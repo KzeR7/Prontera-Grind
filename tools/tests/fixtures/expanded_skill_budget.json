@@ -1,5 +1,5 @@
 {
- "note": "Expanded-roster damage budgets (haven-v409). Each class was measured with tools/skill_balance.js stationary() for 120 s against 1 and 3 targets at Base Lv 99 / 150 / 175 by tier (Ninja and Gunslinger at 150), every skill maxed, and fitted to `target` x its `sibling`. atk = class row attack multiplier, K = SKILL_TUNING single, A = SKILL_TUNING area.",
+ "note": "Expanded-roster damage budgets (haven-v409). Each class was measured with tools/skill_balance.js stationary() for 120 s against 1 and 3 targets at Base Lv 99 / 150 / 175 by tier (Ninja and Gunslinger at 150), every skill maxed, and fitted to `target` x its `sibling`. atk = class row attack multiplier, K = SKILL_TUNING single, A = SKILL_TUNING area. haven-v410: Kagerou & Oboro and Rebellion were fitted with tools/fit_expanded_budget.js (same measurement, attack multiplier left as written).",
  "classes": {
   "Crusader": {
    "sibling": "Knight",
@@ -140,6 +140,20 @@
    "atk": 2.25,
    "K": 6.9209,
    "A": 0.2
+  },
+  "Kagerou & Oboro": {
+   "sibling": "Guillotine Cross",
+   "target": 0.97,
+   "atk": 2.3,
+   "K": 2.487,
+   "A": 0.263
+  },
+  "Rebellion": {
+   "sibling": "Ranger",
+   "target": 0.97,
+   "atk": 2.4,
+   "K": 0.999,
+   "A": 0.431
   }
  }
 }

@@ -78,7 +78,7 @@ try{
  test('GM panel exposes a preset per fourth job, additive ore control and all three level targets',()=>{
   const doc=g.window.document.createElement('div');doc.innerHTML=ev('V.gm()');
   // six shipped fourth jobs plus the six of the expanded roster (haven-v409)
-  assert.equal(doc.querySelectorAll('[data-a="gmmaxset"]').length,12);
+  assert.equal(doc.querySelectorAll('[data-a="gmmaxset"]').length,14);
   assert.ok(doc.querySelector('[data-a="gmo"][data-v="1000"]'));
   assert.equal(doc.querySelectorAll('[data-a="gmresetlv"]').length,3);
   for(const lv of [1,99,120])assert.ok(doc.querySelector(`[data-a="gmresetlv"][data-v="${lv}"]`));

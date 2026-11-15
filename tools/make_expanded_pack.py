@@ -26,7 +26,7 @@ Output (the layout index.html's packTex() reads):
     to a different direction than the body (it does during attacks).
 
 Melee jobs play RO's first attack action, the bow / gun jobs the third (aimed) one.
-The Gunslinger is drawn holding its native gun sprite during the attack.
+The Gunslinger and the Rebellion are drawn holding the native gun sprite during the attack.
 
 usage:
     python3 tools/make_expanded_pack.py            # fetch (if needed) and rebuild everything
@@ -59,11 +59,11 @@ FRAMES = [1, 8, 6]
 
 MALE = ['crusader', 'paladin', 'royal_guard', 'sage', 'scholar', 'sorcerer', 'alchemist',
         'biochemist', 'geneticist', 'monk', 'champion', 'sura', 'rogue', 'stalker',
-        'shadow_chaser', 'bard', 'minstrel', 'maestro', 'ninja', 'gunslinger']
-FEMALE_OF = {'bard': 'dancer', 'minstrel': 'gypsy', 'maestro': 'wanderer'}
+        'shadow_chaser', 'bard', 'minstrel', 'maestro', 'ninja', 'gunslinger', 'kagerou', 'rebellion']
+FEMALE_OF = {'bard': 'dancer', 'minstrel': 'gypsy', 'maestro': 'wanderer', 'kagerou': 'oboro'}
 BODIES = [(k, k, 'm') for k in MALE] + [('f_' + FEMALE_OF.get(k, k), FEMALE_OF.get(k, k), 'f') for k in MALE]
-AIMED = {'bard', 'minstrel', 'maestro', 'dancer', 'gypsy', 'wanderer', 'gunslinger'}
-HELD = {'gunslinger': 'gun'}
+AIMED = {'bard', 'minstrel', 'maestro', 'dancer', 'gypsy', 'wanderer', 'gunslinger', 'rebellion'}
+HELD = {'gunslinger': 'gun', 'rebellion': 'gun'}   # the client ships the same gun sprite for both
 
 # Where the centre of head-sprite 1's image sits relative to the head atlas pivot (32,48), per
 # atlas column. Measured once by locating that sprite inside assets/sprite_pack_data.js heads.
@@ -177,7 +177,7 @@ def main():
             print('expanded sprite pack is STALE: ' + ', '.join(bad))
             return 1
         srcs = json.load(open(MANIFEST, encoding='utf-8'))['files']
-        if len(srcs) != 2 * len(BODIES) + 4 + 4 * len(HELD):
+        if len(srcs) != 2 * len(BODIES) + 4 + 4 * len(set(HELD.values())):
             print('expanded sprite pack source manifest does not list every source')
             return 1
         print('Expanded sprite pack is current (%d bodies, %d native sources).' % (len(BODIES), len(srcs)))

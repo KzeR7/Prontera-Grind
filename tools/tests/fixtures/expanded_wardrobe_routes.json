@@ -1,0 +1,13 @@
+{
+ "note": "sha256 of JSON.stringify(routes) per \"asset|class\", written by tools/make_expanded_wardrobe.py --fixture",
+ "routes": {
+  "hair-m-2-0|Royal Guard": "79130e51b320e414fe87129a4a15db5b019a059ce7145854dd2b593d1fff3651",
+  "hair-f-19-4|Maestro & Wanderer": "7f7a2ee4e854c73120cb1cad68e640b22266411f8f0447abc93184faeee450b9",
+  "piece-halo-m|Gunslinger": "c56806ea58badf7f5c8cfefbec2b695de589e81eef1dd16871d7f7782e9c98c8",
+  "piece-wings-f|Sura": "bbcb9ca281a37f42976db195fbe8011d915fb29d9cfd87ebcb7e71cf6663915b",
+  "piece-afkBalloon-m|Ninja": "04baa4ea13edb144da93ebffcdce76e0a54dfc3ebb9278c718c389900451accf",
+  "piece-blackThunder-f|Kagerou & Oboro": "990be1235f248dd98e7f74dafdc361edeb9e4dfdf762b757ebfbd2835070ed6c",
+  "piece-foxEars-m|Rebellion": "76023609d591f6c8159737cbb1093cef087f9e008c1ebd05d18eb8e4207e0b44",
+  "piece-flower-f|Sage": "5ea90a4e556630b044d5ba2ab8b3f5dcefc114cb6481e2d468e472b1d2637b8f"
+ }
+}

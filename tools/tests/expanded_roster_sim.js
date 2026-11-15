@@ -10,21 +10,31 @@ let passed=0,failed=0;
 const test=(name,fn)=>{try{fn();passed++;console.log('  ok   '+name)}catch(e){failed++;console.error('  FAIL '+name+' -> '+e.message)}};
 // Class and skill ids are written into saves. They may be added to, never renamed or removed.
 const CLASS_IDS=['Alchemist','Bard & Dancer','Biochemist','Champion','Crusader','Geneticist','Gunslinger','Maestro & Wanderer','Minstrel & Gypsy','Monk',
-  'Ninja','Paladin','Rogue','Royal Guard','Sage','Scholar','Shadow Chaser','Sorcerer','Stalker','Sura'];
+  'Kagerou & Oboro','Ninja','Paladin','Rebellion','Rogue','Royal Guard','Sage','Scholar','Shadow Chaser','Sorcerer','Stalker','Sura'].sort();
 const LINES=[['Swordman','Crusader','Paladin','Royal Guard'],['Mage','Sage','Scholar','Sorcerer'],['Merchant','Alchemist','Biochemist','Geneticist'],
   ['Acolyte','Monk','Champion','Sura'],['Thief','Rogue','Stalker','Shadow Chaser'],['Archer','Bard & Dancer','Minstrel & Gypsy','Maestro & Wanderer']];
 const FAMILIES=['dagger','sword','staff','bow','mace','axe','katar'];
 console.log('expanded roster: classes, gate, skills, bodies');
 
-test('twenty classes join the shipped twenty-five without disturbing them',()=>{
+test('twenty-two classes join the shipped twenty-five without disturbing them',()=>{
   assert.deepEqual(json('return [...EXPANDED_LINE].sort()'),CLASS_IDS);
-  assert.equal(ev('Object.keys(CLASSES).length'),45);
+  assert.equal(ev('Object.keys(CLASSES).length'),47);
   assert.equal(ev('CD.filter(c=>!EXPANDED_LINE.has(c[0])).length'),25);
   for(const line of LINES)for(let i=1;i<line.length;i++){
     assert.equal(ev(`CLASSES[${JSON.stringify(line[i])}].par`),line[i-1]);
     assert.equal(ev(`CLASSES[${JSON.stringify(line[i])}].tier`),i+1);
   }
   for(const solo of ['Ninja','Gunslinger']){assert.equal(ev(`CLASSES.${solo}.par`),'Novice');assert.equal(ev(`classTierOf(${JSON.stringify(solo)})`),3)}
+  // haven-v410: each Novice-born class has one advanced job, a full Ascension (tier 4) class.
+  for(const [adv,par] of [['Kagerou & Oboro','Ninja'],['Rebellion','Gunslinger']]){
+    assert.equal(ev(`CLASSES[${JSON.stringify(adv)}].par`),par);assert.equal(ev(`CLASSES[${JSON.stringify(adv)}].tier`),4);assert.equal(ev(`CLASSES[${JSON.stringify(adv)}].rj`),50);
+    assert.deepEqual(json(`return lineOf(${JSON.stringify(adv)})`),['Novice',par,adv]);
+    assert.ok(ev(`!!JOB_RITE_OPPONENTS[${JSON.stringify(par)}]`),par+' has no advancement opponent');
+    ev(`S=fresh();S.cls=${JSON.stringify(adv)};S.lv=150`);assert.equal(ev('fourthJob()'),true);
+    const wt=json(`return CLASSES[${JSON.stringify(adv)}].wt`)[0];
+    ev(`{const src=genGear({...gearPool(9,15).find(x=>x.k===WEAPON_KIN[${JSON.stringify(wt)}]),k:${JSON.stringify(wt)}},fieldPower(9,15),5,false,4,9,15);S.inv=[src];S.zeny=1e12;S.ascensionMat=[1000,1000,1000];window.forged=transformToMythic(src,GM_ASC_PRESETS[S.cls].set)}`);
+    assert.equal(ev('window.forged.success'),true,adv+' cannot forge its Mythic '+wt);
+  }
 });
 
 test('every expanded class trains in a shipped weapon family or the kin of one',()=>{
@@ -72,10 +82,10 @@ test('the six expanded Transcendent classes join the collection: cap +12%',()=>{
 
 test('five ordinary skills per class, a sixth Ascension skill per fourth job, ids pinned',()=>{
   const rows=json('return SKILLSX.map(s=>({id:s.id,from:s.from,max:s.max,type:s.type,asc:!!s.ascensionOnly,icon:s.icon,fx:s.fx,tree:s.tree||null,key:s.key||null}))');
-  assert.equal(rows.length,106);assert.equal(new Set(rows.map(r=>r.id)).size,106);
-  assert.equal(ev('SKILLS.length'),233);
+  assert.equal(rows.length,118);assert.equal(new Set(rows.map(r=>r.id)).size,118);
+  assert.equal(ev('SKILLS.length'),245);
   assert.equal(ev('SKILLS.filter(s=>!SKILLSX.includes(s)).length'),127,'the shipped catalogue is unchanged');
-  assert.equal(ev('new Set(SKILLS.map(s=>s.id)).size'),233,'a new skill id collides with a shipped one');
+  assert.equal(ev('new Set(SKILLS.map(s=>s.id)).size'),245,'a new skill id collides with a shipped one');
   for(const cls of CLASS_IDS){
     const own=rows.filter(r=>r.from===cls),fourth=ev(`CLASSES[${JSON.stringify(cls)}].tier`)===4;
     assert.equal(own.filter(r=>!r.asc).length,5,cls);assert.equal(own.filter(r=>r.asc).length,fourth?1:0,cls);
@@ -105,7 +115,7 @@ test('every skill borrows existing art: an icon that resolves and a shipped cast
 });
 
 test('Ascension covers the six new fourth jobs',()=>{
-  assert.equal(ev('ASC_ROWS.length'),12);
+  assert.equal(ev('ASC_ROWS.length'),14);
   assert.deepEqual(json('return ASC_SKILLS.filter(s=>!ASC_UPGRADES[s.id]).map(s=>s.id)'),[]);
   ev(`S=fresh();S.cls='Sura';S.lv=150;for(const n of lineOf('Sura'))S.jobs[n]={jl:CLASSES[n].mj,jx:0}`);
   assert.equal(ev(`lv('su_knuckle')`),0,'the sixth skill starts locked');
@@ -135,7 +145,7 @@ test('the Jobs and Skills windows render for every expanded class',()=>{
 test('each class has a male and a female body built from its own sheet',()=>{
   const box={window:{}};vm.runInNewContext(fs.readFileSync(path.join(root,'assets/sprite-pack-x/index.js'),'utf8'),box);
   const X=box.window.SPRITE_PACK_X,names=Object.keys(X.bodies);
-  assert.equal(names.length,40);
+  assert.equal(names.length,44);
   assert.deepEqual(fs.readdirSync(path.join(root,'assets/sprite-pack-x')).sort(),[...names.map(n=>X.bodies[n].file),'index.js'].sort(),'stray or missing body file');
   for(const n of names){
     const b=X.bodies[n],file=fs.readFileSync(path.join(root,X.dir,b.file));
@@ -151,7 +161,7 @@ test('each class has a male and a female body built from its own sheet',()=>{
   assert.deepEqual([...X.cell],[126,134]);assert.equal(ev('window.SPRITE_PACK.cellW+","+window.SPRITE_PACK.cellH'),'126,134');
   assert.ok(X.pivotY>X.origin[1]&&X.pivotY<X.cell[1]);
   const manifest=JSON.parse(fs.readFileSync(path.join(root,'tools/native-expanded/source-manifest.json'),'utf8'));
-  assert.equal(manifest.files.length,88);for(const f of manifest.files){assert.match(f.sha256,/^[0-9a-f]{64}$/);assert.match(f.blob,/^[0-9a-f]{40}$/);assert.ok(f.repo&&f.commit&&f.path&&f.bytes>0,f.name)}
+  assert.equal(manifest.files.length,96);for(const f of manifest.files){assert.match(f.sha256,/^[0-9a-f]{64}$/);assert.match(f.blob,/^[0-9a-f]{40}$/);assert.ok(f.repo&&f.commit&&f.path&&f.bytes>0,f.name)}
   for(const cls of CLASS_IDS)for(const sex of ['m','f']){
     const body=ev(`expandedBodyName(${JSON.stringify(cls)},${JSON.stringify(sex)})`);
     assert.ok(X.bodies[body],cls+' '+sex+' -> '+body);assert.equal(body.startsWith('f_'),sex==='f');

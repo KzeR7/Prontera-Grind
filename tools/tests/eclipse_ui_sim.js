@@ -218,7 +218,7 @@ test('current lineage offers direct class actions and the full tree inspects wit
  assert.equal(doc.querySelectorAll('.current-class-card').length,5);
  doc.querySelector('[data-a=jobview][data-v=browse]').click();
  assert.equal(doc.querySelectorAll('.class-lineage-overview [data-a=selk]').length,25);
- assert.equal(doc.querySelectorAll('.class-expanded-tree [data-a=selk]').length,20);
+ assert.equal(doc.querySelectorAll('.class-expanded-tree [data-a=selk]').length,22);
  const before=ev('JSON.stringify(S)');doc.querySelector('.class-lineage-overview [data-v=Wizard]').click();
  assert.equal(ev('JSON.stringify(S)'),before);assert.ok(doc.querySelector('.class-path-focus [data-a=job][data-v=Wizard]').disabled);
  doc.querySelector('.class-lineage-overview [data-v=Warlock]').click();assert.match(doc.querySelector('.class-path-focus').textContent,/Enter advancement trial/);assert.ok(doc.querySelector('.class-path-focus [data-a=job][data-v=Warlock]').disabled);

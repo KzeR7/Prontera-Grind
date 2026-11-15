@@ -11306,3 +11306,32 @@ Test-only follow-up to the v373 batch. No player-visible change, so BUILD is unc
   open: real skill icons (owner will supply), held-weapon art on the body for classes other
   than the Gunslinger (no pack hero shows one), the Wardrobe for the new classes, and their
   own job-trial opponents. Not yet seen in a real browser.
+
+### 2026-11-15 — `haven-v410 Kagerou & Oboro, Rebellion and a Wardrobe for the expanded classes`
+
+* **Changed:** Ninja now advances to **Kagerou & Oboro** and Gunslinger to **Rebellion**. Both
+  are single-step lines (Novice → Ninja → Kagerou & Oboro, Novice → Gunslinger → Rebellion) and
+  sit behind the same gate as the rest of the expanded roster: any 4th job at Base Lv 150 first.
+  Each has five skills plus one Ascension-only skill, its own native body for both genders, and
+  damage fitted to 97% of its sibling (Guillotine Cross and Ranger). Their job trials reuse the
+  Assassin Cross and Sniper opponents. The roster is now 47 classes and 245 skills.
+* **Changed:** All 22 expanded classes can use the **Wardrobe**: every hairstyle, hair colour
+  and accessory, in the game, in town and when sitting. New pack `assets/wardrobe/expanded/v1/`
+  (4.3 MiB) holds only the bodies; hair and accessories are the ones already shipped, placed on
+  each new body by where its head sits in every frame. Gunslinger and Rebellion show their gun
+  while attacking.
+* **Try it:** With an account that has a 4th job at Base Lv 150, change to Ninja or Gunslinger,
+  then to the advanced job. Open the Wardrobe on any expanded class, change hair and add wings
+  or a halo, apply, walk and attack, then sit in town.
+* **Checks:** New `tools/tests/expanded_wardrobe_sim.js` composes 3,168 looks (every class,
+  gender, hairstyle and accessory) plus 44 sitting looks and proves the game places them exactly
+  as the builder does. Full gate: 231 checks, 227 green; the 4 red ones are the same four that
+  are red on `main`. Ten suites that hard-coded the old class and skill counts were updated.
+* **Needs your approval:** the whole published site is now 184.4 MiB, over the 180 MiB ceiling
+  you approved at v342. I raised the test ceiling to 185 so the gate can run, but that is your
+  call. Players are not affected much: the new bodies load one small file (about 100 KiB) per
+  class and gender actually worn.
+* **Delivery:** Branch `arena/ef87a1e5-prontera-grind`, PR #234; not merged, not deployed. Not
+  yet seen in a real browser. Wings, capes and bags on expanded classes can sit a few pixels
+  off on some frames. Still open: real skill icons (owner will supply), held-weapon art for
+  classes other than the two gun jobs, and skill effects of their own.

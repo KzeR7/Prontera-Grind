@@ -792,6 +792,78 @@
    "blob": "cfb559411aebe4b2a1f97b2a930f8f052bacd6cc",
    "bytes": 42772,
    "sha256": "3e61d49b1d1d7d360a2077de74bbcef020eec8fc8bab246fe3eff002e5618dcb"
+  },
+  {
+   "name": "body/rebellion_m.spr",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/남/rebellion_남.spr",
+   "blob": "cbe64e86f7bca2da332b981b67a0b1b5ace033c8",
+   "bytes": 269046,
+   "sha256": "2210e0fe7f39319e089dbbd255f4c399168f23e80b87946643cf1e89966016ee"
+  },
+  {
+   "name": "body/rebellion_m.act",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/남/rebellion_남.act",
+   "blob": "4e078b39582c96c06e85a29653ffeae9c4a58412",
+   "bytes": 48276,
+   "sha256": "364432dc092f171717b8a86d4a17960fff5ff29b52ea835ffcd283ca58668d7f"
+  },
+  {
+   "name": "body/rebellion_f.spr",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/여/rebellion_여.spr",
+   "blob": "8602610b909de9657a0188a41eff6111a2a4a806",
+   "bytes": 233302,
+   "sha256": "d6d4d5539efca6677986ec2ecb558d42191cc5c73144fab6f748db63f7845c39"
+  },
+  {
+   "name": "body/rebellion_f.act",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/여/rebellion_여.act",
+   "blob": "4591f2f56c9c777b2dd9cabdb60ca3cb61a5b960",
+   "bytes": 48276,
+   "sha256": "704c9b66f5a702d6c7fa9a0c41b61ea93b7b0ffc8b3eaa9d89cd13349674ccaa"
+  },
+  {
+   "name": "body/kagerou_m.spr",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/남/kagerou_남.spr",
+   "blob": "1d6b244e6013eb333dbbe4cb497a4a2a3dfb2390",
+   "bytes": 275547,
+   "sha256": "22708cd73eaf4bd30aac662bad6f7098b8a4044cf3598debf0ea0b684f0efca9"
+  },
+  {
+   "name": "body/kagerou_m.act",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/남/kagerou_남.act",
+   "blob": "fbc357355079da7862a739a46d0a71f4f6d855a9",
+   "bytes": 48404,
+   "sha256": "e61246f1a5982765197bbbc445c7472cbca757da40049436c97b9ed30a7c0781"
+  },
+  {
+   "name": "body/oboro_f.spr",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/여/oboro_여.spr",
+   "blob": "ad9a80c334bc787dcc60065a4f9d6b0156d29def",
+   "bytes": 238816,
+   "sha256": "4dd2c27a9b2c056ff45159852293b25ab02e2805e36d767d7e9a72700861adab"
+  },
+  {
+   "name": "body/oboro_f.act",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/여/oboro_여.act",
+   "blob": "efbc2826fe172869a17b933a76196ec32889e150",
+   "bytes": 48276,
+   "sha256": "d84b520644a4f5c0f7ff842b3d3438c9c88acefb0471e68d43e96fb4e9262bc4"
   }
  ]
 }

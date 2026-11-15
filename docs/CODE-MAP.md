@@ -233,6 +233,11 @@ before composition; `arrangePanel` moves it above the skill catalog without
 mutating saves. Check `progression_refresh_sim.js`, `eclipse_ui_sim.js` and
 `panel_layout_smoke.js`.
 
+`assets/expanded-jobs.js` (`PGExpandedJobs`) is the Wardrobe store for the 22 expanded classes:
+bodies from `assets/wardrobe/expanded/v1/` (built by `tools/make_expanded_wardrobe.py`), hair and
+accessories read in place from `assets/wardrobe/v5/` and `assets/social/sitting/` and moved onto
+each body by `Store.route()`. Sources and method: `tools/native-expanded/README.md`.
+
 `assets/fourth-jobs.js` uses the shared bounded native component loader with
 six class routes and `assets/wardrobe/fourth/v1/`. The earlier nineteen-class pack
 remains at `assets/wardrobe/v5/`. `tools/build_wardrobe_collection.py --fourth-jobs`

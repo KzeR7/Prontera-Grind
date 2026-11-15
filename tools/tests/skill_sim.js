@@ -577,9 +577,11 @@ t('a maxed job level fits its data-derived tree without exposed overflow', () =>
     // the flat per-level cost, less the one free level of First Aid every line inherits
     const need = reach.reduce((a, s) => a + 1 * s.max, 0) - 1;
     const earned = line.reduce((a, n) => a + (K.CLASSES[n].mj - 1), 0);
-    rows.push([name, c.tier, need, earned]);
     assert.ok(need <= earned,
       `${name} is ${need - earned} points short: the tree costs ${need} and a maxed line earns ${earned}`);
+    // haven-v410: the two Novice-born lines reach tier 4 in two steps, so their tree is shorter by design.
+    if (line.length < c.tier + 1) continue;
+    rows.push([name, c.tier, need, earned]);
   }
   const byTier = {};
   for (const [name, tier, need, earned] of rows) {

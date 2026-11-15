@@ -1,13 +1,19 @@
 /* Shared character customization and game adapter. Appearance never changes combat equipment/stats. */
 const wardrobeBaseStore=new PGWardrobe.Store(),wardrobeFourthStore=new PGFourthJobs.Store();
+// haven-v410: the expanded roster has a pack of its own (assets/expanded-jobs.js). The script is
+// optional so a page that does not load it keeps working with the two shipped packs.
+const wardrobeExpandedStore=typeof PGExpandedJobs!=='undefined'?new PGExpandedJobs.Store():null;
+const wardrobeStores=[wardrobeBaseStore,wardrobeFourthStore,...(wardrobeExpandedStore?[wardrobeExpandedStore]:[])];
+const wardrobeExpandedClass=cls=>!!wardrobeExpandedStore&&Object.hasOwn(PGExpandedJobs.CLASSES,cls);
+const wardrobeStoreFor=cls=>Object.hasOwn(PGFourthJobs.CLASSES,cls)?wardrobeFourthStore:wardrobeExpandedClass(cls)?wardrobeExpandedStore:wardrobeBaseStore;
 const wardrobeStore={
- select(client,a,cls){const fourth=Object.hasOwn(PGFourthJobs.CLASSES,cls);(fourth?wardrobeBaseStore:wardrobeFourthStore).release(client);return (fourth?wardrobeFourthStore:wardrobeBaseStore).select(client,a,cls)},
- release(client){wardrobeBaseStore.release(client);wardrobeFourthStore.release(client)},
- dispose(){wardrobeBaseStore.dispose();wardrobeFourthStore.dispose()},
- get pixelBytes(){return wardrobeBaseStore.pixelBytes+wardrobeFourthStore.pixelBytes},
- get budget(){return wardrobeBaseStore.budget+wardrobeFourthStore.budget},
+ select(client,a,cls){const store=wardrobeStoreFor(cls);for(const other of wardrobeStores)if(other!==store)other.release(client);return store.select(client,a,cls)},
+ release(client){for(const store of wardrobeStores)store.release(client)},
+ dispose(){for(const store of wardrobeStores)store.dispose()},
+ get pixelBytes(){return wardrobeStores.reduce((n,store)=>n+store.pixelBytes,0)},
+ get budget(){return wardrobeStores.reduce((n,store)=>n+store.budget,0)},
  get fetcher(){return wardrobeBaseStore.fetcher},
- set fetcher(value){wardrobeBaseStore.fetcher=value;wardrobeFourthStore.fetcher=value}
+ set fetcher(value){for(const store of wardrobeStores)store.fetcher=value}
 };
 const wardrobeState={owner:null,cls:'',sex:'',draft:null,look:null,status:'',loading:false,seq:0,start:0,paint:'',canvas:null};
 let wardrobeEquipped=null,wardrobeRequested='',wardrobeFailure='';
@@ -20,7 +26,7 @@ function wardrobeAppearance(){const a=PGWardrobe.normalize(S.appearance)||PGWard
 // Which paid items a draft wears that may not be worn yet (empty without the shop script).
 function wardrobeLocked(a){return typeof shopLockedIn==='function'&&a?shopLockedIn(a):[]}
 function wardrobeTag(field,id){return typeof shopOptionTag==='function'?shopOptionTag(field,id):''}
-function wardrobeSupported(cls){return Object.hasOwn(PGWardrobe.CLASSES,cls)||Object.hasOwn(PGFourthJobs.CLASSES,cls)}
+function wardrobeSupported(cls){return Object.hasOwn(PGWardrobe.CLASSES,cls)||Object.hasOwn(PGFourthJobs.CLASSES,cls)||wardrobeExpandedClass(cls)}
 function wardrobePending(cls){return Object.hasOwn(PGFourthJobs.CLASSES,cls)||wardrobeSupported(cls)&&!wardrobeFailure}
 function wardrobePanel(){wardrobeOwner();if(wardrobeState.cls!==S.cls||wardrobeState.sex!==S.sex){wardrobeState.cls=S.cls;wardrobeState.sex=S.sex;wardrobeState.seq++;wardrobeStore.release('preview');wardrobeState.look=null;wardrobeState.loading=false;wardrobeState.draft=null;wardrobeState.canvas=null}
  if(!wardrobeState.draft){wardrobeState.draft=wardrobeAppearance();wardrobeState.status='';wardrobeState.look=null}

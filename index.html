@@ -925,9 +925,9 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="stylesheet" href="assets/ui/mobile.css?v=324">
 <script src="assets/ui/mobile.js?v=274"></script>
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
-<link rel="stylesheet" href="assets/social.css?v=409">
+<link rel="stylesheet" href="assets/social.css?v=410">
 <link rel="stylesheet" href="assets/social-battle.css?v=393">
-  <link rel="stylesheet" href="assets/social-fishing.css?v=409"><link rel="stylesheet" href="assets/friends.css?v=273">
+  <link rel="stylesheet" href="assets/social-fishing.css?v=410"><link rel="stylesheet" href="assets/friends.css?v=273">
 </head>
 <body>
 <div id="loginOverlay"><div class="eclipse-login-world" aria-hidden="true"></div><header class="eclipse-login-header"><a href="./" class="eclipse-brand"><span>HH</span><b>HORIZON HAVEN<small>YOUR IDLE ADVENTURE</small></b></a><div class="eclipse-palettes" role="group" aria-label="Interface palette"><button type="button" data-palette="moonstone">Moonstone</button><button type="button" data-palette="aurora">Aurora</button><button type="button" data-palette="ember">Ember</button></div></header><main class="eclipse-login-layout"><section class="login-brand"><div class="login-eyebrow">A WORLD WORTH RETURNING TO</div><h1>Your next <br>chapter <em>awaits.</em></h1><p>Explore a world beyond the horizon.<br>Collect rare gear, master every class, and build your haven.</p><div class="eclipse-login-art"><img src="assets/ui/eclipse-knight.png" alt="Lord Knight ready for adventure"><span>01 / PRONTERA<small>THE JOURNEY BEGINS HERE</small></span><div><img src="assets/equipment-icons/1142.png" alt=""><span>YOUR NEXT UPGRADE<small>Somewhere out there.</small></span></div></div><div class="login-footnote">EXPLORE · GROW · CONQUER</div></section><div class="login-card"><div class="eclipse-access">ADVENTURER ACCESS <span>◇</span></div><h2 id="authHeading">Welcome back.</h2><p class="login-intro" id="authIntro">Your adventure is right where you left it.</p><div class="atabs" id="authTabs"><button type="button" id="tabLogin" class="on">Login</button><button type="button" id="tabReg">Register</button></div>
@@ -1059,6 +1059,7 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <script src="assets/wardrobe.js?v=199"></script>
 <script src="assets/shop-catalog.js?v=321"></script>
 <script src="assets/fourth-jobs.js?v=179"></script>
+<script src="assets/expanded-jobs.js?v=410"></script>
 <script src="assets/ascension.js?v=156"></script>
 <script src="assets/native-mob-heights.js?v=153"></script>
 <script src="assets/native-fields.js?v=197"></script>
@@ -1325,7 +1326,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-14 haven-v409 expanded roster: native class sprites, seven new weapon families and fitted damage budgets';
+const BUILD='2026-11-15 haven-v410 expanded roster: Kagerou & Oboro, Rebellion and a Wardrobe for all 22 expanded classes';
 // v364: this write used to sit AFTER the `//` on the BUILD line, so it was part of the comment and
 // never ran - the login card showed an empty #buildTag and there was no way to confirm which file
 // the browser had loaded. It also has to survive the script running before the login card exists.
@@ -1367,8 +1368,11 @@ const CDX=[
 ['Bard & Dancer','Archer',.7,1.44,1.0,'c44b7a','5c1934',['instrument','whip','bow'],'dex',1],['Minstrel & Gypsy','Bard & Dancer',.58,2.03,1.15,'e06596','732242',['instrument','whip','bow'],'dex',1],
 ['Ninja','Novice',.6,2.19,1.1,'3b3b54','181826',['shuriken','dagger'],'dex',1],['Gunslinger','Novice',.58,2.25,1.05,'5c4033','2b1b14',['gun'],'dex',1]];
 const CD4X=[
-['Royal Guard','Paladin',.7,2.56,2.25,'f2d16b','8a6a10',['spear','sword'],'str',0,'a88418'],['Sorcerer','Scholar',.82,2.67,1.2,'b580e8','4f2475',['book','staff'],'int',1,'6c369c'],['Geneticist','Biochemist',.68,2.75,1.7,'70d68c','2d6b3e',['axe','mace'],'str',0,'3c8a52'],['Sura','Champion',.5,1.3,1.6,'ff9b4f','994008',['knuckle','mace'],'str',0,'b85210'],['Shadow Chaser','Stalker',.5,2.45,1.3,'9470b5','3d2654',['dagger','bow'],'dex',0,'533470'],['Maestro & Wanderer','Minstrel & Gypsy',.54,1.61,1.25,'ff80b3','8a2650',['instrument','whip','bow'],'dex',1,'a83264']];
-const EXPANDED_CLASSES=new Set(['Ninja','Gunslinger']);
+['Royal Guard','Paladin',.7,2.56,2.25,'f2d16b','8a6a10',['spear','sword'],'str',0,'a88418'],['Sorcerer','Scholar',.82,2.67,1.2,'b580e8','4f2475',['book','staff'],'int',1,'6c369c'],['Geneticist','Biochemist',.68,2.75,1.7,'70d68c','2d6b3e',['axe','mace'],'str',0,'3c8a52'],['Sura','Champion',.5,1.3,1.6,'ff9b4f','994008',['knuckle','mace'],'str',0,'b85210'],['Shadow Chaser','Stalker',.5,2.45,1.3,'9470b5','3d2654',['dagger','bow'],'dex',0,'533470'],['Maestro & Wanderer','Minstrel & Gypsy',.54,1.61,1.25,'ff80b3','8a2650',['instrument','whip','bow'],'dex',1,'a83264'],
+// haven-v410: the two Novice-born classes get their advanced job. It sits two steps below Novice in
+// the tree but is a full Ascension (tier 4) class - see SOLO_ADVANCED where tiers are computed.
+['Kagerou & Oboro','Ninja',.52,2.3,1.3,'55557a','22223a',['shuriken','dagger'],'dex',1,'33334d'],['Rebellion','Gunslinger',.5,2.4,1.25,'7a5540','3a251a',['gun'],'dex',1,'4d3526']];
+const EXPANDED_CLASSES=new Set(['Ninja','Gunslinger']),SOLO_ADVANCED=new Set(['Kagerou & Oboro','Rebellion']);
 const NEW_GATE_CLASSES=new Set([...CDX,...CD4X].map(row=>row[0]));
 // The whole expanded roster is a prestige unlock: one fourth job at Base Lv 150 opens it for good.
 // A class the player stepped away from keeps its Base Lv on its own record (S.base[class].lv).
@@ -1379,7 +1383,7 @@ if(EXPANDED_JOBS_LIVE){CD.push(...CDX);if(FOURTH_JOBS_LIVE)CD.push(...CD4X);}
 const EXPANDED_LINE=new Set(EXPANDED_JOBS_LIVE?NEW_GATE_CLASSES:[]),ASC_ROWS=[...CD4,...(EXPANDED_JOBS_LIVE?CD4X:[])];
 const CLASSES={};
 CD.forEach(([n,par,aspd,atk,hp,col,cape,wt,main,rng,hat])=>CLASSES[n]={n,par,aspd,atk,hp,col:parseInt(col,16),cape:cape?parseInt(cape,16):0,wt,main,rng,hat:hat?parseInt(hat,16):0,kids:[]});
-for(const c of Object.values(CLASSES)){c.tier=0;for(let p=c.par;p;p=CLASSES[p].par)c.tier++;c.mj=c.tier?50:10;c.rj=[0,10,40,50,50][c.tier];if(c.par)CLASSES[c.par].kids.push(c.n)}
+for(const c of Object.values(CLASSES)){c.tier=0;for(let p=c.par;p;p=CLASSES[p].par)c.tier++;c.mj=c.tier?50:10;if(SOLO_ADVANCED.has(c.n))c.tier=4;c.rj=[0,10,40,50,50][c.tier];if(c.par)CLASSES[c.par].kids.push(c.n)}
 // Milestone 4 (4th jobs, tier 4): also need Base Lv 150 before their first unlock. Already-played
 // 4th jobs are handled by playedClass() in classBlock(), exactly like the earlier tiers.
 const ADV4_BASE_LV=150;
@@ -1645,7 +1649,19 @@ const SKILLSX=[
  {"id":"gs_rapid","n":"Rapid Shower","max":10,"type":"act","col":"#d49a6a","cd":2.5,"hits":5,"power":3.0,"shape":"single","rng":6,"icon":"mc_gat","visual":"gatling","text":"Fire five rapid shots at one target.","fx":"mc_gat","from":"Gunslinger"},
  {"id":"gs_desp","n":"Desperado","max":10,"type":"act","col":"#d49a6a","cd":4,"hits":4,"power":3.6,"shape":"radial","icon":"landmine","visual":"spin","text":"Spin and fire in all directions around the caster.","fx":"mc_rocket","from":"Gunslinger"},
  {"id":"gs_track","n":"Tracking","max":10,"type":"act","col":"#ffd080","cd":5,"hits":1,"power":4.4,"shape":"single","rng":7,"icon":"vult","visual":"cannon","text":"Lock on and fire a high-caliber sniper round.","fx":"mc_over","from":"Gunslinger"},
- {"id":"gs_snake","n":"Snake Eye","max":5,"type":"pas","col":"#d49a6a","key":"range","rate":0.05,"icon":"sight","text":"A marksman's eye extends attack range.","from":"Gunslinger"}
+ {"id":"gs_snake","n":"Snake Eye","max":5,"type":"pas","col":"#d49a6a","key":"range","rate":0.05,"icon":"sight","text":"A marksman's eye extends attack range.","from":"Gunslinger"},
+ {"id":"ko_cross","n":"Cross Slash","max":10,"type":"act","col":"#8a7ac0","cd":3,"hits":2,"power":3.4,"shape":"single","icon":"sdestroy","visual":"cross","text":"Carve a cross through one enemy with two blades.","fx":"sdestroy","from":"Kagerou & Oboro"},
+ {"id":"ko_kunai","n":"Kunai Explosion","max":10,"type":"act","col":"#8a7ac0","cd":4,"hits":1,"power":3.6,"shape":"splash","rng":6,"icon":"landmine","visual":"bomb","text":"Throw an explosive kunai that bursts over the target and nearby enemies.","fx":"landmine","from":"Kagerou & Oboro"},
+ {"id":"ko_petal","n":"Swirling Petal","max":10,"type":"act","col":"#8a7ac0","cd":4.5,"hits":3,"power":3.8,"shape":"radial","icon":"mAss","visual":"spin","text":"Spin a giant shuriken around the caster, cutting every enemy in reach.","fx":"mAss","from":"Kagerou & Oboro"},
+ {"id":"ko_huuma","n":"Huuma Shuriken Storm","max":10,"type":"act","col":"#8a7ac0","cd":5,"hits":3,"power":4.2,"shape":"splash","rng":6,"icon":"sonic","visual":"cuts","text":"Hurl a huuma shuriken that tears through the target and those beside it.","fx":"sonic","from":"Kagerou & Oboro"},
+ {"id":"ko_izayoi","n":"16th Night","max":10,"type":"buff","col":"#8a7ac0","cd":12,"key":"atk","rate":2.2,"duration":12,"icon":"frenzy","text":"Draw on the moon's power, raising attack.","fx":"frenzy","from":"Kagerou & Oboro"},
+ {"id":"ko_moon","n":"Moonlight Fantasy","max":10,"type":"act","col":"#b9a8f0","cd":12,"hits":3,"power":4,"shape":"single","icon":"soulb","visual":"cross","text":"Three strikes delivered from inside a moonlit illusion.","fx":"soulb","ascensionOnly":true,"from":"Kagerou & Oboro"},
+ {"id":"rb_fire","n":"Fire Dance","max":10,"type":"act","col":"#e0a070","cd":3,"hits":5,"power":3.6,"shape":"radial","icon":"landmine","visual":"spin","text":"Dance with two revolvers, shooting every enemy around the caster.","fx":"mc_rocket","from":"Rebellion"},
+ {"id":"rb_round","n":"Round Trip","max":10,"type":"act","col":"#e0a070","cd":4,"hits":4,"power":3.8,"shape":"splash","rng":6,"icon":"mc_gat","visual":"gatling","text":"Sweep a gatling burst across the target and nearby enemies.","fx":"mc_gat","from":"Rebellion"},
+ {"id":"rb_dragon","n":"Dragon Tail","max":10,"type":"act","col":"#e0a070","cd":4.5,"hits":3,"power":4,"shape":"splash","rng":7,"icon":"landmine","visual":"bomb","text":"Launch guided missiles that explode over the target.","fx":"mc_rocket","from":"Rebellion"},
+ {"id":"rb_slug","n":"Slug Shot","max":10,"type":"act","col":"#ffd080","cd":5,"hits":1,"power":4.8,"shape":"single","rng":7,"icon":"vult","visual":"cannon","text":"Fire one heavy shotgun slug at a single enemy.","fx":"mc_over","from":"Rebellion"},
+ {"id":"rb_heat","n":"Heat Barrel","max":10,"type":"buff","col":"#e0a070","cd":12,"key":"speed","rate":2,"duration":12,"icon":"sonic","text":"Overheat the barrel, increasing attack speed.","fx":"iagi","from":"Rebellion"},
+ {"id":"rb_god","n":"Hammer of God","max":10,"type":"act","col":"#ffe0a0","cd":12,"hits":3,"power":4,"shape":"single","rng":7,"icon":"vult","visual":"judgment","text":"Call three rounds down from the sky onto a marked enemy.","fx":"mc_over","ascensionOnly":true,"from":"Rebellion"}
 ];
 if(EXPANDED_JOBS_LIVE)SKILLS.push(...SKILLSX.filter(s=>CLASSES[s.from]));
 // Ascension skill ranks belong to a fourth job's own skills, original or expanded.
@@ -2129,7 +2145,8 @@ const GM_ASC_PRESETS={
   'Ranger':{set:'infernal',main:'dex'},'Guillotine Cross':{set:'voidwalker',main:'str'},
   'Arch Bishop':{set:'primal',main:'int'},'Mechanic':{set:'molten',main:'str'},
   'Royal Guard':{set:'celestial',main:'str'},'Sorcerer':{set:'ethereal',main:'int'},'Geneticist':{set:'molten',main:'str'},
-  'Sura':{set:'primal',main:'str'},'Shadow Chaser':{set:'voidwalker',main:'dex'},'Maestro & Wanderer':{set:'infernal',main:'dex'}
+  'Sura':{set:'primal',main:'str'},'Shadow Chaser':{set:'voidwalker',main:'dex'},'Maestro & Wanderer':{set:'infernal',main:'dex'},
+  'Kagerou & Oboro':{set:'voidwalker',main:'dex'},'Rebellion':{set:'infernal',main:'dex'}
 };
 function gmMaxAscensionGear(cls){
   if(!S.gm||!Object.hasOwn(GM_ASC_PRESETS,cls))return;
@@ -3428,7 +3445,7 @@ const ASC_STATS={
  evasion:{n:'Evasion',step:.5,unit:' pp',text:'Flee beyond the ordinary cap'}
 };
 const ASC_UPGRADES={
- rg_genesis:{damage:25},so_buster:{damage:25},ge_hell:{damage:25},su_knuckle:{damage:25},sc_spell:{damage:25},mw_echo:{damage:25},
+ rg_genesis:{damage:25},so_buster:{damage:25},ge_hell:{damage:25},su_knuckle:{damage:25},sc_spell:{damage:25},mw_echo:{damage:25},ko_moon:{damage:25},rb_god:{damage:25},
  rk_charge:{damage:25,range:1},rk_burst:{damage:20,area:20},rk_ward:{damage:20,burn:10},rk_spear:{damage:25,boss:10},rk_wind:{damage:20,cooldown:10},rk_enchant:{buff:10},
  wl_chain:{damage:20,bounce:1},wl_seal:{damage:25,area:15},wl_det:{damage:20,stun:.5},wl_frost:{damage:20,slow:10},wl_comet:{damage:25,cooldown:10},wl_vortex:{damage:25},
  rg_hunt:{damage:25,boss:10},rg_warg:{damage:25,cooldown:10},rg_storm:{damage:20,area:20},rg_bite:{damage:20,root:1},rg_cluster:{damage:25,area:15},rg_unlimit:{buff:15},
@@ -3439,6 +3456,8 @@ const ASC_UPGRADES={
  so_psychic:{damage:25,area:15},so_diamond:{damage:20,slow:10},so_varetyr:{damage:25,stun:.5},so_grave:{damage:20,area:20},so_strike:{buff:10,duration:2},
  ge_cart:{damage:25,boss:10},ge_thorn:{damage:20,root:1},ge_spore:{damage:25,area:15},ge_weed:{damage:20,cooldown:10},ge_fire:{damage:25,boss:10},
  su_tiger:{damage:20,area:20},su_rampage:{damage:25,cooldown:10},su_gate:{damage:25,boss:10},su_sky:{damage:20,cooldown:10},su_rising:{buff:5,duration:2},
+ ko_cross:{damage:25},ko_kunai:{damage:25,area:15},ko_petal:{damage:20,area:20},ko_huuma:{damage:25,area:15},ko_izayoi:{buff:10,duration:2},
+ rb_fire:{damage:20,area:20},rb_round:{damage:25,area:15},rb_dragon:{damage:25,area:15},rb_slug:{damage:25,range:1},rb_heat:{buff:10,duration:2},
  sc_tri:{damage:25,range:1},sc_fatal:{damage:20,area:20},sc_feint:{damage:25,area:15},sc_masq:{damage:20,slow:10},sc_auto:{buff:10,duration:2},
  bd_metal:{damage:25,area:15},dn_rain:{damage:25,cooldown:10},dn_swing:{buff:10,duration:2},bd_reverb:{damage:25,area:15},bd_gloomy:{buff:5,duration:2},
  mc_gat:{damage:25,range:1},mc_over:{damage:25,boss:10},mc_rocket:{damage:20,area:20},mc_boomerang:{damage:25,cooldown:10},mc_swing:{damage:25,stun:.5},mc_magma:{damage:25}
@@ -6333,6 +6352,32 @@ const SKILL_TUNING={
   ],
   "companion": 1
  },
+ "Kagerou & Oboro": {
+  "single": [
+   2.487,
+   2.487,
+   2.487
+  ],
+  "area": [
+   0.263,
+   0.263,
+   0.263
+  ],
+  "companion": 1
+ },
+ "Rebellion": {
+  "single": [
+   0.999,
+   0.999,
+   0.999
+  ],
+  "area": [
+   0.431,
+   0.431,
+   0.431
+  ],
+  "companion": 1
+ },
  "Gunslinger": {
   "single": [
    6.921,
@@ -7692,7 +7737,7 @@ const JOB_RITE_OPPONENTS={
 };
 // haven-v408: the expanded lines have no champion art of their own yet, so each one faces the
 // existing champion of the first-job family it branched from - same fight, same rules.
-for(const [parent,champion] of [['Paladin','Lord Knight'],['Scholar','High Wizard'],['Biochemist','Whitesmith'],['Champion','High Priest'],['Stalker','Assassin Cross'],['Minstrel & Gypsy','Sniper']])
+for(const [parent,champion] of [['Paladin','Lord Knight'],['Scholar','High Wizard'],['Biochemist','Whitesmith'],['Champion','High Priest'],['Stalker','Assassin Cross'],['Minstrel & Gypsy','Sniper'],['Ninja','Assassin Cross'],['Gunslinger','Sniper']])
   if(EXPANDED_JOBS_LIVE)JOB_RITE_OPPONENTS[parent]=JOB_RITE_OPPONENTS[champion];
 const JOB_RITE_SECS=30,JOB_RITE_BOSS_MULT=2;
 // v211 (owner: "job change should be hard and stronger than abyss nightmare boss"): the Crucible
@@ -8442,13 +8487,13 @@ const V={
   job(){const lines=[['Swordman','Knight','Lord Knight','Rune Knight'],['Mage','Wizard','High Wizard','Warlock'],['Archer','Hunter','Sniper','Ranger'],['Thief','Assassin','Assassin Cross','Guillotine Cross'],['Acolyte','Priest','High Priest','Arch Bishop'],['Merchant','Blacksmith','Whitesmith','Mechanic']];
     // haven-v408: the alternate line of each first job sits in the same column as that first job.
     const altLines=EXPANDED_JOBS_LIVE?[['Swordman','Crusader','Paladin','Royal Guard'],['Mage','Sage','Scholar','Sorcerer'],['Archer','Bard & Dancer','Minstrel & Gypsy','Maestro & Wanderer'],['Thief','Rogue','Stalker','Shadow Chaser'],['Acolyte','Monk','Champion','Sura'],['Merchant','Alchemist','Biochemist','Geneticist']]:[];
-    const soloLines=EXPANDED_JOBS_LIVE?[...EXPANDED_CLASSES].filter(n=>CLASSES[n]).map(n=>[n]):[];
+    const soloLines=EXPANDED_JOBS_LIVE?[...EXPANDED_CLASSES].filter(n=>CLASSES[n]).map(n=>[n,...CLASSES[n].kids]):[];
     const k=selK||S.cls,planned=CD4.find(row=>row[0]===k),c=CLASSES[k],future=!c&&!!planned,blk=future?'Coming soon':classBlock(k),pj=S.jobs[k],rec=future?null:classRec(k);
     const node=n=>CLASSES[n]?tnode(n):`<button class="tn lock${k===n?' pick':''}" data-class-status="lock" data-a="selk" data-v="${n}"><b>${n}</b><small><span class="eclipse-job-status">Coming soon</span> · 4th job</small></button>`;
     const expandedOpen=hasLv150ThirdClass();
-    const expanded=altLines.length?`<div class="tree class-expanded-tree" style="margin-top:14px" data-expanded-roster="${expandedOpen?'open':'locked'}"><div class="sec">Expanded roster <small>${expandedOpen?'Unlocked · alternate lines branch from each first job':'Locked · take any 4th job to Base Lv '+ADV4_BASE_LV+' to open these classes'}</small></div>${[1,2,3].map(i=>`<div class="trow">${altLines.map(line=>node(line[i])).join('')}</div>${i<3?'<div class="trunk"></div>':''}`).join('')}<div class="sec">Expanded classes <small>start from Novice · no promotions</small></div><div class="trow">${soloLines.map(line=>node(line[0])).join('')}</div></div>`:'';
+    const expanded=altLines.length?`<div class="tree class-expanded-tree" style="margin-top:14px" data-expanded-roster="${expandedOpen?'open':'locked'}"><div class="sec">Expanded roster <small>${expandedOpen?'Unlocked · alternate lines branch from each first job':'Locked · take any 4th job to Base Lv '+ADV4_BASE_LV+' to open these classes'}</small></div>${[1,2,3].map(i=>`<div class="trow">${altLines.map(line=>node(line[i])).join('')}</div>${i<3?'<div class="trunk"></div>':''}`).join('')}<div class="sec">Expanded classes <small>start from Novice · one advanced job each</small></div><div class="trow">${soloLines.map(line=>node(line[0])).join('')}</div>${soloLines.some(line=>line[1])?`<div class="trunk"></div><div class="trow">${soloLines.map(line=>line[1]?node(line[1]):'').join('')}</div>`:''}</div>`:'';
     const overview=`<div class="tree class-lineage-overview"><div class="trow">${node('Novice')}</div><div class="trunk"></div>${[0,1,2,3].map((i)=>`<div class="trow">${lines.map(line=>node(line[i])).join('')}</div>${i<3?'<div class="trunk"></div>':''}`).join('')}</div>${expanded}`;
-    const currentLine=[...altLines,...soloLines].find(line=>line.slice(line.length>1?1:0).includes(S.cls))||lines.find(line=>line.includes(S.cls)),path=['Novice',...(currentLine||[])];
+    const currentLine=soloLines.find(line=>line.includes(S.cls))||altLines.find(line=>line.slice(1).includes(S.cls))||lines.find(line=>line.includes(S.cls)),path=['Novice',...(currentLine||[])];
     const design=`<div class="current-class-path" aria-label="Current class lineage">${path.map((n,i)=>{const c=CLASSES[n],blocked=c?classBlock(n):'Coming soon';return `<article class="current-class-card ${n===S.cls?'current':''}" ${n===S.cls?'aria-current="step"':''}><span class="ui-eyebrow">${i===0?'START':i+' / JOB'}</span><span class="class-card-emblem" aria-hidden="true">${['✧','⚔','♜','♛','✦'][i]}</span><button data-a="job" data-v="${n}" ${blocked?'disabled':''}>${n}</button><small>${n===S.cls?'Current class':blocked||'Change class'}</small></article>`}).join('')}</div>${!currentLine?'<p>Select a first class in Class tree to explore its full lineage.</p>':''}`;
     return`<div class="atabs" aria-label="Jobs views"><button data-a="jobview" data-v="lineage" class="${!eclipseJobsBrowse?'on':''}">Current lineage</button><button data-a="jobview" data-v="browse" class="${eclipseJobsBrowse?'on':''}">Class tree</button></div>${eclipseJobsBrowse?overview:design}
     <div class="class-path-focus"><div class="ui-inspector">
@@ -12610,7 +12655,7 @@ const PACK_BODY={Novice:'novice',
   Crusader:'swordman',Paladin:'swordman','Royal Guard':'swordman',Sage:'mage',Scholar:'mage',Sorcerer:'mage',
   Alchemist:'merchant',Biochemist:'merchant',Geneticist:'merchant',Monk:'aco',Champion:'aco',Sura:'aco',
   Rogue:'thief',Stalker:'thief','Shadow Chaser':'thief','Bard & Dancer':'archer','Minstrel & Gypsy':'archer','Maestro & Wanderer':'archer',
-  Ninja:'thief',Gunslinger:'archer'};
+  Ninja:'thief',Gunslinger:'archer','Kagerou & Oboro':'thief',Rebellion:'archer'};
 // A class uses its own art as soon as the pack has a body named after it
 // (knight, lord_knight, wizard...): drop the sheet in Sprite/, run the tool, done.
 // Until then it keeps its first-job line's art, so every class always has a sprite.
@@ -12618,18 +12663,18 @@ const packBodyName=c=>String(c||'').toLowerCase().replace(/[^a-z0-9]+/g,'_').rep
 // Expanded roster bodies (tools/make_expanded_pack.py). Unlike the shipped pack these have a male
 // and a female body per class; the three Bard & Dancer jobs wear the Bard line as a man and the
 // Dancer line as a woman. Only the body being worn is downloaded.
-const EXPANDED_BODY={'Bard & Dancer':['bard','f_dancer'],'Minstrel & Gypsy':['minstrel','f_gypsy'],'Maestro & Wanderer':['maestro','f_wanderer']};
+const EXPANDED_BODY={'Bard & Dancer':['bard','f_dancer'],'Minstrel & Gypsy':['minstrel','f_gypsy'],'Maestro & Wanderer':['maestro','f_wanderer'],'Kagerou & Oboro':['kagerou','f_oboro']};
 const expandedBodyName=(cls,sex)=>{if(typeof EXPANDED_LINE==='undefined'||!EXPANDED_LINE.has(cls))return null;
   const pair=EXPANDED_BODY[cls]||[packBodyName(cls),'f_'+packBodyName(cls)];return pair[sex==='f'?1:0]};
 const expandedPack={index:0,bodies:new Map()};
 function expandedRefresh(){heroKey='';if(typeof drawAppearancePreview==='function'){drawAppearancePreview();drawClassPreview()}}
 function requestExpandedBody(name){const PK=window.SPRITE_PACK,X=window.SPRITE_PACK_X;if(!PK||!name)return false;
   if(PK.bodies[name]&&packImg['b:'+name])return true;
-  if(!X){if(!expandedPack.index){expandedPack.index=1;const script=document.createElement('script');script.src='assets/sprite-pack-x/index.js?v=409';
+  if(!X){if(!expandedPack.index){expandedPack.index=1;const script=document.createElement('script');script.src='assets/sprite-pack-x/index.js?v=410';
     script.onload=()=>{expandedPack.index=2;expandedRefresh()};script.onerror=()=>{expandedPack.index=3;script.remove()};document.head.appendChild(script)}return false}
   const rec=X.bodies[name];if(!rec||expandedPack.bodies.has(name))return false;expandedPack.bodies.set(name,'loading');
   const img=new Image();img.onload=()=>{PK.bodies[name]={atlas:img.src,anchors:rec.anchors,cell:X.cell,pivotY:X.pivotY};packImg['b:'+name]=img;expandedPack.bodies.set(name,'ready');expandedRefresh()};
-  img.onerror=()=>expandedPack.bodies.set(name,'failed');img.src=X.dir+encodeURIComponent(rec.file)+'?v=409';return false}
+  img.onerror=()=>expandedPack.bodies.set(name,'failed');img.src=X.dir+encodeURIComponent(rec.file)+'?v=410';return false}
 function packBodyFor(cls,tier,sex){const PK=window.SPRITE_PACK;if(!PK)return null;
   const own=expandedBodyName(cls,sex||(typeof S!=='undefined'&&S&&S.sex)||'m');if(own&&requestExpandedBody(own))return own;
   const n=packBodyName(cls);if(!own&&PK.bodies&&PK.bodies[n])return n;
@@ -14768,20 +14813,20 @@ setInterval(updateWatch,60000);
 // be hours old while the player was on another tab, and the check is a 60-byte text file.
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&(pendingUpdateBuild||Date.now()-PAGE_STARTED_AT>30000))updateWatch()});
 </script>
-<script src="assets/wardrobe-ui.js?v=409"></script>
+<script src="assets/wardrobe-ui.js?v=410"></script>
 <script src="assets/shop.js?v=321"></script>
 <script src="assets/friends.js?v=273"></script>
-<script src="assets/digimon/roster.js?v=409"></script>
-<script src="assets/digimon/base-stats.js?v=409"></script>
-<script src="assets/social-rules.js?v=409"></script>
-<script src="assets/social-poker.js?v=409"></script>
-<script src="assets/digimon-sanctuary.js?v=409"></script>
+<script src="assets/digimon/roster.js?v=410"></script>
+<script src="assets/digimon/base-stats.js?v=410"></script>
+<script src="assets/social-rules.js?v=410"></script>
+<script src="assets/social-poker.js?v=410"></script>
+<script src="assets/digimon-sanctuary.js?v=410"></script>
 <script src="assets/digimon-battle.js?v=393"></script>
-<script src="assets/social-digimon.js?v=409"></script>
+<script src="assets/social-digimon.js?v=410"></script>
 <script src="assets/social-gym-redesign.js?v=393"></script>
 <script src="assets/social-pond-design.js?v=393"></script>
-<script src="assets/social-scene.js?v=409"></script>
-<script src="assets/social-fishing.js?v=409"></script>
-<script src="assets/plaza-bots.js?v=409"></script>
-<script src="assets/social.js?v=409"></script></body>
+<script src="assets/social-scene.js?v=410"></script>
+<script src="assets/social-fishing.js?v=410"></script>
+<script src="assets/plaza-bots.js?v=410"></script>
+<script src="assets/social.js?v=410"></script></body>
 </html>

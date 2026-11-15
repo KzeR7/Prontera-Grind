@@ -52,3 +52,35 @@ Weapon icons are not built by this tool. Each BMP was converted to PNG with the 
 key made transparent and saved as `assets/equipment-icons/<item id>.png`; its blob URL
 and SHA-256 are recorded in `assets/equipment-icons/manifest.json` and
 `mythic-manifest.json`, and `tools/tests/equipment_art_sim.js` verifies them.
+
+## haven-v410 additions
+
+### Two more bodies (Rebellion, Kagerou & Oboro)
+
+Same repository and commit as the other bodies (`devilm/costume-ro`, folder
+`data/sprite/인간족/몸통/{남,여}/`). These three jobs are filed under English names there:
+`rebellion_남`, `rebellion_여`, `kagerou_남`, `oboro_여` (`.spr` + `.act` each). They are saved as
+`.cache/native-expanded/body/{rebellion_m,rebellion_f,kagerou_m,oboro_f}.*` and pinned in
+`source-manifest.json` (96 entries now). Rebellion reuses the Gunslinger's gun sprite.
+
+### The Wardrobe pack (`assets/wardrobe/expanded/v1/`)
+
+Built by `python3 tools/make_expanded_wardrobe.py` (about 20 seconds; `--check` verifies the
+committed files against `wardrobe-output-manifest.json`; `--sheet out.png [class …]` paints a
+contact sheet for eyeballing; `--fixture` rewrites the routes the test compares).
+
+* **Bodies:** the same 88 body files as the sprite pack, re-rendered on the Wardrobe's
+  320×280 canvas, one atlas per job and gender, with idle, walk, attack and sit.
+* **Hair and accessories:** nothing new is downloaded or copied. The game reads them in place
+  from `assets/wardrobe/v5/` (standing) and `assets/social/sitting/` (sitting).
+* **Reference job:** the Knight's body files, used only to read where its head attaches in
+  each frame. From `devilm/costume-ro` at the same commit: `기사_남.{spr,act}`,
+  `기사_여.{spr,act}`, saved to `.cache/native-expanded/ref/knight_{m,f}.*` and pinned in
+  `wardrobe-source-manifest.json`.
+* **How a head lands on a new body:** the catalog stores each job's head attach point per frame
+  (`tracks`) and the Knight's (`reference`). The game moves the Knight's shipped hair or
+  accessory frames by the difference. `PGExpandedJobs.reroute` in `assets/expanded-jobs.js` and
+  `reroute()` in the builder must stay identical; `tools/tests/expanded_wardrobe_sim.js` fails
+  if they drift.
+* **Known approximation:** pieces worn on the body rather than the head (wings, capes, bags)
+  follow the head by the same rule, so they can sit a few pixels off on some frames.
