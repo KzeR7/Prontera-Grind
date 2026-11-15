@@ -3704,7 +3704,7 @@ function plazaLootTick(income,dt){
   // A bag that is full stops adding gear, so a long AFK cannot walk past BAGMAX one kill at
   // a time. The overflow is counted by offlineStoreGear, not swallowed.
   const r={measured:true,noKillCount:true,kills:0,drops:0,exp:0,zeny:0,items:0,storedItems:0,autoSold:0,
-    overflow:0,cards:0,ori:0,elu:0,pets:0,petRefunds:0,petFolds:0,stages:0};
+    overflow:0,cards:0,cardsFull:false,ori:0,elu:0,pets:0,petRefunds:0,petFolds:0,stages:0};
   for(let i=0;i<n;i++){const mob=offlineMobForCurrentField(map,stage);if(!mob)break;offlineAwardKill(mob,r)}
   if(r.cards||r.drops)plazaLootNotice(r);
 }
@@ -3718,7 +3718,10 @@ function plazaLootNotice(r){
   if(r.elu)bits.push(r.elu+' Elu');
   if(!bits.length)return;
   const now=Date.now();if(now-plazaLootSaid<60000)return;plazaLootSaid=now;
-  log('Plaza AFK found '+bits.join(', ')+(r.overflow?' · bag full, '+r.overflow+' left behind':''),'','kills');
+  // v411: a full card collection refuses drops the same way a full bag does, and staying silent about
+  // it would look like the card rate had simply stopped.
+  log('Plaza AFK found '+bits.join(', ')+(r.overflow?' · bag full, '+r.overflow+' left behind':'')
+    +(r.cardsFull?' · card collection full, no cards kept':''),'','kills');
 }
 function plazaAfkTick(dt){
   const income=plazaFarmIncome();if(!income||!(dt>0))return;
@@ -5666,6 +5669,9 @@ function showOfflineReward(r){
   set('offlineKills','+'+r.kills.toLocaleString());set('offlineDrops','+'+r.drops.toLocaleString());set('offlineExp','+'+r.exp.toLocaleString());
   set('offlineItems','+'+r.items.toLocaleString());set('offlineCards','+'+r.cards.toLocaleString());set('offlineZeny','+'+r.zeny.toLocaleString());
   const detail=[];if(r.storedItems)detail.push(`${r.storedItems} stored`);if(r.autoSold)detail.push(`${r.autoSold} auto-sold`);if(r.overflow)detail.push(`${r.overflow} not stored (bag full)`);
+  // v411: the card collection has a ceiling too, and an away payout that quietly stopped paying cards
+  // would look like a rate change. Say it in the same line that reports the bag.
+  if(r.cardsFull)detail.push('card collection full (no cards kept)');
   if(r.ori||r.elu)detail.push(`Oridecon +${r.ori} · Elunium +${r.elu}`);if(r.pets)detail.push(`Pets +${r.pets}`);if(r.petFolds)detail.push(`${r.petFolds} duplicate pet${r.petFolds===1?'':'s'} folded into Bond`);if(r.petRefunds)detail.push(`${r.petRefunds} full-collection pet refund${r.petRefunds===1?'':'s'}`);if(r.stages)detail.push(`${r.stages} stage${r.stages===1?'':'s'} advanced`);
   const note=[];note.push(r.awayMs>OFFLINE_CAP_MS?'Away rewards are capped at four hours.':'Rewards use the time credited above.');
   note.push(`50% of measured farming income: ${Math.round(r.xpMin||0).toLocaleString()} EXP/min · ${Math.round(r.zenyMin||0).toLocaleString()}z/min. No map or stage advance while offline. Quest rewards and gifts are excluded. After an update or class/map/stage change, farm a fresh minute to replace your saved rate. Until then, the previous measured minute is used, including its original field for drops. No previous sample means no offline income.${r.incomeSource?" Sample: "+r.incomeSource+".":""}`);
@@ -5711,7 +5717,7 @@ function applyOfflineProgress(now=Date.now(),serverClaim=null){
   // minutes were never ground here and the server's claim must pay them. That is exactly the
   // owner's rule: a lost connection is away time, not progress.
   const covered=!CLOUD.gate&&!!plan.show&&Number.isFinite(awayStart)&&awayStart>=PAGE_BOOT_AT&&plan.awayMs<=OFFLINE_SIM_COVER_MS;
-  const r={...plan,show:!!plan.show&&!covered,covered,kills:0,drops:0,exp:0,zeny:0,items:0,storedItems:0,autoSold:0,overflow:0,cards:0,ori:0,elu:0,pets:0,petRefunds:0,petFolds:0,stages:0};
+  const r={...plan,show:!!plan.show&&!covered,covered,kills:0,drops:0,exp:0,zeny:0,items:0,storedItems:0,autoSold:0,overflow:0,cards:0,cardsFull:false,ori:0,elu:0,pets:0,petRefunds:0,petFolds:0,stages:0};
   if(plan.show&&!covered){
     const income=S.offlineIncome,source=String(income?.key||'').split(':'),sourceMap=Number(source[1]),sourceStage=Number(source[2]);
     const valid=income&&income.version===1&&(sourceMap<10||income.rewardVersion===ASC_REWARD_VERSION)&&source.length===3&&Object.hasOwn(CLASSES,source[0])&&Number.isInteger(sourceMap)&&sourceMap>=0&&sourceMap<MAPS.length&&Number.isInteger(sourceStage)&&sourceStage>=1&&sourceStage<=(sourceMap>=10?5:15)&&Number.isFinite(income.at)&&income.at<=Number(S.offlineAt)&&['xp','zeny','job','kph'].every(k=>Number.isFinite(income[k])&&income[k]>=0);
