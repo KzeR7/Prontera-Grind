@@ -11344,3 +11344,26 @@ Test-only follow-up to the v373 batch. No player-visible change, so BUILD is unc
   and the Social Worker ship from the same commit, and either order is safe — an old client
   ignores the snapshot field, and a new client falls back to a deterministic per-room seed
   when the field is missing.
+
+### 2026-11-15 — `save audit: Fishcoins and Pet Coins are minigames, so they are not judged` (no build bump — no `index.html` change)
+
+* **The owner (2026-11-15): "did u also notice the fishcoin & digicoin flag? i think we dont need to be
+  in the flag, these are mini games. i dont think cheating in this does any good."** He is right:
+  Fishcoins buy rods, bait, bag tiers and titles at the pond, and Pet Coins buy DigiPet cosmetics.
+  Neither touches combat, the level curve, the Zeny economy or any counter a flag exists to protect,
+  so a coin figure is never worth a review the owner has to dismiss by hand.
+* **Removed outright, not loosened.** `fishcoins` and `petcoins` are gone from `COUNTERS` (their save
+  paths are no longer read), from `RATE_LIMITS` (they carried 100,000/h and 10,000/h) and from
+  `LUMP_ALLOWANCE` (the 1.5M sold-out-bag allowance and the 100,000 DigiPet payout). Deleting the
+  entries rather than raising the numbers is the point: no future limit can reintroduce the flag by
+  accident, and `creditsFromGrants` simply stops treating those two gift resources as counter credits.
+* **What still flags, unchanged:** kills, levels, Zeny, shards, refine/mythic scrolls, ori/elu,
+  Ascension materials and Nightmare material 0 — all review-only, none of which ever rejects a save
+  (see the module header).
+* **Existing rows stay.** Alerts already recorded for those two kinds remain in `save_alerts` as
+  history; nothing new can be written for them.
+* **Checks:** `api_sim` **69** — the fishing block now proves the opposite of what it used to: +300k,
+  +1M and +300M Fishcoins in two minutes record nothing, a 500,000 Pet Coin jump records nothing, and
+  both keys are asserted absent from `COUNTERS`, `RATE_LIMITS` and `LUMP_ALLOWANCE`. Full gate on the
+  final tree: **1690 passed**, the same five reds as `main`.
+* **Delivery:** Branch `arena/369b4228-prontera-grind`, PR **#236**.

@@ -68,6 +68,13 @@ export const statsSpent = st => {
 const refineCap = item => (Number(item && item.sec) === 6 ? 15 : 10);
 
 // What one of our counters is in the save blob (gift resource key -> save path).
+//
+// Fishing Fishcoins and DigiPet Pet Coins are deliberately NOT counters any more (owner,
+// 2026-11-15: "did u also notice the fishcoin & digicoin flag? i think we dont need to be in the
+// flag, these are mini games. i dont think cheating in this does any good"). Nothing they buy
+// touches combat, the level curve or the economy the flags exist to protect, so a coin count is
+// never worth a review. The counters, their hourly limits and their lump allowances are removed
+// outright - not loosened - so no future limit can quietly reintroduce them.
 export const COUNTERS = {
   shards: s => floor(s && s.shards),
   refineScrolls: s => floor(s && s.refineScrolls),
@@ -78,8 +85,6 @@ export const COUNTERS = {
   ascMat1: s => floor(s && s.ascensionMat && s.ascensionMat[1]),
   ascMat2: s => floor(s && s.ascensionMat && s.ascensionMat[2]),
   nmat0: s => floor(s && s.nmMat && s.nmMat[0]),
-  fishcoins: s => floor(s && s.fishing && s.fishing.coins),
-  petcoins: s => floor(s && s.digimonBag && s.digimonBag.coins),
 };
 
 // Provisional per-hour limits. Generous on purpose: each must be beatable only by play the game
@@ -90,20 +95,17 @@ export const RATE_LIMITS = {
   shards: 3000, ori: 800, elu: 800,
   refineScrolls: 200, mythicScrolls: 100,
   ascMat0: 200, ascMat1: 200, ascMat2: 200, nmat0: 200,
-  fishcoins: 100000, petcoins: 10000,
 };
 // Levels per hour by the level you STARTED the window at. Early game can be quick; Lv 100+
 // cannot: the exp curve (needAt) makes 30 levels in one hour unreachable without a hack.
 export const levelRateLimit = prevLv => (num(prevLv) >= 100 ? 30 : num(prevLv) >= 40 ? 90 : 240);
 
-// Some counters move in LUMPS that no hourly rate can describe: selling a whole fishing bag is one
-// click (the Aether Keep holds 1,000 fish), the Black Market sells ore by the thousand, a DigiPet
-// payout lands at once. Each window is therefore allowed ONE such action on top of the hourly
-// limit; a second one, or one bigger than this, is still judged as before. The allowance is on the
-// DELTA, so it can only ever prevent a false positive - never hide a repeated gain.
+// Some counters move in LUMPS that no hourly rate can describe: the Black Market sells ore by the
+// thousand and a salvage run lands at once. Each window is therefore allowed ONE such action on top
+// of the hourly limit; a second one, or one bigger than this, is still judged as before. The
+// allowance is on the DELTA, so it can only ever prevent a false positive - never hide a repeated
+// gain. The fishing-bag and DigiPet payouts used to be here; they are not judged at all now.
 export const LUMP_ALLOWANCE = {
-  fishcoins: 1_500_000,            // 1,000 fish averaging 1,500 coins each
-  petcoins: 100_000,
   ori: 5_000, elu: 5_000,          // one Black Market purchase / one salvage run
 };
 
