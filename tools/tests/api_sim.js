@@ -894,6 +894,51 @@ await T('an accepted sync writes the save row exactly once', async () => {
   assert.ok(row.last_seen > 1, 'the accepted save carries the new last_seen with it');
 });
 
+// ------------------------------------------ the v410 CPU diet (JSON parses) ----
+// Parsing the save blob is the most expensive thing a sync does, and on the free plan a request that
+// spends too much CPU is killed mid-flight (docs/CPU-LIMIT.md). Before v410 an accepted PUT parsed
+// the same blob SIX times - the body, checkSaveBlob, saveBelongsTo, storedRestoreAt,
+// withSaveIdentity and a final storedSave re-parse - and stringified it twice. Only three parses are
+// irreducible: the request envelope, the incoming save, and the stored row. Pin that, so a future
+// helper cannot quietly reintroduce a full re-read of up to 512 KB per sync.
+await T('an accepted sync parses the save blob once per side, not six times', async () => {
+  const h = freshEnv();
+  const me = await api.register(h.env, { u: 'PARSE', p: 'parse-password-1' });
+  // A save big enough that the instrumentation threshold (8 KB) sees it.
+  const big = JSON.parse(saveBlob(30, 999));
+  big.inv = Array.from({ length: 300 }, (_, i) => ({
+    id: 'it' + i, name: 'Salvaged Blade ' + i, slot: 'weapon', wt: 'sword', tier: 4, val: 900 + i,
+    aff: [{ k: 'atk', v: 900 }, { k: 'crit', v: 120 }], slots: 2, cards: [], sec: 6, lvl: 120, quality: 5, r: 10,
+  }));
+  let blob = JSON.stringify(big);
+  assert.ok(blob.length > 8192, 'the fixture must be over the 8 KB instrumentation threshold');
+  const first = await api.putSave(h.env, me.cookie, { version: 0, blob });
+  assert.strictEqual(first.status, 200, 'the fixture save must be accepted');
+  // Take the STORED blob as the fixture: it already carries the owner/accountId stamp, so the
+  // second push is a byte-for-byte straight sync with nothing for the server to re-stamp.
+  blob = h.sqlite.prepare('SELECT blob FROM saves WHERE user_id = (SELECT id FROM users WHERE username = ?)')
+    .get('PARSE').blob;
+
+  const parse = JSON.parse, stringify = JSON.stringify;
+  let parses = 0, strings = 0;
+  JSON.parse = function (v, ...rest) { if (typeof v === 'string' && v.length > 8192) parses++; return parse.call(this, v, ...rest); };
+  JSON.stringify = function (v, ...rest) { const out = stringify.call(this, v, ...rest); if (typeof out === 'string' && out.length > 8192) strings++; return out; };
+  let accepted;
+  try {
+    // putRaw sends the body EXACTLY as given: api.putSave would run the harness's own stampFor()
+    // helper, and that helper's two parses are this test's bookkeeping, not the server's CPU.
+    accepted = await api.putRaw(h.env, me.cookie, { version: 1, owner: 'PARSE', blob });
+  }
+  finally { JSON.parse = parse; JSON.stringify = stringify; }
+  assert.strictEqual(accepted.status, 200, 'the second sync must be accepted');
+  // envelope + incoming save + stored row = 3. (The stored-row parse is what saveBelongsTo and the
+  // restore fence share; it is one parse, not two.)
+  assert.strictEqual(parses, 3,
+    'an accepted sync must not parse the save blob more than three times (envelope, incoming, stored); saw ' + parses);
+  assert.strictEqual(strings, 1,
+    'an accepted sync must stringify the save blob at most once; saw ' + strings);
+});
+
 await T('a conflict (or a claim demand) still moves the away baseline', async () => {
   const h = freshEnv();
   const me = await api.register(h.env, { u: 'BASELINE', p: 'baseline-password' });

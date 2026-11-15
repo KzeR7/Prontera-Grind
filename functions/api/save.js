@@ -20,7 +20,7 @@
 import { currentUser } from '../_lib/auth.js';
 import { lockedCosmetics } from '../_lib/shop.js';
 import { json, guard, readJson, fail, unauth } from '../_lib/http.js';
-import { checkSaveBlob, publicFields, saveOwnerStamp, sameAccount, savedElsewhere, saveBelongsTo, withSaveIdentity, storedSaveOwner, SAVE_MISMATCH, restoreAllowsWrite, storedRestoreAt, RESTORE_FENCED } from '../_lib/validate.js';
+import { checkSaveBlob, publicFields, saveOwnerStamp, sameAccount, savedElsewhere, saveBelongsTo, withSaveIdentity, storedSaveOwner, SAVE_MISMATCH, restoreAllowsWrite, storedRestoreAt, RESTORE_FENCED, parseSave } from '../_lib/validate.js';
 import * as db from '../_lib/db.js';
 import { recordDamageObservation } from '../_lib/damage-monitor.js';
 import { auditAcceptedSave } from '../_lib/save-audit.js';
@@ -157,11 +157,15 @@ export const onRequestPut = guard(async ({ request, env }) => {
   // v280: store the account's durable identity (users.id) alongside the name it was written under.
   // The name is mutable and a rename used to strand the save; the id never changes. Stamping here
   // means every save this build writes is rename-proof from now on, whoever renames it and however.
-  const stored = withSaveIdentity(body.blob, user);
-  // `stored` is `body.blob` unless the stamp was stale, so it is still a checked save blob; falling
-  // back keeps a write that reached this point from crashing on a parse it did not need to do.
-  let storedSave;
-  try { storedSave = JSON.parse(stored); } catch { storedSave = save; }
+  // v410 CPU: `save` was already parsed by checkSaveBlob above, so hand that object in. The old code
+  // re-parsed the blob here and then parsed the result again, i.e. two full parses of up to 512 KB
+  // per sync for no new information. `stored` is `body.blob` unchanged when the stamp is already
+  // correct (the ordinary path), which is where the second parse used to happen.
+  const stored = withSaveIdentity(body.blob, user, save);
+  // `stored` differs from `body.blob` only by the added `owner`/`accountId` stamp, so the client's
+  // own parse (`save`) is the object the rest of this handler audits - re-parsing `stored` would
+  // read the same 512 KB again to learn nothing new.
+  const storedSave = save;
   const pub = publicFields(storedSave);
   const savedAt = Date.now(); // ignore client time for cloud-save ordering and audit timestamps
   // Diagnostics are best-effort after successful saves only. They must never
@@ -181,7 +185,8 @@ export const onRequestPut = guard(async ({ request, env }) => {
     try {
       const { flagged, fresh } = await auditAcceptedSave(D, {
         userId: user.id, username: user.username, gm: user.gm,
-        prev: row, save: storedSave, pub, savedAt,
+        // v410: hand the audit the STORED blob we already parsed above, so it does not re-read it.
+        prev: row, prevSave: storedRow, save: storedSave, pub, savedAt,
         claimKills: appliedClaim ? Number(appliedClaim.kills) || 0 : 0,
         // The claim row itself: the audit credits what the payout bought (levels, Zeny, loot),
         // not just the kills, or a welcome-back lands in the next window as impossible progress.
@@ -209,6 +214,10 @@ export const onRequestPut = guard(async ({ request, env }) => {
   let appliedClaim = null;
 
   const row = await db.saveByUser(D, user.id);
+  // v410 CPU: parse the STORED blob ONCE and reuse it for the ownership check, the restore fence and
+  // the audit's previous-save view. Previously each of those parsed the same string again (up to
+  // 512 KB each). `null` for the first-save path, where there is no previous blob at all.
+  const storedRow = row ? parseSave(row.blob) : null;
   if (!row) {
     await db.insertSave(D, user.id, stored, savedAt, pub);
     await db.pushHistory(D, user.id, 1, stored, savedAt);
@@ -220,7 +229,7 @@ export const onRequestPut = guard(async ({ request, env }) => {
   // v88.6 / v280: the copy already stored must not belong to someone else either. It is never
   // written over. A blob carrying this account's own id is its own, whatever name it was stamped
   // with - that is what makes a rename survivable.
-  if (!saveBelongsTo(row.blob, user)) return saveMismatch(user);
+  if (!saveBelongsTo(storedRow, user)) return saveMismatch(user);
 
   const pending = await pendingOrIssueOfflineClaim(D, user.id, row, savedAt);
 
@@ -235,7 +244,7 @@ export const onRequestPut = guard(async ({ request, env }) => {
   // asked of the browser: v394 guarded cloudPush's 409 branch and v395 the login push, and both were
   // undone in the field by a tab that was simply open across the rollback. While the row carries a
   // restore stamp, a save without that stamp is a pre-restore copy whatever version it presents.
-  const fenceAt = storedRestoreAt(row.blob);
+  const fenceAt = storedRestoreAt(storedRow);
   if (!restoreAllowsWrite(row.blob, save, fenceAt)) {
     return early({ err: RESTORE_FENCED, restoreFenced: true, restoreAt: fenceAt,
       conflict: true, version: row.version, blob: row.blob, savedAt: row.saved_at,
