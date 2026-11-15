@@ -1,5 +1,6 @@
 // Fits the damage budget of expanded-roster classes against their sibling class.
 //   node tools/fit_expanded_budget.js "Rebellion=Ranger:0.97" "Kagerou & Oboro=Guillotine Cross:0.97"
+// "Geneticist=Mechanic:1.2/1.4" fits 1.2 x on one target and 1.4 x on three.
 // For each class it measures sustained damage (tools/skill_balance.js stationary(), 120 s, 1 and
 // 3 targets, every skill maxed, Base Lv 99 / 150 / 175 by tier) and solves SKILL_TUNING single (K)
 // and area (A) so both land on target x sibling. The class attack multiplier is left as written.
@@ -30,8 +31,8 @@ const dps=(cls,n,weapon)=>{configure(g,cls,weapon);return stationary(g,n,SEC).dp
 const tune=(cls,K,A)=>g.ev(`SKILL_TUNING[${JSON.stringify(cls)}]={single:[${K},${K},${K}],area:[${A},${A},${A}],companion:1}`);
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),out={};
 for(const arg of process.argv.slice(2)){
-  const [cls,rest]=arg.split('='),[sibling,t]=rest.split(':'),target=+t,sw=/Assassin|Guillotine/.test(sibling)?'katar':null;
-  const goal=[dps(sibling,1,sw)*target,dps(sibling,3,sw)*target];let K=1,A=1;
+  const [cls,rest]=arg.split('='),[sibling,t]=rest.split(':'),target=+t.split('/')[0],area=+(t.split('/')[1]||target),sw=/Assassin|Guillotine/.test(sibling)?'katar':null;
+  const goal=[dps(sibling,1,sw)*target,dps(sibling,3,sw)*area];let K=1,A=1;
   for(let r=0;r<ROUNDS;r++){
     const m=(k,a)=>{tune(cls,k,a);return [dps(cls,1),dps(cls,3)]};
     const b=m(K,A),dk=m(K*1.5,A),da=m(K,A*1.5);
@@ -41,10 +42,10 @@ for(const arg of process.argv.slice(2)){
     let nk=K,na=A;if(Math.abs(det)>1e-9&&Math.abs(sA[0])+Math.abs(sA[1])>1e-6){nk=K+(e[0]*sA[1]-e[1]*sA[0])/det;na=A+(sK[0]*e[1]-sK[1]*e[0])/det}
     else if(Math.abs(sK[0])>1e-9)nk=K+e[0]/sK[0];   // no area skill: fit single target only
     K=clamp(nk,.2,15);A=clamp(na,.2,6);
-    process.stderr.write(`${cls} round ${r}: ${(b[0]/goal[0]*target).toFixed(3)} / ${(b[1]/goal[1]*target).toFixed(3)} -> K ${K.toFixed(3)} A ${A.toFixed(3)}\n`);
+    process.stderr.write(`${cls} round ${r}: ${(b[0]/goal[0]*target).toFixed(3)} / ${(b[1]/goal[1]*area).toFixed(3)} -> K ${K.toFixed(3)} A ${A.toFixed(3)}\n`);
   }
   K=+K.toFixed(4);A=+A.toFixed(4);tune(cls,K,A);
-  out[cls]={sibling,target,atk:g.ev(`CLASSES[${JSON.stringify(cls)}].atk`),K,A,check:[+(dps(cls,1)/goal[0]*target).toFixed(3),+(dps(cls,3)/goal[1]*target).toFixed(3)],
+  out[cls]={sibling,target,area,atk:g.ev(`CLASSES[${JSON.stringify(cls)}].atk`),K,A,check:[+(dps(cls,1)/goal[0]*target).toFixed(3),+(dps(cls,3)/goal[1]*area).toFixed(3)],
     hp:+g.ev(`(()=>{const h=n=>{S.cls=n;return maxHp()};return h(${JSON.stringify(cls)})/h(${JSON.stringify(sibling)})})()`).toFixed(2)};
 }
 g.close();console.log(JSON.stringify(out,null,1));

@@ -56,4 +56,16 @@ ok("Auto Spell, Spell Fist, Double Casting, Plagiarism, Chain Action, Shadow War
 const boss=J(`Math.random=()=>.5;const m=__setup('Biochemist');const a=__hit(m,'bi_demo');resetSkillRuntime();m.boss=true;const b=__hit(m,'bi_demo');return b/a`);
 assert.ok(boss>1.15&&boss<1.7,'Acid Demonstration +40% on bosses');
 ok('Acid Demonstration hits bosses 40% harder');
+// haven-v413: a class with eight Ascension skills levels its skill track far enough to max them all.
+const asc=J(`const o={};for(const c of ['Kagerou & Oboro','Rebellion','Sura','Rune Knight']){S=fresh();S.cls=c;S.lv=150;const n=ASC_SKILLS.filter(s=>s.from===c).length;
+  const a=ascState();gainAscension(1e15,c);const lvl=a.skills[c].level;let bought=0;for(const s of ASC_SKILLS.filter(s=>s.from===c))for(let i=0;i<5;i++)if(allocateAscension(s.id,true))bought++;
+  const kept=cleanAscension(JSON.parse(JSON.stringify(S.ascension))).skills[c];o[c]={n,cap:ascSkillCap(c),lvl,bought,left:ascPoints(true),keptLevel:kept.level,keptRanks:Object.values(kept.ranks).reduce((x,y)=>x+y,0)}}return o`);
+for(const c of ['Kagerou & Oboro','Rebellion']){assert.equal(asc[c].n,8,c);assert.equal(asc[c].cap,40,c);assert.equal(asc[c].lvl,40,c);assert.equal(asc[c].bought,40,c+' can max all eight skills');assert.equal(asc[c].left,0);assert.equal(asc[c].keptLevel,40,c+' survives a save round trip');assert.equal(asc[c].keptRanks,40)}
+for(const c of ['Sura','Rune Knight']){assert.equal(asc[c].cap,30,c);assert.equal(asc[c].lvl,30,c);assert.equal(asc[c].bought,30,c)}
+ok('Kagerou & Oboro and Rebellion earn 40 Skill Ascension points and can max all eight skills; six-skill classes stay at 30');
+
+// Elemental Bolt out-hits a plain Fire Bolt by about a fifth.
+const bolt=J(`Math.random=()=>.5;const m=__setup('Sage');const a=__hit(m,'fire');resetSkillRuntime();const b=__hit(m,'sa_bolt');return b/a`);
+assert.ok(bolt>1.12&&bolt<1.3,'Elemental Bolt should be about 20% above Fire Bolt, is '+bolt.toFixed(2));
+ok('Elemental Bolt hits '+Math.round((bolt-1)*100)+'% harder than Fire Bolt');
 g.close();console.log(passed+' passed, 0 failed');

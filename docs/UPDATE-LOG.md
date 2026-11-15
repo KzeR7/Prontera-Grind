@@ -11387,3 +11387,15 @@ Owner feedback after testing v411 on staging (8 points). Still behind the fourth
 Not done: Shadow Chaser still has one attack animation (the bow). A second, dagger animation needs a new stance in both the body pack and the Wardrobe atlases, which are at their size ceilings.
 
 Tests: `signature_skills_sim.js` (new), `signature_fx_sim.js`, `expanded_roster_sim.js`, `expanded_wardrobe_sim.js`, `publish_sim.js`.
+
+## haven-v413 — expanded roster: stronger budgets, skill-first damage, 40-point Skill Ascension (2026-11-15)
+
+Owner direction after reading the v412 damage report. Still behind the fourth-job gate; the 26 original classes are untouched.
+
+- **Budgets.** New classes sit about 20% above their sibling. Royal Guard, Maestro & Wanderer, Kagerou & Oboro and Rebellion stay close (105%). Sorcerer and Shadow Chaser 125%. Geneticist 120% on one target, 140% on three. Sura is the single-target ceiling of the fourth jobs: 227% of Rune Knight = 130% of Guillotine Cross. `tools/fit_expanded_budget.js` accepts `Class=Sibling:single/area`.
+- **Skills before normal attacks.** The attack multiplier of Sura (1.3 to 1.1), Shadow Chaser (2.45 to 1.7), Maestro & Wanderer (1.61 to 1.15) and Rebellion (2.4 to 1.7) was lowered and the skill tuning refitted, so the same budget comes from skills. Triangle Shot power 4.6 to 8.5.
+- Elemental Bolt power 4.14 (about 20% above Fire Bolt). Sorcerer Spell Fist bolts hit bosses 40% harder.
+- **Skill Ascension cap** is `ascSkillCap(cls)` = max(30, 5 x skills): 40 for Kagerou & Oboro and Rebellion (eight skills each).
+- New `tools/expanded_damage_report.js` prints the per-class damage table.
+
+Tests: `signature_skills_sim.js`, `expanded_roster_sim.js`.

@@ -925,9 +925,9 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="stylesheet" href="assets/ui/mobile.css?v=324">
 <script src="assets/ui/mobile.js?v=274"></script>
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
-<link rel="stylesheet" href="assets/social.css?v=412">
+<link rel="stylesheet" href="assets/social.css?v=413">
 <link rel="stylesheet" href="assets/social-battle.css?v=393">
-  <link rel="stylesheet" href="assets/social-fishing.css?v=412"><link rel="stylesheet" href="assets/friends.css?v=273">
+  <link rel="stylesheet" href="assets/social-fishing.css?v=413"><link rel="stylesheet" href="assets/friends.css?v=273">
 </head>
 <body>
 <div id="loginOverlay"><div class="eclipse-login-world" aria-hidden="true"></div><header class="eclipse-login-header"><a href="./" class="eclipse-brand"><span>HH</span><b>HORIZON HAVEN<small>YOUR IDLE ADVENTURE</small></b></a><div class="eclipse-palettes" role="group" aria-label="Interface palette"><button type="button" data-palette="moonstone">Moonstone</button><button type="button" data-palette="aurora">Aurora</button><button type="button" data-palette="ember">Ember</button></div></header><main class="eclipse-login-layout"><section class="login-brand"><div class="login-eyebrow">A WORLD WORTH RETURNING TO</div><h1>Your next <br>chapter <em>awaits.</em></h1><p>Explore a world beyond the horizon.<br>Collect rare gear, master every class, and build your haven.</p><div class="eclipse-login-art"><img src="assets/ui/eclipse-knight.png" alt="Lord Knight ready for adventure"><span>01 / PRONTERA<small>THE JOURNEY BEGINS HERE</small></span><div><img src="assets/equipment-icons/1142.png" alt=""><span>YOUR NEXT UPGRADE<small>Somewhere out there.</small></span></div></div><div class="login-footnote">EXPLORE · GROW · CONQUER</div></section><div class="login-card"><div class="eclipse-access">ADVENTURER ACCESS <span>◇</span></div><h2 id="authHeading">Welcome back.</h2><p class="login-intro" id="authIntro">Your adventure is right where you left it.</p><div class="atabs" id="authTabs"><button type="button" id="tabLogin" class="on">Login</button><button type="button" id="tabReg">Register</button></div>
@@ -1059,7 +1059,7 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <script src="assets/wardrobe.js?v=199"></script>
 <script src="assets/shop-catalog.js?v=321"></script>
 <script src="assets/fourth-jobs.js?v=179"></script>
-<script src="assets/expanded-jobs.js?v=412"></script>
+<script src="assets/expanded-jobs.js?v=413"></script>
 <script src="assets/ascension.js?v=156"></script>
 <script src="assets/native-mob-heights.js?v=153"></script>
 <script src="assets/native-fields.js?v=197"></script>
@@ -1069,8 +1069,8 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <script src="assets/skill-materials.js?v=220"></script>
 <script src="assets/afterglow-animations.js?v=151"></script>
 <script src="assets/skill-overdrive.js?v=220"></script>
-<script src="assets/ro-fx/index.js?v=412"></script>
-<script src="assets/signature-fx.js?v=412"></script>
+<script src="assets/ro-fx/index.js?v=413"></script>
+<script src="assets/signature-fx.js?v=413"></script>
 <script src="assets/skill-afterglow.js?v=220"></script>
 <script src="assets/boss-fx.js?v=249"></script>
 <script src="assets/pets.js?v=130"></script>
@@ -1328,7 +1328,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-15 haven-v412 expanded roster: original RO skill effects, signature skills and autocast, every class armed';
+const BUILD='2026-11-15 haven-v413 expanded roster: stronger budgets, skill-first damage, 40-point Skill Ascension for eight-skill classes';
 // v364: this write used to sit AFTER the `//` on the BUILD line, so it was part of the comment and
 // never ran - the login card showed an empty #buildTag and there was no way to confirm which file
 // the browser had loaded. It also has to survive the script running before the login card exists.
@@ -1370,10 +1370,10 @@ const CDX=[
 ['Bard & Dancer','Archer',.7,1.44,1.0,'c44b7a','5c1934',['instrument','whip','bow'],'dex',1],['Minstrel & Gypsy','Bard & Dancer',.58,2.03,1.15,'e06596','732242',['instrument','whip','bow'],'dex',1],
 ['Ninja','Novice',.6,2.19,1.1,'3b3b54','181826',['shuriken','dagger'],'dex',1],['Gunslinger','Novice',.58,2.25,1.05,'5c4033','2b1b14',['gun'],'dex',1]];
 const CD4X=[
-['Royal Guard','Paladin',.7,2.56,2.25,'f2d16b','8a6a10',['spear','sword'],'str',0,'a88418'],['Sorcerer','Scholar',.82,2.67,1.2,'b580e8','4f2475',['book','staff'],'int',1,'6c369c'],['Geneticist','Biochemist',.68,2.75,1.7,'70d68c','2d6b3e',['axe','mace'],'str',0,'3c8a52'],['Sura','Champion',.5,1.3,1.6,'ff9b4f','994008',['knuckle','mace'],'str',0,'b85210'],['Shadow Chaser','Stalker',.5,2.45,1.3,'9470b5','3d2654',['dagger','bow'],'dex',0,'533470'],['Maestro & Wanderer','Minstrel & Gypsy',.54,1.61,1.25,'ff80b3','8a2650',['instrument','whip','bow'],'dex',1,'a83264'],
+['Royal Guard','Paladin',.7,2.56,2.25,'f2d16b','8a6a10',['spear','sword'],'str',0,'a88418'],['Sorcerer','Scholar',.82,2.67,1.2,'b580e8','4f2475',['book','staff'],'int',1,'6c369c'],['Geneticist','Biochemist',.68,2.75,1.7,'70d68c','2d6b3e',['axe','mace'],'str',0,'3c8a52'],['Sura','Champion',.5,1.1,1.6,'ff9b4f','994008',['knuckle','mace'],'str',0,'b85210'],['Shadow Chaser','Stalker',.5,1.7,1.3,'9470b5','3d2654',['dagger','bow'],'dex',0,'533470'],['Maestro & Wanderer','Minstrel & Gypsy',.54,1.15,1.25,'ff80b3','8a2650',['instrument','whip','bow'],'dex',1,'a83264'],
 // haven-v410: the two Novice-born classes get their advanced job. It sits two steps below Novice in
 // the tree but is a full Ascension (tier 4) class - see SOLO_ADVANCED where tiers are computed.
-['Kagerou & Oboro','Ninja',.52,2.3,1.3,'55557a','22223a',['shuriken','dagger'],'dex',1,'33334d'],['Rebellion','Gunslinger',.5,2.4,1.25,'7a5540','3a251a',['gun'],'dex',1,'4d3526']];
+['Kagerou & Oboro','Ninja',.52,2.3,1.3,'55557a','22223a',['shuriken','dagger'],'dex',1,'33334d'],['Rebellion','Gunslinger',.5,1.7,1.25,'7a5540','3a251a',['gun'],'dex',1,'4d3526']];
 const EXPANDED_CLASSES=new Set(['Ninja','Gunslinger']),SOLO_ADVANCED=new Set(['Kagerou & Oboro','Rebellion']);
 const NEW_GATE_CLASSES=new Set([...CDX,...CD4X].map(row=>row[0]));
 // The whole expanded roster is a prestige unlock: one fourth job at Base Lv 150 opens it for good.
@@ -1564,7 +1564,7 @@ const SKILLSX=[
  {"id":"rg_genesis","n":"Genesis Ray","max":10,"type":"act","col":"#ffe9a8","cd":12,"hits":3,"power":4,"shape":"line","icon":"magnus","visual":"judgment","text":"A column of holy light scorches every enemy in its path.","fx":"magnus","from":"Royal Guard","ascensionOnly":true},
  {"id":"sa_hind","n":"Hindsight","max":10,"type":"buff","col":"#b580e8","cd":12,"key":"matk","rate":1.0,"duration":12,"icon":"mystic","text":"Auto Spell. For 12 seconds every attack and every cast can release a random bolt: Fire, Cold or Lightning.","fx":"mystic","from":"Sage","autocast":{"on":"both","chance":0.55,"pool":[{"as":"fire","n":"Fire Bolt","hits":3,"power":1.3},{"as":"nap","n":"Lightning Bolt","hits":3,"power":1.3},{"as":"fdiver","n":"Cold Bolt","hits":3,"power":1.3}]}},
  {"id":"sa_earth","n":"Heaven's Drive","max":10,"type":"act","col":"#b580e8","cd":4,"hits":3,"power":2.0,"shape":"splash","icon":"tstorm","visual":"detonate","text":"Erupt spikes of earth beneath nearby enemies.","fx":"tstorm","from":"Sage"},
- {"id":"sa_bolt","n":"Elemental Bolt","max":10,"type":"act","col":"#b580e8","cd":2.5,"hits":5,"power":3.2,"shape":"single","icon":"fire","visual":"wave","text":"Five bolts of a random element: fire, ice or lightning.","fx":"fire","from":"Sage","core":true,"fxPool":["fire","nap","fdiver"]},
+ {"id":"sa_bolt","n":"Elemental Bolt","max":10,"type":"act","col":"#b580e8","cd":2.5,"hits":5,"power":4.14,"shape":"single","icon":"fire","visual":"wave","text":"Five bolts of a random element: fire, ice or lightning.","fx":"fire","from":"Sage","core":true,"fxPool":["fire","nap","fdiver"]},
  {"id":"sa_book","n":"Advanced Book","max":10,"type":"pas","col":"#b580e8","key":"matk","rate":1.5,"icon":"wresearch","text":"Study raises magic attack.","from":"Sage"},
  {"id":"sa_dispel","n":"Dispell","max":5,"type":"act","col":"#b580e8","cd":4,"hits":1,"power":2.0,"shape":"single","icon":"soulb","visual":"burst","text":"Strip an enemy's wards. Your next three direct hits within 3 seconds deal 10% more damage.","mark":0.1,"fx":"soulb","from":"Sage"},
  {"id":"sc_web","n":"Spider Web","max":5,"type":"act","col":"#d0a8ff","cd":6,"hits":1,"power":1.5,"shape":"single","root":2,"icon":"pharrow","visual":"detonate","text":"Snare and root an enemy in place.","fx":"pharrow","from":"Scholar"},
@@ -1576,7 +1576,7 @@ const SKILLSX=[
  {"id":"so_diamond","n":"Diamond Dust","max":10,"type":"act","col":"#80d8ff","cd":5,"hits":1,"power":3.4,"shape":"radial","slow":0.35,"icon":"fdiver","visual":"frost","text":"Freeze and slow enemies around the caster.","fx":"wl_frost","from":"Sorcerer"},
  {"id":"so_varetyr","n":"Varetyr Spear","max":10,"type":"act","col":"#b580e8","cd":3.5,"hits":3,"power":3.4,"shape":"single","icon":"nap","visual":"lightning","text":"Three lightning spears pierce one enemy, briefly stunning it.","stun":0.4,"fx":"nap","from":"Sorcerer"},
  {"id":"so_grave","n":"Earth Grave","max":10,"type":"act","col":"#b580e8","cd":4,"hits":1,"power":3.2,"shape":"splash","icon":"tstorm","visual":"detonate","text":"Stone spikes erupt beneath the target and nearby enemies.","fx":"tstorm","from":"Sorcerer"},
- {"id":"so_strike","n":"Spell Fist","max":10,"type":"buff","col":"#b580e8","cd":12,"key":"matk","rate":1.5,"duration":12,"icon":"aura","text":"Spell Fist. For 12 seconds every normal attack releases a bolt of a random element.","fx":"aura","from":"Sorcerer","autocast":{"on":"attack","chance":1,"pool":[{"as":"fire","n":"Fire Bolt","hits":3,"power":0.9},{"as":"nap","n":"Lightning Bolt","hits":3,"power":0.9},{"as":"fdiver","n":"Cold Bolt","hits":3,"power":0.9}]}},
+ {"id":"so_strike","n":"Spell Fist","max":10,"type":"buff","col":"#b580e8","cd":12,"key":"matk","rate":1.5,"duration":12,"icon":"aura","text":"Spell Fist. For 12 seconds every normal attack releases a bolt of a random element. The bolts hit bosses 40% harder.","fx":"aura","from":"Sorcerer","autocast":{"on":"attack","chance":1,"pool":[{"as":"fire","n":"Fire Bolt","hits":3,"power":0.9,"bossPower":0.4},{"as":"nap","n":"Lightning Bolt","hits":3,"power":0.9,"bossPower":0.4},{"as":"fdiver","n":"Cold Bolt","hits":3,"power":0.9,"bossPower":0.4}]}},
  {"id":"so_buster","n":"Poison Buster","max":10,"type":"act","col":"#b580e8","cd":12,"hits":4,"power":4,"shape":"splash","icon":"meteor","visual":"detonate","text":"Detonate a toxic cloud over the target area.","fx":"meteor","from":"Sorcerer","ascensionOnly":true},
  {"id":"al_pot","n":"Potion Pitcher","max":10,"type":"heal","col":"#70d68c","cd":6,"icon":"aid","text":"Automatically restore 12–30% of max HP below half health. Does not occupy a combo slot.","hits":1,"power":0,"shape":"single","visual":"ward","healBase":0.12,"healRank":0.018,"fx":"aid","from":"Alchemist"},
  {"id":"al_acid","n":"Acid Terror","max":10,"type":"act","col":"#70d68c","cd":3,"hits":1,"power":1.9,"shape":"single","dot":0.15,"icon":"meltdown","visual":"detonate","text":"Hurl corrosive acid that keeps burning for a short time.","fx":"meltdown","from":"Alchemist"},
@@ -1620,7 +1620,7 @@ const SKILLSX=[
  {"id":"st_stalk","n":"Stalk","max":10,"type":"buff","col":"#b088d4","cd":12,"key":"move","rate":1,"duration":12,"icon":"wwalk","text":"Move unseen and unhurried: increased movement speed.","fx":"wwalk","from":"Stalker"},
  {"id":"st_counter","n":"Counter Instinct","max":5,"type":"act","col":"#b088d4","cd":2,"hits":1,"power":1.6,"shape":"single","icon":"spearboom","visual":"cuts","text":"A quick riposte. Deals 20% more damage if you were hit within the last 2 seconds.","counter":true,"fx":"spearboom","from":"Stalker"},
  {"id":"st_pres","n":"Preserve","max":10,"type":"pas","col":"#b088d4","key":"damage","rate":1.5,"icon":"sdestroy","text":"Keep your best techniques sharp, increasing all damage.","from":"Stalker"},
- {"id":"sc_tri","n":"Triangle Shot","max":10,"type":"act","col":"#9470b5","cd":3,"hits":3,"power":4.6,"shape":"single","rng":6,"icon":"dstr","visual":"wave","text":"Triangle Shot: three arrows loosed at once from the bow.","fx":"dstr","from":"Shadow Chaser","core":true},
+ {"id":"sc_tri","n":"Triangle Shot","max":10,"type":"act","col":"#9470b5","cd":3,"hits":3,"power":8.5,"shape":"single","rng":6,"icon":"dstr","visual":"wave","text":"Triangle Shot: three arrows loosed at once from the bow.","fx":"dstr","from":"Shadow Chaser","core":true},
  {"id":"sc_fatal","n":"Fatal Menace","max":10,"type":"act","col":"#9470b5","cd":4.5,"hits":1,"power":3.6,"shape":"radial","icon":"mAss","visual":"spin","text":"Slash all enemies surrounding the caster.","fx":"mAss","from":"Shadow Chaser"},
  {"id":"sc_feint","n":"Feint Bomb","max":10,"type":"act","col":"#9470b5","cd":4,"hits":1,"power":3.2,"shape":"splash","icon":"landmine","visual":"bomb","text":"Leave a decoy that detonates over the target and nearby enemies.","fx":"landmine","from":"Shadow Chaser"},
  {"id":"sc_masq","n":"Masquerade","max":10,"type":"act","col":"#9470b5","cd":5,"hits":1,"power":2.4,"shape":"single","icon":"dpois","visual":"burst","text":"A weakening touch that slows one enemy.","slow":0.3,"fx":"sdestroy","from":"Shadow Chaser"},
@@ -1702,7 +1702,7 @@ for(const s of SKILLS){
 for(const s of SKILLS)if(s.core&&!s.text.startsWith('★'))s.text='★ Signature skill. '+s.text;
 const AUTOCAST_SOURCES=SKILLS.filter(s=>s.autocast);
 for(const src of AUTOCAST_SOURCES)src.autocast.casts=(src.autocast.pool||[]).map(e=>{const base=SKILLS.find(x=>x.id===e.as);if(!base)return null;
-  const c={id:base.id,n:e.n||base.n,col:e.col||base.col,type:'act',hits:e.hits||1,power:e.power||1,shape:'single',max:src.max,rankOf:src.id,magic:src.magic,rng:6,aoe:false,cls:src.cls,from:src.from,autocastChild:true};
+  const c={id:base.id,n:e.n||base.n,col:e.col||base.col,type:'act',hits:e.hits||1,power:e.power||1,shape:'single',max:src.max,rankOf:src.id,bossPower:e.bossPower||0,magic:src.magic,rng:6,aoe:false,cls:src.cls,from:src.from,autocastChild:true};
   c.mul=L=>c.power*(.55+.45*Math.min(c.max,L)/c.max);return c}).filter(Boolean);
 // The combo Auto-fill builds for an expanded class: setup first, the signature finisher last.
 const COMBO_PLAN={
@@ -3511,13 +3511,16 @@ const ASC_UPGRADES={
 // keeping the 1.8 exponent and the 8x track ratio - 56B/7B totals fill in ~670h/~83h at the
 // ~1.4M/min the retuned top field sustains. No migration: levels just arrive sooner.
 const ASC_XP_BASE={stats:2667879,skills:1368750},ASC_REWARD_VERSION=6;
+// haven-v413: one point per level, five ranks per skill - a class with eight Ascension skills
+// (Kagerou & Oboro, Rebellion) levels its skill track to 40 instead of 30.
+const ascSkillCap=cls=>Math.max(30,5*ASC_SKILLS.filter(s=>s.from===cls).length);
 const ascNeed=(level,skills=false)=>Math.round(ASC_XP_BASE[skills?'skills':'stats']*Math.pow(level+1,1.8)/1000)*1000;
 function cleanAscension(value){
  const count=(v,max)=>Number.isFinite(Number(v))?Math.max(0,Math.min(max,Math.floor(Number(v)))):0;
- const track=(v,cap)=>{const level=count(v?.level,cap);return {level,xp:level===cap?0:count(v?.xp,ascNeed(level,cap===30)-1)}};
+ const track=(v,cap,skills=false)=>{const level=count(v?.level,cap);return {level,xp:level===cap?0:count(v?.xp,ascNeed(level,skills)-1)}};
  const a={version:1,...track(value,50),stats:{},skills:{}};
  for(const [cls] of ASC_ROWS){let budget=a.level;const stats={};for(const k of Object.keys(ASC_STATS)){const n=count(value?.stats?.[cls]?.[k],Math.min(10,budget));if(n)stats[k]=n;budget-=n;}a.stats[cls]=stats;
-  const sk=track(value?.skills?.[cls],30);budget=sk.level;sk.ranks={};for(const s of ASC_SKILLS.filter(s=>s.from===cls)){const n=count(value?.skills?.[cls]?.ranks?.[s.id],Math.min(5,budget));if(n)sk.ranks[s.id]=n;budget-=n;}a.skills[cls]=sk;
+  const sk=track(value?.skills?.[cls],ascSkillCap(cls),true);budget=sk.level;sk.ranks={};for(const s of ASC_SKILLS.filter(s=>s.from===cls)){const n=count(value?.skills?.[cls]?.ranks?.[s.id],Math.min(5,budget));if(n)sk.ranks[s.id]=n;budget-=n;}a.skills[cls]=sk;
  }return a;
 }
 function ascState(){if(!S.ascension||S.ascension.version!==1)S.ascension=cleanAscension(S.ascension);return S.ascension;}
@@ -3533,7 +3536,7 @@ function gainAscension(amount,cls=S.cls){
  const a=ascState(),advance=(track,cap,skills)=>{const before=track.level;if(track.level===cap)return;track.xp+=Math.floor(amount);
   while(track.level<cap&&track.xp>=ascNeed(track.level,skills)){track.xp-=ascNeed(track.level,skills);track.level++;}if(track.level===cap)track.xp=0;
   if(track.level>before)log(`${skills?cls+' Skill Ascension':'Ascension'} level ${track.level}! +${track.level-before} point${track.level-before===1?'':'s'}.`,'r4','lvl');};
- advance(a,50,false);advance(a.skills[cls],30,true);
+ advance(a,50,false);advance(a.skills[cls],ascSkillCap(cls),true);
 }
 function ascPoints(skills=false){if(!fourthJob())return 0;const a=ascState(),p=skills?a.skills[S.cls]:a;return Math.max(0,p.level-Object.values(skills?p.ranks:a.stats[S.cls]||{}).reduce((s,n)=>s+n,0));}
 function allocateAscension(key,skills=false){if(!fourthJob()||!ascPoints(skills))return false;const a=ascState();
@@ -6159,141 +6162,145 @@ const SKILL_TUNING={
  // haven-v409 expanded roster: fitted by measurement so each class lands on its sibling's sustained
  // damage (1 target and 3 targets) - Crusader line 92%, Monk line 105%, Sage and Alchemist lines 100%,
  // the rest 97%. Budgets and the fit targets are recorded in tools/tests/fixtures/expanded_skill_budget.json.
+ // haven-v413 (owner): the new classes sit about 20% above their sibling; Royal Guard, Maestro & Wanderer,
+ // Kagerou & Oboro and Rebellion stay close (105%); Sorcerer and Shadow Chaser 125%; Geneticist 120% on
+ // one target and 140% on three. Sura is the single-target ceiling of the fourth jobs: 227% of Rune
+ // Knight, which is 130% of Guillotine Cross, the strongest original fourth job on one target.
  "Crusader": {
   "single": [
-   1.2379,
-   1.2379,
-   1.2379
+   1.7315,
+   1.7315,
+   1.7315
   ],
   "area": [
-   0.348,
-   0.348,
-   0.348
+   0.3373,
+   0.3373,
+   0.3373
   ],
   "companion": 1
  },
  "Paladin": {
   "single": [
-   1.6925,
-   1.6925,
-   1.6925
+   2.2993,
+   2.2993,
+   2.2993
   ],
   "area": [
-   0.7123,
-   0.7123,
-   0.7123
+   0.6813,
+   0.6813,
+   0.6813
   ],
   "companion": 1
  },
  "Royal Guard": {
   "single": [
-   0.65,
-   0.65,
-   0.65
+   0.7858,
+   0.7858,
+   0.7858
   ],
   "area": [
-   1.3021,
-   1.3021,
-   1.3021
+   1.2314,
+   1.2314,
+   1.2314
   ],
   "companion": 1
  },
  "Sage": {
   "single": [
-   1.1237,
-   1.1237,
-   1.1237
+   1.3218,
+   1.3218,
+   1.3218
   ],
   "area": [
-   2.4081,
-   2.4081,
-   2.4081
+   2.4542,
+   2.4542,
+   2.4542
   ],
   "companion": 1
  },
  "Scholar": {
   "single": [
-   1.0124,
-   1.0124,
-   1.0124
+   1.1923,
+   1.1923,
+   1.1923
   ],
   "area": [
-   0.8344,
-   0.8344,
-   0.8344
+   0.8421,
+   0.8421,
+   0.8421
   ],
   "companion": 1
  },
  "Sorcerer": {
   "single": [
-   0.38,
-   0.38,
-   0.38
+   0.4553,
+   0.4553,
+   0.4553
   ],
   "area": [
-   2.1338,
-   2.1338,
-   2.1338
+   2.3603,
+   2.3603,
+   2.3603
   ],
   "companion": 1
  },
  "Alchemist": {
   "single": [
-   2.9791,
-   2.9791,
-   2.9791
+   3.7433,
+   3.7433,
+   3.7433
   ],
   "area": [
-   0.4119,
-   0.4119,
-   0.4119
+   0.3936,
+   0.3936,
+   0.3936
   ],
   "companion": 1
  },
  "Biochemist": {
   "single": [
-   2.887,
-   2.887,
-   2.887
+   3.6187,
+   3.6187,
+   3.6187
   ],
   "area": [
-   1.2549,
-   1.2549,
-   1.2549
+   1.2077,
+   1.2077,
+   1.2077
   ],
   "companion": 1
  },
  "Geneticist": {
   "single": [
-   1.3106,
-   1.3106,
-   1.3106
+   1.6905,
+   1.6905,
+   1.6905
   ],
   "area": [
-   0.4772,
-   0.4772,
-   0.4772
+   0.7053,
+   0.7053,
+   0.7053
   ],
   "companion": 1
  },
  "Monk": {
   "single": [
-   0.3654,
-   0.3654,
-   0.3654
+   0.4407,
+   0.4407,
+   0.4407
   ],
   "area": [
-   4.126,
-   4.126,
-   4.126
+   3.8923,
+   3.8923,
+   3.8923
   ],
   "companion": 1
  },
  "Champion": {
   "single": [
-   0.896,
-   0.896,
-   0.896
+   1.0596,
+   1.0596,
+   1.0596
   ],
   "area": [
    1,
@@ -6304,74 +6311,74 @@ const SKILL_TUNING={
  },
  "Sura": {
   "single": [
-   0.434,
-   0.434,
-   0.434
+   1.7367,
+   1.7367,
+   1.7367
   ],
   "area": [
-   3.6689,
-   3.6689,
-   3.6689
+   0.2,
+   0.2,
+   0.2
   ],
   "companion": 1
  },
  "Rogue": {
   "single": [
-   3.7896,
-   3.7896,
-   3.7896
+   4.9671,
+   4.9671,
+   4.9671
   ],
   "area": [
-   1.4182,
-   1.4182,
-   1.4182
+   1.3414,
+   1.3414,
+   1.3414
   ],
   "companion": 1
  },
  "Stalker": {
   "single": [
-   5.0234,
-   5.0234,
-   5.0234
+   6.5115,
+   6.5115,
+   6.5115
   ],
   "area": [
-   1.1896,
-   1.1896,
-   1.1896
+   1.1391,
+   1.1391,
+   1.1391
   ],
   "companion": 1
  },
  "Shadow Chaser": {
   "single": [
-   0.3395,
-   0.3395,
-   0.3395
+   1.2883,
+   1.2883,
+   1.2883
   ],
   "area": [
-   2.4421,
-   2.4421,
-   2.4421
+   0.9617,
+   0.9617,
+   0.9617
   ],
   "companion": 1
  },
  "Bard & Dancer": {
   "single": [
-   2.8185,
-   2.8185,
-   2.8185
+   3.7141,
+   3.7141,
+   3.7141
   ],
   "area": [
-   1.3355,
-   1.3355,
-   1.3355
+   1.2555,
+   1.2555,
+   1.2555
   ],
   "companion": 1
  },
  "Minstrel & Gypsy": {
   "single": [
-   3.1832,
-   3.1832,
-   3.1832
+   4.1245,
+   4.1245,
+   4.1245
   ],
   "area": [
    0.2,
@@ -6382,61 +6389,61 @@ const SKILL_TUNING={
  },
  "Maestro & Wanderer": {
   "single": [
-   0.8216,
-   0.8216,
-   0.8216
+   1.7482,
+   1.7482,
+   1.7482
   ],
   "area": [
-   0.6104,
-   0.6104,
-   0.6104
+   0.4309,
+   0.4309,
+   0.4309
   ],
   "companion": 1
  },
  "Ninja": {
   "single": [
-   6.6264,
-   6.6264,
-   6.6264
+   8.3093,
+   8.3093,
+   8.3093
   ],
   "area": [
-   0.7875,
-   0.7875,
-   0.7875
+   0.7835,
+   0.7835,
+   0.7835
   ],
   "companion": 1
  },
  "Kagerou & Oboro": {
   "single": [
-   1.3958,
-   1.3958,
-   1.3958
+   1.5488,
+   1.5488,
+   1.5488
   ],
   "area": [
-   0.3888,
-   0.3888,
-   0.3888
+   0.3813,
+   0.3813,
+   0.3813
   ],
   "companion": 1
  },
  "Rebellion": {
   "single": [
-   0.4248,
-   0.4248,
-   0.4248
+   0.9791,
+   0.9791,
+   0.9791
   ],
   "area": [
-   1.5928,
-   1.5928,
-   1.5928
+   1.149,
+   1.149,
+   1.149
   ],
   "companion": 1
  },
  "Gunslinger": {
   "single": [
-   2.52,
-   2.52,
-   2.52
+   3.214,
+   3.214,
+   3.214
   ],
   "area": [
    0.2,
@@ -7335,7 +7342,7 @@ const GUIDE_LESSONS={
  ],
  ascension:[
   {id:'welcome',title:'Welcome to your fourth job',body:'Base progression ends at 150, but combat EXP now feeds two Ascension tracks in full. Your ordinary Job levels and skill ranks still progress separately. You can earn Ascension EXP on any combat map.',target:'status',pointer:null},
-  {id:'tracks',title:'Two tracks, two decisions',body:'Character \u2192 Ascension stats earns up to 50 shared points. Each fourth job saves its own allocation; eight stats each allow 10 ranks. Skills \u2192 Ascension earns up to 30 points separately for each fourth job, with five ranks per skill. Resets are currently free and keep earned levels.',target:'skills',pointer:'#dock [data-t="status"]'},
+  {id:'tracks',title:'Two tracks, two decisions',body:'Character \u2192 Ascension stats earns up to 50 shared points. Each fourth job saves its own allocation; eight stats each allow 10 ranks. Skills \u2192 Ascension earns up to 30 points separately for each fourth job (40 for Kagerou & Oboro and Rebellion, which have eight skills), with five ranks per skill. Resets are currently free and keep earned levels.',target:'skills',pointer:'#dock [data-t="status"]'},
   {id:'skill6',title:'Unlock your sixth skill',body:'Your five core fourth-job skills keep their normal rank 1\u201310 upgrades. Spend the first Ascension rank on the sixth skill to unlock it. Add offensive skills to Combo; buffs auto-cast separately. Read each upgrade before spending points.',target:'skills',pointer:'#dock [data-t="skills"]'},
   {id:'mats',title:'Farm materials, evolve equipment',body:'Maps \u2192 Ascension Map opens Astral Citadel and Thor Volcano. They have five stages and no equipment drops. Farm Astral Shards or Primal Catalysts plus Valkyrie\u2019s Sigils. Equipment \u2192 Ascension evolves an owned compatible N+ item into a Mythic set piece.',target:'equip',pointer:'#dock [data-t="map"]'},
   {id:'endgame',title:'Plan your endgame',body:'Evolution keeps item identity, refinement, cards and existing affixes, filling up to four affixes. Sets give bonuses at 2/4/6 pieces. Mythic gear is fourth-job only and refines up to +15. Build stable farming first; these maps are much tougher than Nightmare.',target:'map',pointer:'#dock [data-t="equip"]'}
@@ -8493,7 +8500,7 @@ function gmToolsPanel(){
    <div class="hd" style="margin-top:10px">Card mastery</div><small>Loose cards can be dedicated through the Card Mastery tab; every mastery rank is one gacha token. Roll every token fills the stat caps the slow way (one random roll at a time). Socketed cards stay untouched.</small>
    <div class="row"><button data-a="gmcard" data-v="poring1">+1 Poring Card</button><button data-a="gmcard" data-v="poring5">+5 Poring Cards</button><button data-a="gmcard" data-v="poringMax">Max Poring 5/5</button><button data-a="gmcard" data-v="allMax">Max all cards 5/5</button><button data-a="gmcard" data-v="rollAll">Roll every token</button><button data-a="gmcard" data-v="clear">Reset card mastery</button></div>`;
  }if(1){bodies.world=`<div class="hd">Ascension tracks</div><small>Stats levels are account-wide; skill levels belong to the current class. Spend the points in Character → Ascension stats and Skills → Ascension.</small>
-   <div class="row"><button data-a="gmascstats" data-v="max">Max Stats Ascension 50</button><button data-a="gmascstats" data-v="reset">Reset Stats Ascension</button><button data-a="gmascskills" data-v="max">Max Skill Ascension 30</button><button data-a="gmascskills" data-v="reset">Reset Skill Ascension</button></div>
+   <div class="row"><button data-a="gmascstats" data-v="max">Max Stats Ascension 50</button><button data-a="gmascstats" data-v="reset">Reset Stats Ascension</button><button data-a="gmascskills" data-v="max">Max Skill Ascension</button><button data-a="gmascskills" data-v="reset">Reset Skill Ascension</button></div>
    <div class="hd" style="margin-top:10px">Pets</div>
    <div class="row">${RN.map((n,i)=>`<button data-a="gmp" data-v="${i}">+ ${n} pet</button>`).join('')}</div>
    <div class="row" style="margin-top:6px"><button data-a="gmbond" data-v="1">+1 duplicate on the selected pet (Bond)</button><button data-a="gmbond" data-v="5">+5 duplicates</button></div>
@@ -8746,11 +8753,11 @@ const subBar=t=>`<div class="atabs">${SUBS[t].map(([k,n,badge])=>`<button data-a
 V.ascension=()=>ascensionForgePanel();
 function ascensionProgressPanel(skills=false){
  if(!fourthJob())return `<section class="ascension-progression"><span class="ui-eyebrow">LOCKED · FOURTH JOB REQUIRED</span><h2>${skills?'Ascension Skills':'Ascension stats'}</h2><p>Become a fourth-job class to earn and spend Ascension points.</p></section>`;
- const a=ascState(),track=skills?a.skills[S.cls]:a,cap=skills?30:50,spent=track.level-ascPoints(skills),maxed=track.level===cap,needXP=ascNeed(track.level,skills),xp=n=>Math.floor(n).toLocaleString();
+ const a=ascState(),track=skills?a.skills[S.cls]:a,cap=skills?ascSkillCap(S.cls):50,spent=track.level-ascPoints(skills),maxed=track.level===cap,needXP=ascNeed(track.level,skills),xp=n=>Math.floor(n).toLocaleString();
  return `<section class="ascension-progression"><span class="ui-eyebrow">${skills?esc(S.cls).toUpperCase():'SHARED FOURTH-JOB PROGRESSION'}</span><h2>${skills?'Ascension Skills':'Ascension stats'}</h2>
  <div class="ascension-progress-summary"><strong>Level ${track.level} / ${cap}</strong><b>${ascPoints(skills)} points available</b><span>${spent} spent</span></div>
  <progress aria-label="${skills?'Class skill':'Shared stat'} Ascension EXP" max="${maxed?1:needXP}" value="${maxed?1:track.xp}"></progress><p>${maxed?'Maximum level reached':xp(track.xp)+' / '+xp(needXP)+' EXP to next level'}</p>
- <p>${skills?'Combat EXP earned as '+esc(S.cls)+' levels this track. One point per level: '+(ASC_SKILLS.some(sk=>sk.from===S.cls&&sk.ascensionOnly)?'30 points for six skills × five ranks. Five enhance ordinary skills; the sixth unlocks a new skill.':ASC_SKILLS.filter(sk=>sk.from===S.cls).length*5+' points fill every '+esc(S.cls)+' skill at five ranks; later levels are banked for future skills.'):'Combat EXP from every fourth job contributes here. One point per level; 50 points total. Each stat caps at 10. Your '+esc(S.cls)+' allocation is saved separately.'} Away combat EXP contributes at the existing 50% rate.</p>
+ <p>${skills?'Combat EXP earned as '+esc(S.cls)+' levels this track. One point per level: '+(ASC_SKILLS.some(sk=>sk.from===S.cls&&sk.ascensionOnly)?'30 points for six skills × five ranks. Five enhance ordinary skills; the sixth unlocks a new skill.':ASC_SKILLS.filter(sk=>sk.from===S.cls).length*5+' points fill every '+esc(S.cls)+' skill at five ranks'+(cap>ASC_SKILLS.filter(sk=>sk.from===S.cls).length*5?'; later levels are banked for future skills.':'.')):'Combat EXP from every fourth job contributes here. One point per level; 50 points total. Each stat caps at 10. Your '+esc(S.cls)+' allocation is saved separately.'} Away combat EXP contributes at the existing 50% rate.</p>
  <div class="ascension-allocation-grid">${skills?ASC_SKILLS.filter(sk=>sk.from===S.cls).map(sk=>{const rank=ascRank(sk.id),locked=sk.ascensionOnly&&!rank;return `<article class="ascension-upgrade"><header>${skillIcon(sk.id)}<div><h3>${esc(sk.n)}</h3><small>Ascension ${rank} / 5${sk.ascensionOnly?' · '+(locked?'Rank 1 unlocks this skill':'Signature skill unlocked'):' · Ordinary Lv '+lv(sk.id)+' / '+sk.max}</small></div></header><p>${sk.ascensionOnly?esc(sk.text):'Enhances this skill while playing '+esc(S.cls)+'.'}</p><p><b>${rank?'Current: '+ascUpgradeText(sk.id,rank):'No Ascension bonus yet'}</b></p><small>Rank 5: ${ascUpgradeText(sk.id)}</small>${sk.ascensionOnly&&rank?`<button data-a="sktog" data-v="${sk.id}" aria-pressed="${!skOff(sk.id)}">Auto-cast ${skOff(sk.id)?'off':'on'}</button>`:''}<button data-a="ascskill" data-v="${sk.id}" ${rank>=5||!ascPoints(true)?'disabled':''}>${rank>=5?'Maxed':locked?'Unlock · 1 point':'Upgrade · 1 point'}</button></article>`}).join(''):
  Object.entries(ASC_STATS).map(([key,st])=>{const rank=a.stats[S.cls][key]||0;return `<article class="ascension-upgrade"><header><h3>${st.n}</h3><b>${rank} / 10</b></header><p>${st.text}</p><strong>+${Number(ascStatValue(key,rank).toFixed(2))}${st.unit}</strong><small>${['might','precision','ferocity','slayer'].includes(key)?'Late-rank growth · Next point +'+Number((ascStatValue(key,Math.min(10,rank+1))-ascStatValue(key,rank)).toFixed(2))+st.unit:'+'+st.step+st.unit+' per point'} · Maximum +${10*st.step}${st.unit}</small><button data-a="ascstat" data-v="${key}" ${rank>=10||!ascPoints()?'disabled':''}>${rank>=10?'Maxed':'Allocate · 1 point'}</button></article>`}).join('')}</div>
  <p>${skills?'Offensive bonuses grow with the square of rank progress; final ranks grant the largest gains. New damaging sixth skills also mature from 42.4% cast power at rank 1 to 100% at rank 5. Support and cooldown upgrades keep their existing progression. Ascension ranks are separate from ordinary skill levels. New attacks can be assigned to your six-slot combo in Skills; support skills auto-cast independently.':'Post-cap bonuses are applied separately. Enemy resistance still applies; bonus critical chance does not create multiple critical hits.'}</p><button data-a="ascreset" data-v="${skills?'skills':'stats'}" ${spent?'':'disabled'}>Reset ${esc(S.cls)} allocations · Free during testing</button></section>`;
@@ -10174,7 +10181,7 @@ const ACT={
   gmset:key=>{if(!S.gm||!Object.hasOwn(ASC_SETS,key))return;const recipes=[...C().wt.map(w=>['weapon',w]),...['armor','head','off','leg','acc','acc'].map(s=>[s,undefined])];if(S.inv.length+recipes.length>BAGMAX)return log('Make bag space for the complete set.','r0');const z=S.zeny,m=S.ascensionMat,reserveId=gmGearIdAllocator(S);try{S.zeny=1e12;S.ascensionMat=[10000,10000,10000];for(const [slot,wt] of recipes){const r=makeMythicEquipment(key,slot,wt);if(r?.item)S.inv.push(reserveId(r.item))}}finally{S.zeny=z;S.ascensionMat=m}ui();save()},
   gmaura:v=>{if(!S.gm)return;S.lv=+v;S.pts=Math.max(0,totalPts()-ptsSpent());ui();save()},
   gmascstats:v=>{if(!S.gm)return;const a=ascState();if(v==='max'){a.level=50;a.xp=0;}else{a.level=0;a.xp=0;a.stats[S.cls]={};}S.hp=Math.min(S.hp,maxHp());ui();save()},
-  gmascskills:v=>{if(!S.gm)return;const a=ascState();if(!a.skills[S.cls])a.skills[S.cls]={level:0,xp:0,ranks:{}};const t=a.skills[S.cls];if(v==='max'){t.level=30;t.xp=0;}else{t.level=0;t.xp=0;t.ranks={};resetSkillRuntime();swing=null;for(const id in skCd)delete skCd[id];}ui();save()},
+  gmascskills:v=>{if(!S.gm)return;const a=ascState();if(!a.skills[S.cls])a.skills[S.cls]={level:0,xp:0,ranks:{}};const t=a.skills[S.cls];if(v==='max'){t.level=ascSkillCap(S.cls);t.xp=0;}else{t.level=0;t.xp=0;t.ranks={};resetSkillRuntime();swing=null;for(const id in skCd)delete skCd[id];}ui();save()},
   gmresetlv:(v=1)=>{if(!S.gm||![1,99,120].includes(+v))return;S.lv=+v;S.exp=0;S.pts=Math.max(0,totalPts()-ptsSpent());S.hp=maxHp();ui();save()},gmglow:v=>{if(!S.gm||!S.eq.weapon||!Number.isInteger(+v)||+v<0||+v>(S.eq.weapon.sec===6?15:10))return;S.eq.weapon.r=+v;ui();save()},
   sellpreset:v=>{const r=defaultAutoSellRules();if(v==='physical')r.affixes=[{k:'str',min:0},{k:'dex',min:0},{k:'crit',min:0},{k:'cdm',min:0}];else if(v==='caster')r.affixes=[{k:'int',min:0},{k:'matk',min:0}];else if(v==='collector')r.minEmpty=2;else return;autoSellDraft={owner:S,rules:r};renderWin()},
   sellpresetWorkspace:v=>{const r=defaultAutoSellRules();if(v==='physical')r.affixes=[{k:'str',min:0},{k:'dex',min:0},{k:'crit',min:0},{k:'cdm',min:0}];else if(v==='caster')r.affixes=[{k:'int',min:0},{k:'matk',min:0}];else if(v==='collector')r.minEmpty=2;else return;autoSellWorkspaceState().rules=r;renderWin()},
@@ -12745,11 +12752,11 @@ const expandedPack={index:0,bodies:new Map()};
 function expandedRefresh(){heroKey='';if(typeof drawAppearancePreview==='function'){drawAppearancePreview();drawClassPreview()}}
 function requestExpandedBody(name){const PK=window.SPRITE_PACK,X=window.SPRITE_PACK_X;if(!PK||!name)return false;
   if(PK.bodies[name]&&packImg['b:'+name])return true;
-  if(!X){if(!expandedPack.index){expandedPack.index=1;const script=document.createElement('script');script.src='assets/sprite-pack-x/index.js?v=412';
+  if(!X){if(!expandedPack.index){expandedPack.index=1;const script=document.createElement('script');script.src='assets/sprite-pack-x/index.js?v=413';
     script.onload=()=>{expandedPack.index=2;expandedRefresh()};script.onerror=()=>{expandedPack.index=3;script.remove()};document.head.appendChild(script)}return false}
   const rec=X.bodies[name];if(!rec||expandedPack.bodies.has(name))return false;expandedPack.bodies.set(name,'loading');
   const img=new Image();img.onload=()=>{PK.bodies[name]={atlas:img.src,anchors:rec.anchors,cell:X.cell,pivotY:X.pivotY};packImg['b:'+name]=img;expandedPack.bodies.set(name,'ready');expandedRefresh()};
-  img.onerror=()=>expandedPack.bodies.set(name,'failed');img.src=X.dir+encodeURIComponent(rec.file)+'?v=412';return false}
+  img.onerror=()=>expandedPack.bodies.set(name,'failed');img.src=X.dir+encodeURIComponent(rec.file)+'?v=413';return false}
 function packBodyFor(cls,tier,sex){const PK=window.SPRITE_PACK;if(!PK)return null;
   const own=expandedBodyName(cls,sex||(typeof S!=='undefined'&&S&&S.sex)||'m');if(own&&requestExpandedBody(own))return own;
   const n=packBodyName(cls);if(!own&&PK.bodies&&PK.bodies[n])return n;
@@ -14895,20 +14902,20 @@ setInterval(updateWatch,60000);
 // be hours old while the player was on another tab, and the check is a 60-byte text file.
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&(pendingUpdateBuild||Date.now()-PAGE_STARTED_AT>30000))updateWatch()});
 </script>
-<script src="assets/wardrobe-ui.js?v=412"></script>
+<script src="assets/wardrobe-ui.js?v=413"></script>
 <script src="assets/shop.js?v=321"></script>
 <script src="assets/friends.js?v=273"></script>
-<script src="assets/digimon/roster.js?v=412"></script>
-<script src="assets/digimon/base-stats.js?v=412"></script>
-<script src="assets/social-rules.js?v=412"></script>
-<script src="assets/social-poker.js?v=412"></script>
-<script src="assets/digimon-sanctuary.js?v=412"></script>
+<script src="assets/digimon/roster.js?v=413"></script>
+<script src="assets/digimon/base-stats.js?v=413"></script>
+<script src="assets/social-rules.js?v=413"></script>
+<script src="assets/social-poker.js?v=413"></script>
+<script src="assets/digimon-sanctuary.js?v=413"></script>
 <script src="assets/digimon-battle.js?v=393"></script>
-<script src="assets/social-digimon.js?v=412"></script>
+<script src="assets/social-digimon.js?v=413"></script>
 <script src="assets/social-gym-redesign.js?v=393"></script>
 <script src="assets/social-pond-design.js?v=393"></script>
-<script src="assets/social-scene.js?v=412"></script>
-<script src="assets/social-fishing.js?v=412"></script>
-<script src="assets/plaza-bots.js?v=412"></script>
-<script src="assets/social.js?v=412"></script></body>
+<script src="assets/social-scene.js?v=413"></script>
+<script src="assets/social-fishing.js?v=413"></script>
+<script src="assets/plaza-bots.js?v=413"></script>
+<script src="assets/social.js?v=413"></script></body>
 </html>
