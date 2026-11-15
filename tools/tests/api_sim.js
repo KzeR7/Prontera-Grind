@@ -1340,6 +1340,7 @@ import {
   auditStaticSave, auditSaveRates, creditsFromGrants, claimCredits, addCredits,
   levelsFromExp, expToNext, OFFLINE_REWARD_MULT, OFFLINE_CAP_MS, LUMP_ALLOWANCE,
   OFFLINE_LEVEL_CAP_LV, OFFLINE_LEVEL_CAP, offlineLevelCapFor, offlineExpBudget,
+  COUNTERS, RATE_LIMITS,
 } from '../../functions/_lib/save-audit.js';
 
 // A save that passes every static rule (lv 60 earns far more points than this fixture spends).
@@ -1515,18 +1516,28 @@ t('save audit: the AFK payout is not a flag, but a leap past it is', () => {
   const overCap = auditSaveRates({ prev: cappedPrev, next: seventeen, elapsedMs: 120_000, claimKills: 60_000, credits: cappedCredits });
   assert.ok(overCap.some(v => v.kind === 'level-rate'), 'a jump past ten levels above 120 still flags: ' + JSON.stringify(overCap));
 
-  // Fishing: selling a whole bag is one action. 300k coins in two minutes is a sale, not a hack.
+  // Fishing Fishcoins and DigiPet Pet Coins are minigames and are never judged at all (owner,
+  // 2026-11-15: "i think we dont need to be in the flag, these are mini games. i dont think
+  // cheating in this does any good").
   const fish = (coins) => ({ ...base, fishing: { coins } });
-  const sale = auditSaveRates({
-    prev: { kills: 0, lv: 113, zeny: 0, raw: fish(1_000_000) },
-    next: { kills: 0, lv: 113, zeny: 0, raw: fish(1_300_000) }, elapsedMs: 120_000,
-  });
-  assert.ok(!sale.some(v => v.kind === 'rate:fishcoins'), 'a sold-out bag is not a flag: ' + JSON.stringify(sale));
-  const hoard = auditSaveRates({
-    prev: { kills: 0, lv: 113, zeny: 0, raw: fish(1_000_000) },
-    next: { kills: 0, lv: 113, zeny: 0, raw: fish(1_000_000 + LUMP_ALLOWANCE.fishcoins * 20) }, elapsedMs: 120_000,
-  });
-  assert.ok(hoard.some(v => v.kind === 'rate:fishcoins'), 'twenty sold-out bags in two minutes still flags');
+  for (const gain of [300_000, 1_000_000, 300_000_000]) {
+    const sale = auditSaveRates({
+      prev: { kills: 0, lv: 113, zeny: 0, raw: fish(1_000_000) },
+      next: { kills: 0, lv: 113, zeny: 0, raw: fish(1_000_000 + gain) }, elapsedMs: 120_000,
+    });
+    assert.deepStrictEqual(sale, [], 'Fishcoins +' + gain.toLocaleString('en-US') + ' in two minutes is not a flag');
+  }
+  const pet = (coins) => ({ ...base, digimonBag: { coins } });
+  assert.deepStrictEqual(auditSaveRates({
+    prev: { kills: 0, lv: 113, zeny: 0, raw: pet(0) },
+    next: { kills: 0, lv: 113, zeny: 0, raw: pet(500_000) }, elapsedMs: 120_000,
+  }), [], 'Pet Coins landing in one jump are not a flag');
+  // gone from the audit entirely, not merely unlimited: no counter, no hourly rate, no lump
+  for (const key of ['fishcoins', 'petcoins']) {
+    assert.ok(!(key in COUNTERS), key + ' is not a counter any more');
+    assert.ok(!(key in RATE_LIMITS), key + ' has no hourly limit any more');
+    assert.ok(!(key in LUMP_ALLOWANCE), key + ' has no lump allowance any more');
+  }
 });
 
 await T('save audit: the away payout is credited end to end, and a leap past it still flags', async () => {
