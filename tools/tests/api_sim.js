@@ -1339,6 +1339,7 @@ await T('network bans: the front door refuses every route from a banned network,
 import {
   auditStaticSave, auditSaveRates, creditsFromGrants, claimCredits, addCredits,
   levelsFromExp, expToNext, OFFLINE_REWARD_MULT, OFFLINE_CAP_MS, LUMP_ALLOWANCE,
+  OFFLINE_LEVEL_CAP_LV, OFFLINE_LEVEL_CAP, offlineLevelCapFor, offlineExpBudget,
 } from '../../functions/_lib/save-audit.js';
 
 // A save that passes every static rule (lv 60 earns far more points than this fixture spends).
@@ -1407,22 +1408,42 @@ t('save audit: the exp curve is the game\'s own, so a claim\'s exp can be priced
   assert.strictEqual(levelsFromExp(0, 113), 0);
 });
 
-t('save audit: a claim is half its measured minute, and neither side has a level ceiling', () => {
-  // v408 (owner: "i would not want to have a cap level but i need the offline rewards to work
-  // properly ... offline rewards should be only half of the online players"). The one-level-an-hour
-  // ceiling that briefly existed is gone from the page AND from here, and the rate it is priced
-  // from is the half. Both facts are pinned at the source, because a second opinion is how a
-  // console and a game start reporting different payouts.
+t('save audit: a claim is half its measured minute, ten levels at most from Lv 120, and never says so', () => {
+  // v408 (owner: "i would not want to have a cap level ... offline rewards should be only half of
+  // the online players"), then: "can u make level 120 above, have a cap of 10 levels per offline
+  // rewards. this should be hidden from players." One ceiling, above one level, enforced by both
+  // sides and announced by neither.
   const page = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-  assert.doesNotMatch(page, /OFFLINE_LEVELS_PER_HOUR|offlineExpBudget|offlineMaxLevels/,
-    'index.html carries no level ceiling for a claim');
+  const grab = re => { const m = page.match(re); assert.ok(m, 'index.html must still define ' + re); return m[0]; };
+  assert.match(page, /const OFFLINE_LEVEL_CAP_LV=120,OFFLINE_LEVEL_CAP=10;/, 'the page carries the 120/10 ceiling');
+  assert.strictEqual(OFFLINE_LEVEL_CAP_LV, 120, 'the audit uses the same starting level');
+  assert.strictEqual(OFFLINE_LEVEL_CAP, 10, 'and the same number of levels');
+  // the rendered popup is checked in offline_sim against the real note string; here the old
+  // "capped" sentence must simply never come back.
+  assert.doesNotMatch(page, /Away EXP is capped at/, 'no popup sentence announces the ceiling');
   assert.match(page, /OFFLINE_CAP_MS=4\*60\*60\*1000,OFFLINE_REWARD_MULT=\.5,/, 'the page pays half');
   assert.strictEqual(OFFLINE_REWARD_MULT, .5, 'the audit prices the same half');
   assert.match(page, /const minutes=plan\.creditedMs\/60000\*OFFLINE_REWARD_MULT;/, 'paid minutes are credited at half rate');
-  assert.match(page, /r\.exp=valid\?safeCount\(income\.xp\*minutes\):0/, 'the claim pays the sample undamped');
-  assert.match(page, /r\.zeny=valid\?safeCount\(income\.zeny\*minutes\):0/, 'and the same minutes of Zeny');
-  // the level curve is the only limit, and the curve test above already holds the audit's need()
-  // against the page's for every level: one exp number, one walk, no ceiling to disagree about.
+  assert.match(page, /r\.exp=valid\?Math\.min\(safeCount\(income\.xp\*minutes\),levelBudget\):0/, 'the claim is held to the budget');
+  assert.match(page, /r\.zeny=valid\?safeCount\(income\.zeny\*minutes\):0/, 'and Zeny is not clamped at all');
+  // The page's own budget, run here, must equal the audit's for every level it can meet.
+  const pageBudget = new Function([
+    'const BASE_EXP_LATE_LV=100;',
+    grab(/const NA1=[^;]+;/), grab(/BASE_EXP_LATE_X\s*=\s*[0-9.]+/), grab(/const roundReq\s*=\s*n=>\{[^}]*\};/),
+    grab(/needAt=L=>[\s\S]*?(?=,baseNeedAt=)/).replace(/^needAt=/, 'const needAt = '),
+    grab(/baseNeedAt=L=>[\s\S]*?(?=,need=)/).replace(/^baseNeedAt=/, 'const baseNeedAt = '),
+    grab(/const OFFLINE_LEVEL_CAP_LV=\d+,OFFLINE_LEVEL_CAP=\d+;/),
+    grab(/function offlineExpBudget\([^\n]*/),
+    grab(/function offlineLevelBudget\([^\n]*/),
+    'return { offlineExpBudget, offlineLevelBudget };',
+  ].join('\n'))();
+  assert.strictEqual(pageBudget.offlineLevelBudget(119), Infinity, 'below 120 the page clamps nothing');
+  assert.strictEqual(offlineLevelCapFor(119), Infinity, 'and neither does the audit');
+  for (const lv of [120, 127, 140, 149]) {
+    assert.strictEqual(pageBudget.offlineExpBudget(lv, 10), offlineExpBudget(lv, 10), 'the audit prices ten levels as the page does at Lv ' + lv);
+    assert.strictEqual(pageBudget.offlineLevelBudget(lv), offlineExpBudget(lv, 10), 'the page budget is ten levels at Lv ' + lv);
+    assert.strictEqual(offlineLevelCapFor(lv), 10, 'the audit budget is ten levels at Lv ' + lv);
+  }
 });
 
 t('save audit: a welcome-back claim credits what it paid, walked down the game curve', () => {
@@ -1439,6 +1460,10 @@ t('save audit: a welcome-back claim credits what it paid, walked down the game c
   // the sample the owner actually saw: 1.25M exp/min for four hours, i.e. the 37-level payout
   const rich = claimCredits({ claim, income: { version: 1, xp: 1.25e6, zeny: 0 }, prevLv: 113 });
   assert.strictEqual(rich.levels, 37, 'a 37-level claim is credited as 37 levels, not clamped');
+  // from Lv 120 the same claim is worth exactly ten levels, and not one more
+  const capped = claimCredits({ claim, income: { version: 1, xp: 1.25e6, zeny: 0 }, prevLv: 120 });
+  assert.strictEqual(capped.levels, 10, 'ten levels is the whole claim above 120');
+  assert.ok(capped.levels < rich.levels, 'the ceiling is doing the work at 120, not at 113');
   // no measured sample (an old save): the kills are priced from the game's own reference
   const priced = claimCredits({ claim, income: null, prevLv: 113 });
   assert.ok(priced.levels > 0, 'a priced claim still credits its levels');
@@ -1470,6 +1495,18 @@ t('save audit: the AFK payout is not a flag, but a leap past it is', () => {
   const flagged = auditSaveRates({ prev, next: modest, elapsedMs: 120_000, claimKills: 7_500, credits: short });
   assert.ok(flagged.some(v => v.kind === 'level-rate'), 'a jump past the claim is still a flag: ' + JSON.stringify(flagged));
 
+  // Above Lv 120 the claim pays ten levels, so a 17-level jump is 7 levels nothing paid for.
+  const cappedPrev = { kills: 1_000, lv: 120, zeny: 0, raw: { ...base, lv: 120, offlineIncome: income } };
+  const cappedCredits = claimCredits({ claim, income, prevLv: 120 });
+  assert.strictEqual(cappedCredits.levels, 10, 'the 120+ ceiling rides into the credit');
+  const ten = { kills: 61_000, lv: 130, zeny: 36_000_000, raw: { ...base, lv: 130, kills: 61_000 } };
+  assert.deepStrictEqual(
+    auditSaveRates({ prev: cappedPrev, next: ten, elapsedMs: 120_000, claimKills: 60_000, credits: cappedCredits }), [],
+    'the ten levels the claim pays above 120 are never a flag');
+  const seventeen = { kills: 61_000, lv: 137, zeny: 36_000_000, raw: { ...base, lv: 137, kills: 61_000 } };
+  const overCap = auditSaveRates({ prev: cappedPrev, next: seventeen, elapsedMs: 120_000, claimKills: 60_000, credits: cappedCredits });
+  assert.ok(overCap.some(v => v.kind === 'level-rate'), 'a jump past ten levels above 120 still flags: ' + JSON.stringify(overCap));
+
   // Fishing: selling a whole bag is one action. 300k coins in two minutes is a sale, not a hack.
   const fish = (coins) => ({ ...base, fishing: { coins } });
   const sale = auditSaveRates({
@@ -1486,12 +1523,12 @@ t('save audit: the AFK payout is not a flag, but a leap past it is', () => {
 
 await T('save audit: the away payout is credited end to end, and a leap past it still flags', async () => {
   // One account per run of the scenario; the claim is a real `offline_reward_claims` row.
-  const scenario = async (name, toLv, kills, zeny, claimMs) => {
+  const scenario = async (name, toLv, kills, zeny, claimMs, fromLv = 113) => {
     const h = freshEnv();
     const player = await api.register(h.env, { u: name, p: 'away-password-1' });
     const id = h.sqlite.prepare('SELECT id FROM users WHERE username = ?').get(name).id;
     // a Lv 113 save carrying the measured farm sample the client prices a claim from
-    const start = Object.assign(JSON.parse(saveBlob(113, 0)), {
+    const start = Object.assign(JSON.parse(saveBlob(fromLv, 0)), {
       pts: 0, offlineIncome: { version: 1, xp: 1.25e6, zeny: 300_000 },
     });
     let put = await api.putSave(h.env, player.cookie, { blob: JSON.stringify(start), version: 1 });
@@ -1515,6 +1552,12 @@ await T('save audit: the away payout is credited end to end, and a leap past it 
   // the same 37-level jump under a half-hour claim is 25 levels the claim cannot pay
   const leap = await scenario('AwayLeap', 150, 60007, 36_000_000, 30 * 60 * 1000);
   assert.ok(leap.some(a => a.kind === 'level-rate'), 'a leap past the claim still flags: ' + JSON.stringify(leap));
+
+  // From Lv 120 the claim is worth ten levels: 130 is paid for, 137 is not
+  const capped = await scenario('AwayCapped', 130, 60007, 36_000_000, 4 * 3600 * 1000, 120);
+  assert.deepStrictEqual(capped, [], 'the ten levels a 120+ claim pays records no alert');
+  const overCap = await scenario('AwayOverCap', 137, 60007, 36_000_000, 4 * 3600 * 1000, 120);
+  assert.ok(overCap.some(a => a.kind === 'level-rate'), 'a jump past ten levels above 120 flags: ' + JSON.stringify(overCap));
 });
 
 await T('save audit: an impossible save still stores, and the FIRST flag pokes the owner in-game', async () => {

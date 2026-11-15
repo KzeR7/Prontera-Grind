@@ -68,6 +68,7 @@ function harness() {
   const code = curve + progression+'\n'+from('// ---------- auto-sell rules:', '// ---------- end auto-sell rules ----------') + '\n' + config + '\n' + stamp + '\n' + helpers + '\n' + newCardCode + '\n' + reward + '\n' + stageCode + '\n' + ascensionCode + '\n' + simulation + `
     globalThis.api = {
       offlinePlan, offlineRateSample, applyOfflineProgress, offlineAwardKill,
+      offlineExpBudget, offlineLevelBudget,
       mapSelection(){return[mapM,mapL]},
       OFFLINE_POPUP_MIN_MS, OFFLINE_SIM_COVER_MS, OFFLINE_CAP_MS,
       setState(v){S=v;farmSession=null;if(!Object.hasOwn(S,'offlineIncome'))S.offlineIncome={version:1,key:farmStageKey(),at:S.offlineAt,xp:60,zeny:60,job:42,kph:30000};}, getState(){return S}, setNow(v){clock.now=v}, setCloud(v){CLOUD.on=!!v},
@@ -195,6 +196,36 @@ t('a claim pays exactly half its measured minute, and nothing caps the levels th
   const r2 = h.applyOfflineProgress(9*3600000, short);
   assert.strictEqual(r2.exp, 20000000 * 15, 'half an hour pays fifteen minutes at half rate');
   h.setCloud(false);
+});
+
+t('above Lv 120 a claim pays at most ten levels, and the popup never mentions it', () => {
+  // v408 (owner: "can u make level 120 above, have a cap of 10 levels per offline rewards. this
+  // should be hidden from players."). Below 120 the sample is paid in full; from 120 the claim is
+  // ten levels' worth of EXP and the rest is simply not paid. Zeny and loot are untouched.
+  const mk = lvi => ({ offlineAt:1,offlineKph:30000,offlineRateAt:0,offlineRateKills:0,offlineKillRemainder:0,
+    lv:lvi, kills:0,kl:0,mp:0,lvl:1,prog:[1],exp:0,zeny:0,ore:{ori:0,elu:0},cards:[],inv:[],eq:{},
+    pets:[],auto:false,autoSell:[false,false,false,false,false],jobs:{},q:[],st:{str:1,agi:1,dex:1,luk:1,int:1,vit:1},
+    sk:{},skOff:{},cls:'Novice',base:{},hp:100,
+    offlineIncome:{version:1,key:'Novice:0:1',at:1,xp:20000000,zeny:1000,job:0,kph:1000} });
+  const four = { id:41, awayMs:8*3600000, creditedMs:4*3600000, rateKph:1000, kills:600, remainder:0 };
+  const full = 20000000 * 120;
+  // Lv 119: no ceiling at all
+  const low = mk(119); h.setState(low); h.setCloud(true); h.setNow(9*3600000);
+  const r1 = h.applyOfflineProgress(9*3600000, four);
+  assert.strictEqual(r1.exp, full, 'below 120 the measured sample is paid in full');
+  h.setCloud(false);
+  // Lv 120 and up: exactly ten levels, and not one EXP more
+  for (const lvi of [120, 130, 149]) {
+    const S = mk(lvi); h.setState(S); h.setCloud(true); h.setNow(9*3600000);
+    const r = h.applyOfflineProgress(9*3600000, four);
+    assert.strictEqual(r.exp, h.offlineExpBudget(lvi, 10), 'Lv ' + lvi + ' pays exactly ten levels of EXP');
+    assert.ok(r.exp < full, 'the ceiling is doing the work at Lv ' + lvi);
+    assert.strictEqual(r.zeny, 1000 * 120, 'Zeny is untouched by the ceiling at Lv ' + lvi);
+    assert.strictEqual(r.kills, 600, 'loot is untouched by the ceiling at Lv ' + lvi);
+    const note = h.elements.offlineExplanation.textContent;
+    assert.ok(!/capped at .*level|ten levels|withheld/i.test(note), 'the popup never mentions the level ceiling at Lv ' + lvi);
+    h.setCloud(false);
+  }
 });
 
 t('an online cloud account receives no rewards from its device clock without a server claim', () => {

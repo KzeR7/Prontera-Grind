@@ -11070,7 +11070,7 @@ Test-only follow-up to the v373 batch. No player-visible change, so BUILD is unc
   and the audit card answers with the `0015` note), `gm_console_sim` **19** (boot probes `/me`
   alone, `allSettled`, guarded `loadPlayers`, guarded marker, named note). No BUILD bump.
 
-### 2026-11-15 — `haven-v408 away pay is exactly half your measured minute` (build bump: the welcome-back payout changed)
+### 2026-11-15 — `haven-v408 away pay is half your measured minute, ten levels at most above 120` (build bump: the welcome-back payout changed)
 
 * **The owner (2026-11-15): "can u try and simulate a offline rewards, cause i think 4 hours reward
   for 37level is too much. players shouldnt be getting so much exp and level at once."** He is
@@ -11086,9 +11086,21 @@ Test-only follow-up to the v373 batch. No player-visible change, so BUILD is unc
   players as offline rewards should be only half of the online players." He is right about the rule,
   and the rule is the one the claim already followed: `income.xp × credited minutes × 0.5`, handed
   straight to `earnExp()` and settled by `checkLevel()` walking `need()` — the same curve, at the
-  same price, as a player standing in the field. Nothing is clipped, so an away window buys exactly
-  the levels its half-rate exp pays for. The only bounds left are the ones that describe the
-  player's own play: `OFFLINE_CAP_MS` (four hours) and `OFFLINE_RATE_CAP` (30,000 kills/h).
+  same price, as a player standing in the field. Below Lv 120 nothing is clipped, so an away window
+  buys exactly the levels its half-rate exp pays for; the other bounds are the ones that describe
+  the player's own play: `OFFLINE_CAP_MS` (four hours) and `OFFLINE_RATE_CAP` (30,000 kills/h).
+* **Then narrowed, the same day: ten levels from Lv 120.** Owner: "can u make level 120 above,
+  have a cap of 10 levels per offline rewards. this should be hidden from players." The reason is
+  arithmetic, not paranoia: `need(113) = 952,000` while one Nightmare-Abyss-15 kill pays **29,750**
+  (power 180, `nmExpOf` ×48), so a kill there is **1/32 of a level** instead of 1/3,778 in a
+  level-appropriate field - a 118x swing decided purely by where the player stands. At 2,521 kills/h
+  a four-hour claim therefore buys the 37 levels honestly, which is what the owner saw.
+  `OFFLINE_LEVEL_CAP_LV = 120`, `OFFLINE_LEVEL_CAP = 10`: from Lv 120 a claim pays at most
+  `offlineExpBudget(lv, 10)` (21.6M EXP at 120) and the rest is simply not paid. Kills, Zeny and
+  loot are untouched, **nothing is announced** - the popup reports only what was paid - and below
+  120 nothing is clamped at all. `save-audit.js` mirrors the same ceiling
+  (`offlineLevelCapFor`), so a jump past ten levels from 120+ is now a real flag while the ten the
+  claim paid never is.
 * **Which makes the measured minute the whole safety property.** Nothing now stands between a bad
   measurement and a level slam except the guard below — and the guard below is exactly that
   measurement, closed at the source. The welcome-back popup still says what the number is made of
@@ -11120,11 +11132,13 @@ Test-only follow-up to the v373 batch. No player-visible change, so BUILD is unc
 * **Zeny and loot pay the same half** — `income.zeny × minutes`, and every claim kill rolls its
   loot — so "only half of the online players" is true of the whole payout, not of EXP alone.
   `OFFLINE_REWARD_MULT` (0.5) and the four-hour cap are unchanged.
-* **Checks:** `api_sim` **69**: the half-rate price on both sides, the absence of any ceiling in the
-  page, the pure payout cases (36 and 37 levels from 113, 12 for a half-hour claim) and the
-  two-sided end-to-end run; `adventurer_updates_sim` **29** adds the replayed-minute guard;
-  `offline_sim` **14** proves the client pays exactly 120 paid minutes of the sample and that every
-  point of it reaches the curve (`S.exp` grows by `r.exp`, and no `expCapped` field exists).
+* **Checks:** `api_sim` **69**: the half-rate price on both sides, the 120/10 ceiling run against
+  the page's own `offlineExpBudget`/`offlineLevelBudget` at 120/127/140/149, the pure payout cases
+  (36 and 37 levels from 113, 10 from 120, 12 for a half-hour claim) and the two-sided end-to-end
+  run (a ten-level 120+ claim records nothing, a 17-level one flags); `adventurer_updates_sim` **29**
+  adds the replayed-minute guard; `offline_sim` **15** proves the client pays exactly 120 paid
+  minutes of the sample below 120, pays exactly ten levels at 120/130/149 with Zeny, kills and the
+  rendered popup unaffected, and that every point of the payout reaches the curve.
   `plaza_stranded_still_paid_sim`
   had been measuring the plaza rate off the frame clock and demanding 99% of a nominal 1200,
   which drifts by about a percent run to run (both `v407` and `v408` trees produce 1180 or 1190

@@ -1325,7 +1325,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-15 haven-v408 away pay is exactly half your measured minute, no replayed-minute rate spikes, afk payouts and bulk sales no longer flagged';
+const BUILD='2026-11-15 haven-v408 away pay is half your measured minute, ten levels at most above 120, no replayed-minute rate spikes, afk payouts and bulk sales no longer flagged';
 // v364: this write used to sit AFTER the `//` on the BUILD line, so it was part of the comment and
 // never ran - the login card showed an empty #buildTag and there was no way to confirm which file
 // the browser had loaded. It also has to survive the script running before the login card exists.
@@ -2842,6 +2842,11 @@ const OFFLINE_CAP_MS=4*60*60*1000,OFFLINE_REWARD_MULT=.5,OFFLINE_POPUP_MIN_MS=3*
 // minute of play: farmSamplingPaused() below is the guard that stops a replayed or resumed tab
 // from inflating the sample this payout is priced from, and functions/_lib/save-audit.js credits a
 // claim through the identical curve, so the console and the page never disagree about a payout.
+// v408 (owner: "can u make level 120 above, have a cap of 10 levels per offline rewards. this
+// should be hidden from players."). Above Lv 120 a claim pays at most ten levels' worth of EXP -
+// the rest is simply not paid, and the welcome-back popup says nothing about it. Kills, Zeny and
+// the loot each kill rolls are untouched; below 120 nothing is clamped at all.
+const OFFLINE_LEVEL_CAP_LV=120,OFFLINE_LEVEL_CAP=10;
 // The sim catches up at most SIM_CATCHUP (600s) of a frozen gap when the page comes back, so a
 // claim no longer than that, covering a window this page itself has been alive for, is time the
 // game already paid out - see applyOfflineProgress. Keep the two numbers in step.
@@ -5617,9 +5622,12 @@ function showOfflineReward(r){
   const explanation=$('offlineExplanation');if(explanation)explanation.textContent=note.join(' ');
   const modal=$('offlineModal');if(modal)modal.style.display='flex';const button=$('offlineContinue');if(button){button.onclick=()=>{modal.style.display='none'};button.focus()}
 }
-// v408: no level budget, on purpose. A claim is added with earnExp() and settled by checkLevel(),
-// so a level costs the claim exactly what it costs a player in the field. The only two things that
-// bound a payout are the away window (OFFLINE_CAP_MS) and the measured rate (OFFLINE_RATE_CAP).
+// A claim's EXP is added with earnExp() and settled by checkLevel(), so a level costs the claim
+// exactly what it costs a player in the field - the curve is never re-priced here.
+function offlineExpBudget(lv,levels){const from=Math.max(1,Math.min(149,Math.floor(Number(lv)||1)));let sum=0;for(let i=0;i<levels&&from+i<150;i++)sum+=baseNeedAt(from+i);return sum}
+// The one exception, at Lv 120+ (OFFLINE_LEVEL_CAP_LV): ten levels is the whole claim. It is a
+// silent ceiling - the popup reports what was paid, never that anything was withheld.
+function offlineLevelBudget(lv){return Number(lv)>=OFFLINE_LEVEL_CAP_LV?offlineExpBudget(lv,OFFLINE_LEVEL_CAP):Infinity}
 function applyOfflineProgress(now=Date.now(),serverClaim=null){
   if(!S)return null;
   let plan;
@@ -5653,7 +5661,8 @@ function applyOfflineProgress(now=Date.now(),serverClaim=null){
     const minutes=plan.creditedMs/60000*OFFLINE_REWARD_MULT;
     const kills=valid?Math.min(plan.kills,Math.floor(Math.min(income.kph,OFFLINE_RATE_CAP)*minutes/60)):0;
     for(let i=0;i<kills;i++)offlineAwardKill(offlineMobForCurrentField(sourceMap,sourceStage),r);
-    r.exp=valid?safeCount(income.xp*minutes):0;r.zeny=valid?safeCount(income.zeny*minutes):0;
+    const levelBudget=offlineLevelBudget(S.lv);
+    r.exp=valid?Math.min(safeCount(income.xp*minutes),levelBudget):0;r.zeny=valid?safeCount(income.zeny*minutes):0;
     earnExp(r.exp);earnZeny(r.zeny);if(valid){gainAscension(r.exp,source[0]);}if(valid)addJob(safeCount(income.job*minutes));checkLevel();
     S.offlineKillRemainder=plan.remainder;
   }

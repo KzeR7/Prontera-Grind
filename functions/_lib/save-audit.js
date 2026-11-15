@@ -116,14 +116,24 @@ export const LUMP_ALLOWANCE = {
 // (limit 30/h), and the console called it cheating.
 export const OFFLINE_REWARD_MULT = .5;              // functions/api/save.js OFFLINE_REWARD_MULT
 export const OFFLINE_CAP_MS = 4 * 60 * 60 * 1000;   // functions/api/save.js OFFLINE_CAP_MS
-// v408 (owner, after seeing the ceiling: "i would not want to have a cap level but i need the
-// offline rewards to work properly ... offline rewards should be only half of the online players").
-// There is no level ceiling on either side. A claim is worth half of its measured minute and
-// levelsFromExp() - the page's own checkLevel walk, on the page's own curve - is the only limit,
-// so an away payout that buys 37 levels is credited as 37 and is not a flag. That is only sound
-// because the sample it is priced from can no longer be inflated: index.html's
-// farmSamplingPaused() publishes no sample while the sim is replaying a frozen window. A jump the
-// claim does not explain is still a flag, and that is now the whole test.
+// v408 (owner: "i would not want to have a cap level ... offline rewards should be only half of the
+// online players"), then narrowed the same day: "can u make level 120 above, have a cap of 10
+// levels per offline rewards. this should be hidden from players." So a claim is worth half of its
+// measured minute, walked by levelsFromExp() - the page's checkLevel walk on the page's own curve -
+// with ONE ceiling: from Lv 120 a claim pays at most ten levels, silently. The credit below honours
+// that ceiling, so the monitor never credits more than the client can pay, and a jump past ten
+// levels from 120+ is a real flag. What keeps the rate honest (and there is no price ceiling on it)
+// is index.html's farmSamplingPaused(): no sample is published while the sim replays a frozen window.
+export const OFFLINE_LEVEL_CAP_LV = 120;            // index.html OFFLINE_LEVEL_CAP_LV
+export const OFFLINE_LEVEL_CAP = 10;                // index.html OFFLINE_LEVEL_CAP
+export const offlineLevelCapFor = prevLv => (num(prevLv) >= OFFLINE_LEVEL_CAP_LV ? OFFLINE_LEVEL_CAP : Infinity);
+// The exp that many levels cost from lv, in this module's transcribed curve (index.html baseNeedAt).
+export const offlineExpBudget = (lv, levels) => {
+  const from = Math.max(1, Math.min(149, Math.floor(num(lv) || 1)));
+  let sum = 0;
+  for (let i = 0; i < levels && from + i < CAPS.level; i++) sum += expToNext(from + i);
+  return sum;
+};
 
 // index.html: needAt/baseNeedAt. Lv 100+ costs ×4 and every requirement is rounded by roundReq.
 const NA1 = 18.705917193, NE1 = 1.28684215, NE2 = 11.33248639, NE2B = .72933977;
@@ -181,8 +191,9 @@ export function claimCredits({ claim, income, prevLv }) {
   for (const [key, perKill] of Object.entries(CLAIM_LOOT_PER_KILL)) {
     resources[key] = Math.ceil(kills * perKill);
   }
-  // Exactly what the page would buy: the claim's half-rate exp walked down the same curve.
-  const levels = levelsFromExp(exp, prevLv);
+  // Exactly what the page would buy: the claim's half-rate exp walked down the same curve, under
+  // the Lv 120+ ceiling the client also applies.
+  const levels = Math.min(levelsFromExp(exp, prevLv), offlineLevelCapFor(prevLv));
   return { kills: 0, levels, zeny: Math.ceil(zeny), resources };
 }
 
