@@ -925,9 +925,9 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="stylesheet" href="assets/ui/mobile.css?v=324">
 <script src="assets/ui/mobile.js?v=274"></script>
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
-<link rel="stylesheet" href="assets/social.css?v=413">
+<link rel="stylesheet" href="assets/social.css?v=414">
 <link rel="stylesheet" href="assets/social-battle.css?v=393">
-  <link rel="stylesheet" href="assets/social-fishing.css?v=413"><link rel="stylesheet" href="assets/friends.css?v=273">
+  <link rel="stylesheet" href="assets/social-fishing.css?v=414"><link rel="stylesheet" href="assets/friends.css?v=273">
 </head>
 <body>
 <div id="loginOverlay"><div class="eclipse-login-world" aria-hidden="true"></div><header class="eclipse-login-header"><a href="./" class="eclipse-brand"><span>HH</span><b>HORIZON HAVEN<small>YOUR IDLE ADVENTURE</small></b></a><div class="eclipse-palettes" role="group" aria-label="Interface palette"><button type="button" data-palette="moonstone">Moonstone</button><button type="button" data-palette="aurora">Aurora</button><button type="button" data-palette="ember">Ember</button></div></header><main class="eclipse-login-layout"><section class="login-brand"><div class="login-eyebrow">A WORLD WORTH RETURNING TO</div><h1>Your next <br>chapter <em>awaits.</em></h1><p>Explore a world beyond the horizon.<br>Collect rare gear, master every class, and build your haven.</p><div class="eclipse-login-art"><img src="assets/ui/eclipse-knight.png" alt="Lord Knight ready for adventure"><span>01 / PRONTERA<small>THE JOURNEY BEGINS HERE</small></span><div><img src="assets/equipment-icons/1142.png" alt=""><span>YOUR NEXT UPGRADE<small>Somewhere out there.</small></span></div></div><div class="login-footnote">EXPLORE · GROW · CONQUER</div></section><div class="login-card"><div class="eclipse-access">ADVENTURER ACCESS <span>◇</span></div><h2 id="authHeading">Welcome back.</h2><p class="login-intro" id="authIntro">Your adventure is right where you left it.</p><div class="atabs" id="authTabs"><button type="button" id="tabLogin" class="on">Login</button><button type="button" id="tabReg">Register</button></div>
@@ -1059,7 +1059,7 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <script src="assets/wardrobe.js?v=199"></script>
 <script src="assets/shop-catalog.js?v=321"></script>
 <script src="assets/fourth-jobs.js?v=179"></script>
-<script src="assets/expanded-jobs.js?v=413"></script>
+<script src="assets/expanded-jobs.js?v=414"></script>
 <script src="assets/ascension.js?v=156"></script>
 <script src="assets/native-mob-heights.js?v=153"></script>
 <script src="assets/native-fields.js?v=197"></script>
@@ -1069,8 +1069,8 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <script src="assets/skill-materials.js?v=220"></script>
 <script src="assets/afterglow-animations.js?v=151"></script>
 <script src="assets/skill-overdrive.js?v=220"></script>
-<script src="assets/ro-fx/index.js?v=413"></script>
-<script src="assets/signature-fx.js?v=413"></script>
+<script src="assets/ro-fx/index.js?v=414"></script>
+<script src="assets/signature-fx.js?v=414"></script>
 <script src="assets/skill-afterglow.js?v=220"></script>
 <script src="assets/boss-fx.js?v=249"></script>
 <script src="assets/pets.js?v=130"></script>
@@ -1328,7 +1328,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-15 haven-v413 expanded roster: stronger budgets, skill-first damage, 40-point Skill Ascension for eight-skill classes';
+const BUILD='2026-11-15 haven-v414 expanded roster: budgets revised to about 10% above the original classes, Sura 17%';
 // v364: this write used to sit AFTER the `//` on the BUILD line, so it was part of the comment and
 // never ran - the login card showed an empty #buildTag and there was no way to confirm which file
 // the browser had loaded. It also has to survive the script running before the login card exists.
@@ -6162,33 +6162,33 @@ const SKILL_TUNING={
  // haven-v409 expanded roster: fitted by measurement so each class lands on its sibling's sustained
  // damage (1 target and 3 targets) - Crusader line 92%, Monk line 105%, Sage and Alchemist lines 100%,
  // the rest 97%. Budgets and the fit targets are recorded in tools/tests/fixtures/expanded_skill_budget.json.
- // haven-v413 (owner): the new classes sit about 20% above their sibling; Royal Guard, Maestro & Wanderer,
- // Kagerou & Oboro and Rebellion stay close (105%); Sorcerer and Shadow Chaser 125%; Geneticist 120% on
- // one target and 140% on three. Sura is the single-target ceiling of the fourth jobs: 227% of Rune
- // Knight, which is 130% of Guillotine Cross, the strongest original fourth job on one target.
+ // haven-v414 (owner): the new classes sit about 10% above their sibling; Royal Guard, Maestro & Wanderer,
+ // Kagerou & Oboro and Rebellion stay close (105%); Sorcerer and Shadow Chaser 115%; Geneticist 110% on
+ // one target and 125% on three. Sura is the single-target ceiling of the fourth jobs: 207% of Rune
+ // Knight, which is 117% of Guillotine Cross, the strongest original fourth job on one target.
  "Crusader": {
   "single": [
-   1.7315,
-   1.7315,
-   1.7315
+   1.5552,
+   1.5552,
+   1.5552
   ],
   "area": [
-   0.3373,
-   0.3373,
-   0.3373
+   0.3404,
+   0.3404,
+   0.3404
   ],
   "companion": 1
  },
  "Paladin": {
   "single": [
-   2.2993,
-   2.2993,
-   2.2993
+   2.0826,
+   2.0826,
+   2.0826
   ],
   "area": [
-   0.6813,
-   0.6813,
-   0.6813
+   0.6903,
+   0.6903,
+   0.6903
   ],
   "companion": 1
  },
@@ -6207,100 +6207,100 @@ const SKILL_TUNING={
  },
  "Sage": {
   "single": [
-   1.3218,
-   1.3218,
-   1.3218
+   1.2015,
+   1.2015,
+   1.2015
   ],
   "area": [
-   2.4542,
-   2.4542,
-   2.4542
+   2.4736,
+   2.4736,
+   2.4736
   ],
   "companion": 1
  },
  "Scholar": {
   "single": [
-   1.1923,
-   1.1923,
-   1.1923
+   1.0832,
+   1.0832,
+   1.0832
   ],
   "area": [
-   0.8421,
-   0.8421,
-   0.8421
+   0.8511,
+   0.8511,
+   0.8511
   ],
   "companion": 1
  },
  "Sorcerer": {
   "single": [
-   0.4553,
-   0.4553,
-   0.4553
+   0.4117,
+   0.4117,
+   0.4117
   ],
   "area": [
-   2.3603,
-   2.3603,
-   2.3603
+   2.3959,
+   2.3959,
+   2.3959
   ],
   "companion": 1
  },
  "Alchemist": {
   "single": [
-   3.7433,
-   3.7433,
-   3.7433
+   3.3611,
+   3.3611,
+   3.3611
   ],
   "area": [
-   0.3936,
-   0.3936,
-   0.3936
+   0.4017,
+   0.4017,
+   0.4017
   ],
   "companion": 1
  },
  "Biochemist": {
   "single": [
-   3.6187,
-   3.6187,
-   3.6187
+   3.2529,
+   3.2529,
+   3.2529
   ],
   "area": [
-   1.2077,
-   1.2077,
-   1.2077
+   1.2286,
+   1.2286,
+   1.2286
   ],
   "companion": 1
  },
  "Geneticist": {
   "single": [
-   1.6905,
-   1.6905,
-   1.6905
+   1.5006,
+   1.5006,
+   1.5006
   ],
   "area": [
-   0.7053,
-   0.7053,
-   0.7053
+   0.6758,
+   0.6758,
+   0.6758
   ],
   "companion": 1
  },
  "Monk": {
   "single": [
-   0.4407,
-   0.4407,
-   0.4407
+   0.3905,
+   0.3905,
+   0.3905
   ],
   "area": [
-   3.8923,
-   3.8923,
-   3.8923
+   4.0381,
+   4.0381,
+   4.0381
   ],
   "companion": 1
  },
  "Champion": {
   "single": [
-   1.0596,
-   1.0596,
-   1.0596
+   0.9506,
+   0.9506,
+   0.9506
   ],
   "area": [
    1,
@@ -6311,9 +6311,9 @@ const SKILL_TUNING={
  },
  "Sura": {
   "single": [
-   1.7367,
-   1.7367,
-   1.7367
+   1.5481,
+   1.5481,
+   1.5481
   ],
   "area": [
    0.2,
@@ -6324,61 +6324,61 @@ const SKILL_TUNING={
  },
  "Rogue": {
   "single": [
-   4.9671,
-   4.9671,
-   4.9671
+   4.4551,
+   4.4551,
+   4.4551
   ],
   "area": [
-   1.3414,
-   1.3414,
-   1.3414
+   1.3698,
+   1.3698,
+   1.3698
   ],
   "companion": 1
  },
  "Stalker": {
   "single": [
-   6.5115,
-   6.5115,
-   6.5115
+   5.8645,
+   5.8645,
+   5.8645
   ],
   "area": [
-   1.1391,
-   1.1391,
-   1.1391
+   1.1579,
+   1.1579,
+   1.1579
   ],
   "companion": 1
  },
  "Shadow Chaser": {
   "single": [
-   1.2883,
-   1.2883,
-   1.2883
+   1.1184,
+   1.1184,
+   1.1184
   ],
   "area": [
-   0.9617,
-   0.9617,
-   0.9617
+   1.0433,
+   1.0433,
+   1.0433
   ],
   "companion": 1
  },
  "Bard & Dancer": {
   "single": [
-   3.7141,
-   3.7141,
-   3.7141
+   3.3247,
+   3.3247,
+   3.3247
   ],
   "area": [
-   1.2555,
-   1.2555,
-   1.2555
+   1.285,
+   1.285,
+   1.285
   ],
   "companion": 1
  },
  "Minstrel & Gypsy": {
   "single": [
-   4.1245,
-   4.1245,
-   4.1245
+   3.7152,
+   3.7152,
+   3.7152
   ],
   "area": [
    0.2,
@@ -6402,14 +6402,14 @@ const SKILL_TUNING={
  },
  "Ninja": {
   "single": [
-   8.3093,
-   8.3093,
-   8.3093
+   7.5776,
+   7.5776,
+   7.5776
   ],
   "area": [
-   0.7835,
-   0.7835,
-   0.7835
+   0.785,
+   0.785,
+   0.785
   ],
   "companion": 1
  },
@@ -6441,9 +6441,9 @@ const SKILL_TUNING={
  },
  "Gunslinger": {
   "single": [
-   3.214,
-   3.214,
-   3.214
+   2.9123,
+   2.9123,
+   2.9123
   ],
   "area": [
    0.2,
@@ -12752,11 +12752,11 @@ const expandedPack={index:0,bodies:new Map()};
 function expandedRefresh(){heroKey='';if(typeof drawAppearancePreview==='function'){drawAppearancePreview();drawClassPreview()}}
 function requestExpandedBody(name){const PK=window.SPRITE_PACK,X=window.SPRITE_PACK_X;if(!PK||!name)return false;
   if(PK.bodies[name]&&packImg['b:'+name])return true;
-  if(!X){if(!expandedPack.index){expandedPack.index=1;const script=document.createElement('script');script.src='assets/sprite-pack-x/index.js?v=413';
+  if(!X){if(!expandedPack.index){expandedPack.index=1;const script=document.createElement('script');script.src='assets/sprite-pack-x/index.js?v=414';
     script.onload=()=>{expandedPack.index=2;expandedRefresh()};script.onerror=()=>{expandedPack.index=3;script.remove()};document.head.appendChild(script)}return false}
   const rec=X.bodies[name];if(!rec||expandedPack.bodies.has(name))return false;expandedPack.bodies.set(name,'loading');
   const img=new Image();img.onload=()=>{PK.bodies[name]={atlas:img.src,anchors:rec.anchors,cell:X.cell,pivotY:X.pivotY};packImg['b:'+name]=img;expandedPack.bodies.set(name,'ready');expandedRefresh()};
-  img.onerror=()=>expandedPack.bodies.set(name,'failed');img.src=X.dir+encodeURIComponent(rec.file)+'?v=413';return false}
+  img.onerror=()=>expandedPack.bodies.set(name,'failed');img.src=X.dir+encodeURIComponent(rec.file)+'?v=414';return false}
 function packBodyFor(cls,tier,sex){const PK=window.SPRITE_PACK;if(!PK)return null;
   const own=expandedBodyName(cls,sex||(typeof S!=='undefined'&&S&&S.sex)||'m');if(own&&requestExpandedBody(own))return own;
   const n=packBodyName(cls);if(!own&&PK.bodies&&PK.bodies[n])return n;
@@ -14902,20 +14902,20 @@ setInterval(updateWatch,60000);
 // be hours old while the player was on another tab, and the check is a 60-byte text file.
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&(pendingUpdateBuild||Date.now()-PAGE_STARTED_AT>30000))updateWatch()});
 </script>
-<script src="assets/wardrobe-ui.js?v=413"></script>
+<script src="assets/wardrobe-ui.js?v=414"></script>
 <script src="assets/shop.js?v=321"></script>
 <script src="assets/friends.js?v=273"></script>
-<script src="assets/digimon/roster.js?v=413"></script>
-<script src="assets/digimon/base-stats.js?v=413"></script>
-<script src="assets/social-rules.js?v=413"></script>
-<script src="assets/social-poker.js?v=413"></script>
-<script src="assets/digimon-sanctuary.js?v=413"></script>
+<script src="assets/digimon/roster.js?v=414"></script>
+<script src="assets/digimon/base-stats.js?v=414"></script>
+<script src="assets/social-rules.js?v=414"></script>
+<script src="assets/social-poker.js?v=414"></script>
+<script src="assets/digimon-sanctuary.js?v=414"></script>
 <script src="assets/digimon-battle.js?v=393"></script>
-<script src="assets/social-digimon.js?v=413"></script>
+<script src="assets/social-digimon.js?v=414"></script>
 <script src="assets/social-gym-redesign.js?v=393"></script>
 <script src="assets/social-pond-design.js?v=393"></script>
-<script src="assets/social-scene.js?v=413"></script>
-<script src="assets/social-fishing.js?v=413"></script>
-<script src="assets/plaza-bots.js?v=413"></script>
-<script src="assets/social.js?v=413"></script></body>
+<script src="assets/social-scene.js?v=414"></script>
+<script src="assets/social-fishing.js?v=414"></script>
+<script src="assets/plaza-bots.js?v=414"></script>
+<script src="assets/social.js?v=414"></script></body>
 </html>

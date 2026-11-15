@@ -11399,3 +11399,7 @@ Owner direction after reading the v412 damage report. Still behind the fourth-jo
 - New `tools/expanded_damage_report.js` prints the per-class damage table.
 
 Tests: `signature_skills_sim.js`, `expanded_roster_sim.js`.
+
+## haven-v414 — expanded roster: budgets revised down (2026-11-15)
+
+Owner: 20% above the original classes was unfair. All 22 classes refitted with `tools/fit_expanded_budget.js`: about 110% of the sibling; Royal Guard, Maestro & Wanderer, Kagerou & Oboro and Rebellion 105% (unchanged); Sorcerer and Shadow Chaser 115%; Geneticist 110% on one target and 125% on three; Sura 117% of Guillotine Cross on one target (207% of Rune Knight). Only `SKILL_TUNING` and the budget fixture changed.

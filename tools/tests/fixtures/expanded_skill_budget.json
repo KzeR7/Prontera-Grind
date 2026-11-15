@@ -1,19 +1,19 @@
 {
- "note": "Expanded-roster damage budgets (haven-v409). Each class was measured with tools/skill_balance.js stationary() for 120 s against 1 and 3 targets at Base Lv 99 / 150 / 175 by tier (Ninja and Gunslinger at 150), every skill maxed, and fitted to `target` x its `sibling`. atk = class row attack multiplier, K = SKILL_TUNING single, A = SKILL_TUNING area. haven-v410: Kagerou & Oboro and Rebellion were fitted with tools/fit_expanded_budget.js (same measurement, attack multiplier left as written). haven-v412: every class refitted after the signature-skill and autocast rework; the Monk line has no area skill of its own, so Champion is fitted on one target only. haven-v413: owner targets - about 1.2 x the sibling, 1.05 for the four \"close\" classes, 1.25 Sorcerer and Shadow Chaser, 1.3 Sura, Geneticist 1.2 on one target and 1.4 (`area`) on three; the attack multiplier of Sura, Shadow Chaser, Maestro & Wanderer and Rebellion was lowered so skills carry more of the budget. Sura: 2.27 x Rune Knight on one target (1.3 x Guillotine Cross, the strongest original fourth job there); its area multiplier sits at the 0.2 floor, giving 1.94 x on three.",
+ "note": "Expanded-roster damage budgets (haven-v409). Each class was measured with tools/skill_balance.js stationary() for 120 s against 1 and 3 targets at Base Lv 99 / 150 / 175 by tier (Ninja and Gunslinger at 150), every skill maxed, and fitted to `target` x its `sibling`. atk = class row attack multiplier, K = SKILL_TUNING single, A = SKILL_TUNING area. haven-v410: Kagerou & Oboro and Rebellion were fitted with tools/fit_expanded_budget.js (same measurement, attack multiplier left as written). haven-v412: every class refitted after the signature-skill and autocast rework; the Monk line has no area skill of its own, so Champion is fitted on one target only. haven-v413: owner targets - about 1.2 x the sibling, 1.05 for the four \"close\" classes, 1.25 Sorcerer and Shadow Chaser, 1.3 Sura, Geneticist 1.2 on one target and 1.4 (`area`) on three; the attack multiplier of Sura, Shadow Chaser, Maestro & Wanderer and Rebellion was lowered so skills carry more of the budget. Sura: 2.27 x Rune Knight on one target (1.3 x Guillotine Cross, the strongest original fourth job there); its area multiplier sits at the 0.2 floor, giving 1.94 x on three. haven-v414: owner revised the targets down - about 1.1 x the sibling, 1.05 for the four close classes, 1.15 Sorcerer and Shadow Chaser, Geneticist 1.1 / 1.25, Sura 2.07 x Rune Knight (1.17 x Guillotine Cross). `area` records the measured three-target ratio where it differs from `target`.",
  "classes": {
   "Crusader": {
    "sibling": "Knight",
-   "target": 1.2,
+   "target": 1.1,
    "atk": 1.81,
-   "K": 1.7315,
-   "A": 0.3373
+   "K": 1.5552,
+   "A": 0.3404
   },
   "Paladin": {
    "sibling": "Lord Knight",
-   "target": 1.2,
+   "target": 1.1,
    "atk": 2.35,
-   "K": 2.2993,
-   "A": 0.6813
+   "K": 2.0826,
+   "A": 0.6903
   },
   "Royal Guard": {
    "sibling": "Rune Knight",
@@ -24,103 +24,105 @@
   },
   "Sage": {
    "sibling": "Wizard",
-   "target": 1.2,
+   "target": 1.1,
    "atk": 1.68,
-   "K": 1.3218,
-   "A": 2.4542
+   "K": 1.2015,
+   "A": 2.4736
   },
   "Scholar": {
    "sibling": "High Wizard",
-   "target": 1.2,
+   "target": 1.1,
    "atk": 2.69,
-   "K": 1.1923,
-   "A": 0.8421
+   "K": 1.0832,
+   "A": 0.8511
   },
   "Sorcerer": {
    "sibling": "Warlock",
-   "target": 1.25,
+   "target": 1.15,
    "atk": 2.67,
-   "K": 0.4553,
-   "A": 2.3603
+   "K": 0.4117,
+   "A": 2.3959
   },
   "Alchemist": {
    "sibling": "Blacksmith",
-   "target": 1.2,
+   "target": 1.1,
    "atk": 1.94,
-   "K": 3.7433,
-   "A": 0.3936
+   "K": 3.3611,
+   "A": 0.4017
   },
   "Biochemist": {
    "sibling": "Whitesmith",
-   "target": 1.2,
+   "target": 1.1,
    "atk": 2.48,
-   "K": 3.6187,
-   "A": 1.2077
+   "K": 3.2529,
+   "A": 1.2286
   },
   "Geneticist": {
    "sibling": "Mechanic",
-   "target": 1.2,
+   "target": 1.1,
    "atk": 2.75,
-   "K": 1.6905,
-   "A": 0.7053,
-   "area": 1.4
+   "K": 1.5006,
+   "A": 0.6758,
+   "area": 1.25
   },
   "Monk": {
    "sibling": "Knight",
-   "target": 1.2,
+   "target": 1.1,
    "atk": 0.91,
-   "K": 0.4407,
-   "A": 3.8923
+   "K": 0.3905,
+   "A": 4.0381
   },
   "Champion": {
    "sibling": "Lord Knight",
-   "target": 1.2,
+   "target": 1.1,
    "atk": 1.45,
-   "K": 1.0596,
-   "A": 1
+   "K": 0.9506,
+   "A": 1,
+   "area": 1.072
   },
   "Sura": {
    "sibling": "Rune Knight",
-   "target": 2.27,
+   "target": 2.07,
    "atk": 1.1,
-   "K": 1.7367,
+   "K": 1.5481,
    "A": 0.2,
-   "area": 1.94
+   "area": 1.758
   },
   "Rogue": {
    "sibling": "Assassin",
-   "target": 1.2,
+   "target": 1.1,
    "atk": 1.53,
-   "K": 4.9671,
-   "A": 1.3414
+   "K": 4.4551,
+   "A": 1.3698
   },
   "Stalker": {
    "sibling": "Assassin Cross",
-   "target": 1.2,
+   "target": 1.1,
    "atk": 2.38,
-   "K": 6.5115,
-   "A": 1.1391
+   "K": 5.8645,
+   "A": 1.1579
   },
   "Shadow Chaser": {
    "sibling": "Guillotine Cross",
-   "target": 1.25,
+   "target": 1.15,
    "atk": 1.7,
-   "K": 1.2883,
-   "A": 0.9617
+   "K": 1.1184,
+   "A": 1.0433
   },
   "Bard & Dancer": {
    "sibling": "Hunter",
-   "target": 1.2,
+   "target": 1.1,
    "atk": 1.44,
-   "K": 3.7141,
-   "A": 1.2555
+   "K": 3.3247,
+   "A": 1.285
   },
   "Minstrel & Gypsy": {
    "sibling": "Sniper",
-   "target": 1.2,
+   "target": 1.1,
    "atk": 2.03,
-   "K": 4.1245,
-   "A": 0.2
+   "K": 3.7152,
+   "A": 0.2,
+   "area": 1.24
   },
   "Maestro & Wanderer": {
    "sibling": "Ranger",
@@ -131,17 +133,18 @@
   },
   "Ninja": {
    "sibling": "Assassin Cross",
-   "target": 1.2,
+   "target": 1.1,
    "atk": 2.19,
-   "K": 8.3093,
-   "A": 0.7835
+   "K": 7.5776,
+   "A": 0.785
   },
   "Gunslinger": {
    "sibling": "Sniper",
-   "target": 1.2,
+   "target": 1.1,
    "atk": 2.25,
-   "K": 3.214,
-   "A": 0.2
+   "K": 2.9123,
+   "A": 0.2,
+   "area": 1.11
   },
   "Kagerou & Oboro": {
    "sibling": "Guillotine Cross",
