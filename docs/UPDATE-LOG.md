@@ -11070,7 +11070,7 @@ Test-only follow-up to the v373 batch. No player-visible change, so BUILD is unc
   and the audit card answers with the `0015` note), `gm_console_sim` **19** (boot probes `/me`
   alone, `allSettled`, guarded `loadPlayers`, guarded marker, named note). No BUILD bump.
 
-### 2026-11-15 — `haven-v408 away exp capped at one level an hour` (build bump: the welcome-back payout changed)
+### 2026-11-15 — `haven-v408 away pay is exactly half your measured minute` (build bump: the welcome-back payout changed)
 
 * **The owner (2026-11-15): "can u try and simulate a offline rewards, cause i think 4 hours reward
   for 37level is too much. players shouldnt be getting so much exp and level at once."** He is
@@ -11079,22 +11079,30 @@ Test-only follow-up to the v373 batch. No player-visible change, so BUILD is unc
   into levels by the game's own curve that was worth, at 3,000-30,000 kills an hour: **33-71 levels
   at Lv 40, 21-60 at Lv 60, 20-47 at Lv 80, 3-19 at Lv 100** and 1-10 at Lv 113 for the reference
   field — and more wherever a boss field or exp gear made the measured sample richer, which is how
-  a 37-level jump at 113 happened. Away time was paying more progression than the play it replaces.
-* **The fix is a ceiling on away EXP, not on the claim.** `offlineMaxLevels(creditedMs)` allows
-  **one level per credited hour** (`OFFLINE_LEVELS_PER_HOUR = 1`), so a full four-hour claim pays at
-  most four levels, a one-hour absence one, half an hour one. `offlineExpBudget(lv, levels)` sums
-  the game's own `baseNeedAt` for that many levels and the payout is `min(income.xp × minutes,
-  budget)` — the exp is what gets clipped, so a capped claim still pays its kills, Zeny, and all the
-  loot those kills roll. Re-running the same simulation with the ceiling: **4 levels at every band
-  and every rate**, down from 71.
-* **The popup says when it bit.** The welcome-back note gains "Away EXP is capped at N levels for
-  this claim — a long absence pays a bonus, not a leap", next to the existing 4-hour and 50% notes.
-* **The audit mirrors the ceiling instead of assuming it.** `save-audit.js` carries the same
-  `OFFLINE_LEVELS_PER_HOUR` and caps the levels it credits, and `api_sim` extracts the page's own
-  `offlineMaxLevels`/`offlineExpBudget` and holds the audit against them. That flips the meaning of
-  a big post-claim jump: a claim can no longer explain 37 levels, so `+37 levels in 2 min` is now a
-  **real** flag rather than a false one, and the end-to-end `/api/save` test asserts both halves —
-  four levels with a claim records nothing, 37 levels with the same claim is reported.
+  a 37-level jump at 113 happened. The 50% was never the culprit: the sample that priced it had been
+  inflated by a replayed minute (root cause below), so the claim multiplied a rate nobody had farmed.
+* **No level ceiling — the owner turned the first proposal down.** His follow-up: "i would not want
+  to have a cap level but i need the offline rewards to work properly ... this is not fair to online
+  players as offline rewards should be only half of the online players." He is right about the rule,
+  and the rule is the one the claim already followed: `income.xp × credited minutes × 0.5`, handed
+  straight to `earnExp()` and settled by `checkLevel()` walking `need()` — the same curve, at the
+  same price, as a player standing in the field. Nothing is clipped, so an away window buys exactly
+  the levels its half-rate exp pays for. The only bounds left are the ones that describe the
+  player's own play: `OFFLINE_CAP_MS` (four hours) and `OFFLINE_RATE_CAP` (30,000 kills/h).
+* **Which makes the measured minute the whole safety property.** Nothing now stands between a bad
+  measurement and a level slam except the guard below — and the guard below is exactly that
+  measurement, closed at the source. The welcome-back popup still says what the number is made of
+  (measured EXP/min and Zeny/min, 50%, four-hour window); the "Away EXP is capped at N levels"
+  sentence is gone with the ceiling.
+* **The audit credits the claim's price, not a policy number.** `claimCredits()` runs the half-rate
+  exp through `levelsFromExp()` — the page's `checkLevel` walk, on a curve a test holds against the
+  page for all 149 levels — and the `Math.min(..., ceiling)` is gone with the ceiling. `api_sim`
+  asserts the absence (no `OFFLINE_LEVELS_PER_HOUR` / `offlineExpBudget` / `offlineMaxLevels` in
+  `index.html`), that both sides pay `.5`, and that the owner's own case is credited honestly
+  (1.25M exp/min for four hours = **37 levels**, not four). End to end, that 37-level jump *with*
+  its claim records **no** alert, while the same jump under a half-hour claim (12 levels paid) is
+  still reported: the console now separates "the claim paid for it" from "nothing did", instead of
+  measuring both against a number the game does not enforce.
 * **The root cause the owner suspected, found and closed (his second report).** "If a tab doesnt run
   ... a sudden surge of exp and zeny will happen which spike it for abit ... would this might what
   have happen in this 37 level increase?" Yes - and this is the mechanism that made the payout big
@@ -11109,11 +11117,15 @@ Test-only follow-up to the v373 batch. No player-visible change, so BUILD is unc
   that one function, so the kill rate (`offlineKph`) is protected the same way. `adventurer_updates_sim`
   pins it: a clean minute samples 600 EXP/min and 600 kills/hour, a 300-second replay samples
   nothing and leaves the stored sample untouched (verified to fail with the guard removed).
-* **Zeny and loot were left alone** — they are the income the player actually measured, and the
-  complaint is the level slam. `OFFLINE_REWARD_MULT` (0.5) and the four-hour cap are unchanged.
-* **Checks:** `api_sim` **69** (was 68): the ceiling/cap mirror, the pure payout cases, and the
-  two-sided end-to-end run; `adventurer_updates_sim` **29** adds the replayed-minute guard; `offline_sim` **14** adds the client-side proof (a four-hour claim
-  pays exactly the exp four levels cost, a half-hour claim one). `plaza_stranded_still_paid_sim`
+* **Zeny and loot pay the same half** — `income.zeny × minutes`, and every claim kill rolls its
+  loot — so "only half of the online players" is true of the whole payout, not of EXP alone.
+  `OFFLINE_REWARD_MULT` (0.5) and the four-hour cap are unchanged.
+* **Checks:** `api_sim` **69**: the half-rate price on both sides, the absence of any ceiling in the
+  page, the pure payout cases (36 and 37 levels from 113, 12 for a half-hour claim) and the
+  two-sided end-to-end run; `adventurer_updates_sim` **29** adds the replayed-minute guard;
+  `offline_sim` **14** proves the client pays exactly 120 paid minutes of the sample and that every
+  point of it reaches the curve (`S.exp` grows by `r.exp`, and no `expCapped` field exists).
+  `plaza_stranded_still_paid_sim`
   had been measuring the plaza rate off the frame clock and demanding 99% of a nominal 1200,
   which drifts by about a percent run to run (both `v407` and `v408` trees produce 1180 or 1190
   depending on frame timing); it now keeps the frame-loop check with that documented tolerance

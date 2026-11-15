@@ -19,8 +19,8 @@ const ascensionCode=from('const ASCENSION_MATERIALS=', 'function kill(o){')+'\n'
 const newCardCode=require('./helpers/progression')(src,'newCard');
 const reward = from('const ascRewardBonus=', '// One field monster, before it is placed.');
 const simulation = from('function offlineMobForCurrentField(m=S.mp,stage=S.lvl){', '// ---------- skill effects: damage over time, stun, chain ----------');
-// v408: the away payout is capped at one level per credited hour, so the harness needs the
-// page's own level curve (the payout asks baseNeedAt how much a level costs).
+// v408: there is no level ceiling any more - a claim pays half its measured minute and the page's
+// own curve decides what that buys - so the harness still carries baseNeedAt/needAt.
 const curve = [
   src.match(/BASE_EXP_LATE_LV\s*=\s*[0-9]+/)[0],
   src.match(/const NA1=[^;]+;/)[0],
@@ -68,7 +68,6 @@ function harness() {
   const code = curve + progression+'\n'+from('// ---------- auto-sell rules:', '// ---------- end auto-sell rules ----------') + '\n' + config + '\n' + stamp + '\n' + helpers + '\n' + newCardCode + '\n' + reward + '\n' + stageCode + '\n' + ascensionCode + '\n' + simulation + `
     globalThis.api = {
       offlinePlan, offlineRateSample, applyOfflineProgress, offlineAwardKill,
-      offlineExpBudget, offlineMaxLevels,
       mapSelection(){return[mapM,mapL]},
       OFFLINE_POPUP_MIN_MS, OFFLINE_SIM_COVER_MS, OFFLINE_CAP_MS,
       setState(v){S=v;farmSession=null;if(!Object.hasOwn(S,'offlineIncome'))S.offlineIncome={version:1,key:farmStageKey(),at:S.offlineAt,xp:60,zeny:60,job:42,kph:30000};}, getState(){return S}, setNow(v){clock.now=v}, setCloud(v){CLOUD.on=!!v},
@@ -166,8 +165,11 @@ t('cloud accounts use the server-authorized kill budget and cannot reuse a claim
   h.setCloud(false);
 });
 
-t('a claim pays away EXP up to one level per credited hour, and no further', () => {
-  // v408 (owner: "37 level from 2 mins... players shouldnt be getting so much exp and level at once")
+t('a claim pays exactly half its measured minute, and nothing caps the levels that buys', () => {
+  // v408 (owner: "i would not want to have a cap level but i need the offline rewards to work
+  // properly ... offline rewards should be only half of the online players"). Away pay is the
+  // sample for the paid minutes at 50% - no budget, no ceiling: checkLevel() then walks the same
+  // curve a player in the field walks.
   const mk = lv => ({ offlineAt:1,offlineKph:30000,offlineRateAt:0,offlineRateKills:0,offlineKillRemainder:0,
     lv, kills:0,kl:0,mp:0,lvl:1,prog:[1],exp:0,zeny:0,ore:{ori:0,elu:0},cards:[],inv:[],eq:{},
     pets:[],auto:false,autoSell:[false,false,false,false,false],jobs:{},q:[],st:{str:1,agi:1,dex:1,luk:1,int:1,vit:1},
@@ -175,23 +177,23 @@ t('a claim pays away EXP up to one level per credited hour, and no further', () 
     // a sample rich enough to buy dozens of levels: 20,000,000 exp a minute
     offlineIncome:{version:1,key:'Novice:0:1',at:1,xp:20000000,zeny:1000,job:0,kph:1000} });
   const four = { id:31, awayMs:8*3600000, creditedMs:4*3600000, rateKph:1000, kills:600, remainder:0 };
-  // the sample would pay 20,000,000 × 120 = 2.4 BILLION exp uncapped: dozens of levels
-  const uncapped = 20000000 * 120;
   for (const lv of [40, 113]) {
     const S = mk(lv); h.setState(S); h.setCloud(true); h.setNow(9*3600000);
+    const before = S.exp;
     const r = h.applyOfflineProgress(9*3600000, four);
-    assert.strictEqual(r.expLevelCap, 4, 'a four-hour claim may pay four levels at Lv ' + lv);
-    assert.strictEqual(r.expCapped, true, 'a rich sample is capped at Lv ' + lv);
-    assert.strictEqual(r.exp, h.offlineExpBudget(lv, 4),
-      'the claim pays exactly the exp four levels cost at Lv ' + lv);
-    assert.ok(r.exp < uncapped, 'the cap is doing the work at Lv ' + lv);
+    // 4 h credited, paid at half rate = 120 paid minutes
+    assert.strictEqual(r.exp, 20000000 * 120, 'EXP is the sample for 120 paid minutes at Lv ' + lv);
+    assert.strictEqual(r.zeny, 1000 * 120, 'Zeny is the same 120 paid minutes at Lv ' + lv);
+    assert.strictEqual(r.kills, 600, 'the server kill budget still bounds the loot at Lv ' + lv);
+    assert.strictEqual(S.exp - before, r.exp, 'every point of the payout reaches the level curve at Lv ' + lv);
+    assert.ok(!('expCapped' in r) && !('expLevelCap' in r), 'the payout carries no level ceiling at Lv ' + lv);
     h.setCloud(false);
   }
-  // a short absence is worth fewer levels than a long one
+  // half an hour is a quarter of the pay of four hours, because the minutes are what changed
   const short = { id:32, awayMs:30*60000, creditedMs:30*60000, rateKph:1000, kills:100, remainder:0 };
   const S = mk(113); h.setState(S); h.setCloud(true); h.setNow(9*3600000);
   const r2 = h.applyOfflineProgress(9*3600000, short);
-  assert.strictEqual(r2.expLevelCap, 1, 'half an hour is worth one level, not four');
+  assert.strictEqual(r2.exp, 20000000 * 15, 'half an hour pays fifteen minutes at half rate');
   h.setCloud(false);
 });
 
