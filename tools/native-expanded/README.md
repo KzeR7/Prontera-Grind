@@ -84,3 +84,63 @@ contact sheet for eyeballing; `--fixture` rewrites the routes the test compares)
   if they drift.
 * **Known approximation:** pieces worn on the body rather than the head (wings, capes, bags)
   follow the head by the same rule, so they can sit a few pixels off on some frames.
+
+## haven-v411 additions: held weapons and attack motions
+
+### Weapons in the hand
+
+Weapon sprites come from `rAthena-Thailand/ClientROThailand` at commit
+`6f91cbd1df3b94f3e4ea27c6eeb63a4b9f319e96`, folder
+`Client-2025-06-04/Pre-Renewal/data/sprite/인간족/<job folder>/`. File names are stored on GitHub
+under their CP949 bytes, so list a folder through the git trees API and decode each name
+(`name.encode('latin-1').decode('cp949')`) rather than typing the path. All 36 files are pinned in
+`source-manifest.json` under `weapon/` (128 entries in total now) and re-downloaded by
+`python3 tools/make_expanded_pack.py`.
+
+| Bodies | Job folder | File stem (`_남` male, `_여` female) | What it is |
+| --- | --- | --- | --- |
+| Crusader, Paladin | `크루세이더` | `크루세이더_<sex>_20161` | sword |
+| Royal Guard | `로얄가드` | `로얄가드_<sex>_프리스트의검` | sword |
+| Sage, Scholar | `세이지` | `세이지_<sex>_28603` | book |
+| Sorcerer | `소서러` | `소서러_<sex>_28603` | book |
+| Alchemist, Biochemist | `연금술사` | `연금술사_<sex>_16062` | mace |
+| Geneticist | `제네릭` | `제네릭_<sex>_16062` | mace |
+| Rogue, Stalker | `로그` | `로그_<sex>_라크마` | dagger |
+| Bard, Minstrel | `바드` | `바드_남_20174` | bow |
+| Dancer, Gypsy | `무희` | `무희_여_20174` | bow |
+| Ninja | `닌자` | `닌자_<sex>_라크마` | dagger |
+
+The client keeps one weapon set per second job and reuses it for the transcendent job, so
+Paladin, Scholar, Biochemist, Stalker and Minstrel & Gypsy borrow their second job's files.
+The mapping lives in `HELD` in `tools/make_expanded_pack.py`; the Wardrobe builder reads the
+same table.
+
+**Not available from any public GitHub source (searched 2026-11-15):** the ordinary weapon
+sprites of a full client (`_검`, `_단검`, `_너클`, `_권총`, `_수리검`, `_악기`, `_채찍` and so on).
+That repository only carries a handful of item-specific sprites. As a result these fight
+bare-handed for now: Shadow Chaser, Maestro & Wanderer, Kagerou & Oboro, and the revolvers of
+Gunslinger and Rebellion. To finish them, the files needed from a client `data.grf` are:
+
+* `data/sprite/인간족/건너/건너_{남,여}_권총.{spr,act}` and `rebellion/rebellion_{남,여}_권총.*` (revolver)
+* `data/sprite/인간족/쉐도우체이서/쉐도우체이서_{남,여}_단검.*` (dagger)
+* `data/sprite/인간족/민스트럴/민스트럴_남_활.*`, `원더러/원더러_여_활.*` (bow) or `_악기` / `_채찍`
+* `data/sprite/인간족/kagerou/kagerou_남_수리검.*`, `oboro/oboro_여_수리검.*` (huuma shuriken)
+
+Drop them into `.cache/native-expanded/weapon/<body>_<m|f>.{spr,act}`, add them to `HELD` and the
+source manifest, and rebuild both packs.
+
+### Which attack motion a body plays
+
+An ACT file has three attack motions: 40 = attack1, 80 = attack2, 88 = attack3. `attack_action()`
+in `tools/make_expanded_pack.py` picks one per body:
+
+* Monk, Champion, Sura: 40, the bare-fist punch (80 is the mace swing and was wrong for knuckles).
+* Gunslinger, Rebellion: 80, the two-revolver stance. 88 is the two-handed pose the client uses
+  for rifles, gatling guns and launchers; the only gun sprites available are of that kind, so
+  the gun is not drawn rather than showing the wrong weapon.
+* A body with a weapon: the motion that weapon is drawn in (a weapon ACT only has frames for the
+  motion it belongs to).
+* Otherwise 88 for the aimed jobs and 80 for the rest.
+
+Dead end, do not retry: drawing our own small revolvers at the hands. Finding the hands by skin
+colour picked up belts, boots and trim on most frames.

@@ -121,8 +121,8 @@ def paint(frame, imgs, rgba, shift=(0, 0)):
 def job_frames(src, sex):
     """ACT frames per stance+direction, their delay, and the gun (if the job holds one)."""
     act, imgs, rgba = pack.load('body/%s_%s' % (src, sex))
-    held = pack.load('weapon/%s_%s' % (pack.HELD[src], sex)) if src in pack.HELD else None
-    first = {'idle': 0, 'walk': 8, 'attack': 88 if src in pack.AIMED else 80, 'sit': 16}
+    held = pack.held_weapon(src, sex)
+    first = {'idle': 0, 'walk': 8, 'attack': pack.attack_action(src, held), 'sit': 16}
     frames, delay, guns = {}, {}, {}
     for stance in STANCES:
         for d in range(8):

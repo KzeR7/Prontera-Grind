@@ -7,6 +7,32 @@ history, not the current specification.
 
 ---
 
+## haven-v411 — expanded roster: weapons in hand, signature skills and effects (2026-11-15)
+
+Owner feedback after testing v410 on staging. Still behind the fourth-job gate; nothing here touches the 26 original classes.
+
+**Sprites**
+- Fourteen expanded classes now hold a weapon while attacking: sword (Crusader line), book (Sage line), mace (Alchemist line), dagger (Rogue, Stalker, Ninja), bow (Bard and Dancer lines). Battlefield pack and Wardrobe both.
+- Monk, Champion and Sura punch (attack motion 40) instead of playing the mace swing.
+- Gunslinger and Rebellion use the two-revolver stance instead of the gatling pose. The revolver itself is not drawn: no revolver sprite is publicly available (see `tools/native-expanded/README.md` for the exact files needed).
+- Still bare-handed for the same reason: Shadow Chaser, Maestro & Wanderer, Kagerou & Oboro.
+
+**Skills** (257 skills, was 245)
+- Monk line is built round Spirit Spheres: the combo skills each call a sphere (up to 5), and Asura Strike (now a Monk skill, 10 s cooldown) spends them all for +30% damage each.
+- Alchemist line: Demonstration and Summon Flora leave fields that keep attacking; Acid Demonstration is the Biochemist's main hit; Marine Sphere, Summon Geographer, Crazy Weed, Demonic Fire.
+- Ninja 5 → 9 skills (Huuma Shuriken, Lightning Spear of Ice, Shadow Slash, Dagger Throwing Mastery); Kagerou & Oboro 5 → 7 (Soul Cutter, Shadow Warrior).
+- Gunslinger 5 → 9 (coins from Rapid Shower and Triple Action, spent by Tracking; Bull's Eye, Fling, Chain Action); Rebellion 5 → 7 (Crimson Marker, Platinum Alter).
+- Job caps raised so the bigger trees can be filled: Ninja and Gunslinger Job 70; Kagerou & Oboro and Rebellion Job 60.
+- All ten reworked classes refitted against their sibling with `tools/fit_expanded_budget.js`.
+- Saves: Cadence and the old Alchemist axe skill are gone, Iron Hand and Learning Potion stop at Lv 5; the points come back on load.
+
+**Signature effects** — new `assets/signature-fx.js`, 46 skills, painted at runtime (no image files)
+- Asura Strike: five spheres are drawn in, then 阿修羅覇凰拳 bursts out. Gates of Hell and Tiger Cannon have their own characters.
+- Alchemist: thrown bottles and splashes, biting plants that stay for the field, Crazy Weed vines, Marine Sphere bubbles.
+- Ninja shuriken, kunai and flames; revolver tracers, muzzle flashes, Desperado spray and coin flips; music notes for Bard and Dancer.
+
+Tests: `signature_fx_sim.js` (new), `expanded_roster_sim.js`, `expanded_wardrobe_sim.js`.
+
 ## Update log
 
 Newest entry last. Template at the very bottom of this file.

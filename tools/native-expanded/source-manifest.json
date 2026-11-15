@@ -731,15 +731,6 @@
    "sha256": "dfc548c5cfd9aeb66616c5912df78773c2798834f9412a309a5a2b4f5868ac95"
   },
   {
-   "name": "weapon/gun_m.spr",
-   "repo": "rAthena-Thailand/ClientROThailand",
-   "commit": "6f91cbd1df3b94f3e4ea27c6eeb63a4b9f319e96",
-   "path": "Client-2025-06-04/Pre-Renewal/data/sprite/인간족/건너/건너_남_13167.spr (stored under its CP949 name)",
-   "blob": "d3fcffa31421f6e4c407f24437363b9df4e76b64",
-   "bytes": 7315,
-   "sha256": "41cfe4765030ce8c92046f876971b74bc7c96b2c0285fb553cb2c0256e1a256a"
-  },
-  {
    "name": "head/1_m.act",
    "repo": "devilm/costume-ro",
    "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
@@ -747,15 +738,6 @@
    "blob": "984956c79f1b6d2fd7b9c1feb66eb727ecba6144",
    "bytes": 61044,
    "sha256": "96cb4c7daada65ead29ade650c34da1cba93937d3b360c5468506c3d056219de"
-  },
-  {
-   "name": "weapon/gun_m.act",
-   "repo": "rAthena-Thailand/ClientROThailand",
-   "commit": "6f91cbd1df3b94f3e4ea27c6eeb63a4b9f319e96",
-   "path": "Client-2025-06-04/Pre-Renewal/data/sprite/인간족/건너/건너_남_13167.act (stored under its CP949 name)",
-   "blob": "1b70db0290e9008e2c18bd21308cbe35b8836877",
-   "bytes": 42772,
-   "sha256": "b7039e86add2320ea5edc1258af68806829090be24dfa040ba5cb686c3cc08f8"
   },
   {
    "name": "head/1_f.spr",
@@ -767,15 +749,6 @@
    "sha256": "f44fe17b6527feccadc20a5f44659b8fbb5953bc1f2f988af25994b26fe21ca6"
   },
   {
-   "name": "weapon/gun_f.spr",
-   "repo": "rAthena-Thailand/ClientROThailand",
-   "commit": "6f91cbd1df3b94f3e4ea27c6eeb63a4b9f319e96",
-   "path": "Client-2025-06-04/Pre-Renewal/data/sprite/인간족/건너/건너_여_13167.spr (stored under its CP949 name)",
-   "blob": "1ec4c6685f987194fdb73fd06118a20e6ff38112",
-   "bytes": 6426,
-   "sha256": "37923bcc403217fe71319a2d18f29a2c56aac977f64ec98881b8763705230381"
-  },
-  {
    "name": "head/1_f.act",
    "repo": "devilm/costume-ro",
    "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
@@ -783,15 +756,6 @@
    "blob": "a0421962f013ec8c6d8fed463298578e548882de",
    "bytes": 61044,
    "sha256": "781abd10543411a9ce0dcbb0d0ea2a9c2a118f05d29fc3427b222067a2519ddb"
-  },
-  {
-   "name": "weapon/gun_f.act",
-   "repo": "rAthena-Thailand/ClientROThailand",
-   "commit": "6f91cbd1df3b94f3e4ea27c6eeb63a4b9f319e96",
-   "path": "Client-2025-06-04/Pre-Renewal/data/sprite/인간족/건너/건너_여_13167.act (stored under its CP949 name)",
-   "blob": "cfb559411aebe4b2a1f97b2a930f8f052bacd6cc",
-   "bytes": 42772,
-   "sha256": "3e61d49b1d1d7d360a2077de74bbcef020eec8fc8bab246fe3eff002e5618dcb"
   },
   {
    "name": "body/rebellion_m.spr",
@@ -864,6 +828,330 @@
    "blob": "efbc2826fe172869a17b933a76196ec32889e150",
    "bytes": 48276,
    "sha256": "d84b520644a4f5c0f7ff842b3d3438c9c88acefb0471e68d43e96fb4e9262bc4"
+  },
+  {
+   "name": "weapon/crusader_m.spr",
+   "repo": "rAthena-Thailand/ClientROThailand",
+   "commit": "6f91cbd1df3b94f3e4ea27c6eeb63a4b9f319e96",
+   "path": "Client-2025-06-04/Pre-Renewal/data/sprite/인간족/크루세이더/크루세이더_남_20161.spr (stored under its CP949 name)",
+   "blob": "5b6dde6514c16db4735ebceeb22071f7892c3779",
+   "bytes": 2132,
+   "sha256": "28241832e39ad13f593a1f7398b39986f93c9cdeb59459bf20badc9c200e2bae"
+  },
+  {
+   "name": "weapon/crusader_m.act",
+   "repo": "rAthena-Thailand/ClientROThailand",
+   "commit": "6f91cbd1df3b94f3e4ea27c6eeb63a4b9f319e96",
+   "path": "Client-2025-06-04/Pre-Renewal/data/sprite/인간족/크루세이더/크루세이더_남_20161.act (stored under its CP949 name)",
+   "blob": "688f458a206330db55652302e3859b02b580a41d",
+   "bytes": 42516,
+   "sha256": "750b7786d3e592cb78b34e6bcb8f9694224ccea86d3b7c5d43034ba25ddf12e9"
+  },
+  {
+   "name": "weapon/crusader_f.spr",
+   "repo": "rAthena-Thailand/ClientROThailand",
+   "commit": "6f91cbd1df3b94f3e4ea27c6eeb63a4b9f319e96",
+   "path": "Client-2025-06-04/Pre-Renewal/data/sprite/인간족/크루세이더/크루세이더_여_20161.spr (stored under its CP949 name)",
+   "blob": "6862422b96951211f22ee9194eac000ccea2d490",
+   "bytes": 3961,
+   "sha256": "b029863a7a9dc347ad9931c52f8209011bb7a1e7537935c2b657acf90328653a"
+  },
+  {
+   "name": "weapon/crusader_f.act",
+   "repo": "rAthena-Thailand/ClientROThailand",
+   "commit": "6f91cbd1df3b94f3e4ea27c6eeb63a4b9f319e96",
+   "path": "Client-2025-06-04/Pre-Renewal/data/sprite/인간족/크루세이더/크루세이더_여_20161.act (stored under its CP949 name)",
+   "blob": "d80e44f5a508ea6459c5bdb2a8262b237e6959a3",
+   "bytes": 43540,
+   "sha256": "2a29eb573d4375cd6c7d65a9e4e21a07e36110db8fef1869d1afedf55db7ed6d"
+  },
+  {
+   "name": "weapon/royal_guard_m.spr",
+   "repo": "rAthena-Thailand/ClientROThailand",
+   "commit": "6f91cbd1df3b94f3e4ea27c6eeb63a4b9f319e96",
+   "path": "Client-2025-06-04/Pre-Renewal/data/sprite/인간족/로얄가드/로얄가드_남_프리스트의검.spr (stored under its CP949 name)",
+   "blob": "71d3aae78c6b208c5f7a996f3a5319262fbb287f",
+   "bytes": 2913,
+   "sha256": "365547e05860a70fe15e5a12af019c9b91d6ed7f22af885a8b49cac4f4582e80"
+  },
+  {
+   "name": "weapon/royal_guard_m.act",
+   "repo": "rAthena-Thailand/ClientROThailand",
+   "commit": "6f91cbd1df3b94f3e4ea27c6eeb63a4b9f319e96",
+   "path": "Client-2025-06-04/Pre-Renewal/data/sprite/인간족/로얄가드/로얄가드_남_프리스트의검.act (stored under its CP949 name)",
+   "blob": "da1cd0cdf6ecaef54709ff64edb4396ef5ab8619",
+   "bytes": 42964,
+   "sha256": "5d01f47e1deef16a180ab7e10ac421016c9a0a498c2734763ebd33e3d322c257"
+  },
+  {
+   "name": "weapon/royal_guard_f.spr",
+   "repo": "rAthena-Thailand/ClientROThailand",
+   "commit": "6f91cbd1df3b94f3e4ea27c6eeb63a4b9f319e96",
+   "path": "Client-2025-06-04/Pre-Renewal/data/sprite/인간족/로얄가드/로얄가드_여_프리스트의검.spr (stored under its CP949 name)",
+   "blob": "293e05fcb4d4a26f3385aa6df5d9ff26c35cebb1",
+   "bytes": 4604,
+   "sha256": "4bfa697c8956dcde8faaa442e7df6369ee75705ecb360ccf866b82137ced23c4"
+  },
+  {
+   "name": "weapon/royal_guard_f.act",
+   "repo": "rAthena-Thailand/ClientROThailand",
+   "commit": "6f91cbd1df3b94f3e4ea27c6eeb63a4b9f319e96",
+   "path": "Client-2025-06-04/Pre-Renewal/data/sprite/인간족/로얄가드/로얄가드_여_프리스트의검.act (stored under its CP949 name)",
+   "blob": "8e8fd21400f95c952d6aaaec043c1d8c80e14dfe",
+   "bytes": 43540,
+   "sha256": "f0c407839dbf791680e272171624a29015fe9981186e680de4a680e4d52188f5"
+  },
+  {
+   "name": "weapon/sage_m.spr",
+   "repo": "rAthena-Thailand/ClientROThailand",
+   "commit": "6f91cbd1df3b94f3e4ea27c6eeb63a4b9f319e96",
+   "path": "Client-2025-06-04/Pre-Renewal/data/sprite/인간족/세이지/세이지_남_28603.spr (stored under its CP949 name)",
+   "blob": "d97c5bd34463c290ddd861448fd0a9529c822345",
+   "bytes": 7497,
+   "sha256": "4b445cfbdadc3b4c29711cf20515169cdedc614c8eb79dd37813ec9a63412b47"
+  },
+  {
+   "name": "weapon/sage_m.act",
+   "repo": "rAthena-Thailand/ClientROThailand",
+   "commit": "6f91cbd1df3b94f3e4ea27c6eeb63a4b9f319e96",
+   "path": "Client-2025-06-04/Pre-Renewal/data/sprite/인간족/세이지/세이지_남_28603.act (stored under its CP949 name)",
+   "blob": "62ed64a978c436b241145b1b527fb8508d4e4237",
+   "bytes": 42580,
+   "sha256": "1f3e8fcd9336c3c3e4f2c25ac903de24aaeb438769774b9d557837060b55c51d"
+  },
+  {
+   "name": "weapon/sage_f.spr",
+   "repo": "rAthena-Thailand/ClientROThailand",
+   "commit": "6f91cbd1df3b94f3e4ea27c6eeb63a4b9f319e96",
+   "path": "Client-2025-06-04/Pre-Renewal/data/sprite/인간족/세이지/세이지_여_28603.spr (stored under its CP949 name)",
+   "blob": "f16a398d01d5f018a0c700f609f12458fecb6aae",
+   "bytes": 3767,
+   "sha256": "b1a4f106eb1183ee59a39646699f1513b7a3121883ed9e9ece849e77148f8ce4"
+  },
+  {
+   "name": "weapon/sage_f.act",
+   "repo": "rAthena-Thailand/ClientROThailand",
+   "commit": "6f91cbd1df3b94f3e4ea27c6eeb63a4b9f319e96",
+   "path": "Client-2025-06-04/Pre-Renewal/data/sprite/인간족/세이지/세이지_여_28603.act (stored under its CP949 name)",
+   "blob": "c32e07413ff4c3d08e8c3dc5a6c6458fae32bc86",
+   "bytes": 42452,
+   "sha256": "b349163abd91ff1460ce2c5156f31604183bd51daf5e9cf9b5d25e1f4c54dd5d"
+  },
+  {
+   "name": "weapon/sorcerer_m.spr",
+   "repo": "rAthena-Thailand/ClientROThailand",
+   "commit": "6f91cbd1df3b94f3e4ea27c6eeb63a4b9f319e96",
+   "path": "Client-2025-06-04/Pre-Renewal/data/sprite/인간족/소서러/소서러_남_28603.spr (stored under its CP949 name)",
+   "blob": "d97c5bd34463c290ddd861448fd0a9529c822345",
+   "bytes": 7497,
+   "sha256": "4b445cfbdadc3b4c29711cf20515169cdedc614c8eb79dd37813ec9a63412b47"
+  },
+  {
+   "name": "weapon/sorcerer_m.act",
+   "repo": "rAthena-Thailand/ClientROThailand",
+   "commit": "6f91cbd1df3b94f3e4ea27c6eeb63a4b9f319e96",
+   "path": "Client-2025-06-04/Pre-Renewal/data/sprite/인간족/소서러/소서러_남_28603.act (stored under its CP949 name)",
+   "blob": "62ed64a978c436b241145b1b527fb8508d4e4237",
+   "bytes": 42580,
+   "sha256": "1f3e8fcd9336c3c3e4f2c25ac903de24aaeb438769774b9d557837060b55c51d"
+  },
+  {
+   "name": "weapon/sorcerer_f.spr",
+   "repo": "rAthena-Thailand/ClientROThailand",
+   "commit": "6f91cbd1df3b94f3e4ea27c6eeb63a4b9f319e96",
+   "path": "Client-2025-06-04/Pre-Renewal/data/sprite/인간족/소서러/소서러_여_28603.spr (stored under its CP949 name)",
+   "blob": "f16a398d01d5f018a0c700f609f12458fecb6aae",
+   "bytes": 3767,
+   "sha256": "b1a4f106eb1183ee59a39646699f1513b7a3121883ed9e9ece849e77148f8ce4"
+  },
+  {
+   "name": "weapon/sorcerer_f.act",
+   "repo": "rAthena-Thailand/ClientROThailand",
+   "commit": "6f91cbd1df3b94f3e4ea27c6eeb63a4b9f319e96",
+   "path": "Client-2025-06-04/Pre-Renewal/data/sprite/인간족/소서러/소서러_여_28603.act (stored under its CP949 name)",
+   "blob": "c32e07413ff4c3d08e8c3dc5a6c6458fae32bc86",
+   "bytes": 42452,
+   "sha256": "b349163abd91ff1460ce2c5156f31604183bd51daf5e9cf9b5d25e1f4c54dd5d"
+  },
+  {
+   "name": "weapon/alchemist_m.spr",
+   "repo": "rAthena-Thailand/ClientROThailand",
+   "commit": "6f91cbd1df3b94f3e4ea27c6eeb63a4b9f319e96",
+   "path": "Client-2025-06-04/Pre-Renewal/data/sprite/인간족/연금술사/연금술사_남_16062.spr (stored under its CP949 name)",
+   "blob": "f5a150aae435c52206d2342e1589d335cbc7c8f5",
+   "bytes": 3912,
+   "sha256": "7521966bf83a6d5d0b107dda2fe2bb737fe2bf169577b24724089b683e690fda"
+  },
+  {
+   "name": "weapon/alchemist_m.act",
+   "repo": "rAthena-Thailand/ClientROThailand",
+   "commit": "6f91cbd1df3b94f3e4ea27c6eeb63a4b9f319e96",
+   "path": "Client-2025-06-04/Pre-Renewal/data/sprite/인간족/연금술사/연금술사_남_16062.act (stored under its CP949 name)",
+   "blob": "d695bd86ae59e282eb7f671209dd6787c113dc19",
+   "bytes": 42772,
+   "sha256": "f2fd62002642e5e8a89d941d07fa58946b488a363571b6f053bdac0ef1c15ede"
+  },
+  {
+   "name": "weapon/alchemist_f.spr",
+   "repo": "rAthena-Thailand/ClientROThailand",
+   "commit": "6f91cbd1df3b94f3e4ea27c6eeb63a4b9f319e96",
+   "path": "Client-2025-06-04/Pre-Renewal/data/sprite/인간족/연금술사/연금술사_여_16062.spr (stored under its CP949 name)",
+   "blob": "0bd466ff20d643a104c3977c08148416d24d84a8",
+   "bytes": 2514,
+   "sha256": "7953e0fbc1698b62ea7e5848f1fa6d2ab0c82e44bd257284852e32d664cbcbbf"
+  },
+  {
+   "name": "weapon/alchemist_f.act",
+   "repo": "rAthena-Thailand/ClientROThailand",
+   "commit": "6f91cbd1df3b94f3e4ea27c6eeb63a4b9f319e96",
+   "path": "Client-2025-06-04/Pre-Renewal/data/sprite/인간족/연금술사/연금술사_여_16062.act (stored under its CP949 name)",
+   "blob": "042873b6f54d0fe9ac1cf970e45006058124490f",
+   "bytes": 42708,
+   "sha256": "7612e47723200b8458afb3a188d7437c8043d84b562365da6c80d48a80aa6a73"
+  },
+  {
+   "name": "weapon/geneticist_m.spr",
+   "repo": "rAthena-Thailand/ClientROThailand",
+   "commit": "6f91cbd1df3b94f3e4ea27c6eeb63a4b9f319e96",
+   "path": "Client-2025-06-04/Pre-Renewal/data/sprite/인간족/제네릭/제네릭_남_16062.spr (stored under its CP949 name)",
+   "blob": "f5a150aae435c52206d2342e1589d335cbc7c8f5",
+   "bytes": 3912,
+   "sha256": "7521966bf83a6d5d0b107dda2fe2bb737fe2bf169577b24724089b683e690fda"
+  },
+  {
+   "name": "weapon/geneticist_m.act",
+   "repo": "rAthena-Thailand/ClientROThailand",
+   "commit": "6f91cbd1df3b94f3e4ea27c6eeb63a4b9f319e96",
+   "path": "Client-2025-06-04/Pre-Renewal/data/sprite/인간족/제네릭/제네릭_남_16062.act (stored under its CP949 name)",
+   "blob": "d695bd86ae59e282eb7f671209dd6787c113dc19",
+   "bytes": 42772,
+   "sha256": "f2fd62002642e5e8a89d941d07fa58946b488a363571b6f053bdac0ef1c15ede"
+  },
+  {
+   "name": "weapon/geneticist_f.spr",
+   "repo": "rAthena-Thailand/ClientROThailand",
+   "commit": "6f91cbd1df3b94f3e4ea27c6eeb63a4b9f319e96",
+   "path": "Client-2025-06-04/Pre-Renewal/data/sprite/인간족/제네릭/제네릭_여_16062.spr (stored under its CP949 name)",
+   "blob": "0bd466ff20d643a104c3977c08148416d24d84a8",
+   "bytes": 2514,
+   "sha256": "7953e0fbc1698b62ea7e5848f1fa6d2ab0c82e44bd257284852e32d664cbcbbf"
+  },
+  {
+   "name": "weapon/geneticist_f.act",
+   "repo": "rAthena-Thailand/ClientROThailand",
+   "commit": "6f91cbd1df3b94f3e4ea27c6eeb63a4b9f319e96",
+   "path": "Client-2025-06-04/Pre-Renewal/data/sprite/인간족/제네릭/제네릭_여_16062.act (stored under its CP949 name)",
+   "blob": "042873b6f54d0fe9ac1cf970e45006058124490f",
+   "bytes": 42708,
+   "sha256": "7612e47723200b8458afb3a188d7437c8043d84b562365da6c80d48a80aa6a73"
+  },
+  {
+   "name": "weapon/rogue_m.spr",
+   "repo": "rAthena-Thailand/ClientROThailand",
+   "commit": "6f91cbd1df3b94f3e4ea27c6eeb63a4b9f319e96",
+   "path": "Client-2025-06-04/Pre-Renewal/data/sprite/인간족/로그/로그_남_라크마.spr (stored under its CP949 name)",
+   "blob": "62a6ec41ee346f57e1ba820c164ddc56500833eb",
+   "bytes": 2069,
+   "sha256": "5512332938c4a564f2cd15998fbfc0a26acb4738e408aff8abaf5386609d6d74"
+  },
+  {
+   "name": "weapon/rogue_m.act",
+   "repo": "rAthena-Thailand/ClientROThailand",
+   "commit": "6f91cbd1df3b94f3e4ea27c6eeb63a4b9f319e96",
+   "path": "Client-2025-06-04/Pre-Renewal/data/sprite/인간족/로그/로그_남_라크마.act (stored under its CP949 name)",
+   "blob": "346b80b7969c47fce9ffb172f58354c2bf601daf",
+   "bytes": 42900,
+   "sha256": "47c1f869617eb96f9d6faebbdc293b04a20961ce81724fcfdc91b6db182240eb"
+  },
+  {
+   "name": "weapon/rogue_f.spr",
+   "repo": "rAthena-Thailand/ClientROThailand",
+   "commit": "6f91cbd1df3b94f3e4ea27c6eeb63a4b9f319e96",
+   "path": "Client-2025-06-04/Pre-Renewal/data/sprite/인간족/로그/로그_여_라크마.spr (stored under its CP949 name)",
+   "blob": "0a4db6dccb4169a074b979a90565d7eddf4b6479",
+   "bytes": 3190,
+   "sha256": "5652b4be4354cccee6f17b2f30ac9d5fc379fa14520f30c8ca76538034ebbee8"
+  },
+  {
+   "name": "weapon/rogue_f.act",
+   "repo": "rAthena-Thailand/ClientROThailand",
+   "commit": "6f91cbd1df3b94f3e4ea27c6eeb63a4b9f319e96",
+   "path": "Client-2025-06-04/Pre-Renewal/data/sprite/인간족/로그/로그_여_라크마.act (stored under its CP949 name)",
+   "blob": "bcefa658166c5d2178f462af023b732f647ff5e7",
+   "bytes": 42196,
+   "sha256": "2c516262cc01b9608d0f69f6c87bb8b73b4303611c96cf554cb0d34097dee0a8"
+  },
+  {
+   "name": "weapon/bard_m.spr",
+   "repo": "rAthena-Thailand/ClientROThailand",
+   "commit": "6f91cbd1df3b94f3e4ea27c6eeb63a4b9f319e96",
+   "path": "Client-2025-06-04/Pre-Renewal/data/sprite/인간족/바드/바드_남_20174.spr (stored under its CP949 name)",
+   "blob": "10d500e8e08ce12ed89e39a637291565676041ea",
+   "bytes": 6584,
+   "sha256": "5946e47927b13f4edb7d6c85b63497fbf46543832192327169eefc234f0c756e"
+  },
+  {
+   "name": "weapon/bard_m.act",
+   "repo": "rAthena-Thailand/ClientROThailand",
+   "commit": "6f91cbd1df3b94f3e4ea27c6eeb63a4b9f319e96",
+   "path": "Client-2025-06-04/Pre-Renewal/data/sprite/인간족/바드/바드_남_20174.act (stored under its CP949 name)",
+   "blob": "858c6c0614c41fb57eb50c0e63e17c456845f852",
+   "bytes": 42772,
+   "sha256": "128c74c5ad58436367ca680341368216d79daf5cd62b63ceba8ebe069e0a60ee"
+  },
+  {
+   "name": "weapon/dancer_f.spr",
+   "repo": "rAthena-Thailand/ClientROThailand",
+   "commit": "6f91cbd1df3b94f3e4ea27c6eeb63a4b9f319e96",
+   "path": "Client-2025-06-04/Pre-Renewal/data/sprite/인간족/무희/무희_여_20174.spr (stored under its CP949 name)",
+   "blob": "145cf87a1511787f8468a387d80e06d682a95d51",
+   "bytes": 3846,
+   "sha256": "8053ad454faa88c9ba7e8bcf0eba853bdd64e885d4d70482b37b6bfd4466548a"
+  },
+  {
+   "name": "weapon/dancer_f.act",
+   "repo": "rAthena-Thailand/ClientROThailand",
+   "commit": "6f91cbd1df3b94f3e4ea27c6eeb63a4b9f319e96",
+   "path": "Client-2025-06-04/Pre-Renewal/data/sprite/인간족/무희/무희_여_20174.act (stored under its CP949 name)",
+   "blob": "9da1dde5d169075007e68a1ccecaeb1995c97714",
+   "bytes": 42772,
+   "sha256": "84725e16912ed9eefbc8673253db3384190ae8cd86d3bdc635acd45e11cdf4be"
+  },
+  {
+   "name": "weapon/ninja_m.spr",
+   "repo": "rAthena-Thailand/ClientROThailand",
+   "commit": "6f91cbd1df3b94f3e4ea27c6eeb63a4b9f319e96",
+   "path": "Client-2025-06-04/Pre-Renewal/data/sprite/인간족/닌자/닌자_남_라크마.spr (stored under its CP949 name)",
+   "blob": "4f0166ca423b675c8d81a794ff8ba9bb8619b8f1",
+   "bytes": 1511,
+   "sha256": "e46539622775f903211dcca9a8b65097de8a25405db218b0224b1418f7ed171b"
+  },
+  {
+   "name": "weapon/ninja_m.act",
+   "repo": "rAthena-Thailand/ClientROThailand",
+   "commit": "6f91cbd1df3b94f3e4ea27c6eeb63a4b9f319e96",
+   "path": "Client-2025-06-04/Pre-Renewal/data/sprite/인간족/닌자/닌자_남_라크마.act (stored under its CP949 name)",
+   "blob": "eb7edaae7f109a43f2e916daac84c2f798fd372b",
+   "bytes": 42068,
+   "sha256": "5c180192ce8cf533f2cb3cd58ff40b9626f91ed22eb4d4d5fa90347ded6d30df"
+  },
+  {
+   "name": "weapon/ninja_f.spr",
+   "repo": "rAthena-Thailand/ClientROThailand",
+   "commit": "6f91cbd1df3b94f3e4ea27c6eeb63a4b9f319e96",
+   "path": "Client-2025-06-04/Pre-Renewal/data/sprite/인간족/닌자/닌자_여_라크마.spr (stored under its CP949 name)",
+   "blob": "bbd8ce71c8080d821f512f33a228f3cf12614f89",
+   "bytes": 2164,
+   "sha256": "dfc5786fd1e412daf6df9dc65d65f4f55ec823108e2c128baaeafdf300a73007"
+  },
+  {
+   "name": "weapon/ninja_f.act",
+   "repo": "rAthena-Thailand/ClientROThailand",
+   "commit": "6f91cbd1df3b94f3e4ea27c6eeb63a4b9f319e96",
+   "path": "Client-2025-06-04/Pre-Renewal/data/sprite/인간족/닌자/닌자_여_라크마.act (stored under its CP949 name)",
+   "blob": "e28409f7db0d65b14142abd2473a6c8b994d3c2d",
+   "bytes": 42324,
+   "sha256": "5ca4ee16b9f8614b59765b89c6c972709608c20d4e7989a1385bd0af8dffbe64"
   }
  ]
 }

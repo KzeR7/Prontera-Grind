@@ -42,10 +42,11 @@ function checkLook(look,stances,label){
   assert.ok([...asked].every(f=>f.startsWith(path.normalize(base))||f.startsWith(path.normalize('assets/wardrobe/v5/'))),'the standing pack reads only itself and v5');
   ok('hair and accessory pixels are read in place from assets/wardrobe/v5/');
 
-  // Gunslinger and Rebellion hold the native gun while attacking; nobody else has a weapon layer.
-  for(const cls of Object.keys(X.CLASSES)){const look=await store.select('hero',W.defaults('m'),cls),gun=look.base.metadata.actions.attack0.frames.some(f=>f.some(p=>p[7]==='weapon'));
-    assert.equal(gun,cls==='Gunslinger'||cls==='Rebellion',cls);assert.ok(!look.base.metadata.actions.idle0.frames.some(f=>f.some(p=>p[7]==='weapon')))}
-  ok('only the two gun classes carry a weapon layer, and only while attacking');
+  // Classes whose weapon sprite is available hold it while attacking, never while idle.
+  const armed=new Set(['Crusader','Paladin','Royal Guard','Sage','Scholar','Sorcerer','Alchemist','Biochemist','Geneticist','Rogue','Stalker','Bard & Dancer','Minstrel & Gypsy','Ninja']);
+  for(const cls of Object.keys(X.CLASSES))for(const sex of ['m','f']){const look=await store.select('hero',W.defaults(sex),cls),held=[0,1,2,3,4,5,6,7].some(d=>look.base.metadata.actions['attack'+d].frames.some(f=>f.some(p=>p[7]==='weapon')));
+    assert.equal(held,armed.has(cls),cls+' '+sex);assert.ok(!look.base.metadata.actions.idle0.frames.some(f=>f.some(p=>p[7]==='weapon')))}
+  ok('fourteen classes hold their native weapon while attacking; the Monk line fights with fists');
 
   // The game derives exactly what tools/make_expanded_wardrobe.py derives.
   const fixture=JSON.parse(fs.readFileSync('tools/tests/fixtures/expanded_wardrobe_routes.json')).routes;

@@ -63,7 +63,38 @@ MALE = ['crusader', 'paladin', 'royal_guard', 'sage', 'scholar', 'sorcerer', 'al
 FEMALE_OF = {'bard': 'dancer', 'minstrel': 'gypsy', 'maestro': 'wanderer', 'kagerou': 'oboro'}
 BODIES = [(k, k, 'm') for k in MALE] + [('f_' + FEMALE_OF.get(k, k), FEMALE_OF.get(k, k), 'f') for k in MALE]
 AIMED = {'bard', 'minstrel', 'maestro', 'dancer', 'gypsy', 'wanderer', 'gunslinger', 'rebellion'}
-HELD = {'gunslinger': 'gun', 'rebellion': 'gun'}   # the client ships the same gun sprite for both
+# The weapon each body holds while attacking: body source -> weapon source (weapon/<name>_<sex>).
+# The client keeps one weapon sprite set per second job and reuses it for the transcendent job,
+# whose body frames line up with it. A body that is not listed fights bare-handed: the Monk line
+# on purpose (knuckles), the others because no public source carries their weapon sprites yet
+# (Shadow Chaser, Maestro & Wanderer, Kagerou & Oboro, and the revolver of the two gun jobs).
+HELD = {'crusader': 'crusader', 'paladin': 'crusader', 'royal_guard': 'royal_guard',
+        'sage': 'sage', 'scholar': 'sage', 'sorcerer': 'sorcerer',
+        'alchemist': 'alchemist', 'biochemist': 'alchemist', 'geneticist': 'geneticist',
+        'rogue': 'rogue', 'stalker': 'rogue', 'bard': 'bard', 'minstrel': 'bard',
+        'dancer': 'dancer', 'gypsy': 'dancer', 'ninja': 'ninja'}
+# ACT attack motions: 40 = attack1 (fists; the Monk line), 80 = attack2 (one-handed swing, and the
+# two-revolver stance of the gun jobs), 88 = attack3 (bows and other aimed weapons).
+FISTS = {'monk', 'champion', 'sura'}
+PISTOLS = {'gunslinger', 'rebellion'}
+
+
+def held_weapon(src, sex):
+    return load('weapon/%s_%s' % (HELD[src], sex)) if src in HELD else None
+
+
+def attack_action(src, held=None):
+    """The attack motion a body uses. With a weapon it is the motion that weapon is drawn in."""
+    if src in FISTS:
+        return 40
+    if src in PISTOLS:
+        return 80
+    if held:
+        drawn = {a: sum(1 for f in held[0]['actions'][a] if any(l['spr'] >= 0 for l in f['layers'])) for a in (80, 88, 40)}
+        best = max(drawn, key=lambda a: drawn[a])
+        if drawn[best]:
+            return best
+    return 88 if src in AIMED else 80
 
 # Where the centre of head-sprite 1's image sits relative to the head atlas pivot (32,48), per
 # atlas column. Measured once by locating that sprite inside assets/sprite_pack_data.js heads.
@@ -98,9 +129,9 @@ def pick(n):
 
 def build(src, sex, heads):
     act, imgs, rgba = load('body/%s_%s' % (src, sex))
-    held = load('weapon/%s_%s' % (HELD[src], sex)) if src in HELD else None
+    held = held_weapon(src, sex)
     actions, head, centre = act['actions'], heads[sex]['actions'], HEAD_CENTRE[sex]
-    attack = 88 if src in AIMED else 40
+    attack = attack_action(src, held)
     atlas, anchors = Image.new('RGBA', (CW * 8, CH * 24)), []
     pad = 100
     for anim, (first, wanted) in enumerate(((0, [0]), (8, list(range(8))), (attack, None))):
@@ -112,15 +143,16 @@ def build(src, sex, heads):
                 fr = frames[min(f, len(frames) - 1)]
                 big = roact.draw(fr, imgs, rgba, (CW + 2 * pad, CH + 2 * pad), (pad + ORIGIN[0], pad + ORIGIN[1]))
                 ba = fr['anchors'][0]
+                box = big.getbbox()
+                if box and (box[0] < pad or box[1] < pad or box[2] > pad + CW or box[3] > pad + CH):
+                    raise SystemExit('%s_%s: a frame does not fit the cell' % (src, sex))
+                # A long weapon may reach past the cell at full swing; the cell crop trims its tip.
                 if held and anim == 2:
                     wf = held[0]['actions'][first + d]
                     wf = wf[min(f, len(wf) - 1)]
                     wa = wf['anchors'][0] if wf['anchors'] else ba
                     big.alpha_composite(roact.draw(wf, held[1], held[2], big.size,
                                                    (pad + ORIGIN[0] + ba[0] - wa[0], pad + ORIGIN[1] + ba[1] - wa[1])))
-                box = big.getbbox()
-                if box and (box[0] < pad or box[1] < pad or box[2] > pad + CW or box[3] > pad + CH):
-                    raise SystemExit('%s_%s: a frame does not fit the cell' % (src, sex))
                 atlas.paste(big.crop((pad, pad, pad + CW, pad + CH)), (i * CW, (anim * 8 + d) * CH))
                 hf = head[first + d]
                 hf = hf[min(f, len(hf) - 1)]
@@ -177,7 +209,7 @@ def main():
             print('expanded sprite pack is STALE: ' + ', '.join(bad))
             return 1
         srcs = json.load(open(MANIFEST, encoding='utf-8'))['files']
-        if len(srcs) != 2 * len(BODIES) + 4 + 4 * len(set(HELD.values())):
+        if len(srcs) != 2 * len(BODIES) + 4 + 36:
             print('expanded sprite pack source manifest does not list every source')
             return 1
         print('Expanded sprite pack is current (%d bodies, %d native sources).' % (len(BODIES), len(srcs)))

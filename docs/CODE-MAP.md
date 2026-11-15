@@ -233,6 +233,11 @@ before composition; `arrangePanel` moves it above the skill catalog without
 mutating saves. Check `progression_refresh_sim.js`, `eclipse_ui_sim.js` and
 `panel_layout_smoke.js`.
 
+`assets/signature-fx.js` (`PGSignatureFx`) paints the signature skill effects of the expanded roster
+(Asura Strike's kanji, Crazy Weed, bottles, plants, Spirit Spheres, coins, shuriken, revolver fire)
+on top of the shared effect. `playSkillFx` calls `play(id, ctx)`, `tickSkillFx` calls `tick(dt)`;
+the skill-to-effect table is `MAP` at the bottom of the file. Test: `tools/tests/signature_fx_sim.js`.
+
 `assets/expanded-jobs.js` (`PGExpandedJobs`) is the Wardrobe store for the 22 expanded classes:
 bodies from `assets/wardrobe/expanded/v1/` (built by `tools/make_expanded_wardrobe.py`), hair and
 accessories read in place from `assets/wardrobe/v5/` and `assets/social/sitting/` and moved onto

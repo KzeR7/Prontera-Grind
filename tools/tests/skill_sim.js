@@ -553,10 +553,13 @@ t('every job line has skills to spend points on', () => {
   }
 });
 
+const SOLO_LINES = new Set(['Ninja', 'Kagerou & Oboro', 'Gunslinger', 'Rebellion']);
 t('every job line has the same number of its own skills', () => {
   const byTier = {};
   for (const [name, c] of Object.entries(K.CLASSES)) {
     if (name === 'Novice') continue;
+    // haven-v411: Ninja and Gunslinger lines have two jobs instead of four, so each job carries a larger tree.
+    if (SOLO_LINES.has(name)) continue;
     const n = K.SKILLS.filter(s => s.from === name).length;
     (byTier[c.tier] = byTier[c.tier] || new Set()).add(n);
   }
@@ -580,7 +583,7 @@ t('a maxed job level fits its data-derived tree without exposed overflow', () =>
     assert.ok(need <= earned,
       `${name} is ${need - earned} points short: the tree costs ${need} and a maxed line earns ${earned}`);
     // haven-v410: the two Novice-born lines reach tier 4 in two steps, so their tree is shorter by design.
-    if (line.length < c.tier + 1) continue;
+    if (line.length < c.tier + 1 || SOLO_LINES.has(name)) continue;
     rows.push([name, c.tier, need, earned]);
   }
   const byTier = {};
