@@ -67,6 +67,18 @@ try{
   ev(`lsPut(saveKey(),JSON.stringify(S));S=load()`);
   assert.ok(!ev('cardWorkspacePanel()').includes('Collection trimmed to'),'and it does not come back on reload');
 
+  // --- gmReceipts is bounded too: newest kept, tail dropped, never crashes on junk --------------
+  assert.equal(ev('GMRECEIPTS_MAX'),200,'there is a ceiling');
+  ev(`S.gmReceipts=Array.from({length:4000},(_,i)=>i+1);lsPut(saveKey(),JSON.stringify(S));S=load()`);
+  assert.equal(ev('S.gmReceipts.length'),200,'a 4,000-id receipt list is trimmed on load');
+  assert.equal(ev('S.gmReceipts[199]'),4000,'the NEWEST id is kept');
+  assert.equal(ev('S.gmReceipts[0]'),4000-199,'and exactly the 200 newest survive');
+  ev(`S.gmReceipts=null;lsPut(saveKey(),JSON.stringify(S));S=load()`);
+  assert.equal(JSON.stringify(ev('S.gmReceipts')),'[]','a corrupted receipt list becomes an empty one, not a crash');
+  // An under-cap list is left exactly as it was.
+  ev(`S.gmReceipts=[5,6,7];lsPut(saveKey(),JSON.stringify(S));S=load()`);
+  assert.equal(JSON.stringify(ev('S.gmReceipts')),'[5,6,7]','a short list is untouched');
+
   // --- bulk sale: only loose, unmerged cards; starred and legacy are kept -------------------
   ev(`S.cards=[
     {...mkCard(1),v:2},
@@ -88,5 +100,5 @@ try{
   assert.equal(ev('S.cards.length'),1,'a declined bulk sale sells nothing');
   assert.equal(ev('S.zeny'),0,'and pays nothing');
 
-  console.log('PASS: CARDMAX bounds the collection, refused drops store nothing and say so, an over-cap legacy collection is trimmed but paid, and the bulk sale spares starred/legacy cards.');
+  console.log('PASS: CARDMAX bounds the collection, refused drops store nothing and say so, an over-cap legacy collection is trimmed but paid, the bulk sale spares starred/legacy cards, and gmReceipts keeps only its newest ids.');
 }finally{g.close()}

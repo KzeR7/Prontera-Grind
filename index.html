@@ -2797,6 +2797,10 @@ const BAGMAX=1000;
 // collection by the game itself. Players remove cards with the Sell button (or Card Mastery), and
 // "Sell all" in the card view clears a full collection in one action.
 const CARDMAX=1000;
+// GMRECEIPTS_MAX: the client-side record of which GM grants have been applied. The server keeps its
+// own claimed_at, so this list only guards against re-applying one within a session; it never needs
+// more than the page of grants the server actually sends (50). See the prune in load().
+const GMRECEIPTS_MAX=200;
 // The one door cards enter the collection through (v411). Every drop, redemption and gift used to
 // `S.cards.push(...)` directly, which is why the list could grow for ever - and why the SAME rule
 // had to be remembered at seven call sites. This keeps one rule in one place:
@@ -3506,6 +3510,13 @@ const s=JSON.parse(raw);if(s&&s.lv){const F=fresh(),f=Object.assign(F,s),hadInde
     f.cardOverflowCount=(Math.floor(Number(f.cardOverflowCount)||0))+overflow.length;
   }
   f.mailSeeded=f.mailSeeded===true;
+  // v411: gmReceipts is the client-side dedupe for GM gifts, and nothing ever removed an id from it -
+  // a 4,000-grant account carried 28 KB of dead numbers. The server sends grants newest first
+  // (ORDER BY id DESC LIMIT 50), so the ids that still matter are the newest ones; keep those and drop
+  // the tail. An id only reappears if the server resends that same grant, which it does not for a
+  // claimed one - and the claim itself is recorded server-side in grants.claimed_at.
+  if(!Array.isArray(f.gmReceipts))f.gmReceipts=[];
+  else if(f.gmReceipts.length>GMRECEIPTS_MAX)f.gmReceipts=f.gmReceipts.slice(-GMRECEIPTS_MAX);
   f.offlineAt=Math.max(0,Math.floor(num_(f.offlineAt,0)));f.offlineKph=cl(num_(f.offlineKph,0),0,OFFLINE_RATE_CAP);f.offlineRateAt=Math.max(0,Math.floor(num_(f.offlineRateAt,0)));f.offlineRateKills=safeCount(f.offlineRateKills);f.offlineKillRemainder=cl(num_(f.offlineKillRemainder,0),0,.999999);
   if(!Array.isArray(f.prog)||!f.prog.length)f.prog=F.prog.slice();else f.prog=f.prog.map(v=>num_(v,1));
   while(f.prog.length<MAPS.length)f.prog.push(1);

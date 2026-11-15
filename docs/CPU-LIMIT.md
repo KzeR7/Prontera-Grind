@@ -118,6 +118,19 @@ a rows-written cost rather than a CPU one. `auditStaticSave` accounts for most o
 5. **Workers Paid ($5)** — a legitimate stopgap, since the account already runs 8–18 ms median on
    *every* day and is only surviving on Cloudflare's overrun tolerance. It is not a substitute for
    (1), which is waste regardless of plan.
+6. **Cap the loose-card list and the other unbounded save fields.** `S.cards` is the last list in a
+   save with no ceiling; measured at 86 B per card it reaches ~86 KB on its own, and the bag's 1,000
+   items add ~209 KB, so capping both puts the worst honest save at ~295 KB — inside the ceiling and
+   ~8 ms after (1). **Done in v411** (`CARDMAX`, paid-out overflow, bulk sale).
+7. **Delete `/api/version` and spread deploy reloads.** The endpoint answered a value only a deploy
+   changes and every open tab polled it; the reload that a deploy triggers had every tab flushing its
+   save in the same second — the shape of a spike. **Done in v411.**
+
+**Status after v411:** items 1, 2, 6 and 7 are shipped. Items 3, 4 and 5 are open and are decisions
+for the owner, not code: (3) and (4) change how a player's save is handled, and (5) is a bill. The
+largest honest saves went from 2.8–21.9 ms of parse to under 10 ms **including** Cloudflare's ~5 ms
+of overhead, and the two biggest accounts (`Demonz`, the owner's own, and the two banned cheaters)
+either shrink on their next load or are gone.
 
 ## How to confirm which one it was
 
