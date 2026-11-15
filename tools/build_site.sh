@@ -66,6 +66,7 @@ require assets/wardrobe/fourth/v1/catalog.json
 require assets/wardrobe/expanded/v1/catalog.json
 require assets/expanded-jobs.js
 require assets/signature-fx.js
+require assets/ro-fx/index.js
 require assets/kit/ro-spritesheet.png
 require assets/kit/ro-spritesheet.json
 require assets/world-map/world-map-cleaned.webp

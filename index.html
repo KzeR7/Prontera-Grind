@@ -925,9 +925,9 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="stylesheet" href="assets/ui/mobile.css?v=324">
 <script src="assets/ui/mobile.js?v=274"></script>
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
-<link rel="stylesheet" href="assets/social.css?v=411">
+<link rel="stylesheet" href="assets/social.css?v=412">
 <link rel="stylesheet" href="assets/social-battle.css?v=393">
-  <link rel="stylesheet" href="assets/social-fishing.css?v=411"><link rel="stylesheet" href="assets/friends.css?v=273">
+  <link rel="stylesheet" href="assets/social-fishing.css?v=412"><link rel="stylesheet" href="assets/friends.css?v=273">
 </head>
 <body>
 <div id="loginOverlay"><div class="eclipse-login-world" aria-hidden="true"></div><header class="eclipse-login-header"><a href="./" class="eclipse-brand"><span>HH</span><b>HORIZON HAVEN<small>YOUR IDLE ADVENTURE</small></b></a><div class="eclipse-palettes" role="group" aria-label="Interface palette"><button type="button" data-palette="moonstone">Moonstone</button><button type="button" data-palette="aurora">Aurora</button><button type="button" data-palette="ember">Ember</button></div></header><main class="eclipse-login-layout"><section class="login-brand"><div class="login-eyebrow">A WORLD WORTH RETURNING TO</div><h1>Your next <br>chapter <em>awaits.</em></h1><p>Explore a world beyond the horizon.<br>Collect rare gear, master every class, and build your haven.</p><div class="eclipse-login-art"><img src="assets/ui/eclipse-knight.png" alt="Lord Knight ready for adventure"><span>01 / PRONTERA<small>THE JOURNEY BEGINS HERE</small></span><div><img src="assets/equipment-icons/1142.png" alt=""><span>YOUR NEXT UPGRADE<small>Somewhere out there.</small></span></div></div><div class="login-footnote">EXPLORE · GROW · CONQUER</div></section><div class="login-card"><div class="eclipse-access">ADVENTURER ACCESS <span>◇</span></div><h2 id="authHeading">Welcome back.</h2><p class="login-intro" id="authIntro">Your adventure is right where you left it.</p><div class="atabs" id="authTabs"><button type="button" id="tabLogin" class="on">Login</button><button type="button" id="tabReg">Register</button></div>
@@ -1059,7 +1059,7 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <script src="assets/wardrobe.js?v=199"></script>
 <script src="assets/shop-catalog.js?v=321"></script>
 <script src="assets/fourth-jobs.js?v=179"></script>
-<script src="assets/expanded-jobs.js?v=411"></script>
+<script src="assets/expanded-jobs.js?v=412"></script>
 <script src="assets/ascension.js?v=156"></script>
 <script src="assets/native-mob-heights.js?v=153"></script>
 <script src="assets/native-fields.js?v=197"></script>
@@ -1069,7 +1069,8 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <script src="assets/skill-materials.js?v=220"></script>
 <script src="assets/afterglow-animations.js?v=151"></script>
 <script src="assets/skill-overdrive.js?v=220"></script>
-<script src="assets/signature-fx.js?v=411"></script>
+<script src="assets/ro-fx/index.js?v=412"></script>
+<script src="assets/signature-fx.js?v=412"></script>
 <script src="assets/skill-afterglow.js?v=220"></script>
 <script src="assets/boss-fx.js?v=249"></script>
 <script src="assets/pets.js?v=130"></script>
@@ -1327,7 +1328,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-15 haven-v411 expanded roster: held weapons, signature skills and effects, deeper Ninja and Gunslinger trees';
+const BUILD='2026-11-15 haven-v412 expanded roster: original RO skill effects, signature skills and autocast, every class armed';
 // v364: this write used to sit AFTER the `//` on the BUILD line, so it was part of the comment and
 // never ran - the login card showed an empty #buildTag and there was no way to confirm which file
 // the browser had loaded. It also has to survive the script running before the login card exists.
@@ -1547,96 +1548,96 @@ if(FOURTH_JOBS_LIVE)SKILLS.push(...SKILLS4);
 const SKILLSX=[
  {"id":"cr_guard","n":"Auto Guard","max":10,"type":"buff","col":"#f2d16b","cd":12,"key":"block","rate":1,"duration":12,"icon":"coat","text":"Chance to block incoming hits while attacking.","fx":"coat","from":"Crusader"},
  {"id":"cr_shboom","n":"Shield Boomerang","max":10,"type":"act","col":"#f2d16b","cd":3,"hits":1,"power":2.0,"shape":"single","rng":6,"stun":0.5,"icon":"jointbeat","visual":"wave","text":"Hurl a shield at a distant enemy, briefly stunning it.","fx":"rk_charge","from":"Crusader"},
- {"id":"cr_grand","n":"Grand Cross","max":10,"type":"act","col":"#fff0a0","cd":5,"hits":3,"power":2.2,"shape":"radial","icon":"magnus","visual":"cross","text":"Call down a holy cross around the caster.","fx":"magnus","from":"Crusader"},
+ {"id":"cr_grand","n":"Grand Cross","max":10,"type":"act","col":"#fff0a0","cd":5,"hits":3,"power":3.6,"shape":"radial","icon":"magnus","visual":"cross","text":"Grand Cross: a cross of holy light erupts around you and strikes everything on it three times.","fx":"magnus","from":"Crusader","core":true},
  {"id":"cr_faith","n":"Faith","max":10,"type":"pas","col":"#f2d16b","key":"hpp","rate":2,"icon":"hprec","text":"Devotion hardens the body, raising maximum HP.","from":"Crusader"},
  {"id":"cr_holyx","n":"Holy Cross","max":5,"type":"act","col":"#f2d16b","cd":3,"hits":2,"power":2.0,"shape":"single","icon":"kyrie","visual":"cross","text":"Two crossing holy cuts against one enemy.","fx":"kyrie","from":"Crusader"},
- {"id":"pa_chain","n":"Shield Chain","max":10,"type":"act","col":"#f2d16b","cd":3.5,"hits":5,"power":3.6,"shape":"single","rng":5,"icon":"quick","visual":"cuts","text":"Five rapid shield strikes against one target.","fx":"pierce","from":"Paladin"},
- {"id":"pa_sac","n":"Sacrifice","max":10,"type":"buff","col":"#ff9d5c","cd":12,"key":"atk","rate":2.5,"duration":12,"icon":"asp","text":"Empower attacks with sacred vitality.","fx":"asp","from":"Paladin"},
+ {"id":"pa_chain","n":"Shield Chain","max":10,"type":"act","col":"#f2d16b","cd":3.5,"hits":5,"power":4.6,"shape":"single","rng":5,"icon":"quick","visual":"cuts","text":"Shield Chain: five rapid shield throws at one enemy.","fx":"pierce","from":"Paladin","core":true},
+ {"id":"pa_sac","n":"Martyr's Reckoning","max":10,"type":"buff","col":"#ff9d5c","cd":12,"key":"atk","rate":1.5,"duration":12,"icon":"asp","text":"For 12 seconds your attack rises and most normal attacks add a heavy Martyr's Reckoning blow.","fx":"asp","from":"Paladin","autocast":{"on":"attack","chance":0.7,"pool":[{"as":"cr_holyx","n":"Martyr's Reckoning","hits":1,"power":1.9}]}},
  {"id":"pa_press","n":"Gloria Domini","max":10,"type":"act","col":"#f2d16b","cd":4,"hits":1,"power":3.2,"shape":"single","icon":"holy","visual":"judgment","text":"Drop a pillar of holy pressure on a distant enemy, briefly stunning it.","rng":6,"stun":0.5,"fx":"holy","from":"Paladin"},
  {"id":"pa_def","n":"Defending Aura","max":10,"type":"buff","col":"#f2d16b","cd":12,"key":"guard","rate":0.6,"duration":12,"icon":"coat","text":"Raise a guarding aura that reduces incoming damage.","fx":"coat","from":"Paladin"},
  {"id":"pa_prov","n":"Providence","max":5,"type":"pas","col":"#f2d16b","key":"hpp","rate":2,"icon":"bless","text":"Holy resilience raises maximum HP.","from":"Paladin"},
  {"id":"rg_vanish","n":"Vanishing Point","max":10,"type":"act","col":"#ffe080","cd":2.5,"hits":1,"power":2.9,"shape":"single","rng":5,"icon":"pierce","visual":"wave","text":"Pierce a target from afar with a spear thrust.","fx":"pierce","from":"Royal Guard"},
- {"id":"rg_over","n":"Overbrand","max":10,"type":"act","col":"#ffe080","cd":4.5,"hits":2,"power":4.1,"shape":"radial","icon":"bowl","visual":"spin","text":"Sweep a lance in a wide arc, crushing nearby foes.","fx":"bowl","from":"Royal Guard"},
+ {"id":"rg_over","n":"Overbrand","max":10,"type":"act","col":"#ffe080","cd":4.5,"hits":2,"power":5.0,"shape":"radial","icon":"bowl","visual":"spin","text":"Overbrand: sweep, stab and slam everything around you.","fx":"bowl","from":"Royal Guard","core":true},
  {"id":"rg_cannon","n":"Cannon Spear","max":10,"type":"act","col":"#ffe080","cd":4,"hits":1,"power":3.2,"shape":"line","icon":"spear","visual":"wave","text":"Launch a lance of force through every enemy in a line.","fx":"rk_charge","from":"Royal Guard"},
  {"id":"rg_earth","n":"Earth Drive","max":10,"type":"act","col":"#ffe080","cd":5,"hits":1,"power":3.4,"shape":"radial","icon":"tstorm","visual":"detonate","text":"Slam your shield into the ground, slowing enemies around you.","slow":0.25,"fx":"rk_burst","from":"Royal Guard"},
  {"id":"rg_prestige","n":"Prestige","max":10,"type":"buff","col":"#ffe080","cd":20,"key":"block","rate":2,"duration":8,"icon":"jointbeat","text":"A short burst of royal poise: a much higher chance to block.","fx":"jointbeat","from":"Royal Guard"},
  {"id":"rg_genesis","n":"Genesis Ray","max":10,"type":"act","col":"#ffe9a8","cd":12,"hits":3,"power":4,"shape":"line","icon":"magnus","visual":"judgment","text":"A column of holy light scorches every enemy in its path.","fx":"magnus","from":"Royal Guard","ascensionOnly":true},
- {"id":"sa_hind","n":"Hindsight","max":10,"type":"buff","col":"#b580e8","cd":12,"key":"matk","rate":2.0,"duration":12,"icon":"mystic","text":"Sharpen spellcraft, raising magic attack.","fx":"mystic","from":"Sage"},
+ {"id":"sa_hind","n":"Hindsight","max":10,"type":"buff","col":"#b580e8","cd":12,"key":"matk","rate":1.0,"duration":12,"icon":"mystic","text":"Auto Spell. For 12 seconds every attack and every cast can release a random bolt: Fire, Cold or Lightning.","fx":"mystic","from":"Sage","autocast":{"on":"both","chance":0.55,"pool":[{"as":"fire","n":"Fire Bolt","hits":3,"power":1.3},{"as":"nap","n":"Lightning Bolt","hits":3,"power":1.3},{"as":"fdiver","n":"Cold Bolt","hits":3,"power":1.3}]}},
  {"id":"sa_earth","n":"Heaven's Drive","max":10,"type":"act","col":"#b580e8","cd":4,"hits":3,"power":2.0,"shape":"splash","icon":"tstorm","visual":"detonate","text":"Erupt spikes of earth beneath nearby enemies.","fx":"tstorm","from":"Sage"},
- {"id":"sa_bolt","n":"Elemental Bolt","max":10,"type":"act","col":"#b580e8","cd":2.5,"hits":3,"power":2.4,"shape":"single","icon":"fire","visual":"wave","text":"Three quick elemental bolts against one enemy.","fx":"fire","from":"Sage"},
+ {"id":"sa_bolt","n":"Elemental Bolt","max":10,"type":"act","col":"#b580e8","cd":2.5,"hits":5,"power":3.2,"shape":"single","icon":"fire","visual":"wave","text":"Five bolts of a random element: fire, ice or lightning.","fx":"fire","from":"Sage","core":true,"fxPool":["fire","nap","fdiver"]},
  {"id":"sa_book","n":"Advanced Book","max":10,"type":"pas","col":"#b580e8","key":"matk","rate":1.5,"icon":"wresearch","text":"Study raises magic attack.","from":"Sage"},
  {"id":"sa_dispel","n":"Dispell","max":5,"type":"act","col":"#b580e8","cd":4,"hits":1,"power":2.0,"shape":"single","icon":"soulb","visual":"burst","text":"Strip an enemy's wards. Your next three direct hits within 3 seconds deal 10% more damage.","mark":0.1,"fx":"soulb","from":"Sage"},
  {"id":"sc_web","n":"Spider Web","max":5,"type":"act","col":"#d0a8ff","cd":6,"hits":1,"power":1.5,"shape":"single","root":2,"icon":"pharrow","visual":"detonate","text":"Snare and root an enemy in place.","fx":"pharrow","from":"Scholar"},
- {"id":"sc_double","n":"Double Casting","max":10,"type":"buff","col":"#d0a8ff","cd":12,"key":"damage","rate":1,"duration":12,"icon":"mystic","text":"Cast in echo, increasing all damage.","fx":"mystic","from":"Scholar"},
+ {"id":"sc_double","n":"Double Casting","max":10,"type":"buff","col":"#d0a8ff","cd":12,"key":"damage","rate":0.5,"duration":12,"icon":"mystic","text":"Double Casting. For 12 seconds each spell has a chance to be cast a second time at 60% power.","fx":"mystic","from":"Scholar","autocast":{"on":"cast","same":true,"chance":0.5,"power":0.6}},
  {"id":"sc_fog","n":"Wall of Fog","max":10,"type":"act","col":"#d0a8ff","cd":5,"hits":2,"power":3.0,"shape":"splash","icon":"storm","visual":"frost","text":"Roll a freezing fog over an area, slowing every enemy in it.","slow":0.25,"fx":"storm","from":"Scholar"},
  {"id":"sc_soul","n":"Soul Siphon","max":10,"type":"pas","col":"#d0a8ff","key":"matk","rate":1.8,"icon":"vermilion","text":"Draw power from fallen foes, raising magic attack.","from":"Scholar"},
- {"id":"sc_mind","n":"Mind Breaker","max":10,"type":"act","col":"#d0a8ff","cd":4,"hits":1,"power":3.6,"shape":"single","icon":"meteor","visual":"burst","text":"Shatter one enemy's focus with a heavy psychic blow.","fx":"meteor","from":"Scholar"},
- {"id":"so_psychic","n":"Psychic Wave","max":10,"type":"act","col":"#b580e8","cd":4.5,"hits":4,"power":3.8,"shape":"splash","icon":"napalm","visual":"detonate","text":"Release waves of telekinetic force over an area.","fx":"napalm","from":"Sorcerer"},
+ {"id":"sc_mind","n":"Mind Breaker","max":10,"type":"act","col":"#d0a8ff","cd":4,"hits":1,"power":3.6,"shape":"single","icon":"meteor","visual":"burst","text":"Mind Breaker: shatter the target's focus with raw mental force.","fx":"meteor","from":"Scholar"},
+ {"id":"so_psychic","n":"Psychic Wave","max":10,"type":"act","col":"#b580e8","cd":4.5,"hits":7,"power":4.8,"shape":"splash","icon":"napalm","visual":"detonate","text":"Psychic Wave: seven waves of psychic force over an area.","fx":"napalm","from":"Sorcerer","core":true},
  {"id":"so_diamond","n":"Diamond Dust","max":10,"type":"act","col":"#80d8ff","cd":5,"hits":1,"power":3.4,"shape":"radial","slow":0.35,"icon":"fdiver","visual":"frost","text":"Freeze and slow enemies around the caster.","fx":"wl_frost","from":"Sorcerer"},
  {"id":"so_varetyr","n":"Varetyr Spear","max":10,"type":"act","col":"#b580e8","cd":3.5,"hits":3,"power":3.4,"shape":"single","icon":"nap","visual":"lightning","text":"Three lightning spears pierce one enemy, briefly stunning it.","stun":0.4,"fx":"nap","from":"Sorcerer"},
  {"id":"so_grave","n":"Earth Grave","max":10,"type":"act","col":"#b580e8","cd":4,"hits":1,"power":3.2,"shape":"splash","icon":"tstorm","visual":"detonate","text":"Stone spikes erupt beneath the target and nearby enemies.","fx":"tstorm","from":"Sorcerer"},
- {"id":"so_strike","n":"Striking","max":10,"type":"buff","col":"#b580e8","cd":12,"key":"matk","rate":3,"duration":12,"icon":"aura","text":"Charge your focus, raising magic attack.","fx":"aura","from":"Sorcerer"},
+ {"id":"so_strike","n":"Spell Fist","max":10,"type":"buff","col":"#b580e8","cd":12,"key":"matk","rate":1.5,"duration":12,"icon":"aura","text":"Spell Fist. For 12 seconds every normal attack releases a bolt of a random element.","fx":"aura","from":"Sorcerer","autocast":{"on":"attack","chance":1,"pool":[{"as":"fire","n":"Fire Bolt","hits":3,"power":0.9},{"as":"nap","n":"Lightning Bolt","hits":3,"power":0.9},{"as":"fdiver","n":"Cold Bolt","hits":3,"power":0.9}]}},
  {"id":"so_buster","n":"Poison Buster","max":10,"type":"act","col":"#b580e8","cd":12,"hits":4,"power":4,"shape":"splash","icon":"meteor","visual":"detonate","text":"Detonate a toxic cloud over the target area.","fx":"meteor","from":"Sorcerer","ascensionOnly":true},
  {"id":"al_pot","n":"Potion Pitcher","max":10,"type":"heal","col":"#70d68c","cd":6,"icon":"aid","text":"Automatically restore 12–30% of max HP below half health. Does not occupy a combo slot.","hits":1,"power":0,"shape":"single","visual":"ward","healBase":0.12,"healRank":0.018,"fx":"aid","from":"Alchemist"},
  {"id":"al_acid","n":"Acid Terror","max":10,"type":"act","col":"#70d68c","cd":3,"hits":1,"power":1.9,"shape":"single","dot":0.15,"icon":"meltdown","visual":"detonate","text":"Hurl corrosive acid that keeps burning for a short time.","fx":"meltdown","from":"Alchemist"},
- {"id":"al_bomb","n":"Demonstration","max":10,"type":"act","col":"#70d68c","cd":6,"hits":1,"power":2.6,"shape":"splash","icon":"landmine","visual":"fireburst","text":"Throw a Bottle Grenade that leaves the ground burning for 4 seconds.","rng":6,"fx":"landmine","from":"Alchemist","field":{"duration":4,"interval":1}},
+ {"id":"al_bomb","n":"Demonstration","max":10,"type":"act","col":"#70d68c","cd":6,"hits":1,"power":2.6,"shape":"splash","icon":"landmine","visual":"fireburst","text":"Throw a Bottle Grenade that leaves the ground burning for 4 seconds.","rng":6,"fx":"landmine","from":"Alchemist","field":{"duration":4,"interval":1},"core":true},
  {"id":"al_learn","n":"Potion Research","max":5,"type":"pas","col":"#70d68c","key":"hpp","rate":2,"icon":"phys","text":"Better remedies raise maximum HP.","from":"Alchemist"},
  {"id":"al_flora","n":"Summon Flora","max":10,"type":"act","col":"#70d68c","cd":8,"hits":1,"power":3.0,"shape":"splash","field":{"duration":6,"interval":1},"icon":"rg_bite","visual":"pounce","text":"Plant a Flora that grows and bites every enemy near it for 6 seconds.","fx":"rg_bite","from":"Alchemist"},
- {"id":"bi_demo","n":"Acid Demonstration","max":10,"type":"act","col":"#70d68c","cd":4.5,"hits":5,"power":4.4,"shape":"single","icon":"fireball","visual":"fireburst","text":"Acid Demonstration: hurl a Fire Bottle and an Acid Bottle together for five searing hits. The Biochemist's main attack.","fx":"fireball","from":"Biochemist"},
+ {"id":"bi_demo","n":"Acid Demonstration","max":10,"type":"act","col":"#70d68c","cd":6,"hits":10,"power":7.5,"shape":"single","icon":"fireball","visual":"fireburst","text":"Acid Demonstration: ten hits of acid and flame on one enemy. 40% stronger against bosses.","fx":"fireball","from":"Biochemist","core":true,"bossPower":0.4},
  {"id":"bi_fcp","n":"Full Chemical Protection","max":10,"type":"buff","col":"#70d68c","cd":12,"key":"guard","rate":0.6,"duration":12,"icon":"coat","text":"Coat your gear in protective chemicals, reducing incoming damage.","fx":"coat","from":"Biochemist"},
  {"id":"bi_bio","n":"Marine Sphere","max":10,"type":"act","col":"#70d68c","cd":3,"hits":1,"power":3.2,"shape":"splash","icon":"beast","visual":"bomb","text":"Summon a Marine Sphere that swells and explodes a moment later.","fx":"rg_cluster","from":"Biochemist","pulse":0.6,"delay":1.2},
  {"id":"bi_plant","n":"Summon Geographer","max":5,"type":"act","col":"#70d68c","cd":10,"hits":1,"power":3.4,"shape":"splash","icon":"pharrow","visual":"pounce","text":"Cultivate a Geographer that lashes and slows nearby enemies for 8 seconds.","slow":0.25,"fx":"rg_bite","from":"Biochemist","field":{"duration":8,"interval":1}},
  {"id":"bi_cart","n":"Cart Remodeling","max":10,"type":"pas","col":"#70d68c","key":"atk","rate":2,"icon":"cart","text":"A heavier cart behind every swing: increase weapon attack.","from":"Biochemist"},
- {"id":"ge_cart","n":"Cart Cannon","max":10,"type":"act","col":"#90f0a8","cd":3.5,"hits":1,"power":3.7,"shape":"splash","rng":6,"icon":"cartrev","visual":"cannon","text":"Fire a pressurized cannonball from your cart.","fx":"mc_over","from":"Geneticist"},
+ {"id":"ge_cart","n":"Cart Cannon","max":10,"type":"act","col":"#90f0a8","cd":3.5,"hits":1,"power":4.6,"shape":"splash","rng":6,"icon":"cartrev","visual":"cannon","text":"Cart Cannon: fire a cannon ball from the cart; it bursts on impact.","fx":"mc_over","from":"Geneticist","core":true},
  {"id":"ge_thorn","n":"Thorn Trap","max":10,"type":"act","col":"#90f0a8","cd":6,"hits":1,"power":2.2,"shape":"single","root":2,"icon":"pharrow","visual":"detonate","text":"Root an enemy in thorny vines.","fx":"pharrow","from":"Geneticist"},
  {"id":"ge_spore","n":"Spore Explosion","max":10,"type":"act","col":"#90f0a8","cd":4.5,"hits":1,"power":3.4,"shape":"splash","icon":"mbrk","visual":"bomb","text":"Infect an enemy with spores that burst a second later and damage everything nearby.","rng":6,"fx":"rg_cluster","from":"Geneticist","pulse":0.6,"delay":1.0},
  {"id":"ge_weed","n":"Crazy Weed","max":10,"type":"act","col":"#90f0a8","cd":4,"hits":4,"power":3.4,"shape":"splash","icon":"mAss","visual":"spin","text":"Crazy Weed: giant vines erupt from the ground and whip every enemy in the area four times.","fx":"mAss","from":"Geneticist"},
  {"id":"ge_fire","n":"Demonic Fire","max":10,"type":"act","col":"#90f0a8","cd":7,"hits":1,"power":3.2,"shape":"splash","icon":"fireball","visual":"fireburst","text":"Set the ground ablaze with demonic fire for 5 seconds.","fx":"fireball","from":"Geneticist","field":{"duration":5,"interval":1}},
  {"id":"ge_hell","n":"Hell's Plant","max":10,"type":"act","col":"#7ed06a","cd":10,"hits":2,"power":3.5,"shape":"splash","icon":"landmine","visual":"detonate","text":"A carnivorous plant erupts beneath the target and everything beside it.","fx":"landmine","from":"Geneticist","ascensionOnly":true},
- {"id":"mo_sphere","n":"Fury","max":10,"type":"buff","col":"#ff9b4f","cd":12,"key":"atk","rate":2.2,"duration":12,"icon":"skin","text":"Enter a state of Fury, raising attack while it lasts.","fx":"aura","from":"Monk"},
+ {"id":"mo_sphere","n":"Call Spirits","max":10,"type":"buff","col":"#ff9b4f","cd":12,"key":"atk","rate":2.2,"duration":12,"icon":"skin","text":"Summon five Spirit Spheres at once and raise attack for 12 seconds.","fx":"aura","from":"Monk","fill":{"key":"sphere","n":5,"max":5,"life":20}},
  {"id":"mo_triple","n":"Triple Attack","max":10,"type":"act","col":"#ff9b4f","cd":2.5,"hits":3,"power":2.1,"shape":"single","icon":"adren","visual":"cuts","text":"Three rapid blows. Each use gathers one Spirit Sphere (max 5).","fx":"pierce","from":"Monk","castGain":{"key":"sphere","max":5,"life":20}},
  {"id":"mo_chain","n":"Chain Combo","max":10,"type":"act","col":"#ff9b4f","cd":3.5,"hits":4,"power":2.6,"shape":"single","icon":"quick","visual":"cuts","text":"Four chained strikes that gather a Spirit Sphere and make the next skill hit harder.","follow":0.1,"fx":"spiral","from":"Monk","castGain":{"key":"sphere","max":5,"life":20}},
  {"id":"mo_iron","n":"Iron Fists","max":5,"type":"pas","col":"#ff9b4f","key":"atk","rate":2,"icon":"thrust","text":"Hardened fists increase weapon attack.","from":"Monk"},
- {"id":"ch_asura","n":"Asura Strike","max":10,"type":"act","col":"#ff9b4f","cd":10,"hits":1,"power":5.6,"shape":"single","spend":{"key":"sphere","per":0.3},"icon":"mbrk","visual":"burst","text":"The ultimate fist. Consumes every Spirit Sphere for one devastating blow: +30% damage per sphere.","fx":"mbrk","from":"Monk"},
+ {"id":"ch_asura","n":"Asura Strike","max":10,"type":"act","col":"#ff9b4f","cd":10,"hits":1,"power":16,"shape":"single","spend":{"key":"sphere","per":0.5},"icon":"mbrk","visual":"burst","text":"Asura Strike: pour every Spirit Sphere into one blow. Needs at least one sphere; each sphere adds 50% damage, and it hits bosses 50% harder. The shockwave deals 40% to enemies beside the target. Build spheres with your combo skills first.","fx":"mbrk","from":"Monk","requiresStack":"sphere","core":true,"bossPower":0.5,"shock":{"r":4,"k":0.4}},
  {"id":"ch_glacier","n":"Glacier Fist","max":10,"type":"act","col":"#ff9b4f","cd":4,"hits":1,"power":3.0,"shape":"single","stun":0.6,"castGain":{"key":"sphere","max":5,"life":20},"icon":"wperf","visual":"burst","text":"A freezing punch that stuns the enemy in place and gathers a Spirit Sphere.","fx":"wperf","from":"Champion"},
  {"id":"ch_palm","n":"Raging Palm Strike","max":10,"type":"act","col":"#ff9b4f","cd":2.5,"hits":1,"power":2.6,"shape":"single","icon":"wperf","visual":"burst","text":"A palm strike that hurls the enemy back and gathers a Spirit Sphere.","fx":"wperf","from":"Champion","castGain":{"key":"sphere","max":5,"life":20}},
  {"id":"ch_crush","n":"Chain Crush Combo","max":10,"type":"act","col":"#ff9b4f","cd":4.5,"hits":5,"power":3.8,"shape":"single","icon":"spiral","visual":"cuts","text":"Five crushing blows that gather a Spirit Sphere.","fx":"spiral","from":"Champion","castGain":{"key":"sphere","max":5,"life":20}},
  {"id":"ch_fury","n":"Critical Explosion","max":10,"type":"buff","col":"#ff9b4f","cd":12,"key":"critical","rate":1.5,"duration":12,"icon":"frenzy","text":"Explode your spirit, raising critical chance.","fx":"frenzy","from":"Champion"},
- {"id":"ch_zen","n":"Zen","max":5,"type":"buff","col":"#ff9b4f","cd":10,"key":"damage","rate":4,"duration":5,"icon":"skin","text":"Dangerous Soul Collect: a short surge of power for the next Asura Strike.","fx":"frenzy","from":"Champion"},
- {"id":"su_tiger","n":"Tiger Cannon","max":10,"type":"act","col":"#ff9b4f","cd":4.5,"hits":1,"power":3.9,"shape":"radial","icon":"beast","visual":"fireburst","text":"A tiger of pure force bursts around the Sura and gathers a Spirit Sphere.","fx":"rk_burst","from":"Sura","castGain":{"key":"sphere","max":5,"life":20}},
+ {"id":"ch_zen","n":"Zen","max":5,"type":"buff","col":"#ff9b4f","cd":10,"key":"damage","rate":4,"duration":5,"icon":"skin","text":"Zen: gather five Spirit Spheres in an instant and hit harder for 5 seconds.","fx":"frenzy","from":"Champion","fill":{"key":"sphere","n":5,"max":5,"life":20}},
+ {"id":"su_tiger","n":"Tiger Cannon","max":10,"type":"act","col":"#ff9b4f","cd":4.5,"hits":1,"power":5.2,"shape":"radial","icon":"beast","visual":"fireburst","text":"Tiger Cannon: a roar of force around you. Gains a Spirit Sphere.","fx":"rk_burst","from":"Sura","castGain":{"key":"sphere","max":5,"life":20}},
  {"id":"su_rampage","n":"Rampage Blaster","max":10,"type":"act","col":"#ff9b4f","cd":3.5,"hits":2,"power":3.3,"shape":"splash","icon":"wperf","visual":"detonate","text":"Fire concentrated spirit blasts at a group.","fx":"mbrk","from":"Sura"},
  {"id":"su_gate","n":"Gates of Hell","max":10,"type":"act","col":"#ff9b4f","cd":5,"hits":5,"power":3.8,"shape":"single","icon":"mbrk","visual":"burst","text":"Gates of Hell: five strikes that hit far harder against a wounded enemy.","execute":0.15,"fx":"spiral","from":"Sura"},
  {"id":"su_sky","n":"Sky Net Blow","max":10,"type":"act","col":"#ff9b4f","cd":3,"hits":1,"power":2.6,"shape":"radial","icon":"bowl","visual":"spin","text":"A spinning kick that strikes every enemy around the caster.","fx":"bowl","from":"Sura"},
- {"id":"su_rising","n":"Rising Dragon","max":10,"type":"buff","col":"#ff9b4f","cd":12,"key":"damage","rate":3,"duration":6,"icon":"aura","text":"Open the dragon gates for a short burst of increased damage.","fx":"aura","from":"Sura"},
+ {"id":"su_rising","n":"Rising Dragon","max":10,"type":"buff","col":"#ff9b4f","cd":12,"key":"damage","rate":3,"duration":6,"icon":"aura","text":"Rising Dragon: fill your Spirit Spheres and hit harder for 6 seconds.","fx":"aura","from":"Sura","fill":{"key":"sphere","n":5,"max":5,"life":20}},
  {"id":"su_knuckle","n":"Knuckle Arrow","max":10,"type":"act","col":"#ff9b4f","cd":12,"hits":1,"power":4,"shape":"single","icon":"spiral","visual":"burst","text":"Close the distance and drive a single shattering punch through one enemy.","fx":"spiral","from":"Sura","ascensionOnly":true},
  {"id":"ro_strip","n":"Divest Armor","max":10,"type":"act","col":"#9470b5","cd":4,"hits":1,"power":1.6,"shape":"single","icon":"env","visual":"cuts","text":"Expose an enemy's weak point. Your next three direct hits within 3 seconds deal 10% more damage.","mark":0.1,"fx":"env","from":"Rogue"},
- {"id":"ro_back","n":"Backstab","max":10,"type":"act","col":"#9470b5","cd":2.5,"hits":1,"power":2.1,"shape":"single","icon":"dbl","visual":"cuts","text":"Strike from the shadows for heavy damage.","fx":"env","from":"Rogue"},
+ {"id":"ro_back","n":"Backstab","max":10,"type":"act","col":"#9470b5","cd":2.5,"hits":1,"power":3.0,"shape":"single","icon":"dbl","visual":"cuts","text":"Backstab: slip behind the target for one heavy blow.","fx":"env","from":"Rogue","core":true},
  {"id":"ro_raid","n":"Sightless Mind","max":10,"type":"act","col":"#9470b5","cd":4,"hits":1,"power":2.0,"shape":"radial","icon":"sandat","visual":"spin","text":"Burst from hiding and cut every enemy around you.","fx":"mAss","from":"Rogue"},
  {"id":"ro_sword","n":"Sword Mastery","max":10,"type":"pas","col":"#9470b5","key":"atk","rate":2,"icon":"katm","text":"Increase weapon attack.","from":"Rogue"},
  {"id":"ro_snatch","n":"Snatcher","max":5,"type":"pas","col":"#9470b5","key":"zeny","rate":4,"icon":"steal","text":"Lift extra Zeny from defeated enemies.","from":"Rogue"},
- {"id":"st_plag","n":"Plagiarism","max":10,"type":"buff","col":"#b088d4","cd":12,"key":"damage","rate":1.8,"duration":6,"icon":"soulb","text":"Mimic combat techniques for a short burst of increased damage.","fx":"dpois","from":"Stalker"},
+ {"id":"st_plag","n":"Plagiarism","max":10,"type":"buff","col":"#b088d4","cd":12,"key":"damage","rate":1.0,"duration":6,"icon":"soulb","text":"Plagiarism. For 6 seconds each skill you use may be copied and used again at 70% power.","fx":"dpois","from":"Stalker","autocast":{"on":"cast","same":true,"chance":0.35,"power":0.7}},
  {"id":"st_full","n":"Full Divestment","max":10,"type":"act","col":"#b088d4","cd":4,"hits":1,"power":3.4,"shape":"single","icon":"vdust","visual":"cross","text":"Strip an enemy bare. Your next three direct hits within 3 seconds deal 10% more damage.","mark":0.1,"markHits":3,"fx":"vdust","from":"Stalker"},
  {"id":"st_stalk","n":"Stalk","max":10,"type":"buff","col":"#b088d4","cd":12,"key":"move","rate":1,"duration":12,"icon":"wwalk","text":"Move unseen and unhurried: increased movement speed.","fx":"wwalk","from":"Stalker"},
  {"id":"st_counter","n":"Counter Instinct","max":5,"type":"act","col":"#b088d4","cd":2,"hits":1,"power":1.6,"shape":"single","icon":"spearboom","visual":"cuts","text":"A quick riposte. Deals 20% more damage if you were hit within the last 2 seconds.","counter":true,"fx":"spearboom","from":"Stalker"},
  {"id":"st_pres","n":"Preserve","max":10,"type":"pas","col":"#b088d4","key":"damage","rate":1.5,"icon":"sdestroy","text":"Keep your best techniques sharp, increasing all damage.","from":"Stalker"},
- {"id":"sc_tri","n":"Triangle Shot","max":10,"type":"act","col":"#9470b5","cd":3,"hits":3,"power":3.4,"shape":"single","rng":6,"icon":"dstr","visual":"wave","text":"Fire three rapid shots in a triangle formation.","fx":"dstr","from":"Shadow Chaser"},
+ {"id":"sc_tri","n":"Triangle Shot","max":10,"type":"act","col":"#9470b5","cd":3,"hits":3,"power":4.6,"shape":"single","rng":6,"icon":"dstr","visual":"wave","text":"Triangle Shot: three arrows loosed at once from the bow.","fx":"dstr","from":"Shadow Chaser","core":true},
  {"id":"sc_fatal","n":"Fatal Menace","max":10,"type":"act","col":"#9470b5","cd":4.5,"hits":1,"power":3.6,"shape":"radial","icon":"mAss","visual":"spin","text":"Slash all enemies surrounding the caster.","fx":"mAss","from":"Shadow Chaser"},
  {"id":"sc_feint","n":"Feint Bomb","max":10,"type":"act","col":"#9470b5","cd":4,"hits":1,"power":3.2,"shape":"splash","icon":"landmine","visual":"bomb","text":"Leave a decoy that detonates over the target and nearby enemies.","fx":"landmine","from":"Shadow Chaser"},
  {"id":"sc_masq","n":"Masquerade","max":10,"type":"act","col":"#9470b5","cd":5,"hits":1,"power":2.4,"shape":"single","icon":"dpois","visual":"burst","text":"A weakening touch that slows one enemy.","slow":0.3,"fx":"sdestroy","from":"Shadow Chaser"},
- {"id":"sc_auto","n":"Autoshadow Spell","max":10,"type":"buff","col":"#9470b5","cd":12,"key":"speed","rate":2,"duration":12,"icon":"sonic","text":"Let your shadow strike with you, increasing attack speed.","fx":"iagi","from":"Shadow Chaser"},
+ {"id":"sc_auto","n":"Autoshadow Spell","max":10,"type":"buff","col":"#9470b5","cd":12,"key":"speed","rate":2,"duration":12,"icon":"sonic","text":"Auto Shadow Spell. For 12 seconds you attack faster, and attacks and skills can release a stolen bolt: Fire, Cold or Lightning.","fx":"iagi","from":"Shadow Chaser","autocast":{"on":"both","chance":0.45,"pool":[{"as":"fire","n":"Fire Bolt","hits":3,"power":1.4},{"as":"nap","n":"Lightning Bolt","hits":3,"power":1.4},{"as":"fdiver","n":"Cold Bolt","hits":3,"power":1.4}]}},
  {"id":"sc_spell","n":"Shadow Spell","max":10,"type":"act","col":"#b08ae0","cd":12,"hits":3,"power":4,"shape":"single","icon":"soulb","visual":"cross","text":"Release a stolen spell through the blade in three rapid strikes.","fx":"soulb","from":"Shadow Chaser","ascensionOnly":true},
  {"id":"bd_bragi","n":"Poem of Bragi","max":10,"type":"buff","col":"#70b8ff","cd":12,"key":"speed","rate":1.5,"duration":12,"tree":"bard","icon":"gloria","text":"Bard Tree: Accelerate attack and cast rhythm.","fx":"gloria","from":"Bard & Dancer"},
  {"id":"bd_music","n":"Musical Strike","max":10,"type":"act","col":"#70b8ff","cd":2.5,"hits":1,"power":2.0,"shape":"single","rng":6,"tree":"bard","icon":"sharp","visual":"wave","text":"Bard Tree: Fire a resonant arrow from your instrument.","fx":"sharp","from":"Bard & Dancer"},
  {"id":"dn_service","n":"Service For You","max":10,"type":"buff","col":"#ff80b3","cd":12,"key":"critical","rate":1.2,"duration":12,"tree":"dancer","icon":"bless","text":"Dancer Tree: Boost critical strike chance.","fx":"bless","from":"Bard & Dancer"},
- {"id":"dn_sling","n":"Slinging Arrow","max":10,"type":"act","col":"#ff80b3","cd":2.5,"hits":1,"power":2.0,"shape":"single","rng":6,"tree":"dancer","icon":"iconc","visual":"wave","text":"Dancer Tree: Snap a whip-launched arrow at the target.","fx":"dstr","from":"Bard & Dancer"},
+ {"id":"dn_sling","n":"Slinging Arrow","max":10,"type":"act","col":"#ff80b3","cd":2.5,"hits":1,"power":2.0,"shape":"single","rng":6,"tree":"dancer","icon":"iconc","visual":"wave","text":"Dancer Tree: Snap a whip-launched arrow at the target.","fx":"dstr","from":"Bard & Dancer","core":true},
  {"id":"bd_lesson","n":"Music & Dance Lessons","max":5,"type":"pas","col":"#ff80b3","key":"atk","rate":2,"icon":"owl","text":"Practice with instrument and whip increases weapon attack.","from":"Bard & Dancer"},
- {"id":"bd_vulcan","n":"Arrow Vulcan","max":10,"type":"act","col":"#ff80b3","cd":3.5,"hits":5,"power":3.8,"shape":"single","rng":6,"tree":"bard","icon":"focus","visual":"cuts","text":"Bard Tree: Unleash a rapid barrage of arrows.","fx":"focus","from":"Minstrel & Gypsy"},
+ {"id":"bd_vulcan","n":"Arrow Vulcan","max":10,"type":"act","col":"#ff80b3","cd":3.5,"hits":9,"power":5.0,"shape":"single","rng":6,"tree":"bard","icon":"focus","visual":"cuts","text":"Arrow Vulcan: nine arrows into one enemy.","fx":"focus","from":"Minstrel & Gypsy","core":true},
  {"id":"bd_song","n":"Song of Lutie","max":10,"type":"pas","col":"#ff80b3","key":"hpp","rate":2,"icon":"heal","text":"Bard Tree: A song of life raises maximum HP.","tree":"bard","from":"Minstrel & Gypsy"},
- {"id":"dn_tarot","n":"Tarot Card of Fate","max":10,"type":"act","col":"#ff80b3","cd":4,"hits":1,"power":3.4,"shape":"single","icon":"discount","visual":"judgment","text":"Dancer Tree: Draw a fateful card against one enemy, briefly stunning it.","rng":6,"stun":0.6,"tree":"dancer","fx":"kyrie","from":"Minstrel & Gypsy"},
+ {"id":"dn_tarot","n":"Tarot Card of Fate","max":10,"type":"act","col":"#ff80b3","cd":4,"hits":1,"power":3.4,"shape":"single","icon":"discount","visual":"judgment","text":"Tarot Card of Fate: draw one of fourteen cards against the enemy and stun it.","rng":6,"stun":0.6,"tree":"dancer","fx":"kyrie","from":"Minstrel & Gypsy"},
  {"id":"dn_hum","n":"Humming","max":10,"type":"pas","col":"#ff80b3","key":"atk","rate":2,"icon":"iconc","text":"Dancer Tree: Perfect timing increases weapon attack.","tree":"dancer","from":"Minstrel & Gypsy"},
  {"id":"bd_bliss","n":"Sheltering Bliss","max":5,"type":"buff","col":"#ff80b3","cd":12,"key":"guard","rate":1,"duration":12,"icon":"coat","text":"A duet that reduces incoming damage.","fx":"coat","from":"Minstrel & Gypsy"},
  {"id":"bd_metal","n":"Metallic Sound","max":10,"type":"act","col":"#70b8ff","cd":4,"hits":2,"power":3.6,"shape":"splash","rng":6,"tree":"bard","icon":"grim","visual":"detonate","text":"Bard Tree: Shatter enemies with a sonic wave.","fx":"napalm","from":"Maestro & Wanderer"},
- {"id":"dn_rain","n":"Severe Rainstorm","max":10,"type":"act","col":"#ff80b3","cd":5,"hits":4,"power":4.2,"shape":"splash","rng":6,"tree":"dancer","icon":"ashower","visual":"frost","text":"Dancer Tree: Rain down a storm of arrows over an area.","fx":"ashower","from":"Maestro & Wanderer"},
+ {"id":"dn_rain","n":"Severe Rainstorm","max":10,"type":"act","col":"#ff80b3","cd":5,"hits":8,"power":5.0,"shape":"splash","rng":6,"tree":"dancer","icon":"ashower","visual":"frost","text":"Severe Rainstorm: a storm of arrows over an area.","fx":"ashower","from":"Maestro & Wanderer","core":true},
  {"id":"dn_swing","n":"Swing Dance","max":10,"type":"buff","col":"#ff80b3","cd":12,"key":"move","rate":1,"duration":12,"tree":"dancer","icon":"wwalk","text":"Dancer Tree: Quicken your footwork, raising movement speed.","fx":"wwalk","from":"Maestro & Wanderer"},
  {"id":"bd_reverb","n":"Reverberation","max":10,"type":"act","col":"#ff80b3","cd":3.5,"hits":2,"power":3.0,"shape":"splash","icon":"jup","visual":"detonate","text":"Bard Tree: A ringing note bursts over the target and nearby enemies.","rng":6,"tree":"bard","fx":"jup","from":"Maestro & Wanderer"},
  {"id":"bd_gloomy","n":"Gloomy Shyness","max":10,"type":"buff","col":"#ff80b3","cd":12,"key":"damage","rate":3,"duration":6,"icon":"frenzy","text":"A short, sullen burst of increased damage.","fx":"frenzy","from":"Maestro & Wanderer"},
@@ -1644,7 +1645,7 @@ const SKILLSX=[
  {"id":"nj_cicada","n":"Cicada Skin Shed","max":10,"type":"buff","col":"#6a6a8e","cd":12,"key":"block","rate":1.2,"duration":12,"icon":"dodge","text":"Chance to slip incoming hits behind a shadow decoy.","fx":"wwalk","from":"Ninja"},
  {"id":"nj_kunai","n":"Throw Kunai","max":10,"type":"act","col":"#8a8ab8","cd":2,"hits":3,"power":2.4,"shape":"single","rng":6,"icon":"sonic","visual":"cuts","text":"Hurl three kunai at a distant target.","fx":"sonic","from":"Ninja"},
  {"id":"nj_blaze","n":"Crimson Fire Blossom","max":10,"type":"act","col":"#ff6a3d","cd":4,"hits":3,"power":3.4,"shape":"splash","rng":6,"icon":"fire","visual":"fireburst","text":"Summon explosive fire petals around the target.","fx":"fireball","from":"Ninja"},
- {"id":"nj_final","n":"Final Strike","max":10,"type":"act","col":"#8a8ab8","cd":6,"hits":1,"power":4.5,"shape":"single","icon":"sdestroy","visual":"burst","text":"Killing Strike: one all-or-nothing blow, 25% stronger against an enemy below 30% HP.","fx":"sdestroy","from":"Ninja","execute":0.25},
+ {"id":"nj_final","n":"Final Strike","max":10,"type":"act","col":"#8a8ab8","cd":8,"hits":1,"power":9,"shape":"single","icon":"sdestroy","visual":"burst","text":"Final Strike: stake everything on one cut. 25% stronger on a weakened enemy and 30% stronger against bosses.","fx":"sdestroy","from":"Ninja","execute":0.25,"core":true,"bossPower":0.3},
  {"id":"nj_dagger","n":"Dagger Throwing Practice","max":5,"type":"pas","col":"#8a8ab8","key":"atk","rate":2,"icon":"dbl","text":"Increase weapon attack.","from":"Ninja"},
  {"id":"nj_huuma","n":"Throw Huuma Shuriken","max":5,"type":"act","col":"#8a8ab8","cd":4,"hits":3,"power":3.0,"shape":"splash","rng":6,"icon":"sonic","visual":"spin","text":"Hurl a giant shuriken that cuts through every enemy around the target.","fx":"sonic","from":"Ninja"},
  {"id":"nj_spear","n":"Freezing Spear","max":5,"type":"act","col":"#8fd0ff","cd":3.5,"hits":5,"power":3.2,"shape":"single","rng":6,"slow":0.3,"icon":"storm","visual":"frost","text":"Five spears of ice pierce one enemy and slow it.","fx":"wl_frost","from":"Ninja"},
@@ -1652,25 +1653,25 @@ const SKILLSX=[
  {"id":"nj_mastery","n":"Ninja Mastery","max":5,"type":"pas","col":"#8a8ab8","key":"damage","rate":2,"icon":"iagi","text":"Ninja training raises the damage of every skill.","from":"Ninja"},
  {"id":"gs_coin","n":"Madness Canceller","max":10,"type":"buff","col":"#d49a6a","cd":12,"key":"atk","rate":2.2,"duration":12,"icon":"frenzy","text":"Steady your aim, raising attack power.","fx":"frenzy","from":"Gunslinger"},
  {"id":"gs_rapid","n":"Rapid Shower","max":10,"type":"act","col":"#d49a6a","cd":2.5,"hits":5,"power":3.0,"shape":"single","rng":6,"icon":"mc_gat","visual":"gatling","text":"Rapid Shower: five quick revolver shots. Flips one Coin (max 10).","fx":"mc_gat","from":"Gunslinger","castGain":{"key":"coin","max":10,"life":20}},
- {"id":"gs_desp","n":"Desperado","max":10,"type":"act","col":"#d49a6a","cd":4,"hits":4,"power":3.6,"shape":"radial","icon":"landmine","visual":"spin","text":"Spin and fire in all directions around the caster.","fx":"mc_rocket","from":"Gunslinger"},
- {"id":"gs_track","n":"Tracking","max":10,"type":"act","col":"#ffd080","cd":5,"hits":1,"power":4.4,"shape":"single","rng":7,"icon":"vult","visual":"cannon","text":"Tracking: take careful aim for one heavy shot. Spends every Coin for +8% damage each.","fx":"mc_over","from":"Gunslinger","spend":{"key":"coin","per":0.08}},
+ {"id":"gs_desp","n":"Desperado","max":10,"type":"act","col":"#d49a6a","cd":4,"hits":4,"power":4.2,"shape":"radial","icon":"landmine","visual":"spin","text":"Desperado: empty both revolvers in every direction.","fx":"mc_rocket","from":"Gunslinger"},
+ {"id":"gs_track","n":"Tracking","max":10,"type":"act","col":"#ffd080","cd":5,"hits":1,"power":6.0,"shape":"single","rng":7,"icon":"vult","visual":"cannon","text":"Tracking: take aim for one devastating shot. Spends every coin: +12% damage each.","fx":"mc_over","from":"Gunslinger","spend":{"key":"coin","per":0.12},"core":true},
  {"id":"gs_snake","n":"Snake Eye","max":5,"type":"pas","col":"#d49a6a","key":"range","rate":0.05,"icon":"sight","text":"A marksman's eye extends attack range.","from":"Gunslinger"},
  {"id":"gs_triple","n":"Triple Action","max":5,"type":"act","col":"#d49a6a","cd":2,"hits":3,"power":2.4,"shape":"single","rng":6,"castGain":{"key":"coin","max":10,"life":20},"icon":"dstr","visual":"gatling","text":"Three shots in one motion. Flips one Coin.","fx":"mc_gat","from":"Gunslinger"},
  {"id":"gs_bull","n":"Bull's Eye","max":5,"type":"act","col":"#d49a6a","cd":4,"hits":1,"power":3.0,"shape":"single","rng":7,"stun":0.5,"icon":"focus","visual":"cannon","text":"A shot to a weak point that stuns the enemy.","fx":"mc_over","from":"Gunslinger"},
  {"id":"gs_fling","n":"Fling","max":5,"type":"act","col":"#d49a6a","cd":5,"hits":1,"power":1.8,"shape":"single","rng":6,"mark":0.12,"icon":"vult","visual":"wave","text":"Throw a Coin that cracks the enemy's guard: the next three skills on it hit 12% harder.","fx":"dstr","from":"Gunslinger"},
- {"id":"gs_chain","n":"Chain Action","max":5,"type":"pas","col":"#d49a6a","key":"damage","rate":2,"icon":"iagi","text":"A second handgun follows every shot, raising skill damage.","from":"Gunslinger"},
+ {"id":"gs_chain","n":"Chain Action","max":5,"type":"pas","col":"#d49a6a","key":"damage","rate":1,"icon":"iagi","text":"Chain Action: attacks and skills can fire a second pair of shots. Also raises damage.","from":"Gunslinger","autocast":{"on":"both","chance":0.3,"pool":[{"as":"gs_triple","n":"Chain Action","hits":2,"power":1.2}]}},
  {"id":"ko_cross","n":"Cross Slash","max":10,"type":"act","col":"#8a7ac0","cd":3,"hits":2,"power":3.4,"shape":"single","icon":"sdestroy","visual":"cross","text":"Two crossing cuts leave a wound: the next three skills on that enemy hit 10% harder.","fx":"sdestroy","from":"Kagerou & Oboro","mark":0.1},
- {"id":"ko_kunai","n":"Kunai Explosion","max":10,"type":"act","col":"#8a7ac0","cd":4,"hits":1,"power":3.6,"shape":"splash","rng":6,"icon":"landmine","visual":"bomb","text":"Throw an explosive kunai that bursts over the target and nearby enemies.","fx":"landmine","from":"Kagerou & Oboro"},
+ {"id":"ko_kunai","n":"Kunai Explosion","max":10,"type":"act","col":"#8a7ac0","cd":4,"hits":1,"power":4.6,"shape":"splash","rng":6,"icon":"landmine","visual":"bomb","text":"Kunai Explosion: explosive kunai burst around the target.","fx":"landmine","from":"Kagerou & Oboro","core":true},
  {"id":"ko_petal","n":"Swirling Petal","max":10,"type":"act","col":"#8a7ac0","cd":4.5,"hits":3,"power":3.8,"shape":"radial","icon":"mAss","visual":"spin","text":"Spin a giant shuriken around the caster, cutting every enemy in reach.","fx":"mAss","from":"Kagerou & Oboro"},
  {"id":"ko_huuma","n":"Huuma Shuriken Storm","max":10,"type":"act","col":"#8a7ac0","cd":5,"hits":3,"power":4.2,"shape":"splash","rng":6,"icon":"sonic","visual":"cuts","text":"Hurl a huuma shuriken that tears through the target and those beside it.","fx":"sonic","from":"Kagerou & Oboro"},
  {"id":"ko_izayoi","n":"16th Night","max":10,"type":"buff","col":"#8a7ac0","cd":12,"key":"atk","rate":2.2,"duration":12,"icon":"frenzy","text":"Draw on the moon's power, raising attack.","fx":"frenzy","from":"Kagerou & Oboro"},
  {"id":"ko_soul","n":"Soul Cutter","max":5,"type":"act","col":"#8a7ac0","cd":4,"hits":1,"power":3.6,"shape":"single","execute":0.2,"icon":"soulb","visual":"burst","text":"A blade through the soul. Far stronger against a wounded enemy.","fx":"soulb","from":"Kagerou & Oboro"},
- {"id":"ko_shadow","n":"Shadow Warrior","max":5,"type":"buff","col":"#8a7ac0","cd":12,"key":"critical","rate":3,"duration":12,"icon":"katm","text":"A shadow double fights at your side, raising critical chance.","fx":"wwalk","from":"Kagerou & Oboro"},
+ {"id":"ko_shadow","n":"Shadow Warrior","max":5,"type":"buff","col":"#8a7ac0","cd":12,"key":"critical","rate":2,"duration":12,"icon":"katm","text":"Shadow Warrior. For 12 seconds your shadow raises critical chance and may repeat each skill at half power.","fx":"wwalk","from":"Kagerou & Oboro","autocast":{"on":"cast","same":true,"chance":0.4,"power":0.5}},
  {"id":"ko_moon","n":"Moonlight Fantasy","max":10,"type":"act","col":"#b9a8f0","cd":12,"hits":3,"power":4,"shape":"single","icon":"soulb","visual":"cross","text":"Three strikes delivered from inside a moonlit illusion.","fx":"soulb","ascensionOnly":true,"from":"Kagerou & Oboro"},
  {"id":"rb_fire","n":"Fire Dance","max":10,"type":"act","col":"#e0a070","cd":3,"hits":5,"power":3.6,"shape":"radial","icon":"landmine","visual":"spin","text":"Fire Dance: spin with both revolvers and hit everything around. Flips one Coin.","fx":"mc_rocket","from":"Rebellion","castGain":{"key":"coin","max":10,"life":20}},
  {"id":"rb_round","n":"Round Trip","max":10,"type":"act","col":"#e0a070","cd":4,"hits":4,"power":3.8,"shape":"splash","rng":6,"icon":"mc_gat","visual":"gatling","text":"Sweep a gatling burst across the target and nearby enemies.","fx":"mc_gat","from":"Rebellion"},
  {"id":"rb_dragon","n":"Dragon Tail","max":10,"type":"act","col":"#e0a070","cd":4.5,"hits":3,"power":4,"shape":"splash","rng":7,"icon":"landmine","visual":"bomb","text":"Launch guided missiles that explode over the target.","fx":"mc_rocket","from":"Rebellion"},
- {"id":"rb_slug","n":"Slug Shot","max":10,"type":"act","col":"#ffd080","cd":5,"hits":1,"power":4.8,"shape":"single","rng":7,"icon":"vult","visual":"cannon","text":"Slug Shot: one massive round. Spends every Coin for +8% damage each.","fx":"mc_over","from":"Rebellion","spend":{"key":"coin","per":0.08}},
+ {"id":"rb_slug","n":"Slug Shot","max":10,"type":"act","col":"#ffd080","cd":5,"hits":1,"power":6.5,"shape":"single","rng":7,"icon":"vult","visual":"cannon","text":"Slug Shot: one massive slug. Spends every coin: +12% damage each. 30% stronger against bosses.","fx":"mc_over","from":"Rebellion","spend":{"key":"coin","per":0.12},"core":true,"bossPower":0.3},
  {"id":"rb_heat","n":"Heat Barrel","max":10,"type":"buff","col":"#e0a070","cd":12,"key":"speed","rate":2,"duration":12,"icon":"sonic","text":"Overheat the barrel, increasing attack speed.","fx":"iagi","from":"Rebellion"},
  {"id":"rb_crimson","n":"Crimson Marker","max":5,"type":"act","col":"#e0a070","cd":5,"hits":1,"power":2.0,"shape":"single","rng":7,"mark":0.15,"markHits":4,"icon":"vult","visual":"wave","text":"Mark an enemy: the next four skills on it hit 15% harder.","fx":"dstr","from":"Rebellion"},
  {"id":"rb_platinum","n":"Platinum Alter","max":5,"type":"buff","col":"#e0a070","cd":14,"key":"damage","rate":4,"duration":8,"icon":"iagi","text":"Load platinum rounds: every skill hits harder for 8 seconds.","fx":"aura","from":"Rebellion"},
@@ -1692,6 +1693,36 @@ for(const s of SKILLS){
   const describe=s.d;s.d=L=>describe(L)+(s.training?' Training: '+Object.entries(s.training).map(([key,rate])=>'+'+(rate*L).toFixed(1)+' '+key.toUpperCase()+(key==='def'?'':'%')).join(', ')+'.':'');
 }
 
+// haven-v412: signature skills, autocast and suggested combos for the expanded roster.
+// core: the class's signature attack (badge in the tree, a shout when it lands).
+// autocast: a buff or passive that fires a bonus skill off a normal attack and/or a combo cast.
+//   pool - cast one of these at random; each borrows the look of the shipped skill named by `as`
+//          and is ranked by the source skill, so it needs no points of its own.
+//   same - repeat the skill that was just cast at `power`.
+for(const s of SKILLS)if(s.core&&!s.text.startsWith('★'))s.text='★ Signature skill. '+s.text;
+const AUTOCAST_SOURCES=SKILLS.filter(s=>s.autocast);
+for(const src of AUTOCAST_SOURCES)src.autocast.casts=(src.autocast.pool||[]).map(e=>{const base=SKILLS.find(x=>x.id===e.as);if(!base)return null;
+  const c={id:base.id,n:e.n||base.n,col:e.col||base.col,type:'act',hits:e.hits||1,power:e.power||1,shape:'single',max:src.max,rankOf:src.id,magic:src.magic,rng:6,aoe:false,cls:src.cls,from:src.from,autocastChild:true};
+  c.mul=L=>c.power*(.55+.45*Math.min(c.max,L)/c.max);return c}).filter(Boolean);
+// The combo Auto-fill builds for an expanded class: setup first, the signature finisher last.
+const COMBO_PLAN={
+  'Crusader':['cr_shboom','cr_holyx','cr_grand'],'Paladin':['cr_shboom','pa_press','cr_holyx','pa_chain','cr_grand'],
+  'Royal Guard':['rg_vanish','rg_cannon','pa_chain','rg_earth','rg_genesis','rg_over','cr_grand'],
+  'Sage':['sa_dispel','sa_earth','sa_bolt'],'Scholar':['sa_dispel','sc_web','sc_fog','sa_earth','sc_mind','sa_bolt'],
+  'Sorcerer':['sa_dispel','so_diamond','so_grave','so_varetyr','so_buster','sa_bolt','so_psychic'],
+  'Alchemist':['al_acid','al_flora','al_bomb'],'Biochemist':['al_acid','al_flora','bi_plant','al_bomb','bi_bio','bi_demo'],
+  'Geneticist':['al_flora','ge_fire','ge_weed','ge_spore','ge_hell','ge_cart','bi_demo'],
+  'Monk':['mo_triple','mo_chain','ch_asura'],'Champion':['mo_triple','mo_chain','ch_glacier','ch_palm','ch_crush','ch_asura'],
+  'Sura':['mo_triple','mo_chain','ch_crush','su_tiger','su_gate','ch_asura'],
+  'Rogue':['ro_strip','ro_raid','ro_back'],'Stalker':['st_full','ro_raid','st_counter','ro_back'],
+  'Shadow Chaser':['st_full','sc_masq','sc_feint','sc_fatal','sc_spell','sc_tri'],
+  'Bard & Dancer':['bd_music','dn_sling'],'Minstrel & Gypsy':['bd_music','dn_sling','dn_tarot','bd_vulcan'],
+  'Maestro & Wanderer':['dn_tarot','bd_reverb','bd_metal','mw_echo','bd_vulcan','dn_rain'],
+  'Ninja':['nj_slash','nj_kunai','nj_spear','nj_blaze','nj_huuma','nj_final'],
+  'Kagerou & Oboro':['ko_cross','ko_kunai','ko_petal','ko_huuma','ko_moon','ko_soul','nj_final'],
+  'Gunslinger':['gs_fling','gs_triple','gs_rapid','gs_bull','gs_desp','gs_track'],
+  'Rebellion':['rb_crimson','gs_triple','rb_fire','rb_round','rb_dragon','rb_god','rb_slug']};
+const STACK_LABEL={sphere:'Sphere',coin:'Coin'};
 // Ground spells retain a declared total cast budget; radius growth never multiplies power.
 const GROUND_SKILLS={
   amp:{duration:5,interval:1,cooldown:12,budget:1.4},
@@ -5261,6 +5292,13 @@ const skOff=id=>!!(S.skOff&&S.skOff[id]),skillOn=id=>lv(id)>0&&SKILLS.find(s=>s.
 // Saved combos belong to a class, and only accept attacks inherited by that class.
 function comboRole(sk){return sk.mark||sk.follow||sk.blind?'Opener':sk.execute||sk.death||sk.power>=3?'Finisher':sk.pulse||sk.root||sk.pull||sk.dot?'Setup':'Attack';}
 function suggestedCombo(){const attacks=SKILLS.filter(s=>s.type==='act'&&lv(s.id)>0&&s.cls.includes(S.cls));
+  // haven-v412: an expanded class follows its plan; older-job skills only fill empty slots, in front.
+  const plan=typeof COMBO_PLAN!=='undefined'&&COMBO_PLAN[S.cls];
+  if(plan){const own=plan.map(id=>attacks.find(s=>s.id===id)).filter(Boolean);
+    // more plan skills than slots: keep the first five and the signature finisher
+    const chosen=own.length>6?own.slice(0,5).concat(own[own.findLastIndex(s=>s.core)]||own[5]):own,fill=[];
+    for(const from of lineOf(S.cls).slice().reverse())for(const sk of attacks.filter(s=>s.from===from))if(chosen.length+fill.length<6&&!chosen.includes(sk)&&!fill.includes(sk)&&!sk.requiresStack)fill.push(sk);
+    if(chosen.length)return [...fill,...chosen].slice(0,6).map(s=>s.id);}
   const opener=attacks.find(s=>s.mark||s.follow||s.blind),picked=opener?[opener]:[];
   // Keep an inherited opener, then mix the newest attacks with the previous job's tools.
   for(const from of lineOf(S.cls).slice().reverse())for(const sk of attacks.filter(s=>s.from===from).slice(0,FOURTH_JOBS_LIVE&&CLASSES[from]?.tier===4?5:2))if(!picked.includes(sk))picked.push(sk);
@@ -6123,178 +6161,139 @@ const SKILL_TUNING={
  // the rest 97%. Budgets and the fit targets are recorded in tools/tests/fixtures/expanded_skill_budget.json.
  "Crusader": {
   "single": [
-   1.465,
-   1.465,
-   1.465
+   1.2379,
+   1.2379,
+   1.2379
   ],
   "area": [
-   0.244,
-   0.244,
-   0.244
+   0.348,
+   0.348,
+   0.348
   ],
   "companion": 1
  },
  "Paladin": {
   "single": [
-   3.253,
-   3.253,
-   3.253
+   1.6925,
+   1.6925,
+   1.6925
   ],
   "area": [
-   0.2,
-   0.2,
-   0.2
+   0.7123,
+   0.7123,
+   0.7123
   ],
   "companion": 1
  },
  "Royal Guard": {
   "single": [
-   1.179,
-   1.179,
-   1.179
+   0.65,
+   0.65,
+   0.65
   ],
   "area": [
-   0.762,
-   0.762,
-   0.762
+   1.3021,
+   1.3021,
+   1.3021
   ],
   "companion": 1
  },
  "Sage": {
   "single": [
-   1.619,
-   1.619,
-   1.619
+   1.1237,
+   1.1237,
+   1.1237
   ],
   "area": [
-   1.474,
-   1.474,
-   1.474
+   2.4081,
+   2.4081,
+   2.4081
   ],
   "companion": 1
  },
  "Scholar": {
   "single": [
-   1.649,
-   1.649,
-   1.649
+   1.0124,
+   1.0124,
+   1.0124
   ],
   "area": [
-   0.795,
-   0.795,
-   0.795
+   0.8344,
+   0.8344,
+   0.8344
   ],
   "companion": 1
  },
  "Sorcerer": {
   "single": [
-   0.74,
-   0.74,
-   0.74
+   0.38,
+   0.38,
+   0.38
   ],
   "area": [
-   1.213,
-   1.213,
-   1.213
+   2.1338,
+   2.1338,
+   2.1338
   ],
   "companion": 1
  },
  "Alchemist": {
   "single": [
-   2.9571,
-   2.9571,
-   2.9571
+   2.9791,
+   2.9791,
+   2.9791
   ],
   "area": [
-   0.4622,
-   0.4622,
-   0.4622
+   0.4119,
+   0.4119,
+   0.4119
   ],
   "companion": 1
  },
  "Biochemist": {
   "single": [
-   3.4333,
-   3.4333,
-   3.4333
+   2.887,
+   2.887,
+   2.887
   ],
   "area": [
-   1.2351,
-   1.2351,
-   1.2351
+   1.2549,
+   1.2549,
+   1.2549
   ],
   "companion": 1
  },
  "Geneticist": {
   "single": [
-   1.4954,
-   1.4954,
-   1.4954
+   1.3106,
+   1.3106,
+   1.3106
   ],
   "area": [
-   0.4112,
-   0.4112,
-   0.4112
+   0.4772,
+   0.4772,
+   0.4772
   ],
   "companion": 1
  },
  "Monk": {
   "single": [
-   1.5209,
-   1.5209,
-   1.5209
+   0.3654,
+   0.3654,
+   0.3654
   ],
   "area": [
-   0.8042,
-   0.8042,
-   0.8042
+   4.126,
+   4.126,
+   4.126
   ],
   "companion": 1
  },
  "Champion": {
   "single": [
-   3.7655,
-   3.7655,
-   3.7655
-  ],
-  "area": [
-   0.7969,
-   0.7969,
-   0.7969
-  ],
-  "companion": 1
- },
- "Sura": {
-  "single": [
-   1.1354,
-   1.1354,
-   1.1354
-  ],
-  "area": [
-   1.1073,
-   1.1073,
-   1.1073
-  ],
-  "companion": 1
- },
- "Rogue": {
-  "single": [
-   5.372,
-   5.372,
-   5.372
-  ],
-  "area": [
-   1.05,
-   1.05,
-   1.05
-  ],
-  "companion": 1
- },
- "Stalker": {
-  "single": [
-   6.979,
-   6.979,
-   6.979
+   0.896,
+   0.896,
+   0.896
   ],
   "area": [
    1,
@@ -6303,37 +6302,76 @@ const SKILL_TUNING={
   ],
   "companion": 1
  },
- "Shadow Chaser": {
+ "Sura": {
   "single": [
-   1.191,
-   1.191,
-   1.191
+   0.434,
+   0.434,
+   0.434
   ],
   "area": [
-   0.925,
-   0.925,
-   0.925
+   3.6689,
+   3.6689,
+   3.6689
+  ],
+  "companion": 1
+ },
+ "Rogue": {
+  "single": [
+   3.7896,
+   3.7896,
+   3.7896
+  ],
+  "area": [
+   1.4182,
+   1.4182,
+   1.4182
+  ],
+  "companion": 1
+ },
+ "Stalker": {
+  "single": [
+   5.0234,
+   5.0234,
+   5.0234
+  ],
+  "area": [
+   1.1896,
+   1.1896,
+   1.1896
+  ],
+  "companion": 1
+ },
+ "Shadow Chaser": {
+  "single": [
+   0.3395,
+   0.3395,
+   0.3395
+  ],
+  "area": [
+   2.4421,
+   2.4421,
+   2.4421
   ],
   "companion": 1
  },
  "Bard & Dancer": {
   "single": [
-   2.879,
-   2.879,
-   2.879
+   2.8185,
+   2.8185,
+   2.8185
   ],
   "area": [
-   1.489,
-   1.489,
-   1.489
+   1.3355,
+   1.3355,
+   1.3355
   ],
   "companion": 1
  },
  "Minstrel & Gypsy": {
   "single": [
-   3.161,
-   3.161,
-   3.161
+   3.1832,
+   3.1832,
+   3.1832
   ],
   "area": [
    0.2,
@@ -6344,61 +6382,61 @@ const SKILL_TUNING={
  },
  "Maestro & Wanderer": {
   "single": [
-   0.889,
-   0.889,
-   0.889
+   0.8216,
+   0.8216,
+   0.8216
   ],
   "area": [
-   0.656,
-   0.656,
-   0.656
+   0.6104,
+   0.6104,
+   0.6104
   ],
   "companion": 1
  },
  "Ninja": {
   "single": [
-   8.7285,
-   8.7285,
-   8.7285
+   6.6264,
+   6.6264,
+   6.6264
   ],
   "area": [
-   0.2,
-   0.2,
-   0.2
+   0.7875,
+   0.7875,
+   0.7875
   ],
   "companion": 1
  },
  "Kagerou & Oboro": {
   "single": [
-   1.7505,
-   1.7505,
-   1.7505
+   1.3958,
+   1.3958,
+   1.3958
   ],
   "area": [
-   0.3408,
-   0.3408,
-   0.3408
+   0.3888,
+   0.3888,
+   0.3888
   ],
   "companion": 1
  },
  "Rebellion": {
   "single": [
-   0.7668,
-   0.7668,
-   0.7668
+   0.4248,
+   0.4248,
+   0.4248
   ],
   "area": [
-   0.8141,
-   0.8141,
-   0.8141
+   1.5928,
+   1.5928,
+   1.5928
   ],
   "companion": 1
  },
  "Gunslinger": {
   "single": [
-   3.5283,
-   3.5283,
-   3.5283
+   2.52,
+   2.52,
+   2.52
   ],
   "area": [
    0.2,
@@ -6721,7 +6759,8 @@ function skillHit(target,raw,sk,proc=false){if(!target||target.hp<=0||!mobs.incl
 function castSkill(sk,k){
   sk=ascSkillVariant(sk);
   const target=mob;if(!target||target.hp<=0||!mobs.includes(target)||!skillStackReady(sk)||!fieldReady(sk))return;
-  const r=skillState(),L=lv(sk.id);if(sk.id==='gc_claw'){target.ascClaw={owner:S.cls,left:5,power:ascSkillValue(sk.id,'vulnerable')};playSkillFx(sk.id,target,sk.col);return;}skillDash(sk,target);if(!sk.field)playSkillFx(sk.id,target,sk.col);
+  const r=skillState(),L=lv(sk.rankOf||sk.id),fxId=sk.fxPool?sk.fxPool[Math.floor(Math.random()*sk.fxPool.length)]:sk.id;if(sk.id==='gc_claw'){target.ascClaw={owner:S.cls,left:5,power:ascSkillValue(sk.id,'vulnerable')};playSkillFx(sk.id,target,sk.col);return;}skillDash(sk,target);if(!sk.field)playSkillFx(fxId,target,sk.col);
+  if(sk.core&&!sk.autocastChild&&typeof addFloat==='function')addFloat(target.x,3.5+.4*(target.size||1),target.z,sk.n.toUpperCase()+'!',sk.col,true);
   const bonus=pv('damage')+(sk.falcon?pv('falcon'):0)+(['cart','cartrev','meltdown'].includes(sk.id)?Math.min(3,r.momentum)*pv('momentum'):0);
   // INT multiplies caster skills. Physical training is folded into rank coefficients
   // before interpolation so increasing an attack rank never lowers its damage.
@@ -6730,10 +6769,12 @@ function castSkill(sk,k){
   if(skillOn('iagi')&&aspd()<=.131)raw*=1+(r.buffs.iagi?r.buffs.iagi.value:0)/100;
   if(sk.execute&&target.hp/target.max<.3)raw*=1+sk.execute;
   if(sk.shatter&&target.skillMark&&target.skillMark.source==='wperf')raw*=1+sk.shatter;
+  if(sk.bossPower&&target.boss)raw*=1+sk.bossPower;
   if(sk.spend)raw*=1+sk.spend.per*takeSelfStacks(sk.spend.key);
   let tgtSpent=0;if(sk.tgtSpend){tgtSpent=takeTargetStacks(target,sk.tgtSpend.key);raw*=1+sk.tgtSpend.per*tgtSpent;}
   if(sk.absorb)startAbsorb(sk.absorb,L);
-  if(sk.castGain)addSelfStack(sk.castGain.key,sk.castGain.max,sk.castGain.life);
+  if(sk.castGain){addSelfStack(sk.castGain.key,sk.castGain.max,sk.castGain.life);const label=STACK_LABEL[sk.castGain.key];
+    if(label)addFloat(pl.x,3,pl.z,label+' '+r.stacks[sk.castGain.key].n+'/'+sk.castGain.max,'#9fd8ff');}
   if(sk.id==='mc_magma'){
     const token={},fieldRaw=raw;r.magma=token;const anchor={x:target.x,z:target.z,pack:target.pack};
     for(let i=1;i<=4;i++)skillQueue(i,()=>{if(r.magma!==token||activePack!==anchor.pack)return;for(const o of skillTargets(sk,anchor))skillHit(o,fieldRaw*.125,sk,true);});raw*=.5;
@@ -6757,8 +6798,10 @@ function castSkill(sk,k){
     if(sk.pull&&!o.boss&&!o.fixed&&!o.root){const dx=target.x-o.x,dz=target.z-o.z,d=Math.hypot(dx,dz);if(d>.5){const v=Math.min(sk.pull,d-.5);o.x+=dx/d*v;o.z+=dz/d*v;}}
   }
   if(sk.bounce&&dealt>0)bounceStrike(target,sk,raw);
+  // haven-v412: the shockwave of a signature blow (Asura Strike) - a fixed share to enemies beside the target.
+  if(sk.shock&&dealt>0)for(const o of mobs.slice())if(o!==target&&o.hp>0&&o.pack===target.pack&&Math.hypot(o.x-target.x,o.z-target.z)<=sk.shock.r)skillHit(o,raw*sk.shock.k,sk,true);
   if(pulse){const anchor={x:target.x,z:target.z,pack:target.pack},origin={x:pl.x,z:pl.z};
-    skillQueue(sk.delay||.5,()=>{if(activePack!==anchor.pack)return;for(const o of skillTargets(sk,anchor,origin))skillHit(o,raw*pulse*(o===target?1:.8*skillTuning(true,sk,L)/skillTuning(false,sk,L)),sk,true);playSkillFx(sk.id,anchor,sk.col);});}
+    skillQueue(sk.delay||.5,()=>{if(activePack!==anchor.pack)return;for(const o of skillTargets(sk,anchor,origin))skillHit(o,raw*pulse*(o===target?1:.8*skillTuning(true,sk,L)/skillTuning(false,sk,L)),sk,true);playSkillFx(fxId,anchor,sk.col);});}
   if(target.hp>0&&mobs.includes(target)){
     if(sk.mark)target.skillMark={owner:S.cls,source:sk.id,power:sk.mark,hits:sk.markHits||3,left:3,holy:sk.id==='kyrie'};
     if(death)target.deathmark={raw:raw*death,sk,hits:3,left:1.5,owner:S.cls};
@@ -6770,6 +6813,20 @@ function castSkill(sk,k){
   holyCastEcho(sk,target,raw);
   r.momentum=Math.min(3,r.momentum+1);r.lastHit=t;
 }
+// haven-v412: bonus casts from buffs and passives (Auto Spell, Double Casting, Chain Action...).
+// One roll per source per trigger; a bonus cast never triggers another one.
+function autocastProc(on,cast){const r=skillState();if(r.autocasting||!AUTOCAST_SOURCES.length)return;
+  for(const src of AUTOCAST_SOURCES){const a=src.autocast;if((a.on!=='both'&&a.on!==on)||!src.cls.includes(S.cls)||!skillOn(src.id))continue;
+    if(src.type==='buff'&&!r.buffs[src.id])continue;
+    if(!mob||mob.hp<=0||!mobs.includes(mob))return;
+    if(Math.random()>=a.chance*(.4+.6*lv(src.id)/src.max))continue;
+    let sk=null,k=1;
+    if(a.same){if(!cast||cast.field||cast.spend||cast.autocastChild)continue;sk=cast;k=a.power||.5;}
+    else if(a.casts.length)sk=a.casts[Math.floor(Math.random()*a.casts.length)];
+    if(!sk)continue;
+    r.autocasting=true;try{skillNameFloat(a.same?src.n:sk.n);castSkill(sk,k)}finally{r.autocasting=false}
+  }
+}
 function holyCastEcho(sk,target,raw){const r=skillState();
   if(pv('echo')&&sk.magic&&++r.echo>=4&&(r.echoCd||0)<=0){r.echo=0;r.echoCd=2;skillHit(target,raw*.04*pv('echo'),sk,true);playSkillFx('judex',target,'#fff3a0');}
 }
@@ -6780,6 +6837,7 @@ function tickCombatSkills(dt){const r=skillState();r.counter=Math.max(0,(r.count
     const duration=ascSkillValue(sk.id,'duration')+(sk.id==='dpois'?5+lv(sk.id):['ovthrust','thrust'].includes(sk.id)?8+2*Math.min(5,lv(sk.id)):sk.duration);
     if(sk.absorb)startAbsorb({...sk.absorb,pct:sk.absorb.pct+ascSkillValue(sk.id,'barrier')/100},lv(sk.id));
     r.buffs[sk.id]={key:sk.key,value:sk.f(lv(sk.id))+ascSkillValue(sk.id,'buff'),left:duration};skCd[sk.id]=ascCooldown(sk);
+    if(sk.fill){for(let i=0;i<sk.fill.n;i++)addSelfStack(sk.fill.key,sk.fill.max,sk.fill.life);addFloat(pl.x,3,pl.z,(STACK_LABEL[sk.fill.key]||sk.fill.key)+' '+sk.fill.max+'/'+sk.fill.max,'#9fd8ff');}
     if(sk.id==='ab_epiclesis'){r.regen={left:5,pool:maxHp()*ascSkillValue(sk.id,'regen')/100,rate:maxHp()*ascSkillValue(sk.id,'regen')/500};
       if(mob&&fieldReady({field:true,id:sk.id}))startSkillField({...sk,field:{duration:5,interval:1},shape:'splash',areaScale:1.25,magic:true},mob,matk()*.8*ascUpgradeScale('damage',ascRank(sk.id)),lv(sk.id));
     }playSkillFx(sk.id,null,sk.col);
@@ -6863,13 +6921,14 @@ function resolveSwing(s){
   if(s.casts.length){
     const c=s.casts[0];
     if(skillOn(c.sk.id)&&skillStackReady(c.sk)&&fieldReady(c.sk)&&r.comboSlots&&r.comboSlots[r.cursor]===c.sk.id&&mob.pack===s.pack&&Math.hypot(mob.x-pl.x,mob.z-pl.z)<=skillRange(c.sk,mob)+.6){
-      skCd[c.sk.id]=ascCooldown(c.sk);r.casts[c.sk.id]=t;r.nextCastAt=t+(c.sk.spacing||.5);r.repeatCount=(r.repeatCount||0)+1;if(r.repeatCount>=(c.sk.repeat||1)){r.cursor++;r.repeatCount=0;}skillNameFloat(c.sk.n);castSkill(c.sk,1);
+      skCd[c.sk.id]=ascCooldown(c.sk);r.casts[c.sk.id]=t;r.nextCastAt=t+(c.sk.spacing||.5);r.repeatCount=(r.repeatCount||0)+1;if(r.repeatCount>=(c.sk.repeat||1)){r.cursor++;r.repeatCount=0;}skillNameFloat(c.sk.n);castSkill(c.sk,1);autocastProc('cast',c.sk);
       if(r.cursor>=r.comboSlots.length)finishCombo(r);
     }
   }else if(!s.far){
     const boost=1+(skillBonus('weapon')+skillBonus('sacred')+skillBonus('damage'))/100;
     strike(boost,undefined,INT_CLASSES.includes(S.cls)||skillBonus('sacred')>0);shot();
     if(s.double){skillNameFloat('Twin Strike');if(mob&&mob.hp>0)strike(1)}
+    autocastProc('attack');
   }
   flushDamageGroup();
 }
@@ -12686,11 +12745,11 @@ const expandedPack={index:0,bodies:new Map()};
 function expandedRefresh(){heroKey='';if(typeof drawAppearancePreview==='function'){drawAppearancePreview();drawClassPreview()}}
 function requestExpandedBody(name){const PK=window.SPRITE_PACK,X=window.SPRITE_PACK_X;if(!PK||!name)return false;
   if(PK.bodies[name]&&packImg['b:'+name])return true;
-  if(!X){if(!expandedPack.index){expandedPack.index=1;const script=document.createElement('script');script.src='assets/sprite-pack-x/index.js?v=411';
+  if(!X){if(!expandedPack.index){expandedPack.index=1;const script=document.createElement('script');script.src='assets/sprite-pack-x/index.js?v=412';
     script.onload=()=>{expandedPack.index=2;expandedRefresh()};script.onerror=()=>{expandedPack.index=3;script.remove()};document.head.appendChild(script)}return false}
   const rec=X.bodies[name];if(!rec||expandedPack.bodies.has(name))return false;expandedPack.bodies.set(name,'loading');
   const img=new Image();img.onload=()=>{PK.bodies[name]={atlas:img.src,anchors:rec.anchors,cell:X.cell,pivotY:X.pivotY};packImg['b:'+name]=img;expandedPack.bodies.set(name,'ready');expandedRefresh()};
-  img.onerror=()=>expandedPack.bodies.set(name,'failed');img.src=X.dir+encodeURIComponent(rec.file)+'?v=411';return false}
+  img.onerror=()=>expandedPack.bodies.set(name,'failed');img.src=X.dir+encodeURIComponent(rec.file)+'?v=412';return false}
 function packBodyFor(cls,tier,sex){const PK=window.SPRITE_PACK;if(!PK)return null;
   const own=expandedBodyName(cls,sex||(typeof S!=='undefined'&&S&&S.sex)||'m');if(own&&requestExpandedBody(own))return own;
   const n=packBodyName(cls);if(!own&&PK.bodies&&PK.bodies[n])return n;
@@ -14366,7 +14425,10 @@ function playSkillFx(id,target,color){
 }
 function disposeSkillFx(fx){if(!fx||!fx.group)return;scene.remove(fx.group);fx.group.traverse(o=>{
   if(o.material)o.material.dispose();if(o.userData&&o.userData.skillFxOwnGeometry&&o.geometry)o.geometry.dispose()});fx.group=null}
-function tickSkillFx(dt){if(typeof PGSignatureFx!=='undefined')PGSignatureFx.tick(dt);for(let i=skillFx.length-1;i>=0;i--){const fx=skillFx[i];fx.age+=dt;if(fx.age>=fx.life||fx.field&&!skillState().fields.includes(fx.field)){disposeSkillFx(fx);skillFx.splice(i,1)}}}
+let signatureWarmCls='';
+function tickSkillFx(dt){if(typeof PGSignatureFx!=='undefined')PGSignatureFx.tick(dt);
+  // haven-v412: fetch the original-art flipbooks of the class being played, once per class.
+  if(typeof PGSignatureFx!=='undefined'&&S&&signatureWarmCls!==S.cls&&typeof EXPANDED_LINE!=='undefined'){signatureWarmCls=S.cls;if(EXPANDED_LINE.has(S.cls))PGSignatureFx.warm({THREE,ids:SKILLS.filter(s=>s.cls.includes(S.cls)).map(s=>s.id)})}for(let i=skillFx.length-1;i>=0;i--){const fx=skillFx[i];fx.age+=dt;if(fx.age>=fx.life||fx.field&&!skillState().fields.includes(fx.field)){disposeSkillFx(fx);skillFx.splice(i,1)}}}
 function syncSkillFx(){
   const ascended=FOURTH_JOBS_LIVE&&typeof S!=='undefined'&&S&&CLASSES[S.cls]?.tier===4;
   const fields=skillState().fields;
@@ -14833,20 +14895,20 @@ setInterval(updateWatch,60000);
 // be hours old while the player was on another tab, and the check is a 60-byte text file.
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&(pendingUpdateBuild||Date.now()-PAGE_STARTED_AT>30000))updateWatch()});
 </script>
-<script src="assets/wardrobe-ui.js?v=411"></script>
+<script src="assets/wardrobe-ui.js?v=412"></script>
 <script src="assets/shop.js?v=321"></script>
 <script src="assets/friends.js?v=273"></script>
-<script src="assets/digimon/roster.js?v=411"></script>
-<script src="assets/digimon/base-stats.js?v=411"></script>
-<script src="assets/social-rules.js?v=411"></script>
-<script src="assets/social-poker.js?v=411"></script>
-<script src="assets/digimon-sanctuary.js?v=411"></script>
+<script src="assets/digimon/roster.js?v=412"></script>
+<script src="assets/digimon/base-stats.js?v=412"></script>
+<script src="assets/social-rules.js?v=412"></script>
+<script src="assets/social-poker.js?v=412"></script>
+<script src="assets/digimon-sanctuary.js?v=412"></script>
 <script src="assets/digimon-battle.js?v=393"></script>
-<script src="assets/social-digimon.js?v=411"></script>
+<script src="assets/social-digimon.js?v=412"></script>
 <script src="assets/social-gym-redesign.js?v=393"></script>
 <script src="assets/social-pond-design.js?v=393"></script>
-<script src="assets/social-scene.js?v=411"></script>
-<script src="assets/social-fishing.js?v=411"></script>
-<script src="assets/plaza-bots.js?v=411"></script>
-<script src="assets/social.js?v=411"></script></body>
+<script src="assets/social-scene.js?v=412"></script>
+<script src="assets/social-fishing.js?v=412"></script>
+<script src="assets/plaza-bots.js?v=412"></script>
+<script src="assets/social.js?v=412"></script></body>
 </html>

@@ -38,7 +38,8 @@ for(const arg of process.argv.slice(2)){
     // dps_n = b_n + sK_n*(k-K) + sA_n*(a-A); solve both targets at once
     const sK=[(dk[0]-b[0])/(.5*K),(dk[1]-b[1])/(.5*K)],sA=[(da[0]-b[0])/(.5*A),(da[1]-b[1])/(.5*A)];
     const e=[goal[0]-b[0],goal[1]-b[1]],det=sK[0]*sA[1]-sK[1]*sA[0];
-    let nk=K,na=A;if(Math.abs(det)>1e-9){nk=K+(e[0]*sA[1]-e[1]*sA[0])/det;na=A+(sK[0]*e[1]-sK[1]*e[0])/det}
+    let nk=K,na=A;if(Math.abs(det)>1e-9&&Math.abs(sA[0])+Math.abs(sA[1])>1e-6){nk=K+(e[0]*sA[1]-e[1]*sA[0])/det;na=A+(sK[0]*e[1]-sK[1]*e[0])/det}
+    else if(Math.abs(sK[0])>1e-9)nk=K+e[0]/sK[0];   // no area skill: fit single target only
     K=clamp(nk,.2,15);A=clamp(na,.2,6);
     process.stderr.write(`${cls} round ${r}: ${(b[0]/goal[0]*target).toFixed(3)} / ${(b[1]/goal[1]*target).toFixed(3)} -> K ${K.toFixed(3)} A ${A.toFixed(3)}\n`);
   }

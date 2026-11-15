@@ -1,13 +1,18 @@
-/* Signature skill effects for the expanded roster (haven-v411).
-   Drawn on top of the shared skill effect, never instead of it: the kanji of Asura Strike, the
-   vines of Crazy Weed, the Alchemist's bottles and plants, Spirit Spheres, coins, shuriken and
-   revolver fire. Everything is painted on small canvases at first use; no image files.
+/* Signature skill effects for the expanded roster (haven-v411, original art added in v412).
+   Drawn on top of the shared skill effect, never instead of it.
+   Two sources of art:
+     * assets/ro-fx/ - original Ragnarok Online effects baked to flipbooks by tools/make_ro_fx.py
+       (the Asura Strike characters, Flash Combo, Desperado, Final Strike, Hammer of God...).
+       Used wherever the client has an effect for the skill. `book(key)` / FX.book / FX.stamp.
+     * PAINT - small canvases painted here, for skills the client has no stand-alone effect file
+       for (Crazy Weed, the plants, bottles, Spirit Spheres) and as the fallback while a flipbook
+       is still downloading.
    index.html calls PGSignatureFx.play(id, ctx) from playSkillFx and PGSignatureFx.tick(dt) from
    tickSkillFx. ctx = {THREE, scene, from:{x,z}, to:{x,z}, floor, unit, life}. */
 (function(root){
 'use strict';
 const TAU=Math.PI*2,rnd=(a,b)=>a+Math.random()*(b-a),ease=t=>1-Math.pow(1-Math.min(1,Math.max(0,t)),3);
-const live=[],textures=new Map();let T=null,scene=null;
+const live=[],textures=new Map(),books=new Map();let T=null,scene=null;
 const MAX=90;
 
 // ---- painters: each returns a canvas ---------------------------------------------------------
@@ -60,27 +65,57 @@ const PAINT={
    g.strokeStyle='#0c2a66';g.lineWidth=3;g.stroke()}),
  note:ch=>canvas(64,64,(g,w)=>{g.font='900 54px serif';g.textAlign='center';g.textBaseline='middle';g.lineWidth=7;g.strokeStyle='#2a1038';g.strokeText(ch,w/2,w/2);g.fillStyle='#ffd0f0';g.fillText(ch,w/2,w/2)})
 };
+// ---- original flipbooks ------------------------------------------------------------------------
+// A book is one atlas of n equal cells. Every sprite playing it needs its own texture offset, so
+// each takes a clone of the atlas texture from a small pool and hands it back when it ends.
+function book(key){const pack=root.RO_FX;if(!pack||!pack.books||!pack.books[key]||!T||!T.TextureLoader)return null;
+ let b=books.get(key);
+ if(!b){b={meta:pack.books[key],base:null,ready:false,pool:[]};books.set(key,b);
+  try{b.base=new T.TextureLoader().load(pack.dir+b.meta.file+'?v='+(pack.v||412),()=>{b.ready=true})}catch(e){}}
+ return b.ready?b:null}
+// Only the flipbooks a class can actually cast are downloaded: warm(ids) when the class is known,
+// and again per skill on its first cast.
+function warm(ids){const pack=root.RO_FX;if(!pack||!pack.books||!T)return;for(const id of ids||[])for(const step of MAP[id]||[]){const o=step[1]||{};if(o.book&&pack.books[o.book])book(o.book);if(step[0]==='coin'&&pack.books.coin)book('coin')}}
+function lease(b){let t=b.pool.pop();if(!t){t=b.base.clone();t.needsUpdate=true;t.magFilter=T.LinearFilter;t.minFilter=T.LinearFilter;t.generateMipmaps=false;t.repeat.set(1/b.meta.cols,1/b.meta.rows)}return t}
+function frame(t,m,i){i=Math.max(0,Math.min(m.n-1,i|0));t.offset.set((i%m.cols)/m.cols,1-(Math.floor(i/m.cols)+1)/m.rows)}
+// One sprite playing a book. opt: frame (hold one cell), loop, speed, glow, delay, order, life, centre.
+// update(p,k,h) places it; h is the book's natural height in world units (already scaled).
+function addBook(key,opt,update){const b=book(key);if(!b)return null;const m=b.meta;
+ if(live.length>=MAX)drop(live.shift());
+ const tex=lease(b),mat=new T.SpriteMaterial({map:tex,transparent:true,depthWrite:false,depthTest:opt.depth===true,blending:opt.glow?T.AdditiveBlending:T.NormalBlending});
+ const s=new T.Sprite(mat);if(opt.centre)s.center.set(.5,.5);else s.center.set(m.ox,1-m.oy);s.renderOrder=opt.order||48;s.visible=false;scene.add(s);
+ const natural=m.fps?m.n/m.fps:.8,life=opt.life||natural/(opt.speed||1),h=(opt.unit||2.16)*m.u*(opt.scale||1);
+ frame(tex,m,opt.frame||0);
+ const p={s,age:-(opt.delay||0),life,aspect:m.w/m.h,done:()=>b.pool.length<6?b.pool.push(tex):tex.dispose(),
+  update:(p,k)=>{if(opt.frame==null&&m.n>1){const i=Math.floor(p.age*m.fps*(opt.speed||1));frame(tex,m,opt.loop?i%m.n:i)}
+   s.scale.set(h*p.aspect,h,1);update(p,k,h)}};
+ live.push(p);return p}
+function drop(p){scene&&scene.remove(p.s);p.s.material.dispose();if(p.done)p.done()}
+
 function texture(kind,arg){const key=kind+':'+arg;let t=textures.get(key);if(!t){t=new T.CanvasTexture(PAINT[kind](arg));t.magFilter=T.LinearFilter;t.minFilter=T.LinearFilter;t.generateMipmaps=false;textures.set(key,t)}return t}
 
 // ---- particles -------------------------------------------------------------------------------
 // One sprite with a lifetime and an update(p, k) where k runs 0..1. `foot` anchors it on its base.
 function add(kind,arg,life,update,opt={}){
- if(live.length>=MAX){const old=live.shift();scene.remove(old.s);old.s.material.dispose()}
+ if(live.length>=MAX)drop(live.shift());
  const tex=texture(kind,arg),m=new T.SpriteMaterial({map:tex,transparent:true,depthWrite:false,depthTest:opt.depth!==false,blending:opt.glow?T.AdditiveBlending:T.NormalBlending});
  const s=new T.Sprite(m);if(opt.foot)s.center.set(.5,0);s.renderOrder=opt.order||30;s.visible=false;scene.add(s);
  const p={s,age:-(opt.delay||0),life,update,aspect:tex.image.width/tex.image.height};live.push(p);return p}
 const size=(p,h)=>p.s.scale.set(h*p.aspect,h,1);
 function tick(dt){for(let i=live.length-1;i>=0;i--){const p=live[i];p.age+=dt;
   if(p.age<0)continue;
-  if(p.age>=p.life){scene.remove(p.s);p.s.material.dispose();live.splice(i,1);continue}
+  if(p.age>=p.life){drop(p);live.splice(i,1);continue}
   p.s.visible=true;p.update(p,p.age/p.life)}}
-function clear(){for(const p of live){scene&&scene.remove(p.s);p.s.material.dispose()}live.length=0}
+function clear(){for(const p of live)drop(p);live.length=0}
 
 // ---- effects ---------------------------------------------------------------------------------
 const FX={
  // Kanji fly out of the target one after another, then a shockwave.
  glyphs(c,o){const chars=[...o.text],U=c.unit,gap=.11;
   chars.forEach((ch,i)=>{const side=(i-(chars.length-1)/2)*U*.62,rise=U*(1.25+(i%2)*.28);
+   // The client's own characters when the book is in; the painted ones until then.
+   if(o.book&&addBook(o.book,{frame:i,life:1.05,delay:i*gap,order:60,centre:true,unit:U,scale:1.25},(p,k,h)=>{const pop=k<.2?.3+ease(k/.2)*1.2:1.5-ease((k-.2)/.3)*.5;
+     p.s.scale.set(h*p.aspect*pop,h*pop,1);p.s.position.set(c.to.x+side,c.floor+rise+k*U*.5,c.to.z+.05*i);p.s.material.opacity=k<.72?1:1-(k-.72)/.28}))return;
    add('glyph',ch,.95,(p,k)=>{const pop=k<.22?.3+ease(k/.22)*1.15:1.45-ease((k-.22)/.3)*.45;size(p,U*.78*pop);
     p.s.position.set(c.to.x+side,c.floor+rise+k*U*.5,c.to.z+.05*i);p.s.material.opacity=k<.7?1:1-(k-.7)/.3},{delay:i*gap,order:60,depth:false})});
   const end=chars.length*gap;
@@ -130,13 +165,29 @@ const FX={
     p.s.position.set(c.from.x+Math.cos(a)*r*k,c.floor+U*.6,c.from.z+Math.sin(a)*r*.5*k)},{delay:(i%4)*.06,glow:true,order:50});
    if(i%3===0)add('muzzle',0,.09,(p)=>{size(p,U*.4);p.s.position.set(c.from.x+Math.cos(a)*U*.35,c.floor+U*.62,c.from.z+.05)},{delay:(i%4)*.06,glow:true,order:52})}},
  // A coin flips up from the caster's hand.
- coin(c){const U=c.unit;add('coin',0,.7,(p,k)=>{const flip=Math.abs(Math.cos(k*TAU*3));p.s.scale.set(U*.26*Math.max(.15,flip),U*.26,1);
+ coin(c){const U=c.unit;
+  if(addBook('coin',{unit:U,scale:1.6,life:.7,loop:true,speed:12,centre:true,order:55},(p,k)=>{p.s.position.set(c.from.x+U*.3,c.floor+U*(1+Math.sin(k*Math.PI)*.9),c.from.z+.05);p.s.material.opacity=k<.8?1:(1-k)/.2}))return;
+  add('coin',0,.7,(p,k)=>{const flip=Math.abs(Math.cos(k*TAU*3));p.s.scale.set(U*.26*Math.max(.15,flip),U*.26,1);
    p.s.position.set(c.from.x+U*.3,c.floor+U*(1+Math.sin(k*Math.PI)*.9),c.from.z+.05);p.s.material.opacity=k<.8?1:(1-k)/.2},{order:55,depth:false})},
  // A Marine Sphere swells at the target, then bursts.
  bubble(c,o){const U=c.unit,wait=o.wait||1.1;
   add('bubble',0,wait,(p,k)=>{size(p,U*(.35+k*.75)*(1+Math.sin(k*40)*.04*k));p.s.position.set(c.to.x,c.floor+U*(.35+k*.25),c.to.z)},{order:40});
   add('flash','#8fd8ff',.45,(p,k)=>{size(p,U*(1+k*4));p.s.position.set(c.to.x,c.floor+U*.5,c.to.z);p.s.material.opacity=1-k},{delay:wait,glow:true,order:55});
   for(let j=0;j<9;j++){const a=j/9*TAU;add('drop','#8fd8ff',.5,(p,k)=>{size(p,U*.22);p.s.position.set(c.to.x+Math.cos(a)*U*1.6*k,c.floor+U*(.5+Math.sin(k*Math.PI)*.6),c.to.z+Math.sin(a)*U*.5*k);p.s.material.opacity=1-k},{delay:wait,order:51})}},
+ // An original flipbook played once (or looped for a field's life) at the caster or the target.
+ // o: book, at ('to'|'from'), y (hero heights above the floor), scale, glow, delay, loop, speed, else.
+ book(c,o){const U=c.unit,at=o.at==='from'?c.from:c.to,life=o.loop?Math.max(.8,c.life||o.life||1):o.life;
+  const p=addBook(o.book,{unit:U,scale:o.scale,glow:o.glow,delay:o.delay,loop:o.loop,speed:o.speed,life,order:o.order},(p,k)=>{
+   p.s.position.set(at.x+(o.x||0)*U,c.floor+U*(o.y==null?.45:o.y),at.z+.04);if(o.loop)p.s.material.opacity=k>.9?(1-k)/.1:1});
+  if(!p&&o.else)FX[o.else[0]](c,o.else[1]||{})},
+ // One cell of a book shown as a still: it pops in, holds and fades (tarot card, spider web).
+ stamp(c,o){const U=c.unit,at=o.at==='from'?c.from:c.to,pack=root.RO_FX,m=pack&&pack.books&&pack.books[o.book],pick=o.frame==null&&m?Math.floor(Math.random()*m.n):o.frame|0;
+  addBook(o.book,{unit:U,scale:o.scale,frame:pick,life:o.life||.9,delay:o.delay,centre:true,order:58},(p,k,h)=>{const pop=k<.18?.4+ease(k/.18)*.75:1.15-ease((k-.18)/.25)*.15;
+   p.s.scale.set(h*p.aspect*pop,h*pop,1);p.s.position.set(at.x,c.floor+U*(o.y==null?1.2:o.y)+(o.rise||0)*U*k,at.z+.05);p.s.material.opacity=k<.7?1:1-(k-.7)/.3})},
+ // A still thrown from the caster through the target and back, spinning (Shield Boomerang).
+ hurl(c,o){const U=c.unit,n=o.count||1;
+  for(let i=0;i<n;i++)addBook(o.book,{unit:U,scale:o.scale,frame:0,life:o.back?.7:.32,delay:i*.12,centre:true,order:52},(p,k)=>{const out=o.back?(k<.5?ease(k/.5):1-ease((k-.5)/.5)):k;
+   p.s.material.rotation=-k*TAU*3;p.s.position.set(c.from.x+(c.to.x-c.from.x)*out,c.floor+U*.6,c.from.z+(c.to.z-c.from.z)*out)})},
  // Music notes drift up from the performer.
  notes(c,o){const U=c.unit,at=o.target?c.to:c.from;
   for(let i=0;i<6;i++){const x=rnd(-.7,.7)*U,ph=rnd(0,TAU);add('note',i%2?'♪':'♫',1,(p,k)=>{size(p,U*.4);p.s.position.set(at.x+x+Math.sin(ph+k*7)*U*.12,c.floor+U*(.7+k*1.2),at.z+.05);p.s.material.opacity=1-k*k},{delay:i*.08,order:50,depth:false})}}
@@ -144,17 +195,30 @@ const FX={
 
 // ---- which skill plays what ------------------------------------------------------------------
 const SPHERE=[['orbs',{count:1,life:.8}]];
+const B=(book,o={})=>['book',{book,...o}];
 const MAP={
  // Monk line
- ch_asura:[['orbs',{count:5,life:.45,inward:true}],['glyphs',{text:'阿修羅覇凰拳'}]],
- su_gate:[['glyphs',{text:'羅刹破凰撃',color:'#c05cff'}]],
+ ch_asura:[['orbs',{count:5,life:.45,inward:true}],['glyphs',{text:'阿修羅覇凰拳',book:'asura'}]],
+ su_gate:[B('flash',{y:1.1,scale:1.5,glow:true,else:['glyphs',{text:'閃光連撃',color:'#c05cff'}]})],
  su_tiger:[['glyphs',{text:'號砲',color:'#ff7a2a'}],['orbs',{count:1,life:.8}]],
  mo_sphere:[['orbs',{count:5,life:1.6}]],ch_fury:[['orbs',{count:5,life:1.6,color:'#ffd870'}]],ch_zen:[['orbs',{count:5,life:1.2,inward:true}]],
- mo_triple:SPHERE,mo_chain:SPHERE,ch_palm:SPHERE,ch_crush:SPHERE,ch_glacier:SPHERE,
+ su_rising:[['orbs',{count:5,life:1.4,color:'#ffb060'}]],
+ mo_triple:SPHERE,ch_crush:SPHERE,ch_glacier:SPHERE,
+ mo_chain:[...SPHERE,B('investigate',{y:.55,scale:1.2})],ch_palm:[...SPHERE,B('investigate',{y:.55,scale:1.5})],
+ // Crusader line
+ cr_holyx:[B('holycross',{y:.6,scale:1.3,glow:true})],
+ cr_grand:[B('grandcross',{at:'from',y:.5,scale:2,glow:true})],
+ cr_shboom:[['hurl',{book:'shield',back:true,scale:.9}]],pa_chain:[['hurl',{book:'shield',count:5,scale:.8}]],
+ pa_press:[B('grandcross',{y:.5,scale:1.5,glow:true})],
+ rg_genesis:[B('holycross',{y:.6,scale:2.4,glow:true}),B('grandcross',{y:.5,scale:2.2,glow:true,delay:.15})],
+ rg_vanish:[B('shieldcharge',{y:.5,scale:1.3,glow:true})],
+ // Sage line
+ sc_mind:[B('mindbreak',{y:1.0,scale:1.6,glow:true})],
+ sc_web:[['stamp',{book:'web',y:.25,scale:1.6,life:2}]],
  // Alchemist line
  al_acid:[['bottle',{colors:['#7be04a']}]],
- al_bomb:[['bottle',{colors:['#ff6a2a'],fire:true}],['flames',{}]],
- bi_demo:[['bottle',{colors:['#ff5a2a','#8cf04a'],fire:true}]],
+ al_bomb:[['bottle',{colors:['#ff6a2a'],fire:true}],B('demo',{loop:true,y:0,scale:1.6,delay:.4,else:['flames',{}]}),B('demo',{loop:true,y:0,x:.7,scale:1.2,delay:.5}),B('demo',{loop:true,y:0,x:-.7,scale:1.2,delay:.55})],
+ bi_demo:[['bottle',{colors:['#ff5a2a','#8cf04a'],fire:true}],B('demo',{loop:true,life:1.1,y:0,scale:1.8,delay:.45})],
  al_pot:[['bottle',{colors:['#ff6a8a']}]],
  al_flora:[['plant',{kind:0}]],bi_plant:[['plant',{kind:1}]],
  bi_bio:[['bubble',{}]],
@@ -162,25 +226,46 @@ const MAP={
  ge_thorn:[['vines',{count:5,radius:.9,scale:.8,life:2}]],
  ge_hell:[['vines',{count:7,radius:1.6,scale:1.25}],['plant',{kind:0,life:1.4}]],
  ge_spore:[['bubble',{wait:.9}]],
- ge_fire:[['bottle',{colors:['#ff3a1a']}],['flames',{count:9}]],
+ ge_fire:[['bottle',{colors:['#ff3a1a']}],B('demo',{loop:true,y:0,scale:2,delay:.4,else:['flames',{count:9}]}),B('demo',{loop:true,y:0,x:.9,scale:1.5,delay:.5}),B('demo',{loop:true,y:0,x:-.9,scale:1.5,delay:.55})],
+ // Rogue line
+ ro_strip:[B('strip',{y:.9,scale:1.6})],st_full:[B('strip',{y:.9,scale:1.6}),B('strip',{y:.7,x:.3,scale:1.3,delay:.12}),B('strip',{y:.7,x:-.3,scale:1.3,delay:.24})],
+ sc_masq:[B('masq',{y:1.3,scale:1.5})],
  // Ninja line
  nj_huuma:[['shuriken',{}]],ko_huuma:[['shuriken',{}]],
- nj_kunai:[['volley',{count:3}]],ko_kunai:[['volley',{count:5}]],
- nj_blaze:[['flames',{count:6,life:.9}]],
+ nj_kunai:[['volley',{count:3}]],
+ nj_blaze:[B('blaze',{loop:true,life:.9,y:0,scale:1.6,else:['flames',{count:6,life:.9}]}),B('blaze',{loop:true,life:.9,y:0,x:.6,scale:1.2,delay:.06}),B('blaze',{loop:true,life:.9,y:0,x:-.6,scale:1.2,delay:.12})],
+ nj_slash:[B('shadowslash',{y:.55,scale:1.5})],
+ nj_final:[B('issen',{y:.9,scale:1.6,speed:1.4})],
+ nj_spear:[B('ice',{y:.05,scale:1.2,life:.7})],
+ nj_cicada:[B('mist',{at:'from',y:.4,scale:1.2})],
+ ko_cross:[B('crossslash',{y:.55,scale:2,glow:true})],
+ ko_soul:[B('soulcut',{y:.6,scale:1.6,glow:true})],
+ ko_kunai:[['volley',{count:5}],B('bakuretsu',{y:.5,scale:1.4,delay:.2})],
+ ko_petal:[B('kamaitachi',{at:'from',y:.5,scale:1.6})],
+ ko_shadow:[B('mist',{at:'from',y:.4,scale:1.3})],
  // Gunslinger line
- gs_rapid:[['volley',{kind:'tracer',count:5,gap:.05,muzzle:true}],['coin',{}]],
- gs_triple:[['volley',{kind:'tracer',count:3,gap:.06,muzzle:true}],['coin',{}]],
- gs_bull:[['volley',{kind:'tracer',count:1,muzzle:true}]],gs_track:[['volley',{kind:'tracer',count:1,muzzle:true}]],
+ gs_rapid:[['volley',{kind:'tracer',count:5,gap:.05,muzzle:true}],B('rapid',{y:.55,scale:1.2}),['coin',{}]],
+ gs_triple:[['volley',{kind:'tracer',count:3,gap:.06,muzzle:true}],B('triple',{y:.55,scale:1.1}),['coin',{}]],
+ gs_bull:[['volley',{kind:'tracer',count:1,muzzle:true}],B('bullet',{y:.55,scale:1.2})],
+ gs_track:[['volley',{kind:'tracer',count:1,muzzle:true}],B('tracking',{y:.55,scale:1.8})],
  gs_fling:[['coin',{}]],gs_coin:[['coin',{}]],
- gs_desp:[['spray',{count:16}]],rb_fire:[['spray',{count:16}],['coin',{}]],
- rb_round:[['volley',{kind:'tracer',count:6,gap:.04,muzzle:true}]],rb_slug:[['volley',{kind:'tracer',count:1,muzzle:true}]],
- rb_crimson:[['volley',{kind:'tracer',count:1,muzzle:true}]],
+ gs_desp:[B('desperado',{at:'from',y:.5,scale:1.7,else:['spray',{count:16}]})],
+ rb_fire:[B('firedance',{at:'from',y:.5,scale:1.8,glow:true}),['spray',{count:12}],['coin',{}]],
+ rb_round:[['volley',{kind:'tracer',count:6,gap:.04,muzzle:true}],B('firerain',{y:.3,scale:1.5,glow:true})],
+ rb_dragon:[B('dtail',{y:.35,scale:1.8,glow:true})],
+ rb_slug:[['volley',{kind:'tracer',count:1,muzzle:true}],B('slug',{y:.5,scale:1.8,glow:true})],
+ rb_crimson:[['volley',{kind:'tracer',count:1,muzzle:true}],B('bullet',{y:.55,scale:1.4})],
+ rb_platinum:[B('platinum',{at:'from',y:.5,scale:1.6,glow:true})],
+ rb_heat:[B('heat',{at:'from',y:.5,scale:1.5,glow:true})],
+ rb_god:[B('hammer',{y:.2,scale:2,glow:true})],
  // Performers
- bd_bragi:[['notes',{}]],bd_music:[['notes',{target:true}]],bd_metal:[['notes',{target:true}]],bd_reverb:[['notes',{target:true}]],mw_echo:[['notes',{}]],dn_service:[['notes',{}]],dn_swing:[['notes',{}]]
+ bd_bragi:[['notes',{}],B('note',{at:'from',y:.9,scale:1.5,glow:true})],bd_music:[['notes',{target:true}]],bd_metal:[['notes',{target:true}],B('note',{y:.8,scale:1.5,glow:true})],
+ bd_reverb:[['notes',{target:true}]],mw_echo:[['notes',{}],B('note',{at:'from',y:.9,scale:2,glow:true})],dn_service:[['notes',{}],B('note',{at:'from',y:.9,scale:1.5,glow:true})],dn_swing:[['notes',{}]],
+ dn_tarot:[['stamp',{book:'tarot',y:1.5,scale:1.1,life:1.1,rise:.3}]]
 };
 function play(id,ctx){const steps=MAP[id];if(!steps||!ctx||!ctx.THREE||!ctx.scene||typeof document==='undefined')return false;
- T=ctx.THREE;scene=ctx.scene;const c={from:ctx.from,to:ctx.to||ctx.from,floor:ctx.floor||0,unit:ctx.unit||2.16,life:ctx.life||0};
+ T=ctx.THREE;scene=ctx.scene;warm([id]);const c={from:ctx.from,to:ctx.to||ctx.from,floor:ctx.floor||0,unit:ctx.unit||2.16,life:ctx.life||0};
  try{for(const [name,opt] of steps)FX[name](c,opt)}catch(e){return false}
  return true}
-root.PGSignatureFx={play,tick,clear,has:id=>Object.hasOwn(MAP,id),ids:()=>Object.keys(MAP),get count(){return live.length}};
+root.PGSignatureFx={play,tick,clear,warm:ctx=>{if(ctx&&ctx.THREE){T=ctx.THREE;warm(ctx.ids)}},books:()=>[...new Set(Object.values(MAP).flat().map(s=>s[1]&&s[1].book).filter(Boolean).concat('coin'))],has:id=>Object.hasOwn(MAP,id),ids:()=>Object.keys(MAP),get count(){return live.length}};
 })(globalThis);

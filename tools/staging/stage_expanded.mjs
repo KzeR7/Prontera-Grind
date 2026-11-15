@@ -16,7 +16,7 @@ import { fileURLToPath } from 'node:url';
 
 export const STAGE = Object.freeze({
   branch: 'arena/ef87a1e5-prontera-grind',
-  buildTag: 'haven-v411',
+  buildTag: 'haven-v412',
   pagesProject: 'prontera-grind-staging',
   branchUrl: 'https://main.prontera-grind-staging.pages.dev',
   socialProject: 'prontera-social-staging',

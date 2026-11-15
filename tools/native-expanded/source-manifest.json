@@ -1082,42 +1082,6 @@
    "sha256": "2c516262cc01b9608d0f69f6c87bb8b73b4303611c96cf554cb0d34097dee0a8"
   },
   {
-   "name": "weapon/bard_m.spr",
-   "repo": "rAthena-Thailand/ClientROThailand",
-   "commit": "6f91cbd1df3b94f3e4ea27c6eeb63a4b9f319e96",
-   "path": "Client-2025-06-04/Pre-Renewal/data/sprite/인간족/바드/바드_남_20174.spr (stored under its CP949 name)",
-   "blob": "10d500e8e08ce12ed89e39a637291565676041ea",
-   "bytes": 6584,
-   "sha256": "5946e47927b13f4edb7d6c85b63497fbf46543832192327169eefc234f0c756e"
-  },
-  {
-   "name": "weapon/bard_m.act",
-   "repo": "rAthena-Thailand/ClientROThailand",
-   "commit": "6f91cbd1df3b94f3e4ea27c6eeb63a4b9f319e96",
-   "path": "Client-2025-06-04/Pre-Renewal/data/sprite/인간족/바드/바드_남_20174.act (stored under its CP949 name)",
-   "blob": "858c6c0614c41fb57eb50c0e63e17c456845f852",
-   "bytes": 42772,
-   "sha256": "128c74c5ad58436367ca680341368216d79daf5cd62b63ceba8ebe069e0a60ee"
-  },
-  {
-   "name": "weapon/dancer_f.spr",
-   "repo": "rAthena-Thailand/ClientROThailand",
-   "commit": "6f91cbd1df3b94f3e4ea27c6eeb63a4b9f319e96",
-   "path": "Client-2025-06-04/Pre-Renewal/data/sprite/인간족/무희/무희_여_20174.spr (stored under its CP949 name)",
-   "blob": "145cf87a1511787f8468a387d80e06d682a95d51",
-   "bytes": 3846,
-   "sha256": "8053ad454faa88c9ba7e8bcf0eba853bdd64e885d4d70482b37b6bfd4466548a"
-  },
-  {
-   "name": "weapon/dancer_f.act",
-   "repo": "rAthena-Thailand/ClientROThailand",
-   "commit": "6f91cbd1df3b94f3e4ea27c6eeb63a4b9f319e96",
-   "path": "Client-2025-06-04/Pre-Renewal/data/sprite/인간족/무희/무희_여_20174.act (stored under its CP949 name)",
-   "blob": "9da1dde5d169075007e68a1ccecaeb1995c97714",
-   "bytes": 42772,
-   "sha256": "84725e16912ed9eefbc8673253db3384190ae8cd86d3bdc635acd45e11cdf4be"
-  },
-  {
    "name": "weapon/ninja_m.spr",
    "repo": "rAthena-Thailand/ClientROThailand",
    "commit": "6f91cbd1df3b94f3e4ea27c6eeb63a4b9f319e96",
@@ -1152,6 +1116,222 @@
    "blob": "e28409f7db0d65b14142abd2473a6c8b994d3c2d",
    "bytes": 42324,
    "sha256": "5ca4ee16b9f8614b59765b89c6c972709608c20d4e7989a1385bd0af8dffbe64"
+  },
+  {
+   "name": "weapon/monk_m.spr",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/sprite/인간족/몽크/몽크_남_너클.spr (stored under its CP949 name read as GBK)",
+   "blob": "77bdb501982bb1acaeb7a9e7e64f6c31a8a2abb0",
+   "bytes": 1117,
+   "sha256": "846085c5792778d37ea7a16286003f9f960d85831d4e89d2ef0487e4fef355f6"
+  },
+  {
+   "name": "weapon/monk_m.act",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/sprite/인간족/몽크/몽크_남_너클.act (stored under its CP949 name read as GBK)",
+   "blob": "ab0329e1fe8c8c21c041e6cb11fefa6ee62911dd",
+   "bytes": 40980,
+   "sha256": "896931b23fc8fc2345f5f8128ae2e227d04e4bbee1dc0fb15aa258934153832f"
+  },
+  {
+   "name": "weapon/monk_f.spr",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/sprite/인간족/몽크/몽크_여_너클.spr (stored under its CP949 name read as GBK)",
+   "blob": "77bdb501982bb1acaeb7a9e7e64f6c31a8a2abb0",
+   "bytes": 1117,
+   "sha256": "846085c5792778d37ea7a16286003f9f960d85831d4e89d2ef0487e4fef355f6"
+  },
+  {
+   "name": "weapon/monk_f.act",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/sprite/인간족/몽크/몽크_여_너클.act (stored under its CP949 name read as GBK)",
+   "blob": "ab0329e1fe8c8c21c041e6cb11fefa6ee62911dd",
+   "bytes": 40980,
+   "sha256": "896931b23fc8fc2345f5f8128ae2e227d04e4bbee1dc0fb15aa258934153832f"
+  },
+  {
+   "name": "weapon/gunslinger_m.spr",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/sprite/인간족/건너/건너_남_권총.spr (stored under its CP949 name read as GBK)",
+   "blob": "65c0cc359cd6d3f85d05f229866f9187b65e4f8f",
+   "bytes": 11838,
+   "sha256": "fc5ba7a8b91ffd5eea445745549cc4038ada0bdbc9cb30ecc044bf2040643319"
+  },
+  {
+   "name": "weapon/gunslinger_m.act",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/sprite/인간족/건너/건너_남_권총.act (stored under its CP949 name read as GBK)",
+   "blob": "64c9a2cef0958e4b4f010ea28901b5b42ebaf067",
+   "bytes": 42900,
+   "sha256": "a736f367757a950bb397ca277c4c8c89eefa8cc87000a88881fdcf83596b1761"
+  },
+  {
+   "name": "weapon/gunslinger_f.spr",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/sprite/인간족/건너/건너_여_권총.spr (stored under its CP949 name read as GBK)",
+   "blob": "cca5eef004c3debd702e96d2f1a3ebbcba3dc577",
+   "bytes": 11767,
+   "sha256": "988bfa327523e8e463bd25496dab8ff69deb198f873d2b26d1822a11040dd730"
+  },
+  {
+   "name": "weapon/gunslinger_f.act",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/sprite/인간족/건너/건너_여_권총.act (stored under its CP949 name read as GBK)",
+   "blob": "3920f3a5be12bf5a819c81482ffc739fd429b331",
+   "bytes": 42900,
+   "sha256": "3556a6c3daa67c56167451b9682ceaa2d2546f3372f1fa75518b533c4a5a07a6"
+  },
+  {
+   "name": "weapon/rebellion_m.spr",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/sprite/인간족/rebellion/rebellion_남_권총.spr (stored under its CP949 name read as GBK)",
+   "blob": "e35d7f8725afae01102b4fc47d79a9d9633ca525",
+   "bytes": 17210,
+   "sha256": "b643e36ce2460d580732c00720975bca1612ee53dabc83ddb8175ac1fb5e0444"
+  },
+  {
+   "name": "weapon/rebellion_m.act",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/sprite/인간족/rebellion/rebellion_남_권총.act (stored under its CP949 name read as GBK)",
+   "blob": "77347b98fac434cf10acd50238524c83dfb9ca21",
+   "bytes": 42900,
+   "sha256": "cb42bc59d099157a49338dbb3e2e52d9472a8b023165b7c8013c9374fcd63023"
+  },
+  {
+   "name": "weapon/rebellion_f.spr",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/sprite/인간족/rebellion/rebellion_여_권총.spr (stored under its CP949 name read as GBK)",
+   "blob": "f4bb9bc815af88338fa71334981a2e71d765e3f5",
+   "bytes": 16443,
+   "sha256": "3ae6030c27b55062eee917e8c9e48d922aa52985725a1d62ba72cbd9c0c4f3cb"
+  },
+  {
+   "name": "weapon/rebellion_f.act",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/sprite/인간족/rebellion/rebellion_여_권총.act (stored under its CP949 name read as GBK)",
+   "blob": "7e4b69e5875989d9aa24ec6212ea254c1c72fe97",
+   "bytes": 42900,
+   "sha256": "862c6eaa19b603bb359b74d936313a0111f3195bb6ecd63d25549ac98c711e7a"
+  },
+  {
+   "name": "weapon/rogue_bow_m.spr",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/sprite/인간족/로그/로그_남_1720.spr (stored under its CP949 name read as GBK)",
+   "blob": "9903122d3d4aa96b894c7a7b6b85e3473572a9d5",
+   "bytes": 5259,
+   "sha256": "d18984113027b97ce0e67d393c20b1c4994d6cc2a2fcf4160d68409a4d7d9920"
+  },
+  {
+   "name": "weapon/rogue_bow_m.act",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/sprite/인간족/로그/로그_남_1720.act (stored under its CP949 name read as GBK)",
+   "blob": "78dbe9f7af835bd94c66ec36a85be8e01c79a560",
+   "bytes": 42772,
+   "sha256": "e57701d32a8d9908082dffe468df3a34057f9e2d17a1d3ad5ca8f6106f9aa77c"
+  },
+  {
+   "name": "weapon/rogue_bow_f.spr",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/sprite/인간족/로그/로그_여_1720.spr (stored under its CP949 name read as GBK)",
+   "blob": "df5c48149eb051cdb44e2622b5425ca76ab20224",
+   "bytes": 10778,
+   "sha256": "a32d41c27fcabe264e097e7947c0e5e9cb29e99f854214d158905cf878005274"
+  },
+  {
+   "name": "weapon/rogue_bow_f.act",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/sprite/인간족/로그/로그_여_1720.act (stored under its CP949 name read as GBK)",
+   "blob": "283af76038f20dbad0192ddf65f1448da9b078da",
+   "bytes": 42068,
+   "sha256": "233fa5410cc44f4d9c9a75f01e74ab9cc2ae8efebc12f45e59cda1f66d4ee047"
+  },
+  {
+   "name": "weapon/kagerou_m.spr",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/sprite/인간족/kagerou/kagerou_남_수리검.spr (stored under its CP949 name read as GBK)",
+   "blob": "a7980c0201eef0f7bfb5167ad0788c7d2cc76e79",
+   "bytes": 9371,
+   "sha256": "22b0f11b51e38fb69296bd4bb3639f9ca342254f828e863d5f52a72e9dacbf00"
+  },
+  {
+   "name": "weapon/kagerou_m.act",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/sprite/인간족/kagerou/kagerou_남_수리검.act (stored under its CP949 name read as GBK)",
+   "blob": "79bae4cd09e65784a6e95a770cbd17a7a0a17c91",
+   "bytes": 42900,
+   "sha256": "6cedb6077e93b5768b9273e68dbad2a0440992161b3295150164d15a03e2ec4f"
+  },
+  {
+   "name": "weapon/oboro_f.spr",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/sprite/인간족/oboro/oboro_여_수리검.spr (stored under its CP949 name read as GBK)",
+   "blob": "577c4f445247d66abcc921bdfa23cac3f96ce801",
+   "bytes": 7558,
+   "sha256": "873d6dbc4330b390593a49f526053afc94b75c3ad49b12a0f3d94aabec6f64b5"
+  },
+  {
+   "name": "weapon/oboro_f.act",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/sprite/인간족/oboro/oboro_여_수리검.act (stored under its CP949 name read as GBK)",
+   "blob": "f284e5ffef039642b69f76b18bce6dfd114a05d1",
+   "bytes": 42324,
+   "sha256": "4aa0faee003d030f28c0bc11880ffce981d3599ce91d7a7f478b94c96fb2403e"
+  },
+  {
+   "name": "weapon/bard_inst_m.spr",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/sprite/인간족/바드/바드_남_악기.spr (stored under its CP949 name read as GBK)",
+   "blob": "9012e6c73fda6db48c1f29fb9b3fda36a4b0822e",
+   "bytes": 10149,
+   "sha256": "dab61ffa07341a8ae344a0d0262e9fb37d42d9af33298f2d9276333844c66cc1"
+  },
+  {
+   "name": "weapon/bard_inst_m.act",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/sprite/인간족/바드/바드_남_악기.act (stored under its CP949 name read as GBK)",
+   "blob": "eb815bc8cf411542ca6cfd9d4e90195ed4aa83db",
+   "bytes": 42900,
+   "sha256": "880df65bb1745c067c29a3119a374fbf79b1fcca19b860797bc784d30f950f2d"
+  },
+  {
+   "name": "weapon/dancer_whip_f.spr",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/sprite/인간족/무희/무희_여_채찍.spr (stored under its CP949 name read as GBK)",
+   "blob": "9adcfacf517cc2261e04201f7c312ffd5a20bc99",
+   "bytes": 5062,
+   "sha256": "3242d87eed4355696d6c7b9d0a5dcf11cd7c1e018e8912d513fb5b4705a8b7a4"
+  },
+  {
+   "name": "weapon/dancer_whip_f.act",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/sprite/인간족/무희/무희_여_채찍.act (stored under its CP949 name read as GBK)",
+   "blob": "8f9cc57b911686d4b29c995e08047c66ff5a277d",
+   "bytes": 42900,
+   "sha256": "9eb7320734df927ff0567f850ec64bfc09e0a8ac4da5af7c818767c888577caf"
   }
  ]
 }

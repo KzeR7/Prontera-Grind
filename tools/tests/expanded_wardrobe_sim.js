@@ -43,10 +43,13 @@ function checkLook(look,stances,label){
   ok('hair and accessory pixels are read in place from assets/wardrobe/v5/');
 
   // Classes whose weapon sprite is available hold it while attacking, never while idle.
-  const armed=new Set(['Crusader','Paladin','Royal Guard','Sage','Scholar','Sorcerer','Alchemist','Biochemist','Geneticist','Rogue','Stalker','Bard & Dancer','Minstrel & Gypsy','Ninja']);
+  const armed=new Set(['Crusader','Paladin','Royal Guard','Sage','Scholar','Sorcerer','Alchemist','Biochemist','Geneticist','Rogue','Stalker','Bard & Dancer','Minstrel & Gypsy','Ninja',
+    // haven-v412: the Shadow Chaser's bow, instrument and whip, shuriken, revolvers. The Monk line
+    // plays the knuckle punch; the client's knuckle sprite itself is empty, so fists show.
+    'Shadow Chaser','Maestro & Wanderer','Kagerou & Oboro','Gunslinger','Rebellion']);
   for(const cls of Object.keys(X.CLASSES))for(const sex of ['m','f']){const look=await store.select('hero',W.defaults(sex),cls),held=[0,1,2,3,4,5,6,7].some(d=>look.base.metadata.actions['attack'+d].frames.some(f=>f.some(p=>p[7]==='weapon')));
     assert.equal(held,armed.has(cls),cls+' '+sex);assert.ok(!look.base.metadata.actions.idle0.frames.some(f=>f.some(p=>p[7]==='weapon')))}
-  ok('fourteen classes hold their native weapon while attacking; the Monk line fights with fists');
+  ok('nineteen classes hold their native weapon while attacking; the Monk line punches with its fists');
 
   // The game derives exactly what tools/make_expanded_wardrobe.py derives.
   const fixture=JSON.parse(fs.readFileSync('tools/tests/fixtures/expanded_wardrobe_routes.json')).routes;

@@ -64,19 +64,24 @@ FEMALE_OF = {'bard': 'dancer', 'minstrel': 'gypsy', 'maestro': 'wanderer', 'kage
 BODIES = [(k, k, 'm') for k in MALE] + [('f_' + FEMALE_OF.get(k, k), FEMALE_OF.get(k, k), 'f') for k in MALE]
 AIMED = {'bard', 'minstrel', 'maestro', 'dancer', 'gypsy', 'wanderer', 'gunslinger', 'rebellion'}
 # The weapon each body holds while attacking: body source -> weapon source (weapon/<name>_<sex>).
-# The client keeps one weapon sprite set per second job and reuses it for the transcendent job,
-# whose body frames line up with it. A body that is not listed fights bare-handed: the Monk line
-# on purpose (knuckles), the others because no public source carries their weapon sprites yet
-# (Shadow Chaser, Maestro & Wanderer, Kagerou & Oboro, and the revolver of the two gun jobs).
+# The client keeps one weapon sprite set per second job and reuses it for the later jobs of that
+# line, so a third job without its own set borrows the second job's (Sura the Monk knuckle,
+# Shadow Chaser the Rogue bow, Maestro the Bard instrument, Wanderer the Dancer whip).
 HELD = {'crusader': 'crusader', 'paladin': 'crusader', 'royal_guard': 'royal_guard',
         'sage': 'sage', 'scholar': 'sage', 'sorcerer': 'sorcerer',
         'alchemist': 'alchemist', 'biochemist': 'alchemist', 'geneticist': 'geneticist',
-        'rogue': 'rogue', 'stalker': 'rogue', 'bard': 'bard', 'minstrel': 'bard',
-        'dancer': 'dancer', 'gypsy': 'dancer', 'ninja': 'ninja'}
-# ACT attack motions: 40 = attack1 (fists; the Monk line), 80 = attack2 (one-handed swing, and the
-# two-revolver stance of the gun jobs), 88 = attack3 (bows and other aimed weapons).
-FISTS = {'monk', 'champion', 'sura'}
-PISTOLS = {'gunslinger', 'rebellion'}
+        'monk': 'monk', 'champion': 'monk', 'sura': 'monk',
+        'rogue': 'rogue', 'stalker': 'rogue', 'shadow_chaser': 'rogue_bow',
+        'bard': 'bard_inst', 'minstrel': 'bard_inst', 'maestro': 'bard_inst',
+        'dancer': 'dancer_whip', 'gypsy': 'dancer_whip', 'wanderer': 'dancer_whip',
+        'ninja': 'ninja', 'kagerou': 'kagerou', 'oboro': 'oboro',
+        'gunslinger': 'gunslinger', 'rebellion': 'rebellion'}
+# ACT attack motions: 40 = attack1 (overhead swing), 80 = attack2 (one-handed swing, and the
+# two-revolver stance of the gun jobs), 88 = attack3 (bows, thrown weapons, and the knuckle punch).
+# A weapon sprite can carry frames for more than one motion (the revolver file also holds the
+# gatling pose in 40), so these bodies name theirs outright.
+FORCED = {'monk': 88, 'champion': 88, 'sura': 88, 'gunslinger': 80, 'rebellion': 80,
+          'kagerou': 88, 'oboro': 88, 'shadow_chaser': 88}
 
 
 def held_weapon(src, sex):
@@ -85,10 +90,8 @@ def held_weapon(src, sex):
 
 def attack_action(src, held=None):
     """The attack motion a body uses. With a weapon it is the motion that weapon is drawn in."""
-    if src in FISTS:
-        return 40
-    if src in PISTOLS:
-        return 80
+    if src in FORCED:
+        return FORCED[src]
     if held:
         drawn = {a: sum(1 for f in held[0]['actions'][a] if any(l['spr'] >= 0 for l in f['layers'])) for a in (80, 88, 40)}
         best = max(drawn, key=lambda a: drawn[a])
@@ -144,6 +147,14 @@ def build(src, sex, heads):
                 big = roact.draw(fr, imgs, rgba, (CW + 2 * pad, CH + 2 * pad), (pad + ORIGIN[0], pad + ORIGIN[1]))
                 ba = fr['anchors'][0]
                 box = big.getbbox()
+                # A deep lunge (the instrument swing) can put a foot a few pixels under the cell:
+                # lift that one frame, with its weapon and head, instead of cutting the foot off.
+                lift = max(0, box[3] - pad - CH) if box else 0
+                if lift:
+                    if lift > 8:
+                        raise SystemExit('%s_%s: a frame does not fit the cell' % (src, sex))
+                    big = roact.draw(fr, imgs, rgba, big.size, (pad + ORIGIN[0], pad + ORIGIN[1] - lift))
+                    box = big.getbbox()
                 if box and (box[0] < pad or box[1] < pad or box[2] > pad + CW or box[3] > pad + CH):
                     raise SystemExit('%s_%s: a frame does not fit the cell' % (src, sex))
                 # A long weapon may reach past the cell at full swing; the cell crop trims its tip.
@@ -152,7 +163,7 @@ def build(src, sex, heads):
                     wf = wf[min(f, len(wf) - 1)]
                     wa = wf['anchors'][0] if wf['anchors'] else ba
                     big.alpha_composite(roact.draw(wf, held[1], held[2], big.size,
-                                                   (pad + ORIGIN[0] + ba[0] - wa[0], pad + ORIGIN[1] + ba[1] - wa[1])))
+                                                   (pad + ORIGIN[0] + ba[0] - wa[0], pad + ORIGIN[1] + ba[1] - wa[1] - lift)))
                 atlas.paste(big.crop((pad, pad, pad + CW, pad + CH)), (i * CW, (anim * 8 + d) * CH))
                 hf = head[first + d]
                 hf = hf[min(f, len(hf) - 1)]
@@ -160,7 +171,7 @@ def build(src, sex, heads):
                 ha = hf['anchors'][0]
                 col = HEAD_COL.get((layer['spr'], layer['mirror']), d)
                 entry = [ORIGIN[0] + ba[0] - ha[0] + layer['x'] + centre[col][0],
-                         ORIGIN[1] + ba[1] - ha[1] + layer['y'] + centre[col][1]]
+                         ORIGIN[1] + ba[1] - ha[1] + layer['y'] + centre[col][1] - lift]
                 if col != d:
                     entry.append(col)
                 row.append(entry)
@@ -209,7 +220,7 @@ def main():
             print('expanded sprite pack is STALE: ' + ', '.join(bad))
             return 1
         srcs = json.load(open(MANIFEST, encoding='utf-8'))['files']
-        if len(srcs) != 2 * len(BODIES) + 4 + 36:
+        if len(srcs) != 2 * len(BODIES) + 4 + 56:
             print('expanded sprite pack source manifest does not list every source')
             return 1
         print('Expanded sprite pack is current (%d bodies, %d native sources).' % (len(BODIES), len(srcs)))

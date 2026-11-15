@@ -1,0 +1,1382 @@
+{
+ "description": "Original Ragnarok Online client effect files behind assets/ro-fx/. Each is fetched by git blob id from a public GitHub repository and verified by SHA-256. tools/make_ro_fx.py composes them the way the client does.",
+ "files": [
+  {
+   "name": "data__texture__effect__asura1.tga",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/asura1.tga (stored under its CP949 name read as GBK)",
+   "blob": "f7ff5001a7f862cd3f5d403446bf582c86d382da",
+   "bytes": 16428,
+   "sha256": "2c05babdbaeee81f68e313d46c659c64adc15b27537e1a1ba51bf8fbc9682507"
+  },
+  {
+   "name": "data__texture__effect__asura2.tga",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/asura2.tga (stored under its CP949 name read as GBK)",
+   "blob": "ef9d51ff1d915622ba529d159445f2b1deca0a23",
+   "bytes": 16428,
+   "sha256": "be0f99d33bf6fd5b75d0a285733d0afd89477fd0359b7cad2a229c944b8ab79a"
+  },
+  {
+   "name": "data__texture__effect__asura3.tga",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/asura3.tga (stored under its CP949 name read as GBK)",
+   "blob": "6458b049581e0a584a84dd72a3cebdb44cd5fa68",
+   "bytes": 16428,
+   "sha256": "a53634fa93e70aa0351ec4c97abbfe59e07d491702195d8a9b97d5fb84eef0e0"
+  },
+  {
+   "name": "data__texture__effect__asura4.tga",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/asura4.tga (stored under its CP949 name read as GBK)",
+   "blob": "2f04077dafacd69c72338b5a0c92a68f56c4a164",
+   "bytes": 16428,
+   "sha256": "5990276217e3a99df2b1fb13850630d4b4435287ecd7c4ccd718ea68ac9dc0d1"
+  },
+  {
+   "name": "data__texture__effect__asura5.tga",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/asura5.tga (stored under its CP949 name read as GBK)",
+   "blob": "2657fe671f3fa09f57a8f2043db2cf1154961a68",
+   "bytes": 16428,
+   "sha256": "c4d0932d95d926020d26d11eb79db997f1f83a9b29f6181d28c60a9aededce95"
+  },
+  {
+   "name": "data__texture__effect__asura6.tga",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/asura6.tga (stored under its CP949 name read as GBK)",
+   "blob": "f6910fa3f0e8ebab8abbb67828d5350c27943547",
+   "bytes": 16428,
+   "sha256": "616052a2a807bb2aa9d1b5af384f126d720d82b91e413be0d1fba7b18f84d288"
+  },
+  {
+   "name": "data__texture__effect__sr_flashcombo.str",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/sr_flashcombo.str (stored under its CP949 name read as GBK)",
+   "blob": "015c546c5c9ff5413c6cf018c851f1a091adea04",
+   "bytes": 53652,
+   "sha256": "2ba5a1830aa09c882f0189e9709e84664950080c1afcb00714926fe2ec0bb34d"
+  },
+  {
+   "name": "data__texture__effect__freeze_ice_part.bmp",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/freeze_ice_part.bmp (stored under its CP949 name read as GBK)",
+   "blob": "e4210905be7e96691bbcb843105b3ea960c1442e",
+   "bytes": 57464,
+   "sha256": "8fbf0b3900749f27a23ec3c1022d01ed7cc027705c3c25d10fe46bd00578c618"
+  },
+  {
+   "name": "data__texture__effect__lens_b.bmp",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/lens_b.bmp (stored under its CP949 name read as GBK)",
+   "blob": "85f05f14880a90ec5d898bcbc62cd110720538e3",
+   "bytes": 12344,
+   "sha256": "b12d5ea3bfbc51fcb9df32cb921b95466ebaa50ccb3f9c8c3ca8bb381d926c02"
+  },
+  {
+   "name": "data__texture__effect__skid_flash1_a.bmp",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/skid_flash1_a.bmp (stored under its CP949 name read as GBK)",
+   "blob": "9c4b92be3eeced01745a5a73e3630eb2b1a4116b",
+   "bytes": 16964,
+   "sha256": "4e0cf85e8028c892d5556a7d65609ca238078d6f5014af52a711a7449d7732da"
+  },
+  {
+   "name": "data__texture__effect__skid_flash1_b.bmp",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/skid_flash1_b.bmp (stored under its CP949 name read as GBK)",
+   "blob": "b0b9a4f26eb88073491a7a7b49a6446325ac715f",
+   "bytes": 16964,
+   "sha256": "6c0b2055d6d326125c13f16ffc3dd08f203d8139fc534a5ad14a146037fad4df"
+  },
+  {
+   "name": "data__texture__effect__skid_flash2_a.bmp",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/skid_flash2_a.bmp (stored under its CP949 name read as GBK)",
+   "blob": "de9a729332bec6ea437d173357cacc181c583db5",
+   "bytes": 16512,
+   "sha256": "bcf07e0e3103bf5222aa46a9e520e89601f69512ab2404f5cb6aaa33029bcf56"
+  },
+  {
+   "name": "data__texture__effect__skid_flash2_b.bmp",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/skid_flash2_b.bmp (stored under its CP949 name read as GBK)",
+   "blob": "1dc66c666c86644e92e18edf161cd4b0ad9e319d",
+   "bytes": 17460,
+   "sha256": "5da4703b92d13a5b08cf16130d38f47cbd46df5861ac53afa45dd57e6374b806"
+  },
+  {
+   "name": "data__texture__effect__skid_flash3_a.bmp",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/skid_flash3_a.bmp (stored under its CP949 name read as GBK)",
+   "blob": "2fba670e322904ccab6a057e41139110a3318e72",
+   "bytes": 17284,
+   "sha256": "15410dc2972314c17f3fdb7c13ccf81dee7f752bdac20e15b4fe11658b79b6ca"
+  },
+  {
+   "name": "data__texture__effect__skid_flash3_b.bmp",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/skid_flash3_b.bmp (stored under its CP949 name read as GBK)",
+   "blob": "c120ce16305537e228f9a3002a5ca7755209a6e0",
+   "bytes": 17452,
+   "sha256": "5d437cafb319893d725fc9c9a42fb24324115f804f3a3f2a464f34c9971cdb3b"
+  },
+  {
+   "name": "data__texture__effect__skid_flash4_a.bmp",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/skid_flash4_a.bmp (stored under its CP949 name read as GBK)",
+   "blob": "263d085f135ce5822c5771dcdd2fbb09d307ffef",
+   "bytes": 17436,
+   "sha256": "658b5a9298f917b38876c4ad194c7c98fedc8e02acf6956eba33408e7f05d9ef"
+  },
+  {
+   "name": "data__texture__effect__skid_flash4_b.bmp",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/skid_flash4_b.bmp (stored under its CP949 name read as GBK)",
+   "blob": "ccc5b6576015589dfce561fb493eea91f1c23847",
+   "bytes": 17448,
+   "sha256": "553c9f043eea318a4675de633d4cdf01e49f7335be263049e237362c1e7a1582"
+  },
+  {
+   "name": "data__sprite__이팩트__침투경_.spr",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/sprite/이팩트/침투경_.spr (stored under its CP949 name read as GBK)",
+   "blob": "0e9ab9ec9f9f7b3ab2558a0cc0e2edb74140d977",
+   "bytes": 263180,
+   "sha256": "a041e38cae2cfa120af4c9cdceb9a50caccadd2f7f74190ed7d0fdd4d1f27d39"
+  },
+  {
+   "name": "data__sprite__이팩트__침투경_.act",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/sprite/이팩트/침투경_.act (stored under its CP949 name read as GBK)",
+   "blob": "fcfee560c8108ffe28c4e361f6652ba493399c82",
+   "bytes": 4276,
+   "sha256": "98f6026da40539b39e3414a9b222916cd5b49c6e52ac8bbe06b6167ee7e4017a"
+  },
+  {
+   "name": "data__texture__effect__holy_cross.str",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/holy_cross.str (stored under its CP949 name read as GBK)",
+   "blob": "fe8b995d81d26c2f9c7574dc0818320203e0ebb6",
+   "bytes": 5076,
+   "sha256": "ffa06cc1ccf0f1cfd8aa825840b55918611496b07b84ab57c90887e0052a64e5"
+  },
+  {
+   "name": "data__texture__effect__slash_b_.bmp",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/slash_b_.bmp (stored under its CP949 name read as GBK)",
+   "blob": "0ae4604e0ad01d02c080fb842d35e6a52577cec1",
+   "bytes": 76856,
+   "sha256": "6b65c355eeeb6acc2c26420ee286865d6660cead86bdbb2fdbc9ad6533a1db1c"
+  },
+  {
+   "name": "data__texture__effect__cross.str",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/cross.str (stored under its CP949 name read as GBK)",
+   "blob": "f34ea3d4df9a4b6795ddf4de6e8273c52930efc5",
+   "bytes": 32156,
+   "sha256": "3f33700161edbee70778562a7cdd61ba2a85d1d9dd004ed345b171625007a54b"
+  },
+  {
+   "name": "data__texture__effect__cross1.bmp",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/cross1.bmp (stored under its CP949 name read as GBK)",
+   "blob": "73ad2baf1a90a5a7659f8b6339ae00666c5508d2",
+   "bytes": 49208,
+   "sha256": "88d25fe8827366f0d4d8eab7c17ffdf906843630135151bf738f14de665d83d9"
+  },
+  {
+   "name": "data__texture__effect__pokjuk_a.bmp",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/pokjuk_a.bmp (stored under its CP949 name read as GBK)",
+   "blob": "cafd8918cf724d8637497d682dba86a5c6114232",
+   "bytes": 49208,
+   "sha256": "e1398cc74bf1d9790499c65e29830beecea32f00f89a7782f678cbb936705ffa"
+  },
+  {
+   "name": "data__texture__effect__shield_charge.str",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/shield_charge.str (stored under its CP949 name read as GBK)",
+   "blob": "965f020335bc74e6fecf42db2b5dc87c1ae7dff4",
+   "bytes": 16992,
+   "sha256": "6a64760945a8d7fed3079bc247a6877f17acb9e4cc8270ee99e4c1c8f0fc7538"
+  },
+  {
+   "name": "data__texture__effect__lord_blast_b.bmp",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/lord_blast_b.bmp (stored under its CP949 name read as GBK)",
+   "blob": "41b0fe67d82c7ed92234cac25bd305414e8ad125",
+   "bytes": 66608,
+   "sha256": "28fc5b8062d9cf123bded59319c4ffd25a57c90bdc3565e855b9a704be1f13a5"
+  },
+  {
+   "name": "data__texture__effect__lord_blast_d.bmp",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/lord_blast_d.bmp (stored under its CP949 name read as GBK)",
+   "blob": "e9d8a10388508d2c83a6f56845093266b6966f56",
+   "bytes": 196664,
+   "sha256": "1d50dd5096851ebc6fab4a8241cdb6fe2ce8c36e208fdf20737c556671168bad"
+  },
+  {
+   "name": "data__texture__effect__shield.bmp",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/shield.bmp (stored under its CP949 name read as GBK)",
+   "blob": "f66b6dcbc907eca471586f3d0fd61d718c248ef4",
+   "bytes": 13876,
+   "sha256": "a4aca578e5a654a3c2418b198d39442e0df3b4f18fa3479e00850413984a4390"
+  },
+  {
+   "name": "data__texture__effect__stun.bmp",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/stun.bmp (stored under its CP949 name read as GBK)",
+   "blob": "66db030be26323acf98508a7e8bad5c90225e63f",
+   "bytes": 7656,
+   "sha256": "720b5ab34ceb559b467ad909ffa75f24f01d08eb916669055459da5b7887a419"
+  },
+  {
+   "name": "data__texture__effect__shield_boomerang.bmp",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/shield_boomerang.bmp (stored under its CP949 name read as GBK)",
+   "blob": "5f065c02b3481be0e6349abfeb6ffd0ef831a660",
+   "bytes": 12344,
+   "sha256": "33721ab0134f2e19993332dcdcef02cc95447969615dde695dd23fbda54dcd0b"
+  },
+  {
+   "name": "data__texture__effect__mentalbreak.str",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/mentalbreak.str (stored under its CP949 name read as GBK)",
+   "blob": "df448bcda3adb9b76a277e5c8ef2f0bc194e4600",
+   "bytes": 14044,
+   "sha256": "449f3b0c80178396b3d6fd6757898eb0195bd27a9fcec1f2a58be5346bc0ee1f"
+  },
+  {
+   "name": "data__texture__effect__shockwave_a.bmp",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/shockwave_a.bmp (stored under its CP949 name read as GBK)",
+   "blob": "168ad913779264ceb2e03ec8e4b33c53e69a74c2",
+   "bytes": 49208,
+   "sha256": "2fadb3202892c18d9a766bd62a5b82cc8dd0e3fbc1c9993ccfaa36e6b8658c0e"
+  },
+  {
+   "name": "data__texture__effect__shockwave_b.bmp",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/shockwave_b.bmp (stored under its CP949 name read as GBK)",
+   "blob": "d99f88b64c92a754a1f3d7996a45cac139ca56bb",
+   "bytes": 49208,
+   "sha256": "a40d91a06b7abba934ebbabede41277665ace7714dc2f284c6ff764b7ec2379f"
+  },
+  {
+   "name": "data__texture__effect__shockwave_c.bmp",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/shockwave_c.bmp (stored under its CP949 name read as GBK)",
+   "blob": "30321d5d274c6c46710ce5ce2cdd713cddf338cf",
+   "bytes": 24632,
+   "sha256": "14142e8bffce698bcf781d129648740694a9750ea9bcf1cc6ca75c741e57055a"
+  },
+  {
+   "name": "data__texture__effect__shockwave_d.bmp",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/shockwave_d.bmp (stored under its CP949 name read as GBK)",
+   "blob": "3eeadc136901178ef7eb4ecbf4c68a6ad5ce3e86",
+   "bytes": 24632,
+   "sha256": "12d1df473aca24afe5bf3f31843b9764384000ff01323b02717ee6c7692bf5b7"
+  },
+  {
+   "name": "data__texture__effect__shockwave_e.bmp",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/shockwave_e.bmp (stored under its CP949 name read as GBK)",
+   "blob": "81eb1e797d03f45b898ac9f268c6159e019b3e70",
+   "bytes": 24632,
+   "sha256": "566234783e2474942ef34a7a98cc8ce40dfa7b33ac473953a2c4a8b1ca440032"
+  },
+  {
+   "name": "data__texture__effect__spiderweb.tga",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/spiderweb.tga (stored under its CP949 name read as GBK)",
+   "blob": "93aafec3a092c0f5a00b6bfe621a5be7861335af",
+   "bytes": 65580,
+   "sha256": "31758eebb613bb2051ed7cf63cab84ece87c4fd122f19482c6e4f741c2c38fad"
+  },
+  {
+   "name": "data__sprite__이팩트__데몬스트레이션.spr",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/sprite/이팩트/데몬스트레이션.spr (stored under its CP949 name read as GBK)",
+   "blob": "9505aef628e115c64de2b43670a8a6d42f7ae91e",
+   "bytes": 82972,
+   "sha256": "2b32553ae0ce0b88f705e3961cdc4d634247e842b380d73a5e74ec91c871421f"
+  },
+  {
+   "name": "data__sprite__이팩트__데몬스트레이션.act",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/sprite/이팩트/데몬스트레이션.act (stored under its CP949 name read as GBK)",
+   "blob": "3c59ca7446a0f93a6f894c2b939eafe0c93da736",
+   "bytes": 1128,
+   "sha256": "2f8d89417bc30dab32a1e5fef23fba0a4485958f7c45c3bfaec101c890c9818f"
+  },
+  {
+   "name": "data__texture__effect__strip_weapon.str",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/strip_weapon.str (stored under its CP949 name read as GBK)",
+   "blob": "2af0e99e2fdd7597056539c69b6dceef2a3eabd8",
+   "bytes": 2560,
+   "sha256": "092dc73e1436cf62a2deb6a9964a3471d1c11423544b9a648deaeb0c224c1982"
+  },
+  {
+   "name": "data__texture__effect__weapone.bmp",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/weapone.bmp (stored under its CP949 name read as GBK)",
+   "blob": "619fecaa7ff1e6ad9445e9e145524887ae30113e",
+   "bytes": 12344,
+   "sha256": "f24e5fcc85b5ac4c43588f3f76131a33adbfe941c1760fdf0077b1997f091379"
+  },
+  {
+   "name": "data__texture__effect__groomy.str",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/groomy.str (stored under its CP949 name read as GBK)",
+   "blob": "91ba7e531d4b2181c465aedc0fdd69ec4a996012",
+   "bytes": 1184,
+   "sha256": "b4c48f485f3f2958a21761b1695fbd126ed16f52c16aeae698670eac51b72900"
+  },
+  {
+   "name": "data__texture__effect__groomy_01.bmp",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/groomy_01.bmp (stored under its CP949 name read as GBK)",
+   "blob": "aa7fb02d4ed586f1125a022eec511d47d910cba1",
+   "bytes": 120056,
+   "sha256": "6d758cc0a30539a9eed1a91e11650598daf52939fe761aee0e1bbb876e8158e1"
+  },
+  {
+   "name": "data__texture__effect__groomy_02.bmp",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/groomy_02.bmp (stored under its CP949 name read as GBK)",
+   "blob": "9b865f5818cc41330ed2cc5a1874baf51f60389d",
+   "bytes": 120056,
+   "sha256": "7ad796022a344f5fa8cf4178fa564e2473d75fd10390ed5c46e17989a1ad8700"
+  },
+  {
+   "name": "data__texture__effect__groomy_03.bmp",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/groomy_03.bmp (stored under its CP949 name read as GBK)",
+   "blob": "1bba85259234a4bc92af2d8780c4ef6f1bfa32f5",
+   "bytes": 120056,
+   "sha256": "26ff1bf15faf75c610b423287f0fa671ce0224803cc84901ceaec53169cf6b7d"
+  },
+  {
+   "name": "data__texture__effect__groomy_04.bmp",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/groomy_04.bmp (stored under its CP949 name read as GBK)",
+   "blob": "fe3b0c896dad08642899869d0a692b53683b3fc2",
+   "bytes": 120056,
+   "sha256": "15ba9ed5e285a9dae3f139805347c75937f825d6567e0cae2323fc0307afda78"
+  },
+  {
+   "name": "data__texture__effect__note_1.str",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/note_1.str (stored under its CP949 name read as GBK)",
+   "blob": "77e331d7ff2f862f8f3bb10b106899e7ed7114b4",
+   "bytes": 17088,
+   "sha256": "33a213b98331ea0cf262316f7ba9407bc97f386f52879447140075d0a146a695"
+  },
+  {
+   "name": "data__texture__effect__pika02.bmp",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/pika02.bmp (stored under its CP949 name read as GBK)",
+   "blob": "59e699da87ef4341d9acda901758dc453f7e6823",
+   "bytes": 5176,
+   "sha256": "06e50bc02ebd8cb3c859639d0dc08a5d4ca5ed98f7d8100c56bcc2ff9294205d"
+  },
+  {
+   "name": "data__texture__effect__sdfsgdl.bmp",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/sdfsgdl.bmp (stored under its CP949 name read as GBK)",
+   "blob": "f130950105da41cff72b31171b54c3304f7cf63e",
+   "bytes": 49208,
+   "sha256": "1424c48024f1c8c7feceb950c891b6ea493a3aee787a54c5e514cc99cada5a38"
+  },
+  {
+   "name": "data__texture__effect__ws1.bmp",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/ws1.bmp (stored under its CP949 name read as GBK)",
+   "blob": "3a19b4a3a2f6104cac9b1922dd182fc0838b7698",
+   "bytes": 4668,
+   "sha256": "50f92d03776295c7e04cb5010749fb10542ece59cc31ae4f6e64a432382026e2"
+  },
+  {
+   "name": "data__texture__effect__ws2.bmp",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/ws2.bmp (stored under its CP949 name read as GBK)",
+   "blob": "010682c1376da25fde394b6771e8e5957fc42212",
+   "bytes": 4668,
+   "sha256": "ed9b97ff62ed04fc1a018a1d2a42d7bc30b6e7beadf90c4caa7caf8df24261ea"
+  },
+  {
+   "name": "data__texture__effect__ws3.bmp",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/ws3.bmp (stored under its CP949 name read as GBK)",
+   "blob": "5eef18332ff5dacb53883b61f61392e95b9079e0",
+   "bytes": 4668,
+   "sha256": "f0587e6c8aaf5e5d922f5692598e275264d0ca3606fec844051eb44a22fc707e"
+  },
+  {
+   "name": "data__texture__effect__ws4.bmp",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/ws4.bmp (stored under its CP949 name read as GBK)",
+   "blob": "1bbbcd363c59acf533382e0f583b2d8e30d62bc0",
+   "bytes": 4668,
+   "sha256": "6adad7e93e6506af450b8570fd42811cf0747c5e2e476b87de2ac373c698670f"
+  },
+  {
+   "name": "data__texture__effect__tarot01.tga",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/tarot01.tga (stored under its CP949 name read as GBK)",
+   "blob": "c69a6bf751ca3c21f29146c761888efc51982a4e",
+   "bytes": 98348,
+   "sha256": "0c1ebb13ed0755deaaa02a0eca4cd6245e2f21ff33a78267f652b3f36839bcc7"
+  },
+  {
+   "name": "data__texture__effect__tarot02.tga",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/tarot02.tga (stored under its CP949 name read as GBK)",
+   "blob": "f6b24a51d0001b4ec0c4205c9db06d695d1c2e1d",
+   "bytes": 98348,
+   "sha256": "dc10976c2bec7d66499570c1eba8c0c3eb564aadb2907781e81fec3ca28af3e8"
+  },
+  {
+   "name": "data__texture__effect__tarot03.tga",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/tarot03.tga (stored under its CP949 name read as GBK)",
+   "blob": "c421b4e5d1b78476f7535ca20469fbd27224b7be",
+   "bytes": 98348,
+   "sha256": "4a28cd0f34df93b74d73ce8bb086672104d7999c3bad184e51b9a622fc370987"
+  },
+  {
+   "name": "data__texture__effect__tarot04.tga",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/tarot04.tga (stored under its CP949 name read as GBK)",
+   "blob": "699dcf2a216d5bef388f43ba6f429c027d9e6290",
+   "bytes": 98348,
+   "sha256": "16e26f23c17967601d7a685bf2442abbab916c765910325f7ddb6bf92b56e2dd"
+  },
+  {
+   "name": "data__texture__effect__tarot05.tga",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/tarot05.tga (stored under its CP949 name read as GBK)",
+   "blob": "d03f3bd4810036514713fe86caa2bc01ee5465d0",
+   "bytes": 98348,
+   "sha256": "99bac0aeb3af484d8fd8c59e797fcb93bf11b414a95bec71533155e156720e3b"
+  },
+  {
+   "name": "data__texture__effect__tarot06.tga",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/tarot06.tga (stored under its CP949 name read as GBK)",
+   "blob": "4469b1424931879c3ef9fdf191e54e6d6152dcc0",
+   "bytes": 98348,
+   "sha256": "51a93ff46185bc2630cdd8db5cd05ed6fd92672b8d48c1b1da18a9f68d8aca1a"
+  },
+  {
+   "name": "data__texture__effect__tarot07.tga",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/tarot07.tga (stored under its CP949 name read as GBK)",
+   "blob": "ee13c1d982f0b65a570ce496bde01a4e1273c5b5",
+   "bytes": 98348,
+   "sha256": "3a390c1fa2a8e2954f7fcb3352e255cc22b6637114a0ec60032a7d71f2bc368c"
+  },
+  {
+   "name": "data__texture__effect__tarot08.tga",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/tarot08.tga (stored under its CP949 name read as GBK)",
+   "blob": "4e94d793af9ce68eb60419504fb00b07b598b46f",
+   "bytes": 98348,
+   "sha256": "10176e83d54cd22a646def775bffe324aa07aa32632ef04a3752d4c8903b9fcd"
+  },
+  {
+   "name": "data__texture__effect__tarot09.tga",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/tarot09.tga (stored under its CP949 name read as GBK)",
+   "blob": "5a32d50bdec850c63f77f93c746029fb8f0191fa",
+   "bytes": 98348,
+   "sha256": "94d2dc88d1bc9072e93308ed3812839d6b0ffbc2406008338ce239b4357ac79a"
+  },
+  {
+   "name": "data__texture__effect__tarot10.tga",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/tarot10.tga (stored under its CP949 name read as GBK)",
+   "blob": "ed603e0d71bf43d7b50d071c792a0447d13d5752",
+   "bytes": 98348,
+   "sha256": "f06fb41782f665f6bc015abbf4e6298817382c2992825e481ade84acc8db9b11"
+  },
+  {
+   "name": "data__texture__effect__tarot11.tga",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/tarot11.tga (stored under its CP949 name read as GBK)",
+   "blob": "5bf6dc23f9544f729a9cb781b877dcb929ab3cd3",
+   "bytes": 98348,
+   "sha256": "3de383b4dea49ab7c6b867cd91d29b8e5e4921a5bd45c5abc9f78a55555488da"
+  },
+  {
+   "name": "data__texture__effect__tarot12.tga",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/tarot12.tga (stored under its CP949 name read as GBK)",
+   "blob": "a9773ff93e2f5c8fb082c449f1cdca592dc6fa1b",
+   "bytes": 98348,
+   "sha256": "2152e3b8c9ef858f183175ce8ca8f892120007088effb0796b222f0a791d5778"
+  },
+  {
+   "name": "data__texture__effect__tarot13.tga",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/tarot13.tga (stored under its CP949 name read as GBK)",
+   "blob": "bdfcbdd73726848bf91ec6546e33032cfbcb2a67",
+   "bytes": 98348,
+   "sha256": "3efc4e2563c1d2a8b5f34a42b26bf61b50fc6ee56ab45fc031a9bcbc0779e1bb"
+  },
+  {
+   "name": "data__texture__effect__tarot14.tga",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/tarot14.tga (stored under its CP949 name read as GBK)",
+   "blob": "ea9efa6f40a18858ef6ad157fabf9d6ccda365ab",
+   "bytes": 98348,
+   "sha256": "c5717f3840ff5378406371ed83b8f181864ad466b1dfe0de9243fa8155cb2a07"
+  },
+  {
+   "name": "data__sprite__이팩트__그림자베기.spr",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/sprite/이팩트/그림자베기.spr (stored under its CP949 name read as GBK)",
+   "blob": "fe7605736214310be255f8362cd2200ee0e654da",
+   "bytes": 4405,
+   "sha256": "f6498efb2a4bf0cde33ea0c7f8f627494d79997a1eb1d10b2c120ca510544305"
+  },
+  {
+   "name": "data__sprite__이팩트__그림자베기.act",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/sprite/이팩트/그림자베기.act (stored under its CP949 name read as GBK)",
+   "blob": "9f14c084e7e8db12710fa4b79e0cd5a2b911b64c",
+   "bytes": 10644,
+   "sha256": "0edd6de63167d0f3164d45f662d5fd484edd79ec961c95a5784b04173fb9c416"
+  },
+  {
+   "name": "data__sprite__이팩트__안개베기.spr",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/sprite/이팩트/안개베기.spr (stored under its CP949 name read as GBK)",
+   "blob": "a1416b73f35b3c119febb6176f8ad00fb726e6e4",
+   "bytes": 15633,
+   "sha256": "104b3de4824ea506e78817da2b71424f47a35c5cee27f3c1735e8752e2a3859a"
+  },
+  {
+   "name": "data__sprite__이팩트__안개베기.act",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/sprite/이팩트/안개베기.act (stored under its CP949 name read as GBK)",
+   "blob": "718ffdbc286082d83b0a8224936a5006d6dba94f",
+   "bytes": 12052,
+   "sha256": "5afb196daeaca9f59403d05aad62b28a8b1ed8d8565f67bd35f8bccded87e862"
+  },
+  {
+   "name": "data__sprite__이팩트__일섬.spr",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/sprite/이팩트/일섬.spr (stored under its CP949 name read as GBK)",
+   "blob": "f79e15a7643cda5dcc65f9309589ffa7a77e39ef",
+   "bytes": 18427,
+   "sha256": "e730f42cf82fe13e6697781c081120406f8ff5134ec3e7de1bdf27e530fffaa1"
+  },
+  {
+   "name": "data__sprite__이팩트__일섬.act",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/sprite/이팩트/일섬.act (stored under its CP949 name read as GBK)",
+   "blob": "535308f885532d6b475647a907c6c87b31d0e439",
+   "bytes": 33356,
+   "sha256": "a8e00963f1dd8e0100475a8c5bb9280577c24baf25bccc27ffe1b8d26758e356"
+  },
+  {
+   "name": "data__sprite__이팩트__화염진.spr",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/sprite/이팩트/화염진.spr (stored under its CP949 name read as GBK)",
+   "blob": "9505aef628e115c64de2b43670a8a6d42f7ae91e",
+   "bytes": 82972,
+   "sha256": "2b32553ae0ce0b88f705e3961cdc4d634247e842b380d73a5e74ec91c871421f"
+  },
+  {
+   "name": "data__sprite__이팩트__화염진.act",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/sprite/이팩트/화염진.act (stored under its CP949 name read as GBK)",
+   "blob": "af049046fcf09347e48c63e0c1ec5cf514c9447b",
+   "bytes": 468,
+   "sha256": "ce014ec4637122b266d730b382fb24880bf7dd79150bd630df286bd288abe726"
+  },
+  {
+   "name": "data__sprite__이팩트__얼음땡.spr",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/sprite/이팩트/얼음땡.spr (stored under its CP949 name read as GBK)",
+   "blob": "6cde594e4640392eef5670776ca577544852f76a",
+   "bytes": 11919,
+   "sha256": "7ff0ec1665e10632a3cdb36f668c52d19ebfc91a5fef54ce1019b0331e120ad2"
+  },
+  {
+   "name": "data__sprite__이팩트__얼음땡.act",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/sprite/이팩트/얼음땡.act (stored under its CP949 name read as GBK)",
+   "blob": "b5ff53c035ee220697fa1c2cff6c1db1842a9020",
+   "bytes": 18680,
+   "sha256": "0e75ac46ea2615b20415ad39ff388b6f61c588b4a6bd539b2c98141f3fda8359"
+  },
+  {
+   "name": "data__sprite__이팩트__와일드스톰.spr",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/sprite/이팩트/와일드스톰.spr (stored under its CP949 name read as GBK)",
+   "blob": "b9ae59db1c71610580e637867b20322321cc0b85",
+   "bytes": 1803246,
+   "sha256": "99d6076d5a8c945f0f9440e926f979b22038929b804367a966e579eb67e7893c"
+  },
+  {
+   "name": "data__sprite__이팩트__와일드스톰.act",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/sprite/이팩트/와일드스톰.act (stored under its CP949 name read as GBK)",
+   "blob": "9b08080ecedfde6e451105551bb51f244a3ac55b",
+   "bytes": 3196,
+   "sha256": "ac44927d09fdb1863dce845fbc095065d1ab5f65241a01b088feadfb72844065"
+  },
+  {
+   "name": "data__sprite__이팩트__bakuretsu_hadou__bakuretsu_hadou.spr",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/sprite/이팩트/bakuretsu_hadou/bakuretsu_hadou.spr (stored under its CP949 name read as GBK)",
+   "blob": "cd217c88e4a410330316daefe84136b8a9c80c13",
+   "bytes": 9260,
+   "sha256": "8757b18c51016416ffcc1909ea2b097cf4030580ae8815c90c2b1f54b525d975"
+  },
+  {
+   "name": "data__sprite__이팩트__bakuretsu_hadou__bakuretsu_hadou.act",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/sprite/이팩트/bakuretsu_hadou/bakuretsu_hadou.act (stored under its CP949 name read as GBK)",
+   "blob": "f690afdb83cd553b76312fd56420044ec49f01fa",
+   "bytes": 5220,
+   "sha256": "67c5c5f66f1347b1dc2bf2a098d63b0806655a69eca9727967c0b641c4b2cd4c"
+  },
+  {
+   "name": "data__texture__effect__jyumonjikiri.str",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/jyumonjikiri.str (stored under its CP949 name read as GBK)",
+   "blob": "828db4369971cdb6c08dbdf3628d3ccad29e79ed",
+   "bytes": 5076,
+   "sha256": "d1538024256ce516c7ba98248dcb6fb9c61f102377f7ee2dade9b6afbed682d1"
+  },
+  {
+   "name": "data__texture__effect__jyumonjikiri_1.bmp",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/jyumonjikiri_1.bmp (stored under its CP949 name read as GBK)",
+   "blob": "287f1fc77aa25477af20ed9cc8d7bdc27b6d49e2",
+   "bytes": 12344,
+   "sha256": "472f0294178a3c9d3471053036e95a2b88ab16ed460a293d57be6bec2c927dd6"
+  },
+  {
+   "name": "data__texture__effect__jyumonjikiri_2.bmp",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/jyumonjikiri_2.bmp (stored under its CP949 name read as GBK)",
+   "blob": "be4ab4517b28a5a5b877f553a7569a4cf6ba93c2",
+   "bytes": 33476,
+   "sha256": "1f478280153ffd5071ca4c5f597d83f6efd33d7a479b921159fb1ce787e31d4b"
+  },
+  {
+   "name": "data__texture__effect__setsudan.str",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/setsudan.str (stored under its CP949 name read as GBK)",
+   "blob": "86aa9381a20c6be2f9507e415f7ec3ee91dc1732",
+   "bytes": 8784,
+   "sha256": "0353f7d707921fff32db1fd1dabef5a3d30c0dbf5cd0cca9fce8e8903fb97bec"
+  },
+  {
+   "name": "data__texture__effect__light_a.bmp",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/light_a.bmp (stored under its CP949 name read as GBK)",
+   "blob": "c26b09ed70bcbd8a95d6737e77f2bff0c0ac00f2",
+   "bytes": 73784,
+   "sha256": "65210a572a8d136c34626f8365a4be41c8513f8e2de4464d55182e6bf14a69eb"
+  },
+  {
+   "name": "data__texture__effect__light_b.bmp",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/light_b.bmp (stored under its CP949 name read as GBK)",
+   "blob": "cef4d3bb4b2a2b1d532d0b5a81aec15cef0d2100",
+   "bytes": 66616,
+   "sha256": "f17278d4e0278ef54371d6e48d1a0f1e4d315913490c32a5018b2234a3d652aa"
+  },
+  {
+   "name": "data__texture__effect__light_c.bmp",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/light_c.bmp (stored under its CP949 name read as GBK)",
+   "blob": "69d4b7296f8e5ccf1f1cee41ab54ed34fbdeb3a4",
+   "bytes": 84024,
+   "sha256": "d1e2a4ec222dfb717e975de1a0023596b4ef9072cf752c6a43904f70b608d885"
+  },
+  {
+   "name": "data__texture__effect__light_d.bmp",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/light_d.bmp (stored under its CP949 name read as GBK)",
+   "blob": "6df22423533e3f8b8c342536d65e87960ad85b64",
+   "bytes": 67640,
+   "sha256": "5feda5d9442c283cebec2d64404f627500ff16676924aa0db3f1ce521c98680d"
+  },
+  {
+   "name": "data__texture__effect__light_e.bmp",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/light_e.bmp (stored under its CP949 name read as GBK)",
+   "blob": "f19dd7a9a180ba08d9100715230df56d18bee8dd",
+   "bytes": 61496,
+   "sha256": "a40296fa55244cb0c6b2188d2325d792d43a2edb99c6a98c34ad5ec60d49901d"
+  },
+  {
+   "name": "data__texture__effect__coin_a.bmp",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/coin_a.bmp (stored under its CP949 name read as GBK)",
+   "blob": "791c08dfd5c48200cf183d771d118833c06a9763",
+   "bytes": 3128,
+   "sha256": "ecc94ceb21acaba318e6fe2465e977dcc2462ddb0e6b9f88b85eb69294dd093e"
+  },
+  {
+   "name": "data__texture__effect__coin_b.bmp",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/coin_b.bmp (stored under its CP949 name read as GBK)",
+   "blob": "487574e87b5770fc3b56f9ea92b0a60ffbf06cc8",
+   "bytes": 3128,
+   "sha256": "5c524bd094abf430841cad69efe50e558c7e0647cac8f96e6a25ecd2efb16e4e"
+  },
+  {
+   "name": "data__texture__effect__coin_c.bmp",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/coin_c.bmp (stored under its CP949 name read as GBK)",
+   "blob": "201a17cad33b6ce8835869e780d2454203407ac9",
+   "bytes": 3128,
+   "sha256": "009efe1f5c1bd30669bf878ec550d7e83feb1fb79fb7c7ce990011dbc9c008d2"
+  },
+  {
+   "name": "data__texture__effect__coin_d.bmp",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/coin_d.bmp (stored under its CP949 name read as GBK)",
+   "blob": "201a17cad33b6ce8835869e780d2454203407ac9",
+   "bytes": 3128,
+   "sha256": "009efe1f5c1bd30669bf878ec550d7e83feb1fb79fb7c7ce990011dbc9c008d2"
+  },
+  {
+   "name": "data__texture__effect__coin_e.bmp",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/coin_e.bmp (stored under its CP949 name read as GBK)",
+   "blob": "0c6152ad602a5c56ca0065e9ab3d8bc4d2886e3f",
+   "bytes": 3128,
+   "sha256": "8a13c623518134843e42d04b96c52b847513f6382a941bcaf359059e6c0c15b9"
+  },
+  {
+   "name": "data__sprite__이팩트__데스페라도.spr",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/sprite/이팩트/데스페라도.spr (stored under its CP949 name read as GBK)",
+   "blob": "0ccf5f601657d08c90c7e909f2cb37653c5f71d1",
+   "bytes": 31689,
+   "sha256": "a81cd65bc07438f70933f53e9e8731596662ab5d68b23acf725bc336d78ce25d"
+  },
+  {
+   "name": "data__sprite__이팩트__데스페라도.act",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/sprite/이팩트/데스페라도.act (stored under its CP949 name read as GBK)",
+   "blob": "7b19ebeae3089d1813c6e3aeff4c18199564e56b",
+   "bytes": 16044,
+   "sha256": "702496f5be9d6053ed3f71091aa036cf4dce9262073c8bd1d5a1e4cd8d368ed2"
+  },
+  {
+   "name": "data__sprite__이팩트__래피드샤워.spr",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/sprite/이팩트/래피드샤워.spr (stored under its CP949 name read as GBK)",
+   "blob": "0ccf5f601657d08c90c7e909f2cb37653c5f71d1",
+   "bytes": 31689,
+   "sha256": "a81cd65bc07438f70933f53e9e8731596662ab5d68b23acf725bc336d78ce25d"
+  },
+  {
+   "name": "data__sprite__이팩트__래피드샤워.act",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/sprite/이팩트/래피드샤워.act (stored under its CP949 name read as GBK)",
+   "blob": "c13d336c2b8aa1e02c1dca1d79a3a38cbccbfcf5",
+   "bytes": 7068,
+   "sha256": "b4d9f0a97a6de25b4fbc8edc88a88366beb5532613972a94110160113493f50c"
+  },
+  {
+   "name": "data__sprite__이팩트__트래킹.spr",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/sprite/이팩트/트래킹.spr (stored under its CP949 name read as GBK)",
+   "blob": "b0299bbf77e88a7c0e26df4463458d84cb8aed14",
+   "bytes": 5618,
+   "sha256": "cd497a758211e56a9deeeb9f4d97e4ab8bac637d15cd6857ac96c47dd40eb08b"
+  },
+  {
+   "name": "data__sprite__이팩트__트래킹.act",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/sprite/이팩트/트래킹.act (stored under its CP949 name read as GBK)",
+   "blob": "c05f8d3cca7965416cf0c99609ca1e93757ee08a",
+   "bytes": 1788,
+   "sha256": "0597bfe669fe65f88db5c2182576436148cfab003f5d367767e2f3d7c166f0c0"
+  },
+  {
+   "name": "data__sprite__이팩트__트리플액션.spr",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/sprite/이팩트/트리플액션.spr (stored under its CP949 name read as GBK)",
+   "blob": "0ccf5f601657d08c90c7e909f2cb37653c5f71d1",
+   "bytes": 31689,
+   "sha256": "a81cd65bc07438f70933f53e9e8731596662ab5d68b23acf725bc336d78ce25d"
+  },
+  {
+   "name": "data__sprite__이팩트__트리플액션.act",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/sprite/이팩트/트리플액션.act (stored under its CP949 name read as GBK)",
+   "blob": "fc5594fd64ae8c367f6c3015f1635259530bb91a",
+   "bytes": 3856,
+   "sha256": "21da305bf4e7312318a6dd3df8edeafb59228b5b1223b7ba19c6ac02477c92e2"
+  },
+  {
+   "name": "data__sprite__이팩트__매지컬불릿.spr",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/sprite/이팩트/매지컬불릿.spr (stored under its CP949 name read as GBK)",
+   "blob": "0ccf5f601657d08c90c7e909f2cb37653c5f71d1",
+   "bytes": 31689,
+   "sha256": "a81cd65bc07438f70933f53e9e8731596662ab5d68b23acf725bc336d78ce25d"
+  },
+  {
+   "name": "data__sprite__이팩트__매지컬불릿.act",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/sprite/이팩트/매지컬불릿.act (stored under its CP949 name read as GBK)",
+   "blob": "59485a72b57f3c6e23f662c3bd71b56e9cd058a9",
+   "bytes": 2360,
+   "sha256": "72b6efa6422b704cf8aa308c38ab2e192159d5642c9f04f7d9612ceb2701b599"
+  },
+  {
+   "name": "data__texture__effect__rl_hamer_god__hogg.str",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/RL_HAMER_GOD/hogg.str (stored under its CP949 name read as GBK)",
+   "blob": "88aafe71afef8f2601a4250fed2cddb832c97ea4",
+   "bytes": 11428,
+   "sha256": "34f6960266c1930fa80a359482e890023d59a878c612b96e104e3e0fab038ec8"
+  },
+  {
+   "name": "data__texture__effect__rl_hamer_god__aa.bmp",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/RL_HAMER_GOD/aa.bmp (stored under its CP949 name read as GBK)",
+   "blob": "f6c3ccb2f2e5aaf0e68ea7351f9c437ee679e8fc",
+   "bytes": 6192,
+   "sha256": "cd7a39ecce811b4aeb63f0b3f0425e3488a340b38429412951840ccc1636a40f"
+  },
+  {
+   "name": "data__texture__effect__rl_hamer_god__ray1.bmp",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/RL_HAMER_GOD/ray1.bmp (stored under its CP949 name read as GBK)",
+   "blob": "95ffeccd4815450916345dbb8f1b9f01548b459f",
+   "bytes": 8172,
+   "sha256": "d190fe1f26a105c779b873980380fe789dc30b9bf4b38abf6c134811c412cdc0"
+  },
+  {
+   "name": "data__texture__effect__rl_hamer_god__ray2.bmp",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/RL_HAMER_GOD/ray2.bmp (stored under its CP949 name read as GBK)",
+   "blob": "78dfeab1fa81b86f4e3fca3a49b1dfd388791d60",
+   "bytes": 8172,
+   "sha256": "7dea16e6aa02b69b18d540c4b308a17336aae8c1392d82a0a522afbab159c1de"
+  },
+  {
+   "name": "data__texture__effect__rl_hamer_god__ray3.bmp",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/RL_HAMER_GOD/ray3.bmp (stored under its CP949 name read as GBK)",
+   "blob": "6f50e973355d48185bcc0bbd8bc72de170650d10",
+   "bytes": 8172,
+   "sha256": "cb3b19fd0ce76e1bef6e85cc33af7c3040d1febd941838723b170a33d0b320bb"
+  },
+  {
+   "name": "data__texture__effect__rl_hamer_god__ray4.bmp",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/RL_HAMER_GOD/ray4.bmp (stored under its CP949 name read as GBK)",
+   "blob": "5d04f97cf43571ffbc9651347d2852f2626f636f",
+   "bytes": 8172,
+   "sha256": "eb9d8fca49b81216b27adfbe485ef146e1bcf60900b5530adcf8a738aacd1a32"
+  },
+  {
+   "name": "data__texture__effect__rl_hamer_god__ray5.bmp",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/RL_HAMER_GOD/ray5.bmp (stored under its CP949 name read as GBK)",
+   "blob": "c24172db175015edaf2016fc9b509ca6e4d58d4e",
+   "bytes": 8172,
+   "sha256": "47e79a5d3beab17be29d1b7d9bf94dd2f32fbf17e0bf298d8ebb3fc2db6c1bd4"
+  },
+  {
+   "name": "data__texture__effect__rl_hamer_god__ray6.bmp",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/RL_HAMER_GOD/ray6.bmp (stored under its CP949 name read as GBK)",
+   "blob": "1cf99836f634fb55a9e4fb0d2e3e9db52c2f474a",
+   "bytes": 8172,
+   "sha256": "5e98a060e491109bcb3e88f5252dc12647760b62e5c0bb7c9f2dd4603f59a643"
+  },
+  {
+   "name": "data__texture__effect__rl_hamer_god__rv3.bmp",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/RL_HAMER_GOD/rv3.bmp (stored under its CP949 name read as GBK)",
+   "blob": "35cee7bde98f3c39f23a7c6c82edf897e9610ff2",
+   "bytes": 41072,
+   "sha256": "3dad247436f213908b51414023b0f97d5daae7a3d0f0f6380e8af0024af932b0"
+  },
+  {
+   "name": "data__texture__effect__rl_hamer_god__rv4.bmp",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/RL_HAMER_GOD/rv4.bmp (stored under its CP949 name read as GBK)",
+   "blob": "3e68ba76d9d0304dde6ae99bfc11e3a0fd42645b",
+   "bytes": 17668,
+   "sha256": "f7143a8032b6ae0fe57dc4d9b429a8b5e3aeb9a212956e0c1d38795c3a1664fa"
+  },
+  {
+   "name": "data__texture__effect__rl_d_tail__dtdt.str",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/RL_D_TAIL/DTDT.str (stored under its CP949 name read as GBK)",
+   "blob": "8f3478006606b1ae06adf3019b4c27df5ce3143b",
+   "bytes": 16428,
+   "sha256": "5454c2b81e39845364ae9fb041767495d6bde24f08a2c76987dd8c8dcced4f27"
+  },
+  {
+   "name": "data__texture__effect__rl_d_tail__freeze.bmp",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/RL_D_TAIL/freeze.bmp (stored under its CP949 name read as GBK)",
+   "blob": "6c7087c49cc4aa007fb09c13fc1d09075ecf5910",
+   "bytes": 66608,
+   "sha256": "d149e99d976b094175a0dff29a79e67cf9ef3ed7fa003d3148e904d025dffaeb"
+  },
+  {
+   "name": "data__texture__effect__rl_d_tail__lord_blast_d.bmp",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/RL_D_TAIL/lord_blast_d.bmp (stored under its CP949 name read as GBK)",
+   "blob": "e9d8a10388508d2c83a6f56845093266b6966f56",
+   "bytes": 196664,
+   "sha256": "1d50dd5096851ebc6fab4a8241cdb6fe2ce8c36e208fdf20737c556671168bad"
+  },
+  {
+   "name": "data__texture__effect__rl_d_tail__puyan.bmp",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/RL_D_TAIL/puyan.bmp (stored under its CP949 name read as GBK)",
+   "blob": "676f9ed3e44ec1dff09595fbc91dcbeef7f3e655",
+   "bytes": 17128,
+   "sha256": "dd1cfc7eb1754c2cadbacb28e7dfc732ef3b344263682d43f3d34ab3499836de"
+  },
+  {
+   "name": "data__texture__effect__rl_d_tail__ring.bmp",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/RL_D_TAIL/ring.bmp (stored under its CP949 name read as GBK)",
+   "blob": "0072816b4b9d23aa199693888ff073ff8b490659",
+   "bytes": 5174,
+   "sha256": "071355fdcffe5f9b2b37557ff37bfd5221b4dacd4f692397cb0e6a032549d2b3"
+  },
+  {
+   "name": "data__texture__effect__rl_d_tail__ring_b.bmp",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/RL_D_TAIL/ring_b.bmp (stored under its CP949 name read as GBK)",
+   "blob": "6de3099ffe819fe0583d7640b90ef91d733454f3",
+   "bytes": 17412,
+   "sha256": "d26b343861aaf08fb68783d156eaae72aacd2eeea27213c7d9c67a237a9b1e44"
+  },
+  {
+   "name": "data__texture__effect__rl_d_tail__smoke2.bmp",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/RL_D_TAIL/smoke2.bmp (stored under its CP949 name read as GBK)",
+   "blob": "6d49c22a58ee5135678c6ff8abddfab0a2539912",
+   "bytes": 49208,
+   "sha256": "507f01e7f9980d0c7f40ed7fa50fe967e1c2a1cb532d36bd01e8068cfe660ca5"
+  },
+  {
+   "name": "data__texture__effect__rl_p_alter__platinum.str",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/RL_P_ALTER/platinum.str (stored under its CP949 name read as GBK)",
+   "blob": "718293ac2e09369d01f4f3fb27b765f4cc67b5b3",
+   "bytes": 6080,
+   "sha256": "358f64b8b005205b1d6a1fb0e80b2ef12232ff9f1fd24ec39df3f8ffc0831712"
+  },
+  {
+   "name": "data__texture__effect__rl_p_alter__brser.bmp",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/RL_P_ALTER/brser.bmp (stored under its CP949 name read as GBK)",
+   "blob": "78a73d7ea4cbd6e708d611c3ce9cbe8931caf80c",
+   "bytes": 66608,
+   "sha256": "de51d0448a060f325e6d820d9a4b6ab38d81400644adfaf49b2514c8d963ef8b"
+  },
+  {
+   "name": "data__texture__effect__rl_p_alter__cross3.bmp",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/RL_P_ALTER/cross3.bmp (stored under its CP949 name read as GBK)",
+   "blob": "bf68e1b78f872c726f646428cdd5db1037945532",
+   "bytes": 4820,
+   "sha256": "9be3b808fe5c0d42c9bb4b0a999ee2a176c43a734a0d815ceb16efaa49419bc7"
+  },
+  {
+   "name": "data__texture__effect__rl_p_alter__pokjuk_d.bmp",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/RL_P_ALTER/pokjuk_d.bmp (stored under its CP949 name read as GBK)",
+   "blob": "e7ed54a80b96ff2bef84b1bd75e0f4a6f346428c",
+   "bytes": 49208,
+   "sha256": "9a48034dd8ce5b02e70a2b55e2a359688d2f30aea2602154d4f801c924da446d"
+  },
+  {
+   "name": "data__texture__effect__rl_p_alter__ring_b.bmp",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/RL_P_ALTER/ring_b.bmp (stored under its CP949 name read as GBK)",
+   "blob": "39a2c0e7460ef89d5503bda011256988e6218f96",
+   "bytes": 49208,
+   "sha256": "bfb37c3a8c4bd309c2acb9e3d1c95a026307d342c0c1fb134ae721a356bd6932"
+  },
+  {
+   "name": "data__texture__effect__rl_slugshot__slug.str",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/RL_SLUGSHOT/slug.str (stored under its CP949 name read as GBK)",
+   "blob": "0c6e79bbbab3bc59eece1f34a93cdb9e7143c57e",
+   "bytes": 40028,
+   "sha256": "edbf07a5a0857d2c31806c36e55b109409d905de3a90facb681419e721374c14"
+  },
+  {
+   "name": "data__texture__effect__rl_slugshot__bobo1.bmp",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/RL_SLUGSHOT/bobo1.bmp (stored under its CP949 name read as GBK)",
+   "blob": "8fbf850376c3eb84c8b9dc112011a228876b3640",
+   "bytes": 41072,
+   "sha256": "1fa8c8a7b478dc289bce134cb77c6fb5ce19e7ebe534c2adb083290d73b70178"
+  },
+  {
+   "name": "data__texture__effect__rl_slugshot__bobo2.bmp",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/RL_SLUGSHOT/bobo2.bmp (stored under its CP949 name read as GBK)",
+   "blob": "111ad559f0fbbfb8a2d7a54d6f160be757a586e0",
+   "bytes": 41072,
+   "sha256": "10762fb96024439f00d7c93c9ac2eb2afe2e9bb731f9781cfcdaff3068458709"
+  },
+  {
+   "name": "data__texture__effect__rl_slugshot__bobo3.bmp",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/RL_SLUGSHOT/bobo3.bmp (stored under its CP949 name read as GBK)",
+   "blob": "da0fa99695d48d41ab50d4958aab5923586e64af",
+   "bytes": 41072,
+   "sha256": "2d055347d9a6e93708751b5f3044779355642d91efce3049bc13cd0c3512c04b"
+  },
+  {
+   "name": "data__texture__effect__rl_slugshot__fire_smoke_b.bmp",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/RL_SLUGSHOT/fire_smoke_b.bmp (stored under its CP949 name read as GBK)",
+   "blob": "dc0baa84aafc4cd8db2b399832f900521c7412f9",
+   "bytes": 49208,
+   "sha256": "c2a9a5437812bf72299289f2b3a1a01e30c97f43cd00d87a26fc6bcfc96774e4"
+  },
+  {
+   "name": "data__texture__effect__rl_slugshot__lord_blast_f.bmp",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/RL_SLUGSHOT/lord_blast_f.bmp (stored under its CP949 name read as GBK)",
+   "blob": "71ec61b22e3d6809d46c93d1609ffaecb1b3ed49",
+   "bytes": 49208,
+   "sha256": "9773faf32f0366dd9fc73f41f57772c4df96ddac0be97a4c55961c2334ff1921"
+  },
+  {
+   "name": "data__texture__effect__rl_slugshot__ring_b.bmp",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/RL_SLUGSHOT/ring_b.bmp (stored under its CP949 name read as GBK)",
+   "blob": "39a2c0e7460ef89d5503bda011256988e6218f96",
+   "bytes": 49208,
+   "sha256": "bfb37c3a8c4bd309c2acb9e3d1c95a026307d342c0c1fb134ae721a356bd6932"
+  },
+  {
+   "name": "data__texture__effect__rl_slugshot__twirl_soft.bmp",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/RL_SLUGSHOT/twirl_soft.bmp (stored under its CP949 name read as GBK)",
+   "blob": "eb5f4255ffecfb26a59e9c602513d4c24f3c5e69",
+   "bytes": 5174,
+   "sha256": "f1beadb30704431a249322c896c48ea68f48ccc1b6bab5307e9144fbf641fcb6"
+  },
+  {
+   "name": "data__texture__effect__rl_fire_dance__firedance.str",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/rl_fire_dance/firedance.str (stored under its CP949 name read as GBK)",
+   "blob": "c6d41d6312438723326db74b3f7bb50da32e2150",
+   "bytes": 11312,
+   "sha256": "aa3f6a10be77105e1f413008c4c1d697963d99653756514a14be67f984cb6474"
+  },
+  {
+   "name": "data__texture__effect__rl_fire_dance__qt_2.bmp",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/rl_fire_dance/qt_2.bmp (stored under its CP949 name read as GBK)",
+   "blob": "c1a57f2ac9c7e6b89480b536d00cb16d3b0b5ace",
+   "bytes": 17456,
+   "sha256": "f382cb3ba3ed7ba6bfcce43a8186385c15637a5557a1419692e8e4b52887f958"
+  },
+  {
+   "name": "data__texture__effect__rl_fire_rain__fire_rain.str",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/rl_fire_rain/fire_rain.str (stored under its CP949 name read as GBK)",
+   "blob": "7e7010c399a3548f93878f3d13863a4e15ebc46e",
+   "bytes": 29144,
+   "sha256": "cc26c634f18d9d0349cf58ad7241519a72e46d0251d0ce2bf7e2dddc4f3b1db0"
+  },
+  {
+   "name": "data__texture__effect__rl_fire_rain__blast_stick.bmp",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/rl_fire_rain/blast_stick.bmp (stored under its CP949 name read as GBK)",
+   "blob": "051a0fc7ab23bb90c8bcc76fce89e68a127e2306",
+   "bytes": 63544,
+   "sha256": "f1d860191985cb727654bd2b52aa0f170866da58ab9b5bde26ff66ca3d501e1b"
+  },
+  {
+   "name": "data__texture__effect__rl_fire_rain__fire_blast.bmp",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/rl_fire_rain/fire_blast.bmp (stored under its CP949 name read as GBK)",
+   "blob": "08312e4cf3ebfeebc1fedee73074db8075759e3b",
+   "bytes": 49208,
+   "sha256": "879eb4f3b1743cb4788fbeb762c13d39139c2f8e3508a6aafcabf619429e5a62"
+  },
+  {
+   "name": "data__texture__effect__rl_fire_rain__lord_blast_c.bmp",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/rl_fire_rain/lord_blast_c.bmp (stored under its CP949 name read as GBK)",
+   "blob": "24047383e474e0344dec14452539e6305441b020",
+   "bytes": 196664,
+   "sha256": "510b9e3b9bd3806c42ebb1346a8b20fd92a74efbe2473bfa269ed8a5fc84a541"
+  },
+  {
+   "name": "data__texture__effect__rl_fire_rain__lord_blast_d.bmp",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/rl_fire_rain/lord_blast_d.bmp (stored under its CP949 name read as GBK)",
+   "blob": "e9d8a10388508d2c83a6f56845093266b6966f56",
+   "bytes": 196664,
+   "sha256": "1d50dd5096851ebc6fab4a8241cdb6fe2ce8c36e208fdf20737c556671168bad"
+  },
+  {
+   "name": "data__texture__effect__rl_heat_barrel__htb.str",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/rl_heat_barrel/htb.str (stored under its CP949 name read as GBK)",
+   "blob": "12975f20c5269a314d2eda27a92562429afe4d7e",
+   "bytes": 17148,
+   "sha256": "8a1224e9325d724a5777ea75fdf7a898f307e8b60efa992b9b8718a7dbb25cf8"
+  },
+  {
+   "name": "data__texture__effect__rl_heat_barrel__b7.bmp",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/rl_heat_barrel/b7.bmp (stored under its CP949 name read as GBK)",
+   "blob": "490e4750b40f8465912dc4ff5e22e4e1c2dcda7c",
+   "bytes": 12344,
+   "sha256": "aac29b04ca84b7e632128b52d3799b16f82dcab6e264f30ebdf1c359b00585c1"
+  },
+  {
+   "name": "data__texture__effect__rl_heat_barrel__ki1.bmp",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/rl_heat_barrel/ki1.bmp (stored under its CP949 name read as GBK)",
+   "blob": "4c00af56115458c66a9b5136855999c6b35d6071",
+   "bytes": 7656,
+   "sha256": "a409a183c937a126be6f4f61b8acfaadc593ed6f8af2589ff9d78d772d0f70f2"
+  },
+  {
+   "name": "data__texture__effect__rl_heat_barrel__ki2.bmp",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/rl_heat_barrel/ki2.bmp (stored under its CP949 name read as GBK)",
+   "blob": "65e058af909b3976e6a11b4d36c611121c07065a",
+   "bytes": 7656,
+   "sha256": "ed51cc41e10d2938cefaa0210a2039a8f868be6ca2f6fc4082da0ab2ed4ef8f0"
+  },
+  {
+   "name": "data__texture__effect__rl_heat_barrel__ki3.bmp",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/rl_heat_barrel/ki3.bmp (stored under its CP949 name read as GBK)",
+   "blob": "aab886f97b3b2e80942ca6324d4f4f02456fa99d",
+   "bytes": 7656,
+   "sha256": "c5382fa149ac3f47c247abeb541ae825b849b6a46842b497b84467810804fe79"
+  },
+  {
+   "name": "data__texture__effect__rl_heat_barrel__ki4.bmp",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/rl_heat_barrel/ki4.bmp (stored under its CP949 name read as GBK)",
+   "blob": "cf2df3224cc61af2616cc427e2ebd0dfee2509f5",
+   "bytes": 7656,
+   "sha256": "88c9022d87f12e5b71f6b690e12b9734db62645b9f9e92f22fdd0fa4ddf471f3"
+  },
+  {
+   "name": "data__texture__effect__rl_heat_barrel__lens_r.bmp",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/rl_heat_barrel/lens_r.bmp (stored under its CP949 name read as GBK)",
+   "blob": "e592d7680537c3b3d486beec3fb3f255200c5541",
+   "bytes": 12344,
+   "sha256": "c4b5c3f91821ee475435c9fce17392da1cf334ebe9a150b31bb68358006ecb67"
+  },
+  {
+   "name": "data__texture__effect__rl_heat_barrel__puyan.bmp",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/rl_heat_barrel/puyan.bmp (stored under its CP949 name read as GBK)",
+   "blob": "8121c0970c58e28a2ce54cc64f2334f519d84d60",
+   "bytes": 49208,
+   "sha256": "44fb8ed346219e2c6f9a016bb072966a2a39eea544b6e49a53b73a5993ccdfd3"
+  },
+  {
+   "name": "data__texture__effect__rl_heat_barrel__smoke1_1.bmp",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/rl_heat_barrel/smoke1_1.bmp (stored under its CP949 name read as GBK)",
+   "blob": "a1ee81c772f06d7633332c013af41bea60ca5004",
+   "bytes": 196664,
+   "sha256": "2831fb7202b97d42cd1b0052b7037b2ba970d9f8f2d85e9e63e38cae93e9e8dd"
+  },
+  {
+   "name": "data__texture__effect__rl_heat_barrel__smoke1_2.bmp",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/rl_heat_barrel/smoke1_2.bmp (stored under its CP949 name read as GBK)",
+   "blob": "44ffb60371efa244e01d7f3e6459735f9976abd5",
+   "bytes": 196664,
+   "sha256": "2e954f2f1bb0b30cc7c31f281b4813677666e503a3fe88a2fdb08de84e6d3bc6"
+  },
+  {
+   "name": "data__texture__effect__rl_heat_barrel__smoke1_3.bmp",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/texture/effect/rl_heat_barrel/smoke1_3.bmp (stored under its CP949 name read as GBK)",
+   "blob": "35ba81ee15cc9370bd43b39ba0b99cedf44b2f7b",
+   "bytes": 196664,
+   "sha256": "aca1550daca372a07c0f0759d8ba9fa93c522755de47e84399a15500a7383246"
+  }
+ ]
+}

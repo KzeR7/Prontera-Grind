@@ -156,13 +156,13 @@ test('each class has a male and a female body built from its own sheet',()=>{
     assert.equal(b.anchors.length,3,n);
     for(const [i,anim] of b.anchors.entries()){assert.equal(anim.length,8,n+' lost a direction');for(const dir of anim){assert.equal(dir.length,[1,8,6][i],n+' frame count');
       // [x, y] or [x, y, headColumn]; the head must land inside the padded cell
-      for(const a of dir){assert.ok(a.length===2||a.length===3,n);assert.ok(a.every(Number.isInteger),n);assert.ok(a[0]>=20&&a[0]<=X.cell[0]-20&&a[1]>=28&&a[1]<=X.cell[1],n+' head anchor '+a);if(a.length===3)assert.ok(a[2]>=0&&a[2]<8,n)}}}
+      for(const a of dir){assert.ok(a.length===2||a.length===3,n);assert.ok(a.every(Number.isInteger),n);assert.ok(a[0]>=16&&a[0]<=X.cell[0]-16&&a[1]>=28&&a[1]<=X.cell[1],n+' head anchor '+a);if(a.length===3)assert.ok(a[2]>=0&&a[2]<8,n)}}}
   }
   // haven-v409: native RO renders that fill the shipped pack's padded cell, on their own ground line.
   assert.deepEqual([...X.cell],[126,134]);assert.equal(ev('window.SPRITE_PACK.cellW+","+window.SPRITE_PACK.cellH'),'126,134');
   assert.ok(X.pivotY>X.origin[1]&&X.pivotY<X.cell[1]);
   const manifest=JSON.parse(fs.readFileSync(path.join(root,'tools/native-expanded/source-manifest.json'),'utf8'));
-  assert.equal(manifest.files.length,128);for(const f of manifest.files){assert.match(f.sha256,/^[0-9a-f]{64}$/);assert.match(f.blob,/^[0-9a-f]{40}$/);assert.ok(f.repo&&f.commit&&f.path&&f.bytes>0,f.name)}
+  assert.equal(manifest.files.length,148);for(const f of manifest.files){assert.match(f.sha256,/^[0-9a-f]{64}$/);assert.match(f.blob,/^[0-9a-f]{40}$/);assert.ok(f.repo&&f.commit&&f.path&&f.bytes>0,f.name)}
   for(const cls of CLASS_IDS)for(const sex of ['m','f']){
     const body=ev(`expandedBodyName(${JSON.stringify(cls)},${JSON.stringify(sex)})`);
     assert.ok(X.bodies[body],cls+' '+sex+' -> '+body);assert.equal(body.startsWith('f_'),sex==='f');

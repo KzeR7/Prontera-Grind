@@ -11372,3 +11372,18 @@ Test-only follow-up to the v373 batch. No player-visible change, so BUILD is unc
 * **Try it:** the four PowerShell lines are at the top of the file.
 * **Checks:** the configuration, schema-step and address parsing were exercised here. The
   launcher itself is Windows-only and has not been run end to end.
+
+## haven-v412 — expanded roster: original RO effects, signature skills, autocast, every class armed (2026-11-15)
+
+Owner feedback after testing v411 on staging (8 points). Still behind the fourth-job gate; the 26 original classes are untouched.
+
+- **Weapons.** A second client source (`linhan85/rAthenaCN_LeeClient`, pinned in `tools/native-expanded/source-manifest.json`, 148 files) supplied what ClientROThailand lacks: revolvers for Gunslinger and Rebellion, shuriken for Kagerou & Oboro, the Rogue-line bow for Shadow Chaser, instrument (Maestro) and whip (Wanderer). The Monk line now plays the knuckle punch (ACT action 88) instead of the overhead swing; the client's knuckle sprite is empty, so fists show. 19 classes draw a weapon while attacking.
+- **Original skill effects.** `tools/make_ro_fx.py` bakes 36 client effects (`.str` timelines, effect sprites and stills, pinned in `tools/native-expanded/fx-source-manifest.json`) into WebP flipbooks under `assets/ro-fx/` (1.69 MiB, budget 2.5). `assets/signature-fx.js` plays them for 72 skills; only the books of the class being played are downloaded. Asura Strike now throws the client's own six characters; the painted Asura fallback and the Geneticist vines/plants/bottles stay for a later pass.
+- **Signature skills.** `core:true` marks each class's signature attack (★ in the tree, a shout when it lands). Asura Strike: power 16, needs a Spirit Sphere, +50% per sphere, +50% on bosses, 40% shockwave; Call Spirits / Zen / Rising Dragon fill all five spheres. Acid Demonstration, Final Strike, Slug Shot gain `bossPower`.
+- **Autocast.** New `autocast` row key (`autocastProc`): Sage Hindsight is Auto Spell (random Fire / Cold / Lightning Bolt on attacks and casts), Sorcerer Spell Fist, Scholar Double Casting, Stalker Plagiarism, Shadow Chaser Auto Shadow Spell, Gunslinger Chain Action, Kagerou Shadow Warrior, Paladin Martyr's Reckoning.
+- **Combos.** `COMBO_PLAN` gives Auto-fill a written combo per class that ends on the signature skill; inherited first-job skills only fill empty slots in front. Champion and Sura no longer pick Holy Light.
+- All 22 classes refitted with `tools/fit_expanded_budget.js` (now handles a class with no area skill).
+
+Not done: Shadow Chaser still has one attack animation (the bow). A second, dagger animation needs a new stance in both the body pack and the Wardrobe atlases, which are at their size ceilings.
+
+Tests: `signature_skills_sim.js` (new), `signature_fx_sim.js`, `expanded_roster_sim.js`, `expanded_wardrobe_sim.js`, `publish_sim.js`.

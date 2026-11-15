@@ -2,11 +2,11 @@
  "note": "sha256 of JSON.stringify(routes) per \"asset|class\", written by tools/make_expanded_wardrobe.py --fixture",
  "routes": {
   "hair-m-2-0|Royal Guard": "79130e51b320e414fe87129a4a15db5b019a059ce7145854dd2b593d1fff3651",
-  "hair-f-19-4|Maestro & Wanderer": "7f7a2ee4e854c73120cb1cad68e640b22266411f8f0447abc93184faeee450b9",
+  "hair-f-19-4|Maestro & Wanderer": "1dd272d030875947ae3ab12c57c7e02ca030fc1b3490e5d10a7a65986d7205ef",
   "piece-halo-m|Gunslinger": "719a076bbdb4a131c9e4a5dcb17b4d67b2ba314518e7b7e1ff8ae29cf9bb6e41",
-  "piece-wings-f|Sura": "52ca51c65c727c206a9e9279df36f22549556bfa95d6942f1c6026dced7147c3",
+  "piece-wings-f|Sura": "c43893201d9c2682b7c90537594304b68d10afe0b63ec211773166b567230a76",
   "piece-afkBalloon-m|Ninja": "04baa4ea13edb144da93ebffcdce76e0a54dfc3ebb9278c718c389900451accf",
-  "piece-blackThunder-f|Kagerou & Oboro": "990be1235f248dd98e7f74dafdc361edeb9e4dfdf762b757ebfbd2835070ed6c",
+  "piece-blackThunder-f|Kagerou & Oboro": "1cb3bccb0b5ef4889e7e411f9c1591aebf092ad80e92fb209ef1efaea86efbf3",
   "piece-foxEars-m|Rebellion": "2e2233101f2bb09ec6c8222c69b31ec39c5d6a14dd8f242bb361e892d5bed698",
   "piece-flower-f|Sage": "6c394527a75e4d7b2e2e1df201b9f4bc0bb8677fbbfc6af6cb8ea88890f201e4"
  }

@@ -144,3 +144,8 @@ in `tools/make_expanded_pack.py` picks one per body:
 
 Dead end, do not retry: drawing our own small revolvers at the hands. Finding the hands by skin
 colour picked up belts, boots and trim on most frames.
+
+## haven-v412 additions: second client source, skill effects
+
+- Weapons missing from ClientROThailand (revolvers, shuriken, the Rogue bow, instrument, whip, knuckle) come from `linhan85/rAthenaCN_LeeClient` at a pinned commit; `source-manifest.json` now lists 148 files. Attack motions: 40 overhead, 80 one-hand swing / revolvers / instrument / whip, 88 bow / throw / knuckle punch.
+- `tools/make_ro_fx.py` bakes skill effects into `assets/ro-fx/`: `python3 tools/make_ro_fx.py` rebuilds, `--check` verifies the shipped files against a rebuild, `--sheet out.png [keys]` writes a review sheet. Its `BOOKS` table maps a flipbook key to a `.str` timeline, an effect sprite or a set of stills. Sources are pinned in `fx-source-manifest.json` and cached in `.cache/native-fx/`.
