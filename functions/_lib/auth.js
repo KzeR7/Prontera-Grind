@@ -93,6 +93,11 @@ export function readCookie(request, name = COOKIE) {
 
 // Resolve the caller. Returns null when there is no usable session (the caller answers 401).
 // `D` is the D1 handle (env.DB); the SQL lives in _lib/db.js like everywhere else.
+// True when this account has a recovery code set. Takes the object `currentUser()` returns, so the
+// answer costs no query of its own (v412). Kept as a function so the shape can change without every
+// caller needing to know where the flag lives.
+export const recoverySetFor = user => !!(user && user.recoverySet);
+
 export async function currentUser(request, D) {
   const token = readCookie(request);
   if (!token || token.length < 40) return null;
@@ -106,7 +111,11 @@ export async function currentUser(request, D) {
   if (row.expires_at - now < (SESSION_DAYS - 1) * 86400000) {
     await db.touchSession(D, hash, now + SESSION_DAYS * 86400000);
   }
-  return { id: row.user_id, username: row.username, gm: row.gm, banned: row.banned, tokenHash: hash };
+  // v412 (CPU): `recoverySet` is a boolean derived from the row this JOIN already fetched, so callers
+  // that need "does this account have a recovery code" do not have to read the users table again. The
+  // hash itself is never carried any further than this line - only whether it is set.
+  return { id: row.user_id, username: row.username, gm: row.gm, banned: row.banned, tokenHash: hash,
+           recoverySet: !!row.recovery_hash };
 }
 
 export const isGm = user => !!user && user.gm >= 1;
