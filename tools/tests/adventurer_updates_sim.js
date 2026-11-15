@@ -19,6 +19,19 @@ test('online income samples real gains, retains the previous field, and ignores 
 // stage the character is standing on.
 S.lvl=2;farmSample(62000);const k2=String(S.offlineIncome.key).split(':');
 return S.offlineIncome.xp===r.xp&&S.offlineIncome.zeny===r.zeny&&k2[0]===String(r.key).split(':')[0]&&Number(k2[1])===Number(String(r.key).split(':')[1]);`);
+// v409 (owner): "if a tab doesnt run ... a sudden surge of exp and zeny will happen which spike it
+// for abit ... would this might what have happen in this 37 level increase?" The sampler divides a
+// wall-clock minute into events, so a replayed minute (simAdvance catching a frozen/slept tab up)
+// would read as many times the real rate. While the sim owes time, no sample is published.
+test('a replayed catch-up burst never inflates the measured farm minute',`S=fresh();currentUser='CatchUp';S.offlineIncome=null;farmSession=null;simPending=0;
+ farmSample(1000);recordFarmIncome(600,300,420,10,30000);farmSample(61000);
+ const clean=S.offlineIncome&&S.offlineIncome.xp,  rate=S.offlineIncome.kph;
+ simPending=300;                                  // ten minutes of owed sim time
+ farmSample(62000);
+ const dropped=farmSession===null;
+ for(let i=0;i<50;i++)recordFarmIncome(60000,30000,42000,100,63000+i);   // the replay itself
+ simPending=0;farmSample(64000);
+ return clean===600&&rate===600&&dropped&&S.offlineIncome.xp===600&&S.offlineIncome.kph===600;`);
 test('eight hours gives exactly four hours at half measured income without stage advance',`const now=Date.now();S.offlineAt=now-8*3600000;S.offlineKph=0;S.offlineIncome={version:1,key:farmStageKey(),at:S.offlineAt,xp:100,zeny:200,job:70,kph:0};S.lv=150;const r=applyOfflineProgress(now);return r.exp===12000&&r.zeny===24000&&r.creditedMs===4*3600000&&S.mp===0&&S.lvl===1;`);
 test('old saves and nonfinite earnings never fall back to map payouts',`const now=Date.now();S.offlineAt=now-8*3600000;S.offlineKph=30000;S.offlineIncome={version:1,key:farmStageKey(),at:S.offlineAt,xp:Infinity,zeny:20,job:1,kph:30000};const r=applyOfflineProgress(now);return r.exp===0&&r.zeny===0&&r.kills===0;`);
 test('display preferences can hide and restore UI and aura',`S.hideUI=true;S.lv=99;applyDisplay();syncLevelAura();if(!document.body.classList.contains('clean-screen')||levelAura?.visible)return false;S.hideUI=false;S.auraShow=false;applyDisplay();syncLevelAura();return !document.body.classList.contains('clean-screen')&&!levelAura?.visible;`);

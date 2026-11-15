@@ -1325,7 +1325,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-15 haven-v408 away exp capped at a level an hour, bulk sales and afk payouts no longer flagged';
+const BUILD='2026-11-15 haven-v408 away exp capped at a level an hour, no replayed-minute rate spikes, afk payouts and bulk sales no longer flagged';
 // v364: this write used to sit AFTER the `//` on the BUILD line, so it was part of the comment and
 // never ran - the login card showed an empty #buildTag and there was no way to confirm which file
 // the browser had loaded. It also has to survive the script running before the login card exists.
@@ -3572,8 +3572,18 @@ const farmStageKey=()=>[S.cls,S.mp,S.lvl].join(':');
 const farmKeyMap=key=>{const p=String(key||'').split(':');const m=Number(p[1]);return Number.isInteger(m)?m:-1};
 // A stopped field is not a zero-income farming minute. Discard the partial window
 // so time in the plaza/trials cannot dilute the next real field sample either.
+// v409 (owner, 2026-11-15: "if a tab doesnt run ... a sudden surge of exp and zeny will happen which
+// spike it for abit ... would this might what have happen in this 37 level increase?"). It is
+// exactly that. A throttled, frozen or slept tab replays its owed time through simAdvance(): up to
+// SIM_CATCHUP seconds of grinding land inside a few milliseconds of wall clock. The farm sampler
+// divides the last 60 seconds of EVENTS by 60 seconds of WALL time, so a ten-minute replay read as
+// ten times the real rate - and if the player closed the tab on that minute, the welcome-back claim
+// was priced off the inflated sample. While the sim owes more than a moment of time, a wall-clock
+// rate proves nothing: drop the partial window and start again once the debt is settled.
+const FARM_CATCHUP_PAUSE=2;   // seconds of owed sim time that make a wall-clock rate meaningless
 function farmSamplingPaused(){
- return (typeof document!=='undefined'&&document.body?.classList.contains('social-open'))||
+ return (typeof simPending==='number'&&simPending>FARM_CATCHUP_PAUSE)||
+  (typeof document!=='undefined'&&document.body?.classList.contains('social-open'))||
   (typeof hubFirstPending!=='undefined'&&hubFirstPending)||
   (typeof JOB_RITE!=='undefined'&&JOB_RITE.on)||(typeof TRIAL!=='undefined'&&TRIAL.on)||
   (typeof CLOUD!=='undefined'&&(CLOUD.lost||CLOUD.gate||CLOUD.paused));

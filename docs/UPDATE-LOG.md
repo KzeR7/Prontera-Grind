@@ -11095,10 +11095,24 @@ Test-only follow-up to the v373 batch. No player-visible change, so BUILD is unc
   a big post-claim jump: a claim can no longer explain 37 levels, so `+37 levels in 2 min` is now a
   **real** flag rather than a false one, and the end-to-end `/api/save` test asserts both halves —
   four levels with a claim records nothing, 37 levels with the same claim is reported.
+* **The root cause the owner suspected, found and closed (his second report).** "If a tab doesnt run
+  ... a sudden surge of exp and zeny will happen which spike it for abit ... would this might what
+  have happen in this 37 level increase?" Yes - and this is the mechanism that made the payout big
+  enough to matter. A throttled, frozen or slept tab replays its owed time through `simAdvance()`,
+  which may replay up to `SIM_CATCHUP` (**600 seconds**) of grinding inside a few milliseconds of
+  wall clock. The farm sampler divided the last 60 seconds of *events* by 60 seconds of *wall* time,
+  so a ten-minute replay read as **ten times the real rate**, and a player who closed the tab on
+  that minute had an inflated sample stored - which the welcome-back claim then multiplied by 120
+  credited minutes. `farmSamplingPaused()` now also stops sampling while the sim owes more than
+  `FARM_CATCHUP_PAUSE` (**2 s**) of time: the partial window is dropped, no sample is published,
+  and the away rate stays whatever the last honest field minute measured. Both samplers gate on
+  that one function, so the kill rate (`offlineKph`) is protected the same way. `adventurer_updates_sim`
+  pins it: a clean minute samples 600 EXP/min and 600 kills/hour, a 300-second replay samples
+  nothing and leaves the stored sample untouched (verified to fail with the guard removed).
 * **Zeny and loot were left alone** — they are the income the player actually measured, and the
   complaint is the level slam. `OFFLINE_REWARD_MULT` (0.5) and the four-hour cap are unchanged.
 * **Checks:** `api_sim` **69** (was 68): the ceiling/cap mirror, the pure payout cases, and the
-  two-sided end-to-end run; `offline_sim` **14** adds the client-side proof (a four-hour claim
+  two-sided end-to-end run; `adventurer_updates_sim` **29** adds the replayed-minute guard; `offline_sim` **14** adds the client-side proof (a four-hour claim
   pays exactly the exp four levels cost, a half-hour claim one). `plaza_stranded_still_paid_sim`
   had been measuring the plaza rate off the frame clock and demanding 99% of a nominal 1200,
   which drifts by about a percent run to run (both `v407` and `v408` trees produce 1180 or 1190
