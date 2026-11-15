@@ -11335,3 +11335,14 @@ Test-only follow-up to the v373 batch. No player-visible change, so BUILD is unc
   yet seen in a real browser. Wings, capes and bags on expanded classes can sit a few pixels
   off on some frames. Still open: real skill icons (owner will supply), held-weapon art for
   classes other than the two gun jobs, and skill effects of their own.
+
+### 2026-11-15 (staging launcher) — no build bump
+
+* **Changed:** New owner launcher `tools/staging/stage_expanded.mjs` puts the haven-v410 branch
+  on staging from Windows. It builds in a temporary copy with a staging-only configuration
+  (`prontera-grind-staging`, `prontera-social-staging`, `pg-staging`), refuses to continue if a
+  production name appears or the database is not `pg-staging`, adds any of the additive tables
+  0009-0017 that staging is missing, and deploys. Your checkout is not modified.
+* **Try it:** the four PowerShell lines are at the top of the file.
+* **Checks:** the configuration, schema-step and address parsing were exercised here. The
+  launcher itself is Windows-only and has not been run end to end.
