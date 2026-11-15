@@ -11070,6 +11070,51 @@ Test-only follow-up to the v373 batch. No player-visible change, so BUILD is unc
   and the audit card answers with the `0015` note), `gm_console_sim` **19** (boot probes `/me`
   alone, `allSettled`, guarded `loadPlayers`, guarded marker, named note). No BUILD bump.
 
+### 2026-11-14 — `save audit: a welcome-back payout and a sold-out fishing bag are not cheating` (no build bump — no `index.html` change)
+
+* **The owner (2026-11-15): "the anti cheat flagging system seems to be a bit broken, most of the
+  flagging are incorrect... 37 level from 2 mins, i believe its the afk reward."** He was right, and
+  the bug was in the monitor, not the player. `auditSaveRates` credited a consumed offline claim's
+  **kills** against the kill rule and nothing else, so everything those kills bought landed in the
+  next window as impossible progress: the exp that becomes **levels**, the **Zeny**, and the **loot
+  every claim kill rolls** (ore, Nightmare materials, Ascension materials). A player who came back
+  from an away window was flagged on their first save after it — `+37 levels in 2 min from level
+  113` against a 30/hour limit, which is exactly the row in the console.
+* **The claim is now priced the way the client pays it.** `claimCredits()` mirrors
+  `applyOfflineProgress()`: with the measured farm sample the save carries (`offlineIncome.xp` and
+  `.zeny` per minute) it credits `sample × credited minutes × 0.5`, the same arithmetic the browser
+  uses; without one it prices each kill from the game's own reference (`EXPK`/`ZK` at the level
+  band, with slack for expRate, pets, bosses and the Nightmare multipliers). Exp is turned into
+  **levels by the game's own curve** — `needAt`/`baseNeedAt` transcribed from `index.html`, and a
+  test holds the transcription against the page for all 149 levels — and each kill credits loot at
+  its per-kill ceiling (ore 3%, Nightmare material 3%, Ascension material/Sigil 5%). `/api/save`
+  passes the claim row (kills **and** credited ms) into the audit; the GM-grant credits from `0016`
+  still add on top instead of replacing it.
+* **A single bulk action is not a rate.** The fishing bag sells in one click and the Aether Keep
+  holds 1,000 fish, so a sold-out bag could add millions of Fishcoins inside one 2-minute window and
+  trip a 100,000/hour rule — the owner's "fishing coins where they sell in bulk". Each window now
+  has one **`LUMP_ALLOWANCE`** per lumpy counter (Fishcoins 1.5 M = 1,000 fish at 1,500 each,
+  DigiPet coins 100 k, Black-Market ore/elu 5,000) subtracted before the rate is judged. The
+  allowance is on the delta, so it can only prevent a false positive; twenty sold-out bags inside
+  two minutes still flag.
+* **What was deliberately NOT changed: the payout itself.** It is not broken — it is `4 h ceiling ×
+  50% × the kill rate the server measured`, i.e. at most 60,000 kills for a four-hour absence, and
+  the play session's own measured exp/Zeny per minute is what turns those kills into levels. At the
+  Lv 113 band the game's reference field kill pays ~250 exp, which buys ~15 levels from a full
+  claim; ~37 levels means the sample the client measured was far richer (a late/boss field with exp
+  gear). Lowering `OFFLINE_REWARD_MULT` or the 4 h ceiling is a balance decision for the owner, not
+  a bug fix, so this entry only stops the monitor calling it cheating.
+* **Checks:** `api_sim` **68** (was 64): the exp-curve transcription against `index.html`, the claim
+  credits themselves, a pure "AFK payout is not a flag / twenty bags still are" case, and an
+  end-to-end `/api/save` run where a real `offline_reward_claims` row pays 37 levels and 36 M Zeny —
+  it reproduces the console's exact `+37 levels in 2 min` row when the new wiring is removed, and
+  records no alert with it in place. Full gate: see **Delivery** below.
+* **Nothing to apply server-side** (no migration): deploy the Functions and the next accepted save
+  is judged with the claim credited. Flags already recorded stay as they are — clear them from the
+  Suspicious-saves card once reviewed.
+* **Delivery:** Branch `arena/972fca22-prontera-grind`, PR **#235**. Full gate on the final tree:
+  **219 passed / 6 failed** — the same six pre-existing reds as `main`.
+
 ### 2026-11-14 — `gm console: every save-audit flag renders its clear/reopen button` (no build bump — `gm.html` only)
 
 * **The owner could not unflag anything: the button was written into a row that never closed.**

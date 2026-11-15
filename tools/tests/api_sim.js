@@ -1336,7 +1336,10 @@ await T('network bans: the front door refuses every route from a banned network,
 // hours." The server audits every accepted save against the game's own invariants and against
 // the rate of progress since the previous one (0015), flags REVIEW-ONLY, pokes the owner in-game
 // the first time a rule fires, and never lets a GM gift or an offline claim look like cheating.
-import { auditStaticSave, auditSaveRates, creditsFromGrants } from '../../functions/_lib/save-audit.js';
+import {
+  auditStaticSave, auditSaveRates, creditsFromGrants, claimCredits, addCredits,
+  levelsFromExp, expToNext, OFFLINE_REWARD_MULT, OFFLINE_CAP_MS, LUMP_ALLOWANCE,
+} from '../../functions/_lib/save-audit.js';
 
 // A save that passes every static rule (lv 60 earns far more points than this fixture spends).
 const quietSave = (over = {}) => JSON.stringify(Object.assign({}, JSON.parse(saveBlob(60, 0)), { pts: 0 }, over));
@@ -1370,6 +1373,109 @@ t('save audit: the pure rules — impossible stats, refine ceilings, rates with 
   assert.strictEqual(credits.levels, 60);
   assert.strictEqual(credits.resources.shards, 5_000);
   assert.strictEqual(credits.resources.mystery, undefined, 'an unrecognised resource credits nothing');
+});
+
+// The owner (2026-11-15): "the anti cheat flagging system seems to be a bit broken, most of the
+// flagging are incorrect... 37 level from 2 mins, i believe its the afk reward". A welcome-back
+// payout is the server's own money, and the claim's kills buy exp, Zeny and loot - not just kills.
+t('save audit: the exp curve is the game\'s own, so a claim\'s exp can be priced in levels', () => {
+  // Pull the real curve out of index.html: the constants line and the two arrow functions the
+  // client uses to charge a level. If the page ever retunes them, this fails instead of the console
+  // quietly crediting the wrong number of levels.
+  const page = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+  const grab = re => { const m = page.match(re); assert.ok(m, 'index.html must still define ' + re); return m[0]; };
+  const body = [
+    'const BASE_EXP_LATE_LV=100;',
+    grab(/const NA1=[^;]+;/),
+    grab(/BASE_EXP_LATE_X\s*=\s*[0-9.]+/),
+    grab(/const roundReq\s*=\s*n=>\{[^}]*\};/),   // its body has a ';' in it, so match the braces
+    grab(/needAt=L=>[\s\S]*?(?=,baseNeedAt=)/).replace(/^needAt=/, 'const needAt = '),
+    grab(/baseNeedAt=L=>[\s\S]*?(?=,need=)/).replace(/^baseNeedAt=/, 'const baseNeedAt = '),
+    'return baseNeedAt;',
+  ].join('\n');
+  const clientNeed = new Function(body)();
+  const mismatches = [];
+  for (let lv = 1; lv < 150; lv++) {
+    if (clientNeed(lv) !== expToNext(lv)) mismatches.push(lv + ': page ' + clientNeed(lv) + ' vs audit ' + expToNext(lv));
+  }
+  assert.deepStrictEqual(mismatches.slice(0, 4), [], 'the audit prices a level exactly as index.html does');
+  assert.strictEqual(mismatches.length, 0);
+  // and the walk agrees with the page's own checkLevel loop
+  const expFor = (from, levels) => { let e = 0; for (let i = 0; i < levels; i++) e += expToNext(from + i); return e; };
+  assert.strictEqual(levelsFromExp(expFor(113, 37), 113), 37, 'that much exp buys exactly 37 levels');
+  assert.strictEqual(levelsFromExp(expFor(113, 37) - 1, 113), 36, 'one exp short buys one level less');
+  assert.strictEqual(levelsFromExp(0, 113), 0);
+});
+
+t('save audit: a welcome-back claim credits the exp it paid, the Zeny, and the loot its kills rolled', () => {
+  const claim = { kills: 60_000, creditedMs: 4 * 60 * 60 * 1000 };
+  // the measured farm sample the client multiplies by the credited minutes at half rate
+  const paid = claimCredits({ claim, income: { version: 1, xp: 1.2e6, zeny: 300_000 }, prevLv: 113 });
+  const minutes = (OFFLINE_CAP_MS / 60_000) * OFFLINE_REWARD_MULT;   // 4 h, paid at half rate
+  assert.strictEqual(paid.levels, levelsFromExp(1.2e6 * minutes, 113), 'levels come from the exp the payout actually paid');
+  assert.ok(paid.levels >= 30, 'a four-hour endgame payout is dozens of levels: ' + paid.levels);
+  assert.strictEqual(paid.zeny, Math.ceil(300_000 * minutes), 'Zeny is credited the same way');
+  assert.ok(paid.resources.ori >= 1_000 && paid.resources.nmat0 >= 1_000, 'claim kills also roll loot');
+  assert.strictEqual(paid.kills, 0, 'the kills themselves are credited separately, not twice');
+  // no measured sample (an old save): the kills are priced from the game's own reference
+  const priced = claimCredits({ claim, income: null, prevLv: 113 });
+  assert.ok(priced.levels > 0 && priced.levels < 60, 'a priced claim stays inside the ceiling: ' + priced.levels);
+  assert.strictEqual(claimCredits({ claim: { kills: 0, creditedMs: 0 }, prevLv: 113 }), null, 'no claim pays nothing');
+  // a claim and a GM gift in the same window add up instead of overwriting each other
+  const both = addCredits(paid, creditsFromGrants([{ kind: 'gift', payload: JSON.stringify({ resource: 'ori', amount: 500 }) }]));
+  assert.strictEqual(both.resources.ori, paid.resources.ori + 500);
+  assert.strictEqual(both.levels, paid.levels);
+});
+
+t('save audit: the AFK payout is not a flag, and a bulk sale is not a rate', () => {
+  // 113 -> 150 in two minutes is 1,110 levels/hour: impossible on foot, ordinary after an away
+  // window whose claim paid that exp.
+  const base = JSON.parse(quietSave());
+  const prev = { kills: 1_000, lv: 113, zeny: 0, raw: { ...base, offlineIncome: { version: 1, xp: 1.2e6, zeny: 300_000 } } };
+  const next = { kills: 61_000, lv: 150, zeny: 36_000_000, raw: { ...base, lv: 150, kills: 61_000 } };
+  const withClaim = auditSaveRates({ prev, next, elapsedMs: 120_000, claimKills: 60_000,
+    credits: claimCredits({ claim: { kills: 60_000, creditedMs: 4 * 3600 * 1000 }, income: prev.raw.offlineIncome, prevLv: 113 }) });
+  assert.deepStrictEqual(withClaim, [], 'the claim payout on its own is never a flag: ' + JSON.stringify(withClaim));
+  const without = auditSaveRates({ prev, next, elapsedMs: 120_000, claimKills: 60_000 });
+  assert.ok(without.some(v => v.kind === 'level-rate'), 'the same levels with no claim credited still flag');
+
+  // Fishing: selling a whole bag is one action. 300k coins in two minutes is a sale, not a hack.
+  const fish = (coins) => ({ ...base, fishing: { coins } });
+  const sale = auditSaveRates({
+    prev: { kills: 0, lv: 113, zeny: 0, raw: fish(1_000_000) },
+    next: { kills: 0, lv: 113, zeny: 0, raw: fish(1_300_000) }, elapsedMs: 120_000,
+  });
+  assert.ok(!sale.some(v => v.kind === 'rate:fishcoins'), 'a sold-out bag is not a flag: ' + JSON.stringify(sale));
+  const hoard = auditSaveRates({
+    prev: { kills: 0, lv: 113, zeny: 0, raw: fish(1_000_000) },
+    next: { kills: 0, lv: 113, zeny: 0, raw: fish(1_000_000 + LUMP_ALLOWANCE.fishcoins * 20) }, elapsedMs: 120_000,
+  });
+  assert.ok(hoard.some(v => v.kind === 'rate:fishcoins'), 'twenty sold-out bags in two minutes still flags');
+});
+
+
+await T('save audit: a welcome-back payout is not a flag, end to end through /api/save', async () => {
+  const h = freshEnv();
+  const player = await api.register(h.env, { u: 'Away', p: 'away-password-1' });
+  const id = h.sqlite.prepare("SELECT id FROM users WHERE username='Away'").get().id;
+  // A Lv 113 save that carries the measured farm sample the client prices a claim from.
+  const start = Object.assign(JSON.parse(saveBlob(113, 0)), {
+    pts: 0, offlineIncome: { version: 1, xp: 1.25e6, zeny: 300_000 },
+  });
+  let put = await api.putSave(h.env, player.cookie, { blob: JSON.stringify(start), version: 1 });
+  assert.strictEqual(put.status, 200);
+  // One pending claim: four hours at 30,000 kills an hour, paid at half rate = 60,000 kills.
+  const claimId = Number(h.sqlite.prepare(`INSERT INTO offline_reward_claims(user_id,away_ms,credited_ms,rate_kph,kills,remainder,issued_at,claimed_at)
+    VALUES(?,?,?,?,?,?,?,NULL)`).run(id, 4 * 3600 * 1000, 4 * 3600 * 1000, 30000, 60000, 0, Date.now() - 4 * 3600 * 1000).lastInsertRowid);
+  // the next sync is two minutes after the last one: 37 levels in two minutes is 1,110 an hour
+  h.sqlite.prepare('UPDATE saves SET saved_at = saved_at - 120000, last_seen = last_seen - 120000 WHERE user_id = ?').run(id);
+  const after = Object.assign({}, start, {
+    lv: 150, kills: 60007, zeny: 36_000_000, offlineClaimId: claimId,
+  });
+  put = await api.putSave(h.env, player.cookie, { blob: JSON.stringify(after), version: put.data.version, offlineClaimId: claimId });
+  assert.strictEqual(put.status, 200, JSON.stringify(put.data).slice(0, 200));
+  assert.strictEqual(h.sqlite.prepare('SELECT COUNT(*) n FROM save_alerts').get().n, 0,
+    'the claim paid for those levels and that Zeny: ' + JSON.stringify(h.sqlite.prepare('SELECT kind, detail FROM save_alerts').all()));
 });
 
 await T('save audit: an impossible save still stores, and the FIRST flag pokes the owner in-game', async () => {
