@@ -152,3 +152,10 @@ over repository guidance.
 - [Archived ASPD/movement research](docs/history/aspd-research-2026-10-13/README.md):
   a 2026-10-13 snapshot from another fork. Not a current brief, and its "user
   intent" section is not a standing instruction.
+
+## Where RO sprites and icons come from
+
+Expanded-roster class bodies, heads and the seven new weapon families' icons are taken from
+public RO client mirrors on GitHub, pinned by git blob id and SHA-256. The repositories,
+folder paths and download steps are in `tools/native-expanded/README.md`. Read it before
+adding or replacing any class sprite or item icon.
