@@ -12,6 +12,9 @@ const body = src.slice(src.indexOf('function load(){try{') + 19, src.indexOf('}c
 const arena = grab('const SU=k=>', ',K5=[') + ';';
 // v88.6: load() refuses a save stamped for another account, so the stamp helpers come along with it.
 const stamp = grab('// ---------- the save-owner stamp (v88.6) ----------', 'const num_= (v,d)');
+// v414: load() now runs the save codec first. The codec sits inside the v88.6 stamp span that is
+// already grabbed below (it was placed above `sameSave`, which needs it), so `stamp` carries it and
+// nothing extra is sliced here - slicing it separately would declare `SAVE_CODEC_VERSION` twice.
 const code = [arena, grab('const CD=[', 'const fresh=()=>'), grab('const fresh=()=>', 'const saveKey='), stamp, 'function loadRaw(){' + body + '}'].join('\n');
 
 const save = {progressionVersion:1,pets:[

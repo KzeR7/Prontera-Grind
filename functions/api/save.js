@@ -20,7 +20,8 @@
 import { currentUser } from '../_lib/auth.js';
 import { lockedCosmetics } from '../_lib/shop.js';
 import { json, guard, readJson, fail, unauth } from '../_lib/http.js';
-import { checkSaveBlob, publicFields, saveOwnerStamp, sameAccount, savedElsewhere, saveBelongsTo, withSaveIdentity, storedSaveOwner, SAVE_MISMATCH, restoreAllowsWrite, storedRestoreAt, RESTORE_FENCED, parseSave } from '../_lib/validate.js';
+import { checkSaveBlob, publicFields, saveOwnerStamp, sameAccount, savedElsewhere, saveBelongsTo, withSaveIdentity, storedSaveOwner, SAVE_MISMATCH, restoreAllowsWrite, storedRestoreAt, RESTORE_FENCED, parseSave} from '../_lib/validate.js';
+import { unpackSave } from '../_lib/save-codec.js';
 import * as db from '../_lib/db.js';
 import { recordDamageObservation } from '../_lib/damage-monitor.js';
 import { auditAcceptedSave } from '../_lib/save-audit.js';
@@ -140,7 +141,15 @@ export const onRequestPut = guard(async ({ request, env }) => {
     return json({ err: 'This tab is playing a different account. Nothing was saved.', accountMismatch: true,
       owner: user.username }, 409);
   }
-  const save = checkSaveBlob(body.blob);
+  // v414 CPU: the client now stores items/cards/fish positionally. `checkSaveBlob` still does the
+  // cheap structural work (size ceiling BEFORE the parse, then one parse), but every rule below -
+  // the account stamp, the cosmetic check, the audit, the damage observation - was written against
+  // the ordinary object shape. So the blob is unpacked once, here, into exactly that shape. If this
+  // step were skipped the audit would see arrays instead of items and would quietly stop checking
+  // gear: a silent loss of protection is worse than any CPU saving, so the unpack is unconditional
+  // and `body.blob` (the compact text) is what still gets stored below.
+  const storedForm = checkSaveBlob(body.blob);
+  const save = unpackSave(storedForm);
   // v88.6: the save itself must name its account, and that account must be the one signed in. A save
   // with no stamp comes from a page that predates the stamp: it is told to reload, as for a bad owner.
   const stamp = saveOwnerStamp(save);

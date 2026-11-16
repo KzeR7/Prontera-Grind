@@ -78,6 +78,11 @@ assert.ok(start > 0 && end > start, 'the cloud block is not where this suite exp
 // block, and the block calls them - so they are extracted with it.
 const stampStart = src.indexOf('// ---------- the save-owner stamp (v88.6) ----------'), stampEnd = src.indexOf('const num_= (v,d)', stampStart);
 assert.ok(stampStart > 0 && stampEnd > stampStart, 'the save-owner helpers are not where this suite expects them');
+// v414: cloudPush serialises through `packSave`. The codec sits inside the stamp span grabbed above
+// (it was placed above `sameSave`, which needs it), so it arrives with the stamp helpers and must not
+// be sliced a second time - that would declare `SAVE_CODEC_VERSION` twice.
+assert.ok(src.slice(stampStart, stampEnd).includes('const SAVE_CODEC_VERSION=1;'),
+  'the v414 save codec is not inside the stamp span this suite extracts');
 const cloudCode = src.slice(stampStart, stampEnd) + '\n' + src.slice(start, end + "addEventListener('load',()=>{setTimeout(cloudProbe,80)});".length);
 
 // Every dependency the block has on the game, stubbed so the suite can drive it directly.
