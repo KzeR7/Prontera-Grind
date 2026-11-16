@@ -925,9 +925,9 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="stylesheet" href="assets/ui/mobile.css?v=324">
 <script src="assets/ui/mobile.js?v=274"></script>
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
-<link rel="stylesheet" href="assets/social.css?v=411">
+<link rel="stylesheet" href="assets/social.css?v=413">
 <link rel="stylesheet" href="assets/social-battle.css?v=393">
-  <link rel="stylesheet" href="assets/social-fishing.css?v=411"><link rel="stylesheet" href="assets/friends.css?v=273">
+  <link rel="stylesheet" href="assets/social-fishing.css?v=413"><link rel="stylesheet" href="assets/friends.css?v=273">
 </head>
 <body>
 <div id="loginOverlay"><div class="eclipse-login-world" aria-hidden="true"></div><header class="eclipse-login-header"><a href="./" class="eclipse-brand"><span>HH</span><b>HORIZON HAVEN<small>YOUR IDLE ADVENTURE</small></b></a><div class="eclipse-palettes" role="group" aria-label="Interface palette"><button type="button" data-palette="moonstone">Moonstone</button><button type="button" data-palette="aurora">Aurora</button><button type="button" data-palette="ember">Ember</button></div></header><main class="eclipse-login-layout"><section class="login-brand"><div class="login-eyebrow">A WORLD WORTH RETURNING TO</div><h1>Your next <br>chapter <em>awaits.</em></h1><p>Explore a world beyond the horizon.<br>Collect rare gear, master every class, and build your haven.</p><div class="eclipse-login-art"><img src="assets/ui/eclipse-knight.png" alt="Lord Knight ready for adventure"><span>01 / PRONTERA<small>THE JOURNEY BEGINS HERE</small></span><div><img src="assets/equipment-icons/1142.png" alt=""><span>YOUR NEXT UPGRADE<small>Somewhere out there.</small></span></div></div><div class="login-footnote">EXPLORE · GROW · CONQUER</div></section><div class="login-card"><div class="eclipse-access">ADVENTURER ACCESS <span>◇</span></div><h2 id="authHeading">Welcome back.</h2><p class="login-intro" id="authIntro">Your adventure is right where you left it.</p><div class="atabs" id="authTabs"><button type="button" id="tabLogin" class="on">Login</button><button type="button" id="tabReg">Register</button></div>
@@ -1325,7 +1325,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-15 haven-v411 cards capped at 1,000 with the overflow paid out in Zeny, sell all loose, a permanent account delete that keeps the network bans, and deploy reloads that no longer arrive all at once';
+const BUILD='2026-11-16 haven-v413 a save too large to sync is refused cheaply and paid out instead of being killed, and a bag over its cap is sold at full value instead of being deleted';
 // v364: this write used to sit AFTER the `//` on the BUILD line, so it was part of the comment and
 // never ran - the login card showed an empty #buildTag and there was no way to confirm which file
 // the browser had loaded. It also has to survive the script running before the login card exists.
@@ -3509,6 +3509,23 @@ const s=JSON.parse(raw);if(s&&s.lv){const F=fresh(),f=Object.assign(F,s),hadInde
     f.cardOverflowPaid=(Math.floor(Number(f.cardOverflowPaid)||0))+paid;
     f.cardOverflowCount=(Math.floor(Number(f.cardOverflowCount)||0))+overflow.length;
   }
+  // v413: the BAG is trimmed the same way the card list already is - paid out, never discarded.
+  // This is the only automatic shrink of anything a player owns, so it follows the v411 rule exactly:
+  // the FIRST BAGMAX entries are kept (the bag is ordered by when items were gained, so the newest
+  // arrivals are the ones past the cap), the rest are sold at the same value the Sell button gives,
+  // and the notice is recorded so the player is told rather than finding out by looking.
+  // Without this, an account above the 1,000-item cap can never be brought under it by its owner
+  // without 3,000 individual clicks, and its save stays unsyncable for ever.
+  if(!Array.isArray(f.inv))f.inv=[];
+  else if(f.inv.length>BAGMAX){
+    const overflow=f.inv.slice(BAGMAX);
+    f.inv=f.inv.slice(0,BAGMAX);
+    let paid=0;
+    for(const it of overflow){ try{ paid+=Math.max(0,Math.floor(Number(sellVal(it))||0)); }catch(e){} }
+    if(paid>0)f.zeny=Math.min(1e15,Math.max(0,Math.floor(Number(f.zeny)||0))+paid);
+    f.bagOverflowPaid=(Math.floor(Number(f.bagOverflowPaid)||0))+paid;
+    f.bagOverflowCount=(Math.floor(Number(f.bagOverflowCount)||0))+overflow.length;
+  }
   f.mailSeeded=f.mailSeeded===true;
   // v411: gmReceipts is the client-side dedupe for GM gifts, and nothing ever removed an id from it -
   // a 4,000-grant account carried 28 KB of dead numbers. The server sends grants newest first
@@ -4106,6 +4123,20 @@ async function cloudPush(push,leave){
     // 64 KB body cap, so a big save falls back to the ordinary request instead of throwing.
     if(leave){let bytes=body.length;try{bytes=new TextEncoder().encode(body).byteLength}catch(e){}if(bytes<60000)opt.keepalive=true}
     const r=await cloudFetch('/save',opt);
+    // v413: a save the server says is TOO LARGE can never be accepted, so retrying it is a loop that
+    // burns CPU on both sides and tells the player nothing new. Say what happened once, stop pushing,
+    // and keep the character playing locally - the same promise as any other failed sync, minus the
+    // pointless retries. (Before this, a 413 fell through to the offline path and re-pushed for ever.)
+    if(r.status===413){const c=await r.json().catch(()=>({}));
+      if(c.saveTooLarge){
+        CLOUD.dirty=false;CLOUD.blocked='too-large';
+        // Recorded, not just in memory: a reload must not silently forget that this device holds
+        // progress the cloud never received. The key is per-account, like the save itself.
+        try{localStorage.setItem('pg_sync_blocked_'+String(currentUser||''),String(Date.now()))}catch(e){}
+        cloudBadge('☁ ✕','Save too large to sync');
+        cloudSay('Your save has grown too large to upload ('+(c.err||'refused by the server')+'). Your character keeps playing on this device, but it will not reach the cloud until the save is smaller. Nothing you own has been deleted.','r0');
+        return 'too-large'}
+      throw new Error(c.err||'HTTP 413')}
     if(r.status===409){const c=await r.json();
       if(c.saveMismatch){cloudSaveRefused(c.err);return 'idle'}
       if(c.accountMismatch){cloudAccountMismatch(c.owner);return 'idle'}
@@ -7482,7 +7513,10 @@ function cardWorkspacePanel(){
  // v411: a collection that arrived over CARDMAX was trimmed on load and the surplus paid out as Zeny.
  // Say so here, once, with the button that dismisses it - otherwise the only trace is a Zeny jump the
  // player never saw happen. The notice is dismissed explicitly, never by timer.
- const overflowNotice=(Math.floor(Number(S.cardOverflowCount)||0)>0)
+ const bagOverflowNotice=(Math.floor(Number(S.bagOverflowCount)||0)>0)
+  ?`<section class="eclipse-card-overflow" data-bag-overflow><b>Bag trimmed to ${BAGMAX}</b><p>${Number(S.bagOverflowCount).toLocaleString()} item${S.bagOverflowCount===1?'':'s'} above the ${BAGMAX}-item limit ${S.bagOverflowCount===1?'was':'were'} sold for <b>${(Math.floor(Number(S.bagOverflowPaid)||0)).toLocaleString()} Zeny</b> instead of being deleted. A bag this large could not be saved to the cloud at all, so the items past the limit were sold at their normal value. Nothing was destroyed without payment.</p><button type="button" data-a="bagoverflowack">Got it</button></section>`
+  :'';
+const overflowNotice=(Math.floor(Number(S.cardOverflowCount)||0)>0)
   ?`<section class="eclipse-card-overflow" data-card-overflow><b>Collection trimmed to ${CARDMAX}</b><p>${Number(S.cardOverflowCount).toLocaleString()} card${S.cardOverflowCount===1?'':'s'} above the ${CARDMAX}-card limit ${S.cardOverflowCount===1?'was':'were'} paid out as <b>${(Math.floor(Number(S.cardOverflowPaid)||0)).toLocaleString()} Zeny</b> instead of being deleted. This happened once, when the limit was introduced.</p><button type="button" data-a="cardoverflowack">Got it</button></section>`
   :'';
  const all=ownedCardEntries(),groups=new Map();
@@ -7533,7 +7567,7 @@ function cardWorkspacePanel(){
   return `<article class="eclipse-card-socket empty"><span>${uiIcon('plus')}</span><span><b>Empty socket</b><small>${canInsert?'Compatible card selected':'Insert a compatible loose card'}</small></span>${canInsert?`<button type="button" data-a="sock" data-v="${esc(selected.id)}:${activeSlot}">Insert ${esc(cardName(selected))}</button>`:''}</article>`;
  }).join(''):'<p class="eclipse-card-empty">Equip an item to inspect its sockets. Nothing changes until you choose an explicit action.</p>';
  return `<div class="eclipse-card-workspace">
-  ${overflowNotice}
+  ${bagOverflowNotice}${overflowNotice}
   <header class="eclipse-card-workspace-heading"><div><h2>Cards, without the guesswork.</h2><p>See effects, copies, fit and location before you socket, remove or merge.</p></div><div class="eclipse-workspace-pills"><span>${uiIcon('cards')}${S.cards.length} loose · ${socketed.length} socketed</span><span class="protected">${uiIcon('shield')}Existing card rules</span></div></header>
   <div class="eclipse-card-workspace-grid"><section class="eclipse-card-collection"><div class="eclipse-card-panel-title"><span>CARD COLLECTION</span><small>${visible.length} kind${visible.length===1?'':'s'} shown</small></div><label class="eclipse-card-search"><span class="eclipse-visually-hidden">Search cards or effects</span><input type="search" data-card-search value="${esc(equipmentCardSearch)}" placeholder="Search cards or effects…" aria-label="Search cards or effects"></label><div class="eclipse-card-ownership" role="group" aria-label="Card location">${ownershipFilters}</div><div class="eclipse-card-grade-filters" role="group" aria-label="Card grade">${gradeFilters}</div><div class="eclipse-card-list" data-panel-scroll="equipment-cards">${cardRows||'<p class="eclipse-card-empty">No cards in this collection yet. Cards you earn or socket appear here.</p>'}</div><small class="eclipse-card-collection-note">Starred cards are protected from Card Mastery donations and resets. Normal and Nightmare copies merge separately.</small></section>
    <main class="eclipse-card-detail"><div class="eclipse-card-panel-title"><span>${selectedLoose?'SELECTED LOOSE CARD':'SELECTED CARD'}</span>${selected?`<span class="eclipse-card-grade-pill grade-${selected.g}">${esc(GRADE[selected.g])}</span>`:''}</div><div class="eclipse-selected-card">${selectedHead}<section class="eclipse-card-info-block"><small>EFFECTS</small><div>${selected?cardEffects(selected).map(e=>`<span class="eclipse-card-effect">${esc(cardEffectText(e))}</span>`).join(''):'Select a card to inspect its effects.'}</div></section><section class="eclipse-card-info-block"><small>COMPATIBLE SLOTS</small><div>${fits.length?fits.map(x=>`<span class="eclipse-card-fit">${esc(x)}</span>`).join(''):'No compatible slots'}</div></section>${actionButtons}<section class="eclipse-card-safety"><small>BEFORE YOU ACT</small><div><b>01</b><span>Only cards that fit the equipment are offered<small>A weapon card cannot be inserted into footwear or armor.</small></span><b>02</b><span>One card per monster family on each item<small>Normal and Nightmare versions of a monster share the same family.</small></span><b>03</b><span>Two boss cards and two Crit DMG cards per item<small>The current socket limit remains unchanged.</small></span><b>04</b><span>Cards are never silently discarded<small>Compatible cards transfer on replacement; incompatible cards stay on the old item. Equipment sales return inserted cards.</small></span></div></section><div class="eclipse-card-mastery-note"><b>✧ &nbsp; Card Mastery stays separate.</b><small>Only loose cards can be dedicated. Socketed cards and starred cards are not consumed by Mastery donations or resets.</small></div></div></main>
@@ -9711,6 +9745,7 @@ const ACT={
   // product of a merge the player paid for, and a legacy card still needs its free update first, so
   // both are left alone. The confirmation names the exact count and payout before anything happens.
   cardoverflowack:()=>{S.cardOverflowCount=0;S.cardOverflowPaid=0;ui();save()},
+  bagoverflowack:()=>{S.bagOverflowCount=0;S.bagOverflowPaid=0;ui();save()},
   sellallcards:()=>{
     const loose=(S.cards||[]).filter(c=>c&&!c.legacy&&!cardStars(c));
     if(!loose.length)return log('There are no plain loose cards to sell. Starred and legacy cards are left alone.','r0','card');
@@ -14403,17 +14438,17 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden&&(pendingU
 <script src="assets/wardrobe-ui.js?v=199"></script>
 <script src="assets/shop.js?v=321"></script>
 <script src="assets/friends.js?v=273"></script>
-<script src="assets/digimon/roster.js?v=411"></script>
-<script src="assets/digimon/base-stats.js?v=411"></script>
-<script src="assets/social-rules.js?v=411"></script>
-<script src="assets/social-poker.js?v=411"></script>
-<script src="assets/digimon-sanctuary.js?v=411"></script>
+<script src="assets/digimon/roster.js?v=413"></script>
+<script src="assets/digimon/base-stats.js?v=413"></script>
+<script src="assets/social-rules.js?v=413"></script>
+<script src="assets/social-poker.js?v=413"></script>
+<script src="assets/digimon-sanctuary.js?v=413"></script>
 <script src="assets/digimon-battle.js?v=393"></script>
-<script src="assets/social-digimon.js?v=411"></script>
+<script src="assets/social-digimon.js?v=413"></script>
 <script src="assets/social-gym-redesign.js?v=393"></script>
 <script src="assets/social-pond-design.js?v=393"></script>
-<script src="assets/social-scene.js?v=411"></script>
-<script src="assets/social-fishing.js?v=411"></script>
-<script src="assets/plaza-bots.js?v=411"></script>
-<script src="assets/social.js?v=411"></script></body>
+<script src="assets/social-scene.js?v=413"></script>
+<script src="assets/social-fishing.js?v=413"></script>
+<script src="assets/plaza-bots.js?v=413"></script>
+<script src="assets/social.js?v=413"></script></body>
 </html>
