@@ -39,9 +39,23 @@ export function checkPassword(pass, min) {
 // would call impossible. Keep in step with index.html (MAXST/BASECAP/ELITELV and the level ceiling).
 export const CAPS = { level: 150, maxStat: 120, maxZeny: 1e15 };
 
+// v413: the ceiling that actually matters. The free plan gives an invocation 10 ms of CPU, and a
+// 512 KB blob costs ~6 ms of that in JSON parsing ALONE (measured against this handler), before any
+// validation or audit runs. So the old 512 KB limit did not protect the request - it let a save
+// through that was guaranteed to be killed part-way, which is how one 415 KB account produced
+// hundreds of `exceededResources` errors a day. A 300 KB ceiling still clears the worst honest save
+// the game can build (BAGMAX 1000 items + CARDMAX 1000 cards ~ 288 KB) while refusing anything that
+// cannot be synced inside the budget. The check runs BEFORE JSON.parse, so refusing is nearly free.
+export const SAVE_BYTES_MAX = 300 * 1024;
+
 export function checkSaveBlob(blob) {
   if (typeof blob !== 'string' || !blob) throw new HttpError(400, 'Missing save.');
-  if (blob.length > 512 * 1024) throw new HttpError(413, 'That save is too large.');
+  // `saveTooLarge` lets the client distinguish "this save can never be accepted" from a transient
+  // failure. Without it the page treats a 413 like a dropped connection and retries for ever, which
+  // is a worse experience than the CPU kill it replaced.
+  if (blob.length > SAVE_BYTES_MAX) {
+    throw new HttpError(413, 'That save is too large to sync.', { saveTooLarge: true });
+  }
   let save;
   try { save = JSON.parse(blob); } catch { throw new HttpError(400, 'Save is not valid JSON.'); }
   if (!save || typeof save !== 'object' || Array.isArray(save)) throw new HttpError(400, 'Save must be an object.');
