@@ -3435,6 +3435,14 @@ const CODEC_BCARD=['card','cardVersion','cardKey','family','n','stat','v','effec
 const CODEC_BFISH=['id','sp','w','mut','at','perfect','lock'];
 const CODEC_ITEM_KEYS=new Set(CODEC_BITEM), CODEC_CARD_KEYS=new Set(CODEC_BCARD), CODEC_FISH_KEYS=new Set(CODEC_BFISH);
 const cPack=v=>v===undefined?CODEC_NUL:v, cUnpack=v=>v===CODEC_NUL?undefined:v;
+// An affix/effect is {k,v}, but a newer build may hang more fields on it. Anything carrying more than
+// k/v keeps a third slot with the rest, so the promise "an unknown field survives" holds for them too.
+const cPairOf=p=>{if(!p||typeof p!=='object'||Array.isArray(p))return p;
+  const ks=Object.keys(p).filter(k=>p[k]!==undefined);
+  if(ks.length<=2&&p.k!==undefined&&p.v!==undefined)return[p.k,p.v];
+  const rest=Object.assign({},p);delete rest.k;delete rest.v;return[p.k,p.v,rest]};
+const cObjectOf=p=>{if(!Array.isArray(p))return p;const o={k:p[0],v:p[1]};
+  if(p[2]&&typeof p[2]==='object'&&!Array.isArray(p[2]))Object.assign(o,p[2]);return o};
 function cExtras(o,known){let x=null;for(const k of Object.keys(o)){if(known.has(k)||o[k]===undefined)continue;(x||(x={}))[k]=o[k]}return x}
 // Rebuild one tuple row. `rebuild` restores the nested shapes that were compacted, and keeps an
 // ABSENT list absent (a NUL slot) rather than turning it into [] - the repair code distinguishes them.
@@ -3446,31 +3454,40 @@ function cFromTuple(t,list,rebuild){
 function cPackItem(it){
   if(!it||typeof it!=='object'||Array.isArray(it))return it;
   const t=CODEC_BITEM.map(k=>cPack(it[k]));
-  t[6]=Array.isArray(it.aff)?it.aff.map(a=>a&&typeof a==='object'&&!Array.isArray(a)?[a.k,a.v]:a):cPack(undefined);  // the largest item field: {k,v} -> [k,v]
+  t[6]=Array.isArray(it.aff)?it.aff.map(cPairOf):cPack(undefined);  // the largest item field: {k,v} -> [k,v]
   t[8]=Array.isArray(it.cards)?it.cards:cPack(undefined);
   const x=cExtras(it,CODEC_ITEM_KEYS);if(x)t.push(x);   // an unknown field survives verbatim
   return t}
 function cUnpackItem(t){
+  // A row that is NOT a tuple (a null hole, a string, an object from an older format) is handed
+  // back untouched. Without this a single bad entry threw inside unpackSave on EVERY page load.
+  if(!Array.isArray(t))return t;
   return cFromTuple(t,CODEC_BITEM,(o)=>{
-    if(Array.isArray(t[6]))o.aff=t[6].map(a=>Array.isArray(a)?{k:a[0],v:a[1]}:a);
+    if(Array.isArray(t[6]))o.aff=t[6].map(cObjectOf);
     if(Array.isArray(t[8]))o.cards=t[8];
   })}
 function cPackCard(c){
   if(!c||typeof c!=='object'||Array.isArray(c))return c;
   const t=CODEC_BCARD.map(k=>cPack(c[k]));
-  t[7]=Array.isArray(c.effects)?c.effects.map(e=>e&&typeof e==='object'&&!Array.isArray(e)?[e.k,e.v]:e):cPack(undefined);
+  t[7]=Array.isArray(c.effects)?c.effects.map(cPairOf):cPack(undefined);
   const x=cExtras(c,CODEC_CARD_KEYS);if(x)t.push(x);return t}
 function cUnpackCard(t){
+  // A row that is NOT a tuple (a null hole, a string, an object from an older format) is handed
+  // back untouched. Without this a single bad entry threw inside unpackSave on EVERY page load.
+  if(!Array.isArray(t))return t;
   return cFromTuple(t,CODEC_BCARD,(o)=>{
-    if(Array.isArray(t[7]))o.effects=t[7].map(e=>Array.isArray(e)?{k:e[0],v:e[1]}:e);
+    if(Array.isArray(t[7]))o.effects=t[7].map(cObjectOf);
   })}
 function cPackFish(f){
   if(!f||typeof f!=='object'||Array.isArray(f))return f;
   const t=CODEC_BFISH.map(k=>cPack(f[k]));
-  t[5]=f.perfect===true?1:0;t[6]=f.lock===true?1:0;   // booleans fold to 0/1 to keep the tuple uniform
+  t[5]=f.perfect===true?1:(f.perfect===false?0:cPack(undefined));t[6]=f.lock===true?1:(f.lock===false?0:cPack(undefined));   // an ABSENT flag stays absent
   const x=cExtras(f,CODEC_FISH_KEYS);if(x)t.push(x);return t}
 function cUnpackFish(t){
-  return cFromTuple(t,CODEC_BFISH,(o)=>{o.perfect=t[5]===1;o.lock=t[6]===1})}
+  // A row that is NOT a tuple (a null hole, a string, an object from an older format) is handed
+  // back untouched. Without this a single bad entry threw inside unpackSave on EVERY page load.
+  if(!Array.isArray(t))return t;
+  return cFromTuple(t,CODEC_BFISH,(o)=>{if(t[5]!==undefined&&t[5]!==CODEC_NUL)o.perfect=t[5]===1;if(t[6]!==undefined&&t[6]!==CODEC_NUL)o.lock=t[6]===1})}
 // packSave turns the live save object into the compact cloud form. Pure: the caller keeps `S`.
 function packSave(sv){
   if(!sv||typeof sv!=='object'||Array.isArray(sv))return sv;

@@ -103,6 +103,21 @@ ok('and the codec does not touch it', JSON.stringify(C.unpackSave(JSON.parse(b2.
 const sameData = C.unpackSave(JSON.parse(compact));
 ok('the compact form unpacks to exactly the same data', JSON.stringify(sameData) === JSON.stringify(C.unpackSave(C.packSave(S))));
 
+// 6. the CPU the whole feature exists for: one accepted PUT must not parse a save-sized string more
+//    than THREE times (the request envelope, the incoming save, and one top-level read of the stored
+//    row). This is the exact regression that slipped in once already: handing the raw blob to three
+//    helpers that each parse it turned 3 parses into 5 and ate the entire saving.
+{
+  const before = JSON.parse;
+  let parses = 0;
+  JSON.parse = function (v, ...rest) { if (typeof v === 'string' && v.length > 8192) parses++; return before.call(this, v, ...rest); };
+  let status;
+  try { status = await put(compact); }   // a straight re-sync of the compact row already stored
+  finally { JSON.parse = before; }
+  ok('a re-sync is accepted', status === 200, 'status ' + status);
+  ok('a re-sync parses a save-sized string at most 3 times', parses <= 3, 'saw ' + parses);
+}
+
 console.log('');
 console.log(fails ? fails + ' FAILED' : 'ALL PASSED');
 process.exit(fails ? 1 : 0);

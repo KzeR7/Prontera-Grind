@@ -154,6 +154,44 @@ for (const [label, v] of [['null', null], ['undefined', undefined], ['a string',
 ok('items inside a compact save that are still objects pass through',
   JSON.stringify(C.unpackItem({ id: 1 })) === '{"id":1}');
 
+// ------------------------------------------------ 6b. hostile / legacy shapes must not lose data
+// Every one of these was a real defect found while re-auditing the codec, or a shape a real save can
+// hold. The rule is absolute: what goes in comes back, and nothing is invented on the way.
+{
+  const norm = v => Array.isArray(v) ? v.map(norm)
+    : (v && typeof v === 'object') ? Object.fromEntries(Object.keys(v).sort().map(k => [k, norm(v[k])])) : v;
+  const same = (a, b) => JSON.stringify(norm(a)) === JSON.stringify(norm(b));
+  const roundTrips = (label, obj) => {
+    let back;
+    try { back = C.unpackSave(JSON.parse(JSON.stringify(C.packSave(obj)))); }
+    catch (e) { ok('round trip: ' + label, false, 'threw ' + e.message); return; }
+    ok('round trip: ' + label, same(back, obj), JSON.stringify(norm(obj)).slice(0, 90) + ' -> ' + JSON.stringify(norm(back)).slice(0, 90));
+  };
+  // An affix/effect may gain fields after k/v. Losing them would quietly change what an item does.
+  roundTrips('affix with fields beyond k/v', { inv: [{ id: 1, slot: 'a', aff: [{ k: 'str', v: 12, cap: 15, rolled: 100 }] }] });
+  roundTrips('card effect with fields beyond k/v', { cards: [{ id: 1, card: 1, effects: [{ k: 'luk', v: 3, src: 'set' }] }] });
+  // Absent is not false: a flag a fish never had must not be invented on it.
+  roundTrips('fish with no perfect/lock keys at all', { fishing: { bag: [{ id: 'a', sp: 'x' }] } });
+  roundTrips('fish with lock=false and perfect=false', { fishing: { bag: [{ id: 'a', sp: 'x', lock: false, perfect: false }] } });
+  roundTrips('fish with mut=null', { fishing: { bag: [{ id: 'a', sp: 'x', mut: null }] } });
+  roundTrips('legacy fishs[] list', { fishs: [{ id: 'a', sp: 'x', lock: true }] });
+  roundTrips('empty lists', { inv: [], cards: [], fishing: { bag: [] } });
+  roundTrips('falsy but present values', { inv: [{ id: 0, slot: 'a', val: 0, tier: 0, sec: 0, mp: 0 }] });
+  // A corrupt save must still be storable - one bad row may never block a player's sync.
+  for (const [label, obj] of [
+    ['null hole in inv', { inv: [null, { id: 1, slot: 'a' }] }],
+    ['string in inv', { inv: ['junk', { id: 1, slot: 'a' }] }],
+    ['string in cards', { cards: ['junk'] }],
+    ['null hole in fishing.bag', { fishing: { bag: [null, { id: 'a', sp: 'x' }] } }],
+    ['inv that is not a list', { inv: 'nope' }],
+    ['fishing without a bag', { fishing: { coins: 5 } }],
+  ]) {
+    let threw = false, back;
+    try { back = C.unpackSave(JSON.parse(JSON.stringify(C.packSave(obj)))); } catch (e) { threw = true; }
+    ok('survives ' + label, !threw && same(back, obj));
+  }
+}
+
 // ------------------------------------------------------------------ 7. the page and the module agree
 // The client keeps its own copy of the codec inside index.html (the page cannot import ES modules
 // without changing how it loads). That copy MUST match this module, or a page would store a shape

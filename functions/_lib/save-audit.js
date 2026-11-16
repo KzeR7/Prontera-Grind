@@ -362,7 +362,7 @@ export function creditsFromGrants(rows) {
 // -------------------------------------------------------------- recording ----
 // Orchestration for save.js: audit one accepted save, record any flags, poke the owner the first
 // time a rule fires for an account. NEVER throws — a monitoring failure must not fail a save.
-export async function auditAcceptedSave(D, { userId, username, gm, prev, prevSave = null, save, pub, savedAt, claimKills = 0, claim = null }) {
+export async function auditAcceptedSave(D, { userId, username, gm, prev, prevSave = null, stamp = null, save, pub, savedAt, claimKills = 0, claim = null }) {
   // The owner's own account is not audited: GM tools deliberately create impossible figures
   // (level grants, test gear), and flagging them would bury the console in self-noise.
   if (Number(gm) >= 2) return { flagged: false };
@@ -375,7 +375,11 @@ export async function auditAcceptedSave(D, { userId, username, gm, prev, prevSav
       // v410 CPU: the caller may hand in the already-parsed previous save (`prevSave`), so this
       // audit does not re-read up to 512 KB of stored blob on every sync. safeParse stays as the
       // fallback for callers that only have the row.
-      raw: prevSave || safeParse(prev.blob),
+      //
+      // v414 CPU: `prev.stamp` is the object the PUT already read for its ownership/restore checks.
+      // Only `offlineIncome` is ever taken from here, so re-reading the whole blob to learn one
+      // top-level number was a full parse of up to 512 KB per sync for nothing.
+      raw: prevSave || stamp || safeParse(prev.blob),
     };
     const nextView = { kills: pub.kills, lv: pub.lv, zeny: pub.zeny, raw: save };
     // The claim this save consumed, priced the way the client paid it (see claimCredits).

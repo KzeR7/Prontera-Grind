@@ -55,8 +55,19 @@ first pass wrongly passed `prev: null` to the audit, which skips the entire rate
 
 ### 1. The save blob is parsed six times per sync — and this is the big one
 
-Instrumenting `JSON.parse`/`JSON.stringify` over one accepted `PUT /api/save` counts **6 parses of the
-blob and 2 stringifies**, because each helper re-reads the same string:
+> **Status: FIXED.** v410 reduced this to **3 parses** (the request envelope, the incoming save, one
+> top-level read of the stored row), and v414 keeps it at 3 while making each of those parses read a
+> ~49%-smaller string. The section below is the original measurement that justified the work; keep it
+> as history, but do not quote "6 parses" as the current state — `tools/tests/api_sim.js` and
+> `tools/tests/save_codec_chain_sim.mjs` both fail if the count climbs again.
+>
+> v414 also found what happens if that discipline is dropped: handing the raw stored blob to three
+> helpers that each parse it (owner check, restore stamp, audit) turned 3 parses into **5**, which
+> ate the entire CPU saving of the smaller format. `parseStamp` now memoises the last blob it read,
+> and the audit takes the already-read top-level view instead of re-reading the row.
+
+Instrumenting `JSON.parse`/`JSON.stringify` over one accepted `PUT /api/save` measured **6 parses of
+the blob and 2 stringifies** *at the time of writing*, because each helper re-read the same string:
 `readJson` (body), `checkSaveBlob`, `saveBelongsTo` (stored), `storedRestoreAt` (stored),
 `withSaveIdentity` (incoming), and the `storedSave` re-parse.
 

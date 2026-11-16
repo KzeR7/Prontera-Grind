@@ -193,8 +193,15 @@ export const onRequestPut = guard(async ({ request, env }) => {
     try {
       const { flagged, fresh } = await auditAcceptedSave(D, {
         userId: user.id, username: user.username, gm: user.gm,
-        // v410: hand the audit the STORED blob we already parsed above, so it does not re-read it.
-        prev: row, prevSave: storedRow, save: storedSave, pub, savedAt,
+        // v414: `prevSave` is deliberately null. The audit reads ONE top-level field from the stored
+        // save (`offlineIncome`), and only when the incoming save produced no static violations; its
+        // own safeParse(row.blob) then parses exactly once, in the rare window where it is needed.
+        // Handing it a pre-parsed object would pay a full 512 KB parse on EVERY sync to save that
+        // parse in a path that usually never runs.
+        prev: row, prevSave: null, save: storedSave, pub, savedAt,
+        // The top-level view the ownership/restore checks already read, so the audit does not parse
+        // the same stored blob a third time to look at one field.
+        stamp: storedStamp,
         claimKills: appliedClaim ? Number(appliedClaim.kills) || 0 : 0,
         // The claim row itself: the audit credits what the payout bought (levels, Zeny, loot),
         // not just the kills, or a welcome-back lands in the next window as impossible progress.
@@ -222,10 +229,16 @@ export const onRequestPut = guard(async ({ request, env }) => {
   let appliedClaim = null;
 
   const row = await db.saveByUser(D, user.id);
-  // v410 CPU: parse the STORED blob ONCE and reuse it for the ownership check, the restore fence and
-  // the audit's previous-save view. Previously each of those parsed the same string again (up to
-  // 512 KB each). `null` for the first-save path, where there is no previous blob at all.
-  const storedRow = row ? parseSave(row.blob) : null;
+  // v414 CPU: the three things this handler needs from the STORED blob - who owns it, whether it
+  // carries a restore stamp, and its `offlineIncome` for the audit - read TOP-LEVEL fields only. None
+  // touches inv/cards/fishing, so they share ONE parse of the row, and every helper below is handed
+  // the string so the memo in parseStamp is what makes that sharing work.
+  //
+  // This is deliberately not "parse the whole stored save up front": doing that on the first-save
+  // path, and for an account whose row is unreadable, would pay for a parse nobody asked for. Only
+  // the top-level read below is eager, and it is the one the ownership check needs anyway.
+  const storedBlob = row ? row.blob : null;
+  const storedStamp = storedBlob ? parseSave(storedBlob) : null;
   if (!row) {
     await db.insertSave(D, user.id, stored, savedAt, pub);
     await db.pushHistory(D, user.id, 1, stored, savedAt);
@@ -237,7 +250,7 @@ export const onRequestPut = guard(async ({ request, env }) => {
   // v88.6 / v280: the copy already stored must not belong to someone else either. It is never
   // written over. A blob carrying this account's own id is its own, whatever name it was stamped
   // with - that is what makes a rename survivable.
-  if (!saveBelongsTo(storedRow, user)) return saveMismatch(user);
+  if (!saveBelongsTo(storedBlob, user)) return saveMismatch(user);
 
   const pending = await pendingOrIssueOfflineClaim(D, user.id, row, savedAt);
 
@@ -252,7 +265,7 @@ export const onRequestPut = guard(async ({ request, env }) => {
   // asked of the browser: v394 guarded cloudPush's 409 branch and v395 the login push, and both were
   // undone in the field by a tab that was simply open across the rollback. While the row carries a
   // restore stamp, a save without that stamp is a pre-restore copy whatever version it presents.
-  const fenceAt = storedRestoreAt(storedRow);
+  const fenceAt = storedRestoreAt(storedBlob);
   if (!restoreAllowsWrite(row.blob, save, fenceAt)) {
     return early({ err: RESTORE_FENCED, restoreFenced: true, restoreAt: fenceAt,
       conflict: true, version: row.version, blob: row.blob, savedAt: row.saved_at,

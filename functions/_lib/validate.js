@@ -121,11 +121,21 @@ export function saveAccountId(save) {
 // parse it again. Passing an object is always equivalent to passing its string form: the string
 // path is kept for callers that only ever had a stored blob, and `null`/`''`/garbage still read as
 // "no save", exactly as before.
+// v414 CPU: the SAME stored blob is handed to several of these helpers on one sync (owner? restore
+// stamp? previous offline income?). Without a memo each call parsed up to 512 KB again - measured as
+// 5 parses of the stored blob per accepted save, which is worse than the 3 v410 had reduced it to.
+// One entry is enough: the callers all work on the row they just read, and the next request gets a
+// different string. It is keyed on the string itself, so a different blob can never read stale data.
+let stampCacheText = null, stampCacheSave = null;
 const parseStamp = v => {
   if (v && typeof v === 'object' && !Array.isArray(v)) return v;
   if (typeof v !== 'string' || !v) return null;
-  try { const s = JSON.parse(v); return s && typeof s === 'object' && !Array.isArray(s) ? s : null; }
-  catch { return null; }
+  if (v === stampCacheText) return stampCacheSave;
+  let save = null;
+  try { const s = JSON.parse(v); save = s && typeof s === 'object' && !Array.isArray(s) ? s : null; }
+  catch { save = null; }
+  stampCacheText = v; stampCacheSave = save;
+  return save;
 };
 
 // Explicit name for the same rule, for callers that want to parse a stored blob ONCE and hand the
