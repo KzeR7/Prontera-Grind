@@ -179,8 +179,14 @@ export const insertSession = (db, tokenHash, userId, expiresAt, ua, ipHash) =>
               VALUES(?, ?, ?, ?, ?, ?)`)
     .bind(tokenHash, userId, now(), expiresAt, ua, ipHash).run();
 
+// v412 (CPU): `recovery_hash` rides along on this JOIN so GET /api/me can answer `recoverySet` without
+// a SECOND users read. /api/me is the most-polled endpoint in the game (every open tab, every 45 s,
+// ~80 requests per tab per hour), and it used to do `currentUser()` (this query) and then
+// `userById()` - `SELECT *` on users - merely to test whether one column was NULL. Same result, one
+// fewer D1 round trip on the busiest path. The value is a HASH, never the recovery code itself, and
+// callers outside /api/me use `currentUser()`, which strips it.
 export const sessionByToken = (db, hash) =>
-  db.prepare(`SELECT s.*, u.username, u.gm, u.banned FROM sessions s JOIN users u ON u.id = s.user_id
+  db.prepare(`SELECT s.*, u.username, u.gm, u.banned, u.recovery_hash FROM sessions s JOIN users u ON u.id = s.user_id
               WHERE s.token_hash = ?`).bind(hash).first();
 
 export const touchSession = (db, hash, expiresAt) =>
@@ -207,11 +213,57 @@ export const expireSessions = (db) =>
 // deploying the code before the migration must disable the feature, not brick every login.
 // The writers do not swallow errors — a GM pressing Ban on an unmigrated server should get a
 // loud failure, not a silent no-op.
+// v412 (CPU): this runs on EVERY /api request, so it used to be one D1 round trip per request purely
+// to answer "is this network banned" - and the answer is "no" for essentially every request in the
+// game's life. The ban list is tiny (the console reads it with LIMIT 500) and changes only when a GM
+// acts, so it is cached here instead.
+//
+// The cache is process-local and short-lived, and it is only ever a cache of NEGATIVE answers:
+//   * a hit for a banned fingerprint is still reported as banned (never a bypass);
+//   * the writers below call `forgetIpBans()`, so a fresh ban applies on the very next request in
+//     the isolate that made it; other isolates are bounded by TTL (5 s), which is far shorter than a
+//     human or a banned client can exploit and much cheaper than paying for the lookup forever;
+//   * any D1 error clears the cache and fails open exactly as before.
+// The whole table is loaded at most once per TTL, not once per request.
+const IP_BAN_TTL_MS = 5000;
+// The cache is keyed by the DATABASE, never shared across databases. Production binds exactly one D1
+// database to the project, so in practice this is a single entry; the test suites build many separate
+// in-memory databases in one process, and a cache shared between them would answer for the wrong
+// table (a stale "nothing is banned" served to a database that had just been told otherwise). That is
+// a correctness bug, not a test artefact, so the key is explicit.
+const ipBanCaches = new WeakMap();   // db -> { at, set, failed }
+
+const emptyCache = () => ({ at: 0, set: null, failed: false });
+const cacheFor = db => ipBanCaches.get(db) || emptyCache();
+
+// Drop the cached ban table for ONE database. Called by the statement builders below, so a GM ban or
+// unban is reflected on the very next request in this isolate. There is deliberately no
+// "forget everything" form: that would be a silently-wrong no-op behind a WeakMap, and a caller who
+// wants a different database should say which one.
+export function forgetIpBans(db) {
+  if (db) ipBanCaches.delete(db);
+}
+
+async function ipBanSet(db) {
+  const now = Date.now();
+  const cached = cacheFor(db);
+  if (cached.set && !cached.failed && now - cached.at < IP_BAN_TTL_MS) return cached.set;
+  const rows = await db.prepare('SELECT ip_hash FROM ip_bans').all();
+  const set = new Set((rows?.results || []).map(r => r.ip_hash));
+  ipBanCaches.set(db, { at: now, set, failed: false });
+  return set;
+}
+
 export async function isIpBanned(db, fp) {
   if (!fp) return false;
   try {
-    return !!(await db.prepare('SELECT 1 AS x FROM ip_bans WHERE ip_hash = ?').bind(fp).first());
+    return (await ipBanSet(db)).has(fp);
   } catch (e) {
+    // A failed lookup must never answer "banned". This function fails OPEN by design (a broken ban
+    // check must not take the whole API down), so the failure is recorded, the cache is dropped, and
+    // the next caller re-reads the table. The `failed` flag also stops a warm-but-poisoned cache from
+    // being served to a caller whose database is gone.
+    ipBanCaches.set(db, { ...emptyCache(), failed: true });
     console.warn('ip_bans lookup failed (migration 0014 missing?):', e && e.message);
     return false;
   }
@@ -227,12 +279,23 @@ export async function listIpBans(db, limit = 200) {
   }
 }
 
-export const ipBanStatement = (db, fp, note, by) =>
-  db.prepare('INSERT OR IGNORE INTO ip_bans(ip_hash, note, created_by, created_at) VALUES(?,?,?,?)')
+// v412: the ban writers must drop the cached ban table, or a fresh ban would sit behind a stale
+// "nothing is banned" for up to the TTL. The invalidation is NOT attached to `statement.run()`:
+// callers batch these statements (`D.batch([...])`), and the D1 shim runs a batch through an internal
+// synchronous path that never calls `.run()` - so patching `run` silently did nothing on the real ban
+// path, which the api_sim suite caught. Instead the statements are built by a function that
+// invalidates AT BUILD TIME: that is always after the GM has decided to act and always before the
+// next request is admitted through this isolate.
+export const ipBanStatement = (db, fp, note, by) => {
+  forgetIpBans(db);
+  return db.prepare('INSERT OR IGNORE INTO ip_bans(ip_hash, note, created_by, created_at) VALUES(?,?,?,?)')
     .bind(fp, note || null, by || null, now());
+};
 
-export const ipUnbanStatement = (db, fp) =>
-  db.prepare('DELETE FROM ip_bans WHERE ip_hash = ?').bind(fp);
+export const ipUnbanStatement = (db, fp) => {
+  forgetIpBans(db);
+  return db.prepare('DELETE FROM ip_bans WHERE ip_hash = ?').bind(fp);
+};
 
 // Every live session created from any of these networks is ended at ban time — that is what
 // kicks the cheater's already-signed-in second account in the same request as the ban.
