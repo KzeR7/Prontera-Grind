@@ -210,7 +210,14 @@ export function withSaveIdentity(blob, { id, userId, username }, parsed = null) 
   if (saveAccountId(save) === mine && sameAccount(saveOwnerStamp(save), username)) return blob;
   // Everything else gets the durable identity. A legacy save (no id) whose name still matches is
   // stamped on its very next write - that is the point: from then on a rename cannot strand it.
-  return JSON.stringify(Object.assign({}, save, { owner: username, accountId: mine }));
+  //
+  // v414: `parsed` is the UNPACKED save (save.js needs the ordinary shape for its audit). Stamping
+  // that object and serialising it would store the plain form, silently throwing away the compact
+  // encoding the client just paid to send - and a save that fit in 300 KB compact could come back
+  // over the limit. So the stamp is applied to the text the client sent, which carries the compact
+  // shape, and only falls back to `parsed` when the text cannot be parsed.
+  const src = parseStamp(blob);
+  return JSON.stringify(Object.assign({}, src || save, { owner: username, accountId: mine }));
 }
 
 // What the server stores for the leaderboard/GM list, taken from the save the client just sent.

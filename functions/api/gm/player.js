@@ -27,6 +27,7 @@
 import { currentUser, isGm, hashPassword } from '../../_lib/auth.js';
 import { json, guard, readJson, fail } from '../../_lib/http.js';
 import { checkGrant, checkAnnouncement, GRANT_KINDS, checkSaveBlob, publicFields, savedElsewhere } from '../../_lib/validate.js';
+import { unpackSave } from '../../_lib/save-codec.js';
 import { inspectSave, giftPayload, equipmentPayload, systemsPayload } from '../../_lib/gm-tools.js';
 import { AUDIT_LABELS, rateLabel } from '../../_lib/save-audit.js';
 import { GM_CATALOG } from '../../_lib/gm-catalog.js';
@@ -304,7 +305,12 @@ export const onRequestPost = guard(async ({ request, env }) => {
       const live = await db.saveByUser(D, id);
       if (!live) return fail('That account has no live save.', 400);
       let save;
-      try { save = JSON.parse(live.blob); } catch { return fail('The live save is not readable.', 500); }
+      // v414: the stored blob may be COMPACT (items/cards/fish as positional tuples). This route
+      // rewrites the blob, so it must work in the ordinary shape and store the ordinary shape back -
+      // otherwise the tuples are written as-is with `__v` still on them and the player's page unpacks
+      // them a second time on load. Unpacking here makes the rewrite explicit and re-storing a plain
+      // (old-format) blob is always valid for every client.
+      try { save = unpackSave(JSON.parse(live.blob)); } catch { return fail('The live save is not readable.', 500); }
       if (!save || typeof save !== 'object' || Array.isArray(save)) return fail('The live save is not readable.', 500);
       const had = save.gmRestore || null;
       delete save.gmRestore;
@@ -330,7 +336,10 @@ export const onRequestPost = guard(async ({ request, env }) => {
       // Keep the save we are about to overwrite, so even a mistaken restore is reversible.
       await db.pushHistory(D, id, live.version, live.blob, live.saved_at);
       // The leaderboard columns are re-derived from the restored blob, never copied from the live row.
-      const restored = checkSaveBlob(blob.blob);
+      // v414: a backup may be stored COMPACT. It is re-stamped and written back below, so unpack it
+      // first for the same reason as restore-unlock: the rewrite must not carry tuples into a blob that
+      // still says `__v`, or the page unpacks twice.
+      const restored = unpackSave(checkSaveBlob(blob.blob));
       // v394: a restore must not be silently rebased away by a tab that is still open. It moves the
       // live version on by exactly one, which is precisely the shape cloudPush's v330 "this is our own
       // upload whose answer was lost" rule treats as a rebase - and a pre-restore save beats the restored
