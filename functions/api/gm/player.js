@@ -12,6 +12,9 @@
 //                                                  from (fingerprint rows; raw IPs are never
 //                                                  stored) and end every session on them
 //   logout          {}                          - kill every session (a "force sign-out")
+//   delete          { confirm: "<username>" }   - OWNER ONLY; suspend the account's networks, then
+//                                                  erase the account for good (cascade). For a
+//                                                  cheater's throwaway; irreversible.
 //   grant           { kind, payload, note }      - zeny | item | level | message  (see gm-panel-plan §4)
 //   systems         { system, resource, ... }   - queued Fishing / DigiPet resource with save receipt
 //   announce        { body, kind }               - to everyone, or to this player alone
@@ -157,6 +160,61 @@ export const onRequestPost = guard(async ({ request, env }) => {
       await db.deleteUserSessions(D, id);
       await audit('gm-logout', 'all sessions revoked');
       return json({ ok: true });
+    }
+    case 'delete': {
+      // OWNER ONLY, and irreversible. This exists for a cheater's throwaway account, never for a
+      // player who has something to lose - so it asks for the username to be typed back, refuses
+      // anyone with GM rights, and refuses the owner.
+      //
+      // Order matters. The networks are suspended FIRST, because userIpFingerprints() reads the
+      // sessions and events rows that the cascade is about to remove: ban first and every one of
+      // that person's networks stays blocked afterwards; ban after and the knowledge is gone with
+      // the account. ip_bans and events carry no foreign key, so both survive the delete - which
+      // is why the audit entry can still name who was removed.
+      if (!isOwner) return fail('Only the owner can delete an account.', 403);
+      if (target.id === user.id) return fail('You cannot delete your own account.', 400);
+      if (target.gm > 0) return fail('Remove their GM level first - a staff account is never deleted in one step.', 400);
+      const typed = String(body.confirm || '').trim();
+      if (!typed || typed !== target.username) {
+        return fail(`Type the username exactly ("${target.username}") to confirm. Nothing was deleted.`, 400);
+      }
+
+      // Everything the account owns, counted before it goes, so the audit line can say what it was.
+      const owned = await (async () => {
+        const q = async (sql, ...args) => { try { return Number((await D.prepare(sql).bind(...args).first())?.n) || 0; } catch { return 0; } };
+        return {
+          saves: await q('SELECT COUNT(*) AS n FROM saves WHERE user_id = ?', id),
+          history: await q('SELECT COUNT(*) AS n FROM save_history WHERE user_id = ?', id),
+          grants: await q('SELECT COUNT(*) AS n FROM grants WHERE user_id = ?', id),
+          sessions: await q('SELECT COUNT(*) AS n FROM sessions WHERE user_id = ?', id),
+          // messages is a broadcast table (target_user NULL = everyone), so only notices addressed
+          // to this player come back with it; the shared ones correctly stay.
+          messages: await q('SELECT COUNT(*) AS n FROM messages WHERE target_user = ?', id),
+        };
+      })();
+
+      const fps = (await db.userIpFingerprints(D, id)).map(f => f.fp);
+      const note = `deleted ${target.username} (#${id})`;
+      if (fps.length) {
+        await D.batch([
+          ...fps.map(fp => db.ipBanStatement(D, fp, note, user.username)),
+          db.sessionsOnNetworksStatement(D, fps),
+        ]);
+      }
+
+      // The cascade does the rest: every user-referencing table is ON DELETE CASCADE (verified by
+      // schema.test.js), so one statement removes the save, its history, grants, sessions, friends,
+      // competition rows and fingerprint references together.
+      await D.prepare('DELETE FROM users WHERE id = ?').bind(id).run();
+
+      await db.logEvent(D, user.username, null, 'gm-delete',
+        `${note}; networks suspended: ${fps.join(' ') || 'none recorded'}; removed: ` +
+        `saves ${owned.saves}, history ${owned.history}, grants ${owned.grants}, ` +
+        `sessions ${owned.sessions}, messages ${owned.messages}`.slice(0, 500));
+      return json({
+        ok: true, deleted: target.username, fps,
+        note: `${target.username} deleted. ${fps.length ? `${fps.length} network(s) they used stay suspended. ` : ''}The account, its save and its history are gone; nothing restores them.`,
+      });
     }
     case 'gift':
     case 'equipment': {

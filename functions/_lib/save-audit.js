@@ -259,26 +259,25 @@ export function auditStaticSave(save) {
     ...(Array.isArray(save.inv) ? save.inv : []).filter(Boolean),
     ...(Array.isArray(save.cards) ? save.cards : []).filter(Boolean),
   ];
-  let worstRefine = 0, worstAffix = 0;
+  // v410 CPU: ONE pass, and each rule stops being evaluated once it has fired. The old code walked
+  // the whole eq+inv+cards list twice (once for maxima, once for the refine rule) on EVERY accepted
+  // save; at BAGMAX=1000 that is a few thousand iterations per sync of a 10 ms budget. The rules and
+  // their thresholds are unchanged - only the number of passes is.
+  let worstAffix = 0, refineFlagged = false;
   for (const it of items) {
-    const r = Math.floor(num(it.r));
-    if (r > worstRefine) worstRefine = r;
+    if (!refineFlagged) {
+      const r = Math.floor(num(it.r));
+      if (r > refineCap(it)) {
+        refineFlagged = true;   // one row per kind; the console shows the worst case
+        out.push({ kind: 'refine-over-cap', value: r, threshold: refineCap(it),
+          detail: `${it.name || 'item'} +${r} (max +${refineCap(it)})` });
+      }
+    }
     for (const list of [it.aff, it.effects]) {
       if (!Array.isArray(list)) continue;
       for (const a of list) {
         const v = num(a && a.v);
         if (v > worstAffix) worstAffix = v;
-      }
-    }
-  }
-  if (worstRefine > 0) {
-    // Only flag when the item that holds it exists and the roll exceeds ITS ceiling; a save can
-    // carry different sections, so the check is per item, not per worst number.
-    for (const it of items) {
-      if (Math.floor(num(it.r)) > refineCap(it)) {
-        out.push({ kind: 'refine-over-cap', value: Math.floor(num(it.r)), threshold: refineCap(it),
-          detail: `${it.name || 'item'} +${Math.floor(num(it.r))} (max +${refineCap(it)})` });
-        break; // one row per kind is enough; the console shows the worst case
       }
     }
   }
@@ -363,7 +362,7 @@ export function creditsFromGrants(rows) {
 // -------------------------------------------------------------- recording ----
 // Orchestration for save.js: audit one accepted save, record any flags, poke the owner the first
 // time a rule fires for an account. NEVER throws — a monitoring failure must not fail a save.
-export async function auditAcceptedSave(D, { userId, username, gm, prev, save, pub, savedAt, claimKills = 0, claim = null }) {
+export async function auditAcceptedSave(D, { userId, username, gm, prev, prevSave = null, save, pub, savedAt, claimKills = 0, claim = null }) {
   // The owner's own account is not audited: GM tools deliberately create impossible figures
   // (level grants, test gear), and flagging them would bury the console in self-noise.
   if (Number(gm) >= 2) return { flagged: false };
@@ -373,7 +372,10 @@ export async function auditAcceptedSave(D, { userId, username, gm, prev, save, p
     const elapsedMs = savedAt - Number(prev.saved_at || savedAt);
     const prevView = {
       kills: prev.kills_total, lv: prev.level, zeny: prev.zeny,
-      raw: safeParse(prev.blob),
+      // v410 CPU: the caller may hand in the already-parsed previous save (`prevSave`), so this
+      // audit does not re-read up to 512 KB of stored blob on every sync. safeParse stays as the
+      // fallback for callers that only have the row.
+      raw: prevSave || safeParse(prev.blob),
     };
     const nextView = { kills: pub.kills, lv: pub.lv, zeny: pub.zeny, raw: save };
     // The claim this save consumed, priced the way the client paid it (see claimCredits).

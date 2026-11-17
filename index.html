@@ -1059,7 +1059,7 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <script src="assets/wardrobe.js?v=199"></script>
 <script src="assets/shop-catalog.js?v=321"></script>
 <script src="assets/fourth-jobs.js?v=179"></script>
-<script src="assets/expanded-jobs.js?v=415"></script>
+<script src="assets/expanded-jobs.js?v=414"></script>
 <script src="assets/ascension.js?v=156"></script>
 <script src="assets/native-mob-heights.js?v=153"></script>
 <script src="assets/native-fields.js?v=197"></script>
@@ -1069,8 +1069,8 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <script src="assets/skill-materials.js?v=220"></script>
 <script src="assets/afterglow-animations.js?v=151"></script>
 <script src="assets/skill-overdrive.js?v=220"></script>
-<script src="assets/ro-fx/index.js?v=415"></script>
-<script src="assets/signature-fx.js?v=415"></script>
+<script src="assets/ro-fx/index.js?v=414"></script>
+<script src="assets/signature-fx.js?v=414"></script>
 <script src="assets/skill-afterglow.js?v=220"></script>
 <script src="assets/boss-fx.js?v=249"></script>
 <script src="assets/pets.js?v=130"></script>
@@ -2840,7 +2840,7 @@ function trialBuy(id,inline=false){
   else if(id==='token'){S.cardIndex.bonus=safeCount(S.cardIndex.bonus)+1;log('Shard Store: +1 Card Mastery Token (claim it in the Index).','r3','trial')}
   else if(id==='lcard'){
     const pool=CARD_CATALOG.filter(c=>c.bossCard&&!c.nightmare&&c.map<8),card=newCard(pool[Math.floor(Math.random()*pool.length)]);
-    S.cards.push(card);
+    if(!addCard(card,{label:'Shard Store '+card.n}))return;
     log(`Shard Store: random Legendary ${card.n} (${card.effects.map(cardEffectText).join(', ')}) added to your card collection.`,'r3','trial')}
   else if(id==='rscroll'){S.refineScrolls=safeCount(S.refineScrolls+1);log('Shard Store: +1 Refine Protection Scroll added to your reserve. Enable it in Refine to prevent a rank drop on failure.','r3','trial')}
   else if(id==='mscroll'){if(!Number.isSafeInteger(S.mythicScrolls+1))return;S.mythicScrolls++;log('Shard Store: +1 Mythic Protection Scroll added to your reserve. Enable it in Refine for +11 to +15 Mythic attempts.','r3','trial')}
@@ -3020,6 +3020,38 @@ const ARM=['armor','head','off','leg','acc'],gearSlot=x=>x.slot?x.slot:ARM.inclu
 // The bag holds 1000 items. Loot is refused once it is full (the drop stays on the ground and
 // is reported) so a long farm cannot silently grow an unbounded save.
 const BAGMAX=1000;
+// ---------- card storage capacity ----------
+// CARDMAX: loose cards are the second unbounded list in a save (S.cards), and unlike the bag they
+// had no ceiling at all - every card drop pushed another entry for ever. 1000 matches BAGMAX, which
+// keeps the two storage rules consistent, and bounds a save at roughly 86 KB of cards. Full behaves
+// like a full bag: the drop is refused and reported, nothing is ever deleted from the player's
+// collection by the game itself. Players remove cards with the Sell button (or Card Mastery), and
+// "Sell all" in the card view clears a full collection in one action.
+const CARDMAX=1000;
+// GMRECEIPTS_MAX: the client-side record of which GM grants have been applied. The server keeps its
+// own claimed_at, so this list only guards against re-applying one within a session; it never needs
+// more than the page of grants the server actually sends (50). See the prune in load().
+const GMRECEIPTS_MAX=200;
+// The one door cards enter the collection through (v411). Every drop, redemption and gift used to
+// `S.cards.push(...)` directly, which is why the list could grow for ever - and why the SAME rule
+// had to be remembered at seven call sites. This keeps one rule in one place:
+//   * under the cap -> stored, returns true.
+//   * at the cap     -> refused, returns false, and the caller says so. Nothing is ever deleted.
+// `quiet` lets the farming loop (which already reports a full bag) stay silent per kill.
+function cardStorageFull(){return Array.isArray(S&&S.cards)&&S.cards.length>=CARDMAX}
+function addCard(card,{quiet=false,label='Card'}={}){
+  if(!card||!S)return false;
+  if(!Array.isArray(S.cards))S.cards=[];
+  if(S.cards.length>=CARDMAX){
+    if(!quiet){
+      log(`Card collection full (${CARDMAX}): ${label} was not stored. Sell or merge cards to make room.`,'r0','card');
+      addFloat(pl.x,3,pl.z,'CARDS FULL','#ff6b6b',true);
+    }
+    return false;
+  }
+  S.cards.push(card);
+  return true;
+}
 // v73 (owner): the field tables are 30% lighter from Comodo on - map index 5 and up, whose
 // Stage-10 boss pools drop with them. Prontera and the four class maps (index 0-4) keep their
 // original numbers for field and boss alike, so the early game is untouched: a starter field
@@ -3065,6 +3097,19 @@ const BOSS_CRIT_RES=[0,0,0,0,0,.15,.15,.15,.2,.3],NM_CRIT_RES=[.35,.35,.36,.36,.
 // a perfectly ordinary background minute read as "away" and paid for time the tab had already
 // ground itself. The server uses the same three minutes (functions/api/save.js OFFLINE_MIN_MS).
 const OFFLINE_CAP_MS=4*60*60*1000,OFFLINE_REWARD_MULT=.5,OFFLINE_POPUP_MIN_MS=3*60*1000,OFFLINE_RATE_SAMPLE_MS=60000,OFFLINE_RATE_CAP=30000;
+// v408 (owner: "i would not want to have a cap level but i need the offline rewards to work
+// properly ... offline rewards should be only half of the online players"). There is NO level
+// ceiling on a claim. Away EXP is half of what the measured minute earned, credited minute for
+// minute, and the game's own curve (need() walking in checkLevel) decides what that buys - the
+// same curve an online player pays. What has to be true is that the measured minute is a real
+// minute of play: farmSamplingPaused() below is the guard that stops a replayed or resumed tab
+// from inflating the sample this payout is priced from, and functions/_lib/save-audit.js credits a
+// claim through the identical curve, so the console and the page never disagree about a payout.
+// v408 (owner: "can u make level 120 above, have a cap of 10 levels per offline rewards. this
+// should be hidden from players."). Above Lv 120 a claim pays at most ten levels' worth of EXP -
+// the rest is simply not paid, and the welcome-back popup says nothing about it. Kills, Zeny and
+// the loot each kill rolls are untouched; below 120 nothing is clamped at all.
+const OFFLINE_LEVEL_CAP_LV=120,OFFLINE_LEVEL_CAP=10;
 // The sim catches up at most SIM_CATCHUP (600s) of a frozen gap when the page comes back, so a
 // claim no longer than that, covering a window this page itself has been alive for, is time the
 // game already paid out - see applyOfflineProgress. Keep the two numbers in step.
@@ -3695,7 +3740,44 @@ const s=JSON.parse(raw);if(s&&s.lv){const F=fresh(),f=Object.assign(F,s),hadInde
   const fishTitleIds=['dockhand','bait-layer','reed-watcher','species-collector','perfect-hand','heavy-hook','deep-line','mutation-hunter','pond-legend','apex-angler','tide-regular','line-veteran','leviathan-hook','colossus-hook','secret-circle','mega-hunter','full-creel','armoury','coin-hoard','dark-star'];
   f.fishing.title=typeof f.fishing.title==='string'&&fishTitleIds.includes(f.fishing.title)?f.fishing.title:null;
   if(!Array.isArray(f.mail))f.mail=[];else f.mail=f.mail.filter(m=>m&&typeof m==='object'&&typeof m.body==='string').slice(0,50);
+  // v411: a collection already over the cap keeps its FIRST CARDMAX entries and the rest are paid out
+  // as Zeny on the next load rather than deleted behind the player's back. Cards past the cap could
+  // only ever have arrived before the cap existed, so nothing is being taken that the player chose to
+  // keep - and the payout is the same value the Sell button gives (v*150).
+  if(!Array.isArray(f.cards))f.cards=[];
+  else if(f.cards.length>CARDMAX){
+    const overflow=f.cards.slice(CARDMAX);
+    f.cards=f.cards.slice(0,CARDMAX);
+    const paid=overflow.reduce((n,c)=>n+Math.max(0,Math.floor(Number(c&&c.v)||0))*150,0);
+    if(paid>0)f.zeny=Math.min(1e15,Math.max(0,Math.floor(Number(f.zeny)||0))+paid);
+    f.cardOverflowPaid=(Math.floor(Number(f.cardOverflowPaid)||0))+paid;
+    f.cardOverflowCount=(Math.floor(Number(f.cardOverflowCount)||0))+overflow.length;
+  }
+  // v413: the BAG is trimmed the same way the card list already is - paid out, never discarded.
+  // This is the only automatic shrink of anything a player owns, so it follows the v411 rule exactly:
+  // the FIRST BAGMAX entries are kept (the bag is ordered by when items were gained, so the newest
+  // arrivals are the ones past the cap), the rest are sold at the same value the Sell button gives,
+  // and the notice is recorded so the player is told rather than finding out by looking.
+  // Without this, an account above the 1,000-item cap can never be brought under it by its owner
+  // without 3,000 individual clicks, and its save stays unsyncable for ever.
+  if(!Array.isArray(f.inv))f.inv=[];
+  else if(f.inv.length>BAGMAX){
+    const overflow=f.inv.slice(BAGMAX);
+    f.inv=f.inv.slice(0,BAGMAX);
+    let paid=0;
+    for(const it of overflow){ try{ paid+=Math.max(0,Math.floor(Number(sellVal(it))||0)); }catch(e){} }
+    if(paid>0)f.zeny=Math.min(1e15,Math.max(0,Math.floor(Number(f.zeny)||0))+paid);
+    f.bagOverflowPaid=(Math.floor(Number(f.bagOverflowPaid)||0))+paid;
+    f.bagOverflowCount=(Math.floor(Number(f.bagOverflowCount)||0))+overflow.length;
+  }
   f.mailSeeded=f.mailSeeded===true;
+  // v411: gmReceipts is the client-side dedupe for GM gifts, and nothing ever removed an id from it -
+  // a 4,000-grant account carried 28 KB of dead numbers. The server sends grants newest first
+  // (ORDER BY id DESC LIMIT 50), so the ids that still matter are the newest ones; keep those and drop
+  // the tail. An id only reappears if the server resends that same grant, which it does not for a
+  // claimed one - and the claim itself is recorded server-side in grants.claimed_at.
+  if(!Array.isArray(f.gmReceipts))f.gmReceipts=[];
+  else if(f.gmReceipts.length>GMRECEIPTS_MAX)f.gmReceipts=f.gmReceipts.slice(-GMRECEIPTS_MAX);
   f.offlineAt=Math.max(0,Math.floor(num_(f.offlineAt,0)));f.offlineKph=cl(num_(f.offlineKph,0),0,OFFLINE_RATE_CAP);f.offlineRateAt=Math.max(0,Math.floor(num_(f.offlineRateAt,0)));f.offlineRateKills=safeCount(f.offlineRateKills);f.offlineKillRemainder=cl(num_(f.offlineKillRemainder,0),0,.999999);
   if(!Array.isArray(f.prog)||!f.prog.length)f.prog=F.prog.slice();else f.prog=f.prog.map(v=>num_(v,1));
   while(f.prog.length<MAPS.length)f.prog.push(1);
@@ -3814,8 +3896,18 @@ const farmStageKey=()=>[S.cls,S.mp,S.lvl].join(':');
 const farmKeyMap=key=>{const p=String(key||'').split(':');const m=Number(p[1]);return Number.isInteger(m)?m:-1};
 // A stopped field is not a zero-income farming minute. Discard the partial window
 // so time in the plaza/trials cannot dilute the next real field sample either.
+// v409 (owner, 2026-11-15: "if a tab doesnt run ... a sudden surge of exp and zeny will happen which
+// spike it for abit ... would this might what have happen in this 37 level increase?"). It is
+// exactly that. A throttled, frozen or slept tab replays its owed time through simAdvance(): up to
+// SIM_CATCHUP seconds of grinding land inside a few milliseconds of wall clock. The farm sampler
+// divides the last 60 seconds of EVENTS by 60 seconds of WALL time, so a ten-minute replay read as
+// ten times the real rate - and if the player closed the tab on that minute, the welcome-back claim
+// was priced off the inflated sample. While the sim owes more than a moment of time, a wall-clock
+// rate proves nothing: drop the partial window and start again once the debt is settled.
+const FARM_CATCHUP_PAUSE=2;   // seconds of owed sim time that make a wall-clock rate meaningless
 function farmSamplingPaused(){
- return (typeof document!=='undefined'&&document.body?.classList.contains('social-open'))||
+ return (typeof simPending==='number'&&simPending>FARM_CATCHUP_PAUSE)||
+  (typeof document!=='undefined'&&document.body?.classList.contains('social-open'))||
   (typeof hubFirstPending!=='undefined'&&hubFirstPending)||
   (typeof JOB_RITE!=='undefined'&&JOB_RITE.on)||(typeof TRIAL!=='undefined'&&TRIAL.on)||
   (typeof CLOUD!=='undefined'&&(CLOUD.lost||CLOUD.gate||CLOUD.paused));
@@ -3876,7 +3968,7 @@ function plazaLootTick(income,dt){
   // A bag that is full stops adding gear, so a long AFK cannot walk past BAGMAX one kill at
   // a time. The overflow is counted by offlineStoreGear, not swallowed.
   const r={measured:true,noKillCount:true,kills:0,drops:0,exp:0,zeny:0,items:0,storedItems:0,autoSold:0,
-    overflow:0,cards:0,ori:0,elu:0,pets:0,petRefunds:0,petFolds:0,stages:0};
+    overflow:0,cards:0,cardsFull:false,ori:0,elu:0,pets:0,petRefunds:0,petFolds:0,stages:0};
   for(let i=0;i<n;i++){const mob=offlineMobForCurrentField(map,stage);if(!mob)break;offlineAwardKill(mob,r)}
   if(r.cards||r.drops)plazaLootNotice(r);
 }
@@ -3890,7 +3982,10 @@ function plazaLootNotice(r){
   if(r.elu)bits.push(r.elu+' Elu');
   if(!bits.length)return;
   const now=Date.now();if(now-plazaLootSaid<60000)return;plazaLootSaid=now;
-  log('Plaza AFK found '+bits.join(', ')+(r.overflow?' · bag full, '+r.overflow+' left behind':''),'','kills');
+  // v411: a full card collection refuses drops the same way a full bag does, and staying silent about
+  // it would look like the card rate had simply stopped.
+  log('Plaza AFK found '+bits.join(', ')+(r.overflow?' · bag full, '+r.overflow+' left behind':'')
+    +(r.cardsFull?' · card collection full, no cards kept':''),'','kills');
 }
 function plazaAfkTick(dt){
   const income=plazaFarmIncome();if(!income||!(dt>0))return;
@@ -4275,6 +4370,20 @@ async function cloudPush(push,leave){
     // 64 KB body cap, so a big save falls back to the ordinary request instead of throwing.
     if(leave){let bytes=body.length;try{bytes=new TextEncoder().encode(body).byteLength}catch(e){}if(bytes<60000)opt.keepalive=true}
     const r=await cloudFetch('/save',opt);
+    // v413: a save the server says is TOO LARGE can never be accepted, so retrying it is a loop that
+    // burns CPU on both sides and tells the player nothing new. Say what happened once, stop pushing,
+    // and keep the character playing locally - the same promise as any other failed sync, minus the
+    // pointless retries. (Before this, a 413 fell through to the offline path and re-pushed for ever.)
+    if(r.status===413){const c=await r.json().catch(()=>({}));
+      if(c.saveTooLarge){
+        CLOUD.dirty=false;CLOUD.blocked='too-large';
+        // Recorded, not just in memory: a reload must not silently forget that this device holds
+        // progress the cloud never received. The key is per-account, like the save itself.
+        try{localStorage.setItem('pg_sync_blocked_'+String(currentUser||''),String(Date.now()))}catch(e){}
+        cloudBadge('☁ ✕','Save too large to sync');
+        cloudSay('Your save has grown too large to upload ('+(c.err||'refused by the server')+'). Your character keeps playing on this device, but it will not reach the cloud until the save is smaller. Nothing you own has been deleted.','r0');
+        return 'too-large'}
+      throw new Error(c.err||'HTTP 413')}
     if(r.status===409){const c=await r.json();
       if(c.saveMismatch){cloudSaveRefused(c.err);return 'idle'}
       if(c.accountMismatch){cloudAccountMismatch(c.owner);return 'idle'}
@@ -5798,7 +5907,7 @@ function autoEquip(it){
 }
 function offlineStoreGear(it,r){
   r.items++;r.drops++;
-  if(autoSellMatches(it)){const value=r.measured?0:sellVal(it);earnZeny(value);r.zeny+=value;r.autoSold++;qProg('loot');(it.cards||[]).forEach(c=>S.cards.push(c));return}
+  if(autoSellMatches(it)){const value=r.measured?0:sellVal(it);earnZeny(value);r.zeny+=value;r.autoSold++;qProg('loot');if(!Array.isArray(S.cards))S.cards=[];(it.cards||[]).forEach(c=>S.cards.push(c));return}
   if(S.inv.length>=BAGMAX){r.overflow++;return}
   S.inv.push(it);r.storedItems++;qProg('loot');
   if(S.auto!==false&&canUse(it))autoEquip(it)
@@ -5853,12 +5962,29 @@ function showOfflineReward(r){
   set('offlineKills','+'+r.kills.toLocaleString());set('offlineDrops','+'+r.drops.toLocaleString());set('offlineExp','+'+r.exp.toLocaleString());
   set('offlineItems','+'+r.items.toLocaleString());set('offlineCards','+'+r.cards.toLocaleString());set('offlineZeny','+'+r.zeny.toLocaleString());
   const detail=[];if(r.storedItems)detail.push(`${r.storedItems} stored`);if(r.autoSold)detail.push(`${r.autoSold} auto-sold`);if(r.overflow)detail.push(`${r.overflow} not stored (bag full)`);
+  // v411: the card collection has a ceiling too, and an away payout that quietly stopped paying cards
+  // would look like a rate change. Say it in the same line that reports the bag.
+  if(r.cardsFull)detail.push('card collection full (no cards kept)');
   if(r.ori||r.elu)detail.push(`Oridecon +${r.ori} · Elunium +${r.elu}`);if(r.pets)detail.push(`Pets +${r.pets}`);if(r.petFolds)detail.push(`${r.petFolds} duplicate pet${r.petFolds===1?'':'s'} folded into Bond`);if(r.petRefunds)detail.push(`${r.petRefunds} full-collection pet refund${r.petRefunds===1?'':'s'}`);if(r.stages)detail.push(`${r.stages} stage${r.stages===1?'':'s'} advanced`);
   const note=[];note.push(r.awayMs>OFFLINE_CAP_MS?'Away rewards are capped at four hours.':'Rewards use the time credited above.');
   note.push(`50% of measured farming income: ${Math.round(r.xpMin||0).toLocaleString()} EXP/min · ${Math.round(r.zenyMin||0).toLocaleString()}z/min. No map or stage advance while offline. Quest rewards and gifts are excluded. After an update or class/map/stage change, farm a fresh minute to replace your saved rate. Until then, the previous measured minute is used, including its original field for drops. No previous sample means no offline income.${r.incomeSource?" Sample: "+r.incomeSource+".":""}`);
+
   const details=$('offlineDetails');if(details)details.textContent=detail.length?detail.join(' · '):'No items, cards, ores or pets dropped this time.';
   const explanation=$('offlineExplanation');if(explanation)explanation.textContent=note.join(' ');
   const modal=$('offlineModal');if(modal)modal.style.display='flex';const button=$('offlineContinue');if(button){button.onclick=()=>{modal.style.display='none'};button.focus()}
+}
+// A claim's EXP is added with earnExp() and settled by checkLevel(), so a level costs the claim
+// exactly what it costs a player in the field - the curve is never re-priced here.
+function offlineExpBudget(lv,levels){const from=Math.max(1,Math.min(149,Math.floor(Number(lv)||1)));let sum=0;for(let i=0;i<levels&&from+i<150;i++)sum+=baseNeedAt(from+i);return sum}
+// The one exception, and it starts the moment the claim reaches OFFLINE_LEVEL_CAP_LV rather than
+// when it starts: everything the sample earned up to 120 is paid, then at most ten more levels.
+// So a claim from 118 ends at 130 at the latest, and a claim from 113 pays its seven levels to 120
+// plus ten - 130 is the highest any single claim can reach, whatever the sample says. Silent: the
+// popup reports what was paid, never that anything was withheld.
+function offlineLevelBudget(lv){
+  const from=Math.max(1,Math.min(149,Math.floor(Number(lv)||1)));
+  const toCeiling=Math.max(0,Math.min(OFFLINE_LEVEL_CAP_LV,150)-from);
+  return offlineExpBudget(from,toCeiling+OFFLINE_LEVEL_CAP);
 }
 function applyOfflineProgress(now=Date.now(),serverClaim=null){
   if(!S)return null;
@@ -5884,7 +6010,7 @@ function applyOfflineProgress(now=Date.now(),serverClaim=null){
   // minutes were never ground here and the server's claim must pay them. That is exactly the
   // owner's rule: a lost connection is away time, not progress.
   const covered=!CLOUD.gate&&!!plan.show&&Number.isFinite(awayStart)&&awayStart>=PAGE_BOOT_AT&&plan.awayMs<=OFFLINE_SIM_COVER_MS;
-  const r={...plan,show:!!plan.show&&!covered,covered,kills:0,drops:0,exp:0,zeny:0,items:0,storedItems:0,autoSold:0,overflow:0,cards:0,ori:0,elu:0,pets:0,petRefunds:0,petFolds:0,stages:0};
+  const r={...plan,show:!!plan.show&&!covered,covered,kills:0,drops:0,exp:0,zeny:0,items:0,storedItems:0,autoSold:0,overflow:0,cards:0,cardsFull:false,ori:0,elu:0,pets:0,petRefunds:0,petFolds:0,stages:0};
   if(plan.show&&!covered){
     const income=S.offlineIncome,source=String(income?.key||'').split(':'),sourceMap=Number(source[1]),sourceStage=Number(source[2]);
     const valid=income&&income.version===1&&(sourceMap<10||income.rewardVersion===ASC_REWARD_VERSION)&&source.length===3&&Object.hasOwn(CLASSES,source[0])&&Number.isInteger(sourceMap)&&sourceMap>=0&&sourceMap<MAPS.length&&Number.isInteger(sourceStage)&&sourceStage>=1&&sourceStage<=(sourceMap>=10?5:15)&&Number.isFinite(income.at)&&income.at<=Number(S.offlineAt)&&['xp','zeny','job','kph'].every(k=>Number.isFinite(income[k])&&income[k]>=0);
@@ -5893,7 +6019,8 @@ function applyOfflineProgress(now=Date.now(),serverClaim=null){
     const minutes=plan.creditedMs/60000*OFFLINE_REWARD_MULT;
     const kills=valid?Math.min(plan.kills,Math.floor(Math.min(income.kph,OFFLINE_RATE_CAP)*minutes/60)):0;
     for(let i=0;i<kills;i++)offlineAwardKill(offlineMobForCurrentField(sourceMap,sourceStage),r);
-    r.exp=valid?safeCount(income.xp*minutes):0;r.zeny=valid?safeCount(income.zeny*minutes):0;
+    const levelBudget=offlineLevelBudget(S.lv);
+    r.exp=valid?Math.min(safeCount(income.xp*minutes),levelBudget):0;r.zeny=valid?safeCount(income.zeny*minutes):0;
     earnExp(r.exp);earnZeny(r.zeny);if(valid){gainAscension(r.exp,source[0]);}if(valid)addJob(safeCount(income.job*minutes));checkLevel();
     S.offlineKillRemainder=plan.remainder;
   }
@@ -7054,14 +7181,14 @@ function kill(o){const keep=mob;if(o)mob=o;if(!mob||!mobs.includes(mob)){mob=kee
 function collect(it){
   if(it.ascMat!=null){S.ascensionMat[it.ascMat]=safeCount(S.ascensionMat[it.ascMat])+1;log(`Got ${it.n}!`,'r4','gear');ui();save();return}
   if(it.mat!=null){S.nmMat[it.mat]=safeCount(S.nmMat[it.mat])+1;log(`Got ${it.n}!`,'r4','gear');addFloat(pl.x,2.8,pl.z,it.n+'!','#6cd3ff',true);ui();return}
-  if(it.card){S.cards.push(it);questEvent('card');log(`Got card: [${GRADE[it.g]}] ${cardTxt(it)}`,'r'+GI[it.g],'card');addFloat(pl.x,2.8,pl.z,'CARD!','#ffb020',true);ui();return}
+  if(it.card){if(!addCard(it,{label:cardName(it)})){ui();return}questEvent('card');log(`Got card: [${GRADE[it.g]}] ${cardTxt(it)}`,'r'+GI[it.g],'card');addFloat(pl.x,2.8,pl.z,'CARD!','#ffb020',true);ui();return}
   if(it.ore){S.ore[it.ore]++;questEvent('ore');log(`Got ${it.n}!`,'r4','gear');addFloat(pl.x,2.8,pl.z,it.n+'!','#6cd3ff',true);ui();return}
   // The bag holds BAGMAX items. At capacity the loot is refused and stays where it fell, so a
   // long farm can never grow the save past the cap.
   // v39: auto-sell runs BEFORE the bag cap and before auto-equip for unlocked drops, so a ticked
   // band can never be swallowed by a full bag or worn by accident. Locked gear bypasses the
   // filter, stays protected, and still counts for loot quests - the item was looted.
-  if(autoSellMatches(it)){const v=sellVal(it);earnZeny(v);recordFarmIncome(0,v,0,0);qProg('loot');(it.cards||[]).forEach(c=>S.cards.push(c));
+  if(autoSellMatches(it)){const v=sellVal(it);earnZeny(v);recordFarmIncome(0,v,0,0);qProg('loot');if(!Array.isArray(S.cards))S.cards=[];(it.cards||[]).forEach(c=>S.cards.push(c));
     log(`Auto-sold [${rarOf(it).n}] ${it.name} (+${v.toLocaleString()}z)`,rarCls(it),'gear,zeny',{item:it,label:'Auto-sold',zeny:v});ui();save();return}
   if(S.inv.length>=BAGMAX){log(`Bag full (${BAGMAX} items): sold nothing, left ${it.name} on the ground.`,'r0','gear');addFloat(pl.x,3,pl.z,'BAG FULL','#ff6b6b',true);ui();return}
   S.inv.push(it);qProg('loot');log(`Picked up [${rarOf(it).n}] ${it.name}`,rarCls(it),'gear',{item:it,label:'Loot acquired'});
@@ -7081,7 +7208,7 @@ const autoSellOn=t=>!!(S&&S.autoSell&&S.autoSell[Math.max(0,Math.min(RARALL.leng
 function sell(id){const i=S.inv.findIndex(x=>String(x.id)===String(id));if(i<0)return false;const it=S.inv[i];
   if(S.reforgePending&&String(S.reforgePending.id)===String(it.id)){log('Resolve the paid reforge offer before selling this item.','','gear');return false}
   if(it.locked){ask(`${iname(it)} is locked. Unlock it before selling? It will stay in your bag until you sell again.`,()=>{it.locked=false;log(`${iname(it)} unlocked. Click Sell again to continue.`,'r3','gear');ui();save()});return false}
-  S.inv.splice(i,1);earnZeny(sellVal(it));(it.cards||[]).forEach(c=>S.cards.push(c));if(selB==it.id)selB=null;ui();save();return true}
+  S.inv.splice(i,1);earnZeny(sellVal(it));if(!Array.isArray(S.cards))S.cards=[];(it.cards||[]).forEach(c=>S.cards.push(c));if(selB==it.id)selB=null;ui();save();return true}
 // Quest goal AND reward are solved from the level you are standing at, by the one function the
 // panel and the Claim button both read - so what the quest panel states is exactly what you are
 // paid. The old code froze both at the level the quest was created, so a quest picked up at Lv 1
@@ -7987,6 +8114,15 @@ const mythicSetLine=it=>{const m=mythicSetState(it);if(!m)return'';return `<div 
 var equipmentCardSlot=null;
 function cardWorkspaceCanInsert(card,slot,it){return !!(card&&it&&(it.cards||[]).length<(it.slots||0)&&cardFits(card,it)&&!socketWhy(card,it));}
 function cardWorkspacePanel(){
+ // v411: a collection that arrived over CARDMAX was trimmed on load and the surplus paid out as Zeny.
+ // Say so here, once, with the button that dismisses it - otherwise the only trace is a Zeny jump the
+ // player never saw happen. The notice is dismissed explicitly, never by timer.
+ const bagOverflowNotice=(Math.floor(Number(S.bagOverflowCount)||0)>0)
+  ?`<section class="eclipse-card-overflow" data-bag-overflow><b>Bag trimmed to ${BAGMAX}</b><p>${Number(S.bagOverflowCount).toLocaleString()} item${S.bagOverflowCount===1?'':'s'} above the ${BAGMAX}-item limit ${S.bagOverflowCount===1?'was':'were'} sold for <b>${(Math.floor(Number(S.bagOverflowPaid)||0)).toLocaleString()} Zeny</b> instead of being deleted. A bag this large could not be saved to the cloud at all, so the items past the limit were sold at their normal value. Nothing was destroyed without payment.</p><button type="button" data-a="bagoverflowack">Got it</button></section>`
+  :'';
+const overflowNotice=(Math.floor(Number(S.cardOverflowCount)||0)>0)
+  ?`<section class="eclipse-card-overflow" data-card-overflow><b>Collection trimmed to ${CARDMAX}</b><p>${Number(S.cardOverflowCount).toLocaleString()} card${S.cardOverflowCount===1?'':'s'} above the ${CARDMAX}-card limit ${S.cardOverflowCount===1?'was':'were'} paid out as <b>${(Math.floor(Number(S.cardOverflowPaid)||0)).toLocaleString()} Zeny</b> instead of being deleted. This happened once, when the limit was introduced.</p><button type="button" data-a="cardoverflowack">Got it</button></section>`
+  :'';
  const all=ownedCardEntries(),groups=new Map();
  for(const entry of all){const key=entry.key;if(!groups.has(key))groups.set(key,{key,entries:[],loose:[],socketed:[]});const group=groups.get(key);group.entries.push(entry);(S.cards.includes(entry.card)?group.loose:group.socketed).push(entry)}
  const query=equipmentCardSearch.trim().toLowerCase();
@@ -8027,7 +8163,7 @@ function cardWorkspacePanel(){
  const donors=selected&&!selected.legacy&&selected.cardKey&&cardStars(selected)<3?S.cards.filter(c=>c!==selected&&!c.legacy&&c.cardKey===selected.cardKey&&!cardStars(c)).length:0;
  const fits=(selected?.fit||CARD_FITS[selected?.stat]||[]).map(x=>({weapon:'Weapon',head:'Head',armor:'Armor',off:'Off-hand',leg:'Footwear',acc:'Accessory'})[x]||x);
  const selectedHead=selected?`<div class="eclipse-selected-card-heading"><span class="eclipse-card-large-icon grade-${selected.g}">${uiIcon('cards')}</span><div><small>${selectedLoose?'SELECTED LOOSE CARD':selectedEntry.location==='Stored in bag'?'CARD ON STORED GEAR':'SOCKETED CARD'}</small><h3>${esc(cardName(selected))}</h3><p>Monster family · ${esc(familyName(selected))}</p><small>${selectedLoose?'Loose copy · '+(selectedGroup?.loose.length||1)+' identical loose':'Owned · '+(selectedGroup?.entries.length||1)+' identical copy/copies'}</small></div><span class="eclipse-card-grade-pill grade-${selected.g}">${esc(GRADE[selected.g])}</span></div>`:'<div class="eclipse-card-empty">No cards match these filters. Cards remain in your collection; change the grade, location or search.</div>';
- const actionButtons=selected?`<div class="eclipse-card-actions">${insertSlots.map(([slot,label],i)=>`<button type="button" data-a="sock" data-v="${esc(selected.id)}:${slot}" class="${slot===activeSlot?'eclipse-primary':''}">Insert into ${esc(label)}</button>`).join('')}${selectedLoose&&!insertSlots.length?`<p class="eclipse-card-action-note">${focusReason?esc(focusReason):'No currently equipped item has a compatible empty socket.'}</p>`:''}${!selected.legacy&&selected.cardKey&&cardStars(selected)<3?`<button type="button" data-a="mergecard" data-v="${esc(selected.id)}" ${donors<mergeCost?'disabled':''}>Merge to ${'★'.repeat(cardStars(selected)+1)} · ${mergeCost} extra ${mergeCost===1?'copy':'copies'}${donors<mergeCost?' · '+donors+' available':''}</button>`:''}${selectedLoose?`<button type="button" data-a="sellcard" data-v="${esc(selected.id)}" class="eclipse-card-sell">Sell 1 · ${(selected.v*150).toLocaleString()} Zeny</button>`:''}</div>`:'';
+ const actionButtons=selected?`<div class="eclipse-card-actions">${insertSlots.map(([slot,label],i)=>`<button type="button" data-a="sock" data-v="${esc(selected.id)}:${slot}" class="${slot===activeSlot?'eclipse-primary':''}">Insert into ${esc(label)}</button>`).join('')}${selectedLoose&&!insertSlots.length?`<p class="eclipse-card-action-note">${focusReason?esc(focusReason):'No currently equipped item has a compatible empty socket.'}</p>`:''}${!selected.legacy&&selected.cardKey&&cardStars(selected)<3?`<button type="button" data-a="mergecard" data-v="${esc(selected.id)}" ${donors<mergeCost?'disabled':''}>Merge to ${'★'.repeat(cardStars(selected)+1)} · ${mergeCost} extra ${mergeCost===1?'copy':'copies'}${donors<mergeCost?' · '+donors+' available':''}</button>`:''}${selectedLoose?`<button type="button" data-a="sellcard" data-v="${esc(selected.id)}" class="eclipse-card-sell">Sell 1 · ${(selected.v*150).toLocaleString()} Zeny</button>`:''}${(S.cards||[]).length>1?`<button type="button" data-a="sellallcards" class="eclipse-card-sell">Sell all loose · ${(S.cards||[]).filter(c=>c&&!c.legacy&&!cardStars(c)).length}</button>`:''}</div>`:'';
  const socketRows=activeItem?Array.from({length:activeItem.slots||0},(_,i)=>{
   const card=(activeItem.cards||[])[i],cost=card?(S.freeCardRemoval?0:200*(card.g+1)):0;
   if(card)return `<article class="eclipse-card-socket filled"><span class="eclipse-socket-card-icon grade-${card.g}">${uiIcon('cards')}</span><span><b>${esc(cardName(card))}</b><small>${esc(cardEffects(card).map(cardEffectText).join(' · '))} · ${esc(GRADE[card.g])}</small></span><button type="button" data-a="unsock" data-v="${activeSlot}:${i}" aria-label="Remove ${esc(cardName(card))} for ${cost} Zeny">Remove · ${cost.toLocaleString()} Zeny</button></article>`;
@@ -8035,6 +8171,7 @@ function cardWorkspacePanel(){
   return `<article class="eclipse-card-socket empty"><span>${uiIcon('plus')}</span><span><b>Empty socket</b><small>${canInsert?'Compatible card selected':'Insert a compatible loose card'}</small></span>${canInsert?`<button type="button" data-a="sock" data-v="${esc(selected.id)}:${activeSlot}">Insert ${esc(cardName(selected))}</button>`:''}</article>`;
  }).join(''):'<p class="eclipse-card-empty">Equip an item to inspect its sockets. Nothing changes until you choose an explicit action.</p>';
  return `<div class="eclipse-card-workspace">
+  ${bagOverflowNotice}${overflowNotice}
   <header class="eclipse-card-workspace-heading"><div><h2>Cards, without the guesswork.</h2><p>See effects, copies, fit and location before you socket, remove or merge.</p></div><div class="eclipse-workspace-pills"><span>${uiIcon('cards')}${S.cards.length} loose · ${socketed.length} socketed</span><span class="protected">${uiIcon('shield')}Existing card rules</span></div></header>
   <div class="eclipse-card-workspace-grid"><section class="eclipse-card-collection"><div class="eclipse-card-panel-title"><span>CARD COLLECTION</span><small>${visible.length} kind${visible.length===1?'':'s'} shown</small></div><label class="eclipse-card-search"><span class="eclipse-visually-hidden">Search cards or effects</span><input type="search" data-card-search value="${esc(equipmentCardSearch)}" placeholder="Search cards or effects…" aria-label="Search cards or effects"></label><div class="eclipse-card-ownership" role="group" aria-label="Card location">${ownershipFilters}</div><div class="eclipse-card-grade-filters" role="group" aria-label="Card grade">${gradeFilters}</div><div class="eclipse-card-list" data-panel-scroll="equipment-cards">${cardRows||'<p class="eclipse-card-empty">No cards in this collection yet. Cards you earn or socket appear here.</p>'}</div><small class="eclipse-card-collection-note">Starred cards are protected from Card Mastery donations and resets. Normal and Nightmare copies merge separately.</small></section>
    <main class="eclipse-card-detail"><div class="eclipse-card-panel-title"><span>${selectedLoose?'SELECTED LOOSE CARD':'SELECTED CARD'}</span>${selected?`<span class="eclipse-card-grade-pill grade-${selected.g}">${esc(GRADE[selected.g])}</span>`:''}</div><div class="eclipse-selected-card">${selectedHead}<section class="eclipse-card-info-block"><small>EFFECTS</small><div>${selected?cardEffects(selected).map(e=>`<span class="eclipse-card-effect">${esc(cardEffectText(e))}</span>`).join(''):'Select a card to inspect its effects.'}</div></section><section class="eclipse-card-info-block"><small>COMPATIBLE SLOTS</small><div>${fits.length?fits.map(x=>`<span class="eclipse-card-fit">${esc(x)}</span>`).join(''):'No compatible slots'}</div></section>${actionButtons}<section class="eclipse-card-safety"><small>BEFORE YOU ACT</small><div><b>01</b><span>Only cards that fit the equipment are offered<small>A weapon card cannot be inserted into footwear or armor.</small></span><b>02</b><span>One card per monster family on each item<small>Normal and Nightmare versions of a monster share the same family.</small></span><b>03</b><span>Two boss cards and two Crit DMG cards per item<small>The current socket limit remains unchanged.</small></span><b>04</b><span>Cards are never silently discarded<small>Compatible cards transfer on replacement; incompatible cards stay on the old item. Equipment sales return inserted cards.</small></span></div></section><div class="eclipse-card-mastery-note"><b>✧ &nbsp; Card Mastery stays separate.</b><small>Only loose cards can be dedicated. Socketed cards and starred cards are not consumed by Mastery donations or resets.</small></div></div></main>
@@ -8068,7 +8205,7 @@ function gmCardItem(name='Poring Card',grade=3,seed=1){
 function gmCardTest(mode){
   if(mode==='clear'){S.cardIndex=emptyCardIndex()}
   else if(mode==='poring1'||mode==='poring5'){
-    if(!Array.isArray(S.cards))S.cards=[];const count=mode==='poring1'?1:5;for(let i=0;i<count;i++)S.cards.push(gmCardItem('Poring Card',3,i+1));
+    if(!Array.isArray(S.cards))S.cards=[];const count=mode==='poring1'?1:5;for(let i=0;i<count;i++)addCard(gmCardItem('Poring Card',3,i+1),{quiet:true});
   }else{
     if(!S.cardIndex||typeof S.cardIndex!=='object'||Array.isArray(S.cardIndex))S.cardIndex=emptyCardIndex();
     const ci=S.cardIndex;
@@ -8130,7 +8267,7 @@ function previewAutoSell(bulk=false){const state=bulk?bulkSellState():S,list=S.i
 }
 function confirmAutoSell(){const p=autoSellPreview;autoSellPreview=null;if(!p||p.owner!==S)return;
   let n=0,z=0;for(const id of p.ids){const i=S.inv.findIndex(it=>String(it.id)===String(id));if(i<0)continue;const it=S.inv[i];if(autoSellReason(it,p.bulk?bulkSellState():S))continue;
-    S.inv.splice(i,1);z+=sellVal(it);n++;(it.cards||[]).forEach(c=>S.cards.push(c));}
+    S.inv.splice(i,1);z+=sellVal(it);n++;if(!Array.isArray(S.cards))S.cards=[];(it.cards||[]).forEach(c=>S.cards.push(c));}
   earnZeny(z);if(selB&&!S.inv.some(it=>String(it.id)===String(selB)))selB=null;log(`Sold ${n} matching item${n===1?'':'s'} (+${z.toLocaleString()}z).`,'r3','gear,zeny');ui();save();
 }
 function editSellFilter(el){const workspace=!!el.closest('[data-autosell-workspace]'),r=workspace?autoSellWorkspaceState().rules:sellDraft(),key=el.dataset.sellField;
@@ -8797,7 +8934,7 @@ V.bagItems=()=>`<section class="bag-items"><div class="hd">Items &amp; materials
   ['Refine Protection Scroll',S.refineScrolls,'Enable protection in Refine'],
   ['Echo Shards',S.shards,'Spend in the Echo store'],...NM_MAT.map((n,i)=>[n,S.nmMat[i],'Nightmare crafting material']),
   ...ASCENSION_MATERIALS.map((n,i)=>[n,S.ascensionMat?.[i]||0,i===2?'Mythic equipment evolution':'N+ equipment evolution'])
-].map(([n,count,help])=>`<article class="mob-card"><b>${n}</b><strong>${safeCount(count).toLocaleString()}</strong><small>${help}</small></article>`).join('')}</div><div class="row"><button data-t="equip">Open Loadout</button><button data-a="sub" data-v="bag:cards">Loose cards · ${S.cards.length}</button><button data-t="market">Get supplies</button></div></section>`;
+].map(([n,count,help])=>`<article class="mob-card"><b>${n}</b><strong>${safeCount(count).toLocaleString()}</strong><small>${help}</small></article>`).join('')}</div><div class="row"><button data-t="equip">Open Loadout</button><button data-a="sub" data-v="bag:cards">Loose cards · ${S.cards.length} / ${CARDMAX}</button><button data-t="market">Get supplies</button></div></section>`;
 V.bag=()=>subBar('bag')+V[sub.bag==='bag'?'bagItems':sub.bag]();
 function renderTitleTrack(){
   const xp=indexExperience(),earned=indexRankForXp(xp);
@@ -9774,7 +9911,7 @@ function spinDailyRoulette(forcedIdx){
   else if(seg.buff==='zeny'){st.buffs.zenyUntil=Math.max(Date.now(),Number(st.buffs?.zenyUntil||0))+(seg.durationMin||30)*60000;rewardDetail='+30% Zeny Gain active for 30 minutes!';}
   else if(seg.buff==='exp'){st.buffs.expUntil=Math.max(Date.now(),Number(st.buffs?.expUntil||0))+(seg.durationMin||30)*60000;rewardDetail='+30% Base & Job EXP active for 30 minutes!';}
   else if(seg.zeny){earnZeny(seg.zeny);rewardDetail='+'+Number(seg.zeny).toLocaleString()+' Zeny added to your pouch!';}
-  else if(seg.randomCard){const pool=dailyRouletteCardPool(),card=newCard(pool[Math.floor(Math.random()*pool.length)]);if(!Array.isArray(S.cards))S.cards=[];S.cards.push(card);rewardLabel=`1 × Random Monster Card (${card.n})`;rewardDetail=`${card.n} added to your Cards collection!`;}
+  else if(seg.randomCard){const pool=dailyRouletteCardPool(),card=newCard(pool[Math.floor(Math.random()*pool.length)]);if(Array.isArray(S.cards)&&S.cards.length>=CARDMAX){rewardLabel=`1 × Random Monster Card (${card.n})`;rewardDetail=`Card collection is full (${CARDMAX}) - ${card.n} was not stored. Sell or merge cards, then spin again tomorrow.`;}else{if(!Array.isArray(S.cards))S.cards=[];S.cards.push(card);rewardLabel=`1 × Random Monster Card (${card.n})`;rewardDetail=`${card.n} added to your Cards collection!`;}}
   if(useBonusRoll)st.bonusRolls=Math.max(0,(st.bonusRolls||0)-1);else st.spun=1;st.totalSpins=(st.totalSpins||0)+1;
   st.lastReward={id:seg.id,index:winIdx,label:rewardLabel,detail:rewardDetail,resource:seg.resource||null,amount:seg.amount||1,at:Date.now()};
   log('🎡 Daily Roulette: won '+rewardLabel+'!','r4','loot');save();updateMailDailyHud();
@@ -10216,6 +10353,21 @@ const ACT={
   sock:v=>{const[id,k]=v.split(':'),i=S.cards.findIndex(c=>String(c.id)===id),e=S.eq[k];if(i<0||!e||(e.cards||[]).length>=(e.slots||0))return;if(!cardFits(S.cards[i],e)){log('That card cannot be fitted into this type of equipment.');return}const why=socketWhy(S.cards[i],e);if(why){log(why,'','card');return}e.cards=e.cards||[];e.cards.push(S.cards.splice(i,1)[0]);questEvent('socket');S.hp=Math.min(S.hp,maxHp());ui();save()},
   unsock:v=>{const[k,i]=v.split(':'),e=S.eq[k];if(!e)return;const c=e.cards[+i],p=S.freeCardRemoval?0:200*(c.g+1);if(S.zeny<p)return log('Not enough Zeny to remove the card.');S.zeny-=p;e.cards.splice(+i,1);S.cards.push(c);S.hp=Math.min(S.hp,maxHp());ui();save()},
   sellcard:id=>{const i=S.cards.findIndex(c=>String(c.id)===id);if(i<0)return;const c=S.cards.splice(i,1)[0];earnZeny(c.v*150);ui();save()},
+  // v411: selling a full collection one card at a time is not a real answer to CARDMAX, so the card
+  // view gets a bulk sale. It only ever touches LOOSE, unmerged (0-star) cards: a starred card is the
+  // product of a merge the player paid for, and a legacy card still needs its free update first, so
+  // both are left alone. The confirmation names the exact count and payout before anything happens.
+  cardoverflowack:()=>{S.cardOverflowCount=0;S.cardOverflowPaid=0;ui();save()},
+  bagoverflowack:()=>{S.bagOverflowCount=0;S.bagOverflowPaid=0;ui();save()},
+  sellallcards:()=>{
+    const loose=(S.cards||[]).filter(c=>c&&!c.legacy&&!cardStars(c));
+    if(!loose.length)return log('There are no plain loose cards to sell. Starred and legacy cards are left alone.','r0','card');
+    const value=loose.reduce((n,c)=>n+Math.max(0,Math.floor(Number(c.v)||0))*150,0);
+    if(!confirm(`Sell ${loose.length} loose card${loose.length===1?'':'s'} for ${value.toLocaleString()} Zeny?\n\nMerged (★) and legacy cards are kept.`))return;
+    const ids=new Set(loose.map(c=>String(c.id)));
+    S.cards=S.cards.filter(c=>!ids.has(String(c&&c.id)));
+    earnZeny(value);log(`Sold ${loose.length} loose card${loose.length===1?'':'s'} for ${value.toLocaleString()} Zeny.`,'r3','card');
+    ui();save()},
   indexview:v=>{if(v==='guide'){if(!tabs.includes('guide'))openTab('guide');return}if(v==='mobs'||v==='cards'){indexMode=v;renderWin()}},
   idxmap:v=>{const[tab,raw]=String(v).split(':'),map=+raw;if(tab==='mobs'||tab==='cards'){indexToggleSection(tab,map);renderWin()}},
   titleequip:id=>{if(id==='none'){if(!S.equippedTitle)return;S.equippedTitle=null;log('Hunt title unequipped.','','quest');ui();save();return}
@@ -12773,11 +12925,11 @@ const expandedPack={index:0,bodies:new Map()};
 function expandedRefresh(){heroKey='';if(typeof drawAppearancePreview==='function'){drawAppearancePreview();drawClassPreview()}}
 function requestExpandedBody(name){const PK=window.SPRITE_PACK,X=window.SPRITE_PACK_X;if(!PK||!name)return false;
   if(PK.bodies[name]&&packImg['b:'+name])return true;
-  if(!X){if(!expandedPack.index){expandedPack.index=1;const script=document.createElement('script');script.src='assets/sprite-pack-x/index.js?v=415';
+  if(!X){if(!expandedPack.index){expandedPack.index=1;const script=document.createElement('script');script.src='assets/sprite-pack-x/index.js?v=414';
     script.onload=()=>{expandedPack.index=2;expandedRefresh()};script.onerror=()=>{expandedPack.index=3;script.remove()};document.head.appendChild(script)}return false}
   const rec=X.bodies[name];if(!rec||expandedPack.bodies.has(name))return false;expandedPack.bodies.set(name,'loading');
   const img=new Image();img.onload=()=>{PK.bodies[name]={atlas:img.src,anchors:rec.anchors,cell:X.cell,pivotY:X.pivotY};packImg['b:'+name]=img;expandedPack.bodies.set(name,'ready');expandedRefresh()};
-  img.onerror=()=>expandedPack.bodies.set(name,'failed');img.src=X.dir+encodeURIComponent(rec.file)+'?v=415';return false}
+  img.onerror=()=>expandedPack.bodies.set(name,'failed');img.src=X.dir+encodeURIComponent(rec.file)+'?v=414';return false}
 function packBodyFor(cls,tier,sex){const PK=window.SPRITE_PACK;if(!PK)return null;
   const own=expandedBodyName(cls,sex||(typeof S!=='undefined'&&S&&S.sex)||'m');if(own&&requestExpandedBody(own))return own;
   const n=packBodyName(cls);if(!own&&PK.bodies&&PK.bodies[n])return n;
@@ -14886,6 +15038,12 @@ function showUpdatePrompt(build=BUILD){
   if(later)later.onclick=()=>{showUpdatePrompt.until=Date.now()+UPDATE_SNOOZE_MS;prompt.remove()};
   document.body.appendChild(prompt);
 }
+// v411: how long THIS tab waits before the flush that precedes a build reload. One random draw per
+// tab, bounded so a deploy's uploads arrive spread over the window instead of in one spike. The draw
+// is deliberately per-CALL rather than cached: a tab that retries simply draws again, which keeps the
+// spread even, and the reload itself is still guarded by updateResetSeen(txt).
+const UPDATE_JITTER_MS=90000;
+function cloudUpdateJitterMs(){return Math.floor(Math.random()*UPDATE_JITTER_MS)}
 function updateWatch(){
   if(typeof fetch!=='function'||typeof location==='undefined'||!location.reload)return;
   return fetch('version.txt?_='+Date.now(),{cache:'no-store'}).then(r=>r&&r.ok?r.text():null).then(txt=>{
@@ -14894,7 +15052,11 @@ function updateWatch(){
     // v371 (owner): a hidden tab never navigates - see pendingUpdateBuild above. It remembers the
     // build instead, and the moment the player returns the visibilitychange handler picks it up.
     if(document.hidden===true){pendingUpdateBuild=txt;return}
-    // Quiet moment (a fresh page having only just loaded): reset now, no question asked.
+    // v411 (CPU): a deploy used to make EVERY open tab flush its save in the same second - one build
+    // change, one synchronised stampede of the heaviest requests the API serves. That is exactly the
+    // shape of the Nov 15 CPU spike: errors 13/hour -> 394/hour while traffic stayed FLAT
+    // (docs/CPU-LIMIT.md). The reset still happens on the first quiet moment (v299/v371), but the
+    // UPLOAD that precedes it now waits its own small random slice - see cloudUpdateJitterMs().
     if(Date.now()-PAGE_STARTED_AT<UPDATE_AUTO_MS){
      updateToast();
      // v326: this reset is one of the "random" disconnects players report - the socket dies with the
@@ -14905,7 +15067,10 @@ function updateWatch(){
      if(typeof cloudFlushNow==='function'&&typeof save==='function'&&typeof CLOUD!=='undefined'&&CLOUD.on&&!CLOUD.lost&&!updateResetSeen(txt)){
       try{save()}catch(e){}
       const go=()=>{hardReload(txt)};
-      Promise.race([cloudFlushNow().catch(()=>{}),new Promise(r=>setTimeout(r,1500))]).then(go,go);
+      // v411: draw this tab's slice, then race the upload against it as before. A tab that is already
+      // mid-fight gets its save spread instead of every tab firing together.
+      const spread=new Promise(r=>setTimeout(r,cloudUpdateJitterMs()));
+      Promise.all([spread]).then(()=>Promise.race([cloudFlushNow().catch(()=>{}),new Promise(r=>setTimeout(r,1500))])).then(go,go);
       return;
      }
      if(hardReload(txt))return;
@@ -14923,7 +15088,7 @@ setInterval(updateWatch,60000);
 // be hours old while the player was on another tab, and the check is a 60-byte text file.
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&(pendingUpdateBuild||Date.now()-PAGE_STARTED_AT>30000))updateWatch()});
 </script>
-<script src="assets/wardrobe-ui.js?v=415"></script>
+<script src="assets/wardrobe-ui.js?v=414"></script>
 <script src="assets/shop.js?v=321"></script>
 <script src="assets/friends.js?v=273"></script>
 <script src="assets/digimon/roster.js?v=415"></script>

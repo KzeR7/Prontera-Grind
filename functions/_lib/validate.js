@@ -39,9 +39,23 @@ export function checkPassword(pass, min) {
 // would call impossible. Keep in step with index.html (MAXST/BASECAP/ELITELV and the level ceiling).
 export const CAPS = { level: 150, maxStat: 120, maxZeny: 1e15 };
 
+// v413: the ceiling that actually matters. The free plan gives an invocation 10 ms of CPU, and a
+// 512 KB blob costs ~6 ms of that in JSON parsing ALONE (measured against this handler), before any
+// validation or audit runs. So the old 512 KB limit did not protect the request - it let a save
+// through that was guaranteed to be killed part-way, which is how one 415 KB account produced
+// hundreds of `exceededResources` errors a day. A 300 KB ceiling still clears the worst honest save
+// the game can build (BAGMAX 1000 items + CARDMAX 1000 cards ~ 288 KB) while refusing anything that
+// cannot be synced inside the budget. The check runs BEFORE JSON.parse, so refusing is nearly free.
+export const SAVE_BYTES_MAX = 300 * 1024;
+
 export function checkSaveBlob(blob) {
   if (typeof blob !== 'string' || !blob) throw new HttpError(400, 'Missing save.');
-  if (blob.length > 512 * 1024) throw new HttpError(413, 'That save is too large.');
+  // `saveTooLarge` lets the client distinguish "this save can never be accepted" from a transient
+  // failure. Without it the page treats a 413 like a dropped connection and retries for ever, which
+  // is a worse experience than the CPU kill it replaced.
+  if (blob.length > SAVE_BYTES_MAX) {
+    throw new HttpError(413, 'That save is too large to sync.', { saveTooLarge: true });
+  }
   let save;
   try { save = JSON.parse(blob); } catch { throw new HttpError(400, 'Save is not valid JSON.'); }
   if (!save || typeof save !== 'object' || Array.isArray(save)) throw new HttpError(400, 'Save must be an object.');
@@ -101,19 +115,39 @@ export function saveAccountId(save) {
   return Number.isInteger(id) && id > 0 ? id : 0;
 }
 
+// v410 CPU: every helper below accepts EITHER the JSON string or an already-parsed save object.
+// The save blob is up to 512 KB and parsing it is the single most expensive thing a sync does, so
+// a caller that has already parsed it (save.js parses once in checkSaveBlob) must not make these
+// parse it again. Passing an object is always equivalent to passing its string form: the string
+// path is kept for callers that only ever had a stored blob, and `null`/`''`/garbage still read as
+// "no save", exactly as before.
+const parseStamp = v => {
+  if (v && typeof v === 'object' && !Array.isArray(v)) return v;
+  if (typeof v !== 'string' || !v) return null;
+  try { const s = JSON.parse(v); return s && typeof s === 'object' && !Array.isArray(s) ? s : null; }
+  catch { return null; }
+};
+
+// Explicit name for the same rule, for callers that want to parse a stored blob ONCE and hand the
+// object to several helpers. Returns null for "no save" (null/''/garbage), never throws.
+export const parseSave = parseStamp;
+
 export function storedSaveAccountId(blob) {
-  if (typeof blob !== 'string' || !blob) return 0;
-  try { return saveAccountId(JSON.parse(blob)); } catch { return 0; }
+  return saveAccountId(parseStamp(blob));
 }
 
 // Does this stored save belong to `userId`?
 //   true  - it is this account's own save (by id, or by name when it carries no id)
 //   false - it is somebody else's, and must not be read or written
-export function saveBelongsTo(blob, { id, userId, username }) {
+// `stored` may be the blob string or an already-parsed save (see parseStamp).
+export function saveBelongsTo(stored, { id, userId, username }) {
   const mine = Number(userId ?? id);
-  const stamped = storedSaveAccountId(blob);
-  if (stamped) return stamped === mine;      // the durable identity decides
-  return !savedElsewhere(blob, username);    // legacy save: the name is all there is
+  const save = parseStamp(stored);
+  if (!save) return !savedElsewhere(stored, username);  // unreadable: the legacy name path decides
+  const stamped = saveAccountId(save);
+  if (stamped) return stamped === mine;                 // the durable identity decides
+  const name = saveOwnerStamp(save);
+  return !name || sameAccount(name, username);          // legacy save: the name is all there is
 }
 
 // ------------------------------------------------------- GM restore fence ----
@@ -155,20 +189,24 @@ export function restoreAllowsWrite(storedBlob, incomingSave, fenceAt) {
 }
 
 // The stamp on a stored blob, so a PUT can compare against what is actually in the row.
+// Accepts the blob string or an already-parsed save (v410: see parseStamp).
 export function storedRestoreAt(blob) {
-  if (typeof blob !== 'string' || !blob) return 0;
-  try { return restoreAt(JSON.parse(blob)); } catch { return 0; }
+  const save = parseStamp(blob);
+  return save ? restoreAt(save) : 0;
 }
 
 // The blob this account should store: re-stamped with its current name and id when either is stale.
 // Returns `blob` unchanged when it is already correct, so the common path rewrites nothing.
 // `id` is what currentUser() returns; `userId` is accepted for callers that already have it named.
-export function withSaveIdentity(blob, { id, userId, username }) {
+//
+// v410: `parsed` lets a caller that has already parsed the blob hand the object in, so the common
+// path (nothing stale) costs no JSON work at all and the re-stamp path costs one stringify. The
+// return shape is unchanged: a string, ready for D1.
+export function withSaveIdentity(blob, { id, userId, username }, parsed = null) {
   const mine = Number(userId ?? id);
   if (!Number.isInteger(mine) || mine <= 0) return blob;   // nothing durable to stamp with
-  let save;
-  try { save = JSON.parse(blob); } catch { return blob; }
-  if (!save || typeof save !== 'object' || Array.isArray(save)) return blob;
+  const save = parsed || parseStamp(blob);
+  if (!save) return blob;
   if (saveAccountId(save) === mine && sameAccount(saveOwnerStamp(save), username)) return blob;
   // Everything else gets the durable identity. A legacy save (no id) whose name still matches is
   // stamped on its very next write - that is the point: from then on a rename cannot strand it.
