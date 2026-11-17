@@ -1370,7 +1370,7 @@ const CDX=[
 ['Bard & Dancer','Archer',.7,1.44,1.0,'c44b7a','5c1934',['instrument','whip','bow'],'dex',1],['Minstrel & Gypsy','Bard & Dancer',.58,2.03,1.15,'e06596','732242',['instrument','whip','bow'],'dex',1],
 ['Ninja','Novice',.6,2.19,1.1,'3b3b54','181826',['shuriken','dagger'],'dex',1],['Gunslinger','Novice',.58,2.25,1.05,'5c4033','2b1b14',['gun'],'dex',1]];
 const CD4X=[
-['Royal Guard','Paladin',.7,2.56,2.25,'f2d16b','8a6a10',['spear','sword'],'str',0,'a88418'],['Sorcerer','Scholar',.82,2.67,1.2,'b580e8','4f2475',['book','staff'],'int',1,'6c369c'],['Geneticist','Biochemist',.68,2.75,1.7,'70d68c','2d6b3e',['axe','mace'],'str',0,'3c8a52'],['Sura','Champion',.5,1.1,1.6,'ff9b4f','994008',['knuckle','mace'],'str',0,'b85210'],['Shadow Chaser','Stalker',.5,1.7,1.3,'9470b5','3d2654',['dagger','bow'],'dex',0,'533470'],['Maestro & Wanderer','Minstrel & Gypsy',.54,1.15,1.25,'ff80b3','8a2650',['instrument','whip','bow'],'dex',1,'a83264'],
+['Royal Guard','Paladin',.7,2.56,2.25,'f2d16b','8a6a10',['spear','sword'],'str',0,'a88418'],['Sorcerer','Scholar',.82,2.67,1.2,'b580e8','4f2475',['book','staff'],'int',1,'6c369c'],['Geneticist','Biochemist',.68,2.75,1.7,'70d68c','2d6b3e',['axe','mace'],'str',0,'3c8a52'],['Sura','Champion',.5,1.1,1.6,'ff9b4f','994008',['knuckle','mace'],'str',0,'b85210'],['Shadow Chaser','Stalker',.5,1.7,1.3,'9470b5','3d2654',['dagger','bow'],'dex',1,'533470'],['Maestro & Wanderer','Minstrel & Gypsy',.54,1.15,1.25,'ff80b3','8a2650',['instrument','whip','bow'],'dex',1,'a83264'],
 // haven-v410: the two Novice-born classes get their advanced job. It sits two steps below Novice in
 // the tree but is a full Ascension (tier 4) class - see SOLO_ADVANCED where tiers are computed.
 ['Kagerou & Oboro','Ninja',.52,2.3,1.3,'55557a','22223a',['shuriken','dagger'],'dex',1,'33334d'],['Rebellion','Gunslinger',.5,1.7,1.25,'7a5540','3a251a',['gun'],'dex',1,'4d3526']];
@@ -1576,7 +1576,7 @@ const SKILLSX=[
  {"id":"so_diamond","n":"Diamond Dust","max":10,"type":"act","col":"#80d8ff","cd":5,"hits":1,"power":3.4,"shape":"radial","slow":0.35,"icon":"fdiver","visual":"frost","text":"Freeze and slow enemies around the caster.","fx":"wl_frost","from":"Sorcerer"},
  {"id":"so_varetyr","n":"Varetyr Spear","max":10,"type":"act","col":"#b580e8","cd":3.5,"hits":3,"power":3.4,"shape":"single","icon":"nap","visual":"lightning","text":"Three lightning spears pierce one enemy, briefly stunning it.","stun":0.4,"fx":"nap","from":"Sorcerer"},
  {"id":"so_grave","n":"Earth Grave","max":10,"type":"act","col":"#b580e8","cd":4,"hits":1,"power":3.2,"shape":"splash","icon":"tstorm","visual":"detonate","text":"Stone spikes erupt beneath the target and nearby enemies.","fx":"tstorm","from":"Sorcerer"},
- {"id":"so_strike","n":"Spell Fist","max":10,"type":"buff","col":"#b580e8","cd":12,"key":"matk","rate":1.5,"duration":12,"icon":"aura","text":"Spell Fist. For 12 seconds every normal attack releases a bolt of a random element. The bolts hit bosses 40% harder.","fx":"aura","from":"Sorcerer","autocast":{"on":"attack","chance":1,"pool":[{"as":"fire","n":"Fire Bolt","hits":3,"power":0.9,"bossPower":0.4},{"as":"nap","n":"Lightning Bolt","hits":3,"power":0.9,"bossPower":0.4},{"as":"fdiver","n":"Cold Bolt","hits":3,"power":0.9,"bossPower":0.4}]}},
+ {"id":"so_strike","n":"Spell Fist","max":10,"type":"buff","col":"#b580e8","cd":12,"key":"matk","rate":1.5,"duration":12,"icon":"aura","text":"Spell Fist. For 12 seconds every normal attack releases a bolt of a random element. The bolts hit bosses 40% harder.","fx":"aura","from":"Sorcerer","autocast":{"on":"attack","chance":0.6,"pool":[{"as":"fire","n":"Fire Bolt","hits":3,"power":0.45,"bossPower":0.25},{"as":"nap","n":"Lightning Bolt","hits":3,"power":0.45,"bossPower":0.25},{"as":"fdiver","n":"Cold Bolt","hits":3,"power":0.45,"bossPower":0.25}]}},
  {"id":"so_buster","n":"Poison Buster","max":10,"type":"act","col":"#b580e8","cd":12,"hits":4,"power":4,"shape":"splash","icon":"meteor","visual":"detonate","text":"Detonate a toxic cloud over the target area.","fx":"meteor","from":"Sorcerer","ascensionOnly":true},
  {"id":"al_pot","n":"Potion Pitcher","max":10,"type":"heal","col":"#70d68c","cd":6,"icon":"aid","text":"Automatically restore 12–30% of max HP below half health. Does not occupy a combo slot.","hits":1,"power":0,"shape":"single","visual":"ward","healBase":0.12,"healRank":0.018,"fx":"aid","from":"Alchemist"},
  {"id":"al_acid","n":"Acid Terror","max":10,"type":"act","col":"#70d68c","cd":3,"hits":1,"power":1.9,"shape":"single","dot":0.15,"icon":"meltdown","visual":"detonate","text":"Hurl corrosive acid that keeps burning for a short time.","fx":"meltdown","from":"Alchemist"},
@@ -1598,7 +1598,7 @@ const SKILLSX=[
  {"id":"mo_triple","n":"Triple Attack","max":10,"type":"act","col":"#ff9b4f","cd":2.5,"hits":3,"power":2.1,"shape":"single","icon":"adren","visual":"cuts","text":"Three rapid blows. Each use gathers one Spirit Sphere (max 5).","fx":"pierce","from":"Monk","castGain":{"key":"sphere","max":5,"life":20}},
  {"id":"mo_chain","n":"Chain Combo","max":10,"type":"act","col":"#ff9b4f","cd":3.5,"hits":4,"power":2.6,"shape":"single","icon":"quick","visual":"cuts","text":"Four chained strikes that gather a Spirit Sphere and make the next skill hit harder.","follow":0.1,"fx":"spiral","from":"Monk","castGain":{"key":"sphere","max":5,"life":20}},
  {"id":"mo_iron","n":"Iron Fists","max":5,"type":"pas","col":"#ff9b4f","key":"atk","rate":2,"icon":"thrust","text":"Hardened fists increase weapon attack.","from":"Monk"},
- {"id":"ch_asura","n":"Asura Strike","max":10,"type":"act","col":"#ff9b4f","cd":10,"hits":1,"power":16,"shape":"single","spend":{"key":"sphere","per":0.5},"icon":"mbrk","visual":"burst","text":"Asura Strike: pour every Spirit Sphere into one blow. Needs at least one sphere; each sphere adds 50% damage, and it hits bosses 50% harder. The shockwave deals 40% to enemies beside the target. Build spheres with your combo skills first.","fx":"mbrk","from":"Monk","requiresStack":"sphere","core":true,"bossPower":0.5,"shock":{"r":4,"k":0.4}},
+ {"id":"ch_asura","n":"Asura Strike","max":10,"type":"act","col":"#ff9b4f","cd":6,"hits":1,"power":16,"shape":"single","spend":{"key":"sphere","per":0.5},"icon":"mbrk","visual":"burst","text":"Asura Strike: pour every Spirit Sphere into one blow. Needs at least one sphere; each sphere adds 50% damage, and it hits bosses 50% harder. The shockwave deals 40% to enemies beside the target. Build spheres with your combo skills first.","fx":"mbrk","from":"Monk","requiresStack":"sphere","core":true,"bossPower":0.5,"shock":{"r":4,"k":0.4}},
  {"id":"ch_glacier","n":"Glacier Fist","max":10,"type":"act","col":"#ff9b4f","cd":4,"hits":1,"power":3.0,"shape":"single","stun":0.6,"castGain":{"key":"sphere","max":5,"life":20},"icon":"wperf","visual":"burst","text":"A freezing punch that stuns the enemy in place and gathers a Spirit Sphere.","fx":"wperf","from":"Champion"},
  {"id":"ch_palm","n":"Raging Palm Strike","max":10,"type":"act","col":"#ff9b4f","cd":2.5,"hits":1,"power":2.6,"shape":"single","icon":"wperf","visual":"burst","text":"A palm strike that hurls the enemy back and gathers a Spirit Sphere.","fx":"wperf","from":"Champion","castGain":{"key":"sphere","max":5,"life":20}},
  {"id":"ch_crush","n":"Chain Crush Combo","max":10,"type":"act","col":"#ff9b4f","cd":4.5,"hits":5,"power":3.8,"shape":"single","icon":"spiral","visual":"cuts","text":"Five crushing blows that gather a Spirit Sphere.","fx":"spiral","from":"Champion","castGain":{"key":"sphere","max":5,"life":20}},
@@ -1713,7 +1713,11 @@ const COMBO_PLAN={
   'Alchemist':['al_acid','al_flora','al_bomb'],'Biochemist':['al_acid','al_flora','bi_plant','al_bomb','bi_bio','bi_demo'],
   'Geneticist':['al_flora','ge_fire','ge_weed','ge_spore','ge_hell','ge_cart','bi_demo'],
   'Monk':['mo_triple','mo_chain','ch_asura'],'Champion':['mo_triple','mo_chain','ch_glacier','ch_palm','ch_crush','ch_asura'],
-  'Sura':['mo_triple','mo_chain','ch_crush','su_tiger','su_gate','ch_asura'],
+  // haven-v416: Sky Net Blow was on no combo at all, so the two slowest hitters (Tiger Cannon 4.5s,
+  // Gates of Hell 5s) were all Sura had between Asura casts and the rotation fell back to normal
+  // attacks. Sky Net Blow is 3s and hits everything around the caster, which is exactly the filler
+  // a rotation needs - no new skill, no change to the 50-point tree.
+  'Sura':['mo_triple','su_sky','ch_crush','su_tiger','su_gate','ch_asura'],
   'Rogue':['ro_strip','ro_raid','ro_back'],'Stalker':['st_full','ro_raid','st_counter','ro_back'],
   'Shadow Chaser':['st_full','sc_masq','sc_feint','sc_fatal','sc_spell','sc_tri'],
   'Bard & Dancer':['bd_music','dn_sling'],'Minstrel & Gypsy':['bd_music','dn_sling','dn_tarot','bd_vulcan'],
@@ -6213,9 +6217,19 @@ function log(m,cls,cat,visual){const e={m,cls,cat,id:++logSequence};logs.push(e)
 // ---------- combat ----------
 // Magic lines hold six tiles even between casts; bows hold four, melee closes in.
 const CLASS_BAND=cls=>cls&&INT_CLASSES.includes(cls.n)?6:cls&&cls.rng?4:0;
+// haven-v416 (owner): the thrown/ranged-mixed lines reach a little further than a plain rng class.
+// Their weapon list is what earns it - shuriken, gun, instrument and bow are all thrown or fired -
+// yet the bow-only extra below gave Shadow Chaser (dagger + bow) a quarter tile and nothing else in
+// this table anything at all. A flat half tile is small enough to keep them inside the same camp
+// and short of the next one, and it applies to both the basic reach and every skill, so the extra
+// is not lost to whichever skill happens to be off cooldown.
+const EXTRA_REACH_CLASSES=new Set(['Shadow Chaser','Kagerou & Oboro','Rebellion','Maestro & Wanderer']);
+const extraReach=cls=>cls&&EXTRA_REACH_CLASSES.has(cls.n)?.5:0;
 let standC={t:-9,r:0},engageTgt=null,engageWait=0;   // engageTgt: latched into a stand-and-trade fight (v83.1); engageWait: seconds latched while out of reach (v88.4)
 function heroStandoff(m){
   let r=CLASS_BAND(C());if(r&&(typeof rangedWeapon==='function'?C().wt.some(rangedWeapon):C().wt.includes('bow')))r+=Math.min(.5,pv('range'));
+  // v416: the thrown/ranged-mixed lines keep their extra bit of reach.
+  if(r)r+=extraReach(C());
   // A ranged skill must not keep a melee class outside its basic/combo reach.
   if(!r)r=1.2+.45*(m&&m.size?m.size:1);
   // hold the last stand-off for 1.5s, so a skill coming off cooldown does not make the hero pace.
@@ -6361,14 +6375,14 @@ const SKILL_TUNING={
  },
  "Sorcerer": {
   "single": [
-   0.4117,
-   0.4117,
-   0.4117
+   0.4529,
+   0.4529,
+   0.4529
   ],
   "area": [
-   2.3959,
-   2.3959,
-   2.3959
+   2.1238,
+   2.1238,
+   2.1238
   ],
   "companion": 1
  },
@@ -6829,7 +6843,7 @@ function skillTuning(area=false,sk,L){const table=SKILL_TUNING[S.cls];if(!table)
   return power/sk.mul(rank);
 }
 function skillRange(sk,target){const range=(sk.rng||sk.dash||CLASS_BAND(C()))+ascSkillValue(sk.id,'range');
-  return range?range+((typeof rangedWeapon==='function'?C().wt.some(rangedWeapon):C().wt.includes('bow'))?Math.min(.5,pv('range')):0):1.8+.45*(target&&target.size||1);}
+  return range?range+extraReach(C())+((typeof rangedWeapon==='function'?C().wt.some(rangedWeapon):C().wt.includes('bow'))?Math.min(.5,pv('range')):0):1.8+.45*(target&&target.size||1);}
 function skillTargets(sk,target,origin=pl){const area=sk.areaScale||1,shape=sk.shape||'single',center=shape==='radial'?origin:target;
   const dx=target.x-origin.x,dz=target.z-origin.z,len=Math.hypot(dx,dz)||1,ux=dx/len,uz=dz/len;
   const hits=mobs.slice().filter(o=>{if(o.hp<=0) return false;if(o===target) return true;if(shape==='single')return false;

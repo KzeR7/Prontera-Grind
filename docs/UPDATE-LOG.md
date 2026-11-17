@@ -11482,3 +11482,40 @@ missed, and a byte-for-byte round trip of every packaged file. Full suite: 219 o
 `render_lost_boot_smoke` (4 passed / 3 failed) and `mvp_art_crop.py --check` (7 drifted) fail
 identically on `main` and are untouched here. Package is 58.0 MB compressed, up from 48.8 MB — it
 was not runnable before, so there is no working baseline to compare against.
+
+## haven-v416 — four owner reports: reach, Sorcerer's bolts, Sura's rotation (2026-11-15)
+
+Owner feedback after playing the expanded classes. Still behind the fourth-job gate; the 26 original
+classes are untouched, and no other class's budget moved.
+
+- **A little more reach for the thrown and ranged-mixed lines.** Shadow Chaser, Kagerou & Oboro,
+  Rebellion and Maestro & Wanderer now stand half a tile further off than the other ranged classes
+  and cast every skill from that same half tile further out (`EXTRA_REACH_CLASSES` / `extraReach`,
+  applied to both `heroStandoff` and `skillRange`). Measured stand-off is 4.5 tiles against Ranger's
+  4.0; melee is unchanged at 1.65. `CLASS_BAND` is untouched, so Ranger, Ninja and Gunslinger do not
+  gain anything. Shadow Chaser's roster row said `rng:0` even though it carries a bow, which is why
+  it was reaching like a dagger class; that row now reads `rng:1`.
+- **Sorcerer was overpowered because Spell Fist never lapsed.** `so_strike` is a 12-second buff on a
+  12-second cooldown with `chance:1`: permanent uptime, and every normal attack fired one of three
+  three-hit bolts at `power:0.9`. On the highest-`atk` caster in the game (2.67) that turned ordinary
+  attacks into full skill casts, which is where the 60-70k/min came from - the three bolts alone were
+  38% of its damage. Chance is now 0.6 and each bolt 0.45 single / 0.25 boss, so the bolts are worth
+  11%. The class was then refitted (`K 0.4117 to 0.4529`, `A 2.3959 to 2.1238`) so it still delivers
+  its recorded 115% of Warlock from its own skills: Psychic Wave 12%, Diamond Dust 12%, Earth Grave
+  10%. Sorcerer 91k one target / 180k three; Warlock 79k.
+- **Sura could only fit one Asura Strike per two rotations.** Asura Strike's cooldown was 10 s while
+  the six-skill rotation takes about 20 s, and Sky Net Blow was on no combo at all, so the two
+  slowest hitters (Tiger Cannon 4.5 s, Gates of Hell 5 s) were all the rotation had between Asura
+  casts and it fell back to normal attacks. Sky Net Blow (3 s, hits everything around the caster)
+  replaced Chain Combo in the Sura combo, and Asura's cooldown is 6 s. The rotation is now 134 casts
+  per 120 s with 12 Asura Strikes (was 11 skills and one Asura in game), and Sura reads 105k / 133k
+  with Asura at 53% of its damage. No skill was added - the Sura tree still costs exactly 50 points.
+
+**Checks.** All three `progression_*.json` fixtures regenerated (hash-only diffs). `SKILL_TUNING.Sorcerer`
+and `expanded_skill_budget.json` moved together, as `expanded_roster_sim` requires. Full suite:
+219 of 219 `*_sim` pass.
+
+**Still open.** Asura Strike still does not kneel with its fists on the ground: the FX layer plays the
+client's six kanji glyphs (`assets/signature-fx.js:201`), and the Monk line has no body pose to reach
+for - `SPRITE_PACK.bodies` and `class_skins_data.js` carry no monk/champion/sura record, and
+`assets/ro-fx/asura.webp` is a glyph book, not a body. This needs new art, not a tuning change.

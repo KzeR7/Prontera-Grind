@@ -40,8 +40,8 @@
    "sibling": "Warlock",
    "target": 1.15,
    "atk": 2.67,
-   "K": 0.4117,
-   "A": 2.3959
+   "K": 0.4529,
+   "A": 2.1238
   },
   "Alchemist": {
    "sibling": "Blacksmith",
