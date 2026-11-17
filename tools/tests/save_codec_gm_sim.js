@@ -42,7 +42,7 @@ const game = createGame();
 // A real save from the real constructors - never hand-written shapes.
 const realSave = () => {
   const s = game.ev(`(()=>{ const S=load();
-    S.inv=[]; for(let i=0;i<12;i++)S.inv.push(genGear({k:['armor','head','weapon'][i%3],n:'Plate Armor',quality:1},145,i%3,false,undefined,i%10,10));
+    S.inv=[]; for(let i=0;i<12;i++){const it=genGear({k:['armor','head','weapon'][i%3],n:'Plate Armor',quality:1},145,i%3,false,undefined,i%10,10);it.r=i%11;it.locked=i%2===0;S.inv.push(it);}
     S.cards=[]; for(let i=0;i<5;i++)S.cards.push(newCard(cardDefinition(i%4,i%2,i%2===0)));
     S.fishing.bag=[{id:'keep',sp:'Magikarp',w:9.5,mut:null,at:1,perfect:false,lock:true}];
     S.zeny=777; S.owner='CompactTest'; return JSON.parse(JSON.stringify(S)); })()`);
@@ -124,6 +124,7 @@ try {
     // `locked` repair flag, so object identity is the wrong test. Every id must still be present.
     const idSet = list => list.map(i => String(i.id)).sort().join('|');
     assert.equal(idSet(after.inv), idSet(ordinary.inv), 'no item id was lost by the rewrite');
+    assert.ok(same(after.inv, ordinary.inv), 'item state, refinement and locks survive the GM rewrite');
   });
 
   await test('GM restore (version rollback) stores an ordinary blob the page can read', async () => {
@@ -133,7 +134,9 @@ try {
     assert.ok(hist, 'a history version exists to restore');
     const r = await call(gmPlayer, gm, { id: playerId, action: 'restore', version: hist.version, note: 'regression test' }, '/api/gm/player');
     assert.equal(r.res.status, 200, 'restore answered: ' + JSON.stringify(r.data));
-    tupleRowIsClean(sqlite.prepare('SELECT blob FROM saves').get().blob, 'restore');
+    const restored = sqlite.prepare('SELECT blob FROM saves').get().blob;
+    tupleRowIsClean(restored, 'restore');
+    assert.ok(same(unpackSave(JSON.parse(restored)).inv, ordinary.inv), 'restore preserves item state, refinement and locks');
   });
 
   // Reported by review: GM unlock/restore stored the ORDINARY shape, expanding a 169 KB row to

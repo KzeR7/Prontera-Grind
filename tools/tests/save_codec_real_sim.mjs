@@ -13,6 +13,7 @@ const require = createRequire(import.meta.url);
 const { createGame } = require('./helpers/game');
 const fs = require('fs');
 const path = require('path');
+const F = require('../../assets/social-fishing.js');
 
 let fails = 0;
 const ok = (n, c, d) => { if (c) console.log('  ok   ' + n); else { fails++; console.log('  FAIL ' + n + (d ? ' -> ' + d : '')); } };
@@ -25,7 +26,8 @@ const corpus = ev(`(()=>{
   const slots=['weapon','armor','head','off','leg','acc'];
   const items=[];
   for(let map=0;map<10;map++){for(let sec=0;sec<6;sec++){for(let k=0;k<6;k++){
-    items.push(genGear({k:slots[k%6],n:'Plate Armor',quality:1},145,sec,false,undefined,map,10));
+    const it=genGear({k:slots[k%6],n:'Plate Armor',quality:1},145,sec,false,undefined,map,10);
+    it.r=(map+sec+k)%11;it.locked=(map+k)%2===0;items.push(it);
   }}}
   items.push(S.eq.weapon);                       // the starting equipped dagger (wt set)
   const cards=[];
@@ -33,11 +35,15 @@ const corpus = ev(`(()=>{
     try{ cards.push(newCard(cardDefinition(m,j,nm))); }catch(e){}
   }}}
   cards.push({id:9001,g:1,stat:'str',v:5,legacy:true,card:1});   // the legacy shape the repair adds
-  const fish=[];
-  for(let i=0;i<60;i++)fish.push({id:'f'+i,sp:'Magikarp',w:12.34,mut:i%7?null:'shiny',at:1712345678901+i,
-    perfect:i%4===0,lock:i%9===0});
-  return {items,cards,fish};})()`);
+  return {items,cards};})()`);
 g.close();
+const fishState = F.normalize(null);
+for (let i = 0; i < 60; i++) {
+  const fish = F.addCatch(fishState, { sp: 'minnow', w: .27, mut: i % 7 ? null : 'shiny',
+    perfect: i % 4 === 0 }, 1712345678901 + i);
+  fish.lock = i % 9 === 0;
+}
+corpus.fish = fishState.bag;
 
 const save = { owner: 'demonz', accountId: 1, lv: 145, st: { str: 99 }, zeny: 1234567,
   inv: corpus.items, cards: corpus.cards, fishing: { bagTier: 3, bag: corpus.fish } };
@@ -53,9 +59,10 @@ const cardKeys = new Set(); for (const c of save.cards) Object.keys(c).forEach(k
 const fishKeys = new Set(); for (const f of save.fishing.bag) Object.keys(f).forEach(k => fishKeys.add(k));
 
 const missingIn = (gameKeys, list) => [...gameKeys].filter(k => !list.includes(k));
-ok('every ITEM field the game emits is in the tuple or would be carried as an extra',
-  missingIn(itemKeys, C.CODE_LAYOUT.BITEM).length === 0,
-  'missing: ' + missingIn(itemKeys, C.CODE_LAYOUT.BITEM).join(','));
+const ITEM_FIELDS = [...C.CODE_LAYOUT.BITEM, ...C.CODE_LAYOUT.ITEM_STATE_FIELDS];
+ok('every ITEM field the game emits is in the tuple or compact state',
+  missingIn(itemKeys, ITEM_FIELDS).length === 0,
+  'missing: ' + missingIn(itemKeys, ITEM_FIELDS).join(','));
 // `legacy` is deliberately NOT a tuple slot: it is a rare marker the repair code adds to a card that
 // predates card effects. It travels in the extras object, which is proven separately below.
 const CARD_EXTRAS = ['legacy'];
@@ -71,8 +78,8 @@ ok('every FISH field the game emits is covered',
 // the codec silently stops compressing, which is how cards got bigger before.
 const heavy = (gameKeys, list, allowExtra) =>
   [...gameKeys].filter(k => !allowExtra.includes(k) && !list.includes(k));
-ok('no heavy item field falls into extras', heavy(itemKeys, C.CODE_LAYOUT.BITEM, []).length === 0,
-  heavy(itemKeys, C.CODE_LAYOUT.BITEM, []).join(','));
+ok('no heavy item field falls into extras', heavy(itemKeys, ITEM_FIELDS, []).length === 0,
+  heavy(itemKeys, ITEM_FIELDS, []).join(','));
 ok('no heavy card field falls into extras', heavy(cardKeys, C.CODE_LAYOUT.BCARD, CARD_EXTRAS).length === 0,
   heavy(cardKeys, C.CODE_LAYOUT.BCARD, CARD_EXTRAS).join(','));
 ok('no heavy fish field falls into extras', heavy(fishKeys, C.CODE_LAYOUT.BFISH, []).length === 0,
@@ -202,6 +209,8 @@ const grabList = name => {
   return m ? m[1].split(',').map(s => s.trim().replace(/^'|'$/g, '')).filter(Boolean) : null;
 };
 const htmlItem = grabList('CODEC_BITEM'), htmlCard = grabList('CODEC_BCARD');
+ok('index.html has the same compact ITEM STATE fields as this module',
+  JSON.stringify(grabList('CODEC_ITEM_STATE_FIELDS')) === JSON.stringify(C.CODE_LAYOUT.ITEM_STATE_FIELDS));
 ok('index.html has the same ITEM layout as this module', htmlItem && JSON.stringify(htmlItem) === JSON.stringify(C.CODE_LAYOUT.BITEM),
   'page: ' + JSON.stringify(htmlItem));
 ok('index.html has the same CARD layout as this module', htmlCard && JSON.stringify(htmlCard) === JSON.stringify(C.CODE_LAYOUT.BCARD),

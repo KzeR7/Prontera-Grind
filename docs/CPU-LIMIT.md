@@ -104,10 +104,17 @@ first pass wrongly passed `prev: null` to the audit, which skips the entire rate
 > already refused (413) - which is the original bug. For those accounts only the compact arm exists, so
 > the comparison above cannot be run for them at all.
 >
-> CPU is not what stops the largest accounts, though: they are refused on **size**, and a smaller
-> upload is also the cheaper request, so the two problems point the same way. The reachable worst case
-> is ~709 KB compact (see `docs/CLOUD-DATA.md`), which `SAVE_BYTES_MAX` refuses long before any CPU
-> ceiling matters. Raising the CPU budget (Workers Paid) would not let those accounts sync.
+> **Size and CPU are separate gates.** The older ~709 KB compact measurement predates the v3 card
+> catalog and is not the current largest-account measurement. Review then reproduced a legitimate
+> refined/locked, all-starred state over v3's size ceiling. The stronger v415 production-constructor
+> fixture is **338,180 characters in v3 → 295,175 in v4** (see `docs/CLOUD-DATA.md`). That fixes this
+> fixture's size refusal, not every possible account and not its hosted CPU budget. Raising the CPU
+> budget (Workers Paid) still does not raise `SAVE_BYTES_MAX`.
+>
+> **After deployment, verify CPU separately:** watch the affected account complete repeated saves,
+> and compare Pages `exceededResources` plus p50/p99 CPU against the pre-deployment window. Codec
+> size/fidelity tests and the three-parse ceiling are not proof of Cloudflare CPU headroom. No v415
+> production CPU measurement or deployment has been made from this sandbox.
 
 Instrumenting `JSON.parse`/`JSON.stringify` over one accepted `PUT /api/save` measured **6 parses of
 the blob and 2 stringifies** *at the time of writing*, because each helper re-read the same string:

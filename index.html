@@ -925,9 +925,9 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="stylesheet" href="assets/ui/mobile.css?v=324">
 <script src="assets/ui/mobile.js?v=274"></script>
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
-<link rel="stylesheet" href="assets/social.css?v=414">
+<link rel="stylesheet" href="assets/social.css?v=415">
 <link rel="stylesheet" href="assets/social-battle.css?v=393">
-  <link rel="stylesheet" href="assets/social-fishing.css?v=414"><link rel="stylesheet" href="assets/friends.css?v=273">
+  <link rel="stylesheet" href="assets/social-fishing.css?v=415"><link rel="stylesheet" href="assets/friends.css?v=273">
 </head>
 <body>
 <div id="loginOverlay"><div class="eclipse-login-world" aria-hidden="true"></div><header class="eclipse-login-header"><a href="./" class="eclipse-brand"><span>HH</span><b>HORIZON HAVEN<small>YOUR IDLE ADVENTURE</small></b></a><div class="eclipse-palettes" role="group" aria-label="Interface palette"><button type="button" data-palette="moonstone">Moonstone</button><button type="button" data-palette="aurora">Aurora</button><button type="button" data-palette="ember">Ember</button></div></header><main class="eclipse-login-layout"><section class="login-brand"><div class="login-eyebrow">A WORLD WORTH RETURNING TO</div><h1>Your next <br>chapter <em>awaits.</em></h1><p>Explore a world beyond the horizon.<br>Collect rare gear, master every class, and build your haven.</p><div class="eclipse-login-art"><img src="assets/ui/eclipse-knight.png" alt="Lord Knight ready for adventure"><span>01 / PRONTERA<small>THE JOURNEY BEGINS HERE</small></span><div><img src="assets/equipment-icons/1142.png" alt=""><span>YOUR NEXT UPGRADE<small>Somewhere out there.</small></span></div></div><div class="login-footnote">EXPLORE · GROW · CONQUER</div></section><div class="login-card"><div class="eclipse-access">ADVENTURER ACCESS <span>◇</span></div><h2 id="authHeading">Welcome back.</h2><p class="login-intro" id="authIntro">Your adventure is right where you left it.</p><div class="atabs" id="authTabs"><button type="button" id="tabLogin" class="on">Login</button><button type="button" id="tabReg">Register</button></div>
@@ -1325,7 +1325,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-16 haven-v414 a save stores items, cards and fish compactly so a big account fits and syncs instead of being refused, and every old save still loads exactly as it did';
+const BUILD='2026-11-17 haven-v415 full-storage refined and locked saves use a smaller lossless item format, preserving old saves and older pages';
 // v364: this write used to sit AFTER the `//` on the BUILD line, so it was part of the comment and
 // never ran - the login card showed an empty #buildTag and there was no way to confirm which file
 // the browser had loaded. It also has to survive the script running before the login card exists.
@@ -3428,12 +3428,12 @@ const saveIsMine=raw=>{const id=saveAccountIdOf(raw);return !!(id&&CLOUD.id&&id=
 //
 // SAFETY: a save with no `__v` is an OLD save and is returned completely untouched - never read,
 // never rewritten, never upgraded in place. Old saves keep loading for ever.
-const SAVE_CODEC_VERSION=3;
-// v414 client capability: the percentage of a page's build that knows how to DECODE a compact save.
+const SAVE_CODEC_VERSION=4;
+// Client capability: the build number that knows how to DECODE a compact save.
 // A server holding a compact row must not hand it to a page that cannot read it - the old loader
 // turns tuple rows into "not an item" and a tuple fish into no fish at all, and the next upload then
 // persists that loss. Every request carries the number this page was built with.
-const SAVE_FORMAT=111;   // 111 = this build decodes codec __v 3; 110 and below only decode __v 1-2
+const SAVE_FORMAT=112;   // 112 decodes __v 4 item states/enums; 111 stops at __v 3, 110 at __v 1-2
 const CODEC_NUL='\u0000';                        // "this key was absent"; never a real value in a save
 const CODEC_BITEM=['id','slot','wt','tier','val','name','aff','slots','cards','sec','lvl','quality','mp'];
 const CODEC_BCARD=['card','cardVersion','cardKey','family','n','stat','v','effects','fit','g','bossCard','map','nightmare','id'];
@@ -3456,20 +3456,45 @@ function cFromTuple(t,list,rebuild){
   if(rebuild)rebuild(o,t);
   const x=t[list.length];if(x&&typeof x==='object')Object.assign(o,x);
   return o}
+// v4: append-only enum order; a numeric trailer identifies this form (v1-v3 have an extras object).
+// State = 3*(r+1, or 0 when absent) + locked (absent=0/false=1/true=2). Presence survives too.
+const CODEC_ITEM_SLOTS=['weapon','armor','head','off','leg','acc'];
+const CODEC_ITEM_WEAPONS=['sword','axe','mace','staff','dagger','katar','bow'];
+const CODEC_ITEM_AFFIX_STATS=['str','agi','dex','int','vit','luk','hp','atk','matk','crit','aspd','cdm','flee','move','def','mdef'];
+const cItemPairOf=p=>{if(!p||typeof p!=='object'||Array.isArray(p)||typeof p.k!=='string')return p;
+  const t=cPairOf(p),k=CODEC_ITEM_AFFIX_STATS.indexOf(p.k);if(k>=0)t[0]=k;return t};
+const cItemObjectOf=p=>{const o=cObjectOf(p);
+  if(Array.isArray(p)&&Number.isInteger(p[0])&&p[0]>=0&&p[0]<CODEC_ITEM_AFFIX_STATS.length)o.k=CODEC_ITEM_AFFIX_STATS[p[0]];return o};
+const CODEC_ITEM_STATE_FIELDS=['r','locked'];
+const CODEC_ITEM_STATE_KEYS=new Set([...CODEC_BITEM,...CODEC_ITEM_STATE_FIELDS]);
+const cItemState=it=>{
+  if((it.slot!==undefined&&typeof it.slot!=='string')||(it.wt!==undefined&&typeof it.wt!=='string')||
+    (it.r!==undefined&&(!Number.isInteger(it.r)||it.r<0||it.r>15))||(it.locked!==undefined&&typeof it.locked!=='boolean')||
+    (Array.isArray(it.aff)&&it.aff.some(Array.isArray)))return null;
+  return(it.r===undefined?0:it.r+1)*3+(it.locked===undefined?0:it.locked?2:1)};
 function cPackItem(it){
   if(!it||typeof it!=='object'||Array.isArray(it))return it;
-  const t=CODEC_BITEM.map(k=>cPack(it[k]));
-  t[6]=Array.isArray(it.aff)?it.aff.map(cPairOf):cPack(undefined);  // the largest item field: {k,v} -> [k,v]
+  const t=CODEC_BITEM.map(k=>cPack(it[k])),state=cItemState(it);
+  t[6]=Array.isArray(it.aff)?it.aff.map(state===null?cPairOf:cItemPairOf):cPack(undefined);  // v4 also indexes affix stat names
   t[8]=Array.isArray(it.cards)?it.cards.map(cPackCard):cPack(undefined);   // v2: socketed cards compact too
-  const x=cExtras(it,CODEC_ITEM_KEYS);if(x)t.push(x);   // an unknown field survives verbatim
+  if(state!==null){const slot=CODEC_ITEM_SLOTS.indexOf(it.slot),wt=CODEC_ITEM_WEAPONS.indexOf(it.wt);
+    if(slot>=0)t[1]=slot;if(wt>=0)t[2]=wt;t.push(state)}
+  const x=cExtras(it,state===null?CODEC_ITEM_KEYS:CODEC_ITEM_STATE_KEYS);if(x)t.push(x);   // unknown fields survive verbatim
   return t}
 function cUnpackItem(t){
   // A row that is NOT a tuple (a null hole, a string, an object from an older format) is handed
   // back untouched. Without this a single bad entry threw inside unpackSave on EVERY page load.
   if(!Array.isArray(t))return t;
+  const state=t[CODEC_BITEM.length],v4=Number.isInteger(state)&&state>=0&&state<=50;
   return cFromTuple(t,CODEC_BITEM,(o)=>{
-    if(Array.isArray(t[6]))o.aff=t[6].map(cObjectOf);
+    if(Array.isArray(t[6]))o.aff=t[6].map(v4?cItemObjectOf:cObjectOf);
     if(Array.isArray(t[8]))o.cards=t[8].map(cUnpackCard);
+    if(v4){
+      if(Number.isInteger(t[1])&&t[1]>=0&&t[1]<CODEC_ITEM_SLOTS.length)o.slot=CODEC_ITEM_SLOTS[t[1]];
+      if(Number.isInteger(t[2])&&t[2]>=0&&t[2]<CODEC_ITEM_WEAPONS.length)o.wt=CODEC_ITEM_WEAPONS[t[2]];
+      const rank=Math.floor(state/3),locked=state%3;if(rank)o.r=rank-1;if(locked)o.locked=locked===2;
+      const x=t[CODEC_BITEM.length+1];if(x&&typeof x==='object'&&!Array.isArray(x))Object.assign(o,x);
+    } // v1-v3's extras object (including r/locked) is still merged by cFromTuple.
   })}
 // v2: a card's `n` is a pure function of the two fields stored right next to it, so it is written as
 // NUL and rebuilt on read. `family` stays: it is only derivable from cardKey via the static
@@ -14650,17 +14675,17 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden&&(pendingU
 <script src="assets/wardrobe-ui.js?v=199"></script>
 <script src="assets/shop.js?v=321"></script>
 <script src="assets/friends.js?v=273"></script>
-<script src="assets/digimon/roster.js?v=414"></script>
-<script src="assets/digimon/base-stats.js?v=414"></script>
-<script src="assets/social-rules.js?v=414"></script>
-<script src="assets/social-poker.js?v=414"></script>
-<script src="assets/digimon-sanctuary.js?v=414"></script>
+<script src="assets/digimon/roster.js?v=415"></script>
+<script src="assets/digimon/base-stats.js?v=415"></script>
+<script src="assets/social-rules.js?v=415"></script>
+<script src="assets/social-poker.js?v=415"></script>
+<script src="assets/digimon-sanctuary.js?v=415"></script>
 <script src="assets/digimon-battle.js?v=393"></script>
-<script src="assets/social-digimon.js?v=414"></script>
+<script src="assets/social-digimon.js?v=415"></script>
 <script src="assets/social-gym-redesign.js?v=393"></script>
 <script src="assets/social-pond-design.js?v=393"></script>
-<script src="assets/social-scene.js?v=414"></script>
-<script src="assets/social-fishing.js?v=414"></script>
-<script src="assets/plaza-bots.js?v=414"></script>
-<script src="assets/social.js?v=414"></script></body>
+<script src="assets/social-scene.js?v=415"></script>
+<script src="assets/social-fishing.js?v=415"></script>
+<script src="assets/plaza-bots.js?v=415"></script>
+<script src="assets/social.js?v=415"></script></body>
 </html>

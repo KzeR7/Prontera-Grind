@@ -1,0 +1,1669 @@
+{
+  "note": "Frozen v1/v2/v3 blobs emitted by each recorded revision of the real encoder. Do not regenerate with the current encoder.",
+  "expected": {
+    "lv": 150,
+    "inv": [
+      {
+        "id": 1794873600003.4329,
+        "slot": "weapon",
+        "wt": "bow",
+        "tier": 4,
+        "val": 4293,
+        "name": "N+ Nightfall Recurve",
+        "aff": [
+          {
+            "k": "agi",
+            "v": 65
+          },
+          {
+            "k": "crit",
+            "v": 18
+          },
+          {
+            "k": "aspd",
+            "v": 38
+          }
+        ],
+        "slots": 4,
+        "cards": [
+          {
+            "card": 1,
+            "cardVersion": 1,
+            "cardKey": "10:3:0",
+            "family": "Death Whisperer Card",
+            "n": "Death Whisperer Card",
+            "stat": "int",
+            "v": 18,
+            "effects": [
+              {
+                "k": "int",
+                "v": 18
+              }
+            ],
+            "fit": [
+              "weapon",
+              "head",
+              "acc"
+            ],
+            "g": 2,
+            "bossCard": false,
+            "map": 10,
+            "nightmare": false,
+            "id": 1794873600004.1082,
+            "stars": 3
+          },
+          {
+            "card": 1,
+            "cardVersion": 1,
+            "cardKey": "10:4:0",
+            "family": "Agony Demon Card",
+            "n": "Agony Demon Card",
+            "stat": "atk",
+            "v": 16,
+            "effects": [
+              {
+                "k": "atk",
+                "v": 16
+              }
+            ],
+            "fit": [
+              "weapon"
+            ],
+            "g": 2,
+            "bossCard": false,
+            "map": 10,
+            "nightmare": false,
+            "id": 1794873600005.427,
+            "stars": 3
+          },
+          {
+            "card": 1,
+            "cardVersion": 1,
+            "cardKey": "11:1:0",
+            "family": "Fire Imp Card",
+            "n": "Fire Imp Card",
+            "stat": "field",
+            "v": 12,
+            "effects": [
+              {
+                "k": "field",
+                "v": 12
+              }
+            ],
+            "fit": [
+              "weapon",
+              "acc"
+            ],
+            "g": 2,
+            "bossCard": false,
+            "map": 11,
+            "nightmare": false,
+            "id": 1794873600006.1445,
+            "stars": 3
+          },
+          {
+            "card": 1,
+            "cardVersion": 1,
+            "cardKey": "11:2:0",
+            "family": "Kasa Card",
+            "n": "Kasa Card",
+            "stat": "matk",
+            "v": 6,
+            "effects": [
+              {
+                "k": "matk",
+                "v": 6
+              }
+            ],
+            "fit": [
+              "weapon",
+              "head"
+            ],
+            "g": 2,
+            "bossCard": false,
+            "map": 11,
+            "nightmare": false,
+            "id": 1794873600007.7773,
+            "stars": 3
+          }
+        ],
+        "sec": 5,
+        "lvl": 145,
+        "quality": 1.25,
+        "mp": 9,
+        "r": 10,
+        "locked": true,
+        "futureSetId": "keep"
+      },
+      {
+        "id": 1794873600008.359,
+        "slot": "weapon",
+        "wt": "bow",
+        "tier": 4,
+        "val": 4010,
+        "name": "N+ Nightfall Recurve",
+        "aff": [
+          {
+            "k": "dex",
+            "v": 45
+          },
+          {
+            "k": "aspd",
+            "v": 45
+          },
+          {
+            "k": "cdm",
+            "v": 25
+          }
+        ],
+        "slots": 4,
+        "cards": [
+          {
+            "card": 1,
+            "cardVersion": 1,
+            "cardKey": "10:3:0",
+            "family": "Death Whisperer Card",
+            "n": "Death Whisperer Card",
+            "stat": "int",
+            "v": 18,
+            "effects": [
+              {
+                "k": "int",
+                "v": 18
+              }
+            ],
+            "fit": [
+              "weapon",
+              "head",
+              "acc"
+            ],
+            "g": 2,
+            "bossCard": false,
+            "map": 10,
+            "nightmare": false,
+            "id": 1794873600009.077,
+            "stars": 3
+          },
+          {
+            "card": 1,
+            "cardVersion": 1,
+            "cardKey": "10:4:0",
+            "family": "Agony Demon Card",
+            "n": "Agony Demon Card",
+            "stat": "atk",
+            "v": 16,
+            "effects": [
+              {
+                "k": "atk",
+                "v": 16
+              }
+            ],
+            "fit": [
+              "weapon"
+            ],
+            "g": 2,
+            "bossCard": false,
+            "map": 10,
+            "nightmare": false,
+            "id": 1794873600010.1833,
+            "stars": 3
+          },
+          {
+            "card": 1,
+            "cardVersion": 1,
+            "cardKey": "11:1:0",
+            "family": "Fire Imp Card",
+            "n": "Fire Imp Card",
+            "stat": "field",
+            "v": 12,
+            "effects": [
+              {
+                "k": "field",
+                "v": 12
+              }
+            ],
+            "fit": [
+              "weapon",
+              "acc"
+            ],
+            "g": 2,
+            "bossCard": false,
+            "map": 11,
+            "nightmare": false,
+            "id": 1794873600011.9263,
+            "stars": 3
+          },
+          {
+            "card": 1,
+            "cardVersion": 1,
+            "cardKey": "11:2:0",
+            "family": "Kasa Card",
+            "n": "Kasa Card",
+            "stat": "matk",
+            "v": 6,
+            "effects": [
+              {
+                "k": "matk",
+                "v": 6
+              }
+            ],
+            "fit": [
+              "weapon",
+              "head"
+            ],
+            "g": 2,
+            "bossCard": false,
+            "map": 11,
+            "nightmare": false,
+            "id": 1794873600012.529,
+            "stars": 3
+          }
+        ],
+        "sec": 5,
+        "lvl": 145,
+        "quality": 1.25,
+        "mp": 9
+      },
+      {
+        "id": 1794873600013.4067,
+        "slot": "weapon",
+        "wt": "bow",
+        "tier": 4,
+        "val": 4270,
+        "name": "N+ Nightfall Recurve",
+        "aff": [
+          {
+            "k": "crit",
+            "v": 21
+          },
+          {
+            "k": "luk",
+            "v": 60
+          },
+          {
+            "k": "cdm",
+            "v": 33
+          }
+        ],
+        "slots": 4,
+        "cards": [
+          {
+            "card": 1,
+            "cardVersion": 1,
+            "cardKey": "10:3:0",
+            "family": "Death Whisperer Card",
+            "n": "Death Whisperer Card",
+            "stat": "int",
+            "v": 18,
+            "effects": [
+              {
+                "k": "int",
+                "v": 18
+              }
+            ],
+            "fit": [
+              "weapon",
+              "head",
+              "acc"
+            ],
+            "g": 2,
+            "bossCard": false,
+            "map": 10,
+            "nightmare": false,
+            "id": 1794873600014.529,
+            "stars": 3
+          },
+          {
+            "card": 1,
+            "cardVersion": 1,
+            "cardKey": "10:4:0",
+            "family": "Agony Demon Card",
+            "n": "Agony Demon Card",
+            "stat": "atk",
+            "v": 16,
+            "effects": [
+              {
+                "k": "atk",
+                "v": 16
+              }
+            ],
+            "fit": [
+              "weapon"
+            ],
+            "g": 2,
+            "bossCard": false,
+            "map": 10,
+            "nightmare": false,
+            "id": 1794873600015.5173,
+            "stars": 3
+          },
+          {
+            "card": 1,
+            "cardVersion": 1,
+            "cardKey": "11:1:0",
+            "family": "Fire Imp Card",
+            "n": "Fire Imp Card",
+            "stat": "field",
+            "v": 12,
+            "effects": [
+              {
+                "k": "field",
+                "v": 12
+              }
+            ],
+            "fit": [
+              "weapon",
+              "acc"
+            ],
+            "g": 2,
+            "bossCard": false,
+            "map": 11,
+            "nightmare": false,
+            "id": 1794873600016.7583,
+            "stars": 3
+          },
+          {
+            "card": 1,
+            "cardVersion": 1,
+            "cardKey": "11:2:0",
+            "family": "Kasa Card",
+            "n": "Kasa Card",
+            "stat": "matk",
+            "v": 6,
+            "effects": [
+              {
+                "k": "matk",
+                "v": 6
+              }
+            ],
+            "fit": [
+              "weapon",
+              "head"
+            ],
+            "g": 2,
+            "bossCard": false,
+            "map": 11,
+            "nightmare": false,
+            "id": 1794873600017.0078,
+            "stars": 3
+          }
+        ],
+        "sec": 5,
+        "lvl": 145,
+        "quality": 1.25,
+        "mp": 9,
+        "r": 0,
+        "locked": false
+      }
+    ],
+    "cards": [
+      {
+        "card": 1,
+        "cardVersion": 1,
+        "cardKey": "0:0:0",
+        "family": "Poring Card",
+        "n": "Poring Card",
+        "stat": "luk",
+        "v": 3,
+        "effects": [
+          {
+            "k": "luk",
+            "v": 3
+          }
+        ],
+        "fit": [
+          "acc"
+        ],
+        "g": 0,
+        "bossCard": false,
+        "map": 0,
+        "nightmare": false,
+        "id": 1794873605003.7349,
+        "stars": 3
+      },
+      {
+        "card": 1,
+        "cardVersion": 1,
+        "cardKey": "0:1:0",
+        "family": "Fabre Card",
+        "n": "Fabre Card",
+        "stat": "hp",
+        "v": 50,
+        "effects": [
+          {
+            "k": "hp",
+            "v": 50
+          }
+        ],
+        "fit": [
+          "head",
+          "armor"
+        ],
+        "g": 0,
+        "bossCard": false,
+        "map": 0,
+        "nightmare": false,
+        "id": 1794873605004.6228,
+        "stars": 3
+      }
+    ],
+    "fishing": {
+      "bag": [
+        {
+          "id": "fmwjxedc02xp",
+          "sp": "minnow",
+          "w": 0.27,
+          "mut": null,
+          "at": 1794873600000,
+          "perfect": true,
+          "lock": true
+        },
+        {
+          "id": "fmwjxfnmoub9",
+          "sp": "carp",
+          "w": 2.35,
+          "mut": "prismatic",
+          "at": 1794873660000,
+          "perfect": false,
+          "lock": false
+        }
+      ]
+    }
+  },
+  "versions": [
+    {
+      "revision": "52fec170",
+      "blob": {
+        "lv": 150,
+        "inv": [
+          [
+            1794873600003.4329,
+            "weapon",
+            "bow",
+            4,
+            4293,
+            "N+ Nightfall Recurve",
+            [
+              [
+                "agi",
+                65
+              ],
+              [
+                "crit",
+                18
+              ],
+              [
+                "aspd",
+                38
+              ]
+            ],
+            4,
+            [
+              {
+                "card": 1,
+                "cardVersion": 1,
+                "cardKey": "10:3:0",
+                "family": "Death Whisperer Card",
+                "n": "Death Whisperer Card",
+                "stat": "int",
+                "v": 18,
+                "effects": [
+                  {
+                    "k": "int",
+                    "v": 18
+                  }
+                ],
+                "fit": [
+                  "weapon",
+                  "head",
+                  "acc"
+                ],
+                "g": 2,
+                "bossCard": false,
+                "map": 10,
+                "nightmare": false,
+                "id": 1794873600004.1082,
+                "stars": 3
+              },
+              {
+                "card": 1,
+                "cardVersion": 1,
+                "cardKey": "10:4:0",
+                "family": "Agony Demon Card",
+                "n": "Agony Demon Card",
+                "stat": "atk",
+                "v": 16,
+                "effects": [
+                  {
+                    "k": "atk",
+                    "v": 16
+                  }
+                ],
+                "fit": [
+                  "weapon"
+                ],
+                "g": 2,
+                "bossCard": false,
+                "map": 10,
+                "nightmare": false,
+                "id": 1794873600005.427,
+                "stars": 3
+              },
+              {
+                "card": 1,
+                "cardVersion": 1,
+                "cardKey": "11:1:0",
+                "family": "Fire Imp Card",
+                "n": "Fire Imp Card",
+                "stat": "field",
+                "v": 12,
+                "effects": [
+                  {
+                    "k": "field",
+                    "v": 12
+                  }
+                ],
+                "fit": [
+                  "weapon",
+                  "acc"
+                ],
+                "g": 2,
+                "bossCard": false,
+                "map": 11,
+                "nightmare": false,
+                "id": 1794873600006.1445,
+                "stars": 3
+              },
+              {
+                "card": 1,
+                "cardVersion": 1,
+                "cardKey": "11:2:0",
+                "family": "Kasa Card",
+                "n": "Kasa Card",
+                "stat": "matk",
+                "v": 6,
+                "effects": [
+                  {
+                    "k": "matk",
+                    "v": 6
+                  }
+                ],
+                "fit": [
+                  "weapon",
+                  "head"
+                ],
+                "g": 2,
+                "bossCard": false,
+                "map": 11,
+                "nightmare": false,
+                "id": 1794873600007.7773,
+                "stars": 3
+              }
+            ],
+            5,
+            145,
+            1.25,
+            9,
+            {
+              "r": 10,
+              "locked": true,
+              "futureSetId": "keep"
+            }
+          ],
+          [
+            1794873600008.359,
+            "weapon",
+            "bow",
+            4,
+            4010,
+            "N+ Nightfall Recurve",
+            [
+              [
+                "dex",
+                45
+              ],
+              [
+                "aspd",
+                45
+              ],
+              [
+                "cdm",
+                25
+              ]
+            ],
+            4,
+            [
+              {
+                "card": 1,
+                "cardVersion": 1,
+                "cardKey": "10:3:0",
+                "family": "Death Whisperer Card",
+                "n": "Death Whisperer Card",
+                "stat": "int",
+                "v": 18,
+                "effects": [
+                  {
+                    "k": "int",
+                    "v": 18
+                  }
+                ],
+                "fit": [
+                  "weapon",
+                  "head",
+                  "acc"
+                ],
+                "g": 2,
+                "bossCard": false,
+                "map": 10,
+                "nightmare": false,
+                "id": 1794873600009.077,
+                "stars": 3
+              },
+              {
+                "card": 1,
+                "cardVersion": 1,
+                "cardKey": "10:4:0",
+                "family": "Agony Demon Card",
+                "n": "Agony Demon Card",
+                "stat": "atk",
+                "v": 16,
+                "effects": [
+                  {
+                    "k": "atk",
+                    "v": 16
+                  }
+                ],
+                "fit": [
+                  "weapon"
+                ],
+                "g": 2,
+                "bossCard": false,
+                "map": 10,
+                "nightmare": false,
+                "id": 1794873600010.1833,
+                "stars": 3
+              },
+              {
+                "card": 1,
+                "cardVersion": 1,
+                "cardKey": "11:1:0",
+                "family": "Fire Imp Card",
+                "n": "Fire Imp Card",
+                "stat": "field",
+                "v": 12,
+                "effects": [
+                  {
+                    "k": "field",
+                    "v": 12
+                  }
+                ],
+                "fit": [
+                  "weapon",
+                  "acc"
+                ],
+                "g": 2,
+                "bossCard": false,
+                "map": 11,
+                "nightmare": false,
+                "id": 1794873600011.9263,
+                "stars": 3
+              },
+              {
+                "card": 1,
+                "cardVersion": 1,
+                "cardKey": "11:2:0",
+                "family": "Kasa Card",
+                "n": "Kasa Card",
+                "stat": "matk",
+                "v": 6,
+                "effects": [
+                  {
+                    "k": "matk",
+                    "v": 6
+                  }
+                ],
+                "fit": [
+                  "weapon",
+                  "head"
+                ],
+                "g": 2,
+                "bossCard": false,
+                "map": 11,
+                "nightmare": false,
+                "id": 1794873600012.529,
+                "stars": 3
+              }
+            ],
+            5,
+            145,
+            1.25,
+            9
+          ],
+          [
+            1794873600013.4067,
+            "weapon",
+            "bow",
+            4,
+            4270,
+            "N+ Nightfall Recurve",
+            [
+              [
+                "crit",
+                21
+              ],
+              [
+                "luk",
+                60
+              ],
+              [
+                "cdm",
+                33
+              ]
+            ],
+            4,
+            [
+              {
+                "card": 1,
+                "cardVersion": 1,
+                "cardKey": "10:3:0",
+                "family": "Death Whisperer Card",
+                "n": "Death Whisperer Card",
+                "stat": "int",
+                "v": 18,
+                "effects": [
+                  {
+                    "k": "int",
+                    "v": 18
+                  }
+                ],
+                "fit": [
+                  "weapon",
+                  "head",
+                  "acc"
+                ],
+                "g": 2,
+                "bossCard": false,
+                "map": 10,
+                "nightmare": false,
+                "id": 1794873600014.529,
+                "stars": 3
+              },
+              {
+                "card": 1,
+                "cardVersion": 1,
+                "cardKey": "10:4:0",
+                "family": "Agony Demon Card",
+                "n": "Agony Demon Card",
+                "stat": "atk",
+                "v": 16,
+                "effects": [
+                  {
+                    "k": "atk",
+                    "v": 16
+                  }
+                ],
+                "fit": [
+                  "weapon"
+                ],
+                "g": 2,
+                "bossCard": false,
+                "map": 10,
+                "nightmare": false,
+                "id": 1794873600015.5173,
+                "stars": 3
+              },
+              {
+                "card": 1,
+                "cardVersion": 1,
+                "cardKey": "11:1:0",
+                "family": "Fire Imp Card",
+                "n": "Fire Imp Card",
+                "stat": "field",
+                "v": 12,
+                "effects": [
+                  {
+                    "k": "field",
+                    "v": 12
+                  }
+                ],
+                "fit": [
+                  "weapon",
+                  "acc"
+                ],
+                "g": 2,
+                "bossCard": false,
+                "map": 11,
+                "nightmare": false,
+                "id": 1794873600016.7583,
+                "stars": 3
+              },
+              {
+                "card": 1,
+                "cardVersion": 1,
+                "cardKey": "11:2:0",
+                "family": "Kasa Card",
+                "n": "Kasa Card",
+                "stat": "matk",
+                "v": 6,
+                "effects": [
+                  {
+                    "k": "matk",
+                    "v": 6
+                  }
+                ],
+                "fit": [
+                  "weapon",
+                  "head"
+                ],
+                "g": 2,
+                "bossCard": false,
+                "map": 11,
+                "nightmare": false,
+                "id": 1794873600017.0078,
+                "stars": 3
+              }
+            ],
+            5,
+            145,
+            1.25,
+            9,
+            {
+              "r": 0,
+              "locked": false
+            }
+          ]
+        ],
+        "cards": [
+          [
+            1,
+            1,
+            "0:0:0",
+            "Poring Card",
+            "Poring Card",
+            "luk",
+            3,
+            [
+              [
+                "luk",
+                3
+              ]
+            ],
+            [
+              "acc"
+            ],
+            0,
+            false,
+            0,
+            false,
+            1794873605003.7349,
+            {
+              "stars": 3
+            }
+          ],
+          [
+            1,
+            1,
+            "0:1:0",
+            "Fabre Card",
+            "Fabre Card",
+            "hp",
+            50,
+            [
+              [
+                "hp",
+                50
+              ]
+            ],
+            [
+              "head",
+              "armor"
+            ],
+            0,
+            false,
+            0,
+            false,
+            1794873605004.6228,
+            {
+              "stars": 3
+            }
+          ]
+        ],
+        "fishing": {
+          "bag": [
+            [
+              "fmwjxedc02xp",
+              "minnow",
+              0.27,
+              null,
+              1794873600000,
+              1,
+              1
+            ],
+            [
+              "fmwjxfnmoub9",
+              "carp",
+              2.35,
+              "prismatic",
+              1794873660000,
+              0,
+              0
+            ]
+          ]
+        },
+        "__v": 1
+      }
+    },
+    {
+      "revision": "83970b6d",
+      "blob": {
+        "lv": 150,
+        "inv": [
+          [
+            1794873600003.4329,
+            "weapon",
+            "bow",
+            4,
+            4293,
+            "N+ Nightfall Recurve",
+            [
+              [
+                "agi",
+                65
+              ],
+              [
+                "crit",
+                18
+              ],
+              [
+                "aspd",
+                38
+              ]
+            ],
+            4,
+            [
+              [
+                1,
+                1,
+                "10:3:0",
+                "Death Whisperer Card",
+                "\u0000",
+                "int",
+                18,
+                [
+                  [
+                    "int",
+                    18
+                  ]
+                ],
+                [
+                  "weapon",
+                  "head",
+                  "acc"
+                ],
+                2,
+                false,
+                10,
+                false,
+                1794873600004.1082,
+                {
+                  "stars": 3
+                }
+              ],
+              [
+                1,
+                1,
+                "10:4:0",
+                "Agony Demon Card",
+                "\u0000",
+                "atk",
+                16,
+                [
+                  [
+                    "atk",
+                    16
+                  ]
+                ],
+                [
+                  "weapon"
+                ],
+                2,
+                false,
+                10,
+                false,
+                1794873600005.427,
+                {
+                  "stars": 3
+                }
+              ],
+              [
+                1,
+                1,
+                "11:1:0",
+                "Fire Imp Card",
+                "\u0000",
+                "field",
+                12,
+                [
+                  [
+                    "field",
+                    12
+                  ]
+                ],
+                [
+                  "weapon",
+                  "acc"
+                ],
+                2,
+                false,
+                11,
+                false,
+                1794873600006.1445,
+                {
+                  "stars": 3
+                }
+              ],
+              [
+                1,
+                1,
+                "11:2:0",
+                "Kasa Card",
+                "\u0000",
+                "matk",
+                6,
+                [
+                  [
+                    "matk",
+                    6
+                  ]
+                ],
+                [
+                  "weapon",
+                  "head"
+                ],
+                2,
+                false,
+                11,
+                false,
+                1794873600007.7773,
+                {
+                  "stars": 3
+                }
+              ]
+            ],
+            5,
+            145,
+            1.25,
+            9,
+            {
+              "r": 10,
+              "locked": true,
+              "futureSetId": "keep"
+            }
+          ],
+          [
+            1794873600008.359,
+            "weapon",
+            "bow",
+            4,
+            4010,
+            "N+ Nightfall Recurve",
+            [
+              [
+                "dex",
+                45
+              ],
+              [
+                "aspd",
+                45
+              ],
+              [
+                "cdm",
+                25
+              ]
+            ],
+            4,
+            [
+              [
+                1,
+                1,
+                "10:3:0",
+                "Death Whisperer Card",
+                "\u0000",
+                "int",
+                18,
+                [
+                  [
+                    "int",
+                    18
+                  ]
+                ],
+                [
+                  "weapon",
+                  "head",
+                  "acc"
+                ],
+                2,
+                false,
+                10,
+                false,
+                1794873600009.077,
+                {
+                  "stars": 3
+                }
+              ],
+              [
+                1,
+                1,
+                "10:4:0",
+                "Agony Demon Card",
+                "\u0000",
+                "atk",
+                16,
+                [
+                  [
+                    "atk",
+                    16
+                  ]
+                ],
+                [
+                  "weapon"
+                ],
+                2,
+                false,
+                10,
+                false,
+                1794873600010.1833,
+                {
+                  "stars": 3
+                }
+              ],
+              [
+                1,
+                1,
+                "11:1:0",
+                "Fire Imp Card",
+                "\u0000",
+                "field",
+                12,
+                [
+                  [
+                    "field",
+                    12
+                  ]
+                ],
+                [
+                  "weapon",
+                  "acc"
+                ],
+                2,
+                false,
+                11,
+                false,
+                1794873600011.9263,
+                {
+                  "stars": 3
+                }
+              ],
+              [
+                1,
+                1,
+                "11:2:0",
+                "Kasa Card",
+                "\u0000",
+                "matk",
+                6,
+                [
+                  [
+                    "matk",
+                    6
+                  ]
+                ],
+                [
+                  "weapon",
+                  "head"
+                ],
+                2,
+                false,
+                11,
+                false,
+                1794873600012.529,
+                {
+                  "stars": 3
+                }
+              ]
+            ],
+            5,
+            145,
+            1.25,
+            9
+          ],
+          [
+            1794873600013.4067,
+            "weapon",
+            "bow",
+            4,
+            4270,
+            "N+ Nightfall Recurve",
+            [
+              [
+                "crit",
+                21
+              ],
+              [
+                "luk",
+                60
+              ],
+              [
+                "cdm",
+                33
+              ]
+            ],
+            4,
+            [
+              [
+                1,
+                1,
+                "10:3:0",
+                "Death Whisperer Card",
+                "\u0000",
+                "int",
+                18,
+                [
+                  [
+                    "int",
+                    18
+                  ]
+                ],
+                [
+                  "weapon",
+                  "head",
+                  "acc"
+                ],
+                2,
+                false,
+                10,
+                false,
+                1794873600014.529,
+                {
+                  "stars": 3
+                }
+              ],
+              [
+                1,
+                1,
+                "10:4:0",
+                "Agony Demon Card",
+                "\u0000",
+                "atk",
+                16,
+                [
+                  [
+                    "atk",
+                    16
+                  ]
+                ],
+                [
+                  "weapon"
+                ],
+                2,
+                false,
+                10,
+                false,
+                1794873600015.5173,
+                {
+                  "stars": 3
+                }
+              ],
+              [
+                1,
+                1,
+                "11:1:0",
+                "Fire Imp Card",
+                "\u0000",
+                "field",
+                12,
+                [
+                  [
+                    "field",
+                    12
+                  ]
+                ],
+                [
+                  "weapon",
+                  "acc"
+                ],
+                2,
+                false,
+                11,
+                false,
+                1794873600016.7583,
+                {
+                  "stars": 3
+                }
+              ],
+              [
+                1,
+                1,
+                "11:2:0",
+                "Kasa Card",
+                "\u0000",
+                "matk",
+                6,
+                [
+                  [
+                    "matk",
+                    6
+                  ]
+                ],
+                [
+                  "weapon",
+                  "head"
+                ],
+                2,
+                false,
+                11,
+                false,
+                1794873600017.0078,
+                {
+                  "stars": 3
+                }
+              ]
+            ],
+            5,
+            145,
+            1.25,
+            9,
+            {
+              "r": 0,
+              "locked": false
+            }
+          ]
+        ],
+        "cards": [
+          [
+            1,
+            1,
+            "0:0:0",
+            "Poring Card",
+            "\u0000",
+            "luk",
+            3,
+            [
+              [
+                "luk",
+                3
+              ]
+            ],
+            [
+              "acc"
+            ],
+            0,
+            false,
+            0,
+            false,
+            1794873605003.7349,
+            {
+              "stars": 3
+            }
+          ],
+          [
+            1,
+            1,
+            "0:1:0",
+            "Fabre Card",
+            "\u0000",
+            "hp",
+            50,
+            [
+              [
+                "hp",
+                50
+              ]
+            ],
+            [
+              "head",
+              "armor"
+            ],
+            0,
+            false,
+            0,
+            false,
+            1794873605004.6228,
+            {
+              "stars": 3
+            }
+          ]
+        ],
+        "fishing": {
+          "bag": [
+            [
+              "fmwjxedc02xp",
+              "minnow",
+              0.27,
+              null,
+              1794873600000,
+              1,
+              1
+            ],
+            [
+              "fmwjxfnmoub9",
+              "carp",
+              2.35,
+              "prismatic",
+              1794873660000,
+              0,
+              0
+            ]
+          ]
+        },
+        "__v": 2
+      }
+    },
+    {
+      "revision": "e36769bb",
+      "blob": {
+        "lv": 150,
+        "inv": [
+          [
+            1794873600003.4329,
+            "weapon",
+            "bow",
+            4,
+            4293,
+            "N+ Nightfall Recurve",
+            [
+              [
+                "agi",
+                65
+              ],
+              [
+                "crit",
+                18
+              ],
+              [
+                "aspd",
+                38
+              ]
+            ],
+            4,
+            [
+              [
+                26,
+                1794873600004.1082,
+                3
+              ],
+              [
+                27,
+                1794873600005.427,
+                3
+              ],
+              [
+                30,
+                1794873600006.1445,
+                3
+              ],
+              [
+                31,
+                1794873600007.7773,
+                3
+              ]
+            ],
+            5,
+            145,
+            1.25,
+            9,
+            {
+              "r": 10,
+              "locked": true,
+              "futureSetId": "keep"
+            }
+          ],
+          [
+            1794873600008.359,
+            "weapon",
+            "bow",
+            4,
+            4010,
+            "N+ Nightfall Recurve",
+            [
+              [
+                "dex",
+                45
+              ],
+              [
+                "aspd",
+                45
+              ],
+              [
+                "cdm",
+                25
+              ]
+            ],
+            4,
+            [
+              [
+                26,
+                1794873600009.077,
+                3
+              ],
+              [
+                27,
+                1794873600010.1833,
+                3
+              ],
+              [
+                30,
+                1794873600011.9263,
+                3
+              ],
+              [
+                31,
+                1794873600012.529,
+                3
+              ]
+            ],
+            5,
+            145,
+            1.25,
+            9
+          ],
+          [
+            1794873600013.4067,
+            "weapon",
+            "bow",
+            4,
+            4270,
+            "N+ Nightfall Recurve",
+            [
+              [
+                "crit",
+                21
+              ],
+              [
+                "luk",
+                60
+              ],
+              [
+                "cdm",
+                33
+              ]
+            ],
+            4,
+            [
+              [
+                26,
+                1794873600014.529,
+                3
+              ],
+              [
+                27,
+                1794873600015.5173,
+                3
+              ],
+              [
+                30,
+                1794873600016.7583,
+                3
+              ],
+              [
+                31,
+                1794873600017.0078,
+                3
+              ]
+            ],
+            5,
+            145,
+            1.25,
+            9,
+            {
+              "r": 0,
+              "locked": false
+            }
+          ]
+        ],
+        "cards": [
+          [
+            1,
+            1794873605003.7349,
+            3
+          ],
+          [
+            5,
+            1794873605004.6228,
+            3
+          ]
+        ],
+        "fishing": {
+          "bag": [
+            [
+              "fmwjxedc02xp",
+              "minnow",
+              0.27,
+              -1,
+              [
+                60,
+                0
+              ],
+              1,
+              1
+            ],
+            [
+              "fmwjxfnmoub9",
+              "carp",
+              2.35,
+              6,
+              [
+                0,
+                0
+              ],
+              0,
+              0
+            ]
+          ]
+        },
+        "__v": 3,
+        "__at": 1794873660000
+      }
+    }
+  ]
+}

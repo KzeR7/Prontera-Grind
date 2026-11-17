@@ -47,6 +47,40 @@ must fetch them first or those suites fail with `Command failed: git show …`:
 git fetch origin d164bd0527cfe335f9c183d0e576800716b7dd26
 ```
 
+## Save size and codec regressions (haven-v415)
+
+```sh
+node tools/tests/save_max_state_sim.mjs
+node tools/tests/save_codec_item_state_sim.mjs
+node tools/tests/save_codec_real_sim.mjs
+node tools/tests/save_codec_catalog_sim.mjs
+node tools/tests/save_codec_chain_sim.mjs
+node tools/tests/save_codec_gm_sim.js
+node tools/tests/api_sim.js
+node tools/tests/gm_tools_sim.js
+```
+
+`helpers/full-storage-save.js` builds the refined/locked, all-three-star account with actual
+`genGear()` / `newCard()` / `addCatch()` calls, a seeded clock/RNG, compatible distinct-family sockets,
+production-length ids and the fish dex/stats. Do not replace it with short handwritten fish ids or
+half-starred cards. The measured case is 338,180 characters under the merged v3 encoder and 295,175
+under v4, against the unchanged 307,200 limit. This is a finite regression, **not a global maximum**.
+
+`save_codec_item_state_sim` checks all 51 refinement/lock-presence states, permanent enum mappings,
+page/server decoding in both directions, malformed/future-value preservation and the client capability
+matrix (110 → v1–2, 111 → v3, 112 → v4). Its historical JSON fixture is **frozen output from the real
+v1/v2/v3 encoders** at the recorded revisions; do not regenerate it with the current encoder. The
+API chain also checks that the full account stays compact through real PUT/GET and uses at most three
+save-sized parses. Local size/fidelity/parse-count checks do **not** prove Cloudflare CPU headroom;
+follow [CPU verification](CPU-LIMIT.md) after a separately authorised deployment.
+
+**2026-11-17 local comparison:** the unmodified merge had 233 passes / 3 failures out of 236 gate
+entries; this change has 234 passes / the same 3 failures out of 237, after the coordinated asset
+cache-bust reruns. No dependency skips. The existing reds are `hosted_launch_stage_sim` (unpackaged
+`assets/plaza-bots.js`), `render_lost_boot_smoke` (renderer-null/guide assertions) and `skill_balance_sim`
+(stale combat measurement hash). No balance fixture was re-hashed, assertion removed or budget loosened.
+API is 70/70 and GM tools 20/20 here; their earlier reported failures did not reproduce.
+
 ## Latest local gate (haven-v346)
 
 The 2026-11-06 complete local run passed **207 checks / 0 failures** on Node

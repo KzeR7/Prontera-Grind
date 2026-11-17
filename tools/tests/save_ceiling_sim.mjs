@@ -5,7 +5,7 @@ const mk = n => { const S={lv:150,inv:[]}; let i=0;
 let pass=0,fail=0;
 const t=(n,f)=>{try{f();pass++;console.log('  ok   '+n)}catch(e){fail++;console.log('  FAIL '+n+' -> '+e.message)}};
 t('300 KB ceiling is exported as 307200', ()=>{ if(SAVE_BYTES_MAX!==307200) throw Error(String(SAVE_BYTES_MAX)); });
-t('worst honest save (288 KB) is accepted', ()=>{ checkSaveBlob(mk(288*1024)); });
+t('a synthetic 288 KB blob is accepted (not a worst-account bound)', ()=>{ checkSaveBlob(mk(288*1024)); });
 t('a 415 KB save is refused with 413', ()=>{
   try { checkSaveBlob(mk(415*1024)); throw Error('was accepted!'); }
   catch(e){ if(e.status!==413) throw Error('status '+e.status+' not 413'); }

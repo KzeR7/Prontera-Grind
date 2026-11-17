@@ -44,9 +44,10 @@ export const CAPS = { level: 150, maxStat: 120, maxZeny: 1e15 };
 // 512 KB blob costs ~6 ms of that in JSON parsing ALONE (measured against this handler), before any
 // validation or audit runs. So the old 512 KB limit did not protect the request - it let a save
 // through that was guaranteed to be killed part-way, which is how one 415 KB account produced
-// hundreds of `exceededResources` errors a day. A 300 KB ceiling still clears the worst honest save
-// the game can build (BAGMAX 1000 items + CARDMAX 1000 cards ~ 288 KB) while refusing anything that
-// cannot be synced inside the budget. The check runs BEFORE JSON.parse, so refusing is nearly free.
+// hundreds of `exceededResources` errors a day. The 300 KB ceiling is a size guard, NOT proof that
+// every reachable account fits or that accepted saves fit the hosted CPU budget. The old ~288 KB
+// estimate missed socketed cards/refinement/locks and production fish; see docs/CLOUD-DATA.md.
+// This blob-length check runs before parsing the blob (the request envelope was already parsed).
 export const SAVE_BYTES_MAX = 300 * 1024;
 
 // v414: the SAVE FORMAT a page can decode, sent as `X-Save-Format` on every cloud request.
@@ -60,6 +61,7 @@ export const SAVE_BYTES_MAX = 300 * 1024;
 export const SAVE_FORMAT_PLAIN = 0;       // no codec at all (every build before v414)
 export const SAVE_FORMAT_COMPACT = 110;   // v414: decodes codec `__v` 1-2
 export const SAVE_FORMAT_V3 = 111;        // decodes codec `__v` 3 (catalog references, delta timestamps)
+export const SAVE_FORMAT_V4 = 112;        // decodes codec `__v` 4 (item refinement/lock state and enums)
 export function clientSaveFormat(request) {
   const raw = Number(request?.headers?.get?.('X-Save-Format'));
   return Number.isFinite(raw) && raw > 0 ? Math.floor(raw) : SAVE_FORMAT_PLAIN;
@@ -84,7 +86,9 @@ export const clientCanRead = (blob, format) => {
   if (v === null) return true;                         // not a compact blob: everyone can read it
   if (format < SAVE_FORMAT_COMPACT) return false;      // no codec at all
   if (v <= 2) return true;                             // the original compact codec
-  return format >= SAVE_FORMAT_V3;                     // a v3 row needs a v3-capable page
+  if (v === 3) return format >= SAVE_FORMAT_V3;
+  if (v === 4) return format >= SAVE_FORMAT_V4;         // never give v4 item enums to a v3-only page
+  return false;                                       // do not claim support for a future codec
 };
 
 // The body a save endpoint should return for `blob` to a client of `format`. Never throws: an

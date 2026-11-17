@@ -38,7 +38,7 @@
 
 import { catalogRow, catalogCard, catalogIdOf } from './card-catalog.js';
 
-export const CODEC_VERSION = 3;
+export const CODEC_VERSION = 4;
 
 // v2 (size): a card's `n` is a PURE FUNCTION of two fields that are always stored alongside it -
 // `n = (nightmare ? 'Nightmare ' : '') + family`. It is 28 of the 122 bytes a packed card costs, so a
@@ -50,8 +50,8 @@ export const CODEC_VERSION = 3;
 // with no name at all. This is not the forbidden "rebuild by re-rolling" - nothing is generated or
 // randomised, and a card whose `n` does not match the rule keeps its stored copy.
 
-// Positional order. NEVER reorder - only append. The tuple length is the array length, and a shorter
-// tuple is filled from the defaults below, so old compact saves stay readable after an append.
+// Frozen positional order. Do not reorder or extend these layouts: their end slot already holds
+// legacy extras. v4 items add a distinguishable numeric state trailer, not a new BITEM field.
 const BITEM = ['id', 'slot', 'wt', 'tier', 'val', 'name', 'aff', 'slots', 'cards', 'sec', 'lvl', 'quality', 'mp'];
 const BCARD = ['card', 'cardVersion', 'cardKey', 'family', 'n', 'stat', 'v', 'effects', 'fit', 'g',
   'bossCard', 'map', 'nightmare', 'id'];
@@ -123,28 +123,79 @@ function fromTuple(t, list, rebuild) {
 
 // ---------------------------------------------------------------------------- items -------------
 
+// v4: fixed enums, append-only just like catalog ids. Unknown strings stay strings. The numeric
+// trailer at BITEM.length distinguishes this form from v1-v3 (whose trailer is an extras OBJECT).
+// It stores BOTH presence and value: 3 * (r + 1, or 0 when absent) + (locked: absent=0/false=1/true=2).
+// Thus +0 is not absent, and unlocked is not absent. No item identity or rolled value is shortened.
+// These fields used to repeat {"r":10,"locked":true} on each item; their trailer is now the number 35.
+// Slot/weapon/affix stat names also use fixed enums. Keep the inline page in sync.
+const ITEM_SLOTS = ['weapon', 'armor', 'head', 'off', 'leg', 'acc'];
+const ITEM_WEAPONS = ['sword', 'axe', 'mace', 'staff', 'dagger', 'katar', 'bow'];
+const ITEM_AFFIX_STATS = ['str', 'agi', 'dex', 'int', 'vit', 'luk', 'hp', 'atk', 'matk', 'crit', 'aspd', 'cdm', 'flee', 'move', 'def', 'mdef'];
+const itemPairOf = p => {
+  // Numeric/unknown-shaped keys stay full objects, so they cannot be mistaken for enum ids.
+  if (!isObj(p) || typeof p.k !== 'string') return p;
+  const t = pairOf(p), k = ITEM_AFFIX_STATS.indexOf(p.k);
+  if (k >= 0) t[0] = k;
+  return t;
+};
+const itemObjectOf = p => {
+  const o = objectOf(p);
+  if (Array.isArray(p) && Number.isInteger(p[0]) && p[0] >= 0 && p[0] < ITEM_AFFIX_STATS.length) o.k = ITEM_AFFIX_STATS[p[0]];
+  return o;
+};
+const ITEM_STATE_FIELDS = ['r', 'locked'];
+const ITEM_STATE_KEYS = new Set([...BITEM, ...ITEM_STATE_FIELDS]);
+const itemState = it => {
+  // A malformed/legacy/future value must survive verbatim, not be mistaken for an enum or flag.
+  if ((it.slot !== undefined && typeof it.slot !== 'string') ||
+      (it.wt !== undefined && typeof it.wt !== 'string') ||
+      (it.r !== undefined && (!Number.isInteger(it.r) || it.r < 0 || it.r > 15)) ||
+      (it.locked !== undefined && typeof it.locked !== 'boolean') ||
+      (Array.isArray(it.aff) && it.aff.some(Array.isArray))) return null;
+  return (it.r === undefined ? 0 : it.r + 1) * 3 + (it.locked === undefined ? 0 : it.locked ? 2 : 1);
+};
+
 export function packItem(it) {
   if (!isObj(it)) return it;
   const t = BITEM.map(k => pack(it[k]));
-  // Affixes are the single largest item field (~29% of item bytes): {k:'str',v:12} -> ['str',12].
-  // Absent stays absent, for the same reason as `effects` above.
-  t[6] = Array.isArray(it.aff) ? it.aff.map(pairOf) : pack(undefined);
+  const state = itemState(it);
+  // Affixes are the single largest item field (~29% of item bytes). v4 also indexes their stat
+  // names; old/fallback rows keep the string-keyed pairs. Absent stays absent.
+  t[6] = Array.isArray(it.aff) ? it.aff.map(state === null ? pairOf : itemPairOf) : pack(undefined);
   // v2: a card socketed into an item is the same object as one in the bag, so it gets the same tuple.
   // It was previously stored as a full object - the largest remaining uncompacted collection, ~330 B
   // per card against ~105 B packed.
   t[8] = Array.isArray(it.cards) ? it.cards.map(packCard) : pack(undefined);
-  const extra = extrasOf(it, ITEM_KEYS);
+  if (state !== null) {
+    const slot = ITEM_SLOTS.indexOf(it.slot), wt = ITEM_WEAPONS.indexOf(it.wt);
+    if (slot >= 0) t[1] = slot;
+    if (wt >= 0) t[2] = wt;
+    t.push(state);
+  }
+  const extra = extrasOf(it, state === null ? ITEM_KEYS : ITEM_STATE_KEYS);
   if (extra) t.push(extra);
   return t;
 }
 export function unpackItem(t) {
   if (!Array.isArray(t)) return t; // an object inside a compact save - hand it back untouched
+  const state = t[BITEM.length], v4 = Number.isInteger(state) && state >= 0 && state <= 50;
   return fromTuple(t, BITEM, (o) => {
     // `undefined` and `[]` are NOT the same thing in a save: the repair code checks for a missing
     // `aff` to decide whether an item predates affixes. So a NUL slot stays absent rather than
     // becoming an empty array - the same rule the flat fields already follow.
-    if (Array.isArray(t[6])) o.aff = t[6].map(objectOf);
+    if (Array.isArray(t[6])) o.aff = t[6].map(v4 ? itemObjectOf : objectOf);
     if (Array.isArray(t[8])) o.cards = t[8].map(unpackCard); // v2: socketed cards are tuples too
+    if (v4) {
+      if (Number.isInteger(t[1]) && t[1] >= 0 && t[1] < ITEM_SLOTS.length) o.slot = ITEM_SLOTS[t[1]];
+      if (Number.isInteger(t[2]) && t[2] >= 0 && t[2] < ITEM_WEAPONS.length) o.wt = ITEM_WEAPONS[t[2]];
+      const rank = Math.floor(state / 3), locked = state % 3;
+      if (rank) o.r = rank - 1;
+      if (locked) o.locked = locked === 2;
+      const extra = t[BITEM.length + 1];
+      if (isObj(extra)) Object.assign(o, extra);
+    }
+    // v1-v3's extras object at BITEM.length is still merged by fromTuple, including r/locked.
   });
 }
 
@@ -347,4 +398,4 @@ export function unpackSave(save) {
 export const isPacked = save => isObj(save) && save.__v != null;
 
 // Exported so the test suite can compare the lists against the game's own constructors.
-export const CODE_LAYOUT = { BITEM, BCARD, BFISH };
+export const CODE_LAYOUT = { BITEM, BCARD, BFISH, ITEM_STATE_FIELDS };
