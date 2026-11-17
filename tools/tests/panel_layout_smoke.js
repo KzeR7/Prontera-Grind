@@ -379,8 +379,18 @@ t('Ascension gates, immediate MVP escorts, stage progression, material boundarie
  assert.strictEqual(ev('ascensionDrops({mapIndex:9,boss:true}).length'),0);
  assert.strictEqual(ev('ascensionDrops({mapIndex:10,boss:false}).map(d=>d.n).join(",")'),"Astral Shard,Valkyrie's Sigil");
  ev('Math.random=()=>.002');assert.strictEqual(ev('ascensionDrops({mapIndex:11,boss:false}).map(d=>d.n).join(",")'),'Primal Catalyst');
- ev('Math.random=()=>.005');assert.strictEqual(ev('ascensionDrops({mapIndex:11,boss:true}).map(d=>d.n).join(",")'),"Valkyrie's Sigil");
- ev('Math.random=()=>.01');assert.strictEqual(ev('ascensionDrops({mapIndex:11,boss:true}).length'),0);
+ // v415: the MVP also carries the 70% its escorts gave up, so its material chance at Thor is
+ // 6.6% (not 1.75%) and its Sigil chance is 2.53% (not 1%). The thresholds below are the live
+ // values, read off the same helper the drop table uses.
+ ev('window.__mch=ascMaterialChance({mapIndex:11,boss:true}),window.__sch=ascSigilChance({mapIndex:11,boss:true})');
+ const mch=ev('window.__mch'),sch=ev('window.__sch');
+ assert.ok(mch>1.75*3&&mch<1.75*4,'the MVP carries its escorts\' material share');
+ assert.ok(sch>1&&sch<3,'the MVP carries its escorts\' Sigil share');
+ // The MVP's material chance is now ABOVE its Sigil chance, so a low roll pays both - there is no
+ // Sigil-only roll left to assert. What still matters is that the Sigil rolls at its own threshold
+ // and that a roll past the larger of the two pays nothing.
+ ev(`Math.random=()=>${(sch-.1)/100}`);assert.ok(ev('ascensionDrops({mapIndex:11,boss:true}).map(d=>d.n).includes("Valkyrie\'s Sigil")'),'the Sigil rolls at its own threshold');
+ ev(`Math.random=()=>${(mch+.5)/100}`);assert.strictEqual(ev('ascensionDrops({mapIndex:11,boss:true}).length'),0);
  ev('currentUser="ascension_test";Math.random=window.oldRandom;collect({ascMat:0,n:"Astral Shard"});save()');assert.strictEqual(ev('S.ascensionMat[0]'),1);
  assert.strictEqual(ev('load().ascensionMat[0]'),1);assert.strictEqual(ev('load().mapClears[10]'),true);
  ev('S.prog=S.prog.slice(0,10);delete S.ascensionMat;delete S.mapClears;S.mp=0;save();S=load()');

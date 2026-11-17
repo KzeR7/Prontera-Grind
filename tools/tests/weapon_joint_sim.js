@@ -123,7 +123,7 @@ t('the game loads the joints file and consults it (source pins)', () => {
     'the held weapon keeps frame 0\'s angle as well as its position');
   assert.ok(src.includes('const swing=0;'),
     'the parked weapon must not pulse in size while the frames advance');
-  assert.ok(src.includes('s.userData.body=packBodyFor(opt.cls,opt.tier)'),
+  assert.ok(src.includes('s.userData.body=packBodyFor(opt.cls,opt.tier,opt.sex)'),
     'the hero sprite must remember which body it wears');
   assert.ok(src.includes("const PACK_WEAPON_ADJUST={bow:[-5,-40]"),
     'the sine-model correction stays for the fallback path only');

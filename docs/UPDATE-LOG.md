@@ -7,6 +7,32 @@ history, not the current specification.
 
 ---
 
+## haven-v411 — expanded roster: weapons in hand, signature skills and effects (2026-11-15)
+
+Owner feedback after testing v410 on staging. Still behind the fourth-job gate; nothing here touches the 26 original classes.
+
+**Sprites**
+- Fourteen expanded classes now hold a weapon while attacking: sword (Crusader line), book (Sage line), mace (Alchemist line), dagger (Rogue, Stalker, Ninja), bow (Bard and Dancer lines). Battlefield pack and Wardrobe both.
+- Monk, Champion and Sura punch (attack motion 40) instead of playing the mace swing.
+- Gunslinger and Rebellion use the two-revolver stance instead of the gatling pose. The revolver itself is not drawn: no revolver sprite is publicly available (see `tools/native-expanded/README.md` for the exact files needed).
+- Still bare-handed for the same reason: Shadow Chaser, Maestro & Wanderer, Kagerou & Oboro.
+
+**Skills** (257 skills, was 245)
+- Monk line is built round Spirit Spheres: the combo skills each call a sphere (up to 5), and Asura Strike (now a Monk skill, 10 s cooldown) spends them all for +30% damage each.
+- Alchemist line: Demonstration and Summon Flora leave fields that keep attacking; Acid Demonstration is the Biochemist's main hit; Marine Sphere, Summon Geographer, Crazy Weed, Demonic Fire.
+- Ninja 5 → 9 skills (Huuma Shuriken, Lightning Spear of Ice, Shadow Slash, Dagger Throwing Mastery); Kagerou & Oboro 5 → 7 (Soul Cutter, Shadow Warrior).
+- Gunslinger 5 → 9 (coins from Rapid Shower and Triple Action, spent by Tracking; Bull's Eye, Fling, Chain Action); Rebellion 5 → 7 (Crimson Marker, Platinum Alter).
+- Job caps raised so the bigger trees can be filled: Ninja and Gunslinger Job 70; Kagerou & Oboro and Rebellion Job 60.
+- All ten reworked classes refitted against their sibling with `tools/fit_expanded_budget.js`.
+- Saves: Cadence and the old Alchemist axe skill are gone, Iron Hand and Learning Potion stop at Lv 5; the points come back on load.
+
+**Signature effects** — new `assets/signature-fx.js`, 46 skills, painted at runtime (no image files)
+- Asura Strike: five spheres are drawn in, then 阿修羅覇凰拳 bursts out. Gates of Hell and Tiger Cannon have their own characters.
+- Alchemist: thrown bottles and splashes, biting plants that stay for the field, Crazy Weed vines, Marine Sphere bubbles.
+- Ninja shuriken, kunai and flames; revolver tracers, muzzle flashes, Desperado spray and coin flips; music notes for Bard and Dancer.
+
+Tests: `signature_fx_sim.js` (new), `expanded_roster_sim.js`, `expanded_wardrobe_sim.js`.
+
 ## Update log
 
 Newest entry last. Template at the very bottom of this file.
@@ -11070,166 +11096,6 @@ Test-only follow-up to the v373 batch. No player-visible change, so BUILD is unc
   and the audit card answers with the `0015` note), `gm_console_sim` **19** (boot probes `/me`
   alone, `allSettled`, guarded `loadPlayers`, guarded marker, named note). No BUILD bump.
 
-### 2026-11-15 — `haven-v408 away pay is half your measured minute, ten levels at most above 120` (build bump: the welcome-back payout changed)
-
-* **The owner (2026-11-15): "can u try and simulate a offline rewards, cause i think 4 hours reward
-  for 37level is too much. players shouldnt be getting so much exp and level at once."** He is
-  right, and a simulation of the payout at the game's own reference rates says so plainly. A claim
-  pays `measured exp/min × credited minutes × 50%`, which at four hours is 120 paid minutes; turned
-  into levels by the game's own curve that was worth, at 3,000-30,000 kills an hour: **33-71 levels
-  at Lv 40, 21-60 at Lv 60, 20-47 at Lv 80, 3-19 at Lv 100** and 1-10 at Lv 113 for the reference
-  field — and more wherever a boss field or exp gear made the measured sample richer, which is how
-  a 37-level jump at 113 happened. The 50% was never the culprit: the sample that priced it had been
-  inflated by a replayed minute (root cause below), so the claim multiplied a rate nobody had farmed.
-* **No level ceiling — the owner turned the first proposal down.** His follow-up: "i would not want
-  to have a cap level but i need the offline rewards to work properly ... this is not fair to online
-  players as offline rewards should be only half of the online players." He is right about the rule,
-  and the rule is the one the claim already followed: `income.xp × credited minutes × 0.5`, handed
-  straight to `earnExp()` and settled by `checkLevel()` walking `need()` — the same curve, at the
-  same price, as a player standing in the field. Below Lv 120 nothing is clipped, so an away window
-  buys exactly the levels its half-rate exp pays for; the other bounds are the ones that describe
-  the player's own play: `OFFLINE_CAP_MS` (four hours) and `OFFLINE_RATE_CAP` (30,000 kills/h).
-* **Then narrowed, the same day: ten levels from Lv 120.** Owner: "can u make level 120 above,
-  have a cap of 10 levels per offline rewards. this should be hidden from players." The reason is
-  arithmetic, not paranoia: `need(113) = 952,000` while one Nightmare-Abyss-15 kill pays **29,750**
-  (power 180, `nmExpOf` ×48), so a kill there is **1/32 of a level** instead of 1/3,778 in a
-  level-appropriate field - a 118x swing decided purely by where the player stands. At 2,521 kills/h
-  a four-hour claim therefore buys the 37 levels honestly, which is what the owner saw.
-  `OFFLINE_LEVEL_CAP_LV = 120`, `OFFLINE_LEVEL_CAP = 10`, and **the ceiling starts inside the
-  claim**: "yes, so example 118, when the exp reach 120, then the capping starts including the
-  current claim, so there is no way from 118 level can go above 10 levels after lv 120."
-  `offlineLevelBudget(lv)` therefore pays every level up to 120 and then ten more, so a claim can
-  reach **Lv 130 at the very most** - 113 pays 17 levels, 118 pays 12, 120 pays 10
-  (21.6M EXP at 120). Kills, Zeny and loot are untouched and **nothing is announced** - the popup
-  reports only what was paid. `save-audit.js` mirrors the same budget
-  (`offlineLevelCapFor(lv) = (120 - lv) + 10`), so the levels a claim can pay are credited and a
-  jump past 130 is a real flag.
-* **Which makes the measured minute the whole safety property.** Nothing now stands between a bad
-  measurement and a level slam except the guard below — and the guard below is exactly that
-  measurement, closed at the source. The welcome-back popup still says what the number is made of
-  (measured EXP/min and Zeny/min, 50%, four-hour window); the "Away EXP is capped at N levels"
-  sentence is gone with the ceiling.
-* **The audit credits the claim's price, not a policy number.** `claimCredits()` runs the half-rate
-  exp through `levelsFromExp()` — the page's `checkLevel` walk, on a curve a test holds against the
-  page for all 149 levels — and the `Math.min(..., ceiling)` is gone with the ceiling. `api_sim`
-  asserts the absence (no `OFFLINE_LEVELS_PER_HOUR` / `offlineExpBudget` / `offlineMaxLevels` in
-  `index.html`), that both sides pay `.5`, and that the owner's own case is credited honestly
-  (1.25M exp/min for four hours = **37 levels**, not four). End to end, that 37-level jump *with*
-  its claim records **no** alert, while the same jump under a half-hour claim (12 levels paid) is
-  still reported: the console now separates "the claim paid for it" from "nothing did", instead of
-  measuring both against a number the game does not enforce.
-* **The root cause the owner suspected, found and closed (his second report).** "If a tab doesnt run
-  ... a sudden surge of exp and zeny will happen which spike it for abit ... would this might what
-  have happen in this 37 level increase?" Yes - and this is the mechanism that made the payout big
-  enough to matter. A throttled, frozen or slept tab replays its owed time through `simAdvance()`,
-  which may replay up to `SIM_CATCHUP` (**600 seconds**) of grinding inside a few milliseconds of
-  wall clock. The farm sampler divided the last 60 seconds of *events* by 60 seconds of *wall* time,
-  so a ten-minute replay read as **ten times the real rate**, and a player who closed the tab on
-  that minute had an inflated sample stored - which the welcome-back claim then multiplied by 120
-  credited minutes. `farmSamplingPaused()` now also stops sampling while the sim owes more than
-  `FARM_CATCHUP_PAUSE` (**2 s**) of time: the partial window is dropped, no sample is published,
-  and the away rate stays whatever the last honest field minute measured. Both samplers gate on
-  that one function, so the kill rate (`offlineKph`) is protected the same way. `adventurer_updates_sim`
-  pins it: a clean minute samples 600 EXP/min and 600 kills/hour, a 300-second replay samples
-  nothing and leaves the stored sample untouched (verified to fail with the guard removed).
-* **Zeny and loot pay the same half** — `income.zeny × minutes`, and every claim kill rolls its
-  loot — so "only half of the online players" is true of the whole payout, not of EXP alone.
-  `OFFLINE_REWARD_MULT` (0.5) and the four-hour cap are unchanged.
-* **Checks:** `api_sim` **69**: the half-rate price on both sides, the budget run against the page's
-  own `offlineExpBudget`/`offlineLevelBudget` at 60/113/118/119/120/130/149 (70/17/12/11/10/10/10
-  levels), the pure payout cases and the two-sided end-to-end run (a claim landing on 130 records
-  nothing, the same jump to 150 flags); `adventurer_updates_sim` **29** adds the replayed-minute
-  guard; `offline_sim` **15** proves the client pays exactly 120 paid minutes of a sample that fits
-  under the ceiling, pays exactly the budget at every boundary level, never carries anyone past 130,
-  and that Zeny, kills and the rendered popup are unaffected.
-  `plaza_stranded_still_paid_sim`
-  had been measuring the plaza rate off the frame clock and demanding 99% of a nominal 1200,
-  which drifts by about a percent run to run (both `v407` and `v408` trees produce 1180 or 1190
-  depending on frame timing); it now keeps the frame-loop check with that documented tolerance
-  and pins the exact rate with 120 direct one-second ticks instead. Full gate on the final tree:
-  see **Delivery** below.
-* **Nothing to apply server-side** (no migration; Functions + the page).
-* **Delivery:** Branch `arena/972fca22-prontera-grind`, PR **#235** (same PR as the audit credit —
-  the flagging fix and the payout it was hiding belong together). Full gate on the final tree:
-  **219 passed / 6 failed** — the same six pre-existing reds as `main`.
-
-### 2026-11-14 — `save audit: a welcome-back payout and a sold-out fishing bag are not cheating` (no build bump — no `index.html` change)
-
-* **The owner (2026-11-15): "the anti cheat flagging system seems to be a bit broken, most of the
-  flagging are incorrect... 37 level from 2 mins, i believe its the afk reward."** He was right, and
-  the bug was in the monitor, not the player. `auditSaveRates` credited a consumed offline claim's
-  **kills** against the kill rule and nothing else, so everything those kills bought landed in the
-  next window as impossible progress: the exp that becomes **levels**, the **Zeny**, and the **loot
-  every claim kill rolls** (ore, Nightmare materials, Ascension materials). A player who came back
-  from an away window was flagged on their first save after it — `+37 levels in 2 min from level
-  113` against a 30/hour limit, which is exactly the row in the console.
-* **The claim is now priced the way the client pays it.** `claimCredits()` mirrors
-  `applyOfflineProgress()`: with the measured farm sample the save carries (`offlineIncome.xp` and
-  `.zeny` per minute) it credits `sample × credited minutes × 0.5`, the same arithmetic the browser
-  uses; without one it prices each kill from the game's own reference (`EXPK`/`ZK` at the level
-  band, with slack for expRate, pets, bosses and the Nightmare multipliers). Exp is turned into
-  **levels by the game's own curve** — `needAt`/`baseNeedAt` transcribed from `index.html`, and a
-  test holds the transcription against the page for all 149 levels — and each kill credits loot at
-  its per-kill ceiling (ore 3%, Nightmare material 3%, Ascension material/Sigil 5%). `/api/save`
-  passes the claim row (kills **and** credited ms) into the audit; the GM-grant credits from `0016`
-  still add on top instead of replacing it.
-* **A single bulk action is not a rate.** The fishing bag sells in one click and the Aether Keep
-  holds 1,000 fish, so a sold-out bag could add millions of Fishcoins inside one 2-minute window and
-  trip a 100,000/hour rule — the owner's "fishing coins where they sell in bulk". Each window now
-  has one **`LUMP_ALLOWANCE`** per lumpy counter (Fishcoins 1.5 M = 1,000 fish at 1,500 each,
-  DigiPet coins 100 k, Black-Market ore/elu 5,000) subtracted before the rate is judged. The
-  allowance is on the delta, so it can only prevent a false positive; twenty sold-out bags inside
-  two minutes still flag.
-* **What was deliberately NOT changed: the payout itself.** It is not broken — it is `4 h ceiling ×
-  50% × the kill rate the server measured`, i.e. at most 60,000 kills for a four-hour absence, and
-  the play session's own measured exp/Zeny per minute is what turns those kills into levels. At the
-  Lv 113 band the game's reference field kill pays ~250 exp, which buys ~15 levels from a full
-  claim; ~37 levels means the sample the client measured was far richer (a late/boss field with exp
-  gear). Lowering `OFFLINE_REWARD_MULT` or the 4 h ceiling is a balance decision for the owner, not
-  a bug fix, so this entry only stops the monitor calling it cheating.
-* **Checks:** `api_sim` **68** (was 64): the exp-curve transcription against `index.html`, the claim
-  credits themselves, a pure "AFK payout is not a flag / twenty bags still are" case, and an
-  end-to-end `/api/save` run where a real `offline_reward_claims` row pays 37 levels and 36 M Zeny —
-  it reproduces the console's exact `+37 levels in 2 min` row when the new wiring is removed, and
-  records no alert with it in place. Full gate: see **Delivery** below.
-* **Nothing to apply server-side** (no migration): deploy the Functions and the next accepted save
-  is judged with the claim credited. Flags already recorded stay as they are — clear them from the
-  Suspicious-saves card once reviewed.
-* **Delivery:** Branch `arena/972fca22-prontera-grind`, PR **#235**. Full gate on the final tree:
-  **219 passed / 6 failed** — the same six pre-existing reds as `main`.
-
-### 2026-11-14 — `gm console: every save-audit flag renders its clear/reopen button` (no build bump — `gm.html` only)
-
-* **The owner could not unflag anything: the button was written into a row that never closed.**
-  `v407` shipped the review feature, but on the live console a flagged player's Damage tab showed
-  four columns and no verdict cell. The cause was in the page, not the deploy: the row template
-  ended at its fourth `</td>` — no `</tr>` — and the button cell was appended with
-  `replace('</tr>', …)`, a replace that matched nothing. The browser then auto-closed each row, so
-  the fifth `<th>` stayed empty and the clear button existed nowhere in the DOM. The reopen button
-  on the cleared list was lost the same way.
-* **Rows are written whole now.** The flag tables moved out of an inline IIFE into a top-level
-  `saveAuditMarkup(alerts)` with two small helpers: `cells()` for the four evidence cells and
-  `row()` which always emits `<tr>…</tr>` and takes the verdict cell as an argument. The cleared
-  table also had its header and body disagreeing — the header's fourth column said "Cleared" while
-  the cell underneath showed first/last seen — so the fourth cell is now the cleared timestamp and
-  reviewer, with Reopen in the fifth.
-* **The regression test renders the table instead of grepping it.** `gm_console_sim` used to assert
-  only that `gm.html`'s *text* contained `data-act="flagclear"`, which was true while the button was
-  invisible to every user. It now lifts `saveAuditMarkup` and its three formatters out of the page's
-  inline script, runs them on a synthetic open flag and a synthetic cleared flag, splits the two
-  `<tbody>` blocks and asserts five `<td>` per row, a closed row, and the button as the last cell —
-  plus that a re-fire button is labelled with the right `data-kind` and that flag text stays escaped.
-  Verified to fail against the broken page and pass against the fix. A source-level guard also
-  rejects patching a closing tag into a row template again.
-* **Checks:** `gm_console_sim` **21** (was 20), and the full gate on the final tree — see
-  **Delivery** below. No API, migration, save or Workers change: `functions/api/gm/damage.js` and
-  the `0016` verdict columns were already correct, which is why the flags themselves listed fine.
-* **Nothing to apply server-side** — this is a static page, so the fix lands with the Pages deploy.
-  A hard reload of the console is enough (`_headers` already sends `no-cache, must-revalidate` for
-  `gm.html`, so the stale-page theory was ruled out on the way to the real cause).
-* **Delivery:** Branch `arena/266e222b-prontera-grind`, PR **#233**. Full gate on the final tree:
-  **219 passed / 6 failed** — the same six pre-existing reds as `main`.
-
 ### 2026-11-14 — `haven-v407 MVP fish art drop, reviewable save flags, announcement gifts for later players, points-to-spend under the attributes`
 
 * **MVP fishing: the owner's ten crops replaced the seven painted bosses.** `assets/social/fish/`
@@ -11345,100 +11211,77 @@ Test-only follow-up to the v373 batch. No player-visible change, so BUILD is unc
   ignores the snapshot field, and a new client falls back to a deterministic per-room seed
   when the field is missing.
 
-### 2026-11-15 — `save audit: Fishcoins and Pet Coins are minigames, so they are not judged` (no build bump — no `index.html` change)
+### 2026-11-14 — `haven-v408 expanded roster: 20 new classes (6 alternate lines + Ninja and Gunslinger) behind a Base 150 fourth-job unlock`
 
-* **The owner (2026-11-15): "did u also notice the fishcoin & digicoin flag? i think we dont need to be
-  in the flag, these are mini games. i dont think cheating in this does any good."** He is right:
-  Fishcoins buy rods, bait, bag tiers and titles at the pond, and Pet Coins buy DigiPet cosmetics.
-  Neither touches combat, the level curve, the Zeny economy or any counter a flag exists to protect,
-  so a coin figure is never worth a review the owner has to dismiss by hand.
-* **Removed outright, not loosened.** `fishcoins` and `petcoins` are gone from `COUNTERS` (their save
-  paths are no longer read), from `RATE_LIMITS` (they carried 100,000/h and 10,000/h) and from
-  `LUMP_ALLOWANCE` (the 1.5M sold-out-bag allowance and the 100,000 DigiPet payout). Deleting the
-  entries rather than raising the numbers is the point: no future limit can reintroduce the flag by
-  accident, and `creditsFromGrants` simply stops treating those two gift resources as counter credits.
-* **What still flags, unchanged:** kills, levels, Zeny, shards, refine/mythic scrolls, ori/elu,
-  Ascension materials and Nightmare material 0 — all review-only, none of which ever rejects a save
-  (see the module header).
-* **Existing rows stay.** Alerts already recorded for those two kinds remain in `save_alerts` as
-  history; nothing new can be written for them.
-* **Checks:** `api_sim` **69** — the fishing block now proves the opposite of what it used to: +300k,
-  +1M and +300M Fishcoins in two minutes record nothing, a 500,000 Pet Coin jump records nothing, and
-  both keys are asserted absent from `COUNTERS`, `RATE_LIMITS` and `LUMP_ALLOWANCE`. Full gate on the
-  final tree: **1690 passed**, the same five reds as `main`.
-* **Delivery:** Branch `arena/369b4228-prontera-grind`, PR **#236**.
+* **Changed:** Continues PR #232 (its commit is carried here unchanged as the first commit, the
+  rework as the second). Twenty classes join the 25: Crusader → Paladin → Royal Guard, Sage →
+  Scholar → Sorcerer, Alchemist → Biochemist → Geneticist, Monk → Champion → Sura, Rogue →
+  Stalker → Shadow Chaser, Bard & Dancer → Minstrel & Gypsy → Maestro & Wanderer, plus Ninja
+  and Gunslinger straight from Novice. The whole roster opens for good once any of the six
+  shipped fourth jobs has reached Base Lv 150; after that the usual parent / job-level /
+  Crucible rules apply (each new job fights its sister class's trial opponent).
+* **What was reworked from the PR, and why:**
+  * The PR put the new rows straight into `CD`/`CD4`/`SKILLS4`, which broke 20 suites and the
+    Wardrobe / class-skin / balance fixtures that enumerate the original roster. They now live
+    in `CDX`/`CD4X`/`SKILLSX`; nothing about the shipped 25 classes or 127 skills changed.
+  * The PR's seven new weapon categories (spear, book, knuckle, instrument, whip, shuriken, gun)
+    had no drops, icons, forge or Mythic pieces, so those classes could never be armed. Each
+    line now trains in existing families (Crusader sword; Sage staff; Alchemist axe + mace; Monk
+    mace; Rogue dagger + bow; Bard & Dancer bow; Ninja dagger; Gunslinger bow).
+  * The PR's 143 files in `assets/skill-icons/new/` were cut on a wrong grid (each held parts
+    of several icons) and are deleted. Every new skill borrows a shipped icon (`icon`) and a
+    shipped cast effect (`fx`) until real crops exist. **No art was drawn or recoloured.**
+  * Skills went from 43 uneven ones to the shipped shape: 5 per class (45 points; 50 for a
+    fourth job) plus a sixth Ascension-only skill for each new fourth job — 106 in all. The 43
+    original ids are kept. Ascension upgrades cover all six new fourth jobs.
+  * The Bard / Dancer tabs called a function that does not exist; they are now real
+    `data-a="bdtree"` tabs and the choice is a view setting, not written to the save.
+  * The 40 uploaded sheets in `Sprite/` and `Sprite/female/` were not used by the game at all.
+    `tools/make_expanded_pack.py` cuts them (same cell layout, anchors, 8 directions and
+    idle / walk / attack as the shipped pack) into `assets/sprite-pack-x/`: one lossless WebP
+    per body, 2.6 MiB for all 40, and only the body being worn is downloaded. Until it arrives
+    the class is drawn with its first-job family body. Men and women get their own body.
+  * The Transcendent class-collection bonus still counts only the original six (cap stays +6%).
+  * Wardrobe looks are not available on the new classes yet (no native Wardrobe bodies); the
+    Wardrobe tab says so instead of showing a load error.
+* **Try it:** With a fourth job at Base Lv 150, open Jobs → Class tree: the "Expanded roster"
+  block under the main tree is unlocked. Reset to Novice for Ninja / Gunslinger, or step from
+  Swordman into Crusader. Without a Lv 150 fourth job every new class reads "Needs any 4th job
+  at Base Lv 150 first". GM console: the class list includes the new classes.
+* **Checks:** New `tools/tests/expanded_roster_sim.js` 11/11 (roster and pinned ids, weapon
+  families, the gate, no item duplicated on class change, collection unchanged, 5 + 1 skills,
+  borrowed icons / effects resolve, Ascension, Jobs and Skills windows for all 20, 40 lossless
+  bodies with 3 animations × 8 directions, save round trip). `make_expanded_pack.py --check`,
+  `build_afterglow.py --check`, `build_gm_catalog.cjs --check` and the four Python gate checks
+  pass. Full gate: **219 passed / 4 failed**, all four red on `main` before this work
+  (`fourth_job_mythic_sim`, `hosted_launch_stage_sim`, `skill_balance_sim`,
+  `render_lost_boot_smoke`). Existing suites that pinned the old totals were updated to the
+  new totals while still pinning the original roster separately (class count 25 → 45 with 25
+  shipped, fourth jobs 6 → 12 with 6 shipped, skills 127 → 233 with 127 shipped); the native
+  preview audits (`class_weapon_sim`, `hair_color_sim`, `wardrobe_game_sim`) now state that
+  they cover the shipped roster; `publish_sim` gives the lazy bodies their own 3 MiB budget
+  and the combined 180 MiB ceiling is unchanged (179.8 measured — almost no headroom left).
+* **Delivery:** Branch `arena/ef87a1e5-prontera-grind`; not merged, not deployed. Supersedes
+  PR #232. No server, Worker or plaza traffic change; no migration. Open for the owner: the
+  original skill-icon sheet (to cut real icons), whether the new weapon categories are wanted
+  as real gear later, and whether the new Transcendent classes should count for the collection.
 
-### 2026-11-15 — `docs/CPU-LIMIT.md`: why the free plan's 10 ms CPU limit is hit so fast
-* **What changed for the player:** nothing. Documentation only; no build bump, no deploy.
-* **Why:** the owner forwarded Cloudflare's daily summary ("Workers hit the free tier CPU time limit at
-  least 1,000+ times in the past 24 hours") and asked what it means and why it happens so fast. The
-  answer needed measuring, not guessing.
-* **Measured (local, Node + the `api_sim` D1 shim — hosted values still need the dashboard):**
-  * one accepted `PUT /api/save` on a **90 KB** save costs **~9 ms**, and instruments at **6 full
-    `JSON.parse` + 2 `JSON.stringify` of the blob** (~0.67 MB re-tokenised) because
-    `checkSaveBlob`, `saveBelongsTo`, `storedRestoreAt`, `withSaveIdentity` and the `storedSave`
-    re-parse each re-read the same string;
-  * PBKDF2-SHA256 at the live 20,000 iterations costs **6.2 ms**, so a single login verification is
-    over half a request's whole budget, and a registration (password + recovery, sequential) is
-    **~12 ms of hashing before any D1 call**;
-  * everything else on the PUT path is cheap and was ruled out explicitly: the save audit ~0.3 ms,
-    damage observation ~0.03 ms, Echo record + settle ~0.05 ms, `gm-catalog.js` is GM-only.
-* **Also documented:** the write gate's per-request cost (`WRITE_GATE = "required"` adds a D1 ban
-  read, a SHA-256 fingerprint and two Durable Object round trips to *every* `/api/*` request,
-  including the 45 s `/api/me` probe), and the fact that a killed `PUT` is a save that never landed,
-  not just a slow request.
-* **Options listed for the owner, cheapest first:** parse the blob once (3 of the 6 parses are pure
-  duplication), shrink the 512 KB ceiling, sample the diagnostics, trim the gate's work on read-only
-  probes, or move to Workers Paid. No code changed in this entry.
-* **Delivery:** branch `arena/6d3886c8-prontera-grind`. Not deployed.
-* **CORRECTED the same day, after the owner supplied the Metrics charts (Oct 30, Nov 6-9, Nov 11-13,
-  Nov 13, Nov 15).** The first version of the doc treated this as a chronic over-budget design. The
-  charts say otherwise and the doc was rewritten:
-  * **The CPU limit was never hit at all before Nov 15** - 0 kills on Oct 30, Oct 30-31, Nov 6-9 and
-    Nov 11-13, on days whose median CPU was already **10-18 ms**, i.e. already over the nominal 10 ms
-    cap and tolerated. Nov 15 then recorded **1,084** CPU kills against 7,631 successes (92% of all
-    errors), with median CPU up 8.7 -> 13.7 ms and p99 45 -> 62 ms. So this is a **regression on
-    Nov 14-15**, not a design that was always doomed.
-  * **The write-gate hypothesis is withdrawn.** It went live Oct 30 and two weeks of zero CPU errors
-    followed; its Durable Object hops are wall time. The doc no longer blames it.
-  * **The save audit is not the smoke either** - measured ~1.1 ms on a 90 KB save with a previous row
-    present, the same whether it flags or not (my first measurement passed `prev: null`, which skips
-    the whole rate check; the number was wrong and the doc now says so).
-  * **The real number:** one accepted `PUT /api/save` parses the blob **6 times** and stringifies it
-    twice. At the 456 KB ceiling that is **34.9 ms**, of which **21.1 ms is duplicated work**; at
-    81 KB it is 6.5 ms vs 2.5 ms if parsed once. That is the floor that makes the account fragile and
-    the first thing to fix. `/api/version` (dead code since v389) was measured and ruled out.
+### 2026-11-14 — `haven-v408 (same unreleased build): expanded Transcendent classes count for the class collection`
 
-### 2026-11-15 — `v410 CPU diet: a save sync parses the blob three times, not six` (no build bump — `functions/` only)
-* **Why:** the owner's Cloudflare Metrics showed `Exceeded CPU Time Limits` going from **0 every day**
-  (Oct 30 → Nov 13) to **1,084 in one day** on Nov 15, 92% of all errors, with median CPU 8.7 → 13.7 ms
-  and p99 45 → 62 ms. See [CPU-LIMIT](CPU-LIMIT.md). The owner asked for "all u can" that cannot change
-  gameplay.
-* **What was wrong:** one accepted `PUT /api/save` parsed the same save blob **six times** — the
-  request envelope, `checkSaveBlob`, `saveBelongsTo`, `storedRestoreAt`, `withSaveIdentity`, and a
-  final `storedSave` re-parse — and stringified it twice, with the save-audit then parsing the stored
-  blob a **seventh** time. At the 512 KB ceiling that is ~35 ms of pure JSON work, two thirds
-  duplicated, against a 10 ms free-plan budget.
-* **What changed:** `_lib/validate.js` helpers accept an already-parsed save (`parseSave`), so a caller
-  that parsed once does not force three more; `save.js` parses the stored row **once** and shares it
-  with the ownership check, the restore fence and the audit; `save-audit.js` takes `prevSave` instead
-  of re-parsing, and its gear walk folds two passes into one that stops each rule once fired.
-* **Measured:** a 90 KB save went **8.9 ms → 4.0 ms** per accepted sync; parses **6 → 3** and
-  stringifies **2 → 1**. The three left are irreducible (envelope, incoming save, stored row).
-* **No gameplay change, deliberately:** no rule, threshold, rejection or prize path was touched. The
-  ownership decision is still accountId-then-name, and the restore fence is byte-identical in effect.
-  Nothing about what a player can do, earn or lose changed.
-* **Not fixed, and stated plainly:** the Nov 15 spike is still not *explained*. Ruled out by
-  measurement — the write gate (0 kills for two weeks after it shipped), the settlement queue (the
-  owner's query showed **no rows stuck in `settling`**, and the batch's claim→place→ledger→close lock
-  was re-tested and holds under interleaving), and `/api/version` (dead code since v389). Still open:
-  (2) the overnight window, where the spike died by noon while traffic continued. What this entry
-  buys is **headroom on the floor**, not the root cause.
-* **Checks:** `api_sim` **70**, including a new case that instruments `JSON.parse`/`JSON.stringify`
-  around one accepted sync and pins 3 parses / 1 stringify. Full gate: **45 suites green**, the 2 reds
-  (`combat_float_sim`, `ui_sim`) reproduced identically on the base commit (both are `jsdom` missing
-  from this sandbox, not this change).
-* **Delivery:** branch `arena/6d3886c8-prontera-grind`, commit `0c68ee9`. Not pushed, not deployed.
+* **Changed:** Owner decision. The six Transcendent classes of the expanded roster (Paladin,
+  Scholar, Biochemist, Champion, Stalker, Minstrel & Gypsy) now count toward the class
+  collection, so it reads `n/12` and the cap is **+12% damage** instead of +6%. This corrects
+  the previous entry, which kept the collection at the original six. Rules are otherwise the
+  same: +1% per Transcendent class at Base Lv 100+, permanent, account-wide; second jobs,
+  fourth jobs, Ninja and Gunslinger never count. No save loses credit. No new build number:
+  v408 has not shipped, so this folds into it.
+* **Try it:** Character window → the Class collection line now shows `/12`.
+* **Checks:** `class_change_sim` (27), `fourth_job_sim`, `ui_sim`, `mythic_testing_sim` and
+  `expanded_roster_sim` (11) pass with the 12-class collection pinned, including "a save with
+  the old full collection keeps exactly +6%".
+* **Delivery:** Branch `arena/ef87a1e5-prontera-grind`; not merged, not deployed. Still open:
+  real skill icons (owner will supply) and the new weapon categories as real gear (drops,
+  Mythic pieces, Ascension) — that needs weapon and icon art before it can be built.
 
 ### 2026-11-15 — `v411 CPU diet: cards capped at 1,000, a bulk sale, a real account delete, no /api/version stampede` (build bump)
 * **Why:** the same Nov 15 investigation as v410. v410 removed the duplicated work on the floor; this
@@ -11533,3 +11376,247 @@ Test-only follow-up to the v373 batch. No player-visible change, so BUILD is unc
   assertion/budget or re-hashed balance fixture. No production CPU result is claimed.
 * **Delivery:** Local changes on `arena/e9a33746-prontera-grind`; not committed, pushed or deployed.
   No production account or remote database was accessed or changed.
+
+### 2026-11-14 — `haven-v409 expanded roster: native class sprites, seven weapon families, fitted damage`
+
+* **Changed (sprites):** All 40 expanded-roster bodies (20 classes × male/female) were
+  rebuilt from the real Ragnarok Online client sprite and action files instead of being cut
+  out of the uploaded sheets by pose-matching, which had produced wrong idle and walk rows
+  (Ninja and Gunslinger worst). Every direction, the 8 walk frames and the attack now come
+  from the client's own animation, and the head is pinned with the client's own attach
+  points (it also turns the way the client turns it during an attack). Melee classes play
+  the first attack, Bard/Dancer and Gunslinger lines the aimed one; the Gunslinger holds a
+  native gun while attacking. Sources are pinned by git blob id and SHA-256 in
+  `tools/native-expanded/source-manifest.json`; nothing is redrawn or recoloured. Each body
+  was checked by eye on contact sheets. Folder size 2.58 MiB (was 2.63).
+* **Changed (weapons):** Seven new weapon families are real gear: **spear** (Crusader line),
+  **book** (Sage line), **knuckle** (Monk line), **instrument** and **whip** (Bard & Dancer
+  line), **shuriken** (Ninja) and **gun** (Gunslinger). Each is the kin of a shipped family
+  and drops wherever that family drops (spear↔sword, book↔staff, knuckle↔mace,
+  instrument/whip/gun↔bow, shuriken↔dagger): for a class that trains in it, 60% of those
+  drops arrive as its own family (100% for the Gunslinger, who uses guns only; a Bard gets
+  mostly instruments, a Dancer mostly whips). Drop tables, rates and every other class are
+  unchanged. They work in online and offline drops, the Shard Store, the Ascension Forge
+  (42 new Mythic weapon names across the six sets), the GM console (presets for the six new
+  fourth jobs) and auto-sell filters. 56 real RO inventory icons were added (six
+  progression bands per family plus Mythic). Books roll magic affixes; instruments, whips
+  and guns have four card sockets like bows. The Job and Equipment panels say where each
+  family drops.
+* **Fixed:** Sage, Scholar and Sorcerer were attacking with physical ATK while wearing INT
+  gear; they are magic classes now, like the Wizard line.
+* **Changed (balance):** The expanded classes did 12–65% of their sibling class's damage
+  (a few did far more). Each was measured for sustained damage against 1 and 3 targets
+  with every skill maxed and fitted to its sibling: Crusader line 92% of the Knight line
+  (it has ~45% more HP), Monk line 105% (less HP), Sage and Alchemist lines 100%, Rogue,
+  Bard & Dancer, Ninja and Gunslinger 97%. The fit is in `SKILL_TUNING` plus each class's
+  attack multiplier, recorded in `tools/tests/fixtures/expanded_skill_budget.json`.
+* **Try it:** On an account with a fourth job at Base Lv 150, become a Gunslinger and fight
+  in Payon: bows now drop as guns. Open Equipment to see the new icons; a fourth job of the
+  new lines can forge its own Mythic weapon in the Ascension Forge.
+* **Checks:** `expanded_roster_sim` 13/13 (new: weapon families, icons with hashes, kin
+  drops, damage budgets, native sprite manifest). Full gate: 229 checks, 225 green. The 4 red ones
+  (`fourth_job_mythic_sim`, `hosted_launch_stage_sim`, `skill_balance_sim`,
+  `render_lost_boot_smoke`) are red on `main` too and were left alone. Thirteen suites
+  that hard-coded the old counts (14 icon families, 6 GM presets, 72 Mythic gifts) or
+  looked for a class weapon by exact family were updated to the new numbers and to the
+  kin rule. The classic-asset size ceiling in `publish_sim` moved from 60.1 to 60.2 MiB
+  for the 56 new icons. Ninja and Gunslinger have no fourth job, so their Mythic weapons
+  exist as GM gifts but cannot be forged yet.
+* **Delivery:** Branch `arena/ef87a1e5-prontera-grind`; not merged, not deployed. Still
+  open: real skill icons (owner will supply), held-weapon art on the body for classes other
+  than the Gunslinger (no pack hero shows one), the Wardrobe for the new classes, and their
+  own job-trial opponents. Not yet seen in a real browser.
+
+### 2026-11-15 — `haven-v410 Kagerou & Oboro, Rebellion and a Wardrobe for the expanded classes`
+
+* **Changed:** Ninja now advances to **Kagerou & Oboro** and Gunslinger to **Rebellion**. Both
+  are single-step lines (Novice → Ninja → Kagerou & Oboro, Novice → Gunslinger → Rebellion) and
+  sit behind the same gate as the rest of the expanded roster: any 4th job at Base Lv 150 first.
+  Each has five skills plus one Ascension-only skill, its own native body for both genders, and
+  damage fitted to 97% of its sibling (Guillotine Cross and Ranger). Their job trials reuse the
+  Assassin Cross and Sniper opponents. The roster is now 47 classes and 245 skills.
+* **Changed:** All 22 expanded classes can use the **Wardrobe**: every hairstyle, hair colour
+  and accessory, in the game, in town and when sitting. New pack `assets/wardrobe/expanded/v1/`
+  (4.3 MiB) holds only the bodies; hair and accessories are the ones already shipped, placed on
+  each new body by where its head sits in every frame. Gunslinger and Rebellion show their gun
+  while attacking.
+* **Try it:** With an account that has a 4th job at Base Lv 150, change to Ninja or Gunslinger,
+  then to the advanced job. Open the Wardrobe on any expanded class, change hair and add wings
+  or a halo, apply, walk and attack, then sit in town.
+* **Checks:** New `tools/tests/expanded_wardrobe_sim.js` composes 3,168 looks (every class,
+  gender, hairstyle and accessory) plus 44 sitting looks and proves the game places them exactly
+  as the builder does. Full gate: 231 checks, 227 green; the 4 red ones are the same four that
+  are red on `main`. Ten suites that hard-coded the old class and skill counts were updated.
+* **Needs your approval:** the whole published site is now 184.4 MiB, over the 180 MiB ceiling
+  you approved at v342. I raised the test ceiling to 185 so the gate can run, but that is your
+  call. Players are not affected much: the new bodies load one small file (about 100 KiB) per
+  class and gender actually worn.
+* **Delivery:** Branch `arena/ef87a1e5-prontera-grind`, PR #234; not merged, not deployed. Not
+  yet seen in a real browser. Wings, capes and bags on expanded classes can sit a few pixels
+  off on some frames. Still open: real skill icons (owner will supply), held-weapon art for
+  classes other than the two gun jobs, and skill effects of their own.
+
+### 2026-11-15 (staging launcher) — no build bump
+
+* **Changed:** New owner launcher `tools/staging/stage_expanded.mjs` puts the haven-v410 branch
+  on staging from Windows. It builds in a temporary copy with a staging-only configuration
+  (`prontera-grind-staging`, `prontera-social-staging`, `pg-staging`), refuses to continue if a
+  production name appears or the database is not `pg-staging`, adds any of the additive tables
+  0009-0017 that staging is missing, and deploys. Your checkout is not modified.
+* **Try it:** the four PowerShell lines are at the top of the file.
+* **Checks:** the configuration, schema-step and address parsing were exercised here. The
+  launcher itself is Windows-only and has not been run end to end.
+
+## haven-v412 — expanded roster: original RO effects, signature skills, autocast, every class armed (2026-11-15)
+
+Owner feedback after testing v411 on staging (8 points). Still behind the fourth-job gate; the 26 original classes are untouched.
+
+- **Weapons.** A second client source (`linhan85/rAthenaCN_LeeClient`, pinned in `tools/native-expanded/source-manifest.json`, 148 files) supplied what ClientROThailand lacks: revolvers for Gunslinger and Rebellion, shuriken for Kagerou & Oboro, the Rogue-line bow for Shadow Chaser, instrument (Maestro) and whip (Wanderer). The Monk line now plays the knuckle punch (ACT action 88) instead of the overhead swing; the client's knuckle sprite is empty, so fists show. 19 classes draw a weapon while attacking.
+- **Original skill effects.** `tools/make_ro_fx.py` bakes 36 client effects (`.str` timelines, effect sprites and stills, pinned in `tools/native-expanded/fx-source-manifest.json`) into WebP flipbooks under `assets/ro-fx/` (1.69 MiB, budget 2.5). `assets/signature-fx.js` plays them for 72 skills; only the books of the class being played are downloaded. Asura Strike now throws the client's own six characters; the painted Asura fallback and the Geneticist vines/plants/bottles stay for a later pass.
+- **Signature skills.** `core:true` marks each class's signature attack (★ in the tree, a shout when it lands). Asura Strike: power 16, needs a Spirit Sphere, +50% per sphere, +50% on bosses, 40% shockwave; Call Spirits / Zen / Rising Dragon fill all five spheres. Acid Demonstration, Final Strike, Slug Shot gain `bossPower`.
+- **Autocast.** New `autocast` row key (`autocastProc`): Sage Hindsight is Auto Spell (random Fire / Cold / Lightning Bolt on attacks and casts), Sorcerer Spell Fist, Scholar Double Casting, Stalker Plagiarism, Shadow Chaser Auto Shadow Spell, Gunslinger Chain Action, Kagerou Shadow Warrior, Paladin Martyr's Reckoning.
+- **Combos.** `COMBO_PLAN` gives Auto-fill a written combo per class that ends on the signature skill; inherited first-job skills only fill empty slots in front. Champion and Sura no longer pick Holy Light.
+- All 22 classes refitted with `tools/fit_expanded_budget.js` (now handles a class with no area skill).
+
+Not done: Shadow Chaser still has one attack animation (the bow). A second, dagger animation needs a new stance in both the body pack and the Wardrobe atlases, which are at their size ceilings.
+
+Tests: `signature_skills_sim.js` (new), `signature_fx_sim.js`, `expanded_roster_sim.js`, `expanded_wardrobe_sim.js`, `publish_sim.js`.
+
+## haven-v413 — expanded roster: stronger budgets, skill-first damage, 40-point Skill Ascension (2026-11-15)
+
+Owner direction after reading the v412 damage report. Still behind the fourth-job gate; the 26 original classes are untouched.
+
+- **Budgets.** New classes sit about 20% above their sibling. Royal Guard, Maestro & Wanderer, Kagerou & Oboro and Rebellion stay close (105%). Sorcerer and Shadow Chaser 125%. Geneticist 120% on one target, 140% on three. Sura is the single-target ceiling of the fourth jobs: 227% of Rune Knight = 130% of Guillotine Cross. `tools/fit_expanded_budget.js` accepts `Class=Sibling:single/area`.
+- **Skills before normal attacks.** The attack multiplier of Sura (1.3 to 1.1), Shadow Chaser (2.45 to 1.7), Maestro & Wanderer (1.61 to 1.15) and Rebellion (2.4 to 1.7) was lowered and the skill tuning refitted, so the same budget comes from skills. Triangle Shot power 4.6 to 8.5.
+- Elemental Bolt power 4.14 (about 20% above Fire Bolt). Sorcerer Spell Fist bolts hit bosses 40% harder.
+- **Skill Ascension cap** is `ascSkillCap(cls)` = max(30, 5 x skills): 40 for Kagerou & Oboro and Rebellion (eight skills each).
+- New `tools/expanded_damage_report.js` prints the per-class damage table.
+
+Tests: `signature_skills_sim.js`, `expanded_roster_sim.js`.
+
+## haven-v414 — expanded roster: budgets revised down (2026-11-15)
+
+Owner: 20% above the original classes was unfair. All 22 classes refitted with `tools/fit_expanded_budget.js`: about 110% of the sibling; Royal Guard, Maestro & Wanderer, Kagerou & Oboro and Rebellion 105% (unchanged); Sorcerer and Shadow Chaser 115%; Geneticist 110% on one target and 125% on three; Sura 117% of Guillotine Cross on one target (207% of Rune Knight). Only `SKILL_TUNING` and the budget fixture changed.
+
+## haven-v415 — escort/boss payout split and the boss-only Asura bonus (2026-11-15)
+
+Owner: "the escorts and the boss pay the same", and Asura's +50% boss bonus must not leak onto an
+MVP's escorts. Code-side only; no `SKILL_TUNING` value moved and no class damage changed.
+
+* **Escort share (materials and Sigils only).** A boss wave's escorts roll 30% of their material
+  and Sigil chance (`ASC_ESCORT_KEEP`); the MVP adds the missing 70% of what each of its escorts
+  used to roll. Zeny, EXP and Job EXP are untouched, so an escort kill still pays normally.
+  Ordinary field enemies and every stage without a boss are unchanged.
+  - The compensation is derived from the stage's real escort stats (`ascEscortIndex`), not from a
+    fixed multiple of the boss's own roll: a boss carries 3x an escort's HP, and from v191 the
+    Stage-5 escorts sit at half HP, so the ratio is 6 there and 3 elsewhere. Measured on Astral and
+    Thor Stage 5, a full clear pays exactly the same materials and Sigils as before (0.00%), while
+    the MVP's share of the material roll rises from 54.5% to 86.4%. Escorts still pay 30%:
+    0.34% / 0.68% material and 0.084% / 0.169% Sigil per escort on those two maps.
+  - Escorts are tagged `escort:true` in `spawn()` so the split can tell them from a field mob.
+* **Asura on escorts.** The shockwave is paid from `raw` with the target's `bossPower` factor
+  removed, so an escort standing beside its MVP no longer inherits Asura Strike's +50%: the same
+  hit dealt 341 before and 227 after. A direct hit on an escort is unchanged.
+* **Tests:** `signature_skills_sim` pins the shockwave share, `starter_sim` pins the escort tag,
+  `ascension_drop_shop_sim` reads the per-monster chances instead of the flat constants, and
+  `tools/progression_balance.js --skills` filters its growth table to the baseline's classes (the
+  expanded roster was inflating 63 rows to 105 and breaking `skill_balance_sim`).
+* **Delivery:** Branch `arena/75645771-prontera-grind`, stacked on PR #234's haven-v414.
+
+## haven-v415 follow-up — the staging rehearsal could not run at all (2026-11-16)
+
+`hosted_launch_stage_sim` was red before this branch existed: the packager refused its own checkout
+(`Unpackaged runtime change: assets/plaza-bots.js` fails on `main` too, with 40 offenders). This
+branch made it worse — 273 offenders — because the expanded roster added whole new art packs, and
+then the rehearsal stopped one step later, at `MISSING: assets/sprite-pack-x/index.js` from the
+staged `tools/build_site.sh`. Fixed at the cause, not by widening the guard.
+
+**Why the overlay drifted.** `package_hosted_launch.mjs` builds from a fixed archive
+(`7511a03c…`) and fails closed on any runtime file it is not carrying, so every new runtime file has
+to be declared. That declaration was a hand-written array, and it had gone three ways wrong at once:
+
+* the packs the new code fetches by URL after load were never packaged (44 sprite bodies, 89
+  wardrobe atlases and pose files, 36 effect flipbooks, and the 156-image pond fishing pack);
+* files the entry points load by static tag were missing, including
+  `assets/sprite-pack-x/index.js`, which is also a hard `require` of `tools/build_site.sh` — so the
+  rehearsal died before it could deploy anything;
+* five runtime files that already exist in the archive but that this branch **modified**
+  (`assets/wardrobe-ui.js`, `functions/_lib/auth.js`, `functions/_lib/gm-catalog.js`,
+  `functions/_lib/usage.js`, `functions/api/gm/usage.js`) were undeclared, which would have shipped
+  staging the archived copy of each alongside a v415 everything-else. `gm-catalog.js` is the
+  47-class roster. That is exactly the mixed-version deployment the guard exists to prevent.
+
+**What changed.** The overlay is now derived, in a new `tools/staging/launch_overlay.mjs`:
+
+* each art pack ships its index plus exactly the files that index names — the generator manifests
+  (`tools/native-expanded/*manifest.json`), `assets/ro-fx/index.js` and
+  `assets/social/fish/MANIFEST.json` are the sources, so regenerating art updates the package;
+* item icons are read from `RO_ITEM_ICON_CANDIDATES` in the released entry point (181 ids, matching
+  an evaluated run of that literal exactly);
+* every `functions/**` module and `migrations/**` file is packaged wholesale, so a newly imported
+  `_lib` module cannot be missed;
+* any static asset tag the entry points gained since the archive base is picked up automatically.
+
+The package template's hand-written copy of that list is gone; `unpackPayload()` now validates the
+payload against its own catalog instead of a second list that had already drifted (it still named
+three removed fish and none of the 566 catalog-driven Digimon files).
+
+**Two bugs found by actually running the rehearsal** (not by the guard):
+
+* `assets/atlas/fountain-plaza.jpg` was not on the packager's binary list, so it was decoded as utf8
+  and re-encoded — a 140 KB source came out at 252 KB, corrupt, in every rehearsal. `.jpg` joined
+  the list, and the packager now proves the text path was lossless and names any file it has to
+  reclassify.
+* the staged tree is now an **exact** copy of a real build: verified `bash tools/build_site.sh`
+  inside the unpacked archive produces 4063 files byte-identical to a build of this checkout.
+
+**Checks.** `hosted_launch_stage_sim` passes, with new assertions for the JPEG round trip, the
+`build_site.sh` dependencies, every file each pack index names, the three MVP fish the old list
+missed, and a byte-for-byte round trip of every packaged file. Full suite: 219 of 219 `*_sim` pass.
+`render_lost_boot_smoke` (4 passed / 3 failed) and `mvp_art_crop.py --check` (7 drifted) fail
+identically on `main` and are untouched here. Package is 58.0 MB compressed, up from 48.8 MB — it
+was not runnable before, so there is no working baseline to compare against.
+
+## haven-v416 — four owner reports: reach, Sorcerer's bolts, Sura's rotation (2026-11-15)
+
+Owner feedback after playing the expanded classes. Still behind the fourth-job gate; the 26 original
+classes are untouched, and no other class's budget moved.
+
+- **A little more reach for the thrown and ranged-mixed lines.** Shadow Chaser, Kagerou & Oboro,
+  Rebellion and Maestro & Wanderer now stand half a tile further off than the other ranged classes
+  and cast every skill from that same half tile further out (`EXTRA_REACH_CLASSES` / `extraReach`,
+  applied to both `heroStandoff` and `skillRange`). Measured stand-off is 4.5 tiles against Ranger's
+  4.0; melee is unchanged at 1.65. `CLASS_BAND` is untouched, so Ranger, Ninja and Gunslinger do not
+  gain anything. Shadow Chaser's roster row said `rng:0` even though it carries a bow, which is why
+  it was reaching like a dagger class; that row now reads `rng:1`.
+- **Sorcerer was overpowered because Spell Fist never lapsed.** `so_strike` is a 12-second buff on a
+  12-second cooldown with `chance:1`: permanent uptime, and every normal attack fired one of three
+  three-hit bolts at `power:0.9`. On the highest-`atk` caster in the game (2.67) that turned ordinary
+  attacks into full skill casts, which is where the 60-70k/min came from - the three bolts alone were
+  38% of its damage. Chance is now 0.6 and each bolt 0.45 single / 0.25 boss, so the bolts are worth
+  11%. The class was then refitted (`K 0.4117 to 0.4529`, `A 2.3959 to 2.1238`) so it still delivers
+  its recorded 115% of Warlock from its own skills: Psychic Wave 12%, Diamond Dust 12%, Earth Grave
+  10%. Sorcerer 91k one target / 180k three; Warlock 79k.
+- **Sura could only fit one Asura Strike per two rotations.** Asura Strike's cooldown was 10 s while
+  the six-skill rotation takes about 20 s, and Sky Net Blow was on no combo at all, so the two
+  slowest hitters (Tiger Cannon 4.5 s, Gates of Hell 5 s) were all the rotation had between Asura
+  casts and it fell back to normal attacks. Sky Net Blow (3 s, hits everything around the caster)
+  replaced Chain Combo in the Sura combo, and Asura's cooldown is 6 s. The rotation is now 134 casts
+  per 120 s with 12 Asura Strikes (was 11 skills and one Asura in game), and Sura reads 105k / 133k
+  with Asura at 53% of its damage. No skill was added - the Sura tree still costs exactly 50 points.
+
+**Checks.** All three `progression_*.json` fixtures regenerated (hash-only diffs). `SKILL_TUNING.Sorcerer`
+and `expanded_skill_budget.json` moved together, as `expanded_roster_sim` requires. The bump also moves
+the twelve social/Digimon asset tags to `?v=416`, which `update_watch_sim` pins to the page's own build
+number. The Wardrobe UI moved too, so its cache buster is `?v=416`. Full suite after the merge with
+main's save codec: 227 of 227 `*_sim` pass.
+
+**Asura Strike now kneels with its fists on the ground.** The pose was in the client data all along:
+the Monk line's own body carries the 'sit' stance (ACT action 16), which is the crouch the Social Hub
+already draws from `assets/social/sitting/`. So no new art was needed. `playSkillFx` opens a 1.1 s
+window when `ch_asura` is cast; while it is open the hero is drawn from a second Wardrobe store that
+carries the sit stance (`wardrobeKneelStore`, `wardrobe-ui.js`), keeping the same saved appearance, so
+the hair, head and accessories come with the pose. The standing route keeps its own animation clock,
+so the hero does not snap back to the first frame afterwards, and the shipped v5 and fourth-job packs
+have no sit stance, so no other class gains or loses a frame. Measured on the committed atlases, the
+sit body draws 28-30 px lower than the idle body in all eight directions. New `asura_pose_sim` (5).

@@ -1,13 +1,27 @@
 /* Shared character customization and game adapter. Appearance never changes combat equipment/stats. */
 const wardrobeBaseStore=new PGWardrobe.Store(),wardrobeFourthStore=new PGFourthJobs.Store();
+// haven-v410: the expanded roster has a pack of its own (assets/expanded-jobs.js). The script is
+// optional so a page that does not load it keeps working with the two shipped packs.
+const wardrobeExpandedStore=typeof PGExpandedJobs!=='undefined'?new PGExpandedJobs.Store():null;
+// haven-v416: a kneeling store, used for Asura Strike. The expanded bodies already carry the client's
+// 'sit' stance (ACT action 16) - it is the same crouch the Social Hub draws from assets/social/sitting/ -
+// so the hero can drop into it for the length of one cast without any new art. The shipped v5 and
+// fourth-job packs do not ship a sit stance, so this store only ever serves the expanded roster; for
+// every other class the hero keeps standing, exactly as before.
+const wardrobeKneelStore=typeof PGExpandedJobs!=='undefined'?new PGExpandedJobs.Store({stances:['sit']}):null;
+const wardrobeStores=[wardrobeBaseStore,wardrobeFourthStore,...(wardrobeExpandedStore?[wardrobeExpandedStore]:[]),...(wardrobeKneelStore?[wardrobeKneelStore]:[])];
+const wardrobeExpandedClass=cls=>!!wardrobeExpandedStore&&Object.hasOwn(PGExpandedJobs.CLASSES,cls);
+const wardrobeStoreFor=cls=>Object.hasOwn(PGFourthJobs.CLASSES,cls)?wardrobeFourthStore:wardrobeExpandedClass(cls)?wardrobeExpandedStore:wardrobeBaseStore;
 const wardrobeStore={
- select(client,a,cls){const fourth=Object.hasOwn(PGFourthJobs.CLASSES,cls);(fourth?wardrobeBaseStore:wardrobeFourthStore).release(client);return (fourth?wardrobeFourthStore:wardrobeBaseStore).select(client,a,cls)},
- release(client){wardrobeBaseStore.release(client);wardrobeFourthStore.release(client)},
- dispose(){wardrobeBaseStore.dispose();wardrobeFourthStore.dispose()},
- get pixelBytes(){return wardrobeBaseStore.pixelBytes+wardrobeFourthStore.pixelBytes},
- get budget(){return wardrobeBaseStore.budget+wardrobeFourthStore.budget},
+ select(client,a,cls){const store=wardrobeStoreFor(cls);for(const other of wardrobeStores)if(other!==store)other.release(client);return store.select(client,a,cls)},
+ // The same look, read from the kneeling store, so the hero can swap the drawn stance for one skill.
+ selectKneel(client,a,cls){if(!wardrobeKneelStore||!wardrobeExpandedClass(cls))return Promise.resolve(null);return wardrobeKneelStore.select(client,a,cls)},
+ release(client){for(const store of wardrobeStores)store.release(client)},
+ dispose(){for(const store of wardrobeStores)store.dispose()},
+ get pixelBytes(){return wardrobeStores.reduce((n,store)=>n+store.pixelBytes,0)},
+ get budget(){return wardrobeStores.reduce((n,store)=>n+store.budget,0)},
  get fetcher(){return wardrobeBaseStore.fetcher},
- set fetcher(value){wardrobeBaseStore.fetcher=value;wardrobeFourthStore.fetcher=value}
+ set fetcher(value){for(const store of wardrobeStores)store.fetcher=value}
 };
 const wardrobeState={owner:null,cls:'',sex:'',draft:null,look:null,status:'',loading:false,seq:0,start:0,paint:'',canvas:null};
 let wardrobeEquipped=null,wardrobeRequested='',wardrobeFailure='';
@@ -20,7 +34,7 @@ function wardrobeAppearance(){const a=PGWardrobe.normalize(S.appearance)||PGWard
 // Which paid items a draft wears that may not be worn yet (empty without the shop script).
 function wardrobeLocked(a){return typeof shopLockedIn==='function'&&a?shopLockedIn(a):[]}
 function wardrobeTag(field,id){return typeof shopOptionTag==='function'?shopOptionTag(field,id):''}
-function wardrobeSupported(cls){return Object.hasOwn(PGWardrobe.CLASSES,cls)||Object.hasOwn(PGFourthJobs.CLASSES,cls)}
+function wardrobeSupported(cls){return Object.hasOwn(PGWardrobe.CLASSES,cls)||Object.hasOwn(PGFourthJobs.CLASSES,cls)||wardrobeExpandedClass(cls)}
 function wardrobePending(cls){return Object.hasOwn(PGFourthJobs.CLASSES,cls)||wardrobeSupported(cls)&&!wardrobeFailure}
 function wardrobePanel(){wardrobeOwner();if(wardrobeState.cls!==S.cls||wardrobeState.sex!==S.sex){wardrobeState.cls=S.cls;wardrobeState.sex=S.sex;wardrobeState.seq++;wardrobeStore.release('preview');wardrobeState.look=null;wardrobeState.loading=false;wardrobeState.draft=null;wardrobeState.canvas=null}
  if(!wardrobeState.draft){wardrobeState.draft=wardrobeAppearance();wardrobeState.status='';wardrobeState.look=null}
@@ -42,7 +56,10 @@ function wardrobeStatus(){const locked=wardrobeLocked(wardrobeState.draft),locke
  const el=$('wardrobeStatus');if(el)el.textContent=wardrobeState.loading?'Loading appearance…':wardrobeState.status||lockText||'Preview your changes, then apply your look.';const retry=$('wardrobeRetry');if(retry)retry.hidden=!wardrobeState.status.includes('could not load');
  const buy=$('wardrobeBuy');if(buy){const can=!!lockedItem&&typeof CLOUD!=='undefined'&&CLOUD.on;buy.hidden=!can;if(can)buy.textContent='Buy '+lockedItem.name+' · '+shopPrice(lockedItem)}
  const button=$('wardrobeApply');if(button)button.disabled=wardrobeState.loading||!wardrobeState.look||checking||locked.length>0||(wardrobeState.look.cls!==S.cls||(PGWardrobe.selectionKey(wardrobeState.look.selection)!==PGWardrobe.selectionKey(wardrobeState.draft)||wardrobeState.look.selection.outfit!==wardrobeState.draft.outfit))}
-function wardrobeLoad(){const a=PGWardrobe.normalize(wardrobeState.draft);if(!a)return;const owner=S,cls=wardrobeState.cls,activeCls=S.cls,seq=++wardrobeState.seq;wardrobeState.loading=true;wardrobeStatus();
+function wardrobeLoad(){const a=PGWardrobe.normalize(wardrobeState.draft);if(!a)return;
+ // haven-v408: the expanded roster has no native Wardrobe body yet; say so instead of a load error.
+ if(!wardrobeSupported(wardrobeState.cls)){wardrobeState.loading=false;wardrobeState.look=null;wardrobeState.status='Wardrobe looks are not available for '+wardrobeState.cls+' yet. Your saved look returns when you switch to another class.';wardrobeStatus();return}
+const owner=S,cls=wardrobeState.cls,activeCls=S.cls,seq=++wardrobeState.seq;wardrobeState.loading=true;wardrobeStatus();
  wardrobeStore.select('preview',a,cls).then(look=>{if(!look||seq!==wardrobeState.seq||S!==owner||S.cls!==activeCls||wardrobeState.cls!==cls||!tabs.includes('wardrobe'))return;wardrobeState.look=look;wardrobeState.loading=false;wardrobeState.paint='';wardrobeState.start=performance.now();wardrobeState.status='';wardrobeStatus();wardrobePreview()}).catch(()=>{if(seq!==wardrobeState.seq||S!==owner||S.cls!==activeCls||wardrobeState.cls!==cls)return;wardrobeState.loading=false;wardrobeState.status='This appearance could not load. Your saved look is unchanged. Try again.';wardrobeStatus()})}
 function wardrobeSync(){wardrobeOwner();if(!tabs.includes('job')){wardrobeStore.release('portrait');wardrobeClassLook=null;wardrobeClassRequest=''}if(!tabs.includes('wardrobe')){if(wardrobeState.draft){wardrobeState.seq++;wardrobeStore.release('preview');wardrobeState.draft=null;wardrobeState.look=null;wardrobeState.loading=false;wardrobeState.canvas=null}return}
  const cv=$('wardrobeCanvas');if(cv!==wardrobeState.canvas){wardrobeState.canvas=cv;wardrobeState.paint='';if(!wardrobeState.look&&!wardrobeState.loading)wardrobeLoad()}wardrobeStatus();wardrobePreview()}
@@ -82,8 +99,12 @@ function wardrobeHero(opt){wardrobeOwner();const a=wardrobeAppearance();if(!ward
 function mkWardrobeHero(look){const cv=document.createElement('canvas');cv.width=320;cv.height=280;const tex=new THREE.CanvasTexture(cv);tex.magFilter=tex.minFilter=THREE.NearestFilter;tex.generateMipmaps=false;
  const spr=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true,alphaTest:.12}));const px=SKIN_H/look.base.figureHeight;
  spr.scale.set(320*px,280*px,1);spr.center.set(.5,1-200/280);spr.userData.wardrobe={look,cv,tex,paint:'',route:'',start:0};return spr}
-function captureWardrobeFrame(spr,dir,run,attack,now=performance.now()){const sk=spr.userData.wardrobe,stance=attack>0?'attack':run?'walk':'idle';// Game-facing indices already follow RO S,SW,W,NW,N,NE,E,SE.
+// forceLook: draw one frame of another stance of the same appearance (haven-v416, Asura Strike's
+// kneel). The route and the animation clock live on the sprite, so the two stances each keep their
+// own start time: kneeling does not rewind the standing animation the hero returns to.
+function captureWardrobeFrame(spr,dir,run,attack,now=performance.now(),forceLook=null){const sk=spr.userData.wardrobe,stance=attack>0?'attack':run?'walk':'idle';// Game-facing indices already follow RO S,SW,W,NW,N,NE,E,SE.
  const route=stance+dir;if(route!==sk.route){sk.route=route;sk.start=now}const v=sk.look.base.metadata.actions[route],progress=attack>0?Math.max(0,Math.min(1,1-attack)):null,ms=now-sk.start,i=PGWardrobe.animationKey(sk.look,stance,dir,ms,progress,now),glow=milestone(REFINE_GLOWS,S?.eq?.weapon?.r||0),paint=route+':'+i+(glow?':refine'+glow.at+':'+Math.floor(now/33):'');
+ if(forceLook){const fr='held:'+sk.route+':'+i;if(sk.paint!==fr){PGWardrobe.draw(sk.cv.getContext('2d'),forceLook,'sit',dir,0,0,now);sk.paint=fr;sk.tex.needsUpdate=true;return true}return false}
  if(sk.paint===paint)return false;
  if(sk.trailRoute!==route||sk.trailTier!==glow?.at){sk.refineTrails=[];sk.trailRoute=route;sk.trailTier=glow?.at}
  let weaponIndex=0;const effect=glow?(ctx,image,p,phase)=>{const trail=sk.refineTrails[weaponIndex]||(sk.refineTrails[weaponIndex]={points:[],progress:null});drawNativeWeaponGlow(ctx,image,p,phase,glow,trail,progress,now);if(phase==='after')weaponIndex++}:null;

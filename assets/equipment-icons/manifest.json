@@ -120,6 +120,62 @@
       2630,
       2649,
       2644
+    ],
+    "spear": [
+      1401,
+      1407,
+      1410,
+      1413,
+      1415,
+      1420
+    ],
+    "book": [
+      1550,
+      1551,
+      1552,
+      1553,
+      1556,
+      1557
+    ],
+    "knuckle": [
+      1801,
+      1803,
+      1807,
+      1809,
+      1813,
+      1814
+    ],
+    "instrument": [
+      1901,
+      1903,
+      1905,
+      1907,
+      1909,
+      1913
+    ],
+    "whip": [
+      1950,
+      1952,
+      1954,
+      1956,
+      1962,
+      1964
+    ],
+    "shuriken": [
+      13300,
+      13301,
+      13302,
+      13303,
+      13304,
+      13305
+    ],
+    "gun": [
+      13100,
+      13102,
+      13104,
+      13151,
+      13154,
+      13157
     ]
   },
   "assets": [
@@ -620,6 +676,300 @@
       "file": "2649.png",
       "source": "https://static.divine-pride.net/images/items/item/2649.png",
       "sha256": "b48486770f41b5e3f2180c9c31afed42afbf6d60fef073fe0a5cbcd081806591"
+    },
+    {
+      "id": 1401,
+      "file": "1401.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/01fbb476e5315b9e1f2bda4b26696ad2d9bad324",
+      "sha256": "93b683626c59cf61cd349be4003e881b015ce3beedd5a5bea8b2cf276ea7dd35",
+      "note": "Client inventory icon (data/texture/유저인터페이스/item/, item id 1401): BMP converted to PNG, magenta key made transparent, pixels otherwise untouched."
+    },
+    {
+      "id": 1407,
+      "file": "1407.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/664867a5f70d2e5be8ad46e899bdfc38d11bd78b",
+      "sha256": "86f5e2e24fd9304e34266c8c865437caad94ddde685a3ec475cff1078ffb64e8",
+      "note": "Client inventory icon (data/texture/유저인터페이스/item/, item id 1407): BMP converted to PNG, magenta key made transparent, pixels otherwise untouched."
+    },
+    {
+      "id": 1410,
+      "file": "1410.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/715cfdf883e45437f1394941eec956c200e7d94b",
+      "sha256": "b80dd3f89e942fea870d1c05c36ca784666d1fe128a98cdaa41a9aa2fa64378a",
+      "note": "Client inventory icon (data/texture/유저인터페이스/item/, item id 1410): BMP converted to PNG, magenta key made transparent, pixels otherwise untouched."
+    },
+    {
+      "id": 1413,
+      "file": "1413.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/6ea23647fde3d7b30a08fad32c92095c612562a5",
+      "sha256": "14618d90d417c07c6372eb461583cfdd72c897b7643ea4dc45c4aae94793e08f",
+      "note": "Client inventory icon (data/texture/유저인터페이스/item/, item id 1413): BMP converted to PNG, magenta key made transparent, pixels otherwise untouched."
+    },
+    {
+      "id": 1415,
+      "file": "1415.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/15b85500159ea971211a7d4884be156f6d426d91",
+      "sha256": "76df8f85d0c47e28fa64b64ba0f1c621f7991d324834bcb2c340f936be8c92c9",
+      "note": "Client inventory icon (data/texture/유저인터페이스/item/, item id 1415): BMP converted to PNG, magenta key made transparent, pixels otherwise untouched."
+    },
+    {
+      "id": 1420,
+      "file": "1420.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/844039af1c712d288a14ddc93bb5a1aa866f67d5",
+      "sha256": "bf8ca89539086f7fcb36fc1696af808770191402a07b181b4cd7e37f0f127aa4",
+      "note": "Client inventory icon (data/texture/유저인터페이스/item/, item id 1420): BMP converted to PNG, magenta key made transparent, pixels otherwise untouched."
+    },
+    {
+      "id": 1550,
+      "file": "1550.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/94414e5dc480cbcd67ed56e9d161a288622ef76b",
+      "sha256": "1779ae1b89d467a33c18cc2b75edcbf3382acc30fecfc26d3c47f2f5950d70df",
+      "note": "Client inventory icon (data/texture/유저인터페이스/item/, item id 1550): BMP converted to PNG, magenta key made transparent, pixels otherwise untouched."
+    },
+    {
+      "id": 1551,
+      "file": "1551.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/de8d0570b0feb62ee4458d9e01053a19f3d2b5f1",
+      "sha256": "97f1aef21b7212a7d4aa97b98b580810d991a3aab366cc8a68047fdc8b9c47f9",
+      "note": "Client inventory icon (data/texture/유저인터페이스/item/, item id 1551): BMP converted to PNG, magenta key made transparent, pixels otherwise untouched."
+    },
+    {
+      "id": 1552,
+      "file": "1552.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/869e39989dd2c4ea8bff5621cfc0f66e5fd1db57",
+      "sha256": "e5a32b32efb7b61b8e907763aba61131ac7eb2447c3fd4235b9267ad12413d84",
+      "note": "Client inventory icon (data/texture/유저인터페이스/item/, item id 1552): BMP converted to PNG, magenta key made transparent, pixels otherwise untouched."
+    },
+    {
+      "id": 1553,
+      "file": "1553.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/3e71e6548f5271b9c21d5a71f7058097d0247d14",
+      "sha256": "26f8a7dc13dd39f28bf351dd385c0c88b849f0f7f75e2a430f3e59045d7f9fd3",
+      "note": "Client inventory icon (data/texture/유저인터페이스/item/, item id 1553): BMP converted to PNG, magenta key made transparent, pixels otherwise untouched."
+    },
+    {
+      "id": 1556,
+      "file": "1556.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/23bd65ce78fdbca7546f31da2fcd33e30c880205",
+      "sha256": "6d622b8c43c5a8fe99a01b6e66b43cde634b03a48e5ff258ee4e8482236fd2e5",
+      "note": "Client inventory icon (data/texture/유저인터페이스/item/, item id 1556): BMP converted to PNG, magenta key made transparent, pixels otherwise untouched."
+    },
+    {
+      "id": 1557,
+      "file": "1557.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/b9b6a5fc74c26935a22543da70ef871f54c7fc0f",
+      "sha256": "b7c64f668da146a8ebb7acdbcb6c0e2a1436e66183b9e6f1324a4c0cd448c6a1",
+      "note": "Client inventory icon (data/texture/유저인터페이스/item/, item id 1557): BMP converted to PNG, magenta key made transparent, pixels otherwise untouched."
+    },
+    {
+      "id": 1801,
+      "file": "1801.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/8d6f686a7786ecd45f19338ac635115a9660b3ca",
+      "sha256": "f608e76008c918ffb0dddf74a80243a3020d8fcdc384654ecea43608722abf10",
+      "note": "Client inventory icon (data/texture/유저인터페이스/item/, item id 1801): BMP converted to PNG, magenta key made transparent, pixels otherwise untouched."
+    },
+    {
+      "id": 1803,
+      "file": "1803.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/dd904c4e6c7228890d986814869aca330bd731c0",
+      "sha256": "4d7b748847a91b364bba86a56149bbd5be165356e9f595b788118db725f45a9a",
+      "note": "Client inventory icon (data/texture/유저인터페이스/item/, item id 1803): BMP converted to PNG, magenta key made transparent, pixels otherwise untouched."
+    },
+    {
+      "id": 1807,
+      "file": "1807.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/5f159550a065db1a29a9106ff683d57e8c355ba8",
+      "sha256": "fb5cf4cfd52236bb486b01faa8fb0261225504820bc5d3d3cb99a7071bf8e4a9",
+      "note": "Client inventory icon (data/texture/유저인터페이스/item/, item id 1807): BMP converted to PNG, magenta key made transparent, pixels otherwise untouched."
+    },
+    {
+      "id": 1809,
+      "file": "1809.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/0307b16c8cb68f5b88fe2b2ccefad46bf8bd4390",
+      "sha256": "bec3de0b1bab40e1c2f0fd2e9eb80b744f51855dfa9a6ad4e188fcbefcf110ee",
+      "note": "Client inventory icon (data/texture/유저인터페이스/item/, item id 1809): BMP converted to PNG, magenta key made transparent, pixels otherwise untouched."
+    },
+    {
+      "id": 1813,
+      "file": "1813.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/b95468e0bdbab02bdab08fd93c80afaa03c70af0",
+      "sha256": "8520d3f28af1c26e80c25b771d17c39a00329cb6e39c9986e9346936fdcb6dcd",
+      "note": "Client inventory icon (data/texture/유저인터페이스/item/, item id 1813): BMP converted to PNG, magenta key made transparent, pixels otherwise untouched."
+    },
+    {
+      "id": 1814,
+      "file": "1814.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/ab5f9cadc2b7e88689ecf9a341bb7d12bbd5800c",
+      "sha256": "ecc1abe0ec82481fe72419ccd167be8781e2375fa282e44c19f361930b7a9b53",
+      "note": "Client inventory icon (data/texture/유저인터페이스/item/, item id 1814): BMP converted to PNG, magenta key made transparent, pixels otherwise untouched."
+    },
+    {
+      "id": 1901,
+      "file": "1901.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/e8b0f7b1d1eeac2ac540dbb390c4913a8004c897",
+      "sha256": "f8cbe31130d2f212f6a80e8e087819d1b8d9025eb70f86f734bb450873f71d75",
+      "note": "Client inventory icon (data/texture/유저인터페이스/item/, item id 1901): BMP converted to PNG, magenta key made transparent, pixels otherwise untouched."
+    },
+    {
+      "id": 1903,
+      "file": "1903.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/8c7e7b370bfcbd0037621be8de54e45152c51d97",
+      "sha256": "d34411e1110fc78aeb90959c2eaf04f11e222ffc194566300d1b0ae291af069d",
+      "note": "Client inventory icon (data/texture/유저인터페이스/item/, item id 1903): BMP converted to PNG, magenta key made transparent, pixels otherwise untouched."
+    },
+    {
+      "id": 1905,
+      "file": "1905.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/7410e385568d91e28ecfbf8db385abff7571249d",
+      "sha256": "d3de79f114fea9bed939da11d13dd09d69e331c51e16a2357544baf6fbe4547a",
+      "note": "Client inventory icon (data/texture/유저인터페이스/item/, item id 1905): BMP converted to PNG, magenta key made transparent, pixels otherwise untouched."
+    },
+    {
+      "id": 1907,
+      "file": "1907.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/9d7a53da4baf92d6bc52e9eb6017ec9b68bd1f50",
+      "sha256": "a703738af001ed9c5095195ea2d08b508ab2c41e6d01e650f9587bffb3bd616e",
+      "note": "Client inventory icon (data/texture/유저인터페이스/item/, item id 1907): BMP converted to PNG, magenta key made transparent, pixels otherwise untouched."
+    },
+    {
+      "id": 1909,
+      "file": "1909.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/2e9f35e5eb1bb7cb6eac90dbd3db02fc2f604198",
+      "sha256": "2546d62fc040cbc970d59ab07a5ea91743e0b6bb760b229bd82dc95436d75430",
+      "note": "Client inventory icon (data/texture/유저인터페이스/item/, item id 1909): BMP converted to PNG, magenta key made transparent, pixels otherwise untouched."
+    },
+    {
+      "id": 1913,
+      "file": "1913.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/1ff04dba145171c4d969cde957cd7a6ba1eb5e32",
+      "sha256": "1514ea4f18f3b7ac41fe8dd9ec1c4c9ca67b9e0ea2e3ea2a41ab8c0c6061ad3b",
+      "note": "Client inventory icon (data/texture/유저인터페이스/item/, item id 1913): BMP converted to PNG, magenta key made transparent, pixels otherwise untouched."
+    },
+    {
+      "id": 1950,
+      "file": "1950.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/ef0917d55ae4a5b9f2227de5a67c1829ff328375",
+      "sha256": "dfdfc970336bdcb683c4732622f2f09b9818385b692106d0cf55fa2efec0ef69",
+      "note": "Client inventory icon (data/texture/유저인터페이스/item/, item id 1950): BMP converted to PNG, magenta key made transparent, pixels otherwise untouched."
+    },
+    {
+      "id": 1952,
+      "file": "1952.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/acde08b133514bf9686a62ecdc58bd7ee2fc8f4e",
+      "sha256": "bb19f18e645fc486758b6a509762c23bf504665041ed61a28e67a4ec63f6da2d",
+      "note": "Client inventory icon (data/texture/유저인터페이스/item/, item id 1952): BMP converted to PNG, magenta key made transparent, pixels otherwise untouched."
+    },
+    {
+      "id": 1954,
+      "file": "1954.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/b4e4e75f7a766a3124aa4efa62dcc913116eea15",
+      "sha256": "e4c528f08b54a33ce6bc819f68507e3fb71b4768103746dbb95c51508a576e53",
+      "note": "Client inventory icon (data/texture/유저인터페이스/item/, item id 1954): BMP converted to PNG, magenta key made transparent, pixels otherwise untouched."
+    },
+    {
+      "id": 1956,
+      "file": "1956.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/1714d093b489ffab4a86c163a8a4f3e81890e633",
+      "sha256": "d24ea54e73efc95e044c7ec8dda13be41739e1fb8d4f76f5d51a145c2ad1b51b",
+      "note": "Client inventory icon (data/texture/유저인터페이스/item/, item id 1956): BMP converted to PNG, magenta key made transparent, pixels otherwise untouched."
+    },
+    {
+      "id": 1962,
+      "file": "1962.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/1f0c4e6b85cee987ca51458546438995fb9b8a04",
+      "sha256": "dcb64dac43335745eb39b22320c6f0334529bf52a71b150b21e9da73777efc9e",
+      "note": "Client inventory icon (data/texture/유저인터페이스/item/, item id 1962): BMP converted to PNG, magenta key made transparent, pixels otherwise untouched."
+    },
+    {
+      "id": 1964,
+      "file": "1964.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/1b622797862f374f41703ec8ffd7b061b1e53522",
+      "sha256": "5e6961ad0c603d2d6ace5ae43dc68c2ca3d5a65606a0187ad33ae9ca86cc8406",
+      "note": "Client inventory icon (data/texture/유저인터페이스/item/, item id 1964): BMP converted to PNG, magenta key made transparent, pixels otherwise untouched."
+    },
+    {
+      "id": 13300,
+      "file": "13300.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/17070c5bbc968f40d2802c1982b060eea9f2e8ec",
+      "sha256": "1392678d7f8bc700f642df72afa574fab41a71231fad6c2e351d3b927b81e3d6",
+      "note": "Client inventory icon (data/texture/유저인터페이스/item/, item id 13300): BMP converted to PNG, magenta key made transparent, pixels otherwise untouched."
+    },
+    {
+      "id": 13301,
+      "file": "13301.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/d0f35f6e6e3f30fc3429a17d7caaa8282b2a0c4b",
+      "sha256": "4c8714673436c0b041597e0557576b40f63b74dbf7fdb21ba13efd70ff9b6892",
+      "note": "Client inventory icon (data/texture/유저인터페이스/item/, item id 13301): BMP converted to PNG, magenta key made transparent, pixels otherwise untouched."
+    },
+    {
+      "id": 13302,
+      "file": "13302.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/d0f35f6e6e3f30fc3429a17d7caaa8282b2a0c4b",
+      "sha256": "4c8714673436c0b041597e0557576b40f63b74dbf7fdb21ba13efd70ff9b6892",
+      "note": "Client inventory icon (data/texture/유저인터페이스/item/, item id 13302): BMP converted to PNG, magenta key made transparent, pixels otherwise untouched."
+    },
+    {
+      "id": 13303,
+      "file": "13303.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/7e077e5e7c3e1377ac1fdc950349341ad08f2eca",
+      "sha256": "ca4bec0e77df72e9576fe99ac219e3ebb791c79dd8e9e0bc641cb3691286fabf",
+      "note": "Client inventory icon (data/texture/유저인터페이스/item/, item id 13303): BMP converted to PNG, magenta key made transparent, pixels otherwise untouched."
+    },
+    {
+      "id": 13304,
+      "file": "13304.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/9f423c2f4aa414c78452facffd8811f2c6858278",
+      "sha256": "0539c579504e48792eb264657c06449053b1b49933c4d8468f632ee1f6a4cc2c",
+      "note": "Client inventory icon (data/texture/유저인터페이스/item/, item id 13304): BMP converted to PNG, magenta key made transparent, pixels otherwise untouched."
+    },
+    {
+      "id": 13305,
+      "file": "13305.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/d0f35f6e6e3f30fc3429a17d7caaa8282b2a0c4b",
+      "sha256": "4c8714673436c0b041597e0557576b40f63b74dbf7fdb21ba13efd70ff9b6892",
+      "note": "Client inventory icon (data/texture/유저인터페이스/item/, item id 13305): BMP converted to PNG, magenta key made transparent, pixels otherwise untouched."
+    },
+    {
+      "id": 13100,
+      "file": "13100.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/0192d77213547c020272dfe724190d009ec58ce7",
+      "sha256": "177980e4e9b77d8d8a9d1450dda9d52531a06156e5be06e55bb3d1e8e34f8edc",
+      "note": "Client inventory icon (data/texture/유저인터페이스/item/, item id 13100): BMP converted to PNG, magenta key made transparent, pixels otherwise untouched."
+    },
+    {
+      "id": 13102,
+      "file": "13102.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/2878b590d19316b5b4d0204871dce67ccad13a2c",
+      "sha256": "b172efe88fe0052ea6cf879bbad64225e606d58ae979b45c760b9f8faad7451d",
+      "note": "Client inventory icon (data/texture/유저인터페이스/item/, item id 13102): BMP converted to PNG, magenta key made transparent, pixels otherwise untouched."
+    },
+    {
+      "id": 13104,
+      "file": "13104.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/81a8b5438c56d8f6bcc423bc804557677594d0dc",
+      "sha256": "febb93aea56775c653b5d45f6e02655a15e9f45919bfce03243d2dfdfa9135cc",
+      "note": "Client inventory icon (data/texture/유저인터페이스/item/, item id 13104): BMP converted to PNG, magenta key made transparent, pixels otherwise untouched."
+    },
+    {
+      "id": 13151,
+      "file": "13151.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/57692c446b306b6071fa14261d6cd2f85a46b6d3",
+      "sha256": "32288f175510cb31540efd1e1b9ed391c3cca3799184f404573255704ddca189",
+      "note": "Client inventory icon (data/texture/유저인터페이스/item/, item id 13151): BMP converted to PNG, magenta key made transparent, pixels otherwise untouched."
+    },
+    {
+      "id": 13154,
+      "file": "13154.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/b50a9ec620e3ef7b959e36b42690f5adfb57eb76",
+      "sha256": "683124396022c1106ef9622bdc16e67efaf5d8013da37cf2d98f7b7124aa0264",
+      "note": "Client inventory icon (data/texture/유저인터페이스/item/, item id 13154): BMP converted to PNG, magenta key made transparent, pixels otherwise untouched."
+    },
+    {
+      "id": 13157,
+      "file": "13157.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/a3587800e34194eabcfb0c5a051766b4462e4a4e",
+      "sha256": "dc39521cd86e5c7c20b8617307f4e6b7d0a8123cb655afe7ccf624b5f71af737",
+      "note": "Client inventory icon (data/texture/유저인터페이스/item/, item id 13157): BMP converted to PNG, magenta key made transparent, pixels otherwise untouched."
     }
   ]
 }

@@ -28,7 +28,7 @@ const ev=code=>vm.runInContext(code,box);
 assert.equal(ev('PGAfterglowAnimations.catalog.length'),111);
 // Overdrive covers all 105 ordinary/fourth-job effects and the six Ascension
 // signatures through the same lifecycle.
-assert.equal(ev('SKILLS.filter(s=>s.type!=="pas"&&!s.ascensionOnly).every(s=>PGSkillAfterglow.has(s.id))'),true,'missing ordinary game skill');
+assert.equal(ev('SKILLS.filter(s=>s.type!=="pas"&&!s.ascensionOnly).every(s=>PGSkillAfterglow.has(s.id)||typeof SKILLSX!=="undefined"&&SKILLSX.includes(s)&&PGSkillAfterglow.has(s.fx))'),true,'missing ordinary game skill');
 assert.equal(ev('PGSkillAfterglow.has("concept-venom")'),false);
 assert.equal(ev('SKILLS.filter(s=>s.type==="pas").some(s=>PGSkillAfterglow.has(s.id))'),false);
 for(const id of ev('PGAfterglowAnimations.catalog.map(f=>f.id)')){

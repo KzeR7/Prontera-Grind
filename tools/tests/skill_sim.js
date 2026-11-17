@@ -71,7 +71,7 @@ const fakeThree={RingGeometry:FakeGeometry,TorusGeometry:FakeGeometry,Icosahedro
   BoxGeometry:FakeGeometry,CircleGeometry:FakeGeometry,PlaneGeometry:FakePlaneGeometry,MeshBasicMaterial:FakeMaterial,LineBasicMaterial:FakeMaterial,
   CanvasTexture:FakeCanvasTexture,LinearFilter:1006,NormalBlending:1,
   Mesh:FakeMesh,Line:FakeLine,Group:FakeObject,BufferGeometry:FakeBufferGeometry,Vector3:FakeVec3,DoubleSide:2,AdditiveBlending:3};
-const vfxBox={SKILLS:K.SKILLS,SKILLS4:K.run('SKILLS4'),FOURTH_JOBS_LIVE:K.run('FOURTH_JOBS_LIVE'),simVisualsOff:()=>false,THREE:fakeThree,removed:[],scene:{add(){},remove(o){vfxBox.removed.push(o)}},cam:{quaternion:{}},pl:{x:0,z:0},cl:(v,a,b)=>Math.max(a,Math.min(b,v)),
+const vfxBox={SKILLS:K.SKILLS,SKILLS4:K.run('SKILLS4'),SKILLSX:K.run('SKILLSX'),FOURTH_JOBS_LIVE:K.run('FOURTH_JOBS_LIVE'),simVisualsOff:()=>false,THREE:fakeThree,removed:[],scene:{add(){},remove(o){vfxBox.removed.push(o)}},cam:{quaternion:{}},pl:{x:0,z:0},cl:(v,a,b)=>Math.max(a,Math.min(b,v)),
   document:{createElement:t=>t==='canvas'?fakeCanvas():{}},
   skillFx:[],skillState:()=>({fields:[]}),SKILL_VFX:JSON.parse(JSON.stringify(K.SKILL_VFX))};
 vm.createContext(vfxBox);
@@ -154,7 +154,7 @@ t('every skill id is unique (a duplicate would strand spent points)', () => {
 });
 
 t('magical class skills route through MATK, while physical classes remain ATK-based', () => {
-  const magicLines = new Set(['Mage','Wizard','High Wizard','Acolyte','Priest','High Priest','Warlock','Arch Bishop']);
+  const magicLines = new Set(['Mage','Wizard','High Wizard','Acolyte','Priest','High Priest','Warlock','Arch Bishop','Sage','Scholar','Sorcerer']);
   for (const s of K.SKILLS.filter(x=>x.type==='act')) assert.strictEqual(!!s.magic,magicLines.has(s.from),s.n+' has the wrong damage stat');
   for (const id of ['fire','nap','storm','holy','magnus','judex','tundead']) assert.ok(byId(id).magic,id+' should deal MATK damage');
   for (const id of ['bash','dstr','mammo','env']) assert.ok(!byId(id).magic,id+' should deal physical ATK damage');
@@ -553,10 +553,13 @@ t('every job line has skills to spend points on', () => {
   }
 });
 
+const SOLO_LINES = new Set(['Ninja', 'Kagerou & Oboro', 'Gunslinger', 'Rebellion']);
 t('every job line has the same number of its own skills', () => {
   const byTier = {};
   for (const [name, c] of Object.entries(K.CLASSES)) {
     if (name === 'Novice') continue;
+    // haven-v411: Ninja and Gunslinger lines have two jobs instead of four, so each job carries a larger tree.
+    if (SOLO_LINES.has(name)) continue;
     const n = K.SKILLS.filter(s => s.from === name).length;
     (byTier[c.tier] = byTier[c.tier] || new Set()).add(n);
   }
@@ -577,9 +580,11 @@ t('a maxed job level fits its data-derived tree without exposed overflow', () =>
     // the flat per-level cost, less the one free level of First Aid every line inherits
     const need = reach.reduce((a, s) => a + 1 * s.max, 0) - 1;
     const earned = line.reduce((a, n) => a + (K.CLASSES[n].mj - 1), 0);
-    rows.push([name, c.tier, need, earned]);
     assert.ok(need <= earned,
       `${name} is ${need - earned} points short: the tree costs ${need} and a maxed line earns ${earned}`);
+    // haven-v410: the two Novice-born lines reach tier 4 in two steps, so their tree is shorter by design.
+    if (line.length < c.tier + 1 || SOLO_LINES.has(name)) continue;
+    rows.push([name, c.tier, need, earned]);
   }
   const byTier = {};
   for (const [name, tier, need, earned] of rows) {

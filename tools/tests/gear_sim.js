@@ -103,6 +103,8 @@ console.log('gear: catalogue, per-map relevance, drop mix, slot chooser\n');
 const WEP = ['sword', 'dagger', 'katar', 'staff', 'bow', 'axe', 'mace'];
 
 // ---- 1. the catalogue itself -------------------------------------------------
+// haven-v409: an expanded-roster family is the kin of a shipped one and drops wherever its kin drops (kinDrop).
+const KIN={spear:'sword',book:'staff',knuckle:'mace',instrument:'bow',whip:'bow',shuriken:'dagger',gun:'bow'};
 t('ten maps, four job sections each, all of them populated', () => {
   assert.strictEqual(G.MAPS.length, 12, 'map count');
   assert.strictEqual(G.GEAR.length, 10, 'gear set count - one per map');
@@ -194,7 +196,7 @@ t('mid/endgame stages route second- and third-job equipment as requested',()=>{
     for(const slot of ['armor','head','off','leg','acc'])assert.ok(pool.some(x=>x.k===slot),`${G.MAPS[m].n} Stage ${l} has no ${slot} drop`);
     for(const [cls,c] of Object.entries(G.CLASSES)){
       const gate=G.secField(m,l);
-      if(G.classTierOf(cls)>=gate)assert.ok(c.wt.some(wt=>types.has(wt)),`${G.MAPS[m].n} Stage ${l} has no usable weapon for ${cls}`);
+      if(G.classTierOf(cls)>=gate)assert.ok(c.wt.some(wt=>types.has(KIN[wt]||wt)),`${G.MAPS[m].n} Stage ${l} has no usable weapon for ${cls}`);
     }
   }
 });
@@ -270,7 +272,7 @@ t('a themed map serves its own line in every section', () => {
 t('the type a line can actually use is never missing from its map', () => {
   G.MAPS.forEach((mp, m) => {
     const want = new Set((MAP_LINES[m]||MAP_LINES[9]).flatMap(wtsOf)), have = new Set(mp.gear.flatMap((sg, sec) => typesIn(mp, sec)));
-    want.forEach(k => assert.ok(have.has(k), mp.n + ' never drops a ' + k + ', which its classes train in'));
+    want.forEach(k => assert.ok(have.has(KIN[k]||k), mp.n + ' never drops a ' + k + ', which its classes train in'));
   });
 });
 
@@ -289,7 +291,7 @@ t('every active late-map gear tier offers a weapon for every class',()=>{
     const have=typesIn(G.MAPS[m],sec).sort();
     assert.deepStrictEqual(have,types,`${G.MAPS[m].n} section ${sec} must carry all seven weapon families`);
     for(const [cls,c] of Object.entries(G.CLASSES))
-      assert.ok(c.wt.some(wt=>have.includes(wt)),`${G.MAPS[m].n} section ${sec} has no weapon for ${cls}`);
+      assert.ok(c.wt.some(wt=>have.includes(KIN[wt]||wt)),`${G.MAPS[m].n} section ${sec} has no weapon for ${cls}`);
   }
 });
 

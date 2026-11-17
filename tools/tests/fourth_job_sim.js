@@ -70,8 +70,9 @@ console.log('dark launch: the live roster is unchanged\n');
     build: BUILD,
     hasRuneKnight: !!CLASSES['Rune Knight'],
   })`);
-  assert.equal(r.classes, 25, 'the live game still has 19 classes');
-  assert.equal(r.fourth, 6, 'no 4th-tier class is live');
+  // haven-v408: 25 shipped classes plus the 20 of the expanded roster (6 of them fourth jobs).
+  assert.equal(r.classes, 47, 'the live game has 25 shipped and 22 expanded classes');
+  assert.equal(r.fourth, 14, 'six shipped and eight expanded fourth jobs are live');
   assert.equal(r.hasRuneKnight, true, 'Rune Knight is not in the live roster');
   assert.equal(r.joff, '0,9,49,98', 'the live pacing table is unchanged');
   assert.equal(r.tree, 1, 'the live Jobs tab defaults to the full lineage');
@@ -86,14 +87,16 @@ console.log('4th jobs (flag on): catalogue and tier ladder\n');
 test('six 4th-tier classes exist under the right Transcendent parents', () => `
   const want=${JSON.stringify(FOURTH)};
   return want.every(([n,p])=>CLASSES[n]&&CLASSES[n].par===p&&CLASSES[n].tier===4&&CLASSES[n].mj===50&&CLASSES[n].rj===50)
-    && Object.values(CLASSES).filter(c=>c.tier===4).length===6;`);
+    && Object.values(CLASSES).filter(c=>c.tier===4).length===14
+    && Object.values(CLASSES).filter(c=>c.tier===4&&!EXPANDED_LINE.has(c.n)).length===6;`);
 
 test('parents list the 4th job as their next class', () => `
   return ${JSON.stringify(FOURTH)}.every(([n,p])=>CLASSES[p].kids.includes(n));`);
 
-test('the 3rd-job collection is unchanged: six transcendent classes, none of them 4th jobs', () => `
-  const third=Object.values(CLASSES).filter(c=>c.tier===3).map(c=>c.n).sort().join();
-  return t3Total()===6&&third===['Assassin Cross','High Priest','High Wizard','Lord Knight','Sniper','Whitesmith'].sort().join();`);
+test('the 3rd-job collection is the six shipped transcendent classes plus the six expanded ones, none of them 4th jobs', () => `
+  const third=Object.values(CLASSES).filter(c=>c.tier===3&&!EXPANDED_LINE.has(c.n)).map(c=>c.n).sort().join();
+  const extra=Object.values(CLASSES).filter(c=>c.tier===3&&EXPANDED_LINE.has(c.n)).map(c=>c.n).sort().join();
+  return t3Total()===12&&extra===['Biochemist','Champion','Minstrel & Gypsy','Paladin','Scholar','Stalker'].join()&&third===['Assassin Cross','High Priest','High Wizard','Lord Knight','Sniper','Whitesmith'].sort().join();`);
 
 test('playing a 4th job does not add to the Transcendent collection bonus', () => `
   ${setup('Lord Knight', 50, 150)}

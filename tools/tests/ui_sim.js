@@ -1005,11 +1005,11 @@ t('the character + class panels show the class-collection bonus', () => {
   U.S = mkS('Knight');                          // tier 2 at lv 60: bonus dormant
   let h = U.V.stats();
   assert.ok(h.includes('Class collection'), 'collection progress must be visible on the character panel');
-  assert.ok(h.includes('Class collection: 0/6 transcendent'), 'only transcendent classes count, and the total is data-driven');
+  assert.ok(h.includes('Class collection: 0/12 transcendent'), 'only transcendent classes count, and the total is data-driven');
   assert.ok(h.includes('at Base Lv 100+')&&h.includes('permanent'), 'the v51 rule is spelled out: earned per transcendent class at 100+, kept account-wide');
   U.S.lv = 100; U.S.base['Lord Knight'] = {lv:110};
   h = U.V.stats();
-  assert.ok(h.includes('Class collection: 1/6 transcendent'), 'a played transcendent class joins the count');
+  assert.ok(h.includes('Class collection: 1/12 transcendent'), 'a played transcendent class joins the count');
   assert.ok(h.includes('+1% damage'), 'and pays +1% once at Base Lv 100+');
   assert.ok(!h.includes('activates at'), 'the note disappears once the bonus is live');
   h = U.V.job();
@@ -1324,7 +1324,7 @@ t('the bag shows its 1000-item limit and refuses loot once it is full', () => {
   C.clear();
   C.collect({ card: 1, id: 3, n: 'Poring Card', g: 1, stat: 'str', v: 3 });
   assert.strictEqual(C.S.cards.length, 1, 'cards live in their own bag and are not capped by the item limit');
-  // v411: but that bag has its own ceiling now, and a full one refuses rather than deletes.
+  // v411 (from main): but that bag has its own ceiling now, and a full one refuses rather than deletes.
   C.S.cards = new Array(1000).fill(0).map((_, i) => ({ id: 900 + i, n: 'Card ' + i, v: 1 }));
   C.clear();
   C.collect({ card: 1, id: 4, n: 'Poring Card', g: 1, stat: 'str', v: 3 });

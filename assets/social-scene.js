@@ -2389,7 +2389,11 @@ void main(){
 
  const water=new T.Mesh(new T.CircleGeometry(3.7,48),new T.MeshBasicMaterial({color:0x60c9dc,transparent:true,opacity:.65}));water.rotation.x=-Math.PI/2;water.position.y=.7;scene.add(freeze(water));
  const sprayGeo=new T.BufferGeometry(),spray=new Float32Array(72*3);sprayGeo.setAttribute('position',new T.BufferAttribute(spray,3));const drops=new T.Points(sprayGeo,new T.PointsMaterial({color:0xd6f8ff,size:.14,transparent:true,opacity:.8}));scene.add(drops);
- const allClasses={...PGWardrobe.CLASSES,...PGFourthJobs.CLASSES};const stores=[new PGWardrobe.Store({budget:96*1024*1024}),new PGFourthJobs.Store({budget:64*1024*1024}),new PGWardrobe.Store({base:'assets/social/sitting/',classes:allClasses,budget:48*1024*1024,stances:['sit']})];
+ const expandedJobs=typeof PGExpandedJobs!=='undefined'?PGExpandedJobs.CLASSES:{};
+ const allClasses={...PGWardrobe.CLASSES,...PGFourthJobs.CLASSES,...expandedJobs};const stores=[new PGWardrobe.Store({budget:96*1024*1024}),new PGFourthJobs.Store({budget:64*1024*1024}),new PGWardrobe.Store({base:'assets/social/sitting/',classes:{...PGWardrobe.CLASSES,...PGFourthJobs.CLASSES},budget:48*1024*1024,stances:['sit']})];
+ // haven-v410: expanded-roster players stand and sit in their own bodies (stores 3 and 4).
+ if(typeof PGExpandedJobs!=='undefined')stores.push(new PGExpandedJobs.Store({budget:64*1024*1024}),new PGExpandedJobs.Store({budget:32*1024*1024,stances:['sit']}));
+ const standStore=cls=>Object.hasOwn(expandedJobs,cls)?stores[3]:Object.hasOwn(PGFourthJobs.CLASSES,cls)?stores[1]:stores[0],sitStore=cls=>Object.hasOwn(expandedJobs,cls)?stores[4]:stores[2];
 
  // v266: Two Plaza Hold'em tables along the West Promenade, 12 cushioned stools and 2 native Dealers.
  const woodDark=new T.MeshLambertMaterial({color:0x4b2e1b}),woodRail=new T.MeshLambertMaterial({color:0x633a22}),brassMat=new T.MeshLambertMaterial({color:0xcba458}),velvetRed=new T.MeshLambertMaterial({color:0x8d2630}),velvetBlue=new T.MeshLambertMaterial({color:0x274d78}),feltBaseMat=new T.MeshLambertMaterial({color:0x17583b});
@@ -2427,7 +2431,7 @@ void main(){
  function updateSanctuaryNpcs(now,w,h){
   const ready=!players.size||[...players.values()].some(p=>p.looks.normal);
   for(const n of sanctuaryNpcs){
-   if(ready&&!n.look&&!n.loading&&now>=n.retryAt){const cls=Object.hasOwn(allClasses,n.spec.cls)?n.spec.cls:'Novice';const appearance=PGWardrobe.normalize({version:1,sex:n.spec.sex,heads:{m:n.spec.head,f:n.spec.head},colors:{m:n.spec.color,f:n.spec.color},halo:false,glasses:false,wings:false,headwear:'none',facewear:'none',mouthwear:'none',backwear:'none',outfit:'none'})||PGWardrobe.defaults(n.spec.sex);const store=Object.hasOwn(PGFourthJobs.CLASSES,cls)?stores[1]:stores[0];n.loading=true;store.select('sanctuary-npc-'+n.spec.id,appearance,cls).then(look=>{if(look){n.look=look;n.paint=''}else n.retryAt=performance.now()+3000}).catch(()=>{n.retryAt=performance.now()+3000}).finally(()=>{n.loading=false})}
+   if(ready&&!n.look&&!n.loading&&now>=n.retryAt){const cls=Object.hasOwn(allClasses,n.spec.cls)?n.spec.cls:'Novice';const appearance=PGWardrobe.normalize({version:1,sex:n.spec.sex,heads:{m:n.spec.head,f:n.spec.head},colors:{m:n.spec.color,f:n.spec.color},halo:false,glasses:false,wings:false,headwear:'none',facewear:'none',mouthwear:'none',backwear:'none',outfit:'none'})||PGWardrobe.defaults(n.spec.sex);const store=standStore(cls);n.loading=true;store.select('sanctuary-npc-'+n.spec.id,appearance,cls).then(look=>{if(look){n.look=look;n.paint=''}else n.retryAt=performance.now()+3000}).catch(()=>{n.retryAt=performance.now()+3000}).finally(()=>{n.loading=false})}
    if(n.look){const dir=(Math.round(angle/(Math.PI/4))+8)%8,anim=PGWardrobe.animationKey&&Array.isArray(n.look.pieces)?PGWardrobe.animationKey(n.look,'idle',dir,now,null,now):PGWardrobe.frameIndex(n.look.base.metadata.actions['idle'+dir],now),key=(n.look.key||n.spec.id)+':'+dir+':'+anim;if(key!==n.paint){n.paint=key;PGWardrobe.draw(n.ctx,n.look,'idle',dir,now,null,now,null,null);n.texture.needsUpdate=true;const scale=2.6/n.look.base.figureHeight;n.sprite.scale.set(320*scale,280*scale,1)}}
    head.copy(n.sprite.position);head.y+=3.35;head.project(camera);const hidden=head.z>1||head.z<-1||Math.abs(head.x)>1||Math.abs(head.y)>1||behindGymWall(n.spec.x,2,n.spec.z);n.label.hidden=hidden||!n.look;
    if(!hidden){const x=((head.x+1)*w*.5).toFixed(1)+'px',y=((1-head.y)*h*.5).toFixed(1)+'px';n.label.style.left=x;n.label.style.top=y;n.bubble.style.left=x;n.bubble.style.top=((1-head.y)*h*.5-46).toFixed(1)+'px'}
@@ -2546,7 +2550,7 @@ void main(){
    if(u.look||u.loading||now<u.retryAt)continue;
    const cls=Object.hasOwn(allClasses,u.dSpec.cls)?u.dSpec.cls:'Novice';
    const app=PGWardrobe.normalize(u.dSpec.appearance)||PGWardrobe.defaults('m');
-   const store=Object.hasOwn(PGFourthJobs.CLASSES,cls)?stores[1]:stores[0];
+   const store=standStore(cls);
    u.loading=true;
    store.select('social-npc-'+u.dSpec.id,app,cls).then(look=>{
     if(look){u.look=look;u.paint='';}
@@ -2582,12 +2586,12 @@ void main(){
  function loadLooks(p,now){
   if(p.loading||now<p.retryAt)return;
   const appearance=PGWardrobe.normalize(p.state.look?.appearance)||PGWardrobe.defaults('m'),cls=Object.hasOwn(allClasses,p.state.look?.cls)?p.state.look.cls:'Novice';
-  const seq=++p.seq,key=JSON.stringify([cls,appearance]),normal=Object.hasOwn(PGFourthJobs.CLASSES,cls)?stores[1]:stores[0];p.loading=true;
+  const seq=++p.seq,key=JSON.stringify([cls,appearance]),normal=standStore(cls);p.loading=true;
   const current=()=>players.get(p.state.id)===p&&seq===p.seq;
   // Standing loads first; a pending sitting atlas keeps the standing character visible.
   normal.select('social-'+p.state.id,appearance,cls).then(async look=>{
    if(!current()||!look)return;p.looks.normal=look;if(p.loaded!==key)p.looks.sit=null;p.loaded=key;p.paint='';p.label.dataset.loading='false';p.label.title='';
-   const sit=await stores[2].select('social-'+p.state.id,appearance,cls);if(current()&&sit){p.looks.sit=sit;p.paint=''}
+   const sit=await sitStore(cls).select('social-'+p.state.id,appearance,cls);if(current()&&sit){p.looks.sit=sit;p.paint=''}
   }).catch(e=>{if(current()){p.retryAt=performance.now()+3000;p.label.title='Retrying character download…';console.warn('Social appearance:',e.message)}}).finally(()=>{if(current())p.loading=false});
  }
  // Dir index 0..7 in the plaza's own convention (0 = +z, 2 = -x, 4 = -z, 6 = +x), so anything

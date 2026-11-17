@@ -5,7 +5,7 @@ let n=0;
 const test=(name,fn)=>{ev("Math.random=window.testRandom;S=fresh();S.cls='Guillotine Cross';S.lv=150;S.zeny=1e12;S.ascensionMat=[1000,1000,1000];S.ore={ori:1000,elu:1000}");fn();n++;console.log('ok '+name)};
 try{
  test('all classes and crafted weapon families are available',()=>{
-  assert.equal(ev('Object.values(CLASSES).filter(c=>c.tier===4).length'),6);
+  assert.equal(ev('Object.values(CLASSES).filter(c=>c.tier===4).length'),14);assert.equal(ev('CD4.length'),6);
   assert.ok(ev("ascensionForgePanel().includes('data-ascension-item')"));
   assert.equal(ev("(ascensionForgePanel().match(/data-a=.ascset/g)||[]).length"),6);
  });

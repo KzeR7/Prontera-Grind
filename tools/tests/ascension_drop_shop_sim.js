@@ -7,9 +7,12 @@ const test=(name,fn)=>{ev('S=fresh();Math.random=window.originalRandom');fn();pa
 const data=code=>JSON.parse(ev('JSON.stringify('+code+')'));
 ev('window.originalRandom=Math.random');
 try{
- const MAT=ev('ASC_MAT_CH'),SIG=ev('ASC_SIGIL_CH');
  test('material thresholds on both maps, ordinary enemies and bosses',()=>{
-  for(const map of [10,11])for(const boss of [false,true])for(const [mat,chance] of [[map-10,MAT],[2,boss?1:SIG]]){
+  for(const map of [10,11])for(const boss of [false,true])for(const mat of [map-10,2]){
+   // v415: the two chances are per-monster now (an escort keeps 30% of its roll and the MVP carries
+   // the missing 70%), so the threshold has to come off the live value rather than a constant - but
+   // off the very same monster literal the assertion below rolls against.
+   const chance=ev(`${mat===2?'ascSigilChance':'ascMaterialChance'}({mapIndex:${map},boss:${boss}})`);
    for(const [roll,expected] of [[(chance-1e-8)/100,true],[chance/100,false],[(chance+1e-8)/100,false]]){
     // The two probabilities roll before uid() is called; avoid matching the other material.
     assert.equal(ev(`(()=>{let n=0;Math.random=()=>[${mat===2?.9:roll},${mat===2?roll:.9}][n++]??.5;return ascensionDrops({mapIndex:${map},boss:${boss}}).some(x=>x.ascMat===${mat})})()`),expected);
