@@ -1,0 +1,1491 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prontera-Grind — Class Lineage Window</title>
+<style>
+/* Game's exact Eclipse UI color palette and design tokens */
+:root {
+  --ink: #e8edf4;
+  --panel: #131d29;
+  --edge: #ffffff12;
+  --edge2: #ffffff25;
+  --gold: #d7b77a;
+  --gold-hi: #f5eed7;
+  --e-bg: #101b27;
+  --e-raised: #1b2834;
+  --e-muted: #8a9bab;
+  --e-soft: #d7b77a16;
+  --gold-glow: rgba(215, 183, 122, 0.28);
+  --hp: #5fae77;
+  --sp: #4a88c7;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  color: var(--ink);
+  background: #080d14;
+}
+
+/* ==========================================================================
+   GAME ENVIRONMENT BACKDROP (Field background + in-game HUD + dock)
+   ========================================================================== */
+.game-viewport {
+  width: 100vw;
+  height: 100vh;
+  position: relative;
+  background: url('../assets/ui/eclipse-field.webp') center center / cover no-repeat;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+}
+
+/* In-game HUD Header */
+.game-hud {
+  height: 42px;
+  background: linear-gradient(180deg, rgba(16, 27, 39, 0.95), rgba(16, 27, 39, 0.75));
+  border-bottom: 1px solid var(--edge2);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  font-size: 11px;
+  z-index: 10;
+  backdrop-filter: blur(8px);
+}
+.hud-hero { display: flex; align-items: center; gap: 12px; }
+.hud-name { font-weight: 800; color: #fff; }
+.hud-class { color: var(--gold); font-weight: 600; font-size: 10px; }
+.hud-bars { display: flex; align-items: center; gap: 8px; }
+.hud-bar { width: 90px; height: 7px; background: rgba(0,0,0,0.5); border-radius: 999px; overflow: hidden; border: 1px solid var(--edge); }
+.hud-bar > i { display: block; height: 100%; border-radius: 999px; }
+.hud-farming { display: flex; align-items: center; gap: 6px; color: #4ade80; font-weight: 700; font-size: 11px; }
+.hud-farming-dot { width: 6px; height: 6px; border-radius: 50%; background: #4ade80; box-shadow: 0 0 6px #4ade80; }
+
+/* In-game Bottom Dock */
+.game-dock {
+  height: 52px;
+  background: linear-gradient(0deg, rgba(16, 27, 39, 0.95), rgba(16, 27, 39, 0.8));
+  border-top: 1px solid var(--edge2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  z-index: 10;
+  backdrop-filter: blur(8px);
+}
+.dock-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: var(--e-muted);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 6px 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.dock-btn:hover { color: #fff; background: rgba(255,255,255,0.04); }
+.dock-btn.active {
+  background: var(--e-soft);
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+/* Modal Scrim Backdrop (Simulates `#wins` modal window overlay in game) */
+.modal-scrim {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  background: rgba(4, 8, 14, 0.65);
+  backdrop-filter: blur(4px);
+  z-index: 20;
+}
+
+/* ==========================================================================
+   CLASS LINEAGE WINDOW (In-Game Modal Window · Proportioned Dimensions)
+   ========================================================================== */
+.lineage-window {
+  width: 1060px;
+  max-width: calc(100vw - 28px);
+  height: 610px;
+  max-height: calc(100vh - 90px);
+  background: var(--panel);
+  border: 1px solid var(--gold);
+  border-radius: 10px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.85), 0 0 0 1px var(--e-soft);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* 1. Window Titlebar */
+.win-titlebar {
+  height: 40px;
+  min-height: 40px;
+  padding: 0 18px;
+  background: linear-gradient(180deg, var(--e-raised), var(--panel));
+  border-bottom: 1px solid var(--edge2);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  user-select: none;
+}
+.win-title-left { display: flex; align-items: center; gap: 8px; }
+.win-title-left .gold-sigil { color: var(--gold); font-size: 14px; }
+.win-title-text { font-size: 15px; font-weight: 800; color: #fff; letter-spacing: 0.02em; }
+.win-titlebar-tools { display: flex; align-items: center; gap: 10px; }
+.win-farming-status { font-size: 11px; color: #4ade80; display: flex; align-items: center; gap: 5px; font-weight: 600; }
+.win-tool-btn {
+  background: var(--e-bg);
+  border: 1px solid var(--edge2);
+  color: var(--e-muted);
+  width: 26px;
+  height: 26px;
+  border-radius: 5px;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+}
+.win-tool-btn:hover { border-color: var(--gold); color: #fff; }
+
+/* 2. Class Navigation Tabs Bar (CENTERED · NOVICE AT FRONT · NO SEARCH BAR!) */
+.win-tabs-bar {
+  height: 42px;
+  min-height: 42px;
+  padding: 0 18px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--edge2);
+  display: flex;
+  align-items: center;
+  justify-content: center; /* CENTERED AS REQUESTED! */
+  gap: 7px;
+}
+.tab-btn {
+  padding: 6px 14px;
+  background: var(--e-bg);
+  border: 1px solid var(--edge2);
+  border-radius: 5px;
+  color: var(--e-muted);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+.tab-btn:hover { color: #fff; border-color: var(--gold); }
+.tab-btn.active {
+  background: var(--e-soft);
+  border-color: var(--gold);
+  color: var(--gold);
+  box-shadow: 0 0 8px rgba(215, 183, 122, 0.2);
+}
+.tab-btn .badge-cur {
+  background: var(--gold);
+  color: #0b111a;
+  font-size: 8px;
+  font-weight: 800;
+  padding: 1px 4px;
+  border-radius: 3px;
+  margin-left: 4px;
+}
+
+/* ==========================================================================
+   3. BODY: TREE CANVAS ON LEFT + LONGER INSPECTOR ON RIGHT
+   ========================================================================== */
+.win-body {
+  flex: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Left Tree Canvas (ZERO VERTICAL SCROLLBAR! FITS NICELY!) */
+.tree-canvas {
+  padding: 14px 18px;
+  border-right: 1px solid var(--edge2);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+  overflow: hidden; /* ABSOLUTELY ZERO SCROLLBAR! */
+}
+
+/* Row-by-Row Tree Table Architecture: GUARANTEES T1, T2, T3, T4 ALIGNMENT! */
+.tree-table {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+/* Generic Tier Row: Column 1 is Badge (34px), Column 2 is Content (Flex:1) */
+.tier-row {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
+  gap: 12px;
+  align-items: center; /* PERFECT VERTICAL CENTERING OF T1, T2, T3, T4! */
+  width: 100%;
+}
+
+.tier-badge-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  height: 100%;
+}
+.ruler-tag {
+  font-size: 9px;
+  font-weight: 800;
+  color: var(--gold);
+  background: var(--e-soft);
+  border: 1px solid var(--gold);
+  padding: 2px 4px;
+  border-radius: 4px;
+  width: 28px;
+  text-align: center;
+  box-shadow: 0 0 6px var(--gold-glow);
+  z-index: 2;
+}
+
+/* Subtle continuous vertical spine line connecting ruler tiers */
+.ruler-spine {
+  position: absolute;
+  top: 0; bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 1px;
+  background: var(--edge2);
+  z-index: 1;
+}
+
+/* Content Cells */
+.tier-content-cell {
+  width: 100%;
+}
+.tier-content-cell.center-content {
+  display: flex;
+  justify-content: center;
+}
+.tier-content-cell.dual-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+/* Class Card (Eclipse styling with authentic RO emblems) */
+.class-card {
+  background: linear-gradient(160deg, var(--e-raised), var(--e-bg));
+  border: 1px solid var(--edge2);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+.class-card:hover {
+  border-color: var(--gold);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+.class-card.pick {
+  border-color: var(--gold);
+  background: linear-gradient(160deg, rgba(215, 183, 122, 0.12), var(--e-bg));
+  box-shadow: 0 0 0 1px var(--gold), 0 0 14px var(--gold-glow);
+}
+.class-card.is-current {
+  border-color: #4ade80;
+  box-shadow: 0 0 0 1px #4ade80, 0 0 12px rgba(74, 222, 128, 0.25);
+}
+
+/* Compact Card Geometry for Zero-Scroll */
+.root-card {
+  width: 250px;
+  padding: 8px 12px;
+}
+.branch-card {
+  padding: 8px 12px;
+}
+
+.card-header-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  font-size: 8px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--e-muted);
+  margin-bottom: 2px;
+}
+.card-header-line .level-badge {
+  color: var(--gold);
+  background: rgba(215, 183, 122, 0.12);
+  padding: 1px 4px;
+  border-radius: 3px;
+  border: 1px solid rgba(215, 183, 122, 0.3);
+}
+
+/* Authentic Ragnarok Online Class Icon */
+.class-ro-icon {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  margin: 1px 0 2px;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.6));
+}
+
+.card-name {
+  font-size: 13.5px;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1.15;
+}
+.card-subtext {
+  font-size: 9px;
+  color: var(--e-muted);
+  margin-top: 1px;
+}
+.card-subtext strong { color: var(--gold); }
+
+/* Conduit Connector Lines (Gold!) */
+.conduit-row {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
+  gap: 12px;
+  height: 18px;
+}
+.conduit-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  width: 100%;
+}
+.conduit-stem-top {
+  width: 2px;
+  height: 6px;
+  background: var(--gold);
+  box-shadow: 0 0 4px var(--gold-glow);
+}
+.conduit-dual-hanger {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  width: 100%;
+  height: 12px;
+}
+.c-arm-left {
+  width: 50%;
+  margin-left: 50%;
+  height: 100%;
+  border-top: 2px solid var(--gold);
+  border-left: 2px solid var(--gold);
+  box-shadow: -2px -2px 4px var(--gold-glow);
+}
+.c-arm-right {
+  width: 50%;
+  margin-right: 50%;
+  height: 100%;
+  border-top: 2px solid var(--gold);
+  border-right: 2px solid var(--gold);
+  box-shadow: 2px -2px 4px var(--gold-glow);
+}
+
+/* Branch Headers Row */
+.branch-hdrs-row {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
+  gap: 12px;
+}
+.branch-hdrs-cell {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  width: 100%;
+}
+.branch-hdr {
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gold);
+  background: var(--e-bg);
+  border: 1px solid var(--edge2);
+  padding: 3px 8px;
+  border-radius: 4px;
+  text-align: center;
+}
+
+/* Vertical Step Line Rows (Between T2->T3 and T3->T4) */
+.step-line-row {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
+  gap: 12px;
+  height: 12px;
+}
+.step-lines-cell {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  width: 100%;
+}
+.step-v-line {
+  width: 2px;
+  height: 100%;
+  background: var(--gold);
+  margin: 0 auto;
+  box-shadow: 0 0 4px var(--gold-glow);
+}
+
+/* ==========================================================================
+   NOVICE TAB HUB (ORIGIN NODE + 7 BRANCHES + REBIRTH MECHANIC)
+   ========================================================================== */
+.novice-hub-view {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+/* Novice Origin Top Row */
+.novice-origin-row {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+/* 7 Branching Conduits Fork */
+.novice-fork-line {
+  width: 2px;
+  height: 10px;
+  background: var(--gold);
+  box-shadow: 0 0 4px var(--gold-glow);
+}
+.novice-fork-bus {
+  width: 92%;
+  height: 8px;
+  border-top: 2px solid var(--gold);
+  border-left: 2px solid var(--gold);
+  border-right: 2px solid var(--gold);
+  box-shadow: 0 -2px 6px var(--gold-glow);
+}
+
+/* 7 First Job Options Grid */
+.novice-branches-label {
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 6px;
+  text-align: center;
+}
+.novice-firstjobs-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  width: 100%;
+}
+.firstjob-card {
+  background: linear-gradient(160deg, var(--e-raised), var(--e-bg));
+  border: 1px solid var(--edge2);
+  border-radius: 6px;
+  padding: 6px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.firstjob-card:hover {
+  border-color: var(--gold);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+}
+.firstjob-card.is-active-line {
+  border-color: var(--gold);
+  background: linear-gradient(160deg, rgba(215, 183, 122, 0.12), var(--e-bg));
+}
+.firstjob-card img {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  margin-bottom: 2px;
+}
+.firstjob-card strong {
+  font-size: 11px;
+  font-weight: 800;
+  color: #fff;
+}
+.firstjob-card small {
+  font-size: 8.5px;
+  color: var(--e-muted);
+}
+.firstjob-card .status-pill {
+  font-size: 7.5px;
+  font-weight: 800;
+  padding: 1px 4px;
+  border-radius: 2px;
+  margin-top: 3px;
+  text-transform: uppercase;
+}
+.firstjob-card .status-pill.played {
+  background: rgba(215, 183, 122, 0.15);
+  color: var(--gold);
+  border: 1px solid rgba(215, 183, 122, 0.35);
+}
+.firstjob-card .status-pill.avail {
+  background: rgba(74, 222, 128, 0.12);
+  color: #4ade80;
+  border: 1px solid rgba(74, 222, 128, 0.3);
+}
+
+/* REBIRTH & STARTING OVER CALLOUT BANNER (Matching image-5.png) */
+.rebirth-panel {
+  background: linear-gradient(180deg, rgba(19, 29, 41, 0.95), var(--e-bg));
+  border: 1px solid var(--gold);
+  border-radius: 6px;
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  box-shadow: inset 0 0 12px rgba(215, 183, 122, 0.08);
+}
+.rebirth-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  font-weight: 800;
+  color: var(--gold);
+}
+.rebirth-p {
+  font-size: 10px;
+  color: var(--ink);
+  line-height: 1.45;
+}
+.rebirth-p em {
+  color: var(--gold);
+  font-style: normal;
+  font-weight: 700;
+}
+.rebirth-action-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  margin-top: 2px;
+}
+.rebirth-restart-btn {
+  padding: 6px 14px;
+  background: var(--e-raised);
+  border: 1px solid var(--gold);
+  border-radius: 4px;
+  color: var(--gold);
+  font-size: 10.5px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.rebirth-restart-btn:hover {
+  background: var(--gold);
+  color: #0b111a;
+}
+
+/* ==========================================================================
+   RIGHT INSPECTOR PANEL: LONGER PREVIEW · SWITCH BUTTON BELOW!
+   ========================================================================== */
+.win-inspector {
+  padding: 14px 16px;
+  background: var(--e-bg);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+}
+
+.insp-top-block {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.insp-kicker {
+  font-size: 8.5px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+.insp-header { text-align: left; }
+.insp-header h2 { font-size: 18px; font-weight: 800; color: #fff; line-height: 1.1; }
+.insp-header .status-txt { font-size: 10.5px; color: var(--gold); font-weight: 600; margin-top: 2px; }
+
+/* LONGER CHARACTER SPRITE BOX (Expanded height as requested!) */
+.sprite-display-large {
+  background: radial-gradient(ellipse at center 60%, var(--e-raised), var(--panel) 75%);
+  border: 1px solid var(--edge2);
+  border-radius: 8px;
+  height: 180px; /* Taller, longer character showcase stage! */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+}
+.sprite-pedestal {
+  position: absolute;
+  bottom: 18px;
+  width: 100px;
+  height: 20px;
+  background: radial-gradient(ellipse at center, rgba(215, 183, 122, 0.25), transparent 70%);
+  border-radius: 50%;
+}
+.sprite-art-large {
+  width: 75px;
+  height: 105px;
+  background: url('../assets/ui/eclipse-knight.png') center/contain no-repeat;
+  animation: spriteBounce 2s ease-in-out infinite alternate;
+  z-index: 2;
+}
+@keyframes spriteBounce {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-4px); }
+}
+
+/* Level Summary (Base & Job level only) */
+.levels-summary {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.lv-pill {
+  background: var(--panel);
+  border: 1px solid var(--edge2);
+  border-radius: 5px;
+  padding: 6px 8px;
+  text-align: center;
+}
+.lv-pill small { display: block; font-size: 8px; color: var(--e-muted); text-transform: uppercase; }
+.lv-pill strong { font-size: 14px; font-weight: 700; color: #fff; }
+
+/* Compact Specs List (Weapons, Main stat, Previous class only) */
+.specs-card {
+  background: var(--panel);
+  border: 1px solid var(--edge2);
+  border-radius: 5px;
+  padding: 7px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 10.5px;
+}
+.specs-row { display: flex; justify-content: space-between; align-items: center; }
+.specs-row span { color: var(--e-muted); }
+.specs-row strong { color: var(--ink); }
+
+/* SWITCH CLASS BUTTON BELOW (Moved to bottom of inspector as requested!) */
+.action-switch-btn {
+  width: 100%;
+  padding: 10px;
+  background: var(--gold);
+  border: 1px solid var(--gold);
+  color: #0b111a;
+  font-size: 12px;
+  font-weight: 800;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  margin-top: 4px;
+}
+.action-switch-btn:hover { background: #f3d89d; }
+.action-switch-btn:disabled {
+  background: var(--e-raised);
+  border-color: var(--edge2);
+  color: var(--e-muted);
+  cursor: not-allowed;
+}
+
+/* 4. Window Footer: Class Collection Progress */
+.win-footer {
+  height: 32px;
+  min-height: 32px;
+  padding: 0 18px;
+  background: var(--e-bg);
+  border-top: 1px solid var(--edge2);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 10px;
+}
+.footer-coll { display: flex; align-items: center; gap: 8px; flex: 1; max-width: 500px; }
+.footer-coll-label { color: #fff; font-weight: 700; white-space: nowrap; }
+.footer-bar-wrap { flex: 1; height: 5px; background: var(--panel); border-radius: 999px; overflow: hidden; }
+.footer-bar-fill { width: 85%; height: 100%; background: var(--gold); }
+.footer-reward { color: var(--gold); font-weight: 700; white-space: nowrap; }
+.footer-close-hint { color: var(--e-muted); display: flex; align-items: center; gap: 4px; }
+.kbd-tag { background: var(--panel); border: 1px solid var(--edge2); padding: 0 4px; border-radius: 3px; font-size: 8.5px; }
+
+</style>
+</head>
+<body>
+
+<div class="game-viewport">
+
+  <!-- In-Game HUD Header -->
+  <header class="game-hud">
+    <div class="hud-hero">
+      <span class="hud-name">Player Name: Elara</span>
+      <span class="hud-class">Sorcerer (Lv 99 / 70)</span>
+      <div class="hud-bars">
+        <div class="hud-bar"><i style="width:100%; background:var(--hp);"></i></div>
+        <div class="hud-bar"><i style="width:88%; background:var(--sp);"></i></div>
+      </div>
+      <span style="color:#fcd34d; font-weight:700;">48,250,900 z</span>
+    </div>
+    <div class="hud-farming">
+      <span class="hud-farming-dot"></span>
+      <span>Auto Combat · Prontera Field</span>
+    </div>
+  </header>
+
+  <!-- Modal Scrim Overlay containing the In-Game Window -->
+  <main class="modal-scrim">
+    
+    <!-- CLASS LINEAGE WINDOW -->
+    <div class="lineage-window">
+      
+      <!-- Window Titlebar -->
+      <div class="win-titlebar">
+        <div class="win-title-left">
+          <span class="gold-sigil">❖</span>
+          <span class="win-title-text">Class Lineage</span>
+        </div>
+        <div class="win-titlebar-tools">
+          <span class="win-farming-status">● Farming continues</span>
+          <button class="win-tool-btn" title="Window Settings">⛶</button>
+          <button class="win-tool-btn" title="Close Window">✕</button>
+        </div>
+      </div>
+
+      <!-- Class Navigation Tabs Bar (CENTERED · NOVICE AT FRONT · NO SEARCH!) -->
+      <div class="win-tabs-bar">
+        <button class="tab-btn" id="tabNovice" onclick="selectLine('Novice', this)">Novice</button>
+        <button class="tab-btn active" id="tabSwordman" onclick="selectLine('Swordman', this)">Swordsman</button>
+        <button class="tab-btn" id="tabMage" onclick="selectLine('Mage', this)">Mage <span class="badge-cur">CURRENT</span></button>
+        <button class="tab-btn" id="tabArcher" onclick="selectLine('Archer', this)">Archer</button>
+        <button class="tab-btn" id="tabThief" onclick="selectLine('Thief', this)">Thief</button>
+        <button class="tab-btn" id="tabAcolyte" onclick="selectLine('Acolyte', this)">Acolyte</button>
+        <button class="tab-btn" id="tabMerchant" onclick="selectLine('Merchant', this)">Merchant</button>
+        <button class="tab-btn" id="tabExpanded" onclick="selectLine('expanded', this)">Expanded</button>
+      </div>
+
+      <!-- Body: Tree Canvas on Left + Longer Inspector on Right -->
+      <div class="win-body">
+        
+        <!-- Left Canvas Container -->
+        <div class="tree-canvas" id="canvasContainer">
+          
+          <!-- Standard Class Progression Tree (Default: Swordsman) -->
+          <div class="tree-table" id="standardTreeTable">
+            
+            <!-- TIER 1 ROW (T1 Badge + Centered Root Card) -->
+            <div class="tier-row">
+              <div class="tier-badge-cell">
+                <span class="ruler-tag">T1</span>
+                <div class="ruler-spine"></div>
+              </div>
+              <div class="tier-content-cell center-content">
+                <div class="class-card root-card" id="rootCard" onclick="inspectClass('Swordman')" data-c="Swordman">
+                  <div class="card-header-line">
+                    <span>Tier 1 · Foundation</span>
+                    <span class="level-badge">Job 10</span>
+                  </div>
+                  <img class="class-ro-icon" id="rootIcon" src="ro_icons/icon_jsxq_big_201.png" alt="Swordsman">
+                  <strong class="card-name" id="rootTitle">Swordman</strong>
+                  <div class="card-subtext" id="rootMeta">
+                    <span>Weapons: <strong>Sword</strong></span> · <span>Main: <strong>STR</strong></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- CONDUIT FORK ROW -->
+            <div class="conduit-row">
+              <div class="tier-badge-cell">
+                <div class="ruler-spine"></div>
+              </div>
+              <div class="conduit-cell">
+                <div class="conduit-stem-top"></div>
+                <div class="conduit-dual-hanger">
+                  <div class="c-arm-left"></div>
+                  <div class="c-arm-right"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- BRANCH HEADERS ROW -->
+            <div class="branch-hdrs-row">
+              <div class="tier-badge-cell">
+                <div class="ruler-spine"></div>
+              </div>
+              <div class="branch-hdrs-cell">
+                <div class="branch-hdr" id="b1TitleHdr">Branch 2-1: Knight Path</div>
+                <div class="branch-hdr" id="b2TitleHdr">Branch 2-2: Crusader Path</div>
+              </div>
+            </div>
+
+            <!-- TIER 2 ROW (T2 Badge + Knight & Crusader) -->
+            <div class="tier-row" id="tierRow2">
+              <div class="tier-badge-cell">
+                <span class="ruler-tag">T2</span>
+                <div class="ruler-spine"></div>
+              </div>
+              <div class="tier-content-cell dual-grid" id="tier2Cards">
+                <!-- Knight -->
+                <div class="class-card branch-card" onclick="inspectClass('Knight')" data-c="Knight">
+                  <div class="card-header-line">
+                    <span>Tier 2 · 2nd Job</span>
+                    <span class="level-badge">Job 50</span>
+                  </div>
+                  <img class="class-ro-icon" src="ro_icons/icon_jsxq_big_212.png" alt="Knight">
+                  <strong class="card-name">Knight</strong>
+                  <div class="card-subtext">
+                    <span>Weapons: <strong>Sword</strong></span> · <span>Main: <strong>STR</strong></span>
+                  </div>
+                </div>
+                <!-- Crusader -->
+                <div class="class-card branch-card" onclick="inspectClass('Crusader')" data-c="Crusader">
+                  <div class="card-header-line">
+                    <span>Tier 2 · 2nd Job</span>
+                    <span class="level-badge">Job 50</span>
+                  </div>
+                  <img class="class-ro-icon" src="ro_icons/icon_jsxq_big_222.png" alt="Crusader">
+                  <strong class="card-name">Crusader</strong>
+                  <div class="card-subtext">
+                    <span>Weapons: <strong>Spear, Sword</strong></span> · <span>Main: <strong>STR</strong></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- CONNECTOR LINE ROW T2 -> T3 -->
+            <div class="step-line-row">
+              <div class="tier-badge-cell">
+                <div class="ruler-spine"></div>
+              </div>
+              <div class="step-lines-cell">
+                <div class="step-v-line"></div>
+                <div class="step-v-line"></div>
+              </div>
+            </div>
+
+            <!-- TIER 3 ROW (T3 Badge + Lord Knight & Paladin) -->
+            <div class="tier-row" id="tierRow3">
+              <div class="tier-badge-cell">
+                <span class="ruler-tag">T3</span>
+                <div class="ruler-spine"></div>
+              </div>
+              <div class="tier-content-cell dual-grid" id="tier3Cards">
+                <!-- Lord Knight -->
+                <div class="class-card branch-card pick" onclick="inspectClass('Lord Knight')" data-c="Lord Knight">
+                  <div class="card-header-line">
+                    <span>Tier 3 · Transcendent</span>
+                    <span class="level-badge">Job 70</span>
+                  </div>
+                  <img class="class-ro-icon" src="ro_icons/icon_jsxq_big_213.png" alt="Lord Knight">
+                  <strong class="card-name">Lord Knight</strong>
+                  <div class="card-subtext">
+                    <span>Weapons: <strong>Sword</strong></span> · <span>Main: <strong>STR</strong></span>
+                  </div>
+                </div>
+                <!-- Paladin -->
+                <div class="class-card branch-card" onclick="inspectClass('Paladin')" data-c="Paladin">
+                  <div class="card-header-line">
+                    <span>Tier 3 · Transcendent</span>
+                    <span class="level-badge">Job 70</span>
+                  </div>
+                  <img class="class-ro-icon" src="ro_icons/icon_jsxq_big_223.png" alt="Paladin">
+                  <strong class="card-name">Paladin</strong>
+                  <div class="card-subtext">
+                    <span>Weapons: <strong>Spear, Sword</strong></span> · <span>Main: <strong>STR</strong></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- CONNECTOR LINE ROW T3 -> T4 -->
+            <div class="step-line-row">
+              <div class="tier-badge-cell">
+                <div class="ruler-spine"></div>
+              </div>
+              <div class="step-lines-cell">
+                <div class="step-v-line"></div>
+                <div class="step-v-line"></div>
+              </div>
+            </div>
+
+            <!-- TIER 4 ROW (T4 Badge + Rune Knight & Royal Guard) -->
+            <div class="tier-row" id="tierRow4">
+              <div class="tier-badge-cell">
+                <span class="ruler-tag">T4</span>
+                <div class="ruler-spine"></div>
+              </div>
+              <div class="tier-content-cell dual-grid" id="tier4Cards">
+                <!-- Rune Knight -->
+                <div class="class-card branch-card" onclick="inspectClass('Rune Knight')" data-c="Rune Knight">
+                  <div class="card-header-line">
+                    <span>Tier 4 · Ascension</span>
+                    <span class="level-badge">Base 150</span>
+                  </div>
+                  <img class="class-ro-icon" src="ro_icons/icon_job_js_qslz.png" alt="Rune Knight">
+                  <strong class="card-name">Rune Knight</strong>
+                  <div class="card-subtext">
+                    <span>Weapons: <strong>Sword, Spear</strong></span> · <span>Main: <strong>STR</strong></span>
+                  </div>
+                </div>
+                <!-- Royal Guard -->
+                <div class="class-card branch-card" onclick="inspectClass('Royal Guard')" data-c="Royal Guard">
+                  <div class="card-header-line">
+                    <span>Tier 4 · Ascension</span>
+                    <span class="level-badge">Base 150</span>
+                  </div>
+                  <img class="class-ro-icon" src="ro_icons/icon_job_js_sdszj.png" alt="Royal Guard">
+                  <strong class="card-name">Royal Guard</strong>
+                  <div class="card-subtext">
+                    <span>Weapons: <strong>Spear, Sword</strong></span> · <span>Main: <strong>STR</strong></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Novice Tab Dedicated Hub View (Hidden by default, shown when Novice tab clicked) -->
+          <div class="novice-hub-view" id="noviceHubView" style="display:none;">
+            
+            <!-- Novice Origin Card (T0) -->
+            <div class="novice-origin-row">
+              <div class="class-card root-card" onclick="inspectClass('Novice')" data-c="Novice" style="width:260px;">
+                <div class="card-header-line">
+                  <span>Tier 0 · Universal Origin</span>
+                  <span class="level-badge">Base 25</span>
+                </div>
+                <img class="class-ro-icon" src="ro_icons/icon_jsxq_big_101.png" alt="Novice">
+                <strong class="card-name">Novice</strong>
+                <div class="card-subtext">
+                  <span>Starting Class · <strong>Rebirth Hub</strong></span>
+                </div>
+              </div>
+              <div class="novice-fork-line"></div>
+              <div class="novice-fork-bus"></div>
+            </div>
+
+            <!-- Branches Title -->
+            <div class="novice-branches-label">❖ Choose a 1st Job Class Path to Explore or Advance</div>
+
+            <!-- 7 First Job Options -->
+            <div class="novice-firstjobs-grid">
+              
+              <!-- Swordsman -->
+              <div class="firstjob-card" onclick="jumpToLine('Swordman')">
+                <img src="ro_icons/icon_jsxq_big_201.png" alt="Swordsman">
+                <strong>Swordsman</strong>
+                <small>Melee · Tank</small>
+                <span class="status-pill played">Lv 99 · Played</span>
+              </div>
+
+              <!-- Mage -->
+              <div class="firstjob-card is-active-line" onclick="jumpToLine('Mage')">
+                <img src="ro_icons/icon_jsxq_big_301.png" alt="Mage">
+                <strong>Mage</strong>
+                <small>Magic · AoE</small>
+                <span class="status-pill played" style="color:#4ade80; border-color:#4ade80;">Active Line</span>
+              </div>
+
+              <!-- Archer -->
+              <div class="firstjob-card" onclick="jumpToLine('Archer')">
+                <img src="ro_icons/icon_jsxq_big_401.png" alt="Archer">
+                <strong>Archer</strong>
+                <small>Ranged Physical</small>
+                <span class="status-pill avail">Available</span>
+              </div>
+
+              <!-- Thief -->
+              <div class="firstjob-card" onclick="jumpToLine('Thief')">
+                <img src="ro_icons/icon_jsxq_big_501.png" alt="Thief">
+                <strong>Thief</strong>
+                <small>Speed · Dagger</small>
+                <span class="status-pill avail">Available</span>
+              </div>
+
+              <!-- Acolyte -->
+              <div class="firstjob-card" onclick="jumpToLine('Acolyte')">
+                <img src="ro_icons/icon_jsxq_big_501.png" alt="Acolyte">
+                <strong>Acolyte</strong>
+                <small>Holy · Support</small>
+                <span class="status-pill avail">Available</span>
+              </div>
+
+              <!-- Merchant -->
+              <div class="firstjob-card" onclick="jumpToLine('Merchant')">
+                <img src="ro_icons/icon_jsxq_big_601.png" alt="Merchant">
+                <strong>Merchant</strong>
+                <small>Economy · Axe</small>
+                <span class="status-pill avail">Available</span>
+              </div>
+
+              <!-- Expanded -->
+              <div class="firstjob-card" onclick="jumpToLine('expanded')">
+                <img src="ro_icons/icon_jsxq_big_801.png" alt="Expanded">
+                <strong>Expanded</strong>
+                <small>Gunslinger / Ninja</small>
+                <span class="status-pill avail">Available</span>
+              </div>
+
+              <!-- Super Novice Info -->
+              <div class="firstjob-card" onclick="inspectClass('Novice')" style="border-style:dashed;">
+                <img src="ro_icons/icon_jsxq_big_101.png" alt="Novice">
+                <strong>Novice Hub</strong>
+                <small>Inspect Novice</small>
+                <span class="status-pill played">Rebirth Origin</span>
+              </div>
+
+            </div>
+
+            <!-- Rebirth Callout Banner (Matching Image-5 exact rules!) -->
+            <div class="rebirth-panel">
+              <div class="rebirth-header">
+                <span class="gold-sigil">▼</span>
+                <span>Switching classes &amp; starting over</span>
+              </div>
+              <p class="rebirth-p">
+                Played classes keep their Base Lv, Job Lv, stats, skills and gear. Unplayed classes must meet their parent requirements. Switching to an unplayed 2nd class (e.g. Assassin, Rogue, Sage, Crusader) starts at Base Lv 50, 0 job. Class collection grants +1% damage for each transcendent class at Base Lv 150+.
+              </p>
+              <div class="rebirth-action-row">
+                <button class="rebirth-restart-btn" onclick="restartNovice()">Restart as Novice (Base Lv 25, job levels cleared)</button>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- Right Inspector Panel: LONGER PREVIEW · SWITCH BUTTON BELOW! -->
+        <div class="win-inspector">
+          
+          <div class="insp-top-block">
+            <div class="insp-kicker">SELECTED CLASS</div>
+            
+            <div class="insp-header">
+              <h2 id="inspClassName">Lord Knight</h2>
+              <div class="status-txt" id="inspClassStatus">Played class</div>
+            </div>
+
+            <!-- LONGER CHARACTER SPRITE BOX (Taller stage as requested!) -->
+            <div class="sprite-display-large">
+              <div class="sprite-pedestal"></div>
+              <div class="sprite-art-large" id="spritePreviewArt"></div>
+            </div>
+
+            <!-- Base Lv / Job Lv -->
+            <div class="levels-summary">
+              <div class="lv-pill">
+                <small>Base level</small>
+                <strong id="inspBaseLv">99</strong>
+              </div>
+              <div class="lv-pill">
+                <small>Job level</small>
+                <strong id="inspJobLv">70 / 70</strong>
+              </div>
+            </div>
+
+            <!-- Compact Specs (Weapons, Main stat, Previous class only) -->
+            <div class="specs-card">
+              <div class="specs-row"><span id="inspSpecsLbl1">Weapons</span><strong id="inspWeapons">Sword</strong></div>
+              <div class="specs-row"><span id="inspSpecsLbl2">Main stat</span><strong id="inspMainStat">STR</strong></div>
+              <div class="specs-row"><span id="inspSpecsLbl3">Previous class</span><strong id="inspPrevClass">Knight</strong></div>
+            </div>
+          </div>
+
+          <!-- PRIMARY ACTION BUTTON BELOW (Moved to bottom of inspector!) -->
+          <button class="action-switch-btn" id="inspActionBtn" onclick="handleInspectAction()">Switch to Lord Knight</button>
+
+        </div>
+
+      </div>
+
+      <!-- Window Footer: Class Collection Progress -->
+      <footer class="win-footer">
+        <div class="footer-coll">
+          <span class="footer-coll-label">Class Collection: 12 / 12 transcendent (Base Lv 150+)</span>
+          <div class="footer-bar-wrap">
+            <div class="footer-bar-fill"></div>
+          </div>
+          <span class="footer-reward">+12% damage</span>
+        </div>
+        <div class="footer-close-hint">
+          <span>• Cloud sync ready</span>
+          <span class="kbd-tag">ESC</span> Close
+        </div>
+      </footer>
+
+    </div>
+
+  </main>
+
+  <!-- In-Game Bottom Dock -->
+  <nav class="game-dock">
+    <button class="dock-btn"><span>🎒</span>Bag</button>
+    <button class="dock-btn"><span>👤</span>Status</button>
+    <button class="dock-btn"><span>⚡</span>Skills</button>
+    <button class="dock-btn active"><span>❖</span>Lineage</button>
+    <button class="dock-btn"><span>🛡️</span>Equip</button>
+    <button class="dock-btn"><span>🗺️</span>Map</button>
+    <button class="dock-btn"><span>👥</span>Social</button>
+  </nav>
+
+</div>
+
+<script>
+// Authentic Ragnarok Online Class Emblems mapping
+const RO_ICONS = {
+  // Novice
+  'Novice': 'ro_icons/icon_jsxq_big_101.png',
+
+  // Swordsman
+  'Swordman': 'ro_icons/icon_jsxq_big_201.png',
+  'Knight': 'ro_icons/icon_jsxq_big_212.png',
+  'Lord Knight': 'ro_icons/icon_jsxq_big_213.png',
+  'Rune Knight': 'ro_icons/icon_job_js_qslz.png',
+  'Crusader': 'ro_icons/icon_jsxq_big_222.png',
+  'Paladin': 'ro_icons/icon_jsxq_big_223.png',
+  'Royal Guard': 'ro_icons/icon_job_js_sdszj.png',
+
+  // Mage
+  'Mage': 'ro_icons/icon_jsxq_big_301.png',
+  'Wizard': 'ro_icons/icon_jsxq_big_312.png',
+  'High Wizard': 'ro_icons/icon_jsxq_big_313.png',
+  'Warlock': 'ro_icons/icon_job_fs_wszs.png',
+  'Sage': 'ro_icons/icon_jsxq_big_322.png',
+  'Scholar': 'ro_icons/icon_jsxq_big_323.png',
+  'Sorcerer': 'ro_icons/icon_job_fs_sg.png',
+
+  // Archer
+  'Archer': 'ro_icons/icon_jsxq_big_401.png',
+  'Hunter': 'ro_icons/icon_jsxq_big_412.png',
+  'Sniper': 'ro_icons/icon_jsxq_big_413.png',
+  'Ranger': 'ro_icons/icon_job_sqs_yxz.png',
+  'Bard & Dancer': 'ro_icons/icon_jsxq_big_422.png',
+  'Minstrel & Gypsy': 'ro_icons/icon_jsxq_big_423.png',
+  'Maestro & Wanderer': 'ro_icons/icon_job_lr_yxlr.png',
+
+  // Thief
+  'Thief': 'ro_icons/icon_jsxq_big_501.png',
+  'Assassin': 'ro_icons/icon_jsxq_big_512.png',
+  'Assassin Cross': 'ro_icons/icon_jsxq_big_513.png',
+  'Guillotine Cross': 'ro_icons/icon_job_dz_szck.png',
+  'Rogue': 'ro_icons/icon_jsxq_big_522.png',
+  'Stalker': 'ro_icons/icon_jsxq_big_523.png',
+  'Shadow Chaser': 'ro_icons/icon_job_dz_zyzz.png',
+
+  // Acolyte
+  'Acolyte': 'ro_icons/icon_jsxq_big_501.png',
+  'Priest': 'ro_icons/icon_jsxq_big_512.png',
+  'High Priest': 'ro_icons/icon_jsxq_big_513.png',
+  'Arch Bishop': 'ro_icons/icon_job_mfs_cmds.png',
+  'Monk': 'ro_icons/icon_jsxq_big_522.png',
+  'Champion': 'ro_icons/icon_jsxq_big_523.png',
+  'Sura': 'ro_icons/icon_job_gjs_sss.png',
+
+  // Merchant
+  'Merchant': 'ro_icons/icon_jsxq_big_601.png',
+  'Blacksmith': 'ro_icons/icon_jsxq_big_612.png',
+  'Whitesmith': 'ro_icons/icon_jsxq_big_613.png',
+  'Mechanic': 'ro_icons/icon_job_sr_jxgj.png',
+  'Alchemist': 'ro_icons/icon_jsxq_big_622.png',
+  'Biochemist': 'ro_icons/icon_jsxq_big_623.png',
+  'Geneticist': 'ro_icons/icon_job_dz_sxtb.png',
+
+  // Expanded
+  'Gunslinger': 'ro_icons/icon_jsxq_big_801.png',
+  'Rebellion': 'ro_icons/icon_jsxq_big_813.png',
+  'Ninja': 'ro_icons/icon_jsxq_big_701.png',
+  'Kagerou & Oboro': 'ro_icons/icon_jsxq_big_712.png'
+};
+
+const LINES = {
+  'Swordman': {
+    root: { name: 'Swordman', wt: 'Sword', main: 'STR', lv: 'Job 10' },
+    b1Title: 'Branch 2-1: Knight Path',
+    b2Title: 'Branch 2-2: Crusader Path',
+    b1: [
+      { name: 'Knight', tier: 'Tier 2 · 2nd Job', wt: 'Sword', main: 'STR', pill: 'Job 50', status: 'played' },
+      { name: 'Lord Knight', tier: 'Tier 3 · Transcendent', wt: 'Sword', main: 'STR', pill: 'Job 70', status: 'played' },
+      { name: 'Rune Knight', tier: 'Tier 4 · Ascension', wt: 'Sword, Spear', main: 'STR', pill: 'Base 150', status: 'played' }
+    ],
+    b2: [
+      { name: 'Crusader', tier: 'Tier 2 · 2nd Job', wt: 'Spear, Sword', main: 'STR', pill: 'Job 50', status: 'played' },
+      { name: 'Paladin', tier: 'Tier 3 · Transcendent', wt: 'Spear, Sword', main: 'STR', pill: 'Job 70', status: 'played' },
+      { name: 'Royal Guard', tier: 'Tier 4 · Ascension', wt: 'Spear, Sword', main: 'STR', pill: 'Base 150', status: 'played' }
+    ]
+  },
+  'Mage': {
+    root: { name: 'Mage', wt: 'Staff', main: 'INT', lv: 'Job 10' },
+    b1Title: 'Branch 2-1: Wizard Path',
+    b2Title: 'Branch 2-2: Sage Path',
+    b1: [
+      { name: 'Wizard', tier: 'Tier 2 · 2nd Job', wt: 'Staff', main: 'INT', pill: 'Job 50', status: 'played' },
+      { name: 'High Wizard', tier: 'Tier 3 · Transcendent', wt: 'Staff', main: 'INT', pill: 'Job 70', status: 'played' },
+      { name: 'Warlock', tier: 'Tier 4 · Ascension', wt: 'Staff', main: 'INT', pill: 'Base 150', status: 'played' }
+    ],
+    b2: [
+      { name: 'Sage', tier: 'Tier 2 · 2nd Job', wt: 'Book, Staff', main: 'INT', pill: 'Job 50', status: 'played' },
+      { name: 'Scholar', tier: 'Tier 3 · Transcendent', wt: 'Book, Staff', main: 'INT', pill: 'Job 70', status: 'played' },
+      { name: 'Sorcerer', tier: 'Tier 4 · Ascension', wt: 'Book, Staff', main: 'INT', pill: '✦ CURRENT', status: 'current' }
+    ]
+  },
+  'Archer': {
+    root: { name: 'Archer', wt: 'Bow', main: 'DEX', lv: 'Job 10' },
+    b1Title: 'Branch 2-1: Hunter Path',
+    b2Title: 'Branch 2-2: Performer Path',
+    b1: [
+      { name: 'Hunter', tier: 'Tier 2 · 2nd Job', wt: 'Bow', main: 'DEX', pill: 'Job 50', status: 'played' },
+      { name: 'Sniper', tier: 'Tier 3 · Transcendent', wt: 'Bow', main: 'DEX', pill: 'Job 70', status: 'played' },
+      { name: 'Ranger', tier: 'Tier 4 · Ascension', wt: 'Bow', main: 'DEX', pill: 'Base 150', status: 'played' }
+    ],
+    b2: [
+      { name: 'Bard & Dancer', tier: 'Tier 2 · 2nd Job', wt: 'Instrument, Whip', main: 'DEX', pill: 'Job 50', status: 'played' },
+      { name: 'Minstrel & Gypsy', tier: 'Tier 3 · Transcendent', wt: 'Instrument, Whip', main: 'DEX', pill: 'Job 70', status: 'played' },
+      { name: 'Maestro & Wanderer', tier: 'Tier 4 · Ascension', wt: 'Instrument, Whip', main: 'DEX', pill: 'Base 150', status: 'played' }
+    ]
+  },
+  'Thief': {
+    root: { name: 'Thief', wt: 'Dagger', main: 'STR', lv: 'Job 10' },
+    b1Title: 'Branch 2-1: Assassin Path',
+    b2Title: 'Branch 2-2: Rogue Path',
+    b1: [
+      { name: 'Assassin', tier: 'Tier 2 · 2nd Job', wt: 'Katar, Dagger', main: 'STR', pill: 'Job 50', status: 'played' },
+      { name: 'Assassin Cross', tier: 'Tier 3 · Transcendent', wt: 'Katar, Dagger', main: 'STR', pill: 'Job 70', status: 'played' },
+      { name: 'Guillotine Cross', tier: 'Tier 4 · Ascension', wt: 'Katar, Dagger', main: 'STR', pill: 'Base 150', status: 'played' }
+    ],
+    b2: [
+      { name: 'Rogue', tier: 'Tier 2 · 2nd Job', wt: 'Dagger, Bow', main: 'DEX', pill: 'Job 50', status: 'played' },
+      { name: 'Stalker', tier: 'Tier 3 · Transcendent', wt: 'Dagger, Bow', main: 'DEX', pill: 'Job 70', status: 'played' },
+      { name: 'Shadow Chaser', tier: 'Tier 4 · Ascension', wt: 'Dagger, Bow', main: 'DEX', pill: 'Base 150', status: 'played' }
+    ]
+  },
+  'Acolyte': {
+    root: { name: 'Acolyte', wt: 'Mace', main: 'INT', lv: 'Job 10' },
+    b1Title: 'Branch 2-1: Priest Path',
+    b2Title: 'Branch 2-2: Monk Path',
+    b1: [
+      { name: 'Priest', tier: 'Tier 2 · 2nd Job', wt: 'Mace', main: 'INT', pill: 'Job 50', status: 'played' },
+      { name: 'High Priest', tier: 'Tier 3 · Transcendent', wt: 'Mace', main: 'INT', pill: 'Job 70', status: 'played' },
+      { name: 'Arch Bishop', tier: 'Tier 4 · Ascension', wt: 'Mace', main: 'INT', pill: 'Base 150', status: 'played' }
+    ],
+    b2: [
+      { name: 'Monk', tier: 'Tier 2 · 2nd Job', wt: 'Knuckle, Mace', main: 'STR', pill: 'Job 50', status: 'played' },
+      { name: 'Champion', tier: 'Tier 3 · Transcendent', wt: 'Knuckle, Mace', main: 'STR', pill: 'Job 70', status: 'played' },
+      { name: 'Sura', tier: 'Tier 4 · Ascension', wt: 'Knuckle, Mace', main: 'STR', pill: 'Base 150', status: 'played' }
+    ]
+  },
+  'Merchant': {
+    root: { name: 'Merchant', wt: 'Axe, Mace', main: 'STR', lv: 'Job 10' },
+    b1Title: 'Branch 2-1: Blacksmith Path',
+    b2Title: 'Branch 2-2: Alchemist Path',
+    b1: [
+      { name: 'Blacksmith', tier: 'Tier 2 · 2nd Job', wt: 'Axe, Mace', main: 'STR', pill: 'Job 50', status: 'played' },
+      { name: 'Whitesmith', tier: 'Tier 3 · Transcendent', wt: 'Axe, Mace', main: 'STR', pill: 'Job 70', status: 'played' },
+      { name: 'Mechanic', tier: 'Tier 4 · Ascension', wt: 'Axe, Mace', main: 'STR', pill: 'Base 150', status: 'played' }
+    ],
+    b2: [
+      { name: 'Alchemist', tier: 'Tier 2 · 2nd Job', wt: 'Axe, Mace', main: 'STR', pill: 'Job 50', status: 'played' },
+      { name: 'Biochemist', tier: 'Tier 3 · Transcendent', wt: 'Axe, Mace', main: 'STR', pill: 'Job 70', status: 'played' },
+      { name: 'Geneticist', tier: 'Tier 4 · Ascension', wt: 'Axe, Mace', main: 'STR', pill: 'Base 150', status: 'played' }
+    ]
+  },
+  'expanded': {
+    root: { name: 'Novice (Expanded)', wt: 'Specialized', main: 'DEX', lv: 'Job 1+' },
+    b1Title: 'Branch: Gunslinger Path',
+    b2Title: 'Branch: Ninja Path',
+    b1: [
+      { name: 'Gunslinger', tier: 'Tier 2 · 1st Job', wt: 'Gun', main: 'DEX', pill: 'Job 70', status: 'played' },
+      { name: 'Rebellion', tier: 'Tier 3 · Ascension', wt: 'Gun', main: 'DEX', pill: 'Base 150', status: 'played' },
+      { name: 'Night Watch', tier: 'Tier 4 · Future', wt: 'Gun', main: 'DEX', pill: 'Coming soon', status: 'locked' }
+    ],
+    b2: [
+      { name: 'Ninja', tier: 'Tier 2 · 1st Job', wt: 'Dagger, Shuriken', main: 'STR, INT', pill: 'Job 70', status: 'played' },
+      { name: 'Kagerou & Oboro', tier: 'Tier 3 · Ascension', wt: 'Dagger', main: 'STR, INT', pill: 'Base 150', status: 'played' },
+      { name: 'Shinkiro & Shiranui', tier: 'Tier 4 · Future', wt: 'Dagger', main: 'STR, INT', pill: 'Coming soon', status: 'locked' }
+    ]
+  }
+};
+
+let currentInspected = 'Lord Knight';
+let currentTab = 'Swordman';
+
+function selectLine(key, btn) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  currentTab = key;
+
+  const standardTree = document.getElementById('standardTreeTable');
+  const noviceHub = document.getElementById('noviceHubView');
+
+  if (key === 'Novice') {
+    standardTree.style.display = 'none';
+    noviceHub.style.display = 'flex';
+    inspectClass('Novice');
+    return;
+  }
+
+  standardTree.style.display = 'flex';
+  noviceHub.style.display = 'none';
+
+  const line = LINES[key];
+  if (!line) return;
+
+  // Root
+  const root = line.root;
+  document.getElementById('rootTitle').textContent = root.name;
+  document.getElementById('rootIcon').src = RO_ICONS[root.name] || 'ro_icons/icon_jsxq_big_201.png';
+  document.getElementById('rootMeta').innerHTML = `<span>Weapons: <strong>${root.wt}</strong></span> · <span>Main: <strong>${root.main}</strong></span>`;
+  document.getElementById('rootCard').setAttribute('data-c', root.name);
+  document.getElementById('rootCard').onclick = () => inspectClass(root.name);
+
+  // Headers
+  document.getElementById('b1TitleHdr').textContent = line.b1Title;
+  document.getElementById('b2TitleHdr').textContent = line.b2Title;
+
+  // Build Tier rows
+  renderTierRow('tier2Cards', line.b1[0], line.b2[0]);
+  renderTierRow('tier3Cards', line.b1[1], line.b2[1]);
+  renderTierRow('tier4Cards', line.b1[2], line.b2[2]);
+
+  // Inspect first interesting class
+  inspectClass(line.b1[1]?.name || root.name);
+}
+
+function renderTierRow(containerId, c1, c2) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+
+  const cardHtml = (c) => `
+    <div class="class-card branch-card ${c.status === 'current' ? 'is-current' : ''}" onclick="inspectClass('${c.name}')" data-c="${c.name}">
+      <div class="card-header-line">
+        <span>${c.tier}</span>
+        <span class="level-badge">${c.pill}</span>
+      </div>
+      <img class="class-ro-icon" src="${RO_ICONS[c.name] || 'ro_icons/icon_jsxq_big_201.png'}" alt="${c.name}">
+      <strong class="card-name">${c.name}</strong>
+      <div class="card-subtext">
+        <span>Weapons: <strong>${c.wt}</strong></span> · <span>Main: <strong>${c.main}</strong></span>
+      </div>
+    </div>
+  `;
+
+  container.innerHTML = cardHtml(c1) + cardHtml(c2);
+}
+
+function jumpToLine(key) {
+  const btn = document.getElementById('tab' + (key === 'expanded' ? 'Expanded' : key));
+  selectLine(key, btn);
+}
+
+function inspectClass(name) {
+  currentInspected = name;
+
+  // Highlight card
+  document.querySelectorAll('.class-card').forEach(c => {
+    if (c.getAttribute('data-c') === name) c.classList.add('pick');
+    else c.classList.remove('pick');
+  });
+
+  const isNovice = name === 'Novice';
+  const isCurrent = name === 'Sorcerer';
+
+  document.getElementById('inspClassName').textContent = name;
+  document.getElementById('inspClassStatus').textContent = isCurrent ? '✦ Current active class' : isNovice ? 'Universal Starting Class / Rebirth Point' : 'Played class (Saved progression)';
+  document.getElementById('inspBaseLv').textContent = isNovice ? '25' : '99';
+  document.getElementById('inspJobLv').textContent = isNovice ? '10 / 10' : (name.includes('Rune') || name.includes('Royal') || name.includes('Sorcerer') ? '50 / 50' : '70 / 70');
+
+  // Specs
+  if (isNovice) {
+    document.getElementById('inspSpecsLbl1').textContent = 'Weapons';
+    document.getElementById('inspWeapons').textContent = 'Dagger, 1H Sword';
+    document.getElementById('inspSpecsLbl2').textContent = 'Main stat';
+    document.getElementById('inspMainStat').textContent = 'All Attributes';
+    document.getElementById('inspSpecsLbl3').textContent = 'Advancement';
+    document.getElementById('inspPrevClass').textContent = '7 First Jobs Available';
+    
+    const btn = document.getElementById('inspActionBtn');
+    btn.textContent = 'Restart as Novice (Base Lv 25)';
+    btn.disabled = false;
+  } else {
+    document.getElementById('inspSpecsLbl1').textContent = 'Weapons';
+    document.getElementById('inspWeapons').textContent = name.includes('Mage') || name.includes('Wizard') || name.includes('Sage') || name.includes('Scholar') || name.includes('Sorcerer') ? 'Staff, Book' : 'Sword, Spear';
+    document.getElementById('inspSpecsLbl2').textContent = 'Main stat';
+    document.getElementById('inspMainStat').textContent = name.includes('Mage') || name.includes('Wizard') || name.includes('Sage') || name.includes('Scholar') || name.includes('Sorcerer') ? 'INT' : 'STR';
+    document.getElementById('inspSpecsLbl3').textContent = 'Previous class';
+    document.getElementById('inspPrevClass').textContent = name === 'Swordman' || name === 'Mage' ? 'Novice' : (name.includes('Lord') ? 'Knight' : (name.includes('Rune') ? 'Lord Knight' : 'Previous Job'));
+
+    const btn = document.getElementById('inspActionBtn');
+    if (isCurrent) {
+      btn.textContent = 'Current Class';
+      btn.disabled = true;
+    } else {
+      btn.textContent = 'Switch to ' + name;
+      btn.disabled = false;
+    }
+  }
+}
+
+function handleInspectAction() {
+  if (currentInspected === 'Novice') {
+    restartNovice();
+  } else {
+    alert(`Switched to ${currentInspected}! All saved stats, skills, and equipment for ${currentInspected} are restored.`);
+  }
+}
+
+function restartNovice() {
+  const confirmed = confirm("Restart as Novice?\n\nYou will return to Base Lv 25 with job levels cleared, and your stat points refunded.\n\nAll previously played classes keep their Base Lv, stats, and gear, so you can return to them anytime!");
+  if (confirmed) {
+    selectLine('Novice', document.getElementById('tabNovice'));
+    alert("Restarted as Novice at Base Lv 25! You can now choose any of the 7 first-job paths.");
+  }
+}
+
+// Initialize on Swordsman line
+document.addEventListener('DOMContentLoaded', () => {
+  selectLine('Swordman', document.getElementById('tabSwordman'));
+});
+</script>
+
+</body>
+</html>

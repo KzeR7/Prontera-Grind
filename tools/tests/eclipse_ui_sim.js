@@ -386,10 +386,10 @@ test('a confirmed below-five failure consumes one scroll and keeps the rank',()=
  ev(`tabs.push('equip');sub.equip='refine';renderWin();S.eq.weapon.r=2;S.useRefineScroll=true;S.refineScrolls=2;refine('weapon');window.oldRefRandom=Math.random;Math.random=()=>.999`);doc.getElementById('my').click();ev('Math.random=window.oldRefRandom');assert.equal(ev('S.eq.weapon.r'),2);assert.equal(ev('S.refineScrolls'),1);assert.match(doc.getElementById('eclipseRefineResult').textContent,/Rank kept at \+2/);
 });
 test('class path shows one collection summary while browsing',()=>{
- ev("S.cls='Lord Knight';S.lv=100;S.base={'High Wizard':{lv:100}};selK=null;eclipseJobsBrowse=false;tabs.push('job');renderWin()");
+ ev("S.cls='Lord Knight';S.lv=150;S.base={'High Wizard':{lv:150}};selK=null;eclipseJobsBrowse=false;tabs.push('job');renderWin()");
  assert.equal(ev('collDmg()'),2);assert.equal(doc.querySelectorAll('.eclipse-class-bonus').length,1);
  assert.match(doc.querySelector('.eclipse-class-bonus').textContent,/\+2% damage/);
- doc.querySelector('[data-a=jobview][data-v=browse]').click();doc.querySelector('.class-lineage-overview [data-v=Mage]').click();ev("S.base['High Wizard'].lv=99;renderWin()");
+ doc.querySelector('[data-a=jobview][data-v=browse]').click();doc.querySelector('.class-lineage-overview [data-v=Mage]').click();ev("S.base['High Wizard'].lv=149;renderWin()");
  assert.match(doc.querySelector('.eclipse-class-bonus').textContent,/\+1% damage/);
 });
 test('Ascension Forge keeps crafting and transformation controls in Eclipse',()=>{

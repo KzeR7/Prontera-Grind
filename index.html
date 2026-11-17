@@ -8298,17 +8298,18 @@ function noviceRun(){                         // a real restart: 25 Base Lv, Job
 // wiped Base Lv, stats and points when a player switched back to a class they had played.
 function playedClass(n){return !!((S.base&&S.base[n])||classCareer(n))}
 const classCareer=n=>{const j=S.jobs&&S.jobs[n];return !!(j&&((+j.jl||1)>1||(+j.jx||0)>0))};
-// Class collection: +1% damage per TRANSCENDENT (tier-3) class that has reached Base Lv 100+.
+// Class collection: +1% damage per TRANSCENDENT (tier-3) class that has reached Base Lv 150+.
 // v51 fix: the bonus is account-wide and permanent - it is earned by the class, not by whatever
 // character is currently active, so switching to a lower-level class no longer drops it to 0
 // (the old gate read the ACTIVE class's Base Lv, which disagreed with the visible count).
 // Derived at runtime, so old saves get credit for free; a class's own S.base record carries the
 // Base Lv it left at. Played = a tier-3 record, or being on one right now.
-const t3At100=n=>{const lv=n===S.cls?safeCount(S.lv):safeCount(S.base&&S.base[n]&&S.base[n].lv);return lv>=100};
+const t3At150=n=>{const lv=n===S.cls?safeCount(S.lv):safeCount(S.base&&S.base[n]&&S.base[n].lv);return lv>=150};
+const t3At100=t3At150;
 // haven-v408 (owner decision): the six transcendent classes of the expanded roster count too,
 // so the cap is +12%. Nobody loses anything: credit already earned on the original six stays.
 const collClass=k=>!!CLASSES[k]&&CLASSES[k].tier===3;
-const playedClasses=()=>{const s=new Set();if(collClass(S.cls)&&t3At100(S.cls))s.add(S.cls);for(const k in CLASSES)if(collClass(k)&&playedClass(k)&&t3At100(k))s.add(k);return s.size};
+const playedClasses=()=>{const s=new Set();if(collClass(S.cls)&&t3At150(S.cls))s.add(S.cls);for(const k in CLASSES)if(collClass(k)&&playedClass(k)&&t3At150(k))s.add(k);return s.size};
 const t3Total=()=>{let n=0;for(const k in CLASSES)if(collClass(k))n++;return n};
 const collDmg=()=>playedClasses();
 function classBlock(n){
@@ -8317,7 +8318,7 @@ function classBlock(n){
   if(EXPANDED_LINE.has(n)&&!hasLv150ThirdClass())return`Needs any 4th job at Base Lv ${ADV4_BASE_LV} first`;
   for(let x=n;CLASSES[x].par;x=CLASSES[x].par){const p=CLASSES[x].par,pj=S.jobs[p];if(!pj||pj.jl<CLASSES[x].rj)return`Needs ${p} Job Lv ${CLASSES[x].rj}`}
   if(CLASSES[n].tier>=4&&S.lv<ADV4_BASE_LV)return`Needs Base Lv ${ADV4_BASE_LV}`;
-  if(S.cls!=='Novice'&&S.cls!==CLASSES[n].par)return'Reset to Novice first';return''}
+  if(S.cls!=='Novice'&&S.cls!==CLASSES[n].par&&!(CLASSES[n].tier===2&&lineOf(S.cls).includes(CLASSES[n].par)))return'Reset to Novice first';return''}
 // Played classes remain distinct from newly available promotions in the Jobs view.
 function classStatus(n){return n===S.cls?'cur':n!=='Novice'&&playedClass(n)?'played':classBlock(n)?'lock':'ok'}
 // v74: a loadout can be illegal the moment the class changes, so every worn piece the new class
@@ -8342,6 +8343,12 @@ function changeClass(n){if(classBlock(n))return;
   const rec=n==='Novice'?null:classRec(n);     // a class you left earlier picks up where it stopped
   if(rec){S.lv=rec.lv;S.exp=rec.exp;S.pts=rec.pts;S.st=Object.assign({},rec.st);if(rec.eq)equipRec(rec.eq)}
   else if(n==='Novice')noviceRun();
+  else if(CLASSES[n]?.tier===2){
+    S.lv=50;S.exp=0;
+    S.jobs[n]={jl:1,jx:0};
+    clearClassSkills(n);
+    freshBuild();
+  }
   else if(from==='Novice')freshBuild();       // promotions preserve allocated stats and unspent points
   if(S.mp>=10&&!ascensionOpen(S.mp))gotoField(9,10);
   stowUnfit(from);                            // shields, unusable weapon types and too-high class tiers
@@ -8349,7 +8356,7 @@ function changeClass(n){if(classBlock(n))return;
   snapClass();                                 // so you can step away again right away
   log(rec?`Class: ${n} · back to Base Lv ${S.lv} · Job Lv ${S.jobs[n].jl} · stats, skills and gear restored.`
     :n==='Novice'?`Restarted as Novice · Base Lv ${S.lv} · job levels cleared · ${S.pts} stat points to spend.`
-    :`Class: ${n} · Base Lv ${S.lv} · Job Lv 1 · ${from==='Novice'?'stats refunded':'stats retained'} · ${S.pts} stat points to spend.`,'r4');
+    :`Class: ${n} · Base Lv ${S.lv} · Job Lv 1 · ${from==='Novice'||CLASSES[n]?.tier===2?'stats refunded':'stats retained'} · ${S.pts} stat points to spend.`,'r4');
   addFloat(pl.x,3.6,pl.z,n+'!','#fff',true);ui();save();if(CLASSES[n].tier===4&&typeof maybeGuide==='function')maybeGuide()}
 
 // Crucible of the Valkyrie: transient combat, never a saved farming destination.
@@ -9113,7 +9120,7 @@ const V={
         </div>`:`<small>MVP appears at ${mapL>10?'NM 5 (stage 15)':'Stage '+normalStages(mapM)}.</small>`}
         ${mapM>=10?(()=>{const ah=ascensionCombatStats(mapM,mapL).hp,pc=ch=>String(+ch.toFixed(3)),mc=pc(ascMaterialChance({max:ah})),bc=pc(ascMaterialChance({max:ah*3})),sc=pc(ascSigilChance({max:ah}));return`<div class="sec">Ascension materials</div><p>${ASCENSION_MATERIALS[mapM-10]}: ${mc}% per kill (${bc}% from the MVP)<br>Valkyrie's Sigil: ${sc}% per mob / 1% per MVP</p><small>Both chances scale with this stage's monster HP, so every stage pays the same materials an hour.</small><small>Stored: ${ASCENSION_MATERIALS.map((n,i)=>esc(n)+' × '+safeCount(S.ascensionMat?.[i])).join(' · ')}</small>`})():''}<div class="sec">🐾 Pet drops</div><small>0.03% per kill, 0.5% from MVPs. Odds on ${mp.n}: ${PW[Math.min(mapM,9)].map((w,i)=>RN[i]+' '+w+'%').join(' &middot; ')}</small></div></div>`},
   stats(){const c=C(),b=k=>bon(k)?` <small class="r1">+${bon(k)}</small>`:'',idxC=typeof indexCrit==='function'?indexCrit():0;
-    return`<div class="hd">${S.cls} &middot; Base Lv ${S.lv} &middot; Job Lv ${jobOf().jl}/${c.mj}</div><div class="hd ui-points-line" data-points-left>Stat points: <b>${S.pts}</b> <small>(max ${statCap()} each${S.lv<ELITELV?' &middot; '+MAXST+' unlocks at Base Lv '+ELITELV:''} &middot; max Base Lv 150)</small></div><div class="hd">🏆 Class collection: ${playedClasses()}/${t3Total()} transcendent classes at Base Lv 100+ &middot; <b>+${collDmg()}% damage</b> <small>(+1% each, permanent${playedClasses()?'':' - take a transcendent class to Base Lv 100 to earn it'})</small></div>`
+    return`<div class="hd">${S.cls} &middot; Base Lv ${S.lv} &middot; Job Lv ${jobOf().jl}/${c.mj}</div><div class="hd ui-points-line" data-points-left>Stat points: <b>${S.pts}</b> <small>(max ${statCap()} each${S.lv<ELITELV?' &middot; '+MAXST+' unlocks at Base Lv '+ELITELV:''} &middot; max Base Lv 150)</small></div><div class="hd">🏆 Class collection: ${playedClasses()}/${t3Total()} transcendent classes at Base Lv 150+ &middot; <b>+${collDmg()}% damage</b> <small>(+1% each, permanent${playedClasses()?'':' - take a transcendent class to Base Lv 150 to earn it'})</small></div>`
     +(petBonusList().length?`<small><b>Pet bonuses</b> (the fighting pets): ${petBonusList().join(' &middot; ')}</small>`:'')
     +STATS.map(([k,l,d])=>`<div class="slot"><span><b>${l}</b> ${S.st[k]}${b(k)} <small>(${d})</small></span><span class="bts"><small>${cost(k)}pt</small><button data-a="stat" data-v="${k}" ${S.pts>=cost(k)&&S.st[k]<statCap()?'':'disabled'}>+1</button><button data-a="stat5" data-v="${k}" ${S.pts>=cost(k)&&S.st[k]<statCap()?'':'disabled'}>+5</button></span></div>`).join('')
     +`<div class="slot" style="flex-wrap:wrap"><span>ATK <b>${atk()}</b></span><span>MATK <b>${matk()}</b></span><span>DEF <b>${def()}</b></span><span>ASPD <b>${Math.round(144+5/aspd())}</b> <small>${(1/aspd()).toFixed(2)}/s</small></span><span>Crit <b>${crit().toFixed(1)}%</b>${idxC?` <small>(+${idxC}% Index Crit)</small>`:''}</span><span>Crit DMG <b>x${critD().toFixed(2)}</b></span><span>MDEF <b>${mdef()}</b></span><span>Flee <b>${flee().toFixed(0)}%</b></span><span>HP <b>${maxHp()}</b></span><span>Movement speed <b>${moveSpd().toFixed(2)}</b> <small>u/s</small></span></div>
@@ -9138,7 +9145,7 @@ const V={
     `<small>${c.par?'Before: <b>'+c.par+'</b>':'Starting class'}${c.kids.length?' · Next: <b>'+c.kids.join(', ')+'</b>':''}</small><p>${pj?`Saved ${rec?`Base Lv ${rec.lv} · `:''}Job Lv ${pj.jl}/${c.mj}`:'Not played yet'}${playedClass(k)&&k!==S.cls?' · Your saved build is ready to return.':''}</p><small>Weapons: ${c.wt.join(', ')} · Main stat ${SU(c.main)}<br>ATK ×${c.atk} · ASPD ×${c.aspd} · HP ×${c.hp}</small>
     <div class="row"><button data-a="job" data-v="${k}" ${blk?'disabled':''}>${k===S.cls?'Current class':c.tier===4&&!playedClass(k)?'Enter advancement trial':'Change to '+k}</button>${blk&&k!==S.cls?`<small>${blk}</small>`:''}</div>`}</div>
     </div>${future?'':`<div class="hair-preview-card"><div class="hair-preview-stage"><canvas id="classPreview" width="126" height="134" role="img" aria-label="${S.sex==='f'?'female':'male'} ${k} class skin preview"></canvas><span class="hair-preview-loading" id="classPreviewLoading">Loading sprite…</span></div><div class="hair-preview-info"><span class="eyebrow">CLASS PREVIEW</span><b>${k}</b><span>${S.sex==='f'?'Female':'Male'}</span></div></div>`}</div>
-    <div class="eclipse-class-bonus"><b>Class collection <strong>+${collDmg()}% damage</strong></b><p>${playedClasses()} / ${t3Total()} transcendent classes at Base Lv 100+. Each earns a permanent +1% damage for every class.</p></div>
+    <div class="eclipse-class-bonus"><b>Class collection <strong>+${collDmg()}% damage</strong></b><p>${playedClasses()} / ${t3Total()} transcendent classes at Base Lv 150+. Each earns a permanent +1% damage for every class.</p></div>
     <details class="ui-fold"><summary>Switching classes & starting over</summary><p>Played classes keep their Base Lv, Job Lv, stats, skills and gear. Unplayed classes must meet their parent requirements. Class tree nodes open an inspection. Current lineage cards change class when available.</p><button class="full" data-a="job" data-v="Novice" ${S.cls==='Novice'?'disabled':''}>Restart as Novice (Base Lv 25, job levels cleared)</button></details>`},
   skills(){if(sub.skills==='combo')sub.skills='skilllist';return subBar('skills')+(sub.skills==='skilllist'?rotationBar():'')+(V[sub.skills]||V.skilllist)()},
   skilllist(){const line=lineOf(S.cls),av=skpAvail(),sel=SKILLS.find(s=>s.id===selS);
