@@ -1,9 +1,8 @@
-// v414: which accounts can actually sync, and which still cannot?
+// Full-storage save regressions (v414 synthetic cases plus the v415 production account).
 //
-// The review asked for full game states - equipment, loadouts, every collection - not just the one
-// reported account. Saves are built from the game's own genGear()/newCard()/cardDefinition(), never
-// hand-written shapes: a hand-written fixture is exactly how the first codec passed its own tests
-// while being wrong about real cards.
+// The older cases below exercise codec shapes and production-sized numeric ids, but use synthetic
+// fish and forced socket counts. They are NOT evidence of a largest reachable account. The v415
+// fullStorageSave() case uses real compatible bows/cards, saved upgrades and addCatch() fish.
 //
 // THE CARD LIMIT IS NOT A TOTAL, AND AN EARLIER VERSION OF THIS FILE GOT IT WRONG.
 // index.html:2793 says "loose cards are the second unbounded list in a save (S.cards)". CARDMAX=1000
@@ -11,18 +10,17 @@
 // in item.cards and are NOT counted by it - a player can socket cards, then earn another 1000 loose
 // ones, and unsock() pushes them back into S.cards. So "loose + socketed" is NOT bounded by 1000.
 //
-// That made the reachable worst case 719,982 chars against a 307,200 ceiling. Codec v3 closes it: a
-// modern card is stored as a catalog reference (the page already rebuilds every card field from
-// CARD_CATALOG on load) and a fish timestamp as a delta, taking that worst case to ~248,000 chars.
-// Nothing here deletes a player's cards and no ownership limit was added: the codec is a transport
-// encoding and may not change what a player owns. The cases below are asserted to FIT, so a future
-// change that reopens the gap fails here instead of failing in production.
+// Codec v3 reduced that cost with catalog references and fish timestamp deltas, but the old claim
+// that every reachable state fitted was wrong: refinement/locks, all stars and production fish were
+// missing. v4 closes the new fixture's gap without deleting property or changing any ownership limit.
+// These are finite size/fidelity regressions, not a global bound or a hosted CPU measurement.
 import { createRequire } from 'node:module';
 import { SAVE_BYTES_MAX } from '../../functions/_lib/validate.js';
 import * as C from '../../functions/_lib/save-codec.js';
 
 const require = createRequire(import.meta.url);
 const { createGame } = require('./helpers/game');
+const { fullStorageSave } = require('./helpers/full-storage-save');
 
 let pass = 0, fail = 0;
 const t = (n, f) => { try { f(); pass++; console.log('  ok   ' + n); } catch (e) { fail++; console.log('  FAIL ' + n + ' -> ' + e.message); } };
@@ -70,7 +68,7 @@ const fits = S => { const packed = JSON.stringify(C.packSave(S)); return { packe
 
 // --- states that DO fit -----------------------------------------------------------------------------
 // `socketed` is the number of ITEMS carrying one card each, so socketed === number of cards socketed.
-// These are reachable accounts, but they are NOT the largest reachable account: see the refused block.
+// These older synthetic shapes are useful size checks, not a reachability/max-account proof.
 const fits_cases = [
   ['1000 items, 1000 loose cards, 1000 fish',        { loose: 1000, socketed: 0,   fish: 1000 }],
   ['1000 items, 0 loose, 1000 socketed, 1000 fish',  { loose: 0,    socketed: 1000, fish: 1000 }],
@@ -97,8 +95,7 @@ for (const [label, spec] of fits_cases) {
 
 // --- socketed cards did NOT count against CARDMAX, so these were the states that could not sync ---
 // Codec v3 is what makes them fit (cards stored as catalog references, fish timestamps as deltas).
-// They stay in the suite as the hardest reachable cases: if they ever stop fitting, that is the
-// regression that matters, so they are asserted to fit rather than assumed to.
+// Keep these older stress cases green too; the production-constructor case below is stronger.
 const hard_cases = [
   ['1000 items x1 socketed card + 1000 loose cards + 1000 fish', { loose: 1000, socketed: 1000, fish: 1000 }],
   ['1000 items x1 socketed card + 1000 loose cards',             { loose: 1000, socketed: 1000, fish: 0 }],
@@ -120,7 +117,7 @@ for (const [label, spec] of hard_cases) {
   });
 }
 
-// --- the worst REACHABLE state, with real product ids ----------------------------------------------
+// --- historical 5000-card stress cases, with production-sized numeric ids -------------------------
 // 1000 items x4 socketed + 1000 loose + 1000 fish = 5000 real cards, each with its own 17-char
 // Date.now()+Math.random() id. This used to be over the ceiling (703 KB under v2, ~311 KB under the
 // first v3). Two changes closed it, neither of which touches a player's cards or ids:
@@ -132,21 +129,20 @@ for (const [label, spec] of hard_cases) {
 // that is ~20,000 chars, which is the difference between 311 KB and fitting.
 //
 // A per-save id table was measured twice and does NOT help - do not reintroduce it.
-const THIS_FIXTURE_NOTE = 'the ids below are the fixture\'s own, minted by newCard() - real product ids';
 
-// Distinct Date.now()+Math.random()-shaped ids, which is what a real save holds.
+// Synthetic distinct Date.now()+Math.random()-shaped ids. The new fixture uses newCard() directly.
 const realId = i => Number('1794884' + String(100000 + i * 7919).slice(-6) + '.' + String(1000 + i * 13).slice(-4));
 
-t('the 5000-card worst case fits, with real ids', () => {
+t('the synthetic 5000-card stress case fits, with production-sized ids', () => {
   const S = state({ loose: 1000, socketed: 1000, fish: 1000, perItem: 4 });
   let k = 0;
   for (const c of S.cards) c.id = realId(k++);
   for (const it of S.inv) { it.id = realId(k++); for (const c of it.cards || []) c.id = realId(k++); }
   const n = fits(S).n;
-  console.log('       5000 real cards: ' + kb(n) + ' (' + n + ' chars)');
+  console.log('       5000 production-sized card ids: ' + kb(n) + ' (' + n + ' chars)');
   if (n > SAVE_BYTES_MAX) throw Error(kb(n) + ' is over by ' + kb(n - SAVE_BYTES_MAX));
 });
-t('the 5000-card worst case fits WITH STARRED CARDS too', () => {
+t('the synthetic 5000-card stress case fits WITH STARRED CARDS too', () => {
   // Regression: `stars` used to disqualify a card from the catalog form, so every starred card fell
   // back to the 130-char tuple and this account was ~396 KB.
   const S = state({ loose: 1000, socketed: 1000, fish: 1000, perItem: 4 });
@@ -159,13 +155,58 @@ t('the 5000-card worst case fits WITH STARRED CARDS too', () => {
   const back = C.unpackSave(JSON.parse(JSON.stringify(C.packSave(S))));
   if (norm(S.cards) !== norm(back.cards)) throw Error('starred cards differ after a round trip');
 });
-t('the 5000-card worst case still round-trips exactly', () => {
+t('the synthetic 5000-card stress case still round-trips exactly', () => {
   // whatever the size verdict, the codec must not lose or alter a single card
   const S = state({ loose: 1000, socketed: 1000, fish: 1000, perItem: 4 });
   const back = C.unpackSave(JSON.parse(JSON.stringify(C.packSave(S))));
   for (const k of ['inv', 'cards', 'fishing']) {
     if (norm(S[k]) !== norm(back[k])) throw Error(k + ' differs after a round trip');
   }
+});
+
+// --- review regression: refinement, locks, ALL stars, and production addCatch() identities ---------
+// Unlike the older synthetic cases above, every bow has its real N+ name/quality and four compatible,
+// distinct-family cards, ALL 5000 cards have three stars, and fish bring their real ids/timestamps/dex.
+// This is a large reachable account, NOT a proof that every possible account fits.
+const full = fullStorageSave();
+t('the review fixture really owns 1000 +10 locked four-socket bows, 5000 three-star cards and 1000 production fish', () => {
+  if (full.inv.length !== 1000 || full.cards.length !== 1000 || full.fishing.bag.length !== 1000) throw Error('fixture counts drifted');
+  const ids = new Set();
+  for (const it of full.inv) {
+    if (it.wt !== 'bow' || it.slots !== 4 || it.cards.length !== 4 || it.r !== 10 || it.locked !== true) throw Error('incomplete bow');
+    if (new Set(it.cards.map(c => c.family)).size !== 4) throw Error('repeated socket family');
+    for (const c of it.cards) if (!c.fit.includes('weapon')) throw Error('incompatible socket');
+  }
+  for (const c of [...full.cards, ...full.inv.flatMap(it => it.cards)]) {
+    if (c.stars !== 3 || typeof c.id !== 'number' || String(c.id).length < 13) throw Error('card stars/identity understated');
+    if (ids.has(c.id)) throw Error('duplicated card id'); ids.add(c.id);
+  }
+  if (ids.size !== 5000) throw Error('not 5000 distinct owned cards');
+  if (new Set(full.fishing.bag.map(f => f.id)).size !== 1000) throw Error('duplicated fish id');
+  if (full.fishing.bag.some(f => f.id.length < 9 || f.at < 1e12)) throw Error('fish identities/timestamps understated');
+  if (full.fishing.stats.catches !== 1000 || !Object.keys(full.fishing.dex).length) throw Error('addCatch() records missing');
+});
+t('the refined/locked, ALL-three-star production account fits under the unchanged ceiling', () => {
+  const n = fits(full).n;
+  console.log('       full production account: ' + n + ' chars, ' + (SAVE_BYTES_MAX - n) + ' spare');
+  if (n > SAVE_BYTES_MAX) throw Error(n + ' > ' + SAVE_BYTES_MAX + ', over by ' + (n - SAVE_BYTES_MAX));
+});
+t('the full production account round-trips with EVERY field and collection unchanged', () => {
+  const back = C.unpackSave(JSON.parse(JSON.stringify(C.packSave(full))));
+  if (norm(full) !== norm(back)) throw Error('owned data or progression changed');
+});
+t('the real page load keeps the same full account from plain and compact storage', () => {
+  const page = createGame();
+  try {
+    const load = data => JSON.parse(page.ev(`(() => {
+      lsPut(saveKey(), ${JSON.stringify(JSON.stringify(data))}); S=load();
+      return JSON.stringify({inv:S.inv,cards:S.cards,fishing:S.fishing});
+    })()`));
+    const plain = load(full), compact = load(C.packSave(full));
+    if (norm(plain) !== norm(compact)) throw Error('page load differs by storage format');
+    if (compact.inv.length !== 1000 || compact.cards.length !== 1000 || compact.fishing.bag.length !== 1000) throw Error('page lost owned data');
+    if (compact.inv.some(it => it.r !== 10 || !it.locked || it.cards.some(c => c.stars !== 3))) throw Error('page lost an upgrade or lock');
+  } finally { page.close(); }
 });
 
 // --- a stored row written by an older codec still loads --------------------------------------------

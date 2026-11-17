@@ -9,9 +9,11 @@ import { createRequire } from 'node:module';
 import * as reg from '../../functions/api/register.js';
 import * as save from '../../functions/api/save.js';
 import * as C from '../../functions/_lib/save-codec.js';
+import { SAVE_BYTES_MAX, SAVE_FORMAT_V4 } from '../../functions/_lib/validate.js';
 
 const require = createRequire(import.meta.url);
 const { createGame } = require('./helpers/game');
+const { fullStorageSave } = require('./helpers/full-storage-save');
 
 let fails = 0;
 const ok = (n, c, d) => { if (c) console.log('  ok   ' + n); else { fails++; console.log('  FAIL ' + n + (d ? ' -> ' + d : '')); } };
@@ -57,7 +59,7 @@ console.log('  save: ' + plain.length.toLocaleString() + ' B plain -> ' + compac
 // 1. the compact blob is ACCEPTED by the real handler
 let ver = 0;
 const put = async blob => {
-  const r = await save.onRequestPut({ request: new Request('https://x/api/save', { method: 'PUT', headers: { 'content-type': 'application/json', cookie, 'x-save-format': '111' }, body: JSON.stringify({ owner: n, blob, version: ver }) }), env });
+  const r = await save.onRequestPut({ request: new Request('https://x/api/save', { method: 'PUT', headers: { 'content-type': 'application/json', cookie, 'x-save-format': String(SAVE_FORMAT_V4) }, body: JSON.stringify({ owner: n, blob, version: ver }) }), env });
   const j = await r.clone().json().catch(() => ({}));
   if (j.version != null) ver = j.version;
   return r.status;
@@ -66,7 +68,7 @@ ok('the compact blob is accepted (200)', (await put(compact)) === 200);
 ok('the original plain blob is still refused (413) - it is over the ceiling', (await put(plain)) === 413);
 
 // 2. GET returns exactly what was stored, still compact
-const gRes = await save.onRequestGet({ request: new Request('https://x/api/save', { method: 'GET', headers: { cookie, 'x-save-format': '111' } }), env });
+const gRes = await save.onRequestGet({ request: new Request('https://x/api/save', { method: 'GET', headers: { cookie, 'x-save-format': String(SAVE_FORMAT_V4) } }), env });
 const body = await gRes.json();
 ok('GET returns the stored blob', gRes.status === 200 && !!body.blob);
 ok('the stored blob is compact', body.blob && JSON.parse(body.blob).__v >= 1);
@@ -144,17 +146,22 @@ ok('the compact form unpacks to exactly the same data', JSON.stringify(sameData)
   const v2Get = await save.onRequestGet({ request: new Request('https://x/api/save', { method: 'GET', headers: { cookie, 'x-save-format': '110' } }), env });
   const v2served = await v2Get.json();
   const v2blob = JSON.parse(v2served.blob);
-  ok('a v2-only page (110) is not handed a __v3 blob', v2blob.__v == null,
+  ok('a v2-only page (110) is not handed a newer-codec blob', v2blob.__v == null,
     'served a __v' + v2blob.__v + ' blob to a page that cannot decode it');
   const v2fish = (v2blob.fishing || {}).bag || [];
   ok('  ...and its fish keep a readable species', v2fish.length > 0 && v2fish.every(e => typeof e.sp === 'string'));
   ok('  ...and its cards keep their normal fields',
     (v2blob.cards || []).every(c => typeof c.family === 'string' && typeof c.n === 'string'));
 
-  // a build that CAN decode v3 still gets the compact form (the whole point of the release)
-  const newGet = await save.onRequestGet({ request: new Request('https://x/api/save', { method: 'GET', headers: { cookie, 'x-save-format': '111' } }), env });
+  // A v3-only page must not be handed v4 item enums/state, either.
+  const v3Get = await save.onRequestGet({ request: new Request('https://x/api/save', { method: 'GET', headers: { cookie, 'x-save-format': '111' } }), env });
+  const v3served = JSON.parse((await v3Get.json()).blob);
+  ok('a v3-only page (111) gets plain objects for a v4 row', v3served.__v == null && v3served.inv.every(it => typeof it.slot === 'string'));
+
+  // a build that CAN decode the current codec still gets the compact form
+  const newGet = await save.onRequestGet({ request: new Request('https://x/api/save', { method: 'GET', headers: { cookie, 'x-save-format': String(SAVE_FORMAT_V4) } }), env });
   const fresh = await newGet.json();
-  ok('a v3 page (111) still gets the compact blob', JSON.parse(fresh.blob).__v != null);
+  ok('a v4 page (112) still gets the compact blob', JSON.parse(fresh.blob).__v === 4);
 
   // the conflict reply carries a blob too - it must obey the same rule
   const oldPut = await save.onRequestPut({ request: new Request('https://x/api/save', {
@@ -163,6 +170,37 @@ ok('the compact form unpacks to exactly the same data', JSON.stringify(sameData)
   const conflict = await oldPut.json().catch(() => ({}));
   if (conflict.blob) ok('a conflict reply to an old page carries a readable blob', JSON.parse(conflict.blob).__v == null);
   else ok("an old page's stale push is answered without a compact blob", true);
+}
+
+// 8. Review regression through the REAL endpoints, not just a string-length assertion. This fixture
+// also carries the complete fish dex/stats that addCatch() creates, and all 4000 sockets are checked.
+{
+  const full = fullStorageSave();
+  full.owner = n; full.accountId = 1;
+  const blob = JSON.stringify(C.packSave(full));
+  const norm = o => JSON.stringify(o, (k, v) => v && typeof v === 'object' && !Array.isArray(v)
+    ? Object.fromEntries(Object.keys(v).sort().map(k => [k, v[k]])) : v);
+  console.log('  full production account: ' + blob.length + ' chars (' + (SAVE_BYTES_MAX - blob.length) + ' spare)');
+  ok('the all-starred +10 locked account fits the unchanged size limit', blob.length <= SAVE_BYTES_MAX);
+  ok('the real PUT accepts the full production account', (await put(blob)) === 200);
+  const fetched = await save.onRequestGet({ request: new Request('https://x/api/save', { headers: { cookie, 'x-save-format': String(SAVE_FORMAT_V4) } }), env });
+  const row = await fetched.json();
+  ok('the real GET keeps the full account compact', fetched.status === 200 && row.blob === blob);
+  ok('every owned field, id, socket, star, lock and fish record survives the API', norm(C.unpackSave(JSON.parse(row.blob))) === norm(full));
+
+  // The large account must keep the same parse discipline as the original sample.
+  const parse = JSON.parse; let parses = 0, status;
+  JSON.parse = function(v, ...rest) { if (typeof v === 'string' && v.length > 8192) parses++; return parse.call(this, v, ...rest); };
+  try { status = await put(blob); } finally { JSON.parse = parse; }
+  ok('the full account re-sync is accepted with at most 3 save-sized parses', status === 200 && parses <= 3, 'status=' + status + ', parses=' + parses);
+
+  // Conflict replies carry the live row too; the v3 client must get r/locked in ordinary objects.
+  const stale = await save.onRequestPut({ request: new Request('https://x/api/save', { method: 'PUT',
+    headers: { cookie, 'content-type': 'application/json', 'x-save-format': '111' },
+    body: JSON.stringify({ owner: n, blob, version: 0 }) }), env });
+  const conflict = await stale.json();
+  const readable = conflict.blob && JSON.parse(conflict.blob);
+  ok('a v3-only stale page gets a readable, complete conflict copy', stale.status === 409 && readable && readable.__v == null && norm(readable) === norm(full));
 }
 
 console.log('');

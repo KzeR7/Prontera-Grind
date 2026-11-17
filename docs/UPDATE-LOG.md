@@ -11505,3 +11505,31 @@ Test-only follow-up to the v373 batch. No player-visible change, so BUILD is unc
   code with this diff.
 * **Delivery:** branch `arena/6d3886c8-prontera-grind`, commits `9cdf4fb` (cards, bulk sale,
   `/api/version`, jitter) and `5c8e840` (account delete). Not pushed, not deployed.
+
+### 2026-11-17 — `haven-v415` — refined/locked, all-starred full-storage save regression
+* **Changed:** Confirmed the remaining PR #241 size finding. The stronger deterministic account has
+  1,000 real N+ Nightfall Recurve bows, all +10/locked, four compatible distinct-family three-star
+  cards per bow, another 1,000 loose three-star cards, and 1,000 fish made by `addCatch()` with their
+  production ids/timestamps/dex/stats. The merged v3 encoder produces **338,180 characters**, over
+  the unchanged **307,200** ceiling. Codec v4 produces **295,175**, leaving **12,025 spare**, by
+  compacting item refinement/lock presence and using permanent enums for slot/weapon/affix names.
+  No ids, rolled values, stars or owned items/cards/fish are dropped or regenerated. The four prior
+  review fixes remain intact. Plain/v1/v2/v3 saves still decode; capability 112 advertises v4, and
+  older pages receive plain objects rather than unsupported item enums. BUILD mirrors and the
+  coordinated runtime cache tags are updated together.
+* **Try it:** Run `node tools/tests/save_max_state_sim.mjs`, then
+  `node tools/tests/save_codec_item_state_sim.mjs` and `node tools/tests/save_codec_chain_sim.mjs`.
+  See [save format and remaining limits](CLOUD-DATA.md). The old universal “every reachable state
+  fits” claim is withdrawn: these are finite regression cases, not a global account-size proof;
+  an encoded save above the ceiling is still refused with 413. An older encoder can require a page
+  reload to benefit from v4. Cloudflare CPU must be checked separately after an authorised deployment.
+* **Checks:** All six codec/size suites pass, including exact full-state round trips, real page load,
+  real API PUT/GET/re-sync, old-client conflict replies, all 51 refinement/lock-presence states,
+  frozen output from the actual v1/v2/v3 encoders, and GM restore/unlock fidelity. API **70/70**, GM
+  tools **20/20**, build/publish and whitespace checks pass. Full gate plus cache-tag fix reruns:
+  **234 pass / 3 existing failures / 0 dependency skips**, versus **233 / 3** on the unmodified merge.
+  Existing reds: `hosted_launch_stage_sim` (unpackaged plaza-bots runtime), `render_lost_boot_smoke`
+  (renderer-null/guide assertions), `skill_balance_sim` (stale combat hash). No new red suite, weakened
+  assertion/budget or re-hashed balance fixture. No production CPU result is claimed.
+* **Delivery:** Local changes on `arena/e9a33746-prontera-grind`; not committed, pushed or deployed.
+  No production account or remote database was accessed or changed.
