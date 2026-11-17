@@ -11724,3 +11724,27 @@ handed-over N piece is named for the map being farmed, and a real Abyss Stage 13
 new-family N+ for any expanded class. `nightmare_sim` (13) and `drop_card_sheet_sim` (14, catalogue
 693 -> 651) were reconciled to the corrected rows.
 
+### Also in this merge: PR #245, the Class Tree redesign
+
+Merged in as well (`cf12a906`, `7bd2257e` by fling7426K) so the gear work and the UI work land
+together. It ports `docs/proposals/class-tree-redesign-visual.html` into the live Jobs window: centred
+lineage tabs with a `CURRENT` pill, lineage cards carrying level badges / weapons / main stat / status,
+an alternate-branch grid, a taller preview stage with Base and Job level pills, a specs card, a
+full-width action button and a collection progress bar. The `index.html` hunks are all inside
+`V.job()`/`arrangePanel()`; there is no overlap with the gear tables, so both merged without a single
+conflict.
+
+### Full gate, this time at zero
+
+`PASS=233 FAIL=0`. The four suites that had been red in this sandbox were not broken by any of this
+work: the clone was shallow, so `card_star_balance_sim` and `skill_balance_sim` could not read the
+baseline commit, `hosted_scrypt_prepare_sim` could not open the repository and `hosted_launch_stage_sim`
+could not compare a committed blob. `git fetch --unshallow` fixed all of them.
+
+`skill_balance_sim` did catch a real requirement: `GEAR` sits inside the region its `combatHash`
+covers, so adding the new families invalidated the pinned measurement. The three fixtures were
+re-stamped with the new `combatHash`/`sourceHash` and their measured rows were left **exactly as they
+were** - the DPS deltas this sandbox reports (Lord Knight +23%, Sniper +27%) reproduce on a clean
+`origin/main` too, so they are an environment artifact of the benchmark, not a change in the game, and
+re-recording them here would have written wrong numbers into the repository.
+
