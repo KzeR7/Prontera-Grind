@@ -36,7 +36,7 @@
 // A save with no `__v` is an OLD save and is handed back completely untouched - not read, not
 // rewritten, not upgraded in place. Old saves keep loading for ever.
 
-import { catalogIndexOf, catalogCard } from './card-catalog.js';
+import { catalogRow, catalogCard, catalogIdOf } from './card-catalog.js';
 
 export const CODEC_VERSION = 3;
 
@@ -170,9 +170,11 @@ const cardNameDerivable = c =>
 /** True when `c` is exactly the card its cardKey describes, so the derived half can be left out. */
 export function cardMatchesCatalog(c) {
   if (!isObj(c)) return false;
-  const i = catalogIndexOf(c.cardKey);
-  if (i < 0) return false;
-  const d = catalogCard(i);
+  if (typeof c.cardKey !== 'string') return false;
+  const id = catalogIdOf(c.cardKey);
+  if (id === null) return false;
+  const d = catalogCard(id);
+  if (!d) return false;
   if (c.cardVersion !== d.cardVersion) return false;
   if (c.family !== d.family || c.n !== d.n) return false;
   if (c.stat !== d.stat || c.v !== d.v) return false;
@@ -180,17 +182,31 @@ export function cardMatchesCatalog(c) {
   if (c.map !== d.map || c.nightmare !== d.nightmare) return false;
   if (JSON.stringify(c.fit) !== JSON.stringify(d.fit)) return false;
   if (JSON.stringify(c.effects) !== JSON.stringify(d.effects)) return false;
+  // `stars` is the ONE field v3 stores separately (mergeCard writes it, the catalog cannot). A supported
+  // value is fine; an unsupported one falls through to the full tuple so it is preserved verbatim.
+  if (!starsSupported(c.stars)) return false;
   // any field outside the known set means this card carries something the catalog cannot reproduce
-  if (extrasOf(c, CARD_KEYS)) return false;
+  if (extrasOf(c, { has: k => CARD_KEYS.has(k) || k === 'stars' })) return false;
   return true;
 }
+
+// 0/absent, or an integer 1-3: the values cardStars() reads. Anything else (a string, 4, -1, a float)
+// is not something the game can hold, so it must keep the full stored form rather than be rewritten.
+export const starsSupported = v =>
+  v === undefined || v === null || v === 0 || (Number.isInteger(v) && v >= 1 && v <= 3);
 
 export function packCard(c) {
   if (!isObj(c)) return c;
   if (cardMatchesCatalog(c)) {
-    // [catalogIndex, id, stars]; absent stars stay absent.
+    // [catalogId, id] normally; [catalogId, id, stars] only when the card actually has stars. The first
+    // slot is the PERMANENT numeric id, never an array position, so adding or re-sorting catalog rows
+    // cannot change what an existing save decodes to - an index would silently re-point every reference.
+    // An unstarred card omits the third slot: paying 9 chars for "absent" on every one of 5000 cards is
+    // the difference between fitting under the ceiling and not.
+    const t = [catalogIdOf(c.cardKey), pack(c.id)];
     const stars = Number.isInteger(c.stars) && c.stars > 0 && c.stars <= 3 ? c.stars : undefined;
-    return [catalogIndexOf(c.cardKey), pack(c.id), pack(stars)];
+    if (stars !== undefined) t.push(stars);
+    return t;
   }
   // Otherwise the full v2 tuple, verbatim. Only drop `n` when it PROVABLY matches the rebuild rule.
   const dropName = cardNameDerivable(c);
@@ -212,11 +228,13 @@ export function unpackCard(t) {
   // (its extras bucket is an OBJECT at the end, never an extra positional slot).
   if (t.length <= 3 && Number.isInteger(t[0])) {
     const d = catalogCard(t[0]);
-    if (!d) return t;                       // unknown index: hand it back rather than invent a card
+    if (!d) return t;                       // unknown catalog id: hand it back rather than invent a card
     const id = unpack(t[1]);
     if (id !== undefined) d.id = id;
-    const stars = unpack(t[2]);
-    if (stars !== undefined) d.stars = stars;
+    if (t.length > 2) {
+      const stars = unpack(t[2]);
+      if (stars !== undefined) d.stars = stars;
+    }
     return d;
   }
   return fromTuple(t, BCARD, (o) => {
@@ -264,7 +282,7 @@ export function packFish(f, atBase) {
   if (extra) t.push(extra);
   return t;
 }
-export function unpackFish(t, atBase, oldRow = false) {
+export function unpackFish(t, atBase) {
   if (!Array.isArray(t)) return t;
   return fromTuple(t, BFISH, (o) => {
     if (t[5] !== undefined && t[5] !== NUL) o.perfect = t[5] === 1;
@@ -272,8 +290,9 @@ export function unpackFish(t, atBase, oldRow = false) {
     // v3: a small integer in the `mut` slot indexes the loader's own set. Any other value (a v2 string,
     // or NUL for an absent one) was already assigned by fromTuple and is left exactly as stored.
     const mi = t[FISH_MUT_AT];
-    if (oldRow && mi === NUL) o.mut = null;      // what a v2 client meant by an empty mut slot
-    else if (mi === -1) o.mut = null;
+    // -1 is v3's "no mutation". A NUL stays ABSENT: the real v2 encoder wrote `null` as literal null and
+    // used NUL only for a field that was not there at all, so reading it as null would invent a field.
+    if (mi === -1) o.mut = null;
     else if (typeof mi === 'number' && mi >= 0 && mi < FISH_MUTS.length) o.mut = FISH_MUTS[mi];
     // v3: `at` was stored relative to the newest timestamp in the save.
     const rel = t[FISH_AT_AT];
@@ -317,14 +336,11 @@ export function unpackSave(save) {
   delete out.__v;
   const atBase = typeof save.__at === 'number' ? save.__at : 0;
   delete out.__at;
-  // A v2 row wrote `mut: null` and "no mut field" as the same NUL. Reading a v2 row, NUL means null -
-  // that is what the old client meant by it. A v3 row is unambiguous (-1 means null, NUL means absent).
-  const oldRow = typeof save.__v === 'number' && save.__v < 3;
 
   if (Array.isArray(save.inv)) out.inv = save.inv.map(unpackItem);
   if (Array.isArray(save.cards)) out.cards = save.cards.map(unpackCard);
-  if (hasFishBag(save)) out.fishing = Object.assign({}, save.fishing, { bag: save.fishing.bag.map(f => unpackFish(f, atBase, oldRow)) });
-  if (Array.isArray(save.fishs)) out.fishs = save.fishs.map(f => unpackFish(f, atBase, oldRow));
+  if (hasFishBag(save)) out.fishing = Object.assign({}, save.fishing, { bag: save.fishing.bag.map(f => unpackFish(f, atBase)) });
+  if (Array.isArray(save.fishs)) out.fishs = save.fishs.map(f => unpackFish(f, atBase));
   return out;
 }
 

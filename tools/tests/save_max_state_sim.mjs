@@ -120,28 +120,44 @@ for (const [label, spec] of hard_cases) {
   });
 }
 
-// --- the state that is STILL over, recorded so nobody can claim otherwise --------------------------
+// --- the worst REACHABLE state, with real product ids ----------------------------------------------
 // 1000 items x4 socketed + 1000 loose + 1000 fish = 5000 real cards, each with its own 17-char
-// Date.now()+Math.random() id. v3 takes this from 703 KB to ~311 KB, which is still 4% over the
-// ceiling. The ids alone are ~28% of the save and a per-save id table does NOT help (measured: the
-// table costs more than the repeated ids it replaces when the ids are unique - see the note below).
-// A save with short ids fits (the block above passes); a save with real product ids does not.
+// Date.now()+Math.random() id. This used to be over the ceiling (703 KB under v2, ~311 KB under the
+// first v3). Two changes closed it, neither of which touches a player's cards or ids:
+//
+//   1. the absent-stars slot is omitted - an unstarred card is [catalogId, id], two slots not three;
+//   2. a starred card no longer falls back to the 130-char full tuple (see save_codec_catalog_sim).
+//
+// The catalog id is a small frozen integer rather than the quoted cardKey ("9:6:1"): at 5000 cards
+// that is ~20,000 chars, which is the difference between 311 KB and fitting.
+//
+// A per-save id table was measured twice and does NOT help - do not reintroduce it.
 const THIS_FIXTURE_NOTE = 'the ids below are the fixture\'s own, minted by newCard() - real product ids';
 
 // Distinct Date.now()+Math.random()-shaped ids, which is what a real save holds.
 const realId = i => Number('1794884' + String(100000 + i * 7919).slice(-6) + '.' + String(1000 + i * 13).slice(-4));
 
-t('the 5000-card worst case is measured and reported, not asserted to fit', () => {
+t('the 5000-card worst case fits, with real ids', () => {
   const S = state({ loose: 1000, socketed: 1000, fish: 1000, perItem: 4 });
   let k = 0;
   for (const c of S.cards) c.id = realId(k++);
   for (const it of S.inv) { it.id = realId(k++); for (const c of it.cards || []) c.id = realId(k++); }
-  if (!S.__bust) { /* the cached packed form is what fits() reads, so pack fresh */ }
   const n = fits(S).n;
-  console.log('       5000 real cards: ' + kb(n) + ' (' + n + ' chars), ' +
-    (n > SAVE_BYTES_MAX ? 'over by ' + kb(n - SAVE_BYTES_MAX) : 'fits'));
-  // This is a RECORD, not a requirement: if a future change closes the gap, the message says so.
-  if (n <= SAVE_BYTES_MAX) console.log('       NOTE: it now fits - move it into the block above and update docs/CLOUD-DATA.md');
+  console.log('       5000 real cards: ' + kb(n) + ' (' + n + ' chars)');
+  if (n > SAVE_BYTES_MAX) throw Error(kb(n) + ' is over by ' + kb(n - SAVE_BYTES_MAX));
+});
+t('the 5000-card worst case fits WITH STARRED CARDS too', () => {
+  // Regression: `stars` used to disqualify a card from the catalog form, so every starred card fell
+  // back to the 130-char tuple and this account was ~396 KB.
+  const S = state({ loose: 1000, socketed: 1000, fish: 1000, perItem: 4 });
+  let k = 0;
+  for (const c of S.cards) { c.id = realId(k++); if (k % 2) c.stars = 1 + (k % 3); }
+  for (const it of S.inv) { it.id = realId(k++); for (const c of it.cards || []) { c.id = realId(k++); if (k % 2) c.stars = 1 + (k % 3); } }
+  const n = fits(S).n;
+  console.log('       5000 cards, every other starred: ' + kb(n) + ' (' + n + ' chars)');
+  if (n > SAVE_BYTES_MAX) throw Error(kb(n) + ' is over by ' + kb(n - SAVE_BYTES_MAX));
+  const back = C.unpackSave(JSON.parse(JSON.stringify(C.packSave(S))));
+  if (norm(S.cards) !== norm(back.cards)) throw Error('starred cards differ after a round trip');
 });
 t('the 5000-card worst case still round-trips exactly', () => {
   // whatever the size verdict, the codec must not lose or alter a single card
@@ -152,26 +168,53 @@ t('the 5000-card worst case still round-trips exactly', () => {
   }
 });
 
-// --- a stored row written by an older codec still loads ------------------------------------------
-t('a v2 row (string mut, raw timestamps, full card tuples) still loads exactly', () => {
-  const S = state({ loose: 5, socketed: 3, fish: 20 });
+// --- a stored row written by an older codec still loads --------------------------------------------
+// The v2 tuples below are produced the way the REAL v2 encoder produced them, not hand-written: that
+// encoder wrote `mut: null` as literal null and used NUL only for a field that was ABSENT. An earlier
+// version of this fixture wrote NUL for null, so it tested a format that never shipped.
+t('a v2 row still loads exactly, byte for byte as the v2 encoder wrote it', () => {
+  const base = state({ loose: 5, socketed: 3, fish: 20 });
+  // v2 fish tuple: [id, sp, w, mut, at, perfect, lock] with NUL for an absent field
+  const NUL = '\u0000';
+  const v2fish = f => [f.id, f.sp, f.w, f.mut === undefined ? NUL : f.mut, f.at,
+    f.perfect === undefined ? NUL : (f.perfect ? 1 : 0),
+    f.lock === undefined ? NUL : (f.lock ? 1 : 0)];
+  // v2 card tuple: the BCARD layout, with `n` as NUL when it follows the naming rule
+  const BCARD = C.CODE_LAYOUT.BCARD;
+  const v2card = c => {
+    const t = BCARD.map(k => (c[k] === undefined ? NUL : c[k]));
+    t[7] = Array.isArray(c.effects) ? c.effects.map(e => [e.k, e.v]) : NUL;
+    if (c.n === (c.nightmare === true ? 'Nightmare ' + c.family : c.family)) t[BCARD.indexOf('n')] = NUL;
+    return t;
+  };
   const v2 = {
     __v: 2,
-    cards: S.cards.map(c => [c.card, c.cardVersion, c.cardKey, c.family, c.n, c.stat, c.v,
-      c.effects.map(e => [e.k, e.v]), c.fit, c.g, c.bossCard, c.map, c.nightmare, c.id]),
-    fishing: { bagTier: S.fishing.bagTier, bag: S.fishing.bag.map(f =>
-      [f.id, f.sp, f.w, f.mut === null ? '\u0000' : f.mut, f.at, f.perfect ? 1 : 0, f.lock ? 1 : 0]) },
+    cards: base.cards.map(v2card),
+    fishing: { bagTier: base.fishing.bagTier, bag: base.fishing.bag.map(v2fish) },
   };
   const back = C.unpackSave(JSON.parse(JSON.stringify(v2)));
-  if (norm(back.cards) !== norm(v2.cards.map(C.unpackCard))) throw Error('v2 cards differ');
-  for (let i = 0; i < v2.fishing.bag.length; i++) {
-    const want = S.fishing.bag[i], got = back.fishing.bag[i];
+  for (let i = 0; i < base.fishing.bag.length; i++) {
+    const want = base.fishing.bag[i], got = back.fishing.bag[i];
     for (const k of ['id', 'sp', 'w', 'mut', 'at', 'perfect', 'lock']) {
       if (JSON.stringify(want[k]) !== JSON.stringify(got[k])) {
         throw Error('v2 fish[' + i + '].' + k + ': ' + JSON.stringify(want[k]) + ' -> ' + JSON.stringify(got[k]));
       }
     }
   }
+  for (let i = 0; i < base.cards.length; i++) {
+    const want = base.cards[i], got = back.cards[i];
+    for (const k of ['cardKey', 'family', 'n', 'stat', 'v', 'g', 'bossCard', 'map', 'nightmare', 'id']) {
+      if (JSON.stringify(want[k]) !== JSON.stringify(got[k])) {
+        throw Error('v2 card[' + i + '].' + k + ': ' + JSON.stringify(want[k]) + ' -> ' + JSON.stringify(got[k]));
+      }
+    }
+  }
+});
+t('a fish that never had a mut field does not gain one', () => {
+  // The bug this pins: an earlier v3 branch read NUL as "null", inventing a field the save lacked.
+  const NUL = '\u0000';
+  const back = C.unpackFish(['a', 'Magikarp', 2, NUL, 1712345678901, NUL, NUL], 0);
+  if ('mut' in back) throw Error('invented mut=' + JSON.stringify(back.mut) + ' on a fish that had none');
 });
 
 // --- socketed cards: the collection that used to be stored uncompacted -------------------------------

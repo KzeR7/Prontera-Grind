@@ -91,17 +91,33 @@ gate**; `save_codec_chain_sim.mjs` block 7 fails without it.
 cards and then earn another 1000 loose ones (`unsock()` pushes them back into `S.cards`), so
 "loose + socketed" is **not** bounded by 1000.
 
-**Codec v3** (`__v` 3) closes most of that gap. Two facts made it possible:
+**Codec v3** (`__v` 3) closes that gap. Three facts made it possible:
 
 - A modern card is a *catalog row plus an identity*. `repairProgression()` already overwrites `family`,
   `n`, `stat`, `v`, `effects`, `fit`, `g`, `bossCard`, `map` and `nightmare` from `CARD_CATALOG` on every
-  load, so those fields are a cache. v3 stores `[catalogIndex, id, stars?]` - 32 chars instead of 118.
+  load, so those fields are a cache. v3 stores `[catalogId, id]`, plus a third slot `stars?` only when
+  the card is actually starred - 23 chars instead of 118, 25 when starred.
   The table lives in `functions/_lib/card-catalog.js`, generated from the page's own `cardDefinition()`,
   and `save_codec_catalog_sim.mjs` fails if the two copies ever disagree. A card that does not match its
   row exactly (edited value, unknown key, wrong progression version, any unknown field) keeps the full
   v2 tuple, so the codec can never rename or normalise a card.
 - A fish timestamp is a 13-digit ms value and a mutation comes from a closed set of 7. v3 stores `at` as
   a small delta from `__at` (sent once) and `mut` as an index.
+
+**The catalog id is permanent.** `card-catalog.js` row 0 is a frozen integer id, assigned once and
+never renumbered, reused or reordered: new cards take the next id above the current maximum and a
+retired id is retired. A save stores that id. An array position would not work - inserting one card
+that sorts first silently re-points every stored reference, so an older save decodes to a different
+card than the player owns. `save_codec_catalog_sim.mjs` pins all 192 ids in a fixture and fails on any
+renumber, and a historical-save test decodes the same blob twice to prove the mapping is stable.
+An id the running build does not know is returned untouched, never guessed.
+
+**A client is only handed a version it can decode.** The page sends `X-Save-Format` with its build
+number; the server reads the *stored* blob's `__v` and unpacks to plain objects when the client is too
+old for it. Build 111 decodes `__v` 3; build 110 stops at `__v` 2. Without this, a page from a previous
+build would receive v3 rows and drop every card field and every fish it could not parse - and its next
+upload would save that loss. Note that these constants are build numbers on the same scale as the
+header, not a small enum: an enum (1, 2) makes `110 >= 2` true and silently hands v3 rows to everyone.
 
 | State | compact v2 | compact v3 | syncs? |
 | --- | ---: | ---: | --- |
@@ -110,27 +126,29 @@ cards and then earn another 1000 loose ones (`unsock()` pushes them back into `S
 | 1000 items, 0 loose, 1000 socketed cards, 1000 fish | 265 KB | **171 KB** | yes |
 | 1000 items + 7 fully-carded worn items, 1000 loose cards, 1000 fish | 274 KB | **~180 KB** | yes |
 | **1000 items x1 socketed + 1000 loose + 1000 fish** | 376 KB | **193 KB** | **yes**, 107 KB spare |
-| **1000 items x4 socketed + 1000 loose + 1000 fish** (5000 real cards) | 703 KB | **319 KB** | **no - over by 19 KB** |
+| **1000 items x4 socketed + 1000 loose + 1000 fish** (5000 real cards) | 703 KB | **275 KB** | **yes**, 32 KB spare |
+| the same, with every other card starred | - | **280 KB** | **yes**, 27 KB spare |
 
-So: **the states that were previously impossible now fit, except the single worst one.** 5000 cards,
-each carrying its own 17-character `Date.now()+Math.random()` id, is ~319 KB against a 307,200 ceiling.
-The ids alone are ~28% of that save.
+So: **every reachable state fits, including the worst one.** 5000 cards, each carrying its own
+17-character `Date.now()+Math.random()` id, is ~275 KB against a 307,200 ceiling - and ~280 KB with
+every other card starred. The ids alone are ~28% of that save, and they are never shortened or
+regenerated to make it smaller: a save id is the player's card identity.
 
 A per-save id table was implemented, measured and **removed**: it costs more than it saves. The table
 must contain each unique id once, and the references it replaces are only ~15 chars shorter, so for
 unique ids it is a net loss (measured on 1000 loose cards: 38,241 chars with the table against 31,726
 without). It only ever helped when ids repeat, which a real save does not do.
 
-`save_max_state_sim.mjs` asserts the states above that fit must keep fitting, and *records* the 5000-card
-case with a message that says so if it ever starts fitting. If a future change closes the last ~19 KB,
-that is the line to move.
+`save_max_state_sim.mjs` asserts **every** state above fits, including the 5000-card worst case and the
+same state with half the cards starred. Starring used to disqualify a card from the catalog form, which
+put this account back over the ceiling (~396 KB); that is now a regression test.
 
-**Not solved, and deliberately not papered over.** No card is deleted and no ownership limit was added:
-the codec is a transport encoding and may not change what a player owns. The last remaining over-limit
-state needs a product decision. The realistic options are a shorter id (a per-save counter instead of
-`Date.now()+Math.random()`, which is a game change with its own risk) or accepting that the single
-worst-case account must trim below 1000 items - not a codec change. `Workers Paid` raises the CPU
-ceiling but **does not** raise `SAVE_BYTES_MAX`, so it cannot help here.
+**No player data was changed to reach this.** No card is deleted and no new ownership limit was added:
+the codec is a transport encoding and may not change what a player owns, and it never re-rolls,
+regenerates or re-ids a card. Every gain above is a smaller *description* of the same data - a catalog
+reference instead of a duplicated row, a delta instead of a timestamp, an omitted slot instead of an
+absent marker. The save that used to be rejected for being too large is now the same save, encoded
+smaller. `Workers Paid` raises the CPU ceiling but **does not** raise `SAVE_BYTES_MAX`.
 
 **A GM edit keeps the row's format.** `storedBlobForm(save, previousBlob)` in `functions/api/gm/player.js`
 re-packs through `packSave` when the row was compact, so an unlock or a history restore cannot quietly

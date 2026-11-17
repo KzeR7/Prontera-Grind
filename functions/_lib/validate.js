@@ -54,19 +54,38 @@ export const SAVE_BYTES_MAX = 300 * 1024;
 // row: its loader drops tuple entries, so a compact save handed to it loses items and every fish, and
 // its next upload writes that loss back. So a stored compact blob is only handed out to a page that
 // says it can decode it; anything else is told to reload and is served the ORDINARY form.
-export const SAVE_FORMAT_PLAIN = 0;     // no codec at all (every build before v414)
-export const SAVE_FORMAT_COMPACT = 1;   // can decode packSave()'s output
+// These are BUILD NUMBERS, the same scale the page sends in `X-Save-Format` - not a small enum. They
+// were an enum (1, 2) at first, which made every page look capable: a client sending 110 compares as
+// 110 >= 2, so a v2-only page was handed v3 rows. Keep them on the header's scale.
+export const SAVE_FORMAT_PLAIN = 0;       // no codec at all (every build before v414)
+export const SAVE_FORMAT_COMPACT = 110;   // v414: decodes codec `__v` 1-2
+export const SAVE_FORMAT_V3 = 111;        // decodes codec `__v` 3 (catalog references, delta timestamps)
 export function clientSaveFormat(request) {
   const raw = Number(request?.headers?.get?.('X-Save-Format'));
   return Number.isFinite(raw) && raw > 0 ? Math.floor(raw) : SAVE_FORMAT_PLAIN;
 }
 // Does this page understand the blob we are holding? A plain blob is readable by everyone, so the
-// answer is only ever "no" for a compact blob and an old client.
+// answer is only ever "no" for a compact blob and a client too old for that blob's codec version.
+//
+// THE VERSION IS READ FROM THE BLOB, NOT ASSUMED. A page that advertised "compact" before codec v3
+// existed understands __v 1-2 and nothing later; handing it a __v 3 row gave it cards with no normal
+// fields and a fish whose `at` was a [seconds, millis] pair instead of a timestamp. Advertising a
+// capability is not a promise about formats invented after that build.
 const isPackedText = blob => {
   if (typeof blob !== 'string' || !blob) return false;
   try { return isPacked(JSON.parse(blob)); } catch { return false; }
 };
-export const clientCanRead = (blob, format) => format >= SAVE_FORMAT_COMPACT || !isPackedText(blob);
+const packedVersion = blob => {
+  if (typeof blob !== 'string' || !blob) return null;
+  try { const o = JSON.parse(blob); return isPacked(o) ? Number(o.__v) || 1 : null; } catch { return null; }
+};
+export const clientCanRead = (blob, format) => {
+  const v = packedVersion(blob);
+  if (v === null) return true;                         // not a compact blob: everyone can read it
+  if (format < SAVE_FORMAT_COMPACT) return false;      // no codec at all
+  if (v <= 2) return true;                             // the original compact codec
+  return format >= SAVE_FORMAT_V3;                     // a v3 row needs a v3-capable page
+};
 
 // The body a save endpoint should return for `blob` to a client of `format`. Never throws: an
 // unreadable blob is the caller's problem, not a reason to fail the request.

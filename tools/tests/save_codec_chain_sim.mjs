@@ -57,7 +57,7 @@ console.log('  save: ' + plain.length.toLocaleString() + ' B plain -> ' + compac
 // 1. the compact blob is ACCEPTED by the real handler
 let ver = 0;
 const put = async blob => {
-  const r = await save.onRequestPut({ request: new Request('https://x/api/save', { method: 'PUT', headers: { 'content-type': 'application/json', cookie, 'x-save-format': '110' }, body: JSON.stringify({ owner: n, blob, version: ver }) }), env });
+  const r = await save.onRequestPut({ request: new Request('https://x/api/save', { method: 'PUT', headers: { 'content-type': 'application/json', cookie, 'x-save-format': '111' }, body: JSON.stringify({ owner: n, blob, version: ver }) }), env });
   const j = await r.clone().json().catch(() => ({}));
   if (j.version != null) ver = j.version;
   return r.status;
@@ -66,7 +66,7 @@ ok('the compact blob is accepted (200)', (await put(compact)) === 200);
 ok('the original plain blob is still refused (413) - it is over the ceiling', (await put(plain)) === 413);
 
 // 2. GET returns exactly what was stored, still compact
-const gRes = await save.onRequestGet({ request: new Request('https://x/api/save', { method: 'GET', headers: { cookie, 'x-save-format': '110' } }), env });
+const gRes = await save.onRequestGet({ request: new Request('https://x/api/save', { method: 'GET', headers: { cookie, 'x-save-format': '111' } }), env });
 const body = await gRes.json();
 ok('GET returns the stored blob', gRes.status === 200 && !!body.blob);
 ok('the stored blob is compact', body.blob && JSON.parse(body.blob).__v >= 1);
@@ -138,10 +138,23 @@ ok('the compact form unpacks to exactly the same data', JSON.stringify(sameData)
     'kept ' + (decoded.inv || []).length + ' of ' + S.inv.length + ' items');
   ok('the old loader keeps every card', Array.isArray(decoded.cards) && decoded.cards.length === S.cards.length);
 
-  // a modern page still gets the compact form (the whole point of the release)
-  const newGet = await save.onRequestGet({ request: new Request('https://x/api/save', { method: 'GET', headers: { cookie, 'x-save-format': '110' } }), env });
+  // A page that only knows the ORIGINAL compact codec (build 110) cannot decode a __v 3 row: it would
+  // get cards with no normal fields and a fish whose `at` is a [seconds, millis] pair. The server must
+  // read the STORED VERSION and unpack for a client too old for it.
+  const v2Get = await save.onRequestGet({ request: new Request('https://x/api/save', { method: 'GET', headers: { cookie, 'x-save-format': '110' } }), env });
+  const v2served = await v2Get.json();
+  const v2blob = JSON.parse(v2served.blob);
+  ok('a v2-only page (110) is not handed a __v3 blob', v2blob.__v == null,
+    'served a __v' + v2blob.__v + ' blob to a page that cannot decode it');
+  const v2fish = (v2blob.fishing || {}).bag || [];
+  ok('  ...and its fish keep a readable species', v2fish.length > 0 && v2fish.every(e => typeof e.sp === 'string'));
+  ok('  ...and its cards keep their normal fields',
+    (v2blob.cards || []).every(c => typeof c.family === 'string' && typeof c.n === 'string'));
+
+  // a build that CAN decode v3 still gets the compact form (the whole point of the release)
+  const newGet = await save.onRequestGet({ request: new Request('https://x/api/save', { method: 'GET', headers: { cookie, 'x-save-format': '111' } }), env });
   const fresh = await newGet.json();
-  ok('a v414 page still gets the compact blob', JSON.parse(fresh.blob).__v != null);
+  ok('a v3 page (111) still gets the compact blob', JSON.parse(fresh.blob).__v != null);
 
   // the conflict reply carries a blob too - it must obey the same rule
   const oldPut = await save.onRequestPut({ request: new Request('https://x/api/save', {
