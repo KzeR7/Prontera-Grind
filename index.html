@@ -5710,8 +5710,7 @@ function spawn(){
       ...ascensionCombatStats(S.mp,S.lvl,true),exp:fieldExpReward(S.mp,S.lvl,true),zeny:fieldZenyReward(S.mp,S.lvl,true),
       size:1.3,mag:true,lvl:l,sec:F.sec});
     // The first five maps bring three escorts; the five later maps bring five.
-    // v415: they carry `escort` so the payout split can tell an MVP's escort from an ordinary
-    // field mob - only an escort hands 70% of its material/Sigil roll to the boss.
+    // v415: `escort` lets the payout split tell an MVP's escort from an ordinary field mob.
     for(let i=0;i<(S.mp<5?3:5);i++)mobs.push({...minionDef(0),escort:true});
     mobs.forEach((m,i)=>{
       // v231: escorts sat 2.3-2.95 from the MVP (~2.7 between neighbours), inside the new
@@ -6808,9 +6807,8 @@ function castSkill(sk,k){
   }
   if(sk.bounce&&dealt>0)bounceStrike(target,sk,raw);
   // haven-v412: the shockwave of a signature blow (Asura Strike) - a fixed share to enemies beside the target.
-  // v415 (owner): the boss bonus belongs to the boss. `shockRaw` strips exactly that one factor, so
-  // an escort standing beside its MVP never inherits Asura's +50%; every other multiplier (spheres,
-  // combos, ascension) still applies to the shockwave as before.
+  // v415 (owner): the boss bonus belongs to the boss, so `shockRaw` strips that one factor and an
+  // escort beside its MVP never inherits Asura's +50%. Spheres, combos and ascension still apply.
   if(sk.shock&&dealt>0){const shockRaw=target.boss&&sk.bossPower?raw/(1+sk.bossPower):raw;
     for(const o of mobs.slice())if(o!==target&&o.hp>0&&o.pack===target.pack&&Math.hypot(o.x-target.x,o.z-target.z)<=sk.shock.r)skillHit(o,shockRaw*sk.shock.k,sk,true);}
   if(pulse){const anchor={x:target.x,z:target.z,pack:target.pack},origin={x:pl.x,z:pl.z};
@@ -6967,18 +6965,12 @@ const ASCENSION_MATERIALS=['Astral Shard','Primal Catalyst',"Valkyrie's Sigil"];
 const ASC_MAT_CH=.5,ASC_SIGIL_CH=.125;
 let ascDropAnchor=0;
 function ascDropIndex(mob){if(!ascDropAnchor)ascDropAnchor=ascensionCombatStats(10,1).hp;return Math.max(1,(mob.max||mob.hp||ascDropAnchor)/ascDropAnchor)}
-// v415 (owner: "escort and boss payouts are the same per kill"): an escort rolled exactly what the
-// mobs it replaces roll, so a character that clears straight to the MVP collected the boss's roll
-// and skipped most of the field's. ASC_ESCORT_SHIFT moves 70% of every escort's MATERIAL and SIGIL
-// chance onto the MVP it escorts; the escorts keep 30%, so an escort kill still pays. Zeny, EXP and
-// Job EXP are the v85/v90.3 split and are untouched. Only a boss wave has escorts, so a normal
-// field never changes.
-//   escort chance  x0.30
-//   boss           + (escorts x 0.70 x what ONE escort used to roll)
-// The compensation cannot be a fixed multiple of the boss's own chance: a boss carries 3x an
-// escort's HP, and from v191 the Stage-5 escorts sit at half HP on top of that, so the ratio is 6
-// there and 3 elsewhere. ascEscortIndex() reads the stage's real escort stats instead of guessing,
-// which keeps a full clear value-neutral on every stage of both maps.
+// v415 (owner: "escort and boss payouts are the same per kill"): ASC_ESCORT_SHIFT moves 70% of an
+// escort's MATERIAL and SIGIL chance onto the MVP; escorts keep 30%, so an escort kill still pays.
+// Zeny, EXP and Job EXP are untouched and a normal field has no escorts, so it never changes.
+// The MVP's compensation is read off the stage's real escort stats (ascEscortIndex), not a fixed
+// multiple: a boss carries 3x an escort's HP, but from v191 the Stage-5 escorts sit at half HP, so
+// the ratio is 6 there and 3 elsewhere. That keeps a full clear value-neutral on both maps.
 const ASC_ESCORT_SHIFT=.7,ASC_ESCORT_KEEP=1-ASC_ESCORT_SHIFT;
 const ascEscortCount=m=>((m??S.mp)<5?3:5);
 function ascEscortIndex(mob){const m=mob.mapIndex??S.mp;return m<10?1:ascDropIndex({max:ascensionCombatStats(m,mob.stage??S.lvl,false).hp})}
