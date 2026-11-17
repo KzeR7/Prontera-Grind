@@ -11428,3 +11428,57 @@ MVP's escorts. Code-side only; no `SKILL_TUNING` value moved and no class damage
   `tools/progression_balance.js --skills` filters its growth table to the baseline's classes (the
   expanded roster was inflating 63 rows to 105 and breaking `skill_balance_sim`).
 * **Delivery:** Branch `arena/75645771-prontera-grind`, stacked on PR #234's haven-v414.
+
+## haven-v415 follow-up — the staging rehearsal could not run at all (2026-11-16)
+
+`hosted_launch_stage_sim` was red before this branch existed: the packager refused its own checkout
+(`Unpackaged runtime change: assets/plaza-bots.js` fails on `main` too, with 40 offenders). This
+branch made it worse — 273 offenders — because the expanded roster added whole new art packs, and
+then the rehearsal stopped one step later, at `MISSING: assets/sprite-pack-x/index.js` from the
+staged `tools/build_site.sh`. Fixed at the cause, not by widening the guard.
+
+**Why the overlay drifted.** `package_hosted_launch.mjs` builds from a fixed archive
+(`7511a03c…`) and fails closed on any runtime file it is not carrying, so every new runtime file has
+to be declared. That declaration was a hand-written array, and it had gone three ways wrong at once:
+
+* the packs the new code fetches by URL after load were never packaged (44 sprite bodies, 89
+  wardrobe atlases and pose files, 36 effect flipbooks, and the 156-image pond fishing pack);
+* files the entry points load by static tag were missing, including
+  `assets/sprite-pack-x/index.js`, which is also a hard `require` of `tools/build_site.sh` — so the
+  rehearsal died before it could deploy anything;
+* five runtime files that already exist in the archive but that this branch **modified**
+  (`assets/wardrobe-ui.js`, `functions/_lib/auth.js`, `functions/_lib/gm-catalog.js`,
+  `functions/_lib/usage.js`, `functions/api/gm/usage.js`) were undeclared, which would have shipped
+  staging the archived copy of each alongside a v415 everything-else. `gm-catalog.js` is the
+  47-class roster. That is exactly the mixed-version deployment the guard exists to prevent.
+
+**What changed.** The overlay is now derived, in a new `tools/staging/launch_overlay.mjs`:
+
+* each art pack ships its index plus exactly the files that index names — the generator manifests
+  (`tools/native-expanded/*manifest.json`), `assets/ro-fx/index.js` and
+  `assets/social/fish/MANIFEST.json` are the sources, so regenerating art updates the package;
+* item icons are read from `RO_ITEM_ICON_CANDIDATES` in the released entry point (181 ids, matching
+  an evaluated run of that literal exactly);
+* every `functions/**` module and `migrations/**` file is packaged wholesale, so a newly imported
+  `_lib` module cannot be missed;
+* any static asset tag the entry points gained since the archive base is picked up automatically.
+
+The package template's hand-written copy of that list is gone; `unpackPayload()` now validates the
+payload against its own catalog instead of a second list that had already drifted (it still named
+three removed fish and none of the 566 catalog-driven Digimon files).
+
+**Two bugs found by actually running the rehearsal** (not by the guard):
+
+* `assets/atlas/fountain-plaza.jpg` was not on the packager's binary list, so it was decoded as utf8
+  and re-encoded — a 140 KB source came out at 252 KB, corrupt, in every rehearsal. `.jpg` joined
+  the list, and the packager now proves the text path was lossless and names any file it has to
+  reclassify.
+* the staged tree is now an **exact** copy of a real build: verified `bash tools/build_site.sh`
+  inside the unpacked archive produces 4063 files byte-identical to a build of this checkout.
+
+**Checks.** `hosted_launch_stage_sim` passes, with new assertions for the JPEG round trip, the
+`build_site.sh` dependencies, every file each pack index names, the three MVP fish the old list
+missed, and a byte-for-byte round trip of every packaged file. Full suite: 219 of 219 `*_sim` pass.
+`render_lost_boot_smoke` (4 passed / 3 failed) and `mvp_art_crop.py --check` (7 drifted) fail
+identically on `main` and are untouched here. Package is 58.0 MB compressed, up from 48.8 MB — it
+was not runnable before, so there is no working baseline to compare against.

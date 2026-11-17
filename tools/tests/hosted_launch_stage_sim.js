@@ -28,6 +28,38 @@ try{
  // v360: the binary centerpiece must ride the package as base64, byte for byte - an utf8
  // detour would silently corrupt the glTF container.
  assert.equal(payload['assets/Fountainfile/Prontera_Grand_Aetherwell.glb'],'base64:'+fs.readFileSync('assets/Fountainfile/Prontera_Grand_Aetherwell.glb').toString('base64'));
+ // v415: the same must hold for the JPEG atlas. It was not on the binary list, so it was packed as
+ // utf8 and silently re-encoded (252 KB staged from a 140 KB source) - the hub texture was corrupt
+ // in every rehearsal and nothing failed. Check the bytes, not just the prefix.
+ assert.equal(payload['assets/atlas/fountain-plaza.jpg'],'base64:'+fs.readFileSync('assets/atlas/fountain-plaza.jpg').toString('base64'));
+ // v415: the staged copy runs tools/build_site.sh, and the overlay has to satisfy its `require`
+ // lines or the owner's rehearsal stops at "MISSING ... the game would load broken from this
+ // build". These are exactly the files that were missing while the overlay was a hand-written list.
+ for(const required of ['assets/sprite-pack-x/index.js','assets/ro-fx/index.js','assets/signature-fx.js',
+  'assets/expanded-jobs.js','assets/wardrobe/expanded/v1/catalog.json'])
+  assert.equal(typeof payload[required],'string','overlay must carry the build dependency '+required);
+ // The per-file packs the client fetches by URL after load: each index names its files, and a
+ // staged site that serves the index but not the files renders a blank class or a missing effect.
+ // Derived from the indexes rather than counts, so new art is covered automatically.
+ {
+  const readIndex=rel=>JSON.parse(fs.readFileSync(rel,'utf8').replace(/^[\s\S]*?=\{/,'{').replace(/;?\s*$/,''));
+  for(const rec of Object.values(readIndex('assets/sprite-pack-x/index.js').bodies))
+   assert.equal(typeof payload['assets/sprite-pack-x/'+rec.file],'string','uncarried sprite body '+rec.file);
+  for(const book of Object.values(readIndex('assets/ro-fx/index.js').books))
+   assert.equal(typeof payload['assets/ro-fx/'+book.file],'string','uncarried effect flipbook '+book.file);
+  for(const rel of Object.values(JSON.parse(fs.readFileSync('assets/social/fish/MANIFEST.json','utf8'))))
+   assert.equal(typeof payload[rel],'string','uncarried pond fish '+rel);
+  // The three MVP fish the old hand list had missed, called out so the regression is legible.
+  for(const name of ['mvp_dreadclaw','mvp_stormcoil','mvp_volthorn'])
+   assert.equal(typeof payload['assets/social/fish/'+name+'.png'],'string','uncarried MVP fish '+name);
+ }
+ // And every packaged file must survive the round trip byte for byte - this is what catches a new
+ // binary type being decoded as text before it reaches the owner's rehearsal.
+ for(const [name,text] of Object.entries(payload)){
+  const raw=fs.readFileSync(name);
+  const back=text.startsWith('base64:')?Buffer.from(text.slice(7),'base64'):Buffer.from(text,'utf8');
+  assert.ok(back.equals(raw),'package round trip changed bytes: '+name);
+ }
  assert.equal(payload['assets/vendor/GLTFLoader.r128.js'],fs.readFileSync('assets/vendor/GLTFLoader.r128.js','utf8'));
  assert.throws(()=>unpackPayload(encoded,'bad'));assert.throws(()=>safeSql('DROP TABLE users > file'));
  assert.equal(deployedUrl('https://abcdef12.prontera-grind-staging.pages.dev'),'https://abcdef12.prontera-grind-staging.pages.dev');
