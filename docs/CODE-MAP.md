@@ -79,8 +79,12 @@ an exhaustive test selection. Follow dependencies across systems and see
   lossless WebP per body in 126×134 cells plus `index.js`) and fetched one body at a time
   by `requestExpandedBody()`; `packTex()` reads `rec.cell` and the optional head column in
   an anchor. Their weapon families (spear, book, knuckle, instrument, whip, shuriken, gun)
-  are kin of shipped families: `WEAPON_KIN`, `kinDrop()`, `kinWeaponName()` next to `GEAR`;
-  the pools and rates are untouched. Damage budgets sit at the top of `SKILL_TUNING` and are
+  are kin of shipped families: `WEAPON_KIN`, `kinDrop()`, `kinWeaponName()` next to `GEAR`.
+  Since haven-v417 they are also real items: the Nightmare rows (sections 4-5) of every map
+  carry the families that map trains (`NM_NEW_FAMILY`, `NM_FAMILY_BY_MAP`, `nmRowNew`), and the
+  two Ascension maps have shelves of their own (`ASC_GEAR_ASTRAL`, `ASC_GEAR_THOR`, read by
+  `gearPool`). Sections 0-3 are untouched, so the shipped pools and rates did not move.
+  Damage budgets sit at the top of `SKILL_TUNING` and are
   recorded in `tools/tests/fixtures/expanded_skill_budget.json`. Skills borrow a shipped
   icon (`icon`) and cast effect (`fx`); `tools/tests/expanded_roster_sim.js` covers the lot.
 - **Weapons:** `assets/weapons/`, `assets/weapons_data.js`,

@@ -22,7 +22,9 @@ function liveData(){
     `MAPS.forEach((m,i)=>{m.b=[0,9,19,31,43,59,66,73,79,89,139,149][i];m.rec=REC[i]});`,
     // v76: the Nightmare band's constants and the two extra catalogue rows per map, so the sheet
     // shows exactly what the game ships
-    grab('const NMLV=[', 'GEAR.forEach((row,m)=>{row.push(nmRow(m,0),nmRow(m,1))});') + 'GEAR.forEach((row,m)=>{row.push(nmRow(m,0),nmRow(m,1))});',
+    // haven-v417: the Nightmare rows are now pushed by nmRowNew (nmRow + the expanded families),
+    // so the catalogue slice runs to that call instead of the old nmRow-only one.
+    grab('const NMLV=[', 'GEAR.forEach((row,m)=>{row.push(nmRowNew(m,0),nmRowNew(m,1))});') + 'GEAR.forEach((row,m)=>{row.push(nmRowNew(m,0),nmRowNew(m,1))});',
     pick(/const EARLY_FIELD_PWR=\[[^;]+;/,'early-map power schedules'),
     pick(/const fieldPower=\(m,l\)=>[^;]+;/, 'fieldPower'),   // v76: one ternary expression, no inner statement
     pick(/const secOf=[^;]+;/,'secOf'),
@@ -40,10 +42,18 @@ function liveData(){
     pick(/const MAPVAL=\[[^\]]*\];/,'map value bands'),
     pick(/const dropTier=\(m,l\)=>[^;]+;/,'dropTier'),
     pick(/const FIELD_GEAR=\[[^\]]*\],FIELD_GEAR_MID=\[[^\]]*\],BOSS_POOL_TOTAL=\[[^\]]*\];/,'field drop tables'),
+    // haven-v417: fieldOf now reads FIELD_GEAR_NM (and NMPLUS_DROP) because the two Ascension maps
+    // carry a real gear shelf instead of returning an empty pool, so the Nightmare tables must be
+    // in scope for the extracted slice too.
+    pick(/const FIELD_GEAR_NM=\[[^\]]*\],FIELD_GEAR_MID_NM=\[[^\]]*\];/,'the Nightmare drop tables'),
+    pick(/const NMPLUS_DROP=[^;]+;/,'the N+ halving'),
+    // haven-v417: fieldOf's Ascension branch pays a Forge material on the Stage 5 MVP.
+    pick(/const NM_MAT=\[[^\]]*\];/,'the Nightmare material wallet'),
+    pick(/const nmMatIndex=m=>[^;]+;/,'the material index'),
     grab('const BOSS_CRIT_RES=', 'const OFFLINE_CAP_MS='),
     grab('function gearPool(m,l){','// ---------- stat progression'),
     `const WICON=${pickValue(/const WICON=(\{[^}]*\})/,'weapon type table')};`,
-    `this.__live={MAPS,RAR,GRADE,AFF,AB,K5,cardVal,cardStat,CFIT,SECN,WICON,fieldPower,fieldOf};`
+    `this.__live={MAPS,RAR,GRADE,AFF,AB,K5,cardVal,cardStat,CFIT,SECN,WICON,fieldPower,fieldOf,ASC_GEAR_ASTRAL,ASC_GEAR_THOR};`
   ].join('\n');
   const context={};vm.createContext(context);vm.runInContext(code,context);
   const X=context.__live,build=pickValue(/const BUILD='([^']+)'/,'BUILD');
@@ -71,7 +81,11 @@ function liveData(){
         {slot:'leg',name:g.l},{slot:'acc',name:g.ac},{slot:'acc',name:g.ac2}];
       return raw.map((item,i)=>({id:`m${mi}-s${si}-i${i}`,...item}));
     };
-    const sections=Array.from(mi>=10?[]:mp.gear,(g,si)=>{
+    // haven-v417: Astral Citadel and Thor Volcano used to have no equipment at all, so their
+    // sections were deliberately empty. They now ship a real shelf, built from their own tables
+    // (ASC_GEAR_ASTRAL / ASC_GEAR_THOR) rather than from GEAR, so the sheet catalogues it the same way.
+    const ascSheet=mi>=10?(mi===10?X.ASC_GEAR_ASTRAL:X.ASC_GEAR_THOR):null;
+    const sections=Array.from(ascSheet||(mi>=10?[]:mp.gear),(g,si)=>{
       const items=sectionItems(g,mi,si);
       if(mi===9&&si===3){
         const added=sectionItems(mp.gearUpgrade,mi,si).map((item,i)=>({...item,id:`m${mi}-s${si}-u-i${i}`,gearSet:'abyss-ascended'}));
@@ -81,7 +95,10 @@ function liveData(){
     });
     const stages=[];
     for(let level=1;level<=(mi>=10?5:10);level++){
-      const F=X.fieldOf(mi,level),sec=F.sec,section=sections[sec];
+      const F=X.fieldOf(mi,level),sec=F.sec;
+      // haven-v417: an Ascension field's section is its real gear gate (Astral 4/5, Thor 6), but the
+      // map only has two shelves - N (stage row 0) and N+ (stage row 1) - so index those by row.
+      const section=sections[mi>=10?(level<=3?0:1):sec];
       const itemId=d=>{
         const found=section.items.find(x=>x.slot==='weapon'?x.weaponType===d.k&&x.name===d.n:x.slot===d.k&&x.name===d.n);
         if(!found)throw Error(`cannot map ${mp.n} stage ${level} drop ${d.k}:${d.n}`);
@@ -119,19 +136,32 @@ t('the worksheet covers all maps, gear sections, and field stages',()=>{
   assert.strictEqual(sheet.maps.length,12);
   // Each map has four normal job sections plus the two separate Nightmare rows; the Abyss's
   // enhanced third-job set is listed as a variant inside section 3, not a new equip-gate section.
-  for(const [mi,m] of sheet.maps.entries()){assert.strictEqual(m.sections.length,mi>=10?0:6,m.name);assert.strictEqual(m.stages.length,mi>=10?5:10,m.name);assert.ok(m.stages.every(s=>s.mobs.length===2),m.name+' field mob count')}
+  // haven-v417: the two Ascension maps used to have no sections at all; each now has two shelves
+  // (N on Stages 1-3, N+ on 4-5 / the Mythic tier on Thor), so the sheet lists them like any map.
+  for(const [mi,m] of sheet.maps.entries()){assert.strictEqual(m.sections.length,mi>=10?2:6,m.name);assert.strictEqual(m.stages.length,mi>=10?5:10,m.name);assert.ok(m.stages.every(s=>s.mobs.length===2),m.name+' field mob count')}
   assert.ok(sheet.maps.slice(0,10).every(m=>m.sections[4].name===undefined||m.sections[4].items.length>0),'the Nightmare rows carry items');
   assert.strictEqual(sheet.sectionNames[4],'Nightmare gear');assert.strictEqual(sheet.sectionNames[5],'Abyssal Nightmare gear');
   // v80: Geffen and Payon each gained a second weapon family, and the Nightmare rows are generated
   // from each map's own section 3, so all six of their rows grew by one: 601 -> 613. The Thief-line
   // katar swap then took four back: Morroc's 2nd-job and high-tier shelves (and the two Nightmare
   // rows built from the high-tier one) now carry a single katar where they carried a dagger too.
-  assert.strictEqual(sheet.maps.slice(0,10).reduce((n,m)=>n+m.sections.reduce((a,s)=>a+s.items.length,0),0),609);
+  // haven-v417 (owner: "all these new class nightmare + weapons"): every map's two Nightmare rows
+  // gained the expanded families it trains - 7 on the five late maps, 1-2 on the starter maps - so
+  // the ten-map catalogue grew by exactly 84 items, from 609 to 693. Nothing existing moved.
+  assert.strictEqual(sheet.maps.slice(0,10).reduce((n,m)=>n+m.sections.reduce((a,s)=>a+s.items.length,0),0),693);
 });
-t('Ascension worksheet fields expose five material-only stages and the stage-five boss',()=>{
+t('Ascension worksheet fields expose five stages, a real gear shelf and the stage-five boss',()=>{
   for(const m of sheet.maps.slice(10)){
-    assert.strictEqual(m.sections.length,0);assert.strictEqual(m.stages.length,5);
-    for(const s of m.stages){assert.ok(s.mobs.every(x=>x.drops.length===0));assert.strictEqual(!!s.boss,s.stage===5);if(s.boss)assert.strictEqual(s.boss.drops.length,0);}
+    assert.strictEqual(m.sections.length,2,'N row and N+ row');
+    assert.strictEqual(m.sections[0].items.length,20);assert.strictEqual(m.sections[1].items.length,20);
+    assert.strictEqual(m.stages.length,5);
+    for(const s of m.stages){
+      // every regular mob carries the full family list plus two defensive pieces
+      assert.ok(s.mobs.every(x=>x.drops.length===16),'14 families + 2 defensive rolls per mob');
+      assert.strictEqual(!!s.boss,s.stage===5);
+      // the MVP lists the whole shelf, and it is the shelf of the stage's own row
+      if(s.boss)assert.strictEqual(s.boss.drops.length,20);
+    }
   }
 });
 t('the worksheet snapshot carries the map-specific equipment progression',()=>{
@@ -208,8 +238,12 @@ t('every requested stage band drops weapon families for all eligible class lines
         const item=pool.find(x=>x.id===d.itemId);if(item){droppedSlots.add(item.slot);if(item.slot==='weapon')dropped.add(item.weaponType)}
       });
     }
-    assert.deepStrictEqual([...types].sort(),weaponTypes,`${sheet.maps[mi].name} stages ${levels[0]}-${levels.at(-1)} catalogue coverage`);
-    assert.deepStrictEqual([...dropped].sort(),weaponTypes,`${sheet.maps[mi].name} stages ${levels[0]}-${levels.at(-1)} actual drops cover every class weapon family`);
+    // haven-v417: these bands are the normal route (sections 2/3), which is untouched - it still
+    // carries exactly the seven shipped families. The expanded seven ride the Nightmare rows and
+    // the Ascension maps instead, so compare against the shipped list, not the whole catalogue.
+    const shipped=weaponTypes.filter(k=>!['spear','book','knuckle','instrument','whip','shuriken','gun'].includes(k));
+    assert.deepStrictEqual([...types].sort(),shipped,`${sheet.maps[mi].name} stages ${levels[0]}-${levels.at(-1)} catalogue coverage`);
+    assert.deepStrictEqual([...dropped].sort(),shipped,`${sheet.maps[mi].name} stages ${levels[0]}-${levels.at(-1)} actual drops cover every shipped weapon family`);
     assert.deepStrictEqual([...droppedSlots].sort(),['acc','armor','head','leg','off','weapon'],`${sheet.maps[mi].name} stages ${levels[0]}-${levels.at(-1)} actual drops cover each equipment slot`);
   }
 });

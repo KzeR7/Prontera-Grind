@@ -117,14 +117,20 @@ t('Nightmare gear is by tier: N (section 4) on maps 1-5, N+ (section 5) on maps 
   for (let m = 0; m < 10; m++) assert.strictEqual(N.GEAR[m].length, 6, N.MAPS[m].n + ' must carry six catalogue rows');
 });
 
-t('a Nightmare row is its own map high-tier row renamed - same families, all-new names', () => {
+t('a Nightmare row is its own map high-tier row renamed, plus the expanded families', () => {
+  // haven-v417: the N/N+ rows used to be a pure rename of the high-tier row, so the seven expanded
+  // families (spear, book, knuckle, instrument, whip, shuriken, gun) had no N/N+ item anywhere -
+  // an expanded class could only ever see one through kinDrop's on-the-fly rename. The rows are now
+  // a SUPERSET: every high-tier family is still there, renamed exactly as before (so no class loses
+  // a weapon and the shipped names are untouched), and the map's expanded families are added.
+  const NEWWEP = ['spear', 'book', 'knuckle', 'instrument', 'whip', 'shuriken', 'gun'];
   const names = new Set();
   for (let m = 0; m < 10; m++) {
     const hi = N.GEAR[m][3];
     for (const i of [0, 1]) {
-      const row = N.GEAR[m][4 + i];
+      const row = N.GEAR[m][4 + i], fams = Object.keys(row.w);
       // every weapon family the high-tier row has, the Nightmare row has - so no class loses a weapon
-      assert.deepStrictEqual(Object.keys(row.w).sort(), Object.keys(hi.w).sort(), N.MAPS[m].n + ' section ' + (4 + i) + ' weapon families');
+      assert.deepStrictEqual(fams.filter(k => !NEWWEP.includes(k)).sort(), Object.keys(hi.w).sort(), N.MAPS[m].n + ' section ' + (4 + i) + ' weapon families');
       for (const k in hi.w) {
         assert.ok(row.w[k].endsWith(' ' + hi.w[k]), row.w[k] + ' must keep the base name ' + hi.w[k]);
         assert.notStrictEqual(row.w[k], hi.w[k], 'and be a new item');
@@ -139,7 +145,10 @@ t('a Nightmare row is its own map high-tier row renamed - same families, all-new
   }
   console.log('       ' + names.size + ' Nightmare items across 10 maps x 2 sections');
   // the two sections are named on the item card (SECN[sec] is printed there)
-  assert.ok(src.includes("SECN=['Starter gear','1st-job gear','2nd-job gear','High-tier gear','Nightmare gear','Abyssal Nightmare gear']"), 'SECN carries both Nightmare names');
+  // haven-v417 adds a seventh name: Thor Volcano's Mythic/Primal shelf is section 6, and without an
+  // entry the item card would have printed "undefined".
+  assert.ok(src.includes("SECN=['Starter gear','1st-job gear','2nd-job gear','High-tier gear','Nightmare gear','Abyssal Nightmare gear','Mythic gear']"), 'SECN carries both Nightmare names and the Mythic shelf');
+  assert.ok(src.includes("spear:'\u{1F531}'")||src.includes("spear:'🔱'"), 'WICON knows the expanded families');
 });
 
 t('the Nightmare rows are worth more than the high-tier row, and section 5 tops section 4', () => {
@@ -257,7 +266,12 @@ t('drop-table items keep N section identity separate from map field quality', ()
   assert.ok(src.includes("const RAR5={n:'N'}") && src.includes("RAR6={n:'N+'}") && src.includes("(it&&+it.sec>=5)?6:(it&&+it.sec>=4)?5"),
     'sections 4/5 select the separate N / N+ rarity regardless of the numeric map quality');
   for (let m = 0; m < N.MAPS.length; m++) for (let l = 1; l <= (m>=10?5:15); l++) {
-    const F=N.fieldOf(m,l),tier=N.dropTier(m,l),sec=N.secField(m,l);
+    const F=N.fieldOf(m,l),tier=N.dropTier(m,l);
+    // haven-v417: the two Ascension maps (10 and 11) used to be materials-only, so secField reports
+    // 3 and no item could contradict it. They now drop a real gear shelf: Astral Citadel is N (4) on
+    // Stages 1-3 and N+ (5) on 4-5, Thor Volcano is the Mythic tier (6). The section therefore comes
+    // from the map's own shelf on those fields, not from the materials placeholder.
+    const sec = m===10 ? (l<=3?4:5) : m===11 ? 6 : N.secField(m,l);
     for (const mob of F.mobs) for (const [item] of mob.drops) {
       assert.strictEqual(item.sec,sec,N.MAPS[m].n+' Stage '+l+' item section');
       assert.strictEqual(item.tier,tier,N.MAPS[m].n+' Stage '+l+' item field quality');
