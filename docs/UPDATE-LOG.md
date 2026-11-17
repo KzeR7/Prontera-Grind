@@ -11608,9 +11608,15 @@ classes are untouched, and no other class's budget moved.
 **Checks.** All three `progression_*.json` fixtures regenerated (hash-only diffs). `SKILL_TUNING.Sorcerer`
 and `expanded_skill_budget.json` moved together, as `expanded_roster_sim` requires. The bump also moves
 the twelve social/Digimon asset tags to `?v=416`, which `update_watch_sim` pins to the page's own build
-number. Full suite after the merge with main's save codec: 226 of 226 `*_sim` pass.
+number. The Wardrobe UI moved too, so its cache buster is `?v=416`. Full suite after the merge with
+main's save codec: 227 of 227 `*_sim` pass.
 
-**Still open.** Asura Strike still does not kneel with its fists on the ground: the FX layer plays the
-client's six kanji glyphs (`assets/signature-fx.js:201`), and the Monk line has no body pose to reach
-for - `SPRITE_PACK.bodies` and `class_skins_data.js` carry no monk/champion/sura record, and
-`assets/ro-fx/asura.webp` is a glyph book, not a body. This needs new art, not a tuning change.
+**Asura Strike now kneels with its fists on the ground.** The pose was in the client data all along:
+the Monk line's own body carries the 'sit' stance (ACT action 16), which is the crouch the Social Hub
+already draws from `assets/social/sitting/`. So no new art was needed. `playSkillFx` opens a 1.1 s
+window when `ch_asura` is cast; while it is open the hero is drawn from a second Wardrobe store that
+carries the sit stance (`wardrobeKneelStore`, `wardrobe-ui.js`), keeping the same saved appearance, so
+the hair, head and accessories come with the pose. The standing route keeps its own animation clock,
+so the hero does not snap back to the first frame afterwards, and the shipped v5 and fourth-job packs
+have no sit stance, so no other class gains or loses a frame. Measured on the committed atlases, the
+sit body draws 28-30 px lower than the idle body in all eight directions. New `asura_pose_sim` (5).

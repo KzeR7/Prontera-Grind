@@ -3,11 +3,19 @@ const wardrobeBaseStore=new PGWardrobe.Store(),wardrobeFourthStore=new PGFourthJ
 // haven-v410: the expanded roster has a pack of its own (assets/expanded-jobs.js). The script is
 // optional so a page that does not load it keeps working with the two shipped packs.
 const wardrobeExpandedStore=typeof PGExpandedJobs!=='undefined'?new PGExpandedJobs.Store():null;
-const wardrobeStores=[wardrobeBaseStore,wardrobeFourthStore,...(wardrobeExpandedStore?[wardrobeExpandedStore]:[])];
+// haven-v416: a kneeling store, used for Asura Strike. The expanded bodies already carry the client's
+// 'sit' stance (ACT action 16) - it is the same crouch the Social Hub draws from assets/social/sitting/ -
+// so the hero can drop into it for the length of one cast without any new art. The shipped v5 and
+// fourth-job packs do not ship a sit stance, so this store only ever serves the expanded roster; for
+// every other class the hero keeps standing, exactly as before.
+const wardrobeKneelStore=typeof PGExpandedJobs!=='undefined'?new PGExpandedJobs.Store({stances:['sit']}):null;
+const wardrobeStores=[wardrobeBaseStore,wardrobeFourthStore,...(wardrobeExpandedStore?[wardrobeExpandedStore]:[]),...(wardrobeKneelStore?[wardrobeKneelStore]:[])];
 const wardrobeExpandedClass=cls=>!!wardrobeExpandedStore&&Object.hasOwn(PGExpandedJobs.CLASSES,cls);
 const wardrobeStoreFor=cls=>Object.hasOwn(PGFourthJobs.CLASSES,cls)?wardrobeFourthStore:wardrobeExpandedClass(cls)?wardrobeExpandedStore:wardrobeBaseStore;
 const wardrobeStore={
  select(client,a,cls){const store=wardrobeStoreFor(cls);for(const other of wardrobeStores)if(other!==store)other.release(client);return store.select(client,a,cls)},
+ // The same look, read from the kneeling store, so the hero can swap the drawn stance for one skill.
+ selectKneel(client,a,cls){if(!wardrobeKneelStore||!wardrobeExpandedClass(cls))return Promise.resolve(null);return wardrobeKneelStore.select(client,a,cls)},
  release(client){for(const store of wardrobeStores)store.release(client)},
  dispose(){for(const store of wardrobeStores)store.dispose()},
  get pixelBytes(){return wardrobeStores.reduce((n,store)=>n+store.pixelBytes,0)},
@@ -91,8 +99,12 @@ function wardrobeHero(opt){wardrobeOwner();const a=wardrobeAppearance();if(!ward
 function mkWardrobeHero(look){const cv=document.createElement('canvas');cv.width=320;cv.height=280;const tex=new THREE.CanvasTexture(cv);tex.magFilter=tex.minFilter=THREE.NearestFilter;tex.generateMipmaps=false;
  const spr=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true,alphaTest:.12}));const px=SKIN_H/look.base.figureHeight;
  spr.scale.set(320*px,280*px,1);spr.center.set(.5,1-200/280);spr.userData.wardrobe={look,cv,tex,paint:'',route:'',start:0};return spr}
-function captureWardrobeFrame(spr,dir,run,attack,now=performance.now()){const sk=spr.userData.wardrobe,stance=attack>0?'attack':run?'walk':'idle';// Game-facing indices already follow RO S,SW,W,NW,N,NE,E,SE.
+// forceLook: draw one frame of another stance of the same appearance (haven-v416, Asura Strike's
+// kneel). The route and the animation clock live on the sprite, so the two stances each keep their
+// own start time: kneeling does not rewind the standing animation the hero returns to.
+function captureWardrobeFrame(spr,dir,run,attack,now=performance.now(),forceLook=null){const sk=spr.userData.wardrobe,stance=attack>0?'attack':run?'walk':'idle';// Game-facing indices already follow RO S,SW,W,NW,N,NE,E,SE.
  const route=stance+dir;if(route!==sk.route){sk.route=route;sk.start=now}const v=sk.look.base.metadata.actions[route],progress=attack>0?Math.max(0,Math.min(1,1-attack)):null,ms=now-sk.start,i=PGWardrobe.animationKey(sk.look,stance,dir,ms,progress,now),glow=milestone(REFINE_GLOWS,S?.eq?.weapon?.r||0),paint=route+':'+i+(glow?':refine'+glow.at+':'+Math.floor(now/33):'');
+ if(forceLook){const fr='held:'+sk.route+':'+i;if(sk.paint!==fr){PGWardrobe.draw(sk.cv.getContext('2d'),forceLook,'sit',dir,0,0,now);sk.paint=fr;sk.tex.needsUpdate=true;return true}return false}
  if(sk.paint===paint)return false;
  if(sk.trailRoute!==route||sk.trailTier!==glow?.at){sk.refineTrails=[];sk.trailRoute=route;sk.trailTier=glow?.at}
  let weaponIndex=0;const effect=glow?(ctx,image,p,phase)=>{const trail=sk.refineTrails[weaponIndex]||(sk.refineTrails[weaponIndex]={points:[],progress:null});drawNativeWeaponGlow(ctx,image,p,phase,glow,trail,progress,now);if(phase==='after')weaponIndex++}:null;
