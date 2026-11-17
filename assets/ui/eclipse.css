@@ -2400,6 +2400,13 @@ body.social-open #minimapTools{display:none!important}
 #wins .eclipse-card-summary b{color:var(--gold);font-size:10px;font-variant-numeric:tabular-nums}
 #wins .eclipse-card-summary>span{display:grid;gap:2px;text-align:right}
 #wins .eclipse-card-workspace-grid{display:grid;grid-template-columns:minmax(190px,245px) minmax(235px,1fr) minmax(220px,270px);flex:1;min-height:0}
+/* v411: the one-off notice for a collection that arrived over CARDMAX and was paid out instead of cut. */
+#wins .eclipse-card-overflow{flex:none;margin:0;padding:11px 19px;border-bottom:1px solid var(--e-line);background:color-mix(in srgb,var(--gold) 9%,transparent)}
+#wins .eclipse-card-overflow b{display:block;color:var(--gold);font:600 12px/1.3 var(--e-display)}
+#wins .eclipse-card-overflow p{margin:4px 0 8px;color:var(--e-muted);font-size:9px;line-height:1.5;max-width:70ch}
+#wins .eclipse-card-overflow p b{display:inline;color:var(--ink);font:inherit;font-weight:600}
+#wins .eclipse-card-overflow button{padding:5px 12px;color:var(--ink);border:1px solid var(--e-line);border-radius:7px;background:transparent;font:600 9px/1 var(--e-display);cursor:pointer}
+#wins .eclipse-card-overflow button:hover{border-color:var(--gold);color:var(--gold)}
 #wins .eclipse-card-collection,#wins .eclipse-card-detail,#wins .eclipse-card-sockets{min-width:0;padding:14px 15px;overflow:auto;scrollbar-width:thin}
 #wins .eclipse-card-collection,#wins .eclipse-card-detail{border-right:1px solid var(--e-line)}
 #wins .eclipse-card-panel-title{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 9px;color:var(--e-muted);font-size:7px;letter-spacing:1.25px;text-transform:uppercase}
