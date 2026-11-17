@@ -1006,11 +1006,11 @@ t('the character + class panels show the class-collection bonus', () => {
   let h = U.V.stats();
   assert.ok(h.includes('Class collection'), 'collection progress must be visible on the character panel');
   assert.ok(h.includes('Class collection: 0/12 transcendent'), 'only transcendent classes count, and the total is data-driven');
-  assert.ok(h.includes('at Base Lv 100+')&&h.includes('permanent'), 'the v51 rule is spelled out: earned per transcendent class at 100+, kept account-wide');
-  U.S.lv = 100; U.S.base['Lord Knight'] = {lv:110};
+  assert.ok(h.includes('at Base Lv 150+')&&h.includes('permanent'), 'the v51 rule is spelled out: earned per transcendent class at 150+, kept account-wide');
+  U.S.lv = 150; U.S.base['Lord Knight'] = {lv:150};
   h = U.V.stats();
   assert.ok(h.includes('Class collection: 1/12 transcendent'), 'a played transcendent class joins the count');
-  assert.ok(h.includes('+1% damage'), 'and pays +1% once at Base Lv 100+');
+  assert.ok(h.includes('+1% damage'), 'and pays +1% once at Base Lv 150+');
   assert.ok(!h.includes('activates at'), 'the note disappears once the bonus is live');
   h = U.V.job();
   assert.ok(h.includes('Class collection'), 'the class tree panel repeats the mission');

@@ -76,8 +76,8 @@ test('entering an expanded class keeps every item exactly once',()=>{
 test('the six expanded Transcendent classes join the collection: cap +12%',()=>{
   ev(`S=fresh();S.cls='Novice';S.lv=150;S.base={};for(const n of EXPANDED_LINE)S.base[n]={lv:150}`);
   assert.equal(ev('t3Total()'),12);assert.equal(ev('playedClasses()'),6,'only the tier-3 expanded classes count');assert.equal(ev('collDmg()'),6);
-  ev(`for(const n of ['Lord Knight','High Wizard','Sniper','Assassin Cross','High Priest','Whitesmith'])S.base[n]={lv:100}`);assert.equal(ev('collDmg()'),12);
-  ev(`S.base.Paladin={lv:99}`);assert.equal(ev('collDmg()'),11,'Base Lv 100 is still required');
+  ev(`for(const n of ['Lord Knight','High Wizard','Sniper','Assassin Cross','High Priest','Whitesmith'])S.base[n]={lv:150}`);assert.equal(ev('collDmg()'),12);
+  ev(`S.base.Paladin={lv:149}`);assert.equal(ev('collDmg()'),11,'Base Lv 150 is still required');
 });
 
 test('five ordinary skills per class, a sixth Ascension skill per fourth job, ids pinned',()=>{
