@@ -27,6 +27,7 @@
 import { currentUser, isGm, hashPassword } from '../../_lib/auth.js';
 import { json, guard, readJson, fail } from '../../_lib/http.js';
 import { checkGrant, checkAnnouncement, GRANT_KINDS, checkSaveBlob, publicFields, savedElsewhere } from '../../_lib/validate.js';
+import { unpackSave, packSave, isPacked } from '../../_lib/save-codec.js';
 import { inspectSave, giftPayload, equipmentPayload, systemsPayload } from '../../_lib/gm-tools.js';
 import { AUDIT_LABELS, rateLabel } from '../../_lib/save-audit.js';
 import { GM_CATALOG } from '../../_lib/gm-catalog.js';
@@ -74,6 +75,17 @@ async function loadAccount(D, id) {
       cleared: !!a.cleared_at, clearedAt: a.cleared_at || null, clearedBy: a.cleared_by || '',
     })),
   };
+}
+
+// v414: the form a rewritten save should be STORED in. The rule is "keep the shape the row already
+// had": a compact row stays compact (so a GM edit cannot blow it past the size ceiling or put an
+// over-limit blob into history, which then could not be restored), and an ordinary row stays ordinary
+// (so a GM action never silently upgrades a player still on an old page build to a format it cannot
+// read). Callers pass the ORDINARY object; this only decides how to serialise it.
+function storedBlobForm(save, previousBlob) {
+  let wasCompact = false;
+  try { wasCompact = isPacked(JSON.parse(previousBlob)); } catch { wasCompact = false; }
+  return wasCompact ? JSON.stringify(packSave(save)) : JSON.stringify(save);
 }
 
 export const onRequestGet = guard(async ({ request, env }) => {
@@ -304,11 +316,17 @@ export const onRequestPost = guard(async ({ request, env }) => {
       const live = await db.saveByUser(D, id);
       if (!live) return fail('That account has no live save.', 400);
       let save;
-      try { save = JSON.parse(live.blob); } catch { return fail('The live save is not readable.', 500); }
+      // v414: the stored blob may be COMPACT (items/cards/fish as positional tuples). This route
+      // rewrites the blob, so it works in the ordinary shape (tuples would make `delete gmRestore`
+      // and publicFields meaningless) and then packs it back before storing. Re-storing the ordinary
+      // shape here was WRONG twice over: it expanded a 169 KB row to 322 KB - past the 300 KB ceiling
+      // - which meant the next restore of that history entry was refused with 413, and every later
+      // request had to parse the larger blob again.
+      try { save = unpackSave(JSON.parse(live.blob)); } catch { return fail('The live save is not readable.', 500); }
       if (!save || typeof save !== 'object' || Array.isArray(save)) return fail('The live save is not readable.', 500);
       const had = save.gmRestore || null;
       delete save.gmRestore;
-      const blob = JSON.stringify(save);
+      const blob = storedBlobForm(save, live.blob);
       const pub = publicFields(save);
       await db.pushHistory(D, id, live.version, live.blob, live.saved_at);
       await db.updateSave(D, id, live.version + 1, blob, live.saved_at, pub, live.rate_kph);
@@ -330,7 +348,10 @@ export const onRequestPost = guard(async ({ request, env }) => {
       // Keep the save we are about to overwrite, so even a mistaken restore is reversible.
       await db.pushHistory(D, id, live.version, live.blob, live.saved_at);
       // The leaderboard columns are re-derived from the restored blob, never copied from the live row.
-      const restored = checkSaveBlob(blob.blob);
+      // v414: a backup may be stored COMPACT. It is re-stamped and written back below, so work in the
+      // ordinary shape for the stamp and publicFields, then pack it back - see storedBlobForm. Writing
+      // the ordinary shape here was what made a restore of an already-expanded row exceed the ceiling.
+      const restored = unpackSave(checkSaveBlob(blob.blob));
       // v394: a restore must not be silently rebased away by a tab that is still open. It moves the
       // live version on by exactly one, which is precisely the shape cloudPush's v330 "this is our own
       // upload whose answer was lost" rule treats as a rebase - and a pre-restore save beats the restored
@@ -340,9 +361,9 @@ export const onRequestPost = guard(async ({ request, env }) => {
       // in one sitting (5725 became 5726 with no GM action in between). The blob now says it came from
       // a restore, and the client adopts instead of rebasing whenever the account carries a restore
       // this device has not seen. The stamp is additive, so every older client still reads the save.
-      const stamped = JSON.stringify(Object.assign({}, restored, {
+      const stamped = storedBlobForm(Object.assign({}, restored, {
         gmRestore: { at: Date.now(), from: version },
-      }));
+      }), blob.blob);
       const pub = publicFields(restored);
       await db.updateSave(D, id, live.version + 1, stamped, blob.saved_at, pub, live.rate_kph);
       // haven-v403: a restore now ends every live session on the account.

@@ -59,6 +59,145 @@ compression, browser caches and deployed responses can differ. Resource Timing
 size fields were unavailable in this software-browser environment and are not used
 as a bandwidth measurement.
 
+## The stored save format (haven-v415 / `__v` 4)
+
+A save row is stored **compact**: `inv`, `cards`, the fishing bag and the cards socketed inside items
+are written as positional tuples instead of objects; `eq` stays ordinary.
+`functions/_lib/save-codec.js` and the inline copy in `index.html` (around `SAVE_CODEC_VERSION`) must
+stay mirrored; both now write version 4 and still read plain saves and codec versions 1–3.
+
+**Format history.** v1 stores object fields positionally. v2 also compacts socketed cards and omits
+a card's `n` only when it exactly equals `(nightmare ? 'Nightmare ' : '') + family`. The stored
+`family` is sufficient to recover that name. v3 adds the frozen card catalog below and fish timestamp
+and mutation encodings. None of these operations re-rolls a value; nonmatching cards keep the full form.
+
+**Compatibility.** `GET /api/save` and every conflict/restore-fenced reply run the stored blob through
+`blobForClient(blob, clientSaveFormat(request))`. Capability is version-specific: build/header 110
+reads `__v` 1–2, 111 also reads `__v` 3, and 112 also reads `__v` 4. A page too old for the stored row,
+including one with no header, gets **plain objects**, not tuples it cannot decode. In particular,
+a v3 page must never receive v4 item category numbers or it would lose equipment type/refinement/locks.
+A pre-v414 loader also drops fish tuples because they lack a string `sp`. **Never remove this gate**;
+`save_codec_chain_sim.mjs` and `save_codec_item_state_sim.mjs` cover it. A readable fallback does not
+make an older encoder smaller: an old page can still hit 413 uploading a large account until it
+reloads the current build.
+
+**Ceiling and sizes.** `SAVE_BYTES_MAX` remains **307,200 JavaScript string characters**. `checkSaveBlob`
+checks the blob's length before parsing that blob; the request envelope has already been parsed.
+This is not a UTF-8 byte count or the separate HTTP request-envelope limit.
+
+`CARDMAX` is **not** a limit on how many cards a save may contain. It gates *acquiring a loose card*:
+`cardStorageFull()` reads only `S.cards`, and socketed cards live in `item.cards`. A player can socket
+cards and then earn another 1000 loose ones (`unsock()` pushes them back into `S.cards`), so
+"loose + socketed" is **not** bounded by 1000.
+
+**Codec v3** (`__v` 3) dramatically reduces the cost of socketed cards. It uses these facts:
+
+- A modern card is a *catalog row plus an identity*. `repairProgression()` already overwrites `family`,
+  `n`, `stat`, `v`, `effects`, `fit`, `g`, `bossCard`, `map` and `nightmare` from `CARD_CATALOG` on every
+  load, so those fields are a cache. v3 stores `[catalogId, id]`, plus a third slot `stars?` only when
+  the card is actually starred - 23 chars instead of 118, 25 when starred.
+  The table lives in `functions/_lib/card-catalog.js`, generated from the page's own `cardDefinition()`,
+  and `save_codec_catalog_sim.mjs` fails if the two copies ever disagree. A card that does not match its
+  row exactly (edited value, unknown key, wrong progression version, any unknown field) keeps the full
+  v2 tuple, so the codec can never rename or normalise a card.
+- A fish timestamp is a 13-digit ms value and a mutation comes from a closed set of 7. v3 stores `at` as
+  a small delta from `__at` (sent once) and `mut` as an index.
+
+**The catalog id is permanent.** `card-catalog.js` row 0 is a frozen integer id, assigned once and
+never renumbered, reused or reordered: new cards take the next id above the current maximum and a
+retired id is retired. A save stores that id. An array position would not work - inserting one card
+that sorts first silently re-points every stored reference, so an older save decodes to a different
+card than the player owns. `save_codec_catalog_sim.mjs` pins all 192 ids in a fixture and fails on any
+renumber, and a historical-save test decodes the same blob twice to prove the mapping is stable.
+An id the running build does not know is returned untouched, never guessed.
+
+**A client is only handed a version it can decode.** The page sends `X-Save-Format` with its build
+number; the server reads the *stored* blob's `__v` and unpacks to plain objects when the client is too
+old for it. Build 112 decodes `__v` 4; 111 stops at `__v` 3 and 110 at `__v` 2. Without this, a page from a previous
+build would receive v3 rows and drop every card field and every fish it could not parse - and its next
+upload would save that loss. Note that these constants are build numbers on the same scale as the
+header, not a small enum: an enum (1, 2) makes `110 >= 2` true and silently hands v3 rows to everyone.
+
+The following are **historical v2/v3 fixture measurements**, not a maximum-account bound. The old
+5000-card cases used synthetic fish ids, unrefined/unlocked equipment and at most half-starred cards;
+they remain useful codec stress tests but understate the full-production case below.
+
+| Historical fixture | compact v2 | compact v3 | fits? |
+| --- | ---: | ---: | --- |
+| reported-count sample: 901 items / 485 cards / 801 fish | 188,726 | **147 KB** | yes |
+| 1000 items, 1000 loose cards, 1000 fish | 266 KB | **172 KB** | yes, 128 KB spare |
+| 1000 items, 0 loose, 1000 socketed cards, 1000 fish | 265 KB | **171 KB** | yes |
+| 1000 items + 7 fully-carded worn items, 1000 loose cards, 1000 fish | 274 KB | **~180 KB** | yes |
+| **1000 items x1 socketed + 1000 loose + 1000 fish** | 376 KB | **193 KB** | **yes**, 107 KB spare |
+| **1000 items x4 socketed + 1000 loose + 1000 fish** (5000 real cards) | 703 KB | **275 KB** | **yes**, 32 KB spare |
+| the same, with every other card starred | - | **280 KB** | **yes**, 27 KB spare |
+
+### v415: refined/locked equipment and the all-starred regression
+
+The earlier statement that **every reachable state fits was incorrect**. A review reproduced a
+legitimate all-starred account over the limit. The stronger deterministic fixture in
+`tools/tests/helpers/full-storage-save.js` owns:
+
+- 1000 production N+ Nightfall Recurve bows (real name and 1.25 quality), each **+10 and locked**;
+- four compatible, distinct-family Nightmare cards per bow, using three-digit permanent catalog ids;
+- another 1000 loose cards; **all 5000 owned cards are three-star**, with distinct `newCard()` ids;
+- 1000 fish made by **`addCatch()`**, with real-length identities, minute-spaced millisecond timestamps,
+  lock flags, mutations, and the complete dex/stats those catches produce.
+
+| Same deterministic account | blob characters | result |
+| --- | ---: | --- |
+| merged v3 codec | **338,180** | 30,980 over the ceiling |
+| v4 codec | **295,175** | **12,025 spare** |
+
+v4 stops repeating the item slot, weapon type and affix stat names, using fixed append-only enum ids.
+A numeric item trailer stores `3 * (refinement + 1, or 0 when absent) + lockState`, with lockState
+absent=0 / false=1 / true=2. All 51 combinations preserve presence as well as value: absent refinement
+is not +0 and an absent lock is not false. Old items have an extras **object** in that position, so
+the decoder still recognises every historical layout. Unsupported ranks/types use the full legacy
+form; unknown strings, fields and affix metadata survive. **Item/card/fish ids and rolls are unchanged.**
+
+The fixture is checked for socket compatibility, exact whole-save round trips, actual page `load()`,
+and real API PUT/GET/re-sync (at most three save-sized parses). API owner stamping changes the exact
+character count slightly. Frozen output from the actual v1/v2/v3 encoders also has regression coverage.
+
+**Remaining limitation:** these are finite regression cases, **not proof of a global worst-reachable
+account bound**. Additional worn gear, class/loadout history, Mythic/legacy items, extras and other
+progress vary independently; even the loose-card acquisition cap is not a total ownership cap.
+A blob still above 307,200 is still refused with 413 and cannot cloud-sync. The codec does not trim
+owned data, sell items, change limits or raise the ceiling to force it to fit. Do not reinstate an
+“every account fits” claim without an exhaustive bound over the complete saved state.
+
+A per-save id table was implemented, measured and **removed**: it costs more than it saves. The table
+must contain each unique id once, and the references it replaces are only ~15 chars shorter, so for
+unique ids it is a net loss (measured on 1000 loose cards: 38,241 chars with the table against 31,726
+without). It only ever helped when ids repeat, which a real save does not do.
+
+`save_max_state_sim.mjs` retains the older synthetic size checks and adds the refined/locked,
+all-three-star production case. Starring used to disqualify a card from the catalog form (~396 KB);
+the existing star/catalog, permanent-id, old-client and v2 absent-mutation regressions remain intact.
+
+**No player data was changed to reach this.** No card is deleted and no new ownership limit was added:
+the codec is a transport encoding and may not change what a player owns, and it never re-rolls,
+regenerates or re-ids a card. Every gain above is a smaller *description* of the same data - a catalog
+reference instead of a duplicated row, a delta instead of a timestamp, an omitted slot instead of an
+absent marker, or a compact state/enum instead of repeated item fields. The tested account that used
+to be rejected is now the same save, encoded smaller. `Workers Paid` raises the CPU ceiling but
+**does not** raise `SAVE_BYTES_MAX`.
+
+**A GM edit keeps the row's format.** `storedBlobForm(save, previousBlob)` in `functions/api/gm/player.js`
+re-packs through `packSave` when the row was compact, so an unlock or a history restore cannot quietly
+inflate a 189 KB row into 370 KB, push it over the ceiling, and make restoring that history entry
+return 413. A restore revokes the account's sessions, which is why tests that GM-restore need a fresh
+login afterwards.
+
+**CPU.** See `docs/CPU-LIMIT.md`: in a Node harness running the real handlers, a whole accepted
+`PUT /api/save` (auth, parses, audits, D1, response) dropped from 7.97 ms to 5.38 ms at
+237 KB -> 120 KB, and the parse count is pinned at 3. That is a like-for-like comparison inside this
+repository, **not** a measurement of Cloudflare's billed `cpu_ms` - use Pages CPU quantiles or
+`wrangler pages deployment tail` for that. The v415 size/fidelity checks do **not** establish CPU
+headroom: after deployment, separately check save success, `exceededResources`, and Pages p50/p99
+CPU for large accounts. No hosted CPU verification or deployment was performed for this change.
+
 ## What is deliberately not deleted
 
 The active wardrobe catalog references all 615 non-catalog files in v5; the pet

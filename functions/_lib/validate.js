@@ -5,6 +5,7 @@
 // leaderboard fields (a save can be edited by its owner, so `pub` is never free-form).
 
 import { HttpError } from './http.js';
+import { isPacked, unpackSave } from './save-codec.js';
 
 export const USERNAME_RE = /^[A-Za-z0-9_.-]{2,16}$/;
 export const RESERVED = ['gm', 'admin', 'administrator', 'system', 'server', 'root', 'mod', 'staff',
@@ -43,10 +44,59 @@ export const CAPS = { level: 150, maxStat: 120, maxZeny: 1e15 };
 // 512 KB blob costs ~6 ms of that in JSON parsing ALONE (measured against this handler), before any
 // validation or audit runs. So the old 512 KB limit did not protect the request - it let a save
 // through that was guaranteed to be killed part-way, which is how one 415 KB account produced
-// hundreds of `exceededResources` errors a day. A 300 KB ceiling still clears the worst honest save
-// the game can build (BAGMAX 1000 items + CARDMAX 1000 cards ~ 288 KB) while refusing anything that
-// cannot be synced inside the budget. The check runs BEFORE JSON.parse, so refusing is nearly free.
+// hundreds of `exceededResources` errors a day. The 300 KB ceiling is a size guard, NOT proof that
+// every reachable account fits or that accepted saves fit the hosted CPU budget. The old ~288 KB
+// estimate missed socketed cards/refinement/locks and production fish; see docs/CLOUD-DATA.md.
+// This blob-length check runs before parsing the blob (the request envelope was already parsed).
 export const SAVE_BYTES_MAX = 300 * 1024;
+
+// v414: the SAVE FORMAT a page can decode, sent as `X-Save-Format` on every cloud request.
+// A page build that has no codec advertises nothing (or an older number) and CANNOT read a compact
+// row: its loader drops tuple entries, so a compact save handed to it loses items and every fish, and
+// its next upload writes that loss back. So a stored compact blob is only handed out to a page that
+// says it can decode it; anything else is told to reload and is served the ORDINARY form.
+// These are BUILD NUMBERS, the same scale the page sends in `X-Save-Format` - not a small enum. They
+// were an enum (1, 2) at first, which made every page look capable: a client sending 110 compares as
+// 110 >= 2, so a v2-only page was handed v3 rows. Keep them on the header's scale.
+export const SAVE_FORMAT_PLAIN = 0;       // no codec at all (every build before v414)
+export const SAVE_FORMAT_COMPACT = 110;   // v414: decodes codec `__v` 1-2
+export const SAVE_FORMAT_V3 = 111;        // decodes codec `__v` 3 (catalog references, delta timestamps)
+export const SAVE_FORMAT_V4 = 112;        // decodes codec `__v` 4 (item refinement/lock state and enums)
+export function clientSaveFormat(request) {
+  const raw = Number(request?.headers?.get?.('X-Save-Format'));
+  return Number.isFinite(raw) && raw > 0 ? Math.floor(raw) : SAVE_FORMAT_PLAIN;
+}
+// Does this page understand the blob we are holding? A plain blob is readable by everyone, so the
+// answer is only ever "no" for a compact blob and a client too old for that blob's codec version.
+//
+// THE VERSION IS READ FROM THE BLOB, NOT ASSUMED. A page that advertised "compact" before codec v3
+// existed understands __v 1-2 and nothing later; handing it a __v 3 row gave it cards with no normal
+// fields and a fish whose `at` was a [seconds, millis] pair instead of a timestamp. Advertising a
+// capability is not a promise about formats invented after that build.
+const isPackedText = blob => {
+  if (typeof blob !== 'string' || !blob) return false;
+  try { return isPacked(JSON.parse(blob)); } catch { return false; }
+};
+const packedVersion = blob => {
+  if (typeof blob !== 'string' || !blob) return null;
+  try { const o = JSON.parse(blob); return isPacked(o) ? Number(o.__v) || 1 : null; } catch { return null; }
+};
+export const clientCanRead = (blob, format) => {
+  const v = packedVersion(blob);
+  if (v === null) return true;                         // not a compact blob: everyone can read it
+  if (format < SAVE_FORMAT_COMPACT) return false;      // no codec at all
+  if (v <= 2) return true;                             // the original compact codec
+  if (v === 3) return format >= SAVE_FORMAT_V3;
+  if (v === 4) return format >= SAVE_FORMAT_V4;         // never give v4 item enums to a v3-only page
+  return false;                                       // do not claim support for a future codec
+};
+
+// The body a save endpoint should return for `blob` to a client of `format`. Never throws: an
+// unreadable blob is the caller's problem, not a reason to fail the request.
+export function blobForClient(blob, format) {
+  if (!blob || clientCanRead(blob, format)) return blob;
+  try { return JSON.stringify(unpackSave(JSON.parse(blob))); } catch { return blob; }
+}
 
 export function checkSaveBlob(blob) {
   if (typeof blob !== 'string' || !blob) throw new HttpError(400, 'Missing save.');
@@ -121,11 +171,21 @@ export function saveAccountId(save) {
 // parse it again. Passing an object is always equivalent to passing its string form: the string
 // path is kept for callers that only ever had a stored blob, and `null`/`''`/garbage still read as
 // "no save", exactly as before.
+// v414 CPU: the SAME stored blob is handed to several of these helpers on one sync (owner? restore
+// stamp? previous offline income?). Without a memo each call parsed up to 512 KB again - measured as
+// 5 parses of the stored blob per accepted save, which is worse than the 3 v410 had reduced it to.
+// One entry is enough: the callers all work on the row they just read, and the next request gets a
+// different string. It is keyed on the string itself, so a different blob can never read stale data.
+let stampCacheText = null, stampCacheSave = null;
 const parseStamp = v => {
   if (v && typeof v === 'object' && !Array.isArray(v)) return v;
   if (typeof v !== 'string' || !v) return null;
-  try { const s = JSON.parse(v); return s && typeof s === 'object' && !Array.isArray(s) ? s : null; }
-  catch { return null; }
+  if (v === stampCacheText) return stampCacheSave;
+  let save = null;
+  try { const s = JSON.parse(v); save = s && typeof s === 'object' && !Array.isArray(s) ? s : null; }
+  catch { save = null; }
+  stampCacheText = v; stampCacheSave = save;
+  return save;
 };
 
 // Explicit name for the same rule, for callers that want to parse a stored blob ONCE and hand the
@@ -210,7 +270,14 @@ export function withSaveIdentity(blob, { id, userId, username }, parsed = null) 
   if (saveAccountId(save) === mine && sameAccount(saveOwnerStamp(save), username)) return blob;
   // Everything else gets the durable identity. A legacy save (no id) whose name still matches is
   // stamped on its very next write - that is the point: from then on a rename cannot strand it.
-  return JSON.stringify(Object.assign({}, save, { owner: username, accountId: mine }));
+  //
+  // v414: `parsed` is the UNPACKED save (save.js needs the ordinary shape for its audit). Stamping
+  // that object and serialising it would store the plain form, silently throwing away the compact
+  // encoding the client just paid to send - and a save that fit in 300 KB compact could come back
+  // over the limit. So the stamp is applied to the text the client sent, which carries the compact
+  // shape, and only falls back to `parsed` when the text cannot be parsed.
+  const src = parseStamp(blob);
+  return JSON.stringify(Object.assign({}, src || save, { owner: username, accountId: mine }));
 }
 
 // What the server stores for the leaderboard/GM list, taken from the save the client just sent.
