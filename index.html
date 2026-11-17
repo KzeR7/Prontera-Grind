@@ -3506,7 +3506,29 @@ function unpackSave(sv){
   if(sv.fishing&&typeof sv.fishing==='object'&&Array.isArray(sv.fishing.bag))o.fishing=Object.assign({},sv.fishing,{bag:sv.fishing.bag.map(cUnpackFish)});
   if(Array.isArray(sv.fishs))o.fishs=sv.fishs.map(cUnpackFish);
   return o}
-const sameSave=(a,b)=>{if(a===b)return true;try{const x=unpackSave(JSON.parse(a)),y=unpackSave(JSON.parse(b));for(const k of['owner','cloud','gmStats']){delete x[k];delete y[k]}return JSON.stringify(x)===JSON.stringify(y)}catch(e){return false}};
+// Are these two copies the same progress? Compared BY DATA, not by JSON text: two saves holding
+// identical data can list their keys in a different order (a server re-stamp, an Object.assign, a
+// different code path), and comparing raw strings called those "different" - which adopted the cloud
+// copy over an identical local one and told the player their save had been replaced and backed up,
+// when nothing had actually changed. deepSame walks the two values together, so the answer depends
+// on the data only, and it allocates nothing (a sorted copy of each save cost 16 ms per login).
+function deepSame(x,y){
+  if(x===y)return true;
+  if(typeof x!==typeof y)return false;
+  if(x===null||y===null||typeof x!=='object')return false;
+  const ax=Array.isArray(x),ay=Array.isArray(y);
+  if(ax!==ay)return false;
+  if(ax){
+    if(x.length!==y.length)return false;
+    for(let i=0;i<x.length;i++)if(!deepSame(x[i],y[i]))return false;
+    return true;
+  }
+  const kx=Object.keys(x),ky=Object.keys(y);
+  if(kx.length!==ky.length)return false;
+  for(const k of kx){if(!Object.prototype.hasOwnProperty.call(y,k))return false;if(!deepSame(x[k],y[k]))return false}
+  return true;
+}
+const sameSave=(a,b)=>{if(a===b)return true;try{const x=unpackSave(JSON.parse(a)),y=unpackSave(JSON.parse(b));for(const k of['owner','cloud','gmStats']){delete x[k];delete y[k]}return deepSame(x,y)}catch(e){return false}};
 // The login card's words when a save in this browser belongs to somebody else.
 const saveBlockedText=(who,other,cloud)=>'The save kept in this browser for “'+who+'” belongs to “'+other+'”, so it was not loaded and nothing was written over it. Restore “'+who+'”’s own save from a backup, or remove that copy from this browser, then log in again.'+(cloud?' Your cloud save was not touched.':'');
 // The login card's words when the cloud copy of a save belongs to another account (the server refused it).

@@ -1427,6 +1427,28 @@ await T('v326: two copies of the same progress are one save even though save() r
   assert.strictEqual(h.sandbox.sameSave(a, c), false, 'real progress still differs');
 });
 
+await T('v414: the same progress in a different key order is ONE save, not a replaced account', () => {
+  // CodeRabbit's QA run logged "account replacement and backup" for two copies holding identical
+  // data. sameSave compared JSON text, so a different key order (a server re-stamp, an Object.assign,
+  // a different code path) read as different progress: the cloud copy was adopted over an identical
+  // local one and the player was told their save had been replaced.
+  const h = harness({});
+  const a = JSON.stringify({ owner: 'X', lv: 10, zeny: 5, inv: [{ id: 1, slot: 'armor' }], cards: [] });
+  const reordered = JSON.stringify({ cards: [], inv: [{ slot: 'armor', id: 1 }], zeny: 5, lv: 10, owner: 'X' });
+  assert.strictEqual(h.sandbox.sameSave(a, reordered), true, 'key order is not progress');
+
+  // ...but a REAL difference must still be seen, including inside the packed lists.
+  const itemChanged = JSON.stringify({ owner: 'X', lv: 10, zeny: 5, inv: [{ id: 1, slot: 'head' }], cards: [] });
+  assert.strictEqual(h.sandbox.sameSave(a, itemChanged), false, 'a changed item is a real difference');
+  const dropped = JSON.stringify({ owner: 'X', lv: 10, zeny: 5, inv: [], cards: [] });
+  assert.strictEqual(h.sandbox.sameSave(a, dropped), false, 'a missing item is a real difference');
+  const otherZeny = JSON.stringify({ owner: 'X', lv: 10, zeny: 6, inv: [{ id: 1, slot: 'armor' }], cards: [] });
+  assert.strictEqual(h.sandbox.sameSave(a, otherZeny), false, 'a different Zeny amount is a real difference');
+  // an extra key is a real difference too (a new field was set)
+  const extra = JSON.stringify({ owner: 'X', lv: 10, zeny: 5, inv: [{ id: 1, slot: 'armor' }], cards: [], quest: 'x' });
+  assert.strictEqual(h.sandbox.sameSave(a, extra), false, 'an added field is a real difference');
+});
+
 await T('v326: leaving the page writes the device copy and asks for a keepalive upload', async () => {
   const h = harness({ routes: { '/save': { status: 200, body: { version: 7 } } } });
   h.sandbox.CLOUD.api = true; h.sandbox.CLOUD.on = true; h.sandbox.CLOUD.ver = 6; h.sandbox.CLOUD.user = 'X'; h.sandbox.currentUser = 'X';
