@@ -36,7 +36,9 @@
 // A save with no `__v` is an OLD save and is handed back completely untouched - not read, not
 // rewritten, not upgraded in place. Old saves keep loading for ever.
 
-export const CODEC_VERSION = 2;
+import { catalogIndexOf, catalogCard } from './card-catalog.js';
+
+export const CODEC_VERSION = 3;
 
 // v2 (size): a card's `n` is a PURE FUNCTION of two fields that are always stored alongside it -
 // `n = (nightmare ? 'Nightmare ' : '') + family`. It is 28 of the 122 bytes a packed card costs, so a
@@ -154,9 +156,43 @@ const cardNameDerivable = c =>
   typeof c.family === 'string' && c.family.length > 0 &&
   typeof c.n === 'string' && c.n === (c.nightmare === true ? 'Nightmare ' + c.family : c.family);
 
+// ------------------------------------------------------------------------------ card v3 -----------
+// A modern card is a catalog row plus an identity and an optional star count. The page's own
+// repairProgression() rewrites family/n/stat/v/effects/fit/g/bossCard/map/nightmare out of CARD_CATALOG
+// on EVERY load, so those fields are a cache - storing them stores the catalog again, once per card,
+// inside every item that holds one. v3 stores `[catalogIndex, id]` (or `[catalogIndex, id, stars]`) and
+// rebuilds the rest from functions/_lib/card-catalog.js.
+//
+// This is not the forbidden "rebuild by re-rolling": the rebuild is a lookup in a fixed table generated
+// from the page's own cardDefinition(), not a random roll. A card that does not match its row exactly
+// keeps the full v2 tuple, so nothing is ever normalised into a different card.
+
+/** True when `c` is exactly the card its cardKey describes, so the derived half can be left out. */
+export function cardMatchesCatalog(c) {
+  if (!isObj(c)) return false;
+  const i = catalogIndexOf(c.cardKey);
+  if (i < 0) return false;
+  const d = catalogCard(i);
+  if (c.cardVersion !== d.cardVersion) return false;
+  if (c.family !== d.family || c.n !== d.n) return false;
+  if (c.stat !== d.stat || c.v !== d.v) return false;
+  if (c.g !== d.g || c.bossCard !== d.bossCard) return false;
+  if (c.map !== d.map || c.nightmare !== d.nightmare) return false;
+  if (JSON.stringify(c.fit) !== JSON.stringify(d.fit)) return false;
+  if (JSON.stringify(c.effects) !== JSON.stringify(d.effects)) return false;
+  // any field outside the known set means this card carries something the catalog cannot reproduce
+  if (extrasOf(c, CARD_KEYS)) return false;
+  return true;
+}
+
 export function packCard(c) {
   if (!isObj(c)) return c;
-  // Only drop `n` when it PROVABLY matches the rebuild rule. Anything else is written out verbatim.
+  if (cardMatchesCatalog(c)) {
+    // [catalogIndex, id, stars]; absent stars stay absent.
+    const stars = Number.isInteger(c.stars) && c.stars > 0 && c.stars <= 3 ? c.stars : undefined;
+    return [catalogIndexOf(c.cardKey), pack(c.id), pack(stars)];
+  }
+  // Otherwise the full v2 tuple, verbatim. Only drop `n` when it PROVABLY matches the rebuild rule.
   const dropName = cardNameDerivable(c);
   const t = BCARD.map(k => {
     if (dropName && k === 'n') return NUL;
@@ -172,6 +208,17 @@ export function packCard(c) {
 }
 export function unpackCard(t) {
   if (!Array.isArray(t)) return t;
+  // v3: a short tuple is a catalog reference. Length decides, because a v2 tuple is always BCARD-length
+  // (its extras bucket is an OBJECT at the end, never an extra positional slot).
+  if (t.length <= 3 && Number.isInteger(t[0])) {
+    const d = catalogCard(t[0]);
+    if (!d) return t;                       // unknown index: hand it back rather than invent a card
+    const id = unpack(t[1]);
+    if (id !== undefined) d.id = id;
+    const stars = unpack(t[2]);
+    if (stars !== undefined) d.stars = stars;
+    return d;
+  }
   return fromTuple(t, BCARD, (o) => {
     if (Array.isArray(t[7])) o.effects = t[7].map(objectOf);
     // v2: rebuild the name that was left out. `family` is stored on every card, so if it is missing the
@@ -184,7 +231,14 @@ export function unpackCard(t) {
 
 // ----------------------------------------------------------------------------- fish -------------
 
-export function packFish(f) {
+// The loader's own closed set (index.html: `fishMuts`). A mutation outside it is already dropped to null
+// by sanitiseFish, so encoding it as an index loses nothing - and a value not in the set keeps its
+// string, so a future build that adds one is still written verbatim.
+const FISH_MUTS = ['shiny', 'sparkling', 'frozen', 'electric', 'ghostly', 'golden', 'prismatic'];
+const FISH_AT_AT = BFISH.indexOf('at');
+const FISH_MUT_AT = BFISH.indexOf('mut');
+
+export function packFish(f, atBase) {
   if (!isObj(f)) return f;
   const t = BFISH.map(k => pack(f[k]));
   // `perfect`/`lock` fold to 1/0 so the tuple is uniform. An ABSENT flag stays absent (NUL) rather
@@ -192,15 +246,40 @@ export function packFish(f) {
   // legacy record for no reason, and this codec's rule is that only what was there comes back.
   t[5] = f.perfect === true ? 1 : (f.perfect === false ? 0 : pack(undefined));
   t[6] = f.lock === true ? 1 : (f.lock === false ? 0 : pack(undefined));
+  // v3: a mutation from the loader's own set indexes into it instead of spelling the word. A fish with
+  // no mutation writes -1, which distinguishes "no mutation" (null) from "this fish has no mut field at
+  // all" (NUL) - a distinction v2 could not express because it wrote both as NUL.
+  const mi = typeof f.mut === 'string' ? FISH_MUTS.indexOf(f.mut) : -1;
+  if (mi >= 0) t[FISH_MUT_AT] = mi;
+  else if (f.mut === null) t[FISH_MUT_AT] = -1;
+  else if (typeof f.mut === 'string') t[FISH_MUT_AT] = f.mut;
+  // v3: `at` is a 13-digit ms timestamp - the largest field in a fish (13,000 chars per 1000 fish).
+  // Stored as [seconds, millis] BEFORE the newest timestamp in the save (`__at`), which is sent once.
+  // Lossless for anything the game can hold: sanitiseFish already forces `at` to a non-negative integer.
+  if (atBase > 0 && Number.isInteger(f.at) && f.at >= 0 && f.at <= atBase) {
+    const d = atBase - f.at;
+    t[FISH_AT_AT] = [Math.floor(d / 1000), d % 1000];
+  }
   const extra = extrasOf(f, FISH_KEYS);
   if (extra) t.push(extra);
   return t;
 }
-export function unpackFish(t) {
+export function unpackFish(t, atBase, oldRow = false) {
   if (!Array.isArray(t)) return t;
   return fromTuple(t, BFISH, (o) => {
     if (t[5] !== undefined && t[5] !== NUL) o.perfect = t[5] === 1;
     if (t[6] !== undefined && t[6] !== NUL) o.lock = t[6] === 1;
+    // v3: a small integer in the `mut` slot indexes the loader's own set. Any other value (a v2 string,
+    // or NUL for an absent one) was already assigned by fromTuple and is left exactly as stored.
+    const mi = t[FISH_MUT_AT];
+    if (oldRow && mi === NUL) o.mut = null;      // what a v2 client meant by an empty mut slot
+    else if (mi === -1) o.mut = null;
+    else if (typeof mi === 'number' && mi >= 0 && mi < FISH_MUTS.length) o.mut = FISH_MUTS[mi];
+    // v3: `at` was stored relative to the newest timestamp in the save.
+    const rel = t[FISH_AT_AT];
+    if (atBase > 0 && Array.isArray(rel) && rel.length === 2) {
+      o.at = atBase - (rel[0] * 1000 + rel[1]);
+    }
   });
 }
 
@@ -209,13 +288,25 @@ export function unpackFish(t) {
 const hasFishBag = s => isObj(s.fishing) && Array.isArray(s.fishing.bag);
 
 // Pure: the caller keeps using the object it passed in (the audit runs on the ordinary shape).
+// The newest fishing timestamp in a save, sent once as `__at` so every fish's `at` can be a small delta.
+function newestFishAt(save) {
+  let max = 0;
+  const scan = bag => { if (!Array.isArray(bag)) return;
+    for (const f of bag) if (isObj(f) && Number.isInteger(f.at) && f.at > max) max = f.at; };
+  if (hasFishBag(save)) scan(save.fishing.bag);
+  if (Array.isArray(save.fishs)) scan(save.fishs);
+  return max;
+}
+
 export function packSave(save) {
   if (!isObj(save)) return save;
   const out = Object.assign({}, save, { __v: CODEC_VERSION });
   if (Array.isArray(save.inv)) out.inv = save.inv.map(packItem);
   if (Array.isArray(save.cards)) out.cards = save.cards.map(packCard);
-  if (hasFishBag(save)) out.fishing = Object.assign({}, save.fishing, { bag: save.fishing.bag.map(packFish) });
-  if (Array.isArray(save.fishs)) out.fishs = save.fishs.map(packFish);
+  const atBase = newestFishAt(save);
+  if (atBase > 0) out.__at = atBase;
+  if (hasFishBag(save)) out.fishing = Object.assign({}, save.fishing, { bag: save.fishing.bag.map(f => packFish(f, atBase)) });
+  if (Array.isArray(save.fishs)) out.fishs = save.fishs.map(f => packFish(f, atBase));
   return out;
 }
 
@@ -224,10 +315,16 @@ export function unpackSave(save) {
   if (!isObj(save) || save.__v == null) return save;
   const out = Object.assign({}, save);
   delete out.__v;
+  const atBase = typeof save.__at === 'number' ? save.__at : 0;
+  delete out.__at;
+  // A v2 row wrote `mut: null` and "no mut field" as the same NUL. Reading a v2 row, NUL means null -
+  // that is what the old client meant by it. A v3 row is unambiguous (-1 means null, NUL means absent).
+  const oldRow = typeof save.__v === 'number' && save.__v < 3;
+
   if (Array.isArray(save.inv)) out.inv = save.inv.map(unpackItem);
   if (Array.isArray(save.cards)) out.cards = save.cards.map(unpackCard);
-  if (hasFishBag(save)) out.fishing = Object.assign({}, save.fishing, { bag: save.fishing.bag.map(unpackFish) });
-  if (Array.isArray(save.fishs)) out.fishs = save.fishs.map(unpackFish);
+  if (hasFishBag(save)) out.fishing = Object.assign({}, save.fishing, { bag: save.fishing.bag.map(f => unpackFish(f, atBase, oldRow)) });
+  if (Array.isArray(save.fishs)) out.fishs = save.fishs.map(f => unpackFish(f, atBase, oldRow));
   return out;
 }
 

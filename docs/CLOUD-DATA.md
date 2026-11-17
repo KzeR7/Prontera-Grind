@@ -89,37 +89,48 @@ gate**; `save_codec_chain_sim.mjs` block 7 fails without it.
 `CARDMAX` is **not** a limit on how many cards a save may contain. It gates *acquiring a loose card*:
 `cardStorageFull()` reads only `S.cards`, and socketed cards live in `item.cards`. A player can socket
 cards and then earn another 1000 loose ones (`unsock()` pushes them back into `S.cards`), so
-"loose + socketed" is **not** bounded by 1000. An earlier revision of this document and of
-`save_max_state_sim.mjs` wrongly assumed it was; the table below is measured under the correct model.
+"loose + socketed" is **not** bounded by 1000.
 
-| State | compact v2 | syncs? |
-| --- | ---: | --- |
-| the reported account, 901 items / 485 cards / 801 fish | **188,726 B** | yes (plain was 376,522 B, over) |
-| 1000 items, 1000 loose cards, 1000 fish | **266 KB** | yes, 34 KB spare |
-| 1000 items, 0 loose, 1000 cards socketed, 1000 fish | **274 KB** | yes, 26 KB spare |
-| 1000 items + 7 fully-carded worn items, 1000 loose cards, 1000 fish | **276 KB** | yes, 24 KB spare |
-| **1000 items x1 socketed card + 1000 loose cards** | **333 KB** | **no - over by 33 KB** |
-| **1000 items x1 socketed card + 1000 loose cards + 1000 fish** | **376 KB** | **no - over by 76 KB** |
-| **1000 items x4 socketed cards + 1000 loose cards + 1000 fish** | **709 KB** | **no - over by 409 KB** |
+**Codec v3** (`__v` 3) closes most of that gap. Two facts made it possible:
 
-So the honest position is: **some reachable accounts still cannot sync.** The worst case reachable
-under the game's own rules is about **709 KB**, more than twice the ceiling, and cards are roughly 60%
-of it (a packed card is ~118 chars against ~150 for a 1-slot item with no affixes). `CARDMAX`/`BAGMAX`
-bound items and loose cards, but not socketed cards, and socket counts reach 4 on katar/bow weapons.
+- A modern card is a *catalog row plus an identity*. `repairProgression()` already overwrites `family`,
+  `n`, `stat`, `v`, `effects`, `fit`, `g`, `bossCard`, `map` and `nightmare` from `CARD_CATALOG` on every
+  load, so those fields are a cache. v3 stores `[catalogIndex, id, stars?]` - 32 chars instead of 118.
+  The table lives in `functions/_lib/card-catalog.js`, generated from the page's own `cardDefinition()`,
+  and `save_codec_catalog_sim.mjs` fails if the two copies ever disagree. A card that does not match its
+  row exactly (edited value, unknown key, wrong progression version, any unknown field) keeps the full
+  v2 tuple, so the codec can never rename or normalise a card.
+- A fish timestamp is a 13-digit ms value and a mutation comes from a closed set of 7. v3 stores `at` as
+  a small delta from `__at` (sent once) and `mut` as an index.
 
-`tools/tests/save_max_state_sim.mjs` asserts *both* directions: the states above that fit must keep
-fitting, and the three that do not are asserted to still be over the ceiling, so the limitation shows
-up in CI rather than hiding behind a fixture that avoided it. If a future change makes them fit, that
-assertion fails and tells you to move the case. Their round trip is also asserted to be exact - the
-codec does not lose data on these saves, it is the transport that refuses them, which is what makes a
-future fix a transport change rather than a data migration.
+| State | compact v2 | compact v3 | syncs? |
+| --- | ---: | ---: | --- |
+| the reported account, 901 items / 485 cards / 801 fish | 188,726 | **147 KB** | yes |
+| 1000 items, 1000 loose cards, 1000 fish | 266 KB | **172 KB** | yes, 128 KB spare |
+| 1000 items, 0 loose, 1000 socketed cards, 1000 fish | 265 KB | **171 KB** | yes |
+| 1000 items + 7 fully-carded worn items, 1000 loose cards, 1000 fish | 274 KB | **~180 KB** | yes |
+| **1000 items x1 socketed + 1000 loose + 1000 fish** | 376 KB | **193 KB** | **yes**, 107 KB spare |
+| **1000 items x4 socketed + 1000 loose + 1000 fish** (5000 real cards) | 703 KB | **319 KB** | **no - over by 19 KB** |
 
-**Not solved, and deliberately not papered over.** Card ownership is not touched: no card is deleted,
-and no new ownership limit is imposed to make saves smaller. The remaining over-limit states need a
-product decision - a smaller wire format (a large part of each card is a 17-char generated id repeated
-in both the loose list and its socket) or splitting the card/fish collections into their own row with
-their own versioning. `Workers Paid` raises the CPU ceiling but **does not** raise
-`SAVE_BYTES_MAX`, so it is not a fix for this.
+So: **the states that were previously impossible now fit, except the single worst one.** 5000 cards,
+each carrying its own 17-character `Date.now()+Math.random()` id, is ~319 KB against a 307,200 ceiling.
+The ids alone are ~28% of that save.
+
+A per-save id table was implemented, measured and **removed**: it costs more than it saves. The table
+must contain each unique id once, and the references it replaces are only ~15 chars shorter, so for
+unique ids it is a net loss (measured on 1000 loose cards: 38,241 chars with the table against 31,726
+without). It only ever helped when ids repeat, which a real save does not do.
+
+`save_max_state_sim.mjs` asserts the states above that fit must keep fitting, and *records* the 5000-card
+case with a message that says so if it ever starts fitting. If a future change closes the last ~19 KB,
+that is the line to move.
+
+**Not solved, and deliberately not papered over.** No card is deleted and no ownership limit was added:
+the codec is a transport encoding and may not change what a player owns. The last remaining over-limit
+state needs a product decision. The realistic options are a shorter id (a per-save counter instead of
+`Date.now()+Math.random()`, which is a game change with its own risk) or accepting that the single
+worst-case account must trim below 1000 items - not a codec change. `Workers Paid` raises the CPU
+ceiling but **does not** raise `SAVE_BYTES_MAX`, so it cannot help here.
 
 **A GM edit keeps the row's format.** `storedBlobForm(save, previousBlob)` in `functions/api/gm/player.js`
 re-packs through `packSave` when the row was compact, so an unlock or a history restore cannot quietly
