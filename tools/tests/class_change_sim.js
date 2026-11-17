@@ -10,7 +10,7 @@
 const fs = require('fs'), vm = require('vm'), assert = require('assert');
 const src = fs.readFileSync(__dirname + '/../../index.html', 'utf8');
 const grab = (a, b) => { const i = src.indexOf(a), j = src.indexOf(b, i); if (i < 0 || j < 0) throw new Error('missing ' + a); return src.slice(i, j); };
-const code = [grab('const CD=[', 'const lineOf='), grab('function classRec(', '// ---------- UI ----------')].join('\n');
+const code = [grab('const CD=[', '// ---------- skills'), grab('function classRec(', '// ---------- UI ----------')].join('\n');
 
 // totalPts() lives outside the grabbed range, so the harness re-declares it. Pin the real
 // formula here: if the grant curve in index.html changes, this fails instead of silently
@@ -83,8 +83,23 @@ t('Assassin jobs keep the Katar, or a dagger in each hand, and still stow a shie
   assert.ok(H.S.inv.some(i=>i.id===shield.id),'the old shield must be preserved in the bag');
 });
 
-t('new second and transcendent jobs preserve every stat and unspent point', () => {
-  for(const [name,c] of Object.entries(H.CLASSES).filter(([,c])=>c.tier>=2&&c.tier<=3)){
+t('new second jobs start at Base Lv 50 with a fresh build', () => {
+  for(const [name,c] of Object.entries(H.CLASSES).filter(([,c])=>c.tier===2)){
+    const jobs={}; for(let n=c.par;n;n=H.CLASSES[n].par)jobs[n]={jl:50,jx:0};
+    const stats=st({str:20,agi:17,dex:14,int:11,vit:8,luk:5});
+    H.S=mk({cls:c.par,lv:120,exp:123,pts:7,st:stats,jobs});
+    // haven-v408: the expanded roster opens once any fourth job has reached Base Lv 150.
+    if(H.EXPANDED_LINE.has(name))H.S.base={...(H.S.base||{}),'Rune Knight':{lv:150}};
+    H.changeClass(name);
+    assert.strictEqual(H.S.cls,name);
+    assert.strictEqual(H.S.lv,50,name+' starts at Base Lv 50');
+    assert.strictEqual(H.S.jobs[name].jl,1,name+' starts at Job Lv 1');
+    assert.deepStrictEqual(Object.values(H.S.st),[1,1,1,1,1,1],name+' stats refunded');
+  }
+});
+
+t('transcendent jobs preserve every stat and unspent point', () => {
+  for(const [name,c] of Object.entries(H.CLASSES).filter(([,c])=>c.tier===3)){
     const jobs={}; for(let n=c.par;n;n=H.CLASSES[n].par)jobs[n]={jl:50,jx:0};
     const stats=st({str:20,agi:17,dex:14,int:11,vit:8,luk:5});
     H.S=mk({cls:c.par,lv:60,exp:123,pts:7,st:stats,jobs});
@@ -112,7 +127,7 @@ t('the example: Assassin Cross 120/40 -> Novice -> Hunter 90 -> back to Cross = 
   assert.strictEqual(H.S.jobs.Novice.jl, 1, 'Novice job levels should be cleared');
   H.S.lv = 90; H.S.jobs.Novice.jl = 50; H.S.jobs.Novice.jx = 0;      // level the Novice up
   H.changeClass('Hunter');
-  assert.strictEqual(H.S.lv, 90, 'Hunter should come in at Base Lv 90');
+  assert.strictEqual(H.S.lv, 50, 'Hunter starts at Base Lv 50');
   assert.strictEqual(H.S.jobs.Hunter.jl, 1, 'Hunter must start with no job levels');
   assert.deepStrictEqual(Object.values(H.S.st), [1,1,1,1,1,1], 'Hunter stats should be fresh');
   H.changeClass('Novice');
@@ -305,31 +320,31 @@ t('an unplayed class still starts a fresh build at your own Base Lv', () => {
   assert.ok(H.S.pts > 0, 'stats are refunded for a new build');
 });
 
-// ---- the class-collection bonus (v51: +1% per transcendent class taken to Base 100+,
+// ---- the class-collection bonus (v51: +1% per transcendent class taken to Base 150+,
 //      account-wide - the bonus belongs to the class, not to whatever is being played) ----
-t('the collection counts transcendent classes that reached Base Lv 100+, account-wide', () => {
+t('the collection counts transcendent classes that reached Base Lv 150+, account-wide', () => {
   H.S = mk();                                    // a fresh Novice at lv 1
   assert.strictEqual(H.playedClasses(), 0, 'Novice is not a transcendent class');
-  H.S.base.Hunter = {lv:110};                    // tier-2 records never count
-  H.S.base.Priest = {lv:120};
+  H.S.base.Hunter = {lv:150};                    // tier-2 records never count
+  H.S.base.Priest = {lv:150};
   assert.strictEqual(H.playedClasses(), 0, 'lower tiers never join the collection');
-  H.S.cls = 'Lord Knight'; H.S.lv = 101;         // being on a 100+ transcendent class counts it
+  H.S.cls = 'Lord Knight'; H.S.lv = 150;         // being on a 150+ transcendent class counts it
   assert.strictEqual(H.playedClasses(), 1);
-  H.S.base['High Wizard'] = {lv:105};            // a 100+ transcendent record counts too
+  H.S.base['High Wizard'] = {lv:150};            // a 150+ transcendent record counts too
   assert.strictEqual(H.playedClasses(), 2, 'Lord Knight (current) + High Wizard (record)');
   H.S.cls = 'Novice'; H.S.lv = 1;                // v51: the bonus is account-wide and permanent
   assert.strictEqual(H.playedClasses(), 1, 'stepping down to a low-level class no longer clears it');
   assert.strictEqual(H.collDmg(), 1, 'the recorded High Wizard keeps paying its 1% from the bench');
 });
 
-t('a transcendent class below Base Lv 100 earns nothing', () => {
-  H.S = mk({cls:'Lord Knight', lv:99, base:{}});
-  assert.strictEqual(H.playedClasses(), 0, 'lv 99 is not rebirth yet');
-  H.S.lv = 100;
-  assert.strictEqual(H.playedClasses(), 1, 'lv 100 turns its own point on');
-  H.S.base['Assassin Cross'] = {lv:98};
-  assert.strictEqual(H.playedClasses(), 1, 'a record that never reached 100 stays out');
-  H.S.base['Assassin Cross'] = {lv:100};
+t('a transcendent class below Base Lv 150 earns nothing', () => {
+  H.S = mk({cls:'Lord Knight', lv:149, base:{}});
+  assert.strictEqual(H.playedClasses(), 0, 'lv 149 is not max yet');
+  H.S.lv = 150;
+  assert.strictEqual(H.playedClasses(), 1, 'lv 150 turns its own point on');
+  H.S.base['Assassin Cross'] = {lv:149};
+  assert.strictEqual(H.playedClasses(), 1, 'a record that never reached 150 stays out');
+  H.S.base['Assassin Cross'] = {lv:150};
   assert.strictEqual(H.playedClasses(), 2);
 });
 
@@ -341,7 +356,7 @@ t('the cap follows the class data, so classes added later join automatically', (
   assert.strictEqual(t3.filter(n => !H.EXPANDED_LINE.has(n)).length, 6, 'the original six are all still there');
   assert.strictEqual(H.t3Total(), 12, 'the denominator is derived, not hardcoded');
   H.S.cls = 'Novice'; H.S.lv = 150;
-  H.S.base = {}; t3.forEach(n => H.S.base[n] = {lv:110});
+  H.S.base = {}; t3.forEach(n => H.S.base[n] = {lv:150});
   assert.strictEqual(H.playedClasses(), 12);
   assert.strictEqual(H.collDmg(), 12, 'the cap is 1% per transcendent class');
   H.S.base.Swordman = {lv:150};
@@ -349,7 +364,7 @@ t('the cap follows the class data, so classes added later join automatically', (
   // Only the tier-3 half of the expanded roster counts: its 2nd jobs, 4th jobs, Ninja and Gunslinger do not.
   for (const n of H.EXPANDED_LINE) H.S.base[n] = {lv:150};
   assert.strictEqual(H.playedClasses(), 12, 'other expanded classes never inflate the count');
-  H.S.base = {}; t3.filter(n => !H.EXPANDED_LINE.has(n)).forEach(n => H.S.base[n] = {lv:110});
+  H.S.base = {}; t3.filter(n => !H.EXPANDED_LINE.has(n)).forEach(n => H.S.base[n] = {lv:150});
   assert.strictEqual(H.collDmg(), 6, 'a save that had the old full collection keeps exactly its +6%');
 });
 
@@ -358,13 +373,14 @@ t('records made while playing grow the transcendent collection', () => {
   assert.strictEqual(H.playedClasses(), 0, 'no transcendent class in play yet');
   H.changeClass('Knight');
   assert.ok(H.S.base.Swordman, 'stepping away records the old class');
-  assert.strictEqual(H.S.lv, 101, 'the new class carries on at your Base Lv');
+  assert.strictEqual(H.S.lv, 50, 'the unplayed 2nd class starts at Base Lv 50');
   H.S.cls = 'Lord Knight';                        // ...then the transcendent run itself
+  H.S.lv = 150;
   H.S.jobs['Lord Knight'] = {jl:50, jx:0};
   H.changeClass('Swordman');                      // played classes are always reachable
   assert.ok(H.S.base['Lord Knight'], 'the Lord Knight run was recorded on the way out');
   assert.strictEqual(H.playedClasses(), 1, 'the recorded Lord Knight counts; the Swordman back does not');
-  assert.strictEqual(H.collDmg(), 1, 'the record carries lv 101, so the point is permanent');
+  assert.strictEqual(H.collDmg(), 1, 'the record carries lv 150, so the point is permanent');
 });
 
 t('v74: too-high class gear comes off on a class change, is locked, and is labelled with its wearer', () => {
@@ -428,7 +444,7 @@ t('v74: a piece the departing class could not legally wear gets no wearer label'
 t('the collection bonus is wired into atk(), and reads each class own Base Lv', () => {
   assert.ok(/const atk=\(\)=>[^\n]*\*\(1\+collDmg\(\)\/100\)\);/.test(src), 'atk() must carry the collection multiplier');
   assert.ok(/const collDmg=\(\)=>playedClasses\(\);/.test(src), 'v51: the bonus is account-wide, not gated on the active class');
-  assert.ok(/const t3At100=n=>/.test(src), 'each transcendent class carries its own Base Lv 100 gate');
+  assert.ok(/const t3At150=n=>/.test(src), 'each transcendent class carries its own Base Lv 150 gate');
 });
 
 console.log(`\n${pass} passed, ${fail} failed`);
