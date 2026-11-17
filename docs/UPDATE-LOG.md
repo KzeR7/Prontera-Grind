@@ -7,6 +7,32 @@ history, not the current specification.
 
 ---
 
+## haven-v411 — expanded roster: weapons in hand, signature skills and effects (2026-11-15)
+
+Owner feedback after testing v410 on staging. Still behind the fourth-job gate; nothing here touches the 26 original classes.
+
+**Sprites**
+- Fourteen expanded classes now hold a weapon while attacking: sword (Crusader line), book (Sage line), mace (Alchemist line), dagger (Rogue, Stalker, Ninja), bow (Bard and Dancer lines). Battlefield pack and Wardrobe both.
+- Monk, Champion and Sura punch (attack motion 40) instead of playing the mace swing.
+- Gunslinger and Rebellion use the two-revolver stance instead of the gatling pose. The revolver itself is not drawn: no revolver sprite is publicly available (see `tools/native-expanded/README.md` for the exact files needed).
+- Still bare-handed for the same reason: Shadow Chaser, Maestro & Wanderer, Kagerou & Oboro.
+
+**Skills** (257 skills, was 245)
+- Monk line is built round Spirit Spheres: the combo skills each call a sphere (up to 5), and Asura Strike (now a Monk skill, 10 s cooldown) spends them all for +30% damage each.
+- Alchemist line: Demonstration and Summon Flora leave fields that keep attacking; Acid Demonstration is the Biochemist's main hit; Marine Sphere, Summon Geographer, Crazy Weed, Demonic Fire.
+- Ninja 5 → 9 skills (Huuma Shuriken, Lightning Spear of Ice, Shadow Slash, Dagger Throwing Mastery); Kagerou & Oboro 5 → 7 (Soul Cutter, Shadow Warrior).
+- Gunslinger 5 → 9 (coins from Rapid Shower and Triple Action, spent by Tracking; Bull's Eye, Fling, Chain Action); Rebellion 5 → 7 (Crimson Marker, Platinum Alter).
+- Job caps raised so the bigger trees can be filled: Ninja and Gunslinger Job 70; Kagerou & Oboro and Rebellion Job 60.
+- All ten reworked classes refitted against their sibling with `tools/fit_expanded_budget.js`.
+- Saves: Cadence and the old Alchemist axe skill are gone, Iron Hand and Learning Potion stop at Lv 5; the points come back on load.
+
+**Signature effects** — new `assets/signature-fx.js`, 46 skills, painted at runtime (no image files)
+- Asura Strike: five spheres are drawn in, then 阿修羅覇凰拳 bursts out. Gates of Hell and Tiger Cannon have their own characters.
+- Alchemist: thrown bottles and splashes, biting plants that stay for the field, Crazy Weed vines, Marine Sphere bubbles.
+- Ninja shuriken, kunai and flames; revolver tracers, muzzle flashes, Desperado spray and coin flips; music notes for Bard and Dancer.
+
+Tests: `signature_fx_sim.js` (new), `expanded_roster_sim.js`, `expanded_wardrobe_sim.js`.
+
 ## Update log
 
 Newest entry last. Template at the very bottom of this file.
@@ -11367,3 +11393,270 @@ Test-only follow-up to the v373 batch. No player-visible change, so BUILD is unc
   both keys are asserted absent from `COUNTERS`, `RATE_LIMITS` and `LUMP_ALLOWANCE`. Full gate on the
   final tree: **1690 passed**, the same five reds as `main`.
 * **Delivery:** Branch `arena/369b4228-prontera-grind`, PR **#236**.
+### 2026-11-14 — `haven-v408 expanded roster: 20 new classes (6 alternate lines + Ninja and Gunslinger) behind a Base 150 fourth-job unlock`
+
+* **Changed:** Continues PR #232 (its commit is carried here unchanged as the first commit, the
+  rework as the second). Twenty classes join the 25: Crusader → Paladin → Royal Guard, Sage →
+  Scholar → Sorcerer, Alchemist → Biochemist → Geneticist, Monk → Champion → Sura, Rogue →
+  Stalker → Shadow Chaser, Bard & Dancer → Minstrel & Gypsy → Maestro & Wanderer, plus Ninja
+  and Gunslinger straight from Novice. The whole roster opens for good once any of the six
+  shipped fourth jobs has reached Base Lv 150; after that the usual parent / job-level /
+  Crucible rules apply (each new job fights its sister class's trial opponent).
+* **What was reworked from the PR, and why:**
+  * The PR put the new rows straight into `CD`/`CD4`/`SKILLS4`, which broke 20 suites and the
+    Wardrobe / class-skin / balance fixtures that enumerate the original roster. They now live
+    in `CDX`/`CD4X`/`SKILLSX`; nothing about the shipped 25 classes or 127 skills changed.
+  * The PR's seven new weapon categories (spear, book, knuckle, instrument, whip, shuriken, gun)
+    had no drops, icons, forge or Mythic pieces, so those classes could never be armed. Each
+    line now trains in existing families (Crusader sword; Sage staff; Alchemist axe + mace; Monk
+    mace; Rogue dagger + bow; Bard & Dancer bow; Ninja dagger; Gunslinger bow).
+  * The PR's 143 files in `assets/skill-icons/new/` were cut on a wrong grid (each held parts
+    of several icons) and are deleted. Every new skill borrows a shipped icon (`icon`) and a
+    shipped cast effect (`fx`) until real crops exist. **No art was drawn or recoloured.**
+  * Skills went from 43 uneven ones to the shipped shape: 5 per class (45 points; 50 for a
+    fourth job) plus a sixth Ascension-only skill for each new fourth job — 106 in all. The 43
+    original ids are kept. Ascension upgrades cover all six new fourth jobs.
+  * The Bard / Dancer tabs called a function that does not exist; they are now real
+    `data-a="bdtree"` tabs and the choice is a view setting, not written to the save.
+  * The 40 uploaded sheets in `Sprite/` and `Sprite/female/` were not used by the game at all.
+    `tools/make_expanded_pack.py` cuts them (same cell layout, anchors, 8 directions and
+    idle / walk / attack as the shipped pack) into `assets/sprite-pack-x/`: one lossless WebP
+    per body, 2.6 MiB for all 40, and only the body being worn is downloaded. Until it arrives
+    the class is drawn with its first-job family body. Men and women get their own body.
+  * The Transcendent class-collection bonus still counts only the original six (cap stays +6%).
+  * Wardrobe looks are not available on the new classes yet (no native Wardrobe bodies); the
+    Wardrobe tab says so instead of showing a load error.
+* **Try it:** With a fourth job at Base Lv 150, open Jobs → Class tree: the "Expanded roster"
+  block under the main tree is unlocked. Reset to Novice for Ninja / Gunslinger, or step from
+  Swordman into Crusader. Without a Lv 150 fourth job every new class reads "Needs any 4th job
+  at Base Lv 150 first". GM console: the class list includes the new classes.
+* **Checks:** New `tools/tests/expanded_roster_sim.js` 11/11 (roster and pinned ids, weapon
+  families, the gate, no item duplicated on class change, collection unchanged, 5 + 1 skills,
+  borrowed icons / effects resolve, Ascension, Jobs and Skills windows for all 20, 40 lossless
+  bodies with 3 animations × 8 directions, save round trip). `make_expanded_pack.py --check`,
+  `build_afterglow.py --check`, `build_gm_catalog.cjs --check` and the four Python gate checks
+  pass. Full gate: **219 passed / 4 failed**, all four red on `main` before this work
+  (`fourth_job_mythic_sim`, `hosted_launch_stage_sim`, `skill_balance_sim`,
+  `render_lost_boot_smoke`). Existing suites that pinned the old totals were updated to the
+  new totals while still pinning the original roster separately (class count 25 → 45 with 25
+  shipped, fourth jobs 6 → 12 with 6 shipped, skills 127 → 233 with 127 shipped); the native
+  preview audits (`class_weapon_sim`, `hair_color_sim`, `wardrobe_game_sim`) now state that
+  they cover the shipped roster; `publish_sim` gives the lazy bodies their own 3 MiB budget
+  and the combined 180 MiB ceiling is unchanged (179.8 measured — almost no headroom left).
+* **Delivery:** Branch `arena/ef87a1e5-prontera-grind`; not merged, not deployed. Supersedes
+  PR #232. No server, Worker or plaza traffic change; no migration. Open for the owner: the
+  original skill-icon sheet (to cut real icons), whether the new weapon categories are wanted
+  as real gear later, and whether the new Transcendent classes should count for the collection.
+
+### 2026-11-14 — `haven-v408 (same unreleased build): expanded Transcendent classes count for the class collection`
+
+* **Changed:** Owner decision. The six Transcendent classes of the expanded roster (Paladin,
+  Scholar, Biochemist, Champion, Stalker, Minstrel & Gypsy) now count toward the class
+  collection, so it reads `n/12` and the cap is **+12% damage** instead of +6%. This corrects
+  the previous entry, which kept the collection at the original six. Rules are otherwise the
+  same: +1% per Transcendent class at Base Lv 100+, permanent, account-wide; second jobs,
+  fourth jobs, Ninja and Gunslinger never count. No save loses credit. No new build number:
+  v408 has not shipped, so this folds into it.
+* **Try it:** Character window → the Class collection line now shows `/12`.
+* **Checks:** `class_change_sim` (27), `fourth_job_sim`, `ui_sim`, `mythic_testing_sim` and
+  `expanded_roster_sim` (11) pass with the 12-class collection pinned, including "a save with
+  the old full collection keeps exactly +6%".
+* **Delivery:** Branch `arena/ef87a1e5-prontera-grind`; not merged, not deployed. Still open:
+  real skill icons (owner will supply) and the new weapon categories as real gear (drops,
+  Mythic pieces, Ascension) — that needs weapon and icon art before it can be built.
+
+### 2026-11-14 — `haven-v409 expanded roster: native class sprites, seven weapon families, fitted damage`
+
+* **Changed (sprites):** All 40 expanded-roster bodies (20 classes × male/female) were
+  rebuilt from the real Ragnarok Online client sprite and action files instead of being cut
+  out of the uploaded sheets by pose-matching, which had produced wrong idle and walk rows
+  (Ninja and Gunslinger worst). Every direction, the 8 walk frames and the attack now come
+  from the client's own animation, and the head is pinned with the client's own attach
+  points (it also turns the way the client turns it during an attack). Melee classes play
+  the first attack, Bard/Dancer and Gunslinger lines the aimed one; the Gunslinger holds a
+  native gun while attacking. Sources are pinned by git blob id and SHA-256 in
+  `tools/native-expanded/source-manifest.json`; nothing is redrawn or recoloured. Each body
+  was checked by eye on contact sheets. Folder size 2.58 MiB (was 2.63).
+* **Changed (weapons):** Seven new weapon families are real gear: **spear** (Crusader line),
+  **book** (Sage line), **knuckle** (Monk line), **instrument** and **whip** (Bard & Dancer
+  line), **shuriken** (Ninja) and **gun** (Gunslinger). Each is the kin of a shipped family
+  and drops wherever that family drops (spear↔sword, book↔staff, knuckle↔mace,
+  instrument/whip/gun↔bow, shuriken↔dagger): for a class that trains in it, 60% of those
+  drops arrive as its own family (100% for the Gunslinger, who uses guns only; a Bard gets
+  mostly instruments, a Dancer mostly whips). Drop tables, rates and every other class are
+  unchanged. They work in online and offline drops, the Shard Store, the Ascension Forge
+  (42 new Mythic weapon names across the six sets), the GM console (presets for the six new
+  fourth jobs) and auto-sell filters. 56 real RO inventory icons were added (six
+  progression bands per family plus Mythic). Books roll magic affixes; instruments, whips
+  and guns have four card sockets like bows. The Job and Equipment panels say where each
+  family drops.
+* **Fixed:** Sage, Scholar and Sorcerer were attacking with physical ATK while wearing INT
+  gear; they are magic classes now, like the Wizard line.
+* **Changed (balance):** The expanded classes did 12–65% of their sibling class's damage
+  (a few did far more). Each was measured for sustained damage against 1 and 3 targets
+  with every skill maxed and fitted to its sibling: Crusader line 92% of the Knight line
+  (it has ~45% more HP), Monk line 105% (less HP), Sage and Alchemist lines 100%, Rogue,
+  Bard & Dancer, Ninja and Gunslinger 97%. The fit is in `SKILL_TUNING` plus each class's
+  attack multiplier, recorded in `tools/tests/fixtures/expanded_skill_budget.json`.
+* **Try it:** On an account with a fourth job at Base Lv 150, become a Gunslinger and fight
+  in Payon: bows now drop as guns. Open Equipment to see the new icons; a fourth job of the
+  new lines can forge its own Mythic weapon in the Ascension Forge.
+* **Checks:** `expanded_roster_sim` 13/13 (new: weapon families, icons with hashes, kin
+  drops, damage budgets, native sprite manifest). Full gate: 229 checks, 225 green. The 4 red ones
+  (`fourth_job_mythic_sim`, `hosted_launch_stage_sim`, `skill_balance_sim`,
+  `render_lost_boot_smoke`) are red on `main` too and were left alone. Thirteen suites
+  that hard-coded the old counts (14 icon families, 6 GM presets, 72 Mythic gifts) or
+  looked for a class weapon by exact family were updated to the new numbers and to the
+  kin rule. The classic-asset size ceiling in `publish_sim` moved from 60.1 to 60.2 MiB
+  for the 56 new icons. Ninja and Gunslinger have no fourth job, so their Mythic weapons
+  exist as GM gifts but cannot be forged yet.
+* **Delivery:** Branch `arena/ef87a1e5-prontera-grind`; not merged, not deployed. Still
+  open: real skill icons (owner will supply), held-weapon art on the body for classes other
+  than the Gunslinger (no pack hero shows one), the Wardrobe for the new classes, and their
+  own job-trial opponents. Not yet seen in a real browser.
+
+### 2026-11-15 — `haven-v410 Kagerou & Oboro, Rebellion and a Wardrobe for the expanded classes`
+
+* **Changed:** Ninja now advances to **Kagerou & Oboro** and Gunslinger to **Rebellion**. Both
+  are single-step lines (Novice → Ninja → Kagerou & Oboro, Novice → Gunslinger → Rebellion) and
+  sit behind the same gate as the rest of the expanded roster: any 4th job at Base Lv 150 first.
+  Each has five skills plus one Ascension-only skill, its own native body for both genders, and
+  damage fitted to 97% of its sibling (Guillotine Cross and Ranger). Their job trials reuse the
+  Assassin Cross and Sniper opponents. The roster is now 47 classes and 245 skills.
+* **Changed:** All 22 expanded classes can use the **Wardrobe**: every hairstyle, hair colour
+  and accessory, in the game, in town and when sitting. New pack `assets/wardrobe/expanded/v1/`
+  (4.3 MiB) holds only the bodies; hair and accessories are the ones already shipped, placed on
+  each new body by where its head sits in every frame. Gunslinger and Rebellion show their gun
+  while attacking.
+* **Try it:** With an account that has a 4th job at Base Lv 150, change to Ninja or Gunslinger,
+  then to the advanced job. Open the Wardrobe on any expanded class, change hair and add wings
+  or a halo, apply, walk and attack, then sit in town.
+* **Checks:** New `tools/tests/expanded_wardrobe_sim.js` composes 3,168 looks (every class,
+  gender, hairstyle and accessory) plus 44 sitting looks and proves the game places them exactly
+  as the builder does. Full gate: 231 checks, 227 green; the 4 red ones are the same four that
+  are red on `main`. Ten suites that hard-coded the old class and skill counts were updated.
+* **Needs your approval:** the whole published site is now 184.4 MiB, over the 180 MiB ceiling
+  you approved at v342. I raised the test ceiling to 185 so the gate can run, but that is your
+  call. Players are not affected much: the new bodies load one small file (about 100 KiB) per
+  class and gender actually worn.
+* **Delivery:** Branch `arena/ef87a1e5-prontera-grind`, PR #234; not merged, not deployed. Not
+  yet seen in a real browser. Wings, capes and bags on expanded classes can sit a few pixels
+  off on some frames. Still open: real skill icons (owner will supply), held-weapon art for
+  classes other than the two gun jobs, and skill effects of their own.
+
+### 2026-11-15 (staging launcher) — no build bump
+
+* **Changed:** New owner launcher `tools/staging/stage_expanded.mjs` puts the haven-v410 branch
+  on staging from Windows. It builds in a temporary copy with a staging-only configuration
+  (`prontera-grind-staging`, `prontera-social-staging`, `pg-staging`), refuses to continue if a
+  production name appears or the database is not `pg-staging`, adds any of the additive tables
+  0009-0017 that staging is missing, and deploys. Your checkout is not modified.
+* **Try it:** the four PowerShell lines are at the top of the file.
+* **Checks:** the configuration, schema-step and address parsing were exercised here. The
+  launcher itself is Windows-only and has not been run end to end.
+
+## haven-v412 — expanded roster: original RO effects, signature skills, autocast, every class armed (2026-11-15)
+
+Owner feedback after testing v411 on staging (8 points). Still behind the fourth-job gate; the 26 original classes are untouched.
+
+- **Weapons.** A second client source (`linhan85/rAthenaCN_LeeClient`, pinned in `tools/native-expanded/source-manifest.json`, 148 files) supplied what ClientROThailand lacks: revolvers for Gunslinger and Rebellion, shuriken for Kagerou & Oboro, the Rogue-line bow for Shadow Chaser, instrument (Maestro) and whip (Wanderer). The Monk line now plays the knuckle punch (ACT action 88) instead of the overhead swing; the client's knuckle sprite is empty, so fists show. 19 classes draw a weapon while attacking.
+- **Original skill effects.** `tools/make_ro_fx.py` bakes 36 client effects (`.str` timelines, effect sprites and stills, pinned in `tools/native-expanded/fx-source-manifest.json`) into WebP flipbooks under `assets/ro-fx/` (1.69 MiB, budget 2.5). `assets/signature-fx.js` plays them for 72 skills; only the books of the class being played are downloaded. Asura Strike now throws the client's own six characters; the painted Asura fallback and the Geneticist vines/plants/bottles stay for a later pass.
+- **Signature skills.** `core:true` marks each class's signature attack (★ in the tree, a shout when it lands). Asura Strike: power 16, needs a Spirit Sphere, +50% per sphere, +50% on bosses, 40% shockwave; Call Spirits / Zen / Rising Dragon fill all five spheres. Acid Demonstration, Final Strike, Slug Shot gain `bossPower`.
+- **Autocast.** New `autocast` row key (`autocastProc`): Sage Hindsight is Auto Spell (random Fire / Cold / Lightning Bolt on attacks and casts), Sorcerer Spell Fist, Scholar Double Casting, Stalker Plagiarism, Shadow Chaser Auto Shadow Spell, Gunslinger Chain Action, Kagerou Shadow Warrior, Paladin Martyr's Reckoning.
+- **Combos.** `COMBO_PLAN` gives Auto-fill a written combo per class that ends on the signature skill; inherited first-job skills only fill empty slots in front. Champion and Sura no longer pick Holy Light.
+- All 22 classes refitted with `tools/fit_expanded_budget.js` (now handles a class with no area skill).
+
+Not done: Shadow Chaser still has one attack animation (the bow). A second, dagger animation needs a new stance in both the body pack and the Wardrobe atlases, which are at their size ceilings.
+
+Tests: `signature_skills_sim.js` (new), `signature_fx_sim.js`, `expanded_roster_sim.js`, `expanded_wardrobe_sim.js`, `publish_sim.js`.
+
+## haven-v413 — expanded roster: stronger budgets, skill-first damage, 40-point Skill Ascension (2026-11-15)
+
+Owner direction after reading the v412 damage report. Still behind the fourth-job gate; the 26 original classes are untouched.
+
+- **Budgets.** New classes sit about 20% above their sibling. Royal Guard, Maestro & Wanderer, Kagerou & Oboro and Rebellion stay close (105%). Sorcerer and Shadow Chaser 125%. Geneticist 120% on one target, 140% on three. Sura is the single-target ceiling of the fourth jobs: 227% of Rune Knight = 130% of Guillotine Cross. `tools/fit_expanded_budget.js` accepts `Class=Sibling:single/area`.
+- **Skills before normal attacks.** The attack multiplier of Sura (1.3 to 1.1), Shadow Chaser (2.45 to 1.7), Maestro & Wanderer (1.61 to 1.15) and Rebellion (2.4 to 1.7) was lowered and the skill tuning refitted, so the same budget comes from skills. Triangle Shot power 4.6 to 8.5.
+- Elemental Bolt power 4.14 (about 20% above Fire Bolt). Sorcerer Spell Fist bolts hit bosses 40% harder.
+- **Skill Ascension cap** is `ascSkillCap(cls)` = max(30, 5 x skills): 40 for Kagerou & Oboro and Rebellion (eight skills each).
+- New `tools/expanded_damage_report.js` prints the per-class damage table.
+
+Tests: `signature_skills_sim.js`, `expanded_roster_sim.js`.
+
+
+### 2026-11-15 — `expanded roster balance draft`
+* **Changed:** Former 120% sibling damage targets are now 110%; Geneticist keeps 140% on three targets, and Sura targets 117% of Guillotine Cross on one. Existing special targets are unchanged. Champion has no area skill; Minstrel & Gypsy and Gunslinger remain above the 110% three-target target at the existing area floor.
+* **Try it:** Run the expanded damage report after the pending merge conflicts are resolved.
+* **Checks:** In a temporary copy with the three index conflict blocks provisionally using the PR side, the 120-second damage-target simulation passed all 16 revised classes and the expanded-roster suite passed 13/13. Sura measures 117% of Guillotine Cross but is below Shadow Chaser at 125%; the actual working tree still has unresolved merge conflicts and is not ready to run.
+* **Delivery:** Local draft only; not committed, pushed or deployed.
+
+
+### 2026-11-15 — `expanded roster varied single-target draft`
+* **Changed:** The expanded roster now targets 108–112% of sibling single-target boss damage by role, including Sorcerer and Shadow Chaser at 110%; Sura stays at 117% of Guillotine Cross. Area coefficients are unchanged, although total three-target damage can shift with single-target tuning.
+* **Try it:** Run `node tools/tests/expanded_damage_targets_sim.js` after resolving the pending merge conflicts.
+* **Checks:** In a temporary copy with the index conflict blocks provisionally taking the PR side, expanded-roster passed 13/13. All 22 single-target ratios passed, but the new strongest-Sura assertion failed: Assassin Cross, Ninja, and Stalker exceed Sura in this fixture. Resolving this requires an owner decision on the comparison reference or changes to the original class. Working-tree merge conflicts remain unresolved.
+* **Delivery:** Local draft only; not committed, pushed or deployed.
+
+
+### 2026-11-15 — `class balance audit draft`
+* **Changed:** Added a repeatable equal-level class DPS report and documented the current original-job progression gaps and Ascension-map multiplier risk. No original class or map balance was changed in this audit.
+* **Try it:** Read `docs/CLASS-BALANCE-AUDIT-DRAFT.md`; rerun `node tools/class_balance_audit.js` after merge resolution.
+* **Checks:** All 47 classes were measured on a temporary copy with the PR side of the conflicted index blocks; the map sensitivity experiment was stationary and hypothetical, not a moving-encounter or production test. The strongest-Sura regression remains failing, and merge conflicts remain unresolved.
+* **Delivery:** Local draft only; not committed, pushed or deployed.
+
+### 2026-11-15 — `Ascension balance impact study`
+* **Changed:** Added an in-memory exploratory map probe and documented how candidate class-skill tuning and a shared Ascension monster-HP increase affect entry farming and MVPs. No candidate gameplay, monster or reward values were applied.
+* **Try it:** Read `docs/ASCENSION-BALANCE-IMPACT-DRAFT.md`; run the probe after resolving the existing merge conflicts.
+* **Checks:** A provisional conflict-free test copy ran 36 entry-field samples plus experimental 2.3x-HP samples, and 24 Mythic boss attempts. Two experimental Arch Bishop runs failed with `sk.mul is not a function`; this is an implementation blocker for introducing its tuning table, not a passing test. Results are short, fixed-seed samples and do not measure material pickups.
+* **Delivery:** Local research only; not committed, pushed or deployed. Existing merge conflicts remain unresolved.
+
+### 2026-11-15 — `Shared progression rebalance research`
+* **Changed:** Added experimental, in-memory shared-rebalance simulations and a draft analysis with raw sample data; no gameplay values were applied.
+* **Try it:** Read `docs/SHARED-REBALANCE-EXPERIMENT-DRAFT.md` and run the research probes on a conflict-free test copy.
+* **Checks:** Six class-line reference fits, 28 gear/rank/weapon cross-check cases (four DPS measurements each), and 400 moving field/MVP runs completed; this candidate misses some progression targets and changes farming substantially. Includes a temporary Epiclesis guard for candidate-only simulations; it is not a production fix. Results are short and do not measure actual loot or away income.
+* **Delivery:** Research only; no commit, push, deploy or conflict resolution.
+
+### 2026-11-15 — `Preserve-current-game balance experiments`
+* **Changed:** Added isolated research probes and draft results comparing five Assassin Cross reductions, advanced-job-only tuning without shared map changes, inherited Sonic Blow casts, and a class-scoped encounter-HP thought experiment. No gameplay, enemy or reward values were applied.
+* **Try it:** See `docs/PRESERVE-CURRENT-BALANCE-DRAFT.md` and the raw data under `docs/balance-study/no-map/`.
+* **Checks:** Six reference class fits, 60 cross-check variant rows, 334 moving field/MVP samples, 900 isolated inherited-skill casts and an inherited-coefficient survey completed on a provisionally resolved test copy; no-map candidates altered advanced farming, some progression checks missed, and the HP prototype has an Ascension-material-odds blocker. Tests are short and do not validate loot or away income.
+* **Delivery:** Research only; no commit, push, deploy or conflict resolution. Existing strongest-Sura regression remains unresolved.
+
+### 2026-11-15 — `Earlier-job and map HP shift investigation`
+* **Changed:** Added isolated experimental fits, field/MVP probes and a draft direction for class-specific earlier-job cuts with Nightmare HP reductions and Ascension HP increases. No gameplay, map, reward or player data changes were applied.
+* **Try it:** Review `docs/MAP-SHIFT-DIRECTION-DRAFT.md` and `docs/balance-study/map-shift/`; the research harness requires a conflict-free test copy and jsdom/Three r128.
+* **Checks:** Three uniform candidates plus a per-class tailored candidate were measured with 648 moving field/MVP runs, 56 gear/rank/weapon combo cross-check rows and 900 direct inherited-skill casts on the provisional conflict-free copy. Two-seed short farming samples do not measure collectible drops or away income. Some fits fail progression cross-checks and expanded controls change farming rates.
+* **Delivery:** Research only; no commits, pushes, deployment or conflict resolution. Existing conflict markers and the Sura-strongest regression remain.
+
+### 2026-11-15 — `Integrated roster and map-HP research`
+* **Changed:** Added research-only expanded-roster and map-HP experiments, a draft proposal, and raw simulation data. No proposed gameplay HP or tuning values were applied.
+* **Try it:** Review `docs/INTEGRATED-ROSTER-SHIFT-DRAFT.md` and `docs/balance-study/roster-shift/`; run the probes against a separately provisionally resolved test copy.
+* **Checks:** Compared 47-class boss rankings across two fixtures, 60 same-gear promotion cases, 460 moving field/MVP samples in the main first- and second-pass batches, six earlier-tier controls, inherited-skill experiments and four single-seed local away claims. Seven promotion comparisons remain reversed, Sura is third in the tier-specific fixture, and farming changes substantially; the candidate is not ready. The local away and generated-drop experiments do not validate live pickup or cloud economy.
+* **Delivery:** Research only; no commits, pushes, deployment or conflict resolution. Existing conflicts and the strongest-Sura regression remain.
+
+### 2026-11-15 — `Fourth-job multiplier equality experiment`
+* **Changed:** Added isolated simulations and draft results for raising fourth-job skill multipliers to at least their immediate predecessors' values, with and without matching physical training; no gameplay values or map HP were changed.
+* **Try it:** See `docs/EQUAL-PREDECESSOR-MULTIPLIER-DRAFT.md` and `docs/balance-study/equal-predecessor/`.
+* **Checks:** Fourteen class pairs across ranks 5 and 10, with both GX weapons (30 paired rows), and 60 moving field samples for five classes on a provisionally resolved PR-side copy. Matching coefficients does not universally fix progression and some farming samples rose sharply. Pickup, offline income and broad builds remain unvalidated.
+* **Delivery:** Research only; no conflict resolution, commit, push or deploy.
+
+## haven-v415 — escort/boss payout split and the boss-only Asura bonus (2026-11-15)
+
+Owner: "the escorts and the boss pay the same", and Asura's +50% boss bonus must not leak onto
+MVP escorts. Both are code-side changes to the v413 expanded roster; no `SKILL_TUNING` value moved.
+
+* **Escort share (materials and Sigils only).** A boss wave's escorts now roll 30% of their
+  material and Sigil chance (`ASC_ESCORT_KEEP`); the MVP keeps its own 3x-HP material roll and
+  gains the missing 70% of each of its escorts (`ASC_ESCORT_SHIFT = .7`). Ordinary field enemies
+  and every stage without a boss are untouched. Escorts still drop zeny and EXP at their full
+  original values, so an escort kill is never worthless.
+  - `ASC_MAT_CH`/`ASC_SIGIL_CH` stay the base rates; the split lives in `ascMaterialChance()` and
+    `ascSigilChance()`, which is also what the offline path reads, so online and away agree.
+  - Escorts are tagged `escort:true` in `spawn()` so the split can tell them from a field mob.
+* **Asura on escorts.** The shockwave is paid from `raw` with the MVP's `bossPower` factor removed,
+  so an escort standing beside its MVP no longer inherits Asura Strike's +50%. A direct hit on the
+  escort (it becomes the target) still counts as a direct hit and gets no boss bonus - as before.
+* **Tests:** `signature_skills_sim` pins the shockwave share; `starter_sim` pins the escort tag;
+  `ascension_drop_shop_sim` reads the per-monster chances instead of the flat constants;
+  `tools/progression_balance.js --skills` now filters its growth table to the baseline's classes
+  (the expanded roster was inflating 63 rows to 105 and breaking `skill_balance_sim`).
+* **Delivery:** Branch `arena/75645771-prontera-grind`, on top of the resolved v413/v414 merge.

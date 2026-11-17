@@ -135,7 +135,7 @@ Open the `*.pages.dev` address Cloudflare gives the project, and walk this list:
 | Check | Expected |
 |---|---|
 | The login card | says **“☁ Cloud accounts are on — register or sign in…”** |
-| Build tag at the bottom of the card | `2026-11-15 haven-v408 away pay is half your measured minute, ten levels at most above 120, no replayed-minute rate spikes, afk payouts and bulk sales no longer flagged` || Register your own name and email | a dialog with a **recovery code** — copy it somewhere safe; email is not verified yet |
+| Build tag at the bottom of the card | `2026-11-15 haven-v415 escort pay split: an MVP escort pair keeps 30 percent of its material and Sigil chance and the MVP collects the rest; Asura boss bonus no longer reaches escorts; expanded roster draft with varied class targets, Sura 17 percent; away pay is half your measured minute, ten levels at most above 120, no replayed-minute rate spikes, afk payouts and bulk sales no longer flagged` || Register your own name and email | a dialog with a **recovery code** — copy it somewhere safe; email is not verified yet |
 | Play for a minute | the header badge goes `☁ …` → `☁ ✓` |
 | The same address in a second browser | sign in with the same name and password → **the same character loads** |
 | `/gm.html` | after deliberate D1 owner provisioning, the GM console lists players and shows **👑 owner** |

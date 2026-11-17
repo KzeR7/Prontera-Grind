@@ -49,7 +49,7 @@ function runGear(html,modern,moving=false){const g=createGame(html),rows=[];
  }g.close();return rows;}
 // Historical growth comparisons cover only classes present in the baseline revision.
 // Fourth jobs have separate skill/trial/Mythic integration suites.
-function runGrowth(html,modern){const g=createGame(html),rows=[],classes=JSON.parse(g.ev('JSON.stringify(Object.keys(CLASSES).filter(k=>CLASSES[k].tier<4))'));
+function runGrowth(html,modern,allow){const g=createGame(html),rows=[],classes=JSON.parse(g.ev('JSON.stringify(Object.keys(CLASSES).filter(k=>CLASSES[k].tier<4))')).filter(c=>!allow||allow.has(c));
  for(const cls of classes)for(const weapon of /^Assassin/.test(cls)?['katar','dagger']:[''])for(const profile of [0,1,2]){
   configure(g,cls,profile,weapon,123);
   if(modern)g.ev(`if(!INT_CLASSES.includes(S.cls)){for(const k in S.st)S.st[k]=1;S.pts=totalPts();const order=[C().main,C().main,'agi','dex','luk','vit'];let more=true;while(more){more=false;for(const k of order)if(S.st[k]<statCap()&&S.pts>=cost(k)){S.pts-=cost(k);S.st[k]++;more=true;}}S.hp=maxHp();}`);
@@ -57,7 +57,14 @@ function runGrowth(html,modern){const g=createGame(html),rows=[],classes=JSON.pa
  }g.close();return rows;
 }
 if(require.main===module){const skill=process.argv.includes('--skills'),moving=process.argv.includes('--encounters');let b,a;
- if(skill){b=process.argv.includes('--reuse-baseline')?JSON.parse(fs.readFileSync('tools/tests/fixtures/progression_skills.json')).before:runGrowth(before,false);a=runGrowth(after,true);}else{const prior='tools/tests/fixtures/progression_'+(moving?'encounters':'gear')+'.json';b=process.argv.includes('--reuse-baseline')?JSON.parse(fs.readFileSync(prior)).before:runGear(before,false,moving);a=runGear(after,true,moving);}
+ if(skill){
+  // The growth table is a HISTORICAL comparison: it may only cover classes that exist in the
+  // baseline revision, or the expanded roster silently turns 63 rows into 105 and the fixture
+  // stops matching its own contract (skill_balance_sim pins both lengths).
+  const prior=JSON.parse(fs.readFileSync('tools/tests/fixtures/progression_skills.json')).before;
+  b=process.argv.includes('--reuse-baseline')?prior:runGrowth(before,false);
+  a=runGrowth(after,true,new Set(b.map(r=>r.cls)));
+}else{const prior='tools/tests/fixtures/progression_'+(moving?'encounters':'gear')+'.json';b=process.argv.includes('--reuse-baseline')?JSON.parse(fs.readFileSync(prior)).before:runGear(before,false,moving);a=runGear(after,true,moving);}
  if(b.length!==(skill?63:moving?21:42))throw Error('Incomplete baseline');
  const out={baselineRevision:BASE,baselineHash:hash(before),sourceHash:hash(after),combatHash:combatHash(after),toolHash:hash(fs.readFileSync(__filename)),seconds:skill?60:120,seed:skill?123:789,kind:skill?'skills':moving?'encounters':'gear',before:b,after:a};
  const file='tools/tests/fixtures/progression_'+out.kind+'.json';fs.writeFileSync(file,JSON.stringify(out,null,2)+'\n');console.log(file);
