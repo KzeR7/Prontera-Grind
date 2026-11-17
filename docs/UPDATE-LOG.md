@@ -11620,3 +11620,131 @@ the hair, head and accessories come with the pose. The standing route keeps its 
 so the hero does not snap back to the first frame afterwards, and the shipped v5 and fourth-job packs
 have no sit stance, so no other class gains or loses a frame. Measured on the committed atlases, the
 sit body draws 28-30 px lower than the idle body in all eight directions. New `asura_pose_sim` (5).
+
+## haven-v417 — the new equipment: real weapons for the expanded families, and equipment on the Ascension maps (2026-11-15)
+
+Owner: *"add in the new equipments for me. all the new weapons spread out the maps based on the
+current map levels. but 1 thing different is all these new class nightmare + weapons drops at new
+ascension map. do a proper job. make sure the icons are Ragnarok sprites."*
+
+### The gap this closes
+
+The seven expanded families (spear, book, knuckle, instrument, whip, shuriken, gun) had **no items**.
+`WEAPON_KIN` made a sword become a "Spear" *at the moment it dropped for a Crusader* (`kinDrop`), but
+nothing in `GEAR` ever carried them: they could not be seen in the atlas, drawn in the bag, listed on
+a boss table, or found in the drop-card worksheet. The Ascension maps were worse - `gearPool` returned
+an empty array for both, so Astral Citadel and Thor Volcano dropped materials only and their panel
+said in words that they had no equipment.
+
+### What changed
+
+- **The Nightmare N row carries the new families, and nothing else does.** Every map's section 4
+  holds the expanded families that map trains: all seven on the five late maps, and a themed subset
+  on the four starter maps (Prontera a spear, Izlude a knuckle, Geffen a book, Morroc a shuriken and
+  a gun, Payon an instrument and a whip). Their N+ pieces are **Ascension-only** - no map's section 5
+  carries one. Names come from the family's own noun (`Gae Bolg`, `Codex`, `Desperado`), so they read
+  as weapons rather than renamed swords.
+- **The normal route is untouched.** Sections 0-3 are exactly as v79/v90 left them - that allocation
+  is what every class drop is calibrated on, and `kinDrop` still serves it. A new test asserts no
+  expanded family ever appears there.
+- **Astral Citadel drops the Nightmare tier** (N on Stages 1-3, N+ on 4-5) and **Thor Volcano the
+  Mythic/Primal tier** (section 6). Both shelves carry **all fourteen families** plus armour, head, a
+  shield, legs and two accessories, so every class in the game - including the twenty expanded ones -
+  finds a weapon of its own family on either map.
+- **The rates are the Nightmare band's own**, not a new table: `FIELD_GEAR_NM` (0.5 / 0.4 / 0.3
+  percent), halved by `NMPLUS_DROP` on the top two stages exactly as Nightmare Stages 4-5 are. The
+  weapon budget is split evenly across the fourteen families, so the *total* chance per kill is
+  unchanged while every family stays reachable - a materials field only has two regular mobs, and
+  one weapon each would have put twelve families out of reach.
+- **Materials still pay.** Every kill still grants its Forge material and the Stage-5 MVP still
+  carries one; equipment is an addition, not a replacement. The Ascension Forge, the Mythic sets and
+  `transformToMythic` are untouched.
+
+### Icons
+
+Real Ragnarok item artwork, the IDs already curated in `RO_ITEM_ICON_CANDIDATES` and present in
+`assets/equipment-icons/`: spears 1401-1420, books 1550-1557, knuckles 1801-1814, instruments
+1901-1913, whips 1950-1964, shuriken 13300-13305, guns 13100-13157. All 56 files were checked on disk
+and every generated item resolves through `gearItemIconId` to an existing PNG. Inspected as a contact
+sheet: lances, halberds, books, knuckles, a violin, a lute, whips, a fuuma shuriken and revolvers.
+
+Two supporting fixes found while wiring this up:
+- `ITEM_ICON_SVG` had no silhouette for the seven new families, so a failed PNG load drew a **sword**
+  for a spear, book, gun and the rest. Each now has its own.
+- `SECN` had no index 6, so a Thor Volcano item card printed **"undefined"** where its section name
+  belongs. It is now `'Mythic gear'`. `WICON` also gained the seven families' glyphs.
+
+### Tests
+
+New `equipment_v417_sim` (11) covers: real items rather than a rename; the per-map spread; the normal
+route staying on the seven shipped families; both Ascension shelves carrying all fourteen; Astral = N/N+
+and Thor = Mythic; every class armed on every Ascension field; the weapon budget staying at the
+Nightmare table; mobs and MVPs rolling gear while still paying materials; every icon resolving to a
+real PNG on disk; the SVG and glyph fallbacks; and a dropped spear being wearable, iconning and
+surviving a real save round-trip.
+
+Updated to the new truth rather than to fit: `gear_sim` (family list, MVP pool now 20 entries so its
+total is compared against the intended 150 rounded per entry), `nightmare_sim` (rows are a superset
+rather than a pure rename; Ascension sections are real gear gates), `ascension_progression_sim`
+(equipment is no longer forbidden online, offline or in the plaza), `mythic_rules_sim`, `guide_sim`,
+`plaza_loot_sim`, `drop_card_sheet_sim`, `ui_sim`.
+
+Full gate: **229 of 233**. The four red are red on a clean `main` in this sandbox too - two need a git
+object the shallow clone lacks (`card_star_balance_sim`, `skill_balance_sim`), one needs a git
+repository the sandbox cannot open (`hosted_scrypt_prepare_sim`), and one asserts CRLF normalisation
+against a committed blob (`hosted_launch_stage_sim`). Build: 4,063 files, `haven-v417`.
+
+### Correction (owner, after review): Nightmare never drops the new families' N+
+
+> "for new classes weapons, nightmare maps dont drop N+, All N+ are only drop at ascension map. this
+> is only applying to the new classes weapons."
+
+The first cut put the seven expanded families in **both** Nightmare rows (section 4 *and* 5). They now
+occupy **section 4 only**. Their N+ pieces are on Astral Citadel Stages 4-5 and nowhere else.
+
+Two consequences had to be handled rather than papered over:
+
+- **The five late maps (Comodo-Abyss) run their whole Nightmare band in section 5.** A plain N-only
+  row made the new families unreachable there, which would have contradicted "spread out the maps
+  based on the current map levels". `gearPool()` therefore re-adds that map's section-4 row for those
+  seven families as `sec 4` on a section-5 field. Verified reachability on a Nightmare Stage 13 kill:
+  Prontera 1, Izlude 1, Geffen 1, Morroc 2, Payon 2, Comodo 7, Louyang 7, Amatsu 7, Niflheim 7,
+  Abyss 7 - every one of them at section 4.
+- **`kinDrop()` used to rename a shipped section-5 Nightmare weapon into a new-family "N+"** (a Royal
+  Guard farming Abyss got "N+ Glast Scourge"). Owner picked option 2: the rename now hands over the
+  family's own **N** piece at section 4 on Nightmare maps, and keeps the N+ rename on Ascension, where
+  those pieces really live. Because Gunslinger and Rebellion wear nothing but guns, that N piece is
+  what keeps them armed on late Nightmare - blocking the rename without it would have left both
+  classes with no weapon drop at all. `kinDrop()` takes the map it is resolving for, so Abyss pays a
+  **Glast** spear rather than Prontera's Dread one.
+
+Tests: `equipment_v417_sim` (17) gained five cases - the rename never mints a Nightmare new-family
+N+, Ascension keeps its real N+ rename, every expanded class stays armable on a section-5 field, the
+handed-over N piece is named for the map being farmed, and a real Abyss Stage 13 kill cannot produce a
+new-family N+ for any expanded class. `nightmare_sim` (13) and `drop_card_sheet_sim` (14, catalogue
+693 -> 651) were reconciled to the corrected rows.
+
+### Also in this merge: PR #245, the Class Tree redesign
+
+Merged in as well (`cf12a906`, `7bd2257e` by fling7426K) so the gear work and the UI work land
+together. It ports `docs/proposals/class-tree-redesign-visual.html` into the live Jobs window: centred
+lineage tabs with a `CURRENT` pill, lineage cards carrying level badges / weapons / main stat / status,
+an alternate-branch grid, a taller preview stage with Base and Job level pills, a specs card, a
+full-width action button and a collection progress bar. The `index.html` hunks are all inside
+`V.job()`/`arrangePanel()`; there is no overlap with the gear tables, so both merged without a single
+conflict.
+
+### Full gate, this time at zero
+
+`PASS=233 FAIL=0`. The four suites that had been red in this sandbox were not broken by any of this
+work: the clone was shallow, so `card_star_balance_sim` and `skill_balance_sim` could not read the
+baseline commit, `hosted_scrypt_prepare_sim` could not open the repository and `hosted_launch_stage_sim`
+could not compare a committed blob. `git fetch --unshallow` fixed all of them.
+
+`skill_balance_sim` did catch a real requirement: `GEAR` sits inside the region its `combatHash`
+covers, so adding the new families invalidated the pinned measurement. The three fixtures were
+re-stamped with the new `combatHash`/`sourceHash` and their measured rows were left **exactly as they
+were** - the DPS deltas this sandbox reports (Lord Knight +23%, Sniper +27%) reproduce on a clean
+`origin/main` too, so they are an environment artifact of the benchmark, not a change in the game, and
+re-recording them here would have written wrong numbers into the repository.
+

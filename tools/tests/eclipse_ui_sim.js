@@ -216,6 +216,11 @@ test('card collection tiles expose names and retain keyboard selection',()=>{
 test('current lineage offers direct class actions and the full tree inspects without switching',()=>{
  ev("S=fresh();S.cls='Lord Knight';S.jobs['Lord Knight']={jl:50,jx:0};selK=null;eclipseJobsBrowse=false;tabs.push('job');renderWin()");
  assert.equal(doc.querySelectorAll('.current-class-card').length,5);
+ assert.ok([...doc.querySelectorAll('.alt-branch-card')].every(b=>b.tagName.toLowerCase()==='button'&&b.getAttribute('role')==='button'));
+ assert.match(doc.querySelector('details.ui-fold p').textContent,/starts at Base Lv 50, Job Lv 1/);
+ ev("S.cls='Swordman';S.jobs={Swordman:{jl:10,jx:0}};renderWin()");
+ assert.equal(doc.querySelector('.current-class-card[data-v=Knight] .level-badge')?.textContent,'Job 1');
+ ev("S.cls='Lord Knight';S.jobs['Lord Knight']={jl:50,jx:0};renderWin()");
  doc.querySelector('[data-a=jobview][data-v=browse]').click();
  assert.equal(doc.querySelectorAll('.class-lineage-overview [data-a=selk]').length,25);
  assert.equal(doc.querySelectorAll('.class-expanded-tree [data-a=selk]').length,22);

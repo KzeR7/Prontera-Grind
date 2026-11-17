@@ -72,10 +72,12 @@ try {
       offlineAwardKill(probeMob,r);`);
   assert.equal(ev('r.cards'), 1, 'a card drops at the field rate when its roll lands');
   assert.equal(ev('S.cards.length'), 1, 'and it lands in the real card album');
-  // Map 11 is an ascension map: it carries NO gear table by design (materials instead). That is
-  // the away claim's own behaviour, reproduced here deliberately rather than fixed in one place
-  // and not the other.
-  assert.equal(ev('r.items'), 0, 'ascension maps pay no gear, exactly as the away claim does');
+  // Map 11 used to carry NO gear table (materials only). haven-v417 gives both Ascension maps a real
+  // shelf, so the plaza claim pays gear there exactly as the away claim does - the two paths still
+  // agree, which is what this test exists to prove; only the value they agree on changed.
+  assert.ok(ev('r.items') > 0, 'ascension maps now pay gear in the plaza claim too');
+  // with every die winning, the whole shelf worth of gear can land; assert it is real shelf gear
+  assert.equal(ev('S.inv.length>0'), true, 'the gear it paid is in the bag');
   // ascensionMat is an object keyed by material index, not an array.
   assert.equal(ev('(S.ascensionMat[1]||0)+(S.ascensionMat[2]||0)'), 2,
     'and they pay Ascension materials instead - the materials the owner asked for');

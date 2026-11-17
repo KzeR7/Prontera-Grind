@@ -8,22 +8,39 @@ try{
   ev(`S.mp=${m};S.lvl=${l};S.prog[${m}]=5;spawn()`);
   assert.equal(ev(`fieldOf(${m},${l}).boss!==null`),l===5);
   assert.equal(ev('isBoss()'),l===5);
-  assert.equal(ev(`gearPool(${m},${l}).length`),0);
-  assert.equal(ev('mobs.every(x=>x.drops.length===0)'),true);
+  // haven-v417 (owner: "all these new class nightmare + weapons drops at new ascension map"):
+  // the fields used to carry no equipment at all. They now carry the map's shelf - Astral Citadel
+  // the Nightmare tier, Thor Volcano the Mythic tier - across all fourteen weapon families, so
+  // every class has a weapon of its own family waiting. Materials are still paid on every kill.
+  assert.equal(ev(`gearPool(${m},${l}).length`),20,`map ${m} stage ${l}: 14 families + armour, head, shield, legs, two accessories`);
+  assert.equal(ev('mobs.every(x=>x.drops.length>0)'),true,'every mob now carries gear as well as materials');
+  // regular mobs roll exactly two defensive pieces; the Stage 5 MVP carries the whole shelf instead
+  assert.equal(ev(`mobs.filter(x=>!x.boss).every(x=>x.drops.filter(([T])=>['armor','head','off','leg','acc'].includes(T.k)).length===2)`),true,'two defensive rolls per regular mob');
+  assert.equal(ev(`mobs.filter(x=>x.boss).every(x=>x.drops.length===gearPool(${m},${l}).length)`),true,'the MVP lists the whole shelf');
   assert.equal(ev('mobs.filter(x=>x.boss).length'),l===5?1:0);
   assert.equal(ev(`canTravel(${m},6)`),false);
   assert.throws(()=>ev(`fieldOf(${m},6)`),/five stages/);
  }
- // Online and away kills both pay materials without equipment, even with every die winning.
+ // haven-v417: Ascension fields used to be materials-only. They now drop equipment too, so the
+ // guarantee under test changed from "no equipment ever" to "materials are still always paid, and
+ // any equipment that lands is a real, wearable piece from the map's own shelf".
  ev('window.savedRandom=Math.random;Math.random=()=>0;S.mp=10;S.lvl=5;spawn();window.beforeInv=S.inv.length;kill(mobs.find(x=>x.boss));');
  assert.equal(ev('S.mapClears[10]'),true);
- assert.equal(ev('S.inv.length===window.beforeInv'),true);
- assert.equal(ev('drops.some(x=>x.it?.slot)'),false);
- assert.equal(ev('drops.filter(x=>x.it?.ascMat!=null).length'),2);
+ assert.equal(ev('drops.filter(x=>x.it?.ascMat!=null).length'),2,'the MVP still always pays its two Ascension materials');
+ // with every die winning, the MVP pays gear as well - and it is the Astral shelf, on the right section
+ const gained=ev('drops.filter(x=>x.it?.slot).map(x=>x.it.wt||x.it.slot)');
+ assert.ok(gained.length>0,'the Stage 5 MVP now pays equipment');
+ const allowed=ev(`(()=>{const p=gearPool(10,5);return p.map(x=>x.k)})()`);
+ gained.forEach(k=>assert.ok(allowed.includes(k),'a dropped piece must come from the Astral Citadel shelf, got '+k));
+ assert.equal(ev("drops.every(x=>!x.it?.slot||x.it.sec===(S.lvl<=3?4:5))"),true,'Astral Stages 4-5 roll the N+ section');
+ ev('S.inv.length=window.beforeInv;');
  ev(`window.away={measured:true,kills:0,drops:0,cards:0,ori:0,elu:0,items:0,pets:0,petFolds:0,petRefunds:0,zeny:0,exp:0};
   S.mp=11;S.lvl=5;offlineAwardKill(offlineMobForCurrentField(11,5),window.away);`);
  assert.equal(ev('S.ascensionMat[1]'),1);assert.equal(ev('S.ascensionMat[2]'),1);
- assert.equal(ev('window.away.items'),0);assert.equal(ev('S.mapClears[11]'),true);
+ // Away kills now pay equipment on Ascension too (haven-v417); the materials must still arrive.
+ assert.ok(ev('window.away.items')>0,'away kills on Thor Volcano now pay equipment as well');
+ assert.equal(ev('S.ascensionMat[1]')>=1&&ev('S.ascensionMat[2]')>=1,true,'materials are unaffected by the new gear');
+ assert.equal(ev('S.mapClears[11]'),true);
  ev('Math.random=window.savedRandom');
  // Stage 4 opens stage 5; auto-advance cannot create stage 6 on the final map.
  ev('S.adv=true;S.mp=11;S.lvl=4;S.prog[11]=4;S.kl=MPS-1;spawn();kill(mobs[0])');
@@ -42,8 +59,12 @@ try{
  }
  ev("S.prog[11]=5;S.mp=11;S.lvl=5;mapM=11;mapL=5;mapSeason='ascension';");
  const html=ev('V.map()');assert.match(html,/5\/5 stages available/);assert.doesNotMatch(html,/Gear chance per kill|Every MVP drop is/);
- assert.match(html,/N\+ equipment evolution/);assert.match(html,/Ascension stats/);
- console.log('PASS: ten fields, boss5/escorts, no equipment online/offline, stage4→5, capped final route, twenty legacy migrations/idempotence, material UI.');
+ // haven-v417: the panel used to say "no equipment drops"; it now names the map's shelf and still
+ // points at the Forge and at Ascension stats.
+ assert.match(html,/Nightmare tier/,'the panel names the equipment its field now drops');
+ assert.match(html,/Ascension materials/,'and still names the Forge materials');
+ assert.match(html,/N\+ evolution/);assert.match(html,/Ascension stats/);
+ console.log('PASS: ten fields, boss5/escorts, materials plus the map shelf online/offline, stage4→5, capped final route, twenty legacy migrations/idempotence, panel UI.');
 }finally{game.close();}
 
 // Access, save repair and balance use the real online spawn path.

@@ -117,14 +117,22 @@ t('Nightmare gear is by tier: N (section 4) on maps 1-5, N+ (section 5) on maps 
   for (let m = 0; m < 10; m++) assert.strictEqual(N.GEAR[m].length, 6, N.MAPS[m].n + ' must carry six catalogue rows');
 });
 
-t('a Nightmare row is its own map high-tier row renamed - same families, all-new names', () => {
+// haven-v417: the seven expanded families - N items in Nightmare, but no N+ there (Ascension only).
+const NEWFAM=['spear','book','knuckle','instrument','whip','shuriken','gun'];
+t('a Nightmare row is its own map high-tier row renamed, plus the expanded families', () => {
+  // haven-v417: the N/N+ rows used to be a pure rename of the high-tier row, so the seven expanded
+  // families (spear, book, knuckle, instrument, whip, shuriken, gun) had no N/N+ item anywhere -
+  // an expanded class could only ever see one through kinDrop's on-the-fly rename. The rows are now
+  // a SUPERSET: every high-tier family is still there, renamed exactly as before (so no class loses
+  // a weapon and the shipped names are untouched), and the map's expanded families are added.
+  const NEWWEP = ['spear', 'book', 'knuckle', 'instrument', 'whip', 'shuriken', 'gun'];
   const names = new Set();
   for (let m = 0; m < 10; m++) {
     const hi = N.GEAR[m][3];
     for (const i of [0, 1]) {
-      const row = N.GEAR[m][4 + i];
+      const row = N.GEAR[m][4 + i], fams = Object.keys(row.w);
       // every weapon family the high-tier row has, the Nightmare row has - so no class loses a weapon
-      assert.deepStrictEqual(Object.keys(row.w).sort(), Object.keys(hi.w).sort(), N.MAPS[m].n + ' section ' + (4 + i) + ' weapon families');
+      assert.deepStrictEqual(fams.filter(k => !NEWWEP.includes(k)).sort(), Object.keys(hi.w).sort(), N.MAPS[m].n + ' section ' + (4 + i) + ' weapon families');
       for (const k in hi.w) {
         assert.ok(row.w[k].endsWith(' ' + hi.w[k]), row.w[k] + ' must keep the base name ' + hi.w[k]);
         assert.notStrictEqual(row.w[k], hi.w[k], 'and be a new item');
@@ -139,7 +147,10 @@ t('a Nightmare row is its own map high-tier row renamed - same families, all-new
   }
   console.log('       ' + names.size + ' Nightmare items across 10 maps x 2 sections');
   // the two sections are named on the item card (SECN[sec] is printed there)
-  assert.ok(src.includes("SECN=['Starter gear','1st-job gear','2nd-job gear','High-tier gear','Nightmare gear','Abyssal Nightmare gear']"), 'SECN carries both Nightmare names');
+  // haven-v417 adds a seventh name: Thor Volcano's Mythic/Primal shelf is section 6, and without an
+  // entry the item card would have printed "undefined".
+  assert.ok(src.includes("SECN=['Starter gear','1st-job gear','2nd-job gear','High-tier gear','Nightmare gear','Abyssal Nightmare gear','Mythic gear']"), 'SECN carries both Nightmare names and the Mythic shelf');
+  assert.ok(src.includes("spear:'\u{1F531}'")||src.includes("spear:'🔱'"), 'WICON knows the expanded families');
 });
 
 t('the Nightmare rows are worth more than the high-tier row, and section 5 tops section 4', () => {
@@ -242,8 +253,15 @@ t('the field tables read the band: boss pool, ore and crit resistance', () => {
   assert.strictEqual(N.fieldOf(0, 10).mobs[0].oreCh, .005, 'normal field escorts also drop ore at 0.5%');
   assert.strictEqual(N.fieldOf(9, 9).boss, null, 'and nothing but stage 10 and 15 has a boss');
   assert.ok(N.fieldOf(9, 15).boss && N.fieldOf(3, 15).boss, 'every map ends its Nightmare band with a boss');
-  // the drops a Nightmare field rolls come from the Nightmare rows only
-  assert.ok(N.gearPool(9, 12).every(x => x.sec === 5) && N.gearPool(0, 12).every(x => x.sec === 4), 'pool entries carry their tier section (N on maps 1-5, N+ on maps 6-10)');
+  // The drops a Nightmare field rolls come from the Nightmare rows only. haven-v417: the seven
+  // expanded families are the exception the owner asked for - they have an N item on every map and
+  // no N+ item anywhere in Nightmare, so on a late map (whose band is all section 5) their piece is
+  // added back as section 4. Everything else keeps its band section.
+  const NEWFAM = ['spear', 'book', 'knuckle', 'instrument', 'whip', 'shuriken', 'gun'];
+  const bandOk = (m, want) => N.gearPool(m, 12).every(x => NEWFAM.includes(x.k) ? x.sec === 4 : x.sec === want);
+  assert.ok(bandOk(9, 5) && bandOk(0, 4), 'pool entries carry their tier section (N on maps 1-5, N+ on maps 6-10)');
+  assert.ok(N.gearPool(9, 12).some(x => NEWFAM.includes(x.k) && x.sec === 4), 'a late map still offers the new families as N');
+  assert.ok(N.gearPool(9, 12).every(x => !(NEWFAM.includes(x.k) && x.sec === 5)), 'and never as N+ - N+ new-family gear is Ascension-only');
   assert.ok(N.gearPool(9, 10).every(x => x.sec === 3), 'and a normal field still says section 3');
   const T = N.gearPool(9, 15).map(x => x.n);
   const hi = new Set(Object.values(N.GEAR[9][3].w).concat(N.GEAR[9][3].a, N.GEAR[9][3].h, N.GEAR[9][3].o, N.GEAR[9][3].l, N.GEAR[9][3].ac, N.GEAR[9][3].ac2).filter(Boolean));
@@ -257,13 +275,22 @@ t('drop-table items keep N section identity separate from map field quality', ()
   assert.ok(src.includes("const RAR5={n:'N'}") && src.includes("RAR6={n:'N+'}") && src.includes("(it&&+it.sec>=5)?6:(it&&+it.sec>=4)?5"),
     'sections 4/5 select the separate N / N+ rarity regardless of the numeric map quality');
   for (let m = 0; m < N.MAPS.length; m++) for (let l = 1; l <= (m>=10?5:15); l++) {
-    const F=N.fieldOf(m,l),tier=N.dropTier(m,l),sec=N.secField(m,l);
+    const F=N.fieldOf(m,l),tier=N.dropTier(m,l);
+    // haven-v417: the two Ascension maps (10 and 11) used to be materials-only, so secField reports
+    // 3 and no item could contradict it. They now drop a real gear shelf: Astral Citadel is N (4) on
+    // Stages 1-3 and N+ (5) on 4-5, Thor Volcano is the Mythic tier (6). The section therefore comes
+    // from the map's own shelf on those fields, not from the materials placeholder.
+    const sec = m===10 ? (l<=3?4:5) : m===11 ? 6 : N.secField(m,l);
+    // haven-v417: an expanded-family piece on a Nightmare field is always section 4 (N), because that
+    // is the only band those families have in Nightmare - their N+ is Ascension-only. The *field's*
+    // section is unchanged; only these items differ.
+    const itemSec = item => (m < 10 && NEWFAM.includes(item.k)) ? 4 : sec;
     for (const mob of F.mobs) for (const [item] of mob.drops) {
-      assert.strictEqual(item.sec,sec,N.MAPS[m].n+' Stage '+l+' item section');
+      assert.strictEqual(item.sec,itemSec(item),N.MAPS[m].n+' Stage '+l+' item section');
       assert.strictEqual(item.tier,tier,N.MAPS[m].n+' Stage '+l+' item field quality');
     }
     if(F.boss)for(const [item]of F.boss.drops){
-      assert.strictEqual(item.sec,sec,N.MAPS[m].n+' Stage '+l+' MVP section');
+      assert.strictEqual(item.sec,itemSec(item),N.MAPS[m].n+' Stage '+l+' MVP section');
       assert.strictEqual(item.tier,tier,N.MAPS[m].n+' Stage '+l+' MVP field quality');
     }
   }

@@ -40,7 +40,11 @@ try{
  const nightmare=ev('buildGuide()');
  assert.match(nightmare,/N and N\+ equipment/);assert.match(nightmare,/cannot equip yet/);assert.match(nightmare,/NM [45]/);
  ev("guideTier='ascension'");const ascension=ev('buildGuide()');
- assert.match(ascension,/drop no equipment/);assert.match(ascension,/Mythic set targets for survival/);assert.match(ascension,/View recipe/);
+ // haven-v417: the Ascension maps drop equipment now (Astral the Nightmare tier, Thor the Mythic
+ // tier), so the guide says what they pay instead of promising no equipment at all.
+ assert.doesNotMatch(ascension,/drop no equipment/);
+ assert.match(ascension,/Nightmare tier/);assert.match(ascension,/Mythic\/Primal tier/);
+ assert.match(ascension,/Mythic set targets for survival/);assert.match(ascension,/View recipe/);
  const recipes=['farm','boss','survive'].map(mode=>ev(`guideMode='${mode}';guideMythicTargets()`));assert.equal(new Set(recipes).size,3);
 
  // ---- v404: the beginner tour starts in the plaza and leads to the field ------------------

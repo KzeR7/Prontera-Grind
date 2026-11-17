@@ -64,7 +64,9 @@ const code = [
   pick(/const cardStat=\(g,seed\)=>\{[^}]*\};/, 'cardStat'),
   pick(/const SU=k=>[^,]+/, 'SU'),
   grab('const ARM=[', 'const dropTxt='),
-  pick(/const WICON=\{[^}]*\},ORE=\{[^}]*\},SECN=\[[^\]]*\];/, 'WICON/ORE/SECN'),
+  // haven-v417: WICON gained the seven expanded families and is wrapped over two lines, and SECN
+  // gained the Mythic shelf, so match the whole declarator rather than one flat line.
+  pick(/const WICON=\{[\s\S]*?\},\s*ORE=\{[^}]*\},\s*SECN=\[[^\]]*\];/, 'WICON/ORE/SECN'),
   pick(/const gearRefLevel=it=>[^;]+;/, 'gear reference level'),
   pick(/const sellVal=it=>[^;]+;/, 'sell value'),
   pick(/const weakerGear=[^\n]*/, 'worn gear comparison'),
