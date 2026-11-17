@@ -1,10 +1,21 @@
-// v414: can the LARGEST account the game actually permits still sync?
+// v414: which accounts can actually sync, and which still cannot?
 //
 // The review asked for full game states - equipment, loadouts, every collection - not just the one
-// reported account. The game's own caps (index.html: BAGMAX=1000 items, CARDMAX=1000 cards, fishing
-// bag 1000) bound what a player can reach, so those are the states tested here. Saves are built from
-// the game's own genGear()/newCard()/cardDefinition(), never hand-written shapes: a hand-written
-// fixture is exactly how the first codec passed its own tests while being wrong about real cards.
+// reported account. Saves are built from the game's own genGear()/newCard()/cardDefinition(), never
+// hand-written shapes: a hand-written fixture is exactly how the first codec passed its own tests
+// while being wrong about real cards.
+//
+// THE CARD LIMIT IS NOT A TOTAL, AND AN EARLIER VERSION OF THIS FILE GOT IT WRONG.
+// index.html:2793 says "loose cards are the second unbounded list in a save (S.cards)". CARDMAX=1000
+// gates ACQUIRING a loose card (cardStorageFull() only reads S.cards). Cards socketed into items live
+// in item.cards and are NOT counted by it - a player can socket cards, then earn another 1000 loose
+// ones, and unsock() pushes them back into S.cards. So "loose + socketed" is NOT bounded by 1000.
+//
+// That makes the reachable worst case far larger than the ceiling, and this file now asserts that
+// honestly instead of choosing a fixture that happens to fit. Nothing here deletes a player's cards
+// and no new ownership limit is proposed: the codec is a transport encoding, it may not change what a
+// player owns. Fixing the remaining over-limit states needs a product decision (a smaller wire format
+// or a separate collection row) - not a silent cap.
 import { createRequire } from 'node:module';
 import { SAVE_BYTES_MAX } from '../../functions/_lib/validate.js';
 import * as C from '../../functions/_lib/save-codec.js';
@@ -22,8 +33,9 @@ const norm = o => JSON.stringify(o, (k, v) => (v && typeof v === 'object' && !Ar
 
 const g = createGame();
 const build = src => JSON.parse(g.ev(`(()=>{ S=load(); ${src}; return JSON.stringify(S) })()`));
-// 1000 items, all 4-slot, `socketed` cards split across them; `loose` cards left in the bag.
-const state = ({ loose = 0, socketed = 0, fish = 0, equip = 0 }) => build(`
+// `socketed` = how many ITEMS carry cards (one card each unless `perItem` says otherwise), so
+// socketed * perItem is the number of cards living inside items. `loose` cards stay in S.cards.
+const state = ({ loose = 0, socketed = 0, fish = 0, equip = 0, perItem = 1 }) => build(`
   const sl=['weapon','armor','head','off','leg','acc'];
   const pool=[];for(let i=0;i<1000;i++)pool.push(newCard(cardDefinition(i%10,i%4,i%2===0)));
   S.cards=pool.slice(0,${loose}).map(c=>JSON.parse(JSON.stringify(c)));
@@ -31,8 +43,8 @@ const state = ({ loose = 0, socketed = 0, fish = 0, equip = 0 }) => build(`
   for(let i=0;i<1000;i++){
     const it=genGear({k:sl[i%6],n:'Rare Plate Armor',quality:1},145,i%4,false,undefined,i%10,10);
     it.cards=[];
-    if(i<${socketed}){ it.slots=4;
-      for(let k=0;k<4;k++)it.cards.push(JSON.parse(JSON.stringify(pool[(i*4+k)%1000]))); }
+    if(i<${socketed}){ it.slots=${perItem};
+      for(let k=0;k<${perItem};k++)it.cards.push(JSON.parse(JSON.stringify(pool[(i*${perItem}+k)%1000]))); }
     S.inv.push(it);
   }
   S.eq={};
@@ -49,20 +61,19 @@ const state = ({ loose = 0, socketed = 0, fish = 0, equip = 0 }) => build(`
 
 const fits = S => { const packed = JSON.stringify(C.packSave(S)); return { packed, n: packed.length }; };
 
-// --- the states a player can actually reach ---------------------------------------------------------
-// CARDMAX bounds ACQUIRED cards at 1000, so "loose + socketed" is the axis: the same 1000 cards can
-// sit in the bag or be socketed into gear, and the old codec stored socketed ones as full objects.
-const cases = [
-  ['1000 items, 1000 loose cards, 1000 fish',   { loose: 1000, socketed: 0,   fish: 1000 }],
-  ['1000 items, 500 loose + 500 socketed',      { loose: 500,  socketed: 125, fish: 1000 }],
-  ['1000 items, all 1000 carded into gear',     { loose: 0,    socketed: 250, fish: 1000 }],
-  ['1000 items, 749 loose + 251 socketed',      { loose: 749,  socketed: 63,  fish: 1000 }],
-  ['1000 items + 7 fully-carded equipment',     { loose: 1000, socketed: 0,   fish: 1000, equip: 7 }],
-  ['1000 items, no cards, 1000 fish',           { loose: 0,    socketed: 0,   fish: 1000 }],
+// --- states that DO fit -----------------------------------------------------------------------------
+// `socketed` is the number of ITEMS carrying one card each, so socketed === number of cards socketed.
+// These are reachable accounts, but they are NOT the largest reachable account: see the refused block.
+const fits_cases = [
+  ['1000 items, 1000 loose cards, 1000 fish',        { loose: 1000, socketed: 0,   fish: 1000 }],
+  ['1000 items, 0 loose, 1000 socketed, 1000 fish',  { loose: 0,    socketed: 1000, fish: 1000 }],
+  ['1000 items + 7 fully-carded worn items, 1000 loose cards, 1000 fish',
+                                                      { loose: 1000, socketed: 0,   fish: 1000, equip: 7 }],
+  ['1000 items, no cards, 1000 fish',                 { loose: 0,    socketed: 0,   fish: 1000 }],
 ];
 
-console.log('largest states the game permits (BAGMAX 1000 / CARDMAX 1000 / bag 1000)\n');
-for (const [label, spec] of cases) {
+console.log('states that fit (BAGMAX 1000 items, CARDMAX 1000 LOOSE cards, bag 1000)\n');
+for (const [label, spec] of fits_cases) {
   const S = state(spec);
   t(label + ' fits under the 300 KB ceiling', () => {
     const { n } = fits(S);
@@ -72,6 +83,36 @@ for (const [label, spec] of cases) {
   t(label + ' survives a round trip unchanged', () => {
     const back = C.unpackSave(JSON.parse(JSON.stringify(C.packSave(S))));
     for (const k of ['inv', 'cards', 'eq', 'fishing']) {
+      if (norm(S[k]) !== norm(back[k])) throw Error(k + ' differs after a round trip');
+    }
+  });
+}
+
+// --- states that DO NOT fit, and must not be claimed to --------------------------------------------
+// These are reachable: CARDMAX does not count socketed cards, and a player can socket cards and then
+// earn another 1000 loose ones. They are recorded here as KNOWN, MEASURED failures so the limit is
+// visible in CI instead of being hidden behind a fixture that avoided it. When someone does make these
+// fit, these assertions fail and should be moved to the block above.
+const refused_cases = [
+  ['1000 items x1 socketed card + 1000 loose cards + 1000 fish', { loose: 1000, socketed: 1000, fish: 1000 }],
+  ['1000 items x1 socketed card + 1000 loose cards',             { loose: 1000, socketed: 1000, fish: 0 }],
+  ['1000 items x4 socketed cards + 1000 loose cards + 1000 fish', { loose: 1000, socketed: 1000, fish: 1000, perItem: 4 }],
+];
+
+console.log('\nstates that are reachable and STILL CANNOT SYNC (known limitation)\n');
+for (const [label, spec] of refused_cases) {
+  const S = state(spec);
+  const n = fits(S).n;
+  t(label + ' is measured and still over the ceiling (known)', () => {
+    if (n <= SAVE_BYTES_MAX) throw Error('now fits (' + kb(n) + ')! Move this case to the fits block and update docs/CLOUD-DATA.md');
+    console.log('       ' + kb(n) + ', over by ' + kb(n - SAVE_BYTES_MAX));
+  });
+  t(label + ' still round-trips correctly (the data is intact, it is the transport that refuses)', () => {
+    // The codec is not the thing at fault and it must not lose anything: pack/unpack is exact for
+    // these saves even though the server will refuse them on size. That is what makes a future fix a
+    // transport change rather than a data migration.
+    const back = C.unpackSave(JSON.parse(JSON.stringify(C.packSave(S))));
+    for (const k of ['inv', 'cards', 'fishing']) {
       if (norm(S[k]) !== norm(back[k])) throw Error(k + ' differs after a round trip');
     }
   });

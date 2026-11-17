@@ -72,23 +72,42 @@ first pass wrongly passed `prev: null` to the audit, which skips the entire rate
 > `unpackSave`, the audits, the D1 write and the response - with `process.cpuUsage()` over 21 runs
 > (median, harness serialisation excluded) gives, at 600 items / 300 cards / 500 fish:
 >
-> | | upload | whole-request CPU |
+> | | upload | measured CPU |
 > | --- | ---: | ---: |
 > | plain (pre-v414) | 237 KB | **7.97 ms** |
 > | compact (v414) | 120 KB | **5.38 ms** |
 >
-> That is **-2.59 ms / -33% for the entire request**, against a 10 ms Free-plan ceiling. The saving is
-> real but it is not all of the budget: the per-request floor (auth, session, audit plumbing, D1, the
-> JSON envelope) does not shrink with the payload, and at the reported account's real size the compact
-> form lands at roughly 5.4 ms of the 10 ms - comfortable, but not the several-fold headroom that a
-> parse-only measurement would suggest. Below roughly 100 KB of payload the format is no longer the
-> dominant cost and further codec work buys little; above it, it is.
+> That is **-2.59 ms / -33% for the entire request**.
+>
+> **What these numbers are, and are not.** They come from Node's `process.cpuUsage()` running the real
+> handlers against the local D1 shim. That makes them a valid *comparison* - the same work, the same
+> process, one variable changed (payload size) - and they do show that the format change removes real
+> work from the whole request, not just from the parse. They are **not** a prediction of Cloudflare's
+> billed `cpu_ms`. workerd is a different runtime with a different allocator and GC, deployed requests
+> carry cold-start and Tail-Worker costs this harness does not model, and the local D1 shim is not the
+> production database. A request measured at 5.38 ms here can be faster or slower in production, and
+> only Cloudflare's own CPU metrics can settle that. **No claim in this repository should be read as
+> "this request executes in 5.38 ms on Cloudflare".**
+>
+> What the figure does establish is the shape of the budget: the per-request floor (auth, session,
+> audit plumbing, D1, the JSON envelope) does not shrink with the payload, so the saving is real but is
+> not the whole budget. Below roughly 100 KB of payload the format is no longer the dominant cost and
+> further codec work buys little; above it, it is.
+>
+> To measure it properly in production, Cloudflare exposes per-function CPU quantiles in the Pages
+> dashboard and `wrangler pages deployment tail` for request logs; the runtime debugger can also
+> profile a single request. Compare `cpu_ms` quantiles before and after this change rather than
+> trusting the local figure.
 >
 > **The largest accounts are still the risk.** A save that is legal in both forms has to stay under the
 > ceiling *as plain text* to be comparable at all, and the reported account's 370 KB plain blob is
 > already refused (413) - which is the original bug. For those accounts only the compact arm exists, so
-> the honest statement is: v414 moves the reported account from "cannot sync" to ~5.4 ms and ~184 KB,
-> and the margin shrinks again for a genuinely maximum account (see the size ceiling section).
+> the comparison above cannot be run for them at all.
+>
+> CPU is not what stops the largest accounts, though: they are refused on **size**, and a smaller
+> upload is also the cheaper request, so the two problems point the same way. The reachable worst case
+> is ~709 KB compact (see `docs/CLOUD-DATA.md`), which `SAVE_BYTES_MAX` refuses long before any CPU
+> ceiling matters. Raising the CPU budget (Workers Paid) would not let those accounts sync.
 
 Instrumenting `JSON.parse`/`JSON.stringify` over one accepted `PUT /api/save` measured **6 parses of
 the blob and 2 stringifies** *at the time of writing*, because each helper re-read the same string:
