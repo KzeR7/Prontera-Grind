@@ -11606,8 +11606,9 @@ classes are untouched, and no other class's budget moved.
   with Asura at 53% of its damage. No skill was added - the Sura tree still costs exactly 50 points.
 
 **Checks.** All three `progression_*.json` fixtures regenerated (hash-only diffs). `SKILL_TUNING.Sorcerer`
-and `expanded_skill_budget.json` moved together, as `expanded_roster_sim` requires. Full suite:
-219 of 219 `*_sim` pass.
+and `expanded_skill_budget.json` moved together, as `expanded_roster_sim` requires. The bump also moves
+the twelve social/Digimon asset tags to `?v=416`, which `update_watch_sim` pins to the page's own build
+number. Full suite after the merge with main's save codec: 226 of 226 `*_sim` pass.
 
 **Still open.** Asura Strike still does not kneel with its fists on the ground: the FX layer plays the
 client's six kanji glyphs (`assets/signature-fx.js:201`), and the Monk line has no body pose to reach
