@@ -216,19 +216,85 @@ html, body {
 
 /* Left Tree Canvas (ZERO VERTICAL SCROLLBAR! FITS NICELY!) */
 .tree-canvas {
-  padding: 14px 18px;
+  padding: 12px 18px 14px;
   border-right: 1px solid var(--edge2);
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: flex-start;
+  gap: 8px;
   height: 100%;
+  box-sizing: border-box;
   overflow: hidden; /* ABSOLUTELY ZERO SCROLLBAR! */
+}
+
+/* Current Lineage 5-Step Breadcrumb Strip */
+.current-lineage-strip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 12px;
+  background: var(--e-bg);
+  border: 1px solid var(--edge2);
+  border-radius: 8px;
+  flex-shrink: 0;
+  min-height: 38px;
+  max-height: 38px;
+  box-sizing: border-box;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+}
+.current-lineage-strip::-webkit-scrollbar {
+  display: none;
+}
+.current-lineage-strip .strip-label {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .12em;
+  color: var(--gold);
+  white-space: nowrap;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+.current-lineage-strip .current-class-path {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.current-lineage-strip .strip-node {
+  padding: 3px 8px;
+  border: 1px solid var(--edge2);
+  border-radius: 5px;
+  background: var(--panel);
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all .15s ease;
+}
+.current-lineage-strip .strip-node.current {
+  border-color: #4ade80;
+  background: rgba(74, 222, 128, 0.1);
+  color: #4ade80;
+  font-weight: 800;
+}
+.current-lineage-strip .strip-arrow {
+  color: var(--e-muted);
+  font-size: 13px;
+  line-height: 1;
+  user-select: none;
+  flex-shrink: 0;
 }
 
 /* Row-by-Row Tree Table Architecture: GUARANTEES T1, T2, T3, T4 ALIGNMENT! */
 .tree-table {
   width: 100%;
-  height: 100%;
+  flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -463,7 +529,8 @@ html, body {
    ========================================================================== */
 .novice-hub-view {
   width: 100%;
-  height: 100%;
+  flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -795,14 +862,14 @@ html, body {
 
       <!-- Class Navigation Tabs Bar (CENTERED · NOVICE AT FRONT · NO SEARCH!) -->
       <div class="win-tabs-bar">
-        <button class="tab-btn" id="tabNovice" onclick="selectLine('Novice', this)">Novice</button>
-        <button class="tab-btn active" id="tabSwordman" onclick="selectLine('Swordman', this)">Swordsman <span class="badge-cur">CURRENT</span></button>
-        <button class="tab-btn" id="tabMage" onclick="selectLine('Mage', this)">Mage</button>
-        <button class="tab-btn" id="tabArcher" onclick="selectLine('Archer', this)">Archer</button>
-        <button class="tab-btn" id="tabThief" onclick="selectLine('Thief', this)">Thief</button>
-        <button class="tab-btn" id="tabAcolyte" onclick="selectLine('Acolyte', this)">Acolyte</button>
-        <button class="tab-btn" id="tabMerchant" onclick="selectLine('Merchant', this)">Merchant</button>
-        <button class="tab-btn" id="tabExpanded" onclick="selectLine('expanded', this)">Expanded</button>
+        <button class="tab-btn" id="tabNovice" data-fam="Novice" onclick="selectLine('Novice', this)">Novice</button>
+        <button class="tab-btn active" id="tabSwordman" data-fam="Swordman" onclick="selectLine('Swordman', this)">Swordsman <span class="badge-cur">CURRENT</span></button>
+        <button class="tab-btn" id="tabMage" data-fam="Mage" onclick="selectLine('Mage', this)">Mage</button>
+        <button class="tab-btn" id="tabArcher" data-fam="Archer" onclick="selectLine('Archer', this)">Archer</button>
+        <button class="tab-btn" id="tabThief" data-fam="Thief" onclick="selectLine('Thief', this)">Thief</button>
+        <button class="tab-btn" id="tabAcolyte" data-fam="Acolyte" onclick="selectLine('Acolyte', this)">Acolyte</button>
+        <button class="tab-btn" id="tabMerchant" data-fam="Merchant" onclick="selectLine('Merchant', this)">Merchant</button>
+        <button class="tab-btn" id="tabExpanded" data-fam="expanded" onclick="selectLine('expanded', this)">Expanded</button>
       </div>
 
       <!-- Body: Tree Canvas on Left + Longer Inspector on Right -->
@@ -812,18 +879,18 @@ html, body {
         <div class="tree-canvas" id="canvasContainer">
           
           <!-- Current Lineage 5-Step Breadcrumb Strip -->
-          <div class="current-lineage-strip" style="display:flex;align-items:center;gap:10px;padding:6px 12px;background:var(--e-bg);border:1px solid var(--edge2);border-radius:8px;margin-bottom:8px;overflow-x:auto;">
-            <span class="strip-label" style="font-size:9px;font-weight:800;letter-spacing:.12em;color:var(--gold);white-space:nowrap;text-transform:uppercase;">CURRENT LINEAGE</span>
-            <div class="current-class-path" style="display:flex;align-items:center;gap:6px;">
-              <span class="strip-node" style="padding:3px 8px;border:1px solid var(--edge2);border-radius:5px;background:var(--panel);font-size:11px;font-weight:700;">Novice <small style="color:var(--gold)">Novice</small></span>
-              <span style="color:var(--e-muted);font-size:13px;">›</span>
-              <span class="strip-node" style="padding:3px 8px;border:1px solid var(--edge2);border-radius:5px;background:var(--panel);font-size:11px;font-weight:700;">Swordman <small style="color:var(--gold)">Job 50</small></span>
-              <span style="color:var(--e-muted);font-size:13px;">›</span>
-              <span class="strip-node" style="padding:3px 8px;border:1px solid var(--edge2);border-radius:5px;background:var(--panel);font-size:11px;font-weight:700;">Knight <small style="color:var(--gold)">Job 50</small></span>
-              <span style="color:var(--e-muted);font-size:13px;">›</span>
-              <span class="strip-node current" style="padding:3px 8px;border:1px solid #4ade80;border-radius:5px;background:rgba(74,222,128,.1);color:#4ade80;font-size:11px;font-weight:800;">✦ Lord Knight (Current) <small style="color:var(--gold)">Job 50</small></span>
-              <span style="color:var(--e-muted);font-size:13px;">›</span>
-              <span class="strip-node" style="padding:3px 8px;border:1px solid var(--edge2);border-radius:5px;background:var(--panel);font-size:11px;font-weight:700;">Rune Knight <small style="color:var(--gold)">Base 150</small></span>
+          <div class="current-lineage-strip" id="currentLineageStrip">
+            <span class="strip-label">CURRENT LINEAGE</span>
+            <div class="current-class-path">
+              <span class="strip-node" onclick="inspectClass('Novice')" style="cursor:pointer;">Novice <small style="color:var(--gold)">Novice</small></span>
+              <span class="strip-arrow">›</span>
+              <span class="strip-node" onclick="inspectClass('Swordman')" style="cursor:pointer;">Swordman <small style="color:var(--gold)">Job 50</small></span>
+              <span class="strip-arrow">›</span>
+              <span class="strip-node" onclick="inspectClass('Knight')" style="cursor:pointer;">Knight <small style="color:var(--gold)">Job 50</small></span>
+              <span class="strip-arrow">›</span>
+              <span class="strip-node current" onclick="inspectClass('Lord Knight')" style="cursor:pointer;">✦ Lord Knight (Current) <small style="color:var(--gold)">Job 50</small></span>
+              <span class="strip-arrow">›</span>
+              <span class="strip-node" onclick="inspectClass('Rune Knight')" style="cursor:pointer;">Rune Knight <small style="color:var(--gold)">Base 150</small></span>
             </div>
           </div>
           <!-- Standard Class Progression Tree (Default: Swordsman) -->
@@ -1028,19 +1095,19 @@ html, body {
             <div class="novice-firstjobs-grid">
               
               <!-- Swordsman -->
-              <div class="firstjob-card" onclick="jumpToLine('Swordman')">
+              <div class="firstjob-card is-active-line" onclick="jumpToLine('Swordman')">
                 <img src="ro_icons/icon_jsxq_big_201.png" alt="Swordsman">
                 <strong>Swordsman</strong>
                 <small>Melee · Tank</small>
-                <span class="status-pill played">Lv 99 · Played</span>
+                <span class="status-pill played" style="color:#4ade80; border-color:#4ade80;">Active Line</span>
               </div>
 
               <!-- Mage -->
-              <div class="firstjob-card is-active-line" onclick="jumpToLine('Mage')">
+              <div class="firstjob-card" onclick="jumpToLine('Mage')">
                 <img src="ro_icons/icon_jsxq_big_301.png" alt="Mage">
                 <strong>Mage</strong>
                 <small>Magic · AoE</small>
-                <span class="status-pill played" style="color:#4ade80; border-color:#4ade80;">Active Line</span>
+                <span class="status-pill played">Lv 99 · Played</span>
               </div>
 
               <!-- Archer -->
@@ -1053,7 +1120,7 @@ html, body {
 
               <!-- Thief -->
               <div class="firstjob-card" onclick="jumpToLine('Thief')">
-                <img src="ro_icons/icon_jsxq_big_501.png" alt="Thief">
+                <img src="ro_icons/icon_jsxq_big_601.png" alt="Thief">
                 <strong>Thief</strong>
                 <small>Speed · Dagger</small>
                 <span class="status-pill avail">Available</span>
@@ -1069,7 +1136,7 @@ html, body {
 
               <!-- Merchant -->
               <div class="firstjob-card" onclick="jumpToLine('Merchant')">
-                <img src="ro_icons/icon_jsxq_big_601.png" alt="Merchant">
+                <img src="ro_icons/icon_jsxq_big_701.png" alt="Merchant">
                 <strong>Merchant</strong>
                 <small>Economy · Axe</small>
                 <span class="status-pill avail">Available</span>
@@ -1192,8 +1259,9 @@ html, body {
 const RO_ICONS = {
   // Novice
   'Novice': 'ro_icons/icon_jsxq_big_101.png',
+  'Novice (Expanded)': 'ro_icons/icon_jsxq_big_101.png',
 
-  // Swordsman
+  // Swordsman Line (All RED)
   'Swordman': 'ro_icons/icon_jsxq_big_201.png',
   'Knight': 'ro_icons/icon_jsxq_big_212.png',
   'Lord Knight': 'ro_icons/icon_jsxq_big_213.png',
@@ -1202,56 +1270,58 @@ const RO_ICONS = {
   'Paladin': 'ro_icons/icon_jsxq_big_223.png',
   'Royal Guard': 'ro_icons/icon_job_js_sdszj.png',
 
-  // Mage
+  // Mage Line (All BLUE)
   'Mage': 'ro_icons/icon_jsxq_big_301.png',
   'Wizard': 'ro_icons/icon_jsxq_big_312.png',
   'High Wizard': 'ro_icons/icon_jsxq_big_313.png',
-  'Warlock': 'ro_icons/icon_job_fs_wszs.png',
+  'Warlock': 'ro_icons/icon_job_mfs_cmds.png',
   'Sage': 'ro_icons/icon_jsxq_big_322.png',
   'Scholar': 'ro_icons/icon_jsxq_big_323.png',
-  'Sorcerer': 'ro_icons/icon_job_fs_sg.png',
+  'Sorcerer': 'ro_icons/icon_job_mfs_sorcerer.png',
 
-  // Archer
+  // Archer Line (All GOLD / AMBER)
   'Archer': 'ro_icons/icon_jsxq_big_401.png',
   'Hunter': 'ro_icons/icon_jsxq_big_412.png',
   'Sniper': 'ro_icons/icon_jsxq_big_413.png',
-  'Ranger': 'ro_icons/icon_job_sqs_yxz.png',
+  'Ranger': 'ro_icons/icon_job_gjs_sss.png',
   'Bard & Dancer': 'ro_icons/icon_jsxq_big_422.png',
   'Minstrel & Gypsy': 'ro_icons/icon_jsxq_big_423.png',
   'Maestro & Wanderer': 'ro_icons/icon_job_lr_yxlr.png',
 
-  // Thief
-  'Thief': 'ro_icons/icon_jsxq_big_501.png',
-  'Assassin': 'ro_icons/icon_jsxq_big_512.png',
-  'Assassin Cross': 'ro_icons/icon_jsxq_big_513.png',
+  // Thief Line (All PURPLE - Mask & Daggers)
+  'Thief': 'ro_icons/icon_jsxq_big_601.png',
+  'Assassin': 'ro_icons/icon_jsxq_big_612.png',
+  'Assassin Cross': 'ro_icons/icon_jsxq_big_613.png',
   'Guillotine Cross': 'ro_icons/icon_job_dz_szck.png',
-  'Rogue': 'ro_icons/icon_jsxq_big_522.png',
-  'Stalker': 'ro_icons/icon_jsxq_big_523.png',
-  'Shadow Chaser': 'ro_icons/icon_job_dz_zyzz.png',
+  'Rogue': 'ro_icons/icon_jsxq_big_622.png',
+  'Stalker': 'ro_icons/icon_jsxq_big_623.png',
+  'Shadow Chaser': 'ro_icons/icon_job_dz_sxtb.png',
 
-  // Acolyte
+  // Acolyte Line (All GREEN - Holy Cross & Fist)
   'Acolyte': 'ro_icons/icon_jsxq_big_501.png',
   'Priest': 'ro_icons/icon_jsxq_big_512.png',
   'High Priest': 'ro_icons/icon_jsxq_big_513.png',
-  'Arch Bishop': 'ro_icons/icon_job_mfs_cmds.png',
+  'Arch Bishop': 'ro_icons/icon_job_fs_sg.png',
   'Monk': 'ro_icons/icon_jsxq_big_522.png',
   'Champion': 'ro_icons/icon_jsxq_big_523.png',
-  'Sura': 'ro_icons/icon_job_gjs_sss.png',
+  'Sura': 'ro_icons/icon_job_fs_wszs.png',
 
-  // Merchant
-  'Merchant': 'ro_icons/icon_jsxq_big_601.png',
-  'Blacksmith': 'ro_icons/icon_jsxq_big_612.png',
-  'Whitesmith': 'ro_icons/icon_jsxq_big_613.png',
+  // Merchant Line (All AMBER / ORANGE - Axe, Hammer, Anvil, Flask)
+  'Merchant': 'ro_icons/icon_jsxq_big_701.png',
+  'Blacksmith': 'ro_icons/icon_jsxq_big_712.png',
+  'Whitesmith': 'ro_icons/icon_jsxq_big_713.png',
   'Mechanic': 'ro_icons/icon_job_sr_jxgj.png',
-  'Alchemist': 'ro_icons/icon_jsxq_big_622.png',
-  'Biochemist': 'ro_icons/icon_jsxq_big_623.png',
-  'Geneticist': 'ro_icons/icon_job_dz_sxtb.png',
+  'Alchemist': 'ro_icons/icon_jsxq_big_722.png',
+  'Biochemist': 'ro_icons/icon_jsxq_big_723.png',
+  'Geneticist': 'ro_icons/icon_job_sr_geneticist.png',
 
-  // Expanded
+  // Expanded Line (Gunslinger Bronze & Ninja Shadow Crimson)
   'Gunslinger': 'ro_icons/icon_jsxq_big_801.png',
-  'Rebellion': 'ro_icons/icon_jsxq_big_813.png',
-  'Ninja': 'ro_icons/icon_jsxq_big_701.png',
-  'Kagerou & Oboro': 'ro_icons/icon_jsxq_big_712.png'
+  'Rebellion': 'ro_icons/icon_jsxq_big_812.png',
+  'Night Watch': 'ro_icons/icon_job_sqs_yxz.png',
+  'Ninja': 'ro_icons/icon_job_ninja.png',
+  'Kagerou & Oboro': 'ro_icons/icon_job_kagerou.png',
+  'Shinkiro & Shiranui': 'ro_icons/icon_job_shinkiro.png'
 };
 
 const LINES = {
@@ -1261,7 +1331,7 @@ const LINES = {
     b2Title: 'Branch 2-2: Crusader Path',
     b1: [
       { name: 'Knight', tier: 'Tier 2 · 2nd Job', wt: 'Sword', main: 'STR', pill: 'Job 50', status: 'played' },
-      { name: 'Lord Knight', tier: 'Tier 3 · Transcendent', wt: 'Sword', main: 'STR', pill: 'Job 70', status: 'played' },
+      { name: 'Lord Knight', tier: 'Tier 3 · Transcendent', wt: 'Sword', main: 'STR', pill: 'Job 70', status: 'current' },
       { name: 'Rune Knight', tier: 'Tier 4 · Ascension', wt: 'Sword, Spear', main: 'STR', pill: 'Base 150', status: 'played' }
     ],
     b2: [
@@ -1282,7 +1352,7 @@ const LINES = {
     b2: [
       { name: 'Sage', tier: 'Tier 2 · 2nd Job', wt: 'Book, Staff', main: 'INT', pill: 'Job 50', status: 'played' },
       { name: 'Scholar', tier: 'Tier 3 · Transcendent', wt: 'Book, Staff', main: 'INT', pill: 'Job 70', status: 'played' },
-      { name: 'Sorcerer', tier: 'Tier 4 · Ascension', wt: 'Book, Staff', main: 'INT', pill: '✦ CURRENT', status: 'current' }
+      { name: 'Sorcerer', tier: 'Tier 4 · Ascension', wt: 'Book, Staff', main: 'INT', pill: 'Base 150', status: 'played' }
     ]
   },
   'Archer': {
@@ -1366,9 +1436,152 @@ let currentInspected = 'Lord Knight';
 let currentActiveJob = 'Lord Knight';
 let currentTab = 'Swordman';
 
+window.currentInspected = currentInspected;
+window.currentActiveJob = currentActiveJob;
+window.currentTab = currentTab;
+
+function findClassSpecs(name) {
+  if (name === 'Novice') {
+    return {
+      wt: 'Dagger, 1H Sword',
+      main: 'All Attributes',
+      prev: '7 First Jobs Available',
+      baseLv: '25',
+      jobLv: '10 / 10'
+    };
+  }
+  for (const key of Object.keys(LINES)) {
+    const l = LINES[key];
+    if (l.root && l.root.name === name) {
+      return {
+        wt: l.root.wt,
+        main: l.root.main,
+        prev: 'Novice',
+        baseLv: '99',
+        jobLv: '50 / 50'
+      };
+    }
+    for (const b of [l.b1, l.b2]) {
+      if (!b) continue;
+      for (let i = 0; i < b.length; i++) {
+        if (b[i].name === name) {
+          const item = b[i];
+          const prev = i === 0 ? l.root.name : b[i - 1].name;
+          const isT4 = item.tier.includes('Tier 4') || item.tier.includes('Ascension') || item.tier.includes('Future');
+          return {
+            wt: item.wt,
+            main: item.main,
+            prev: prev,
+            baseLv: isT4 ? '150' : '99',
+            jobLv: isT4 ? '50 / 50' : (item.tier.includes('Tier 3') ? '70 / 70' : '50 / 50')
+          };
+        }
+      }
+    }
+  }
+  return { wt: 'Specialized', main: 'STR', prev: 'Previous Job', baseLv: '99', jobLv: '70 / 70' };
+}
+
+function updateLineageStrip() {
+  const strip = document.getElementById('currentLineageStrip');
+  if (!strip) return;
+
+  let path = [];
+  if (currentActiveJob === 'Novice') {
+    path = [{ name: 'Novice', badge: 'Novice' }];
+  } else {
+    for (const lineKey of Object.keys(LINES)) {
+      const l = LINES[lineKey];
+      if (l.root.name === currentActiveJob) {
+        path = [
+          { name: 'Novice', badge: 'Novice' },
+          { name: l.root.name, badge: 'Job 50' }
+        ];
+        break;
+      }
+      let found = false;
+      for (const branch of [l.b1, l.b2]) {
+        const idx = branch.findIndex(c => c.name === currentActiveJob);
+        if (idx !== -1) {
+          path = [
+            { name: 'Novice', badge: 'Novice' },
+            { name: l.root.name, badge: 'Job 50' }
+          ];
+          for (let i = 0; i < branch.length; i++) {
+            const bPill = i === idx ? 'Job 70' : branch[i].pill.replace('✦ CURRENT', 'Job 70');
+            path.push({ name: branch[i].name, badge: bPill });
+          }
+          found = true;
+          break;
+        }
+      }
+      if (found) break;
+    }
+  }
+
+  if (path.length === 0) {
+    path = [
+      { name: 'Novice', badge: 'Novice' },
+      { name: 'Swordman', badge: 'Job 50' },
+      { name: 'Knight', badge: 'Job 50' },
+      { name: 'Lord Knight', badge: 'Job 50' },
+      { name: 'Rune Knight', badge: 'Base 150' }
+    ];
+  }
+
+  const pathHtml = path.map((node, i) => {
+    const isCur = node.name === currentActiveJob;
+    return `
+      <span class="strip-node ${isCur ? 'current' : ''}" onclick="inspectClass('${node.name}')" style="cursor:pointer;">
+        ${isCur ? '✦ ' : ''}${node.name}${isCur ? ' (Current)' : ''} <small style="color:var(--gold);">${node.badge}</small>
+      </span>
+      ${i < path.length - 1 ? '<span class="strip-arrow">›</span>' : ''}
+    `;
+  }).join('');
+
+  strip.innerHTML = `
+    <span class="strip-label">CURRENT LINEAGE</span>
+    <div class="current-class-path">
+      ${pathHtml}
+    </div>
+  `;
+}
+
+function updateFamilyTabs() {
+  let activeFam = 'Swordman';
+  for (const lineKey of Object.keys(LINES)) {
+    const l = LINES[lineKey];
+    if (l.root.name === currentActiveJob) { activeFam = lineKey; break; }
+    if (l.b1?.some(c => c.name === currentActiveJob) || l.b2?.some(c => c.name === currentActiveJob)) {
+      activeFam = lineKey;
+      break;
+    }
+  }
+  if (currentActiveJob === 'Novice') activeFam = 'Novice';
+
+  const famNames = {
+    'Novice': 'Novice',
+    'Swordman': 'Swordsman',
+    'Mage': 'Mage',
+    'Archer': 'Archer',
+    'Thief': 'Thief',
+    'Acolyte': 'Acolyte',
+    'Merchant': 'Merchant',
+    'expanded': 'Expanded'
+  };
+
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    const fam = btn.getAttribute('data-fam');
+    if (!fam) return;
+    const isCur = fam === activeFam;
+    btn.innerHTML = `${famNames[fam]}${isCur ? ' <span class="badge-cur">CURRENT</span>' : ''}`;
+  });
+}
+
 function selectLine(key, btn) {
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  if (btn) btn.classList.add('active');
+  const targetBtn = btn || document.querySelector(`.tab-btn[data-fam="${key}"]`) || document.getElementById('tab' + (key === 'expanded' ? 'Expanded' : key));
+  if (targetBtn) targetBtn.classList.add('active');
   currentTab = key;
 
   const standardTree = document.getElementById('standardTreeTable');
@@ -1389,11 +1602,15 @@ function selectLine(key, btn) {
 
   // Root
   const root = line.root;
+  const isRootCur = root.name === currentActiveJob;
+  const rootCard = document.getElementById('rootCard');
+  rootCard.className = `class-card root-card ${isRootCur ? 'is-current' : ''}`;
+  rootCard.querySelector('.level-badge').textContent = isRootCur ? '✦ CURRENT' : root.lv;
   document.getElementById('rootTitle').textContent = root.name;
   document.getElementById('rootIcon').src = RO_ICONS[root.name] || 'ro_icons/icon_jsxq_big_201.png';
   document.getElementById('rootMeta').innerHTML = `<span>Weapons: <strong>${root.wt}</strong></span> · <span>Main: <strong>${root.main}</strong></span>`;
-  document.getElementById('rootCard').setAttribute('data-c', root.name);
-  document.getElementById('rootCard').onclick = () => inspectClass(root.name);
+  rootCard.setAttribute('data-c', root.name);
+  rootCard.onclick = () => inspectClass(root.name);
 
   // Headers
   document.getElementById('b1TitleHdr').textContent = line.b1Title;
@@ -1404,38 +1621,42 @@ function selectLine(key, btn) {
   renderTierRow('tier3Cards', line.b1[1], line.b2[1]);
   renderTierRow('tier4Cards', line.b1[2], line.b2[2]);
 
-  // Inspect first interesting class
-  inspectClass(line.b1[1]?.name || root.name);
+  // Inspect first interesting class (active job if in line, else first transcendent or root)
+  const lineHasActive = [root.name, ...line.b1.map(c=>c.name), ...line.b2.map(c=>c.name)].includes(currentActiveJob);
+  inspectClass(lineHasActive ? currentActiveJob : (line.b1[1]?.name || root.name));
 }
 
 function renderTierRow(containerId, c1, c2) {
   const container = document.getElementById(containerId);
   if (!container) return;
 
-  const cardHtml = (c) => `
-    <div class="class-card branch-card ${c.status === 'current' ? 'is-current' : ''}" onclick="inspectClass('${c.name}')" data-c="${c.name}">
-      <div class="card-header-line">
-        <span>${c.tier}</span>
-        <span class="level-badge">${c.pill}</span>
+  const cardHtml = (c) => {
+    const isCur = c.name === currentActiveJob;
+    return `
+      <div class="class-card branch-card ${isCur ? 'is-current' : ''} ${c.name === currentInspected ? 'pick' : ''}" onclick="inspectClass('${c.name}')" data-c="${c.name}">
+        <div class="card-header-line">
+          <span>${c.tier}</span>
+          <span class="level-badge">${isCur ? '✦ CURRENT' : c.pill}</span>
+        </div>
+        <img class="class-ro-icon" src="${RO_ICONS[c.name] || 'ro_icons/icon_jsxq_big_201.png'}" alt="${c.name}">
+        <strong class="card-name">${c.name}</strong>
+        <div class="card-subtext">
+          <span>Weapons: <strong>${c.wt}</strong></span> · <span>Main: <strong>${c.main}</strong></span>
+        </div>
       </div>
-      <img class="class-ro-icon" src="${RO_ICONS[c.name] || 'ro_icons/icon_jsxq_big_201.png'}" alt="${c.name}">
-      <strong class="card-name">${c.name}</strong>
-      <div class="card-subtext">
-        <span>Weapons: <strong>${c.wt}</strong></span> · <span>Main: <strong>${c.main}</strong></span>
-      </div>
-    </div>
-  `;
+    `;
+  };
 
   container.innerHTML = cardHtml(c1) + cardHtml(c2);
 }
 
 function jumpToLine(key) {
-  const btn = document.getElementById('tab' + (key === 'expanded' ? 'Expanded' : key));
-  selectLine(key, btn);
+  selectLine(key);
 }
 
 function inspectClass(name) {
   currentInspected = name;
+  window.currentInspected = name;
 
   // Highlight card
   document.querySelectorAll('.class-card').forEach(c => {
@@ -1445,40 +1666,30 @@ function inspectClass(name) {
 
   const isNovice = name === 'Novice';
   const isCurrent = name === currentActiveJob;
+  const specs = findClassSpecs(name);
 
   document.getElementById('inspClassName').textContent = name;
   document.getElementById('inspClassStatus').textContent = isCurrent ? '✦ Current active class' : isNovice ? 'Universal Starting Class / Rebirth Point' : 'Played class (Saved progression)';
-  document.getElementById('inspBaseLv').textContent = isNovice ? '25' : (name.includes('Rune') || name.includes('Royal') || name.includes('Warlock') ? '150' : '99');
-  document.getElementById('inspJobLv').textContent = isNovice ? '10 / 10' : (name.includes('Rune') || name.includes('Royal') || name.includes('Warlock') ? '50 / 50' : '70 / 70');
+  document.getElementById('inspBaseLv').textContent = specs.baseLv;
+  document.getElementById('inspJobLv').textContent = specs.jobLv;
 
-  // Specs
+  document.getElementById('inspSpecsLbl1').textContent = 'Weapons';
+  document.getElementById('inspWeapons').textContent = specs.wt;
+  document.getElementById('inspSpecsLbl2').textContent = 'Main stat';
+  document.getElementById('inspMainStat').textContent = specs.main;
+  document.getElementById('inspSpecsLbl3').textContent = isNovice ? 'Advancement' : 'Previous class';
+  document.getElementById('inspPrevClass').textContent = specs.prev;
+
+  const btn = document.getElementById('inspActionBtn');
   if (isNovice) {
-    document.getElementById('inspSpecsLbl1').textContent = 'Weapons';
-    document.getElementById('inspWeapons').textContent = 'Dagger, 1H Sword';
-    document.getElementById('inspSpecsLbl2').textContent = 'Main stat';
-    document.getElementById('inspMainStat').textContent = 'All Attributes';
-    document.getElementById('inspSpecsLbl3').textContent = 'Advancement';
-    document.getElementById('inspPrevClass').textContent = '7 First Jobs Available';
-    
-    const btn = document.getElementById('inspActionBtn');
     btn.textContent = 'Restart as Novice (Base Lv 25)';
     btn.disabled = false;
+  } else if (isCurrent) {
+    btn.textContent = 'Current Class';
+    btn.disabled = true;
   } else {
-    document.getElementById('inspSpecsLbl1').textContent = 'Weapons';
-    document.getElementById('inspWeapons').textContent = name.includes('Mage') || name.includes('Wizard') || name.includes('Sage') || name.includes('Scholar') || name.includes('Sorcerer') ? 'Staff, Book' : (name.includes('Archer') || name.includes('Hunter') || name.includes('Sniper') || name.includes('Ranger') ? 'Bow' : (name.includes('Thief') || name.includes('Assassin') || name.includes('Rogue') ? 'Dagger, Katar' : (name.includes('Gunslinger') || name.includes('Rebellion') ? 'Gun' : 'Sword, Spear')));
-    document.getElementById('inspSpecsLbl2').textContent = 'Main stat';
-    document.getElementById('inspMainStat').textContent = name.includes('Mage') || name.includes('Wizard') || name.includes('Sage') || name.includes('Scholar') || name.includes('Sorcerer') ? 'INT' : (name.includes('Archer') || name.includes('Hunter') || name.includes('Sniper') || name.includes('Ranger') || name.includes('Gunslinger') ? 'DEX' : 'STR');
-    document.getElementById('inspSpecsLbl3').textContent = 'Previous class';
-    document.getElementById('inspPrevClass').textContent = name === 'Swordman' || name === 'Mage' || name === 'Archer' || name === 'Thief' || name === 'Acolyte' || name === 'Merchant' ? 'Novice' : (name.includes('Lord') ? 'Knight' : (name.includes('Rune') ? 'Lord Knight' : 'Previous Job'));
-
-    const btn = document.getElementById('inspActionBtn');
-    if (isCurrent) {
-      btn.textContent = 'Current Class';
-      btn.disabled = true;
-    } else {
-      btn.textContent = 'Switch to ' + name;
-      btn.disabled = false;
-    }
+    btn.textContent = 'Switch to ' + name;
+    btn.disabled = false;
   }
 }
 
@@ -1487,6 +1698,10 @@ function handleInspectAction() {
     restartNovice();
   } else {
     currentActiveJob = currentInspected;
+    window.currentActiveJob = currentActiveJob;
+    updateLineageStrip();
+    updateFamilyTabs();
+    selectLine(currentTab);
     inspectClass(currentInspected);
   }
 }
@@ -1494,6 +1709,9 @@ function handleInspectAction() {
 function restartNovice() {
   const confirmed = confirm("Restart as Novice?\n\nYou will return to Base Lv 25 with job levels cleared, and your stat points refunded.\n\nAll previously played classes keep their Base Lv, stats, and gear, so you can return to them anytime!");
   if (confirmed) {
+    currentActiveJob = 'Novice';
+    updateLineageStrip();
+    updateFamilyTabs();
     selectLine('Novice', document.getElementById('tabNovice'));
     alert("Restarted as Novice at Base Lv 25! You can now choose any of the 7 first-job paths.");
   }
@@ -1501,6 +1719,8 @@ function restartNovice() {
 
 // Initialize on Swordsman line
 document.addEventListener('DOMContentLoaded', () => {
+  updateLineageStrip();
+  updateFamilyTabs();
   selectLine('Swordman', document.getElementById('tabSwordman'));
 });
 </script>

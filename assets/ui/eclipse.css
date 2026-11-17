@@ -1798,16 +1798,17 @@ body:not(.playing) #comboFieldStatus:empty{display:none}
 #wins .ui-skill-catalog .sk .si,#wins .ui-skill-catalog .skill-art{width:30px;height:30px}
 
 /* v179 / Class tree redesign: centered lineage navigation, dual-branch progression tree, novice hub and action inspector. */
-#wins .current-lineage-strip{display:flex;align-items:center;gap:10px;padding:6px 12px;background:var(--e-bg);border:1px solid var(--edge2);border-radius:8px;margin-bottom:12px;overflow-x:auto}
-#wins .current-lineage-strip .strip-label{font-size:9px;font-weight:800;letter-spacing:.12em;color:var(--gold);white-space:nowrap;text-transform:uppercase}
-#wins .current-lineage-strip .current-class-path{display:flex;align-items:center;gap:6px;margin:0;padding:0}
-#wins .current-lineage-strip .current-class-card{display:inline-flex;flex-direction:row;align-items:center;gap:6px;min-height:0;padding:4px 8px;border:1px solid var(--edge2);border-radius:6px;background:var(--panel);white-space:nowrap;cursor:pointer;transition:all .15s ease}
+#wins .current-lineage-strip{display:flex;align-items:center;gap:10px;padding:6px 12px;background:var(--e-bg);border:1px solid var(--edge2);border-radius:8px;margin-bottom:12px;flex-shrink:0;min-height:38px;max-height:38px;box-sizing:border-box;overflow-x:auto;overflow-y:hidden;scrollbar-width:none}
+#wins .current-lineage-strip::-webkit-scrollbar{display:none}
+#wins .current-lineage-strip .strip-label{font-size:9px;font-weight:800;letter-spacing:.12em;color:var(--gold);white-space:nowrap;text-transform:uppercase;flex-shrink:0}
+#wins .current-lineage-strip .current-class-path{display:flex;align-items:center;gap:6px;margin:0;padding:0;flex-shrink:0;white-space:nowrap}
+#wins .current-lineage-strip .current-class-card{display:inline-flex;flex-direction:row;align-items:center;gap:6px;min-height:0;padding:3px 8px;border:1px solid var(--edge2);border-radius:5px;background:var(--panel);white-space:nowrap;cursor:pointer;transition:all .15s ease;flex-shrink:0}
 #wins .current-lineage-strip .current-class-card.current{border-color:#4ade80;background:rgba(74,222,128,.08);box-shadow:0 0 8px rgba(74,222,128,.2)}
 #wins .current-lineage-strip .current-class-card.pick{border-color:var(--gold);box-shadow:0 0 8px rgba(215,183,122,.25)}
 #wins .current-lineage-strip .current-class-card>button{background:none;border:none;padding:0;color:var(--ink);font-size:11px;font-weight:700;cursor:pointer;min-height:0}
 #wins .current-lineage-strip .current-class-card.current>button{color:#4ade80;font-weight:800}
 #wins .current-lineage-strip .current-class-card>button:disabled{opacity:1;cursor:default}
-#wins .current-lineage-strip .strip-arrow{color:var(--e-muted);font-size:14px;line-height:1;user-select:none}
+#wins .current-lineage-strip .strip-arrow{color:var(--e-muted);font-size:13px;line-height:1;user-select:none;flex-shrink:0}
 
 #wins .class-lineage-nav{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin:0 0 14px;padding:4px}
 #wins .class-lineage-nav .lineage-tab-btn{padding:6px 14px;border:1px solid var(--edge2);border-radius:6px;background:var(--panel);color:var(--e-muted);font-size:11.5px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:4px}
@@ -1816,10 +1817,10 @@ body:not(.playing) #comboFieldStatus:empty{display:none}
 #wins .class-lineage-nav .badge-cur{font-size:8px;background:var(--gold);color:#0b111a;font-weight:800;padding:1px 4px;border-radius:3px;margin-left:4px}
 
 #wins .class-path-layout{display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:18px;align-items:start}
-#wins .class-path-canvas{min-width:0;display:flex;flex-direction:column;gap:12px}
+#wins .class-path-canvas{min-width:0;display:flex;flex-direction:column;gap:8px}
 
 /* Dual-Branch Progression Tree Table */
-#wins .tree-table{width:100%;display:flex;flex-direction:column;gap:0}
+#wins .tree-table{width:100%;flex:1;min-height:0;display:flex;flex-direction:column;gap:0}
 #wins .tier-row{display:grid;grid-template-columns:36px minmax(0,1fr);gap:12px;align-items:center;width:100%}
 #wins .tier-badge-cell{display:flex;align-items:center;justify-content:center;position:relative;height:100%;min-height:48px}
 #wins .ruler-tag{font-size:9px;font-weight:800;color:var(--gold);background:var(--e-soft);border:1px solid var(--gold);padding:2px 4px;border-radius:4px;width:28px;text-align:center;box-shadow:0 0 6px rgba(215,183,122,.2);z-index:2}
