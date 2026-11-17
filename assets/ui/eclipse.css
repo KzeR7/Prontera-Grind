@@ -1830,8 +1830,9 @@ body:not(.playing) #comboFieldStatus:empty{display:none}
 #wins .alt-branch-section{margin:8px 0 14px;padding:12px;border:1px dashed var(--edge2);border-radius:10px;background:rgba(18,27,39,.5)}
 #wins .alt-branch-header{display:flex;align-items:center;gap:6px;font-size:10px;font-weight:800;color:var(--gold);letter-spacing:.05em;text-transform:uppercase;margin-bottom:8px}
 #wins .alt-branch-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px}
-#wins .alt-branch-card{padding:10px;border:1px solid var(--edge2);border-radius:8px;background:var(--panel);text-align:center;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;transition:all .15s}
+#wins .alt-branch-card{font-family:inherit;color:inherit;width:100%;padding:10px;border:1px solid var(--edge2);border-radius:8px;background:var(--panel);text-align:center;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;transition:all .15s}
 #wins .alt-branch-card:hover{border-color:var(--gold);background:var(--e-raised);transform:translateY(-1px)}
+#wins .alt-branch-card:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 #wins .alt-branch-card.pick{border-color:var(--gold);box-shadow:0 0 10px rgba(215,183,122,.3)}
 #wins .alt-branch-card strong{font-size:12px;color:var(--ink)}
 
