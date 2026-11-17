@@ -787,6 +787,7 @@ html, body {
         </div>
         <div class="win-titlebar-tools">
           <span class="win-farming-status">● Farming continues</span>
+          <a href="/game" style="color:var(--gold);text-decoration:none;font-size:10.5px;font-weight:700;padding:2px 8px;border:1px solid var(--gold);border-radius:4px;background:var(--e-soft)" title="Launch full in-game client">▶ Full Game</a>
           <button class="win-tool-btn" title="Window Settings">⛶</button>
           <button class="win-tool-btn" title="Close Window">✕</button>
         </div>
@@ -795,8 +796,8 @@ html, body {
       <!-- Class Navigation Tabs Bar (CENTERED · NOVICE AT FRONT · NO SEARCH!) -->
       <div class="win-tabs-bar">
         <button class="tab-btn" id="tabNovice" onclick="selectLine('Novice', this)">Novice</button>
-        <button class="tab-btn active" id="tabSwordman" onclick="selectLine('Swordman', this)">Swordsman</button>
-        <button class="tab-btn" id="tabMage" onclick="selectLine('Mage', this)">Mage <span class="badge-cur">CURRENT</span></button>
+        <button class="tab-btn active" id="tabSwordman" onclick="selectLine('Swordman', this)">Swordsman <span class="badge-cur">CURRENT</span></button>
+        <button class="tab-btn" id="tabMage" onclick="selectLine('Mage', this)">Mage</button>
         <button class="tab-btn" id="tabArcher" onclick="selectLine('Archer', this)">Archer</button>
         <button class="tab-btn" id="tabThief" onclick="selectLine('Thief', this)">Thief</button>
         <button class="tab-btn" id="tabAcolyte" onclick="selectLine('Acolyte', this)">Acolyte</button>
@@ -810,6 +811,21 @@ html, body {
         <!-- Left Canvas Container -->
         <div class="tree-canvas" id="canvasContainer">
           
+          <!-- Current Lineage 5-Step Breadcrumb Strip -->
+          <div class="current-lineage-strip" style="display:flex;align-items:center;gap:10px;padding:6px 12px;background:var(--e-bg);border:1px solid var(--edge2);border-radius:8px;margin-bottom:8px;overflow-x:auto;">
+            <span class="strip-label" style="font-size:9px;font-weight:800;letter-spacing:.12em;color:var(--gold);white-space:nowrap;text-transform:uppercase;">CURRENT LINEAGE</span>
+            <div class="current-class-path" style="display:flex;align-items:center;gap:6px;">
+              <span class="strip-node" style="padding:3px 8px;border:1px solid var(--edge2);border-radius:5px;background:var(--panel);font-size:11px;font-weight:700;">Novice <small style="color:var(--gold)">Novice</small></span>
+              <span style="color:var(--e-muted);font-size:13px;">›</span>
+              <span class="strip-node" style="padding:3px 8px;border:1px solid var(--edge2);border-radius:5px;background:var(--panel);font-size:11px;font-weight:700;">Swordman <small style="color:var(--gold)">Job 50</small></span>
+              <span style="color:var(--e-muted);font-size:13px;">›</span>
+              <span class="strip-node" style="padding:3px 8px;border:1px solid var(--edge2);border-radius:5px;background:var(--panel);font-size:11px;font-weight:700;">Knight <small style="color:var(--gold)">Job 50</small></span>
+              <span style="color:var(--e-muted);font-size:13px;">›</span>
+              <span class="strip-node current" style="padding:3px 8px;border:1px solid #4ade80;border-radius:5px;background:rgba(74,222,128,.1);color:#4ade80;font-size:11px;font-weight:800;">✦ Lord Knight (Current) <small style="color:var(--gold)">Job 50</small></span>
+              <span style="color:var(--e-muted);font-size:13px;">›</span>
+              <span class="strip-node" style="padding:3px 8px;border:1px solid var(--edge2);border-radius:5px;background:var(--panel);font-size:11px;font-weight:700;">Rune Knight <small style="color:var(--gold)">Base 150</small></span>
+            </div>
+          </div>
           <!-- Standard Class Progression Tree (Default: Swordsman) -->
           <div class="tree-table" id="standardTreeTable">
             
@@ -1347,6 +1363,7 @@ const LINES = {
 };
 
 let currentInspected = 'Lord Knight';
+let currentActiveJob = 'Lord Knight';
 let currentTab = 'Swordman';
 
 function selectLine(key, btn) {
@@ -1427,12 +1444,12 @@ function inspectClass(name) {
   });
 
   const isNovice = name === 'Novice';
-  const isCurrent = name === 'Sorcerer';
+  const isCurrent = name === currentActiveJob;
 
   document.getElementById('inspClassName').textContent = name;
   document.getElementById('inspClassStatus').textContent = isCurrent ? '✦ Current active class' : isNovice ? 'Universal Starting Class / Rebirth Point' : 'Played class (Saved progression)';
-  document.getElementById('inspBaseLv').textContent = isNovice ? '25' : '99';
-  document.getElementById('inspJobLv').textContent = isNovice ? '10 / 10' : (name.includes('Rune') || name.includes('Royal') || name.includes('Sorcerer') ? '50 / 50' : '70 / 70');
+  document.getElementById('inspBaseLv').textContent = isNovice ? '25' : (name.includes('Rune') || name.includes('Royal') || name.includes('Warlock') ? '150' : '99');
+  document.getElementById('inspJobLv').textContent = isNovice ? '10 / 10' : (name.includes('Rune') || name.includes('Royal') || name.includes('Warlock') ? '50 / 50' : '70 / 70');
 
   // Specs
   if (isNovice) {
@@ -1448,11 +1465,11 @@ function inspectClass(name) {
     btn.disabled = false;
   } else {
     document.getElementById('inspSpecsLbl1').textContent = 'Weapons';
-    document.getElementById('inspWeapons').textContent = name.includes('Mage') || name.includes('Wizard') || name.includes('Sage') || name.includes('Scholar') || name.includes('Sorcerer') ? 'Staff, Book' : 'Sword, Spear';
+    document.getElementById('inspWeapons').textContent = name.includes('Mage') || name.includes('Wizard') || name.includes('Sage') || name.includes('Scholar') || name.includes('Sorcerer') ? 'Staff, Book' : (name.includes('Archer') || name.includes('Hunter') || name.includes('Sniper') || name.includes('Ranger') ? 'Bow' : (name.includes('Thief') || name.includes('Assassin') || name.includes('Rogue') ? 'Dagger, Katar' : (name.includes('Gunslinger') || name.includes('Rebellion') ? 'Gun' : 'Sword, Spear')));
     document.getElementById('inspSpecsLbl2').textContent = 'Main stat';
-    document.getElementById('inspMainStat').textContent = name.includes('Mage') || name.includes('Wizard') || name.includes('Sage') || name.includes('Scholar') || name.includes('Sorcerer') ? 'INT' : 'STR';
+    document.getElementById('inspMainStat').textContent = name.includes('Mage') || name.includes('Wizard') || name.includes('Sage') || name.includes('Scholar') || name.includes('Sorcerer') ? 'INT' : (name.includes('Archer') || name.includes('Hunter') || name.includes('Sniper') || name.includes('Ranger') || name.includes('Gunslinger') ? 'DEX' : 'STR');
     document.getElementById('inspSpecsLbl3').textContent = 'Previous class';
-    document.getElementById('inspPrevClass').textContent = name === 'Swordman' || name === 'Mage' ? 'Novice' : (name.includes('Lord') ? 'Knight' : (name.includes('Rune') ? 'Lord Knight' : 'Previous Job'));
+    document.getElementById('inspPrevClass').textContent = name === 'Swordman' || name === 'Mage' || name === 'Archer' || name === 'Thief' || name === 'Acolyte' || name === 'Merchant' ? 'Novice' : (name.includes('Lord') ? 'Knight' : (name.includes('Rune') ? 'Lord Knight' : 'Previous Job'));
 
     const btn = document.getElementById('inspActionBtn');
     if (isCurrent) {
@@ -1469,7 +1486,8 @@ function handleInspectAction() {
   if (currentInspected === 'Novice') {
     restartNovice();
   } else {
-    alert(`Switched to ${currentInspected}! All saved stats, skills, and equipment for ${currentInspected} are restored.`);
+    currentActiveJob = currentInspected;
+    inspectClass(currentInspected);
   }
 }
 
