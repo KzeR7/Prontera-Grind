@@ -57,7 +57,7 @@ console.log('  save: ' + plain.length.toLocaleString() + ' B plain -> ' + compac
 // 1. the compact blob is ACCEPTED by the real handler
 let ver = 0;
 const put = async blob => {
-  const r = await save.onRequestPut({ request: new Request('https://x/api/save', { method: 'PUT', headers: { 'content-type': 'application/json', cookie }, body: JSON.stringify({ owner: n, blob, version: ver }) }), env });
+  const r = await save.onRequestPut({ request: new Request('https://x/api/save', { method: 'PUT', headers: { 'content-type': 'application/json', cookie, 'x-save-format': '110' }, body: JSON.stringify({ owner: n, blob, version: ver }) }), env });
   const j = await r.clone().json().catch(() => ({}));
   if (j.version != null) ver = j.version;
   return r.status;
@@ -66,10 +66,10 @@ ok('the compact blob is accepted (200)', (await put(compact)) === 200);
 ok('the original plain blob is still refused (413) - it is over the ceiling', (await put(plain)) === 413);
 
 // 2. GET returns exactly what was stored, still compact
-const gRes = await save.onRequestGet({ request: new Request('https://x/api/save', { method: 'GET', headers: { cookie } }), env });
+const gRes = await save.onRequestGet({ request: new Request('https://x/api/save', { method: 'GET', headers: { cookie, 'x-save-format': '110' } }), env });
 const body = await gRes.json();
 ok('GET returns the stored blob', gRes.status === 200 && !!body.blob);
-ok('the stored blob is compact', body.blob && JSON.parse(body.blob).__v === 1);
+ok('the stored blob is compact', body.blob && JSON.parse(body.blob).__v >= 1);
 ok('nothing was re-expanded on the way in (' + body.blob.length.toLocaleString() + ' B stored)', body.blob.length === compact.length);
 
 // 3. what the page's load() would produce - field by field
@@ -116,6 +116,40 @@ ok('the compact form unpacks to exactly the same data', JSON.stringify(sameData)
   finally { JSON.parse = before; }
   ok('a re-sync is accepted', status === 200, 'status ' + status);
   ok('a re-sync parses a save-sized string at most 3 times', parses <= 3, 'saw ' + parses);
+}
+
+// 7. COMPATIBILITY: a page WITHOUT the codec must never be handed a compact blob.
+//    Reported by review: the pre-v414 loader filters fishing entries on `typeof e.sp==='string'`, so a
+//    tuple fish is dropped - the bag goes from N fish to ZERO - and the next upload saves that loss.
+//    Objects stay objects and fish vanish, which is the worst possible failure shape.
+{
+  const oldGet = () => save.onRequestGet({ request: new Request('https://x/api/save', { method: 'GET', headers: { cookie } }), env });
+  const served = await (await oldGet()).json();
+  ok('an old page (no X-Save-Format) gets a readable blob', served.blob && JSON.parse(served.blob).__v == null,
+    'served a compact blob to a client that cannot decode it');
+
+  // and the pre-PR loader really does keep what it was served
+  const oldBag = bag => (Array.isArray(bag) ? bag : []).filter(e => e && typeof e === 'object' && typeof e.sp === 'string');
+  const decoded = JSON.parse(served.blob);
+  const keptFish = oldBag(decoded.fishing && decoded.fishing.bag);
+  ok('the old loader keeps every fish from what it was served', keptFish.length === S.fishing.bag.length,
+    'old loader kept ' + keptFish.length + ' of ' + S.fishing.bag.length + ' fish');
+  ok('the old loader keeps every item', Array.isArray(decoded.inv) && decoded.inv.length === S.inv.length,
+    'kept ' + (decoded.inv || []).length + ' of ' + S.inv.length + ' items');
+  ok('the old loader keeps every card', Array.isArray(decoded.cards) && decoded.cards.length === S.cards.length);
+
+  // a modern page still gets the compact form (the whole point of the release)
+  const newGet = await save.onRequestGet({ request: new Request('https://x/api/save', { method: 'GET', headers: { cookie, 'x-save-format': '110' } }), env });
+  const fresh = await newGet.json();
+  ok('a v414 page still gets the compact blob', JSON.parse(fresh.blob).__v != null);
+
+  // the conflict reply carries a blob too - it must obey the same rule
+  const oldPut = await save.onRequestPut({ request: new Request('https://x/api/save', {
+    method: 'PUT', headers: { 'content-type': 'application/json', cookie },
+    body: JSON.stringify({ owner: n, blob: JSON.stringify(C.packSave(S)), version: 0 }) }), env });
+  const conflict = await oldPut.json().catch(() => ({}));
+  if (conflict.blob) ok('a conflict reply to an old page carries a readable blob', JSON.parse(conflict.blob).__v == null);
+  else ok("an old page's stale push is answered without a compact blob", true);
 }
 
 console.log('');

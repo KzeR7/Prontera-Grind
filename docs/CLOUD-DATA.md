@@ -59,6 +59,55 @@ compression, browser caches and deployed responses can differ. Resource Timing
 size fields were unavailable in this software-browser environment and are not used
 as a bandwidth measurement.
 
+## The stored save format (codec v414 / `__v` 2)
+
+A save row is stored **compact**: `inv`, `cards`, the fishing bag and - since `__v` 2 - the cards
+socketed inside items are written as positional tuples instead of objects, and `eq` stays ordinary.
+`functions/_lib/save-codec.js` and the inline copy in `index.html` (around `SAVE_CODEC_VERSION`) must
+stay mirrored; they are both at version 2.
+
+**Codec v2 drops two redundant things and nothing else:**
+
+- a card's `n` is rebuilt from `family` + `nightmare` (it is always `(nightmare ? 'Nightmare ' : '') +
+  family`). `family` is *kept*, because it is only derivable from `cardKey` via the page's static
+  `CARD_CATALOG`, which the server does not have.
+- the cards socketed in an item get the same tuple as a loose card. They used to be stored as full
+  objects, which was the last uncompacted collection and cost ~53% more per socketed card.
+
+Neither is a "rebuild by re-rolling": nothing is generated or randomised, and a card whose name does
+not follow the rule keeps its stored copy, so the codec can never rename a card.
+
+**Compatibility.** `GET /api/save` and every conflict/restore-fenced reply run the stored blob through
+`blobForClient(blob, clientSaveFormat(request))`. A page that does not send `X-Save-Format` gets the
+save **unpacked to plain objects**; a page that sends 110 or later gets the compact text. This matters
+because a pre-v414 loader keeps only fishing entries with a string `sp` - a compact fish tuple has none,
+so an old page handed a compact row would show zero fish and then upload that loss. **Never remove that
+gate**; `save_codec_chain_sim.mjs` block 7 fails without it.
+
+**Ceiling and sizes** (`SAVE_BYTES_MAX` = 307,200 B, checked on `Content-Length` before any parse):
+
+| State (game caps are `BAGMAX` 1000 items, `CARDMAX` 1000 cards, bag 1000) | plain | compact v2 |
+| --- | ---: | ---: |
+| the reported account, 901 items / 485 cards / 801 fish | 376,522 B (over) | **188,726 B** |
+| 1000 items, 1000 loose cards, 1000 fish | 533 KB | **266 KB** |
+| 1000 items with all 1000 cards socketed into gear, 1000 fish | 533 KB | **265 KB** |
+| 1000 items, 749 loose + 251 socketed, 1000 fish | 533 KB | **266 KB** |
+| 1000 items + 7 fully-carded worn items, 1000 cards, 1000 fish | 547 KB | **274 KB** |
+
+All of those fit with 26-34 KB spare; `tools/tests/save_max_state_sim.mjs` asserts it for each.
+A synthetic state that is *not* reachable under the caps - every one of 1000 items carrying four
+distinct cards on top of a 1000-card bag, i.e. ~4000 cards - exceeds the ceiling (about 1.16 MB). If
+`CARDMAX`/`BAGMAX` are ever raised, that is the first thing to re-measure.
+
+**A GM edit keeps the row's format.** `storedBlobForm(save, previousBlob)` in `functions/api/gm/player.js`
+re-packs through `packSave` when the row was compact, so an unlock or a history restore cannot quietly
+inflate a 189 KB row into 370 KB, push it over the ceiling, and make restoring that history entry
+return 413. A restore revokes the account's sessions, which is why tests that GM-restore need a fresh
+login afterwards.
+
+**CPU.** See `docs/CPU-LIMIT.md`: a whole accepted `PUT /api/save` (auth, parses, audits, D1, response)
+dropped from 7.97 ms to 5.38 ms at 237 KB -> 120 KB, and the parse count is pinned at 3.
+
 ## What is deliberately not deleted
 
 The active wardrobe catalog references all 615 non-catalog files in v5; the pet

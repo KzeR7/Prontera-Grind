@@ -20,7 +20,7 @@
 import { currentUser } from '../_lib/auth.js';
 import { lockedCosmetics } from '../_lib/shop.js';
 import { json, guard, readJson, fail, unauth } from '../_lib/http.js';
-import { checkSaveBlob, publicFields, saveOwnerStamp, sameAccount, savedElsewhere, saveBelongsTo, withSaveIdentity, storedSaveOwner, SAVE_MISMATCH, restoreAllowsWrite, storedRestoreAt, RESTORE_FENCED, parseSave } from '../_lib/validate.js';
+import { checkSaveBlob, publicFields, saveOwnerStamp, sameAccount, savedElsewhere, saveBelongsTo, withSaveIdentity, storedSaveOwner, SAVE_MISMATCH, restoreAllowsWrite, storedRestoreAt, RESTORE_FENCED, parseSave, clientSaveFormat, blobForClient, SAVE_FORMAT_COMPACT } from '../_lib/validate.js';
 import { unpackSave } from '../_lib/save-codec.js';
 import * as db from '../_lib/db.js';
 import { recordDamageObservation } from '../_lib/damage-monitor.js';
@@ -101,6 +101,9 @@ export const onRequestGet = guard(async ({ request, env }) => {
   const user = await currentUser(request, env.DB);
   if (!user) return await unauth(request);
   const D = env.DB, now = Date.now();
+  // v414: what this page can DECODE. A compact row is never handed to a page without the codec -
+  // the old loader drops every tuple row (and every fish) and its next upload would save that loss.
+  const format = clientSaveFormat(request);
   let row = await db.saveByUser(D, user.id), offlineClaim = null;
 
   if (row) {
@@ -122,7 +125,7 @@ export const onRequestGet = guard(async ({ request, env }) => {
   const pending = grants.results.map(g => ({ id: g.id, kind: g.kind, payload: JSON.parse(g.payload || '{}'), note: g.note }));
   // `owner` says whose save this is, so a tab playing another account never applies it (see PUT).
   if (!row) return json({ version: 0, blob: null, savedAt: null, offlineClaim: null, pending, owner: user.username });
-  return json({ version: row.version, blob: row.blob, savedAt: row.saved_at,
+  return json({ version: row.version, blob: blobForClient(row.blob, format), savedAt: row.saved_at,
     updatedAt: row.updated_at, serverNow: now, offlineClaim, pending, owner: user.username });
 });
 
@@ -130,6 +133,9 @@ export const onRequestPut = guard(async ({ request, env }) => {
   const user = await currentUser(request, env.DB);
   if (!user) return await unauth(request);
   const D = env.DB;
+  // v414: conflict/restore-fenced replies carry the LIVE blob too, and a page that cannot decode it
+  // would adopt it and lose items. Every blob that leaves here goes through blobForClient.
+  const format = clientSaveFormat(request);
   const body = await readJson(request, 600_000);
   // Whose save is this? The session cookie is shared by every tab of the site: a tab still playing
   // account A keeps pushing its save after account B has signed in elsewhere, and without this check
@@ -268,11 +274,11 @@ export const onRequestPut = guard(async ({ request, env }) => {
   const fenceAt = storedRestoreAt(storedBlob);
   if (!restoreAllowsWrite(row.blob, save, fenceAt)) {
     return early({ err: RESTORE_FENCED, restoreFenced: true, restoreAt: fenceAt,
-      conflict: true, version: row.version, blob: row.blob, savedAt: row.saved_at,
+      conflict: true, version: row.version, blob: blobForClient(row.blob, format), savedAt: row.saved_at,
       updatedAt: row.updated_at, offlineClaim: publicClaim(pending) }, 409);
   }
   if (clientVersion !== row.version) {
-    return early({ conflict: true, version: row.version, blob: row.blob, savedAt: row.saved_at,
+    return early({ conflict: true, version: row.version, blob: blobForClient(row.blob, format), savedAt: row.saved_at,
       updatedAt: row.updated_at, offlineClaim: publicClaim(pending) }, 409);
   }
 
@@ -306,7 +312,7 @@ export const onRequestPut = guard(async ({ request, env }) => {
     const acknowledged = Number(results?.[1]?.meta?.changes ?? results?.[1]?.meta?.rows_written ?? 0);
     if (!changed || !acknowledged) {
       const latest = await db.saveByUser(D, user.id);
-      return early({ conflict: true, version: latest?.version ?? row.version, blob: latest?.blob ?? row.blob,
+      return early({ conflict: true, version: latest?.version ?? row.version, blob: blobForClient(latest?.blob ?? row.blob, format),
         savedAt: latest?.saved_at ?? row.saved_at, updatedAt: latest?.updated_at ?? row.updated_at,
         offlineClaim: publicClaim(await db.pendingOfflineClaim(D, user.id)) }, 409);
     }
@@ -314,7 +320,7 @@ export const onRequestPut = guard(async ({ request, env }) => {
     const result = await update.run();
     if (!Number(result?.meta?.changes)) {
       const latest = await db.saveByUser(D, user.id);
-      return early({ conflict: true, version: latest?.version ?? row.version, blob: latest?.blob ?? row.blob,
+      return early({ conflict: true, version: latest?.version ?? row.version, blob: blobForClient(latest?.blob ?? row.blob, format),
         savedAt: latest?.saved_at ?? row.saved_at, updatedAt: latest?.updated_at ?? row.updated_at,
         offlineClaim: publicClaim(await db.pendingOfflineClaim(D, user.id)) }, 409);
     }

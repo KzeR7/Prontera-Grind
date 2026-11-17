@@ -5,6 +5,7 @@
 // leaderboard fields (a save can be edited by its owner, so `pub` is never free-form).
 
 import { HttpError } from './http.js';
+import { isPacked, unpackSave } from './save-codec.js';
 
 export const USERNAME_RE = /^[A-Za-z0-9_.-]{2,16}$/;
 export const RESERVED = ['gm', 'admin', 'administrator', 'system', 'server', 'root', 'mod', 'staff',
@@ -47,6 +48,32 @@ export const CAPS = { level: 150, maxStat: 120, maxZeny: 1e15 };
 // the game can build (BAGMAX 1000 items + CARDMAX 1000 cards ~ 288 KB) while refusing anything that
 // cannot be synced inside the budget. The check runs BEFORE JSON.parse, so refusing is nearly free.
 export const SAVE_BYTES_MAX = 300 * 1024;
+
+// v414: the SAVE FORMAT a page can decode, sent as `X-Save-Format` on every cloud request.
+// A page build that has no codec advertises nothing (or an older number) and CANNOT read a compact
+// row: its loader drops tuple entries, so a compact save handed to it loses items and every fish, and
+// its next upload writes that loss back. So a stored compact blob is only handed out to a page that
+// says it can decode it; anything else is told to reload and is served the ORDINARY form.
+export const SAVE_FORMAT_PLAIN = 0;     // no codec at all (every build before v414)
+export const SAVE_FORMAT_COMPACT = 1;   // can decode packSave()'s output
+export function clientSaveFormat(request) {
+  const raw = Number(request?.headers?.get?.('X-Save-Format'));
+  return Number.isFinite(raw) && raw > 0 ? Math.floor(raw) : SAVE_FORMAT_PLAIN;
+}
+// Does this page understand the blob we are holding? A plain blob is readable by everyone, so the
+// answer is only ever "no" for a compact blob and an old client.
+const isPackedText = blob => {
+  if (typeof blob !== 'string' || !blob) return false;
+  try { return isPacked(JSON.parse(blob)); } catch { return false; }
+};
+export const clientCanRead = (blob, format) => format >= SAVE_FORMAT_COMPACT || !isPackedText(blob);
+
+// The body a save endpoint should return for `blob` to a client of `format`. Never throws: an
+// unreadable blob is the caller's problem, not a reason to fail the request.
+export function blobForClient(blob, format) {
+  if (!blob || clientCanRead(blob, format)) return blob;
+  try { return JSON.stringify(unpackSave(JSON.parse(blob))); } catch { return blob; }
+}
 
 export function checkSaveBlob(blob) {
   if (typeof blob !== 'string' || !blob) throw new HttpError(400, 'Missing save.');

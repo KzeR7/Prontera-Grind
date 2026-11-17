@@ -36,7 +36,17 @@
 // A save with no `__v` is an OLD save and is handed back completely untouched - not read, not
 // rewritten, not upgraded in place. Old saves keep loading for ever.
 
-export const CODEC_VERSION = 1;
+export const CODEC_VERSION = 2;
+
+// v2 (size): a card's `n` is a PURE FUNCTION of two fields that are always stored alongside it -
+// `n = (nightmare ? 'Nightmare ' : '') + family`. It is 28 of the 122 bytes a packed card costs, so a
+// thousand-card account saves ~28 KB, which is the margin that decides whether the largest permitted
+// account can sync at all. It is written as NUL and rebuilt on read.
+//
+// `family` deliberately KEEPS being stored: it is derivable only from `cardKey` through the page's
+// static 80-row CARD_CATALOG, which this module does not have. Dropping it here would hand back a card
+// with no name at all. This is not the forbidden "rebuild by re-rolling" - nothing is generated or
+// randomised, and a card whose `n` does not match the rule keeps its stored copy.
 
 // Positional order. NEVER reorder - only append. The tuple length is the array length, and a shorter
 // tuple is filled from the defaults below, so old compact saves stay readable after an append.
@@ -117,7 +127,10 @@ export function packItem(it) {
   // Affixes are the single largest item field (~29% of item bytes): {k:'str',v:12} -> ['str',12].
   // Absent stays absent, for the same reason as `effects` above.
   t[6] = Array.isArray(it.aff) ? it.aff.map(pairOf) : pack(undefined);
-  t[8] = Array.isArray(it.cards) ? it.cards : pack(undefined);
+  // v2: a card socketed into an item is the same object as one in the bag, so it gets the same tuple.
+  // It was previously stored as a full object - the largest remaining uncompacted collection, ~330 B
+  // per card against ~105 B packed.
+  t[8] = Array.isArray(it.cards) ? it.cards.map(packCard) : pack(undefined);
   const extra = extrasOf(it, ITEM_KEYS);
   if (extra) t.push(extra);
   return t;
@@ -129,15 +142,26 @@ export function unpackItem(t) {
     // `aff` to decide whether an item predates affixes. So a NUL slot stays absent rather than
     // becoming an empty array - the same rule the flat fields already follow.
     if (Array.isArray(t[6])) o.aff = t[6].map(objectOf);
-    if (Array.isArray(t[8])) o.cards = t[8];
+    if (Array.isArray(t[8])) o.cards = t[8].map(unpackCard); // v2: socketed cards are tuples too
   });
 }
 
 // ---------------------------------------------------------------------------- cards -------------
 
+// `n` is derivable only when it follows the game's own rule; a card carrying anything else keeps both
+// fields verbatim in the extras slot, so the codec can never rewrite a card into a different name.
+const cardNameDerivable = c =>
+  typeof c.family === 'string' && c.family.length > 0 &&
+  typeof c.n === 'string' && c.n === (c.nightmare === true ? 'Nightmare ' + c.family : c.family);
+
 export function packCard(c) {
   if (!isObj(c)) return c;
-  const t = BCARD.map(k => pack(c[k]));
+  // Only drop `n` when it PROVABLY matches the rebuild rule. Anything else is written out verbatim.
+  const dropName = cardNameDerivable(c);
+  const t = BCARD.map(k => {
+    if (dropName && k === 'n') return NUL;
+    return pack(c[k]);
+  });
   // `effects` is the biggest card field after cardKey: [{k:'luk',v:3}] -> [['luk',3]].
   // An ABSENT effects list stays absent (NUL): a legacy card has none, and turning that into [] would
   // invent a field the game uses to decide whether a card still needs its values repaired.
@@ -150,6 +174,11 @@ export function unpackCard(t) {
   if (!Array.isArray(t)) return t;
   return fromTuple(t, BCARD, (o) => {
     if (Array.isArray(t[7])) o.effects = t[7].map(objectOf);
+    // v2: rebuild the name that was left out. `family` is stored on every card, so if it is missing the
+    // card was written some other way - leave it exactly as stored rather than inventing a name.
+    if (o.family !== undefined && o.n === undefined) {
+      o.n = o.nightmare === true ? 'Nightmare ' + o.family : o.family;
+    }
   });
 }
 

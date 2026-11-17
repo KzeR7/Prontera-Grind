@@ -67,7 +67,7 @@ try {
   // the exact bytes, is what matters: tuples present, and the compact form was not thrown away.
   {
     const row = JSON.parse(storedText);
-    assert.equal(row.__v, 1, 'the compact marker survives the write');
+    assert.ok(row.__v >= 1, 'the compact marker survives the write');
     assert.ok(Array.isArray(row.inv[0]), 'inventory rows stay tuples - stamping must not unpack the save');
     assert.ok(Array.isArray(row.cards[0]), 'card rows stay tuples');
     assert.ok(Array.isArray(row.fishing.bag[0]), 'fish rows stay tuples');
@@ -95,22 +95,30 @@ try {
 
   // The two failures that started this audit: both GM routes re-stringified a parsed save without
   // unpacking, so the row kept `__v` over tuple rows and the page unpacked a second time.
+  // A GM rewrite must leave a row that is CONSISTENT: either the ordinary shape, or the compact shape
+  // with `__v` set - never tuples without `__v` (the page would then read tuples as items). The
+  // original defect was a mix: `__v` still on the row over tuple rows, so the page unpacked twice.
   const tupleRowIsClean = (text, label) => {
     const parsed = JSON.parse(text);
-    assert.equal(parsed.__v, undefined, label + ': must not leave __v on the stored blob');
     assert.ok(Array.isArray(parsed.inv), label + ': inventory is still a list');
-    assert.ok(parsed.inv.every(i => i && !Array.isArray(i)), label + ': no tuple rows may escape');
     assert.ok(parsed.inv.length > 0, label + ': items are still there');
-    assert.ok(same(unpackSave(parsed), parsed), label + ': unpacking again is a no-op');
+    if (parsed.__v == null) {
+      assert.ok(parsed.inv.every(i => i && !Array.isArray(i)), label + ': an ordinary row holds objects');
+    } else {
+      assert.ok(parsed.inv.every(Array.isArray), label + ': a compact row holds tuples');
+      const round = unpackSave(parsed);
+      assert.ok(Array.isArray(round.inv) && !Array.isArray(round.inv[0]), label + ': unpacks to objects');
+    }
     return parsed;
   };
 
-  await test('GM unlock rewrites a compact blob into a clean ordinary one', async () => {
+  await test('GM unlock rewrites a compact blob into a consistent row', async () => {
     const r = await call(gmPlayer, gm, { id: playerId, action: 'unlock' }, '/api/gm/player');
     assert.equal(r.res.status, 200, 'restore-unlock answered: ' + JSON.stringify(r.data));
     tupleRowIsClean(sqlite.prepare('SELECT blob FROM saves').get().blob, 'unlock');
-    // Every item still exists - nothing a player owns may disappear.
-    const after = JSON.parse(sqlite.prepare('SELECT blob FROM saves').get().blob);
+    // Every item still exists - nothing a player owns may disappear. Unpack first: the row keeps the
+    // compact shape, so its inv holds tuples rather than objects.
+    const after = unpackSave(JSON.parse(sqlite.prepare('SELECT blob FROM saves').get().blob));
     assert.equal(after.inv.length, ordinary.inv.length, 'no item was lost by the rewrite');
     // Compare as strings: item ids are float timestamps, and the live copy carries the page's own
     // `locked` repair flag, so object identity is the wrong test. Every id must still be present.
@@ -126,6 +134,63 @@ try {
     const r = await call(gmPlayer, gm, { id: playerId, action: 'restore', version: hist.version, note: 'regression test' }, '/api/gm/player');
     assert.equal(r.res.status, 200, 'restore answered: ' + JSON.stringify(r.data));
     tupleRowIsClean(sqlite.prepare('SELECT blob FROM saves').get().blob, 'restore');
+  });
+
+  // Reported by review: GM unlock/restore stored the ORDINARY shape, expanding a 169 KB row to
+  // 322 KB - past the 300 KB ceiling - so that expanded blob entered history and restoring it later
+  // was refused with 413. A GM edit must never enlarge the row past the limit it was stored under.
+  await test('GM edits keep the stored format, so a restore of history never 413s', async () => {
+    // A restore revokes every session on the account (haven-v403), so this test signs in its own.
+    const freshPlayer = (await call(register, '', { u: 'FormatTest', p: 'test-password-only', email: 'f@example.test' })).res.headers.get('set-cookie').split(';')[0];
+    const freshId = sqlite.prepare('SELECT id FROM users WHERE username=?').get('FormatTest').id;
+    const big = game.ev(`(()=>{const S=load();const sl=['weapon','armor','head','off','leg','acc'];
+      S.inv=[];for(let i=0;i<850;i++)S.inv.push(genGear({k:sl[i%6],n:'Rare Plate Armor',quality:1},145,i%4,false,undefined,i%10,10));
+      S.cards=[];for(let i=0;i<450;i++)S.cards.push(newCard(cardDefinition(i%10,i%4,i%2===0)));
+      S.fishing.bag=[];for(let i=0;i<400;i++)S.fishing.bag.push({id:'f'+i,sp:'Magikarp',w:1+(i%3000),mut:null,at:i,perfect:i%2===0,lock:i%7===0});
+      S.owner='FormatTest';return JSON.parse(JSON.stringify(S))})()`);
+    const packedBig = packSave(big); packedBig.accountId = freshId;
+    const bigText = JSON.stringify(packedBig);
+    assert.ok(JSON.stringify(big).length > 307200, 'the fixture must be over the ceiling when expanded');
+    assert.ok(bigText.length < 307200, '...but under it when compact');
+    const up = await call(savePut, freshPlayer, { version: 0, blob: bigText, owner: 'FormatTest' }, '/api/save', 'PUT');
+    assert.equal(up.res.status, 200, 'compact upload accepted: ' + JSON.stringify(up.data));
+
+    for (let i = 0; i < 3; i++) {
+      const u = await call(gmPlayer, gm, { id: freshId, action: 'unlock' }, '/api/gm/player');
+      assert.equal(u.res.status, 200, 'GM unlock ' + i + ': ' + JSON.stringify(u.data));
+    }
+    const row = sqlite.prepare('SELECT blob FROM saves WHERE user_id=?').get(freshId).blob;
+    const hist = sqlite.prepare('SELECT version, LENGTH(blob) n FROM save_history WHERE user_id=?').all(freshId);
+    assert.ok(row.length <= 307200, 'the live row stayed under the ceiling (' + row.length + ' B)');
+    assert.ok(hist.every(h => h.n <= 307200), 'no oversized blob entered history: ' + hist.map(h => h.n).join(','));
+    assert.ok(Array.isArray(JSON.parse(row).inv[0]), 'the row is still compact after GM edits');
+
+    for (const h of hist) {
+      const r = await call(gmPlayer, gm, { id: freshId, action: 'restore', version: h.version }, '/api/gm/player');
+      assert.notEqual(r.res.status, 413, 'restoring v' + h.version + ' must not be refused as too large');
+    }
+    const after = JSON.parse(sqlite.prepare('SELECT blob FROM saves WHERE user_id=?').get(freshId).blob);
+    const u = unpackSave(after);
+    assert.equal(u.inv.length, 850, 'every item survived the GM edits');
+    assert.equal(u.cards.length, 450, 'every card survived');
+    assert.equal(u.fishing.bag.length, 400, 'every fish survived');
+  });
+
+  await test('a GM edit on an OLD save does not upgrade it to the compact format', async () => {
+    // An old page build cannot decode a compact row, and the server now refuses to hand one out.
+    // Converting a legacy row on a GM action would push that page into the "reload" path for no reason.
+    const oldPlayer = (await call(register, '', { u: 'LegacyTest', p: 'test-password-only', email: 'l@example.test' })).res.headers.get('set-cookie').split(';')[0];
+    const oldId = sqlite.prepare('SELECT id FROM users WHERE username=?').get('LegacyTest').id;
+    const legacy = { owner: 'LegacyTest', accountId: oldId, lv: 50, cls: 'Novice', zeny: 1,
+      inv: [{ id: 1, slot: 'armor', tier: 3, val: 100, name: 'Plate', aff: [{ k: 'str', v: 3 }], slots: 1, cards: [], sec: 1, lvl: 1, quality: 1, mp: 0 }],
+      cards: [], fishing: { bag: [{ id: 'f', sp: 'Magikarp', w: 5, mut: null, at: 1, perfect: false, lock: true }] } };
+    const up = await call(savePut, oldPlayer, { version: 0, blob: JSON.stringify(legacy), owner: 'LegacyTest' }, '/api/save', 'PUT');
+    assert.equal(up.res.status, 200, JSON.stringify(up.data));
+    await call(gmPlayer, gm, { id: oldId, action: 'unlock' }, '/api/gm/player');
+    const row = JSON.parse(sqlite.prepare('SELECT blob FROM saves WHERE user_id=?').get(oldId).blob);
+    assert.equal(row.__v, undefined, 'an old-format row must stay old-format');
+    assert.ok(!Array.isArray(row.inv[0]), 'items stay ordinary objects');
+    assert.equal(row.fishing.bag[0].lock, true, 'the fish lock is untouched');
   });
 
   await test('a page load keeps the fishing lock flag', () => {

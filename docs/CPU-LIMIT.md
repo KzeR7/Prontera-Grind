@@ -65,6 +65,30 @@ first pass wrongly passed `prev: null` to the audit, which skips the entire rate
 > helpers that each parse it (owner check, restore stamp, audit) turned 3 parses into **5**, which
 > ate the entire CPU saving of the smaller format. `parseStamp` now memoises the last blob it read,
 > and the audit takes the already-read top-level view instead of re-reading the row.
+>
+> **Whole-request measurement, not just parse+rebuild.** The review was right that a "24% less CPU"
+> figure covering only `JSON.parse` and the codec says nothing about what the Free plan actually bills.
+> Profiling a complete accepted `PUT /api/save` - auth, session lookup, envelope parse, `checkSaveBlob`,
+> `unpackSave`, the audits, the D1 write and the response - with `process.cpuUsage()` over 21 runs
+> (median, harness serialisation excluded) gives, at 600 items / 300 cards / 500 fish:
+>
+> | | upload | whole-request CPU |
+> | --- | ---: | ---: |
+> | plain (pre-v414) | 237 KB | **7.97 ms** |
+> | compact (v414) | 120 KB | **5.38 ms** |
+>
+> That is **-2.59 ms / -33% for the entire request**, against a 10 ms Free-plan ceiling. The saving is
+> real but it is not all of the budget: the per-request floor (auth, session, audit plumbing, D1, the
+> JSON envelope) does not shrink with the payload, and at the reported account's real size the compact
+> form lands at roughly 5.4 ms of the 10 ms - comfortable, but not the several-fold headroom that a
+> parse-only measurement would suggest. Below roughly 100 KB of payload the format is no longer the
+> dominant cost and further codec work buys little; above it, it is.
+>
+> **The largest accounts are still the risk.** A save that is legal in both forms has to stay under the
+> ceiling *as plain text* to be comparable at all, and the reported account's 370 KB plain blob is
+> already refused (413) - which is the original bug. For those accounts only the compact arm exists, so
+> the honest statement is: v414 moves the reported account from "cannot sync" to ~5.4 ms and ~184 KB,
+> and the margin shrinks again for a genuinely maximum account (see the size ceiling section).
 
 Instrumenting `JSON.parse`/`JSON.stringify` over one accepted `PUT /api/save` measured **6 parses of
 the blob and 2 stringifies** *at the time of writing*, because each helper re-read the same string:

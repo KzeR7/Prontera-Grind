@@ -3428,7 +3428,12 @@ const saveIsMine=raw=>{const id=saveAccountIdOf(raw);return !!(id&&CLOUD.id&&id=
 //
 // SAFETY: a save with no `__v` is an OLD save and is returned completely untouched - never read,
 // never rewritten, never upgraded in place. Old saves keep loading for ever.
-const SAVE_CODEC_VERSION=1;
+const SAVE_CODEC_VERSION=2;
+// v414 client capability: the percentage of a page's build that knows how to DECODE a compact save.
+// A server holding a compact row must not hand it to a page that cannot read it - the old loader
+// turns tuple rows into "not an item" and a tuple fish into no fish at all, and the next upload then
+// persists that loss. Every request carries the number this page was built with.
+const SAVE_FORMAT=110;
 const CODEC_NUL='\u0000';                        // "this key was absent"; never a real value in a save
 const CODEC_BITEM=['id','slot','wt','tier','val','name','aff','slots','cards','sec','lvl','quality','mp'];
 const CODEC_BCARD=['card','cardVersion','cardKey','family','n','stat','v','effects','fit','g','bossCard','map','nightmare','id'];
@@ -3455,7 +3460,7 @@ function cPackItem(it){
   if(!it||typeof it!=='object'||Array.isArray(it))return it;
   const t=CODEC_BITEM.map(k=>cPack(it[k]));
   t[6]=Array.isArray(it.aff)?it.aff.map(cPairOf):cPack(undefined);  // the largest item field: {k,v} -> [k,v]
-  t[8]=Array.isArray(it.cards)?it.cards:cPack(undefined);
+  t[8]=Array.isArray(it.cards)?it.cards.map(cPackCard):cPack(undefined);   // v2: socketed cards compact too
   const x=cExtras(it,CODEC_ITEM_KEYS);if(x)t.push(x);   // an unknown field survives verbatim
   return t}
 function cUnpackItem(t){
@@ -3464,11 +3469,17 @@ function cUnpackItem(t){
   if(!Array.isArray(t))return t;
   return cFromTuple(t,CODEC_BITEM,(o)=>{
     if(Array.isArray(t[6]))o.aff=t[6].map(cObjectOf);
-    if(Array.isArray(t[8]))o.cards=t[8];
+    if(Array.isArray(t[8]))o.cards=t[8].map(cUnpackCard);
   })}
+// v2: a card's `n` is a pure function of the two fields stored right next to it, so it is written as
+// NUL and rebuilt on read. `family` stays: it is only derivable from cardKey via the static
+// CARD_CATALOG, which this codec does not own. A card whose n does not follow the rule keeps its copy.
+const cCardNameDerivable=c=>typeof c.family==='string'&&c.family.length>0&&typeof c.n==='string'
+  &&c.n===(c.nightmare===true?'Nightmare '+c.family:c.family);
 function cPackCard(c){
   if(!c||typeof c!=='object'||Array.isArray(c))return c;
-  const t=CODEC_BCARD.map(k=>cPack(c[k]));
+  const dropName=cCardNameDerivable(c);
+  const t=CODEC_BCARD.map(k=>(dropName&&k==='n')?CODEC_NUL:cPack(c[k]));
   t[7]=Array.isArray(c.effects)?c.effects.map(cPairOf):cPack(undefined);
   const x=cExtras(c,CODEC_CARD_KEYS);if(x)t.push(x);return t}
 function cUnpackCard(t){
@@ -3477,6 +3488,8 @@ function cUnpackCard(t){
   if(!Array.isArray(t))return t;
   return cFromTuple(t,CODEC_BCARD,(o)=>{
     if(Array.isArray(t[7]))o.effects=t[7].map(cObjectOf);
+    // v2: rebuild the name that was left out; a card without `family` is left exactly as stored.
+    if(o.family!==undefined&&o.n===undefined)o.n=o.nightmare===true?'Nightmare '+o.family:o.family;
   })}
 function cPackFish(f){
   if(!f||typeof f!=='object'||Array.isArray(f))return f;
@@ -4170,7 +4183,8 @@ function cloudBadgeStale(why){
 }
 function cloudLoginLine(txt){const e=$('loginCloud');if(e)e.textContent=txt||''}
 async function cloudFetch(path,opt){
-  const o=opt||{},hdrs=Object.assign({'Content-Type':'application/json'},CLOUD.previewToken?{'X-Preview-Session':CLOUD.previewToken}:null,o.headers||{});
+  const o=opt||{},hdrs=Object.assign({'Content-Type':'application/json','X-Save-Format':String(SAVE_FORMAT)},
+    CLOUD.previewToken?{'X-Preview-Session':CLOUD.previewToken}:null,o.headers||{});
   const epoch=CLOUD.epoch||0;
   // v328: every request gets a deadline. A fetch sitting on a socket the network has already dropped
   // never settles by itself, and cloudPush holds CLOUD.pushing until it does - so one dead request used
