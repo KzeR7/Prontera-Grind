@@ -105,6 +105,10 @@ const WEP = ['sword', 'dagger', 'katar', 'staff', 'bow', 'axe', 'mace'];
 // ---- 1. the catalogue itself -------------------------------------------------
 // haven-v409: an expanded-roster family is the kin of a shipped one and drops wherever its kin drops (kinDrop).
 const KIN={spear:'sword',book:'staff',knuckle:'mace',instrument:'bow',whip:'bow',shuriken:'dagger',gun:'bow'};
+// haven-v417: the seven expanded families (NEWWEP) now have real shelf entries of their own on the
+// Nightmare rows and the Ascension maps, so a section may legitimately name 14 families, not 7.
+const NEWWEP=['spear','book','knuckle','instrument','whip','shuriken','gun'];
+const ALLWEP=[...WEP,...NEWWEP];
 t('ten maps, four job sections each, all of them populated', () => {
   assert.strictEqual(G.MAPS.length, 12, 'map count');
   assert.strictEqual(G.GEAR.length, 10, 'gear set count - one per map');
@@ -125,7 +129,7 @@ t('every section has weapons and its available armour/accessory slots', () => {
     const where = mp.n + ' section ' + sec;
     const wt = Object.keys(sg.w);
     assert.ok(wt.length >= 1, where + ': no weapon at all');
-    wt.forEach(k => assert.ok(WEP.includes(k), where + ': unknown weapon type ' + k));
+    wt.forEach(k => assert.ok(ALLWEP.includes(k), where + ': unknown weapon type ' + k));
     assert.ok(sg.w[wt[0]], where + ': empty weapon name');
     ['a', 'h', 'l', 'ac', 'ac2'].forEach(k => assert.ok(sg[k] && sg[k].length > 2, where + ': missing ' + k));
     if(mp.n==='Prontera'&&sec===0)assert.ok(!sg.o,'Novice cannot equip the shield slot');
@@ -446,9 +450,17 @@ t('N and N+ by tier (v90.10): the weapon walk is back on every map, and the N+ h
   assert.ok(Math.abs(total - G.FIELD_GEAR_MID_NM[0] * G.NMPLUS_DROP) < 1e-3, 'Abyss N+ weapon chance is half the Nightmare table, got ' + total);
   const totalN = G.fieldOf(0, 14).mobs[0].drops.filter(([T]) => isW(T)).reduce((a, [, c]) => a + c, 0);
   assert.ok(Math.abs(totalN - G.FIELD_GEAR_NM[0]) < 1e-3, 'Prontera N weapon chance is the full Nightmare table (no halving on tier 1), got ' + totalN);
-  // the MVP pool is halved as well (v89): 300 x .5 = 150 spread over the whole pool
-  const bossTotal = G.fieldOf(9, 15).boss.drops.reduce((a, [, c]) => a + c, 0);
-  assert.ok(Math.abs(bossTotal - 1.5) < 0.1, 'the Stage 5 MVP pool must total about 1.5% (13 entries, each rounded to .01), got ' + bossTotal.toFixed(3));
+  // the MVP pool is halved as well (v89): 300 x .5 = 150 spread over the whole pool.
+  // haven-v417: the pool now holds 20 entries (7 shipped families + 7 expanded + armour/head/leg/
+  // accessories) instead of 13, so each entry rounds to a coarser .01 step. The *intent* is 150
+  // over the pool; the achieved total is that intent rounded per entry, so compare against it
+  // rather than a fixed 1.5 that only held for exactly 13 entries.
+  const bossDrops = G.fieldOf(9, 15).boss.drops, nb = bossDrops.length;
+  const bossTotal = bossDrops.reduce((a, [, c]) => a + c, 0);
+  const perEntry = Math.round(150 / nb) / 100, wantBoss = nb * perEntry;
+  assert.strictEqual(nb, 20, 'the N+ MVP pool carries all 14 families plus armour, head, legs and two accessories');
+  assert.ok(Math.abs(bossTotal - wantBoss) < 1e-9, 'the Stage 5 MVP pool must total ' + wantBoss.toFixed(2) + '% (' + nb + ' entries at .' + String(Math.round(150 / nb)).padStart(2, '0') + ' each), got ' + bossTotal.toFixed(3));
+  assert.ok(Math.abs(bossTotal - 1.5) < 0.15, 'the Stage 5 MVP pool stays near the intended 1.5%, got ' + bossTotal.toFixed(3));
   // and the N+ table is one half of the Nightmare table it used to be, in both bands
   assert.strictEqual(G.NMPLUS_DROP, .5, 'the N+ nerf is one half');
 });

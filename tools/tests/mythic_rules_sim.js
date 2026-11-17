@@ -14,9 +14,24 @@ try{
   assert.equal(ev('crit()*.5'),60,'boss resistance uses the full 120%');
   ev('S.inv.push(S.eq.armor);S.eq.armor=null');assert.equal(ev('crit()'),100);
  });
- test('every Astral and Thor stage is equipment-free, including MVPs',()=>{
-  assert.equal(ev(`MAPS.slice(10).every((_,i)=>Array.from({length:5},(_,j)=>fieldOf(i+10,j+1)).every(f=>f.mobs.concat(f.boss?[f.boss]:[]).every(m=>m.drops.length===0)))`),true);
-  assert.equal(ev('gearPool(10,1).length+gearPool(11,5).length'),0);
+ test('every Astral and Thor stage now carries a real gear shelf, including the MVPs',()=>{
+  // haven-v417 (owner): the Ascension maps used to be equipment-free so the Forge was the only way
+  // to get Mythic gear. They now drop a shelf of their own - Astral the Nightmare tier (N on Stages
+  // 1-3, N+ on 4-5) and Thor the Mythic/Primal tier - across all fourteen weapon families, while
+  // the Forge is untouched below.
+  assert.equal(ev('MAPS.slice(10).every((_,i)=>Array.from({length:5},(_,j)=>fieldOf(i+10,j+1)).every(f=>f.mobs.every(m=>m.drops.length>0)))'),true);
+  {
+    let mvpOk = true;
+    for (const m of [10, 11]) for (let l = 1; l <= 5; l++) {
+      const bossLen = ev(`(()=>{const f=fieldOf(${m},${l});return f.boss?f.boss.drops.length:-1})()`);
+      if (l === 5) assert.equal(bossLen, ev(`gearPool(${m},${l}).length`), 'map ' + m + ' Stage 5 MVP lists its whole shelf');
+      else assert.equal(bossLen, -1, 'map ' + m + ' Stage ' + l + ' has no MVP');
+    }
+    assert.ok(mvpOk);
+  }
+  assert.equal(ev('gearPool(10,1).length+gearPool(11,5).length'),40,'20 items per shelf, both maps');
+  // the sections are the real gear gates, not the materials placeholder
+  assert.equal(ev('[gearPool(10,1)[0].sec,gearPool(10,4)[0].sec,gearPool(11,1)[0].sec].join()'),'4,5,6');
  });
  test('Ascension Forge crafts Mythic using the exact material and Zeny cost',()=>{
   ev("S=fresh();S.cls='Rune Knight';S.lv=150;S.ascensionMat=[1000,1000,1000];S.zeny=1e9");

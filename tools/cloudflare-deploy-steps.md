@@ -135,11 +135,7 @@ Open the `*.pages.dev` address Cloudflare gives the project, and walk this list:
 | Check | Expected |
 |---|---|
 | The login card | says **“☁ Cloud accounts are on — register or sign in…”** |
-| Build tag at the bottom of the card | `2026-11-15 haven-v416 half a tile more reach for Shadow Chaser, Kagerou & Oboro, Rebellion and Maestro & Wanderer; Sorcerer Spell Fist bolts trimmed and the class refitted; Asura Strike cooldown 6s and Sky Net Blow in the Sura rotation` || Register your own name and email | a dialog with a **recovery code** — copy it somewhere safe; email is not verified yet |
-| Play for a minute | the header badge goes `☁ …` → `☁ ✓` |
-| The same address in a second browser | sign in with the same name and password → **the same character loads** |
-| `/gm.html` | after deliberate D1 owner provisioning, the GM console lists players and shows **👑 owner** |
-| `https://<your-site>/api/me` while signed out | `{"err":"Not logged in."}` with HTTP 401 — JSON, not an HTML page |
+| Build tag at the bottom of the card | `2026-11-15 haven-v417 new equipment: the Nightmare N rows of all ten maps carry the seven expanded weapon families as real items (their N+ exists only on Astral Citadel), and Astral Citadel and Thor Volcano now drop equipment - Astral the Nightmare tier, Thor the Mythic/Primal tier, all fourteen families on each; a Nightmare kin drop hands over the family N piece instead of minting an N+<your-site>/api/me` while signed out | `{"err":"Not logged in."}` with HTTP 401 — JSON, not an HTML page |
 
 That second-browser line is the entire point of the shift: it is progress following the player
 instead of the browser.
