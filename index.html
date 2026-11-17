@@ -925,9 +925,9 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="stylesheet" href="assets/ui/mobile.css?v=324">
 <script src="assets/ui/mobile.js?v=274"></script>
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
-<link rel="stylesheet" href="assets/social.css?v=413">
+<link rel="stylesheet" href="assets/social.css?v=414">
 <link rel="stylesheet" href="assets/social-battle.css?v=393">
-  <link rel="stylesheet" href="assets/social-fishing.css?v=413"><link rel="stylesheet" href="assets/friends.css?v=273">
+  <link rel="stylesheet" href="assets/social-fishing.css?v=414"><link rel="stylesheet" href="assets/friends.css?v=273">
 </head>
 <body>
 <div id="loginOverlay"><div class="eclipse-login-world" aria-hidden="true"></div><header class="eclipse-login-header"><a href="./" class="eclipse-brand"><span>HH</span><b>HORIZON HAVEN<small>YOUR IDLE ADVENTURE</small></b></a><div class="eclipse-palettes" role="group" aria-label="Interface palette"><button type="button" data-palette="moonstone">Moonstone</button><button type="button" data-palette="aurora">Aurora</button><button type="button" data-palette="ember">Ember</button></div></header><main class="eclipse-login-layout"><section class="login-brand"><div class="login-eyebrow">A WORLD WORTH RETURNING TO</div><h1>Your next <br>chapter <em>awaits.</em></h1><p>Explore a world beyond the horizon.<br>Collect rare gear, master every class, and build your haven.</p><div class="eclipse-login-art"><img src="assets/ui/eclipse-knight.png" alt="Lord Knight ready for adventure"><span>01 / PRONTERA<small>THE JOURNEY BEGINS HERE</small></span><div><img src="assets/equipment-icons/1142.png" alt=""><span>YOUR NEXT UPGRADE<small>Somewhere out there.</small></span></div></div><div class="login-footnote">EXPLORE · GROW · CONQUER</div></section><div class="login-card"><div class="eclipse-access">ADVENTURER ACCESS <span>◇</span></div><h2 id="authHeading">Welcome back.</h2><p class="login-intro" id="authIntro">Your adventure is right where you left it.</p><div class="atabs" id="authTabs"><button type="button" id="tabLogin" class="on">Login</button><button type="button" id="tabReg">Register</button></div>
@@ -1325,7 +1325,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-16 haven-v413 a save too large to sync is refused cheaply and paid out instead of being killed, and a bag over its cap is sold at full value instead of being deleted';
+const BUILD='2026-11-16 haven-v414 a save stores items, cards and fish compactly so a big account fits and syncs instead of being refused, and every old save still loads exactly as it did';
 // v364: this write used to sit AFTER the `//` on the BUILD line, so it was part of the comment and
 // never ran - the login card showed an empty #buildTag and there was no way to confirm which file
 // the browser had loaded. It also has to survive the script running before the login card exists.
@@ -3405,7 +3405,218 @@ const saveIsMine=raw=>{const id=saveAccountIdOf(raw);return !!(id&&CLOUD.id&&id=
 // every five seconds with a fresh `at` - none of them is progress. Comparing gmStats made EVERY device
 // copy differ from its own uploaded copy, so a login could never recognise "this is the same save" and
 // always fell through to the account copy (see cloudJoin).
-const sameSave=(a,b)=>{if(a===b)return true;try{const x=JSON.parse(a),y=JSON.parse(b);for(const k of['owner','cloud','gmStats']){delete x[k];delete y[k]}return JSON.stringify(x)===JSON.stringify(y)}catch(e){return false}};
+// ---------------------------------------------------------------------------------------------
+// v414 save compaction. The cloud blob stores items, cards and fish POSITIONALLY (a tuple, no key
+// names) and these functions rebuild the ordinary objects the rest of the game already expects.
+// Nothing else in the game changes: it only ever sees the shape it has always seen.
+//
+// WHY: a save is JSON, so `"slot":"armor"` writes the 8-byte word `slot` once per item and a card
+// writes `"cardVersion":1` on every row. At BAGMAX 1000 + CARDMAX 1000 those key names are about
+// half the blob, and the blob's SIZE is what the free plan's 10 ms CPU budget is spent on because
+// the server parses it on every sync. Measured: 340 KB parses in 1.246 ms, the same save compacted
+// to 146 KB parses in 0.632 ms; after paying for the rebuild the net is 24% less CPU per sync, and
+// the smaller blob is what lets a big account fit under the size ceiling at all.
+//
+// THE FIELD LISTS ARE NOT GUESSED. They are copied from the constructors that build these objects:
+//   genGear()        -> id,slot,wt,tier,val,name,aff,slots,cards,sec,lvl,quality,mp
+//   cardDefinition() -> card,cardVersion,cardKey,family,n,stat,v,effects,fit,g,bossCard,map,nightmare
+//   newCard()        -> ...that, plus id
+//   addCatch()       -> id,sp,w,mut,at,perfect,lock
+// An earlier attempt used invented card keys and made cards 12% BIGGER. If a future build adds a
+// field, it travels in the trailing extras object instead of being dropped, and the test suite
+// (tools/tests/save_codec_real_sim.mjs) fails if these lists stop matching the game.
+//
+// SAFETY: a save with no `__v` is an OLD save and is returned completely untouched - never read,
+// never rewritten, never upgraded in place. Old saves keep loading for ever.
+const SAVE_CODEC_VERSION=3;
+// v414 client capability: the percentage of a page's build that knows how to DECODE a compact save.
+// A server holding a compact row must not hand it to a page that cannot read it - the old loader
+// turns tuple rows into "not an item" and a tuple fish into no fish at all, and the next upload then
+// persists that loss. Every request carries the number this page was built with.
+const SAVE_FORMAT=111;   // 111 = this build decodes codec __v 3; 110 and below only decode __v 1-2
+const CODEC_NUL='\u0000';                        // "this key was absent"; never a real value in a save
+const CODEC_BITEM=['id','slot','wt','tier','val','name','aff','slots','cards','sec','lvl','quality','mp'];
+const CODEC_BCARD=['card','cardVersion','cardKey','family','n','stat','v','effects','fit','g','bossCard','map','nightmare','id'];
+const CODEC_BFISH=['id','sp','w','mut','at','perfect','lock'];
+const CODEC_ITEM_KEYS=new Set(CODEC_BITEM), CODEC_CARD_KEYS=new Set(CODEC_BCARD), CODEC_FISH_KEYS=new Set(CODEC_BFISH);
+const cPack=v=>v===undefined?CODEC_NUL:v, cUnpack=v=>v===CODEC_NUL?undefined:v;
+// An affix/effect is {k,v}, but a newer build may hang more fields on it. Anything carrying more than
+// k/v keeps a third slot with the rest, so the promise "an unknown field survives" holds for them too.
+const cPairOf=p=>{if(!p||typeof p!=='object'||Array.isArray(p))return p;
+  const ks=Object.keys(p).filter(k=>p[k]!==undefined);
+  if(ks.length<=2&&p.k!==undefined&&p.v!==undefined)return[p.k,p.v];
+  const rest=Object.assign({},p);delete rest.k;delete rest.v;return[p.k,p.v,rest]};
+const cObjectOf=p=>{if(!Array.isArray(p))return p;const o={k:p[0],v:p[1]};
+  if(p[2]&&typeof p[2]==='object'&&!Array.isArray(p[2]))Object.assign(o,p[2]);return o};
+function cExtras(o,known){let x=null;for(const k of Object.keys(o)){if(known.has(k)||o[k]===undefined)continue;(x||(x={}))[k]=o[k]}return x}
+// Rebuild one tuple row. `rebuild` restores the nested shapes that were compacted, and keeps an
+// ABSENT list absent (a NUL slot) rather than turning it into [] - the repair code distinguishes them.
+function cFromTuple(t,list,rebuild){
+  const o={};for(let i=0;i<list.length;i++){const v=cUnpack(t[i]);if(v!==undefined)o[list[i]]=v}
+  if(rebuild)rebuild(o,t);
+  const x=t[list.length];if(x&&typeof x==='object')Object.assign(o,x);
+  return o}
+function cPackItem(it){
+  if(!it||typeof it!=='object'||Array.isArray(it))return it;
+  const t=CODEC_BITEM.map(k=>cPack(it[k]));
+  t[6]=Array.isArray(it.aff)?it.aff.map(cPairOf):cPack(undefined);  // the largest item field: {k,v} -> [k,v]
+  t[8]=Array.isArray(it.cards)?it.cards.map(cPackCard):cPack(undefined);   // v2: socketed cards compact too
+  const x=cExtras(it,CODEC_ITEM_KEYS);if(x)t.push(x);   // an unknown field survives verbatim
+  return t}
+function cUnpackItem(t){
+  // A row that is NOT a tuple (a null hole, a string, an object from an older format) is handed
+  // back untouched. Without this a single bad entry threw inside unpackSave on EVERY page load.
+  if(!Array.isArray(t))return t;
+  return cFromTuple(t,CODEC_BITEM,(o)=>{
+    if(Array.isArray(t[6]))o.aff=t[6].map(cObjectOf);
+    if(Array.isArray(t[8]))o.cards=t[8].map(cUnpackCard);
+  })}
+// v2: a card's `n` is a pure function of the two fields stored right next to it, so it is written as
+// NUL and rebuilt on read. `family` stays: it is only derivable from cardKey via the static
+// CARD_CATALOG, which this codec does not own. A card whose n does not follow the rule keeps its copy.
+const cCardNameDerivable=c=>typeof c.family==='string'&&c.family.length>0&&typeof c.n==='string'
+  &&c.n===(c.nightmare===true?'Nightmare '+c.family:c.family);
+
+// ---- v3: a modern card is a catalog row plus an id and optional stars -------------------------------
+// repairProgression() already rewrites family/n/stat/v/effects/fit/g/bossCard/map/nightmare out of
+// CARD_CATALOG on every load, so those fields are a cache. v3 stores [catalogIndex, id, stars] and
+// rebuilds them. The table is generated from CARD_CATALOG itself, so it cannot disagree with the game;
+// functions/_lib/card-catalog.js holds the same rows and save_codec_catalog_sim.mjs fails if they drift.
+// A card that does not match its row exactly keeps the full v2 tuple, so nothing is ever renamed.
+const CODEC_CARD_ROWS=[[1,"0:0:0","Poring Card","luk",3,[["luk",3]],["acc"],0,0,0,0],[2,"0:0:1","Poring Card","luk",4,[["luk",4]],["acc"],0,0,0,1],[3,"0:10:0","Mastering Card","hpPct",5,[["hpPct",5]],["armor","head","off"],3,1,0,0],[4,"0:10:1","Mastering Card","hpPct",6,[["hpPct",6]],["armor","head","off"],3,1,0,1],[5,"0:1:0","Fabre Card","hp",50,[["hp",50]],["head","armor"],0,0,0,0],[6,"0:1:1","Fabre Card","hp",63,[["hp",63]],["head","armor"],0,0,0,1],[7,"0:2:0","Lunatic Card","agi",3,[["agi",3]],["armor","leg","acc"],0,0,0,0],[8,"0:2:1","Lunatic Card","agi",4,[["agi",4]],["armor","leg","acc"],0,0,0,1],[9,"0:3:0","Drops Card","dex",3,[["dex",3]],["weapon","acc"],0,0,0,0],[10,"0:3:1","Drops Card","dex",4,[["dex",4]],["weapon","acc"],0,0,0,1],[11,"0:4:0","Chonchon Card","move",3,[["move",3]],["leg","acc"],0,0,0,0],[12,"0:4:1","Chonchon Card","move",4,[["move",4]],["leg","acc"],0,0,0,1],[13,"0:5:0","Willow Card","int",3,[["int",3],["matk",4]],["weapon","head","acc"],0,0,0,0],[14,"0:5:1","Willow Card","int",4,[["int",4],["matk",4]],["weapon","head","acc"],0,0,0,1],[15,"0:6:0","Rocker Card","str",3,[["str",3]],["weapon","acc"],0,0,0,0],[16,"0:6:1","Rocker Card","str",4,[["str",4]],["weapon","acc"],0,0,0,1],[17,"0:7:0","Poporing Card","vit",3,[["vit",3]],["armor","off","head"],0,0,0,0],[18,"0:7:1","Poporing Card","vit",4,[["vit",4]],["armor","off","head"],0,0,0,1],[19,"0:8:0","Savage Bebe Card","hpPct",4,[["hpPct",4]],["armor","head","off"],0,0,0,0],[20,"0:8:1","Savage Bebe Card","hpPct",5,[["hpPct",5]],["armor","head","off"],0,0,0,1],[21,"0:9:0","Peco Peco Card","move",3,[["move",3]],["leg","acc"],0,0,0,0],[22,"0:9:1","Peco Peco Card","move",4,[["move",4]],["leg","acc"],0,0,0,1],[23,"10:0:0","Retribution Angel Card","matk",6,[["matk",6]],["weapon","head"],2,0,10,0],[24,"10:1:0","Despair Phantom Card","mdef",30,[["mdef",30]],["head","armor","off"],2,0,10,0],[25,"10:2:0","Tower Watcher Card","def",30,[["def",30]],["armor","off","leg"],2,0,10,0],[26,"10:3:0","Death Whisperer Card","int",18,[["int",18]],["weapon","head","acc"],2,0,10,0],[27,"10:4:0","Agony Demon Card","atk",16,[["atk",16]],["weapon"],2,0,10,0],[28,"10:5:0","Memory of Thanatos Card","matk",8,[["matk",8]],["weapon","head"],3,1,10,0],[29,"11:0:0","Magma Slag Card","hpPct",8,[["hpPct",8]],["armor","head","off"],2,0,11,0],[30,"11:1:0","Fire Imp Card","field",12,[["field",12]],["weapon","acc"],2,0,11,0],[31,"11:2:0","Kasa Card","matk",6,[["matk",6]],["weapon","head"],2,0,11,0],[32,"11:3:0","Salamander Card","aspd",10,[["aspd",10]],["armor","leg"],2,0,11,0],[33,"11:4:0","Obsidian Golem Card","def",30,[["def",30]],["armor","off","leg"],2,0,11,0],[34,"11:5:0","Ifrit Card","atk",20,[["atk",20]],["weapon"],3,1,11,0],[35,"1:0:0","Marina Card","matk",3,[["matk",3]],["weapon","head"],1,0,1,0],[36,"1:0:1","Marina Card","matk",4,[["matk",4]],["weapon","head"],1,0,1,1],[37,"1:10:0","Drake Card","atk",8,[["atk",8]],["weapon"],3,1,1,0],[38,"1:10:1","Drake Card","atk",10,[["atk",10]],["weapon"],3,1,1,1],[39,"1:1:0","Pupa Card","hpPct",6,[["hpPct",6]],["armor","head","off"],1,0,1,0],[40,"1:1:1","Pupa Card","hpPct",8,[["hpPct",8]],["armor","head","off"],1,0,1,1],[41,"1:2:0","Crab Card","def",8,[["def",8]],["armor","off","leg"],1,0,1,0],[42,"1:2:1","Crab Card","def",10,[["def",10]],["armor","off","leg"],1,0,1,1],[43,"1:3:0","Sea Otter Card","agi",6,[["agi",6]],["armor","leg","acc"],1,0,1,0],[44,"1:3:1","Sea Otter Card","agi",8,[["agi",8]],["armor","leg","acc"],1,0,1,1],[45,"1:4:0","Muka Card","vit",6,[["vit",6]],["armor","off","head"],1,0,1,0],[46,"1:4:1","Muka Card","vit",8,[["vit",8]],["armor","off","head"],1,0,1,1],[47,"1:5:0","Anacondaq Card","crit",2,[["crit",2]],["weapon","acc"],1,0,1,0],[48,"1:5:1","Anacondaq Card","crit",3,[["crit",3]],["weapon","acc"],1,0,1,1],[49,"1:6:0","Thief Bug Card","aspd",5,[["aspd",5]],["armor","leg"],1,0,1,0],[50,"1:6:1","Thief Bug Card","aspd",6,[["aspd",6]],["armor","leg"],1,0,1,1],[51,"1:7:0","Marse Card","int",6,[["int",6]],["weapon","head","acc"],1,0,1,0],[52,"1:7:1","Marse Card","int",8,[["int",8]],["weapon","head","acc"],1,0,1,1],[53,"1:8:0","Ambernite Card","def",8,[["def",8]],["armor","off","leg"],1,0,1,0],[54,"1:8:1","Ambernite Card","def",10,[["def",10]],["armor","off","leg"],1,0,1,1],[55,"1:9:0","Kukre Card","dex",6,[["dex",6]],["weapon","acc"],1,0,1,0],[56,"1:9:1","Kukre Card","dex",8,[["dex",8]],["weapon","acc"],1,0,1,1],[57,"2:0:0","Skeleton Card","atk",6,[["atk",6]],["weapon"],1,0,2,0],[58,"2:0:1","Skeleton Card","atk",8,[["atk",8]],["weapon"],1,0,2,1],[59,"2:10:0","Baphomet Card","matk",4,[["matk",4]],["weapon","head"],3,1,2,0],[60,"2:10:1","Baphomet Card","matk",5,[["matk",5]],["weapon","head"],3,1,2,1],[61,"2:1:0","Zombie Card","vit",6,[["vit",6]],["armor","off","head"],1,0,2,0],[62,"2:1:1","Zombie Card","vit",8,[["vit",8]],["armor","off","head"],1,0,2,1],[63,"2:2:0","Ghoul Card","str",6,[["str",6]],["weapon","acc"],1,0,2,0],[64,"2:2:1","Ghoul Card","str",8,[["str",8]],["weapon","acc"],1,0,2,1],[65,"2:3:0","Poison Spore Card","hp",100,[["hp",100]],["head","armor"],1,0,2,0],[66,"2:3:1","Poison Spore Card","hp",125,[["hp",125]],["head","armor"],1,0,2,1],[67,"2:4:0","Whisper Card","matk",3,[["matk",3]],["weapon","head"],1,0,2,0],[68,"2:4:1","Whisper Card","matk",4,[["matk",4]],["weapon","head"],1,0,2,1],[69,"2:5:0","Bat Familiar Card","move",3,[["move",3]],["leg","acc"],1,0,2,0],[70,"2:5:1","Bat Familiar Card","move",4,[["move",4]],["leg","acc"],1,0,2,1],[71,"2:6:0","Dark Priest Card","int",6,[["int",6]],["weapon","head","acc"],1,0,2,0],[72,"2:6:1","Dark Priest Card","int",8,[["int",8]],["weapon","head","acc"],1,0,2,1],[73,"2:7:0","Wraith Card","mdef",8,[["mdef",8]],["head","armor","off"],1,0,2,0],[74,"2:7:1","Wraith Card","mdef",10,[["mdef",10]],["head","armor","off"],1,0,2,1],[75,"2:8:0","Evil Druid Card","matk",3,[["matk",3]],["weapon","head"],1,0,2,0],[76,"2:8:1","Evil Druid Card","matk",4,[["matk",4]],["weapon","head"],1,0,2,1],[77,"2:9:0","Marionette Card","crit",2,[["crit",2]],["weapon","acc"],1,0,2,0],[78,"2:9:1","Marionette Card","crit",3,[["crit",3]],["weapon","acc"],1,0,2,1],[79,"3:0:0","Scorpion Card","crit",2,[["crit",2]],["weapon","acc"],1,0,3,0],[80,"3:0:1","Scorpion Card","crit",3,[["crit",3]],["weapon","acc"],1,0,3,1],[81,"3:10:0","Phreeoni Card","crit",3,[["crit",3]],["weapon","acc"],3,1,3,0],[82,"3:10:1","Phreeoni Card","crit",4,[["crit",4]],["weapon","acc"],3,1,3,1],[83,"3:1:0","Sand Man Card","def",8,[["def",8]],["armor","off","leg"],1,0,3,0],[84,"3:1:1","Sand Man Card","def",10,[["def",10]],["armor","off","leg"],1,0,3,1],[85,"3:2:0","Desert Wolf Card","field",8,[["field",8]],["weapon","acc"],1,0,3,0],[86,"3:2:1","Desert Wolf Card","field",10,[["field",10]],["weapon","acc"],1,0,3,1],[87,"3:3:0","Cactus Card","vit",6,[["vit",6]],["armor","off","head"],1,0,3,0],[88,"3:3:1","Cactus Card","vit",8,[["vit",8]],["armor","off","head"],1,0,3,1],[89,"3:4:0","Pasana Card","str",6,[["str",6]],["weapon","acc"],1,0,3,0],[90,"3:4:1","Pasana Card","str",8,[["str",8]],["weapon","acc"],1,0,3,1],[91,"3:5:0","Horn Card","def",8,[["def",8]],["armor","off","leg"],1,0,3,0],[92,"3:5:1","Horn Card","def",10,[["def",10]],["armor","off","leg"],1,0,3,1],[93,"3:6:0","Mummy Card","hpPct",6,[["hpPct",6]],["armor","head","off"],1,0,3,0],[94,"3:6:1","Mummy Card","hpPct",8,[["hpPct",8]],["armor","head","off"],1,0,3,1],[95,"3:7:0","Isis Card","agi",6,[["agi",6]],["armor","leg","acc"],1,0,3,0],[96,"3:7:1","Isis Card","agi",8,[["agi",8]],["armor","leg","acc"],1,0,3,1],[97,"3:8:0","Anubis Card","atk",6,[["atk",6]],["weapon"],1,0,3,0],[98,"3:8:1","Anubis Card","atk",8,[["atk",8]],["weapon"],1,0,3,1],[99,"3:9:0","Minorous Card","str",6,[["str",6]],["weapon","acc"],1,0,3,0],[100,"3:9:1","Minorous Card","str",8,[["str",8]],["weapon","acc"],1,0,3,1],[101,"4:0:0","Spore Card","vit",6,[["vit",6]],["armor","off","head"],1,0,4,0],[102,"4:0:1","Spore Card","vit",8,[["vit",8]],["armor","off","head"],1,0,4,1],[103,"4:10:0","Eddga Card","atk",8,[["atk",8]],["weapon"],3,1,4,0],[104,"4:10:1","Eddga Card","atk",10,[["atk",10]],["weapon"],3,1,4,1],[105,"4:1:0","Wolf Card","field",8,[["field",8]],["weapon","acc"],1,0,4,0],[106,"4:1:1","Wolf Card","field",10,[["field",10]],["weapon","acc"],1,0,4,1],[107,"4:2:0","Elder Willow Card","int",6,[["int",6]],["weapon","head","acc"],1,0,4,0],[108,"4:2:1","Elder Willow Card","int",8,[["int",8]],["weapon","head","acc"],1,0,4,1],[109,"4:3:0","Hornet Card","aspd",5,[["aspd",5]],["armor","leg"],1,0,4,0],[110,"4:3:1","Hornet Card","aspd",6,[["aspd",6]],["armor","leg"],1,0,4,1],[111,"4:4:0","Bigfoot Card","hpPct",6,[["hpPct",6]],["armor","head","off"],1,0,4,0],[112,"4:4:1","Bigfoot Card","hpPct",8,[["hpPct",8]],["armor","head","off"],1,0,4,1],[113,"4:5:0","Zenorc Card","agi",6,[["agi",6]],["armor","leg","acc"],1,0,4,0],[114,"4:5:1","Zenorc Card","agi",8,[["agi",8]],["armor","leg","acc"],1,0,4,1],[115,"4:6:0","Skel Archer Card","dex",6,[["dex",6]],["weapon","acc"],1,0,4,0],[116,"4:6:1","Skel Archer Card","dex",8,[["dex",8]],["weapon","acc"],1,0,4,1],[117,"4:7:0","Ancient Worm Card","def",8,[["def",8]],["armor","off","leg"],1,0,4,0],[118,"4:7:1","Ancient Worm Card","def",10,[["def",10]],["armor","off","leg"],1,0,4,1],[119,"4:8:0","Orc Warrior Card","atk",6,[["atk",6]],["weapon"],1,0,4,0],[120,"4:8:1","Orc Warrior Card","atk",8,[["atk",8]],["weapon"],1,0,4,1],[121,"4:9:0","Orc Archer Card","dex",6,[["dex",6]],["weapon","acc"],1,0,4,0],[122,"4:9:1","Orc Archer Card","dex",8,[["dex",8]],["weapon","acc"],1,0,4,1],[123,"5:0:0","Merman Card","atk",10,[["atk",10]],["weapon"],2,0,5,0],[124,"5:0:1","Merman Card","atk",13,[["atk",13]],["weapon"],2,0,5,1],[125,"5:1:0","Sea Witch Card","matk",4,[["matk",4]],["weapon","head"],2,0,5,0],[126,"5:1:1","Sea Witch Card","matk",5,[["matk",5]],["weapon","head"],2,0,5,1],[127,"5:2:0","Coral Crab Card","def",18,[["def",18]],["armor","off","leg"],2,0,5,0],[128,"5:2:1","Coral Crab Card","def",23,[["def",23]],["armor","off","leg"],2,0,5,1],[129,"5:3:0","Giant Eel Card","aspd",8,[["aspd",8]],["armor","leg"],2,0,5,0],[130,"5:3:1","Giant Eel Card","aspd",10,[["aspd",10]],["armor","leg"],2,0,5,1],[131,"5:4:0","Siren Card","crit",3,[["crit",3]],["weapon","acc"],2,0,5,0],[132,"5:4:1","Siren Card","crit",4,[["crit",4]],["weapon","acc"],2,0,5,1],[133,"5:5:0","Deep Jelly Card","hpPct",7,[["hpPct",7]],["armor","head","off"],2,0,5,0],[134,"5:5:1","Deep Jelly Card","hpPct",9,[["hpPct",9]],["armor","head","off"],2,0,5,1],[135,"5:6:0","Kraken Card","field",13,[["field",13]],["weapon","acc"],3,1,5,0],[136,"5:6:1","Kraken Card","field",16,[["field",16]],["weapon","acc"],3,1,5,1],[137,"6:0:0","Jiangshi Card","hpPct",7,[["hpPct",7]],["armor","head","off"],2,0,6,0],[138,"6:0:1","Jiangshi Card","hpPct",9,[["hpPct",9]],["armor","head","off"],2,0,6,1],[139,"6:1:0","Bamboo Fox Card","move",4,[["move",4]],["leg","acc"],2,0,6,0],[140,"6:1:1","Bamboo Fox Card","move",5,[["move",5]],["leg","acc"],2,0,6,1],[141,"6:2:0","Wild Boar Card","str",12,[["str",12]],["weapon","acc"],2,0,6,0],[142,"6:2:1","Wild Boar Card","str",15,[["str",15]],["weapon","acc"],2,0,6,1],[143,"6:3:0","Stone Golem Card","def",18,[["def",18]],["armor","off","leg"],2,0,6,0],[144,"6:3:1","Stone Golem Card","def",23,[["def",23]],["armor","off","leg"],2,0,6,1],[145,"6:4:0","Mantis Card","str",12,[["str",12],["atk",6]],["weapon","acc"],2,0,6,0],[146,"6:4:1","Mantis Card","str",15,[["str",15],["atk",6]],["weapon","acc"],2,0,6,1],[147,"6:5:0","Dragon Pup Card","atk",10,[["atk",10]],["weapon"],2,0,6,0],[148,"6:5:1","Dragon Pup Card","atk",13,[["atk",13]],["weapon"],2,0,6,1],[149,"6:6:0","Dragon Lord Card","atk",13,[["atk",13]],["weapon"],3,1,6,0],[150,"6:6:1","Dragon Lord Card","atk",16,[["atk",16]],["weapon"],3,1,6,1],[151,"7:0:0","Oni Card","atk",10,[["atk",10]],["weapon"],2,0,7,0],[152,"7:0:1","Oni Card","atk",13,[["atk",13]],["weapon"],2,0,7,1],[153,"7:1:0","Kappa Card","def",18,[["def",18]],["armor","off","leg"],2,0,7,0],[154,"7:1:1","Kappa Card","def",23,[["def",23]],["armor","off","leg"],2,0,7,1],[155,"7:2:0","Kitsune Card","move",4,[["move",4]],["leg","acc"],2,0,7,0],[156,"7:2:1","Kitsune Card","move",5,[["move",5]],["leg","acc"],2,0,7,1],[157,"7:3:0","Tengu Card","dex",12,[["dex",12]],["weapon","acc"],2,0,7,0],[158,"7:3:1","Tengu Card","dex",15,[["dex",15]],["weapon","acc"],2,0,7,1],[159,"7:4:0","Yuki Onna Card","matk",4,[["matk",4]],["weapon","head"],2,0,7,0],[160,"7:4:1","Yuki Onna Card","matk",5,[["matk",5]],["weapon","head"],2,0,7,1],[161,"7:5:0","Spirit Lantern Card","mdef",18,[["mdef",18]],["head","armor","off"],2,0,7,0],[162,"7:5:1","Spirit Lantern Card","mdef",23,[["mdef",23]],["head","armor","off"],2,0,7,1],[163,"7:6:0","Shiranui Card","matk",5,[["matk",5]],["weapon","head"],3,1,7,0],[164,"7:6:1","Shiranui Card","matk",6,[["matk",6]],["weapon","head"],3,1,7,1],[165,"8:0:0","Ghost Hound Card","field",12,[["field",12]],["weapon","acc"],2,0,8,0],[166,"8:0:1","Ghost Hound Card","field",15,[["field",15]],["weapon","acc"],2,0,8,1],[167,"8:1:0","Banshee Card","matk",6,[["matk",6]],["weapon","head"],2,0,8,0],[168,"8:1:1","Banshee Card","matk",8,[["matk",8]],["weapon","head"],2,0,8,1],[169,"8:2:0","Death Knight Card","atk",16,[["atk",16]],["weapon"],2,0,8,0],[170,"8:2:1","Death Knight Card","atk",20,[["atk",20]],["weapon"],2,0,8,1],[171,"8:3:0","Bone Worm Card","hpPct",8,[["hpPct",8]],["armor","head","off"],2,0,8,0],[172,"8:3:1","Bone Worm Card","hpPct",10,[["hpPct",10]],["armor","head","off"],2,0,8,1],[173,"8:4:0","Frost Wraith Card","mdef",30,[["mdef",30]],["head","armor","off"],2,0,8,0],[174,"8:4:1","Frost Wraith Card","mdef",38,[["mdef",38]],["head","armor","off"],2,0,8,1],[175,"8:5:0","Soul Eater Card","cdm",20,[["cdm",20]],["acc"],2,0,8,0],[176,"8:5:1","Soul Eater Card","cdm",25,[["cdm",25]],["acc"],2,0,8,1],[177,"8:6:0","Lord of Death Card","cdm",35,[["cdm",35]],["acc"],3,1,8,0],[178,"8:6:1","Lord of Death Card","cdm",50,[["cdm",50]],["acc"],3,1,8,1],[179,"9:0:0","Abyss Knight Card","cdm",20,[["cdm",20]],["weapon"],2,0,9,0],[180,"9:0:1","Abyss Knight Card","cdm",25,[["cdm",25]],["weapon"],2,0,9,1],[181,"9:1:0","Lava Slime Card","hpPct",8,[["hpPct",8]],["armor","head","off"],2,0,9,0],[182,"9:1:1","Lava Slime Card","hpPct",10,[["hpPct",10]],["armor","head","off"],2,0,9,1],[183,"9:2:0","Chaos Imp Card","matk",6,[["matk",6]],["weapon","head"],2,0,9,0],[184,"9:2:1","Chaos Imp Card","matk",8,[["matk",8]],["weapon","head"],2,0,9,1],[185,"9:3:0","Shadow Beast Card","crit",5,[["crit",5]],["weapon","acc"],2,0,9,0],[186,"9:3:1","Shadow Beast Card","crit",6,[["crit",6]],["weapon","acc"],2,0,9,1],[187,"9:4:0","Doom Tree Card","def",30,[["def",30]],["armor","off","leg"],2,0,9,0],[188,"9:4:1","Doom Tree Card","def",38,[["def",38]],["armor","off","leg"],2,0,9,1],[189,"9:5:0","Hell Worm Card","atk",16,[["atk",16]],["weapon"],2,0,9,0],[190,"9:5:1","Hell Worm Card","atk",20,[["atk",20]],["weapon"],2,0,9,1],[191,"9:6:0","Dark Lord Card","cdm",50,[["cdm",50]],["weapon"],3,1,9,0],[192,"9:6:1","Dark Lord Card","cdm",75,[["cdm",75]],["weapon"],3,1,9,1]];
+// Lookup by the PERMANENT NUMERIC id (row[0]), never by array position: a save stores that id, so rows
+// may be added or re-sorted without changing what an existing save decodes to. Ids are frozen - a new
+// card takes the next id above the maximum and a retired id is never recycled.
+const CODEC_CARD_BY_ID=(()=>{const m=new Map();for(const r of CODEC_CARD_ROWS)m.set(r[0],r);return m})();
+const CODEC_CARD_KEY_TO_ID=(()=>{const m=new Map();for(const r of CODEC_CARD_ROWS)m.set(r[1],r[0]);return m})();
+const CODEC_PROGRESSION_VERSION=(typeof PROGRESSION_VERSION==='number'?PROGRESSION_VERSION:1);
+function cCatalogCard(id){
+  const r=CODEC_CARD_BY_ID.get(id); if(!r)return null;
+  return {card:1,cardVersion:CODEC_PROGRESSION_VERSION,cardKey:r[1],family:r[2],stat:r[3],v:r[4],
+    effects:r[5].map(e=>({k:e[0],v:e[1]})),fit:r[6].slice(),g:r[7],bossCard:r[8]===1,map:r[9],
+    nightmare:r[10]===1,n:r[10]===1?'Nightmare '+r[2]:r[2]}}
+function cCardMatchesCatalog(c){
+  if(!c||typeof c!=='object')return false;
+  const id=CODEC_CARD_KEY_TO_ID.get(c.cardKey); if(id===undefined)return false;
+  const d=cCatalogCard(id); if(!d)return false;
+  if(c.cardVersion!==d.cardVersion)return false;
+  if(c.family!==d.family||c.n!==d.n||c.stat!==d.stat||c.v!==d.v)return false;
+  if(c.g!==d.g||c.bossCard!==d.bossCard||c.map!==d.map||c.nightmare!==d.nightmare)return false;
+  if(JSON.stringify(c.fit)!==JSON.stringify(d.fit))return false;
+  if(JSON.stringify(c.effects)!==JSON.stringify(d.effects))return false;
+  // `stars` is the one field v3 stores separately (mergeCard writes it; the catalog cannot). A supported
+  // value is fine; anything else falls through to the full tuple so it is preserved verbatim.
+  if(!cStarsSupported(c.stars))return false;
+  return !cExtras(c,{has:k=>CODEC_CARD_KEYS.has(k)||k==='stars'})}
+const cStarsSupported=v=>v===undefined||v===null||v===0||(Number.isInteger(v)&&v>=1&&v<=3);
+function cPackCard(c){
+  if(!c||typeof c!=='object'||Array.isArray(c))return c;
+  if(cCardMatchesCatalog(c)){
+    // [catalogId, id], plus a third slot ONLY when the card has stars: paying 9 chars for "absent"
+    // on every unstarred card is what kept the largest saves over the ceiling.
+    const t=[CODEC_CARD_KEY_TO_ID.get(c.cardKey),cPack(c.id)];
+    if(Number.isInteger(c.stars)&&c.stars>0&&c.stars<=3)t.push(c.stars);
+    return t}
+  const dropName=cCardNameDerivable(c);
+  const t=CODEC_BCARD.map(k=>(dropName&&k==='n')?CODEC_NUL:cPack(c[k]));
+  t[7]=Array.isArray(c.effects)?c.effects.map(cPairOf):cPack(undefined);
+  const x=cExtras(c,CODEC_CARD_KEYS);if(x)t.push(x);return t}
+function cUnpackCard(t){
+  // A row that is NOT a tuple (a null hole, a string, an object from an older format) is handed
+  // back untouched. Without this a single bad entry threw inside unpackSave on EVERY page load.
+  if(!Array.isArray(t))return t;
+  // v3: a short tuple is a catalog reference (a v2 tuple is always CODEC_BCARD-length).
+  if(t.length<=3&&Number.isInteger(t[0])){
+    const d=cCatalogCard(t[0]); if(!d)return t;
+    const id=cUnpack(t[1]); if(id!==undefined)d.id=id;
+    if(t.length>2){const stars=cUnpack(t[2]); if(stars!==undefined)d.stars=stars}
+    return d}
+  return cFromTuple(t,CODEC_BCARD,(o)=>{
+    if(Array.isArray(t[7]))o.effects=t[7].map(cObjectOf);
+    // v2: rebuild the name that was left out; a card without `family` is left exactly as stored.
+    if(o.family!==undefined&&o.n===undefined)o.n=o.nightmare===true?'Nightmare '+o.family:o.family;
+  })}
+// ---- v3 fish ---------------------------------------------------------------------------------------
+// `at` is a 13-digit ms timestamp and the largest field in a fish; `mut` comes from a closed set of 7.
+// v3 stores `at` as [seconds, millis] before the newest timestamp in the save (`__at`, sent once) and
+// `mut` as an index. sanitiseFish already forces `at` to a non-negative integer, so this is lossless.
+const CODEC_FISH_MUTS=['shiny','sparkling','frozen','electric','ghostly','golden','prismatic'];
+const CODEC_FISH_AT=CODEC_BFISH.indexOf('at'), CODEC_FISH_MUT=CODEC_BFISH.indexOf('mut');
+function cPackFish(f,atBase){
+  if(!f||typeof f!=='object'||Array.isArray(f))return f;
+  const t=CODEC_BFISH.map(k=>cPack(f[k]));
+  t[5]=f.perfect===true?1:(f.perfect===false?0:cPack(undefined));t[6]=f.lock===true?1:(f.lock===false?0:cPack(undefined));   // an ABSENT flag stays absent
+  const mi=typeof f.mut==='string'?CODEC_FISH_MUTS.indexOf(f.mut):-1;
+  if(mi>=0)t[CODEC_FISH_MUT]=mi;                                  // a mutation outside the set keeps its string
+  else if(f.mut===null)t[CODEC_FISH_MUT]=-1;                      // v3: null != absent, and -1 says so
+  else if(typeof f.mut==='string')t[CODEC_FISH_MUT]=f.mut;
+  if(atBase>0&&Number.isInteger(f.at)&&f.at>=0&&f.at<=atBase){const d=atBase-f.at;t[CODEC_FISH_AT]=[Math.floor(d/1000),d%1000]}
+  const x=cExtras(f,CODEC_FISH_KEYS);if(x)t.push(x);return t}
+function cUnpackFish(t,atBase){
+  // A row that is NOT a tuple (a null hole, a string, an object from an older format) is handed
+  // back untouched. Without this a single bad entry threw inside unpackSave on EVERY page load.
+  if(!Array.isArray(t))return t;
+  return cFromTuple(t,CODEC_BFISH,(o)=>{
+    if(t[5]!==undefined&&t[5]!==CODEC_NUL)o.perfect=t[5]===1;
+    if(t[6]!==undefined&&t[6]!==CODEC_NUL)o.lock=t[6]===1;
+    const mi=t[CODEC_FISH_MUT];
+    // -1 is v3's "no mutation"; a NUL stays ABSENT (the real v2 encoder wrote null as literal null, so
+    // reading NUL as null would invent a field the save never had).
+    if(mi===-1)o.mut=null;
+    else if(typeof mi==='number'&&mi>=0&&mi<CODEC_FISH_MUTS.length)o.mut=CODEC_FISH_MUTS[mi];
+    const rel=t[CODEC_FISH_AT];
+    if(atBase>0&&Array.isArray(rel)&&rel.length===2)o.at=atBase-(rel[0]*1000+rel[1]);
+  })}
+// packSave turns the live save object into the compact cloud form. Pure: the caller keeps `S`.
+// The newest fishing timestamp in a save, sent ONCE as `__at` so every fish's `at` can be a small delta.
+function cNewestFishAt(sv){
+  let max=0;
+  const scan=b=>{if(!Array.isArray(b))return;for(const f of b)if(f&&typeof f==='object'&&Number.isInteger(f.at)&&f.at>max)max=f.at};
+  if(sv.fishing&&typeof sv.fishing==='object')scan(sv.fishing.bag);
+  if(Array.isArray(sv.fishs))scan(sv.fishs);
+  return max}
+function packSave(sv){
+  if(!sv||typeof sv!=='object'||Array.isArray(sv))return sv;
+  const o=Object.assign({},sv,{__v:SAVE_CODEC_VERSION});
+  if(Array.isArray(sv.inv))o.inv=sv.inv.map(cPackItem);
+  if(Array.isArray(sv.cards))o.cards=sv.cards.map(cPackCard);
+  const atBase=cNewestFishAt(sv); if(atBase>0)o.__at=atBase;
+  if(sv.fishing&&typeof sv.fishing==='object'&&Array.isArray(sv.fishing.bag))o.fishing=Object.assign({},sv.fishing,{bag:sv.fishing.bag.map(f=>cPackFish(f,atBase))});
+  if(Array.isArray(sv.fishs))o.fishs=sv.fishs.map(f=>cPackFish(f,atBase));
+  return o}
+// unpackSave is the exact inverse. No `__v` => an old save, returned AS IS.
+function unpackSave(sv){
+  if(!sv||typeof sv!=='object'||Array.isArray(sv)||sv.__v==null)return sv;
+  const o=Object.assign({},sv);delete o.__v;
+  const atBase=typeof sv.__at==='number'?sv.__at:0; delete o.__at;
+  if(Array.isArray(sv.inv))o.inv=sv.inv.map(cUnpackItem);
+  if(Array.isArray(sv.cards))o.cards=sv.cards.map(cUnpackCard);
+  if(sv.fishing&&typeof sv.fishing==='object'&&Array.isArray(sv.fishing.bag))o.fishing=Object.assign({},sv.fishing,{bag:sv.fishing.bag.map(f=>cUnpackFish(f,atBase))});
+  if(Array.isArray(sv.fishs))o.fishs=sv.fishs.map(f=>cUnpackFish(f,atBase));
+  return o}
+// Are these two copies the same progress? Compared BY DATA, not by JSON text: two saves holding
+// identical data can list their keys in a different order (a server re-stamp, an Object.assign, a
+// different code path), and comparing raw strings called those "different" - which adopted the cloud
+// copy over an identical local one and told the player their save had been replaced and backed up,
+// when nothing had actually changed. deepSame walks the two values together, so the answer depends
+// on the data only, and it allocates nothing (a sorted copy of each save cost 16 ms per login).
+function deepSame(x,y){
+  if(x===y)return true;
+  if(typeof x!==typeof y)return false;
+  if(x===null||y===null||typeof x!=='object')return false;
+  const ax=Array.isArray(x),ay=Array.isArray(y);
+  if(ax!==ay)return false;
+  if(ax){
+    if(x.length!==y.length)return false;
+    for(let i=0;i<x.length;i++)if(!deepSame(x[i],y[i]))return false;
+    return true;
+  }
+  const kx=Object.keys(x),ky=Object.keys(y);
+  if(kx.length!==ky.length)return false;
+  for(const k of kx){if(!Object.prototype.hasOwnProperty.call(y,k))return false;if(!deepSame(x[k],y[k]))return false}
+  return true;
+}
+const sameSave=(a,b)=>{if(a===b)return true;try{const x=unpackSave(JSON.parse(a)),y=unpackSave(JSON.parse(b));for(const k of['owner','cloud','gmStats']){delete x[k];delete y[k]}return deepSame(x,y)}catch(e){return false}};
 // The login card's words when a save in this browser belongs to somebody else.
 const saveBlockedText=(who,other,cloud)=>'The save kept in this browser for “'+who+'” belongs to “'+other+'”, so it was not loaded and nothing was written over it. Restore “'+who+'”’s own save from a backup, or remove that copy from this browser, then log in again.'+(cloud?' Your cloud save was not touched.':'');
 // The login card's words when the cloud copy of a save belongs to another account (the server refused it).
@@ -3415,7 +3626,7 @@ function load(){try{let raw=lsGet(saveKey());if(saveRefusal(raw,currentUser))ret
 // v280: this browser's copy is this account's own save under a previous name (a rename). Re-stamp it
 // rather than discarding the character - discarding it is how a rename cost the owner his progress.
 if(raw&&saveIsMine(raw)){try{const o=JSON.parse(raw);if(o&&o.owner!==currentUser){o.owner=currentUser;raw=JSON.stringify(o);lsPut(saveKey(),raw)}}catch(e){}}
-const s=JSON.parse(raw);if(s&&s.lv){const F=fresh(),f=Object.assign(F,s),hadIndexXp=Object.prototype.hasOwnProperty.call(s,'indexXp');f.st=Object.assign(fresh().st,s.st||{});if(!CLASSES[f.cls])f.cls='Novice';
+const s=unpackSave(JSON.parse(raw));if(s&&s.lv){const F=fresh(),f=Object.assign(F,s),hadIndexXp=Object.prototype.hasOwnProperty.call(s,'indexXp');f.st=Object.assign(fresh().st,s.st||{});if(!CLASSES[f.cls])f.cls='Novice';
 // repair top-level numbers corrupted by older/test saves (null -> crash on .toLocaleString())
   for(const k of['lv','exp','hp','zeny','kills','indexXp','dmg','pts','mp','lvl','kl','gmx'])f[k]=num_(f[k],F[k]);if(!hadIndexXp)delete f.indexXp;
   if(f.dmgShort!==true&&f.dmgShort!==false)f.dmgShort=true;   // damage digits: short unless deliberately switched
@@ -3481,7 +3692,7 @@ const s=JSON.parse(raw);if(s&&s.lv){const F=fresh(),f=Object.assign(F,s),hadInde
   const fishBagTiers=[120,200,300,400,500,750,1000];
   f.fishing.bagTier=Math.max(0,Math.min(fishBagTiers.length-1,Math.floor(num_(f.fishing.bagTier,0))||0));
   const fishBagCap=fishBagTiers[f.fishing.bagTier];
-  f.fishing.bag=(Array.isArray(f.fishing.bag)?f.fishing.bag:[]).filter(e=>e&&typeof e==='object'&&typeof e.sp==='string').slice(-fishBagCap).map(e=>({id:typeof e.id==='string'?e.id.slice(0,40):'',sp:e.sp.slice(0,24),w:Math.round(cl(num_(e.w,0),0,3000)*100)/100,mut:fishMuts.includes(e.mut)?e.mut:null,at:Math.max(0,Math.floor(num_(e.at,0))),perfect:e.perfect===true}));
+  f.fishing.bag=(Array.isArray(f.fishing.bag)?f.fishing.bag:[]).filter(e=>e&&typeof e==='object'&&typeof e.sp==='string').slice(-fishBagCap).map(e=>({id:typeof e.id==='string'?e.id.slice(0,40):'',sp:e.sp.slice(0,24),w:Math.round(cl(num_(e.w,0),0,3000)*100)/100,mut:fishMuts.includes(e.mut)?e.mut:null,at:Math.max(0,Math.floor(num_(e.at,0))),perfect:e.perfect===true,lock:e.lock===true}));
   f.fishing.dex=f.fishing.dex&&typeof f.fishing.dex==='object'&&!Array.isArray(f.fishing.dex)?Object.fromEntries(Object.entries(f.fishing.dex).slice(0,96).filter(([k,d])=>typeof k==='string'&&d&&typeof d==='object').map(([k,d])=>[k.slice(0,24),{n:safeCount(d.n),bw:Math.round(cl(num_(d.bw,0),0,3000)*100)/100,at:Math.max(0,Math.floor(num_(d.at,0))),mut:[...new Set((Array.isArray(d.mut)?d.mut:[]).filter(m=>fishMuts.includes(m)))]}])):{};
   f.fishing.stats={casts:safeCount(f.fishing.stats?.casts),catches:safeCount(f.fishing.stats?.catches),escapes:safeCount(f.fishing.stats?.escapes),perfects:safeCount(f.fishing.stats?.perfects)};
   // v297 (owner bug): autoSell was dropped here, so the toggle looked on in a live session but
@@ -4047,7 +4258,8 @@ function cloudBadgeStale(why){
 }
 function cloudLoginLine(txt){const e=$('loginCloud');if(e)e.textContent=txt||''}
 async function cloudFetch(path,opt){
-  const o=opt||{},hdrs=Object.assign({'Content-Type':'application/json'},CLOUD.previewToken?{'X-Preview-Session':CLOUD.previewToken}:null,o.headers||{});
+  const o=opt||{},hdrs=Object.assign({'Content-Type':'application/json','X-Save-Format':String(SAVE_FORMAT)},
+    CLOUD.previewToken?{'X-Preview-Session':CLOUD.previewToken}:null,o.headers||{});
   const epoch=CLOUD.epoch||0;
   // v328: every request gets a deadline. A fetch sitting on a socket the network has already dropped
   // never settles by itself, and cloudPush holds CLOUD.pushing until it does - so one dead request used
@@ -4115,7 +4327,7 @@ async function cloudPush(push,leave){
   S.gmStats=gmStatSnapshot();
   CLOUD.pushing=true;CLOUD.pushSince=Date.now();cloudBadge('☁ ⇅','Syncing…');
   try{
-    const body=JSON.stringify({version:CLOUD.ver,owner:CLOUD.user,blob:JSON.stringify(S),savedAt:Date.now(),offlineClaimId:S.offlineClaimId||null});
+    const body=JSON.stringify({version:CLOUD.ver,owner:CLOUD.user,blob:JSON.stringify(packSave(S)),savedAt:Date.now(),offlineClaimId:S.offlineClaimId||null});
     const opt={method:'PUT',body};
     // v326: a push sent on the way out of the page (a reload, a closed tab, the update reload) is
     // cancelled with the page unless the request is marked keepalive - which is one of the ways a
@@ -14438,17 +14650,17 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden&&(pendingU
 <script src="assets/wardrobe-ui.js?v=199"></script>
 <script src="assets/shop.js?v=321"></script>
 <script src="assets/friends.js?v=273"></script>
-<script src="assets/digimon/roster.js?v=413"></script>
-<script src="assets/digimon/base-stats.js?v=413"></script>
-<script src="assets/social-rules.js?v=413"></script>
-<script src="assets/social-poker.js?v=413"></script>
-<script src="assets/digimon-sanctuary.js?v=413"></script>
+<script src="assets/digimon/roster.js?v=414"></script>
+<script src="assets/digimon/base-stats.js?v=414"></script>
+<script src="assets/social-rules.js?v=414"></script>
+<script src="assets/social-poker.js?v=414"></script>
+<script src="assets/digimon-sanctuary.js?v=414"></script>
 <script src="assets/digimon-battle.js?v=393"></script>
-<script src="assets/social-digimon.js?v=413"></script>
+<script src="assets/social-digimon.js?v=414"></script>
 <script src="assets/social-gym-redesign.js?v=393"></script>
 <script src="assets/social-pond-design.js?v=393"></script>
-<script src="assets/social-scene.js?v=413"></script>
-<script src="assets/social-fishing.js?v=413"></script>
-<script src="assets/plaza-bots.js?v=413"></script>
-<script src="assets/social.js?v=413"></script></body>
+<script src="assets/social-scene.js?v=414"></script>
+<script src="assets/social-fishing.js?v=414"></script>
+<script src="assets/plaza-bots.js?v=414"></script>
+<script src="assets/social.js?v=414"></script></body>
 </html>

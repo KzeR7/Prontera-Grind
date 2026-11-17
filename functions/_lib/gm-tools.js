@@ -1,4 +1,5 @@
 import { GM_CATALOG } from './gm-catalog.js';
+import { unpackSave } from './save-codec.js';
 import { DIGIMON_STARTER_EGG_CAP, FISHING_BAIT, FISHING_RODS } from './gm-systems.js';
 import { HttpError } from './http.js';
 const bad = message => { throw new HttpError(400, message); };
@@ -11,7 +12,9 @@ export function giftPayload(body) {
 }
 export function inspectSave(blob) {
   if(!blob)return null;
-  const s=JSON.parse(blob),fish=s.fishing&&typeof s.fishing==='object'&&!Array.isArray(s.fishing)?s.fishing:null,
+  // v414: a stored blob may be compact (tuple rows). Unpack first, or every array below is
+  // a tuple the GM form cannot read. unpackSave is a no-op on an old, ordinary save.
+  const s=unpackSave(JSON.parse(blob)),fish=s.fishing&&typeof s.fishing==='object'&&!Array.isArray(s.fishing)?s.fishing:null,
     bag=s.digimonBag&&typeof s.digimonBag==='object'&&!Array.isArray(s.digimonBag)?s.digimonBag:null,
     count=(value,max)=>Math.max(0,Math.min(max,Math.floor(Number(value)||0))),rodIds=new Set(FISHING_RODS.map(x=>x.id));
   // A deliberate whitelist: account/session information never comes from a save. Only the
@@ -38,7 +41,7 @@ export function systemsPayload(body) {
 }
 export function equipmentPayload(body,blob) {
   if(!blob)bad('This player has no cloud save yet.');
-  const s=JSON.parse(blob),eq=s.eq||{},inv=s.inv||[];
+  const s=unpackSave(JSON.parse(blob)),eq=s.eq||{},inv=s.inv||[];   // v414: stored blobs may be compact
   const item=[...Object.values(eq),...inv].find(x=>x && String(x.id)===String(body.itemId));
   if(!item||item.card||item.ore)bad('Select equipment this player still owns.');
   if(body.mode==='equip'){

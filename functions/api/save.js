@@ -20,7 +20,8 @@
 import { currentUser } from '../_lib/auth.js';
 import { lockedCosmetics } from '../_lib/shop.js';
 import { json, guard, readJson, fail, unauth } from '../_lib/http.js';
-import { checkSaveBlob, publicFields, saveOwnerStamp, sameAccount, savedElsewhere, saveBelongsTo, withSaveIdentity, storedSaveOwner, SAVE_MISMATCH, restoreAllowsWrite, storedRestoreAt, RESTORE_FENCED, parseSave } from '../_lib/validate.js';
+import { checkSaveBlob, publicFields, saveOwnerStamp, sameAccount, savedElsewhere, saveBelongsTo, withSaveIdentity, storedSaveOwner, SAVE_MISMATCH, restoreAllowsWrite, storedRestoreAt, RESTORE_FENCED, parseSave, clientSaveFormat, blobForClient, SAVE_FORMAT_COMPACT } from '../_lib/validate.js';
+import { unpackSave } from '../_lib/save-codec.js';
 import * as db from '../_lib/db.js';
 import { recordDamageObservation } from '../_lib/damage-monitor.js';
 import { auditAcceptedSave } from '../_lib/save-audit.js';
@@ -100,6 +101,9 @@ export const onRequestGet = guard(async ({ request, env }) => {
   const user = await currentUser(request, env.DB);
   if (!user) return await unauth(request);
   const D = env.DB, now = Date.now();
+  // v414: what this page can DECODE. A compact row is never handed to a page without the codec -
+  // the old loader drops every tuple row (and every fish) and its next upload would save that loss.
+  const format = clientSaveFormat(request);
   let row = await db.saveByUser(D, user.id), offlineClaim = null;
 
   if (row) {
@@ -121,7 +125,7 @@ export const onRequestGet = guard(async ({ request, env }) => {
   const pending = grants.results.map(g => ({ id: g.id, kind: g.kind, payload: JSON.parse(g.payload || '{}'), note: g.note }));
   // `owner` says whose save this is, so a tab playing another account never applies it (see PUT).
   if (!row) return json({ version: 0, blob: null, savedAt: null, offlineClaim: null, pending, owner: user.username });
-  return json({ version: row.version, blob: row.blob, savedAt: row.saved_at,
+  return json({ version: row.version, blob: blobForClient(row.blob, format), savedAt: row.saved_at,
     updatedAt: row.updated_at, serverNow: now, offlineClaim, pending, owner: user.username });
 });
 
@@ -129,6 +133,9 @@ export const onRequestPut = guard(async ({ request, env }) => {
   const user = await currentUser(request, env.DB);
   if (!user) return await unauth(request);
   const D = env.DB;
+  // v414: conflict/restore-fenced replies carry the LIVE blob too, and a page that cannot decode it
+  // would adopt it and lose items. Every blob that leaves here goes through blobForClient.
+  const format = clientSaveFormat(request);
   const body = await readJson(request, 600_000);
   // Whose save is this? The session cookie is shared by every tab of the site: a tab still playing
   // account A keeps pushing its save after account B has signed in elsewhere, and without this check
@@ -140,7 +147,14 @@ export const onRequestPut = guard(async ({ request, env }) => {
     return json({ err: 'This tab is playing a different account. Nothing was saved.', accountMismatch: true,
       owner: user.username }, 409);
   }
-  const save = checkSaveBlob(body.blob);
+  // v414 CPU: the page now stores items/cards/fish positionally, which is ~44% fewer bytes and the
+  // cheaper parse the whole change is for. But every rule below - the account stamp, the cosmetic
+  // ownership check, the gear audit, the damage observation - was written against the ORDINARY object
+  // shape. So the blob is unpacked once, here, into exactly that shape. Skipping this would leave the
+  // audit looking at arrays instead of items and quietly stop checking gear: a silent loss of
+  // protection, which is worse than any CPU saving. `body.blob` (the compact text) is what is stored.
+  const storedForm = checkSaveBlob(body.blob);
+  const save = unpackSave(storedForm);
   // v88.6: the save itself must name its account, and that account must be the one signed in. A save
   // with no stamp comes from a page that predates the stamp: it is told to reload, as for a bad owner.
   const stamp = saveOwnerStamp(save);
@@ -185,8 +199,15 @@ export const onRequestPut = guard(async ({ request, env }) => {
     try {
       const { flagged, fresh } = await auditAcceptedSave(D, {
         userId: user.id, username: user.username, gm: user.gm,
-        // v410: hand the audit the STORED blob we already parsed above, so it does not re-read it.
-        prev: row, prevSave: storedRow, save: storedSave, pub, savedAt,
+        // v414: `prevSave` is deliberately null. The audit reads ONE top-level field from the stored
+        // save (`offlineIncome`), and only when the incoming save produced no static violations; its
+        // own safeParse(row.blob) then parses exactly once, in the rare window where it is needed.
+        // Handing it a pre-parsed object would pay a full 512 KB parse on EVERY sync to save that
+        // parse in a path that usually never runs.
+        prev: row, prevSave: null, save: storedSave, pub, savedAt,
+        // The top-level view the ownership/restore checks already read, so the audit does not parse
+        // the same stored blob a third time to look at one field.
+        stamp: storedStamp,
         claimKills: appliedClaim ? Number(appliedClaim.kills) || 0 : 0,
         // The claim row itself: the audit credits what the payout bought (levels, Zeny, loot),
         // not just the kills, or a welcome-back lands in the next window as impossible progress.
@@ -214,10 +235,16 @@ export const onRequestPut = guard(async ({ request, env }) => {
   let appliedClaim = null;
 
   const row = await db.saveByUser(D, user.id);
-  // v410 CPU: parse the STORED blob ONCE and reuse it for the ownership check, the restore fence and
-  // the audit's previous-save view. Previously each of those parsed the same string again (up to
-  // 512 KB each). `null` for the first-save path, where there is no previous blob at all.
-  const storedRow = row ? parseSave(row.blob) : null;
+  // v414 CPU: the three things this handler needs from the STORED blob - who owns it, whether it
+  // carries a restore stamp, and its `offlineIncome` for the audit - read TOP-LEVEL fields only. None
+  // touches inv/cards/fishing, so they share ONE parse of the row, and every helper below is handed
+  // the string so the memo in parseStamp is what makes that sharing work.
+  //
+  // This is deliberately not "parse the whole stored save up front": doing that on the first-save
+  // path, and for an account whose row is unreadable, would pay for a parse nobody asked for. Only
+  // the top-level read below is eager, and it is the one the ownership check needs anyway.
+  const storedBlob = row ? row.blob : null;
+  const storedStamp = storedBlob ? parseSave(storedBlob) : null;
   if (!row) {
     await db.insertSave(D, user.id, stored, savedAt, pub);
     await db.pushHistory(D, user.id, 1, stored, savedAt);
@@ -229,7 +256,7 @@ export const onRequestPut = guard(async ({ request, env }) => {
   // v88.6 / v280: the copy already stored must not belong to someone else either. It is never
   // written over. A blob carrying this account's own id is its own, whatever name it was stamped
   // with - that is what makes a rename survivable.
-  if (!saveBelongsTo(storedRow, user)) return saveMismatch(user);
+  if (!saveBelongsTo(storedBlob, user)) return saveMismatch(user);
 
   const pending = await pendingOrIssueOfflineClaim(D, user.id, row, savedAt);
 
@@ -244,14 +271,14 @@ export const onRequestPut = guard(async ({ request, env }) => {
   // asked of the browser: v394 guarded cloudPush's 409 branch and v395 the login push, and both were
   // undone in the field by a tab that was simply open across the rollback. While the row carries a
   // restore stamp, a save without that stamp is a pre-restore copy whatever version it presents.
-  const fenceAt = storedRestoreAt(storedRow);
+  const fenceAt = storedRestoreAt(storedBlob);
   if (!restoreAllowsWrite(row.blob, save, fenceAt)) {
     return early({ err: RESTORE_FENCED, restoreFenced: true, restoreAt: fenceAt,
-      conflict: true, version: row.version, blob: row.blob, savedAt: row.saved_at,
+      conflict: true, version: row.version, blob: blobForClient(row.blob, format), savedAt: row.saved_at,
       updatedAt: row.updated_at, offlineClaim: publicClaim(pending) }, 409);
   }
   if (clientVersion !== row.version) {
-    return early({ conflict: true, version: row.version, blob: row.blob, savedAt: row.saved_at,
+    return early({ conflict: true, version: row.version, blob: blobForClient(row.blob, format), savedAt: row.saved_at,
       updatedAt: row.updated_at, offlineClaim: publicClaim(pending) }, 409);
   }
 
@@ -285,7 +312,7 @@ export const onRequestPut = guard(async ({ request, env }) => {
     const acknowledged = Number(results?.[1]?.meta?.changes ?? results?.[1]?.meta?.rows_written ?? 0);
     if (!changed || !acknowledged) {
       const latest = await db.saveByUser(D, user.id);
-      return early({ conflict: true, version: latest?.version ?? row.version, blob: latest?.blob ?? row.blob,
+      return early({ conflict: true, version: latest?.version ?? row.version, blob: blobForClient(latest?.blob ?? row.blob, format),
         savedAt: latest?.saved_at ?? row.saved_at, updatedAt: latest?.updated_at ?? row.updated_at,
         offlineClaim: publicClaim(await db.pendingOfflineClaim(D, user.id)) }, 409);
     }
@@ -293,7 +320,7 @@ export const onRequestPut = guard(async ({ request, env }) => {
     const result = await update.run();
     if (!Number(result?.meta?.changes)) {
       const latest = await db.saveByUser(D, user.id);
-      return early({ conflict: true, version: latest?.version ?? row.version, blob: latest?.blob ?? row.blob,
+      return early({ conflict: true, version: latest?.version ?? row.version, blob: blobForClient(latest?.blob ?? row.blob, format),
         savedAt: latest?.saved_at ?? row.saved_at, updatedAt: latest?.updated_at ?? row.updated_at,
         offlineClaim: publicClaim(await db.pendingOfflineClaim(D, user.id)) }, 409);
     }
