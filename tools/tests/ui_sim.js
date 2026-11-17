@@ -1324,6 +1324,14 @@ t('the bag shows its 1000-item limit and refuses loot once it is full', () => {
   C.clear();
   C.collect({ card: 1, id: 3, n: 'Poring Card', g: 1, stat: 'str', v: 3 });
   assert.strictEqual(C.S.cards.length, 1, 'cards live in their own bag and are not capped by the item limit');
+  // v411 (from main): but that bag has its own ceiling now, and a full one refuses rather than deletes.
+  C.S.cards = new Array(1000).fill(0).map((_, i) => ({ id: 900 + i, n: 'Card ' + i, v: 1 }));
+  C.clear();
+  C.collect({ card: 1, id: 4, n: 'Poring Card', g: 1, stat: 'str', v: 3 });
+  assert.strictEqual(C.S.cards.length, 1000, 'the loose-card bag never grows past CARDMAX');
+  assert.ok(C.msg.includes('Card collection full'), 'and the refusal is reported: ' + C.msg);
+  assert.ok(!C.S.cards.some(c => c.id === 4), 'the refused card is not stored');
+  C.S.cards = [];
   // v39: a ticked rarity is sold the moment it drops - the full bag never sees it
   C.S.autoSell = [false, false, true, false, false]; C.S.zeny = 0; C.clear();
   C.collect({ id: 7, name: 'Blue Robe', tier: 2, slot: 'armor', val: 40, sec: 1, lvl: 10, cards: [] });

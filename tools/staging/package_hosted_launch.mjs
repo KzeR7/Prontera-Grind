@@ -96,7 +96,12 @@ for(const p of new Set(all)){
   if(cleaned!==baseline.get(p))throw Error('Unpackaged runtime change: '+p);
  }
 }
-for(const p of baseline.keys())if(relevant(p)&&!fs.existsSync(path.join(root,p)))throw Error('Missing archive runtime file: '+p);
+// haven-v416: a file the base had and this tree deliberately DROPPED is not a missing file. v411
+// removed functions/api/version.js (the whole 1.33 MB index.html was decoded to answer one string),
+// and this archive base predates that, so the head of the tree no longer has it. Ask Git instead of
+// the working tree: a tracked deletion is intentional, an absent-but-tracked file is not.
+const stillTracked=new Set(all);
+for(const p of baseline.keys())if(relevant(p)&&!fs.existsSync(path.join(root,p))&&stillTracked.has(p))throw Error('Missing archive runtime file: '+p);
 
 // v360: the Aetherwell GLB is binary like the atlases - utf8 would silently corrupt it.
 // v415: jpg joined the list. assets/atlas/fountain-plaza.jpg was being decoded as utf8 and

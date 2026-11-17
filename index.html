@@ -6164,7 +6164,7 @@ function offlineAwardKill(mob,r){
   const z=r.measured?0:Math.round(mob.zeny*(1+pv('zeny')/100)*nmZenyRoll(mob))*gx(),xp=r.measured?0:Math.round(mob.exp*expRate());earnZeny(z);r.zeny+=z;earnExp(xp);r.exp+=xp;
   if(!r.measured){gainAscension(xp);addJob(Math.round(Math.round(mob.exp*.7)*expRate()));checkLevel();}
   for(const[T,ch]of mob.drops)if(Math.random()*100<ch)offlineStoreGear(genGear((typeof kinDrop==='function'?kinDrop(T):T),mob.lvl,mob.sec,mob.boss,mob.tier,mob.mapIndex),r);
-  if(Math.random()*100<mob.cardCh){const g=mob.card.g;S.cards.push(newCard(mob.card));questEvent('card');r.cards++;r.drops++}
+  if(Math.random()*100<mob.cardCh){const g=mob.card.g;if(addCard(newCard(mob.card),{quiet:true})){questEvent('card');r.cards++;r.drops++}else r.cardsFull=true}
   for(const item of ascensionDrops(mob)){S.ascensionMat[item.ascMat]=safeCount(S.ascensionMat[item.ascMat])+1;r.drops++}
   if(mob.boss)recordMapClear(mob.mapIndex??S.mp,mob.stage??S.lvl);
   if(mob.ore)for(const ore of['ori','elu'])if(Math.random()<mob.oreCh){S.ore[ore]=safeCount(S.ore[ore])+1;questEvent('ore');r[ore]++;r.drops++}

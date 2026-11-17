@@ -253,29 +253,34 @@ await T('offline cloud sync still permits a chosen refresh after saving locally'
   assert.deepStrictEqual(h.calls.order,['save','flush','flushed','replace']);
 });
 
-// ---- the endpoint itself ----------------------------------------------------
-await T('functions/api/version.js answers with the deployed BUILD, no-store, no database', async () => {
-  const mod = await import(pathToFileURL(path.join(__dirname, '..', '..', 'functions', 'api', 'version.js')).href);
-  assert.strictEqual(typeof mod.onRequestGet, 'function', 'it exports the GET handler');
-  const env = { ASSETS: { fetch: async u => new Response(src, { status: 200 }) }, DB: null };
-  const res = await mod.onRequestGet({ request: new Request('https://game.example/api/version'), env });
-  assert.strictEqual(res.status, 200, 'always a 200');
-  assert.strictEqual(await res.text(), BUILD, 'the answer is exactly the BUILD in the served index.html');
-  assert.ok((res.headers.get('cache-control') || '').includes('no-store'), 'the answer can never be cached');
-  assert.ok((res.headers.get('content-type') || '').includes('text/plain'), 'it is plain text, not JSON');
-
-  const broken = await mod.onRequestGet({ request: new Request('https://game.example/api/version'), env: {} });
-  assert.strictEqual(broken.status, 200, 'without an asset store it still answers');
-  assert.strictEqual(await broken.text(), '', 'with an empty body, so the watcher simply waits');
+// ---- the endpoint's removal (v411) ------------------------------------------
+// /api/version was kept only so tabs open across the v250 deploy could notice it. That deploy is long
+// shipped, and a watcher that gets a 404 treats it as "no update" and keeps playing, so the endpoint
+// is gone: it decoded the whole 1.33 MB index.html (~5.3 ms of CPU) to answer one string.
+await T('/api/version is removed and nothing routes to it any more', async () => {
+  assert.ok(!fs.existsSync(path.join(__dirname, '..', '..', 'functions', 'api', 'version.js')),
+    'the handler file is gone');
+  const dev = fs.readFileSync(path.join(__dirname, '..', '..', 'tools', 'dev_server.js'), 'utf8');
+  assert.ok(!dev.includes("'GET /api/version'"), 'the dev server no longer routes it');
+  // The page must poll the static file, never the Function.
+  assert.ok(!src.includes('api/version'), 'the page does not reference /api/version');
+  assert.ok(src.includes("fetch('version.txt"), 'the update watcher polls version.txt');
 });
 
-await T('the endpoint is routed on Cloudflare (_routes.json) and in the local dev server', async () => {
-  const routes = JSON.parse(fs.readFileSync(path.join(__dirname, '..', '..', '_routes.json'), 'utf8'));
-  assert.ok(routes.include.includes('/api/*'), '/api/* goes through Functions');
-  assert.ok(!routes.include.some(p => p.includes('version.txt')), 'version.txt stays outside Pages Functions routing');
-  const dev = fs.readFileSync(path.join(__dirname, '..', '..', 'tools', 'dev_server.js'), 'utf8');
-  assert.ok(dev.includes("'GET /api/version': ['onRequestGet', 'api/version.js']"), 'the offline dev server keeps legacy /api/version for open pre-v250 tabs');
-  assert.ok(dev.includes('env.ASSETS'), 'with the asset store shimmed, so local dev behaves like Pages');
+await T('a deploy spreads its reloads instead of stampeding every open tab (v411)', async () => {
+  // Every open tab used to flush its save in the same second when BUILD changed - the shape of the
+  // Nov 15 CPU spike. The reset still happens on the first quiet moment (v299/v371); the UPLOAD that
+  // precedes it now waits a small random slice, so a deploy's saves arrive spread out.
+  const jitter = Number((src.match(/const UPDATE_JITTER_MS=(\d+)/) || [])[1]);
+  assert.ok(jitter > 0 && jitter <= 180000, 'the window is bounded and sane, got ' + jitter);
+  assert.ok(/function cloudUpdateJitterMs\(\)\{return Math\.floor\(Math\.random\(\)\*UPDATE_JITTER_MS\)\}/.test(src),
+    'the delay is a fresh random draw, not a fixed one');
+  const block = src.slice(src.indexOf('const UPDATE_JITTER_MS'), src.indexOf('function updateWatch()'));
+  assert.ok(block.includes('cloudUpdateJitterMs'), 'the jitter helper is defined before updateWatch');
+  const flush = src.slice(src.indexOf('const spread=new Promise'), src.indexOf('const spread=new Promise') + 400);
+  assert.ok(flush.includes('cloudUpdateJitterMs()'), 'the pre-reload flush consults the delay');
+  // ...and the reset gate itself must NOT be gated on the jitter, or a fresh page would never reset.
+  assert.ok(!/UPDATE_AUTO_MS&&!cloudUpdateJitter/.test(src), 'the auto-reset is not gated on the jitter');
 });
 
 await T('build_site.sh writes static version.txt and a revalidating _headers matching BUILD, served by dev_server', async () => {
