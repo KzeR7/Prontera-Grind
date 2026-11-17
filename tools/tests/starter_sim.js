@@ -253,7 +253,7 @@ t('stage 10 starts with boss plus 3 or 5 escorts and boss defeat resets the whol
  // Escorts are spawned with minionDef(0), so they and the boss all carry pack 0, and the boss
  // wave builds no camps (activePack=0). The pack gate therefore never holds an escort back, and
  // isBoss() inside inAggro is what lets the whole group engage together. Both halves are the
- // contract this test exists to protect. v414: the escorts also carry `escort:true` so the
+ // contract this test exists to protect. v415: the escorts also carry `escort:true` so the
  // payout split can tell an MVP's escort from an ordinary field mob.
  assert.ok(/for\(let i=0;i<\(S\.mp<5\?3:5\);i\+\+\)mobs\.push\(\{\.\.\.minionDef\(0\),escort:true\}\)/.test(src),
   'escorts are spawned into the boss pack');

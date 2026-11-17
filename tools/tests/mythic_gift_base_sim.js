@@ -15,9 +15,10 @@ try{
   for(const random of [0,.5,1])ev(`Math.random=()=>${random};
    for(const [setKey,set] of Object.entries(ASC_SETS))for(const slot of Object.keys(set.cost))for(const wt of slot==='weapon'?Object.keys(set.pieces.weapon):[undefined]){
     const gift=makeMythicEquipment(setKey,slot,wt).item;
-    S.cls=wt==='katar'||wt==='dagger'?'Guillotine Cross':wt==='bow'?'Ranger':wt==='staff'?'Warlock':wt==='axe'||wt==='mace'?'Mechanic':'Rune Knight';
-    const source=genGear(gearPool(9,15).find(x=>x.k===(wt||slot)),fieldPower(9,15),5,false,4,9,15);
+    S.cls=wt==='katar'||wt==='dagger'?'Guillotine Cross':wt==='bow'?'Ranger':wt==='staff'?'Warlock':wt==='axe'||wt==='mace'?'Mechanic':wt==='spear'?'Royal Guard':wt==='book'?'Sorcerer':wt==='knuckle'?'Sura':wt==='instrument'||wt==='whip'?'Maestro & Wanderer':wt==='shuriken'?'Ninja':wt==='gun'?'Gunslinger':'Rune Knight';
+    const source=genGear({...gearPool(9,15).find(x=>x.k===(WEAPON_KIN[wt]||wt||slot)),k:wt||slot},fieldPower(9,15),5,false,4,9,15);
     if(gift.val!==source.val)throw Error('gift/drop base mismatch');
+    if(wt==='shuriken'||wt==='gun')continue; // Ninja and Gunslinger have no fourth job yet, so nobody can forge these two; the gift base above is still checked.
     if(slot==='off')continue; // Current fourth jobs cannot equip shields, so the Forge excludes them.
     const before=source.val;S.inv=[source];S.zeny=1e12;S.ascensionMat=[1000,1000,1000];
     const result=transformToMythic(source,setKey);
@@ -26,11 +27,11 @@ try{
   assert.equal(ev("mythicGiftBaseValue('head',1.12)"),24343);
   assert.equal(ev("ev({val:mythicGiftBaseValue('head',1.12),r:15})"),79115);
  });
- test('all six maxed class presets match evolved maximum N+ bases with empty sockets',()=>{
+ test('all twelve maxed class presets match evolved maximum N+ bases with empty sockets',()=>{
   ev(`for(const cls of Object.keys(GM_ASC_PRESETS)){
    S.inv=[];ACT.gmmaxset(cls);
    for(const it of S.inv){
-    Math.random=()=>1;const source=genGear(gearPool(9,15).find(x=>x.k===(it.wt||it.slot)),fieldPower(9,15),5,false,4,9,15);
+    Math.random=()=>1;S.cls=cls;const source=genGear({...gearPool(9,15).find(x=>x.k===(WEAPON_KIN[it.wt]||it.wt||it.slot)),k:it.wt||it.slot},fieldPower(9,15),5,false,4,9,15);
     if(it.val!==source.val||it.r!==15||it.cards.length||it.mythicGiftVersion!==1)throw Error(cls+' preset mismatch');
    }
   }`);
@@ -87,7 +88,7 @@ try{
   assert.ok(ev('S.inv.length>0&&S.inv.every(it=>it.mythicGiftVersion===1&&it.val>=mythicGiftBaseValue(it.slot,.9)&&it.val<=mythicGiftBaseValue(it.slot,1.12))'));
   const catalog=JSON.parse(fs.readFileSync(__dirname+'/../../functions/_lib/gm-catalog.js','utf8').split('export const GM_CATALOG = ')[1].trim().slice(0,-1));
   const gifts=catalog.entries.filter(x=>x.id.startsWith('mythic:'));
-  assert.equal(gifts.length,72);
+  assert.equal(gifts.length,114); // 6 sets x (14 weapon families + 5 armour slots), haven-v409
   for(const {item}of gifts){assert.equal(item.val,ev(`mythicGiftBaseValue(${JSON.stringify(item.slot)},1.01)`));assert.equal(item.mythicGiftVersion,1);}
  });
  console.log(passed+' Mythic gift base checks passed');

@@ -33,6 +33,7 @@ require index.html
 require gm.html
 require _routes.json
 require assets/sprite_pack_data.js
+require assets/sprite-pack-x/index.js
 require assets/class_skins_data.js
 require assets/weapon_joints_data.js
 require assets/digimon-sanctuary.js
@@ -62,6 +63,10 @@ require assets/digimon/v1/patamon.png
 require assets/digimon/v1/palmon.png
 require assets/wardrobe/v5/catalog.json
 require assets/wardrobe/fourth/v1/catalog.json
+require assets/wardrobe/expanded/v1/catalog.json
+require assets/expanded-jobs.js
+require assets/signature-fx.js
+require assets/ro-fx/index.js
 require assets/kit/ro-spritesheet.png
 require assets/kit/ro-spritesheet.json
 require assets/world-map/world-map-cleaned.webp
@@ -123,7 +128,7 @@ node -e '
 ' "$OUT"
 
 # A build that silently ships the wrong thing is worse than one that fails.
-for must in index.html gm.html _routes.json version.txt _headers assets/sprite_pack_data.js assets/class_skins_data.js assets/weapon_joints_data.js; do
+for must in index.html gm.html _routes.json version.txt _headers assets/sprite_pack_data.js assets/sprite-pack-x/index.js assets/class_skins_data.js assets/weapon_joints_data.js; do
   [ -s "$OUT/$must" ] || { echo "BUILD BROKEN: $must is missing or empty in $OUT" >&2; exit 1; }
 done
 for forbidden in _login.html _shot.html logic2.js docs tools Sprite image-search assets/weapons assets/weapons_manifest.json; do

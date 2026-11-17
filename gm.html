@@ -730,7 +730,7 @@ function renderCharacter(body,s){
 function equipmentSlots(it,c){
  const cls=CATALOG.classes[c.cls];if(!cls||Math.min(3,it.sec||0)>Math.max(1,cls.tier))return [];
  if(it.slot==='weapon'&&!cls.wt.includes(it.wt))return [];
- const shield=/^(Novice|Swordman|Knight|Lord Knight|Acolyte|Priest|High Priest|Merchant|Blacksmith|Whitesmith|Rune Knight|Arch Bishop|Mechanic)$/.test(c.cls);
+ const shield=/^(Novice|Swordman|Knight|Lord Knight|Acolyte|Priest|High Priest|Merchant|Blacksmith|Whitesmith|Rune Knight|Arch Bishop|Mechanic|Crusader|Paladin|Royal Guard|Monk|Champion|Sura|Alchemist|Biochemist|Geneticist)$/.test(c.cls);
  return CATALOG.slots.filter(x=>x.id==='off'?(c.equipment.weapon?.wt!=='katar'&&(it.slot==='off'&&shield||it.wt==='dagger'&&cls.wt.includes('katar'))):x.id==='acc1'||x.id==='acc2'?it.slot==='acc':it.slot===x.id);
 }
 function renderEquipment(body,s){

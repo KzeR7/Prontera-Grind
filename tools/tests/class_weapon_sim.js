@@ -4,7 +4,7 @@ const root=path.join(__dirname,'../..'),dir=path.join(root,'Updates/class-weapon
 const report=JSON.parse(fs.readFileSync(path.join(dir,'audit.json')));
 const src=fs.readFileSync(path.join(root,'index.html'),'utf8');
 const begin=src.indexOf('const CD='),end=src.indexOf('const CLASSES=',begin);
-const game=vm.runInNewContext(src.slice(begin,end)+';CD.filter(c=>!CD4.includes(c))');
+const game=vm.runInNewContext(src.slice(begin,end)+';CD.filter(c=>!CD4.includes(c)&&!CDX.includes(c)&&!CD4X.includes(c))');
 assert.deepEqual(report.catalog.classes.map(c=>[c.name,c.weapons]),JSON.parse(JSON.stringify(game.map(c=>[c[0],c[7]]))));
 const combos=report.catalog.classes.reduce((n,c)=>n+c.weapons.length*2,0);
 assert.equal(combos,50);assert.equal(report.cases.length,combos*3*3);

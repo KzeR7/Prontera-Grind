@@ -19,3 +19,6 @@ docs/proposals/terrain-v2/floor-*.png
 
 # local screenshot harnesses (playwright, throwaway)
 .tmpcheck/
+
+# local source cache for tools/make_expanded_pack.py
+.cache/

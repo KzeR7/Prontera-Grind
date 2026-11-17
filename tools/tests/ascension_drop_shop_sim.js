@@ -9,7 +9,7 @@ ev('window.originalRandom=Math.random');
 try{
  test('material thresholds on both maps, ordinary enemies and bosses',()=>{
   for(const map of [10,11])for(const boss of [false,true])for(const mat of [map-10,2]){
-   // v414: the two chances are per-monster now (an escort keeps 30% of its roll and the MVP carries
+   // v415: the two chances are per-monster now (an escort keeps 30% of its roll and the MVP carries
    // the missing 70%), so the threshold has to come off the live value rather than a constant - but
    // off the very same monster literal the assertion below rolls against.
    const chance=ev(`${mat===2?'ascSigilChance':'ascMaterialChance'}({mapIndex:${map},boss:${boss}})`);

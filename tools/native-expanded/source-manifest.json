@@ -1,0 +1,1337 @@
+{
+ "description": "Native Ragnarok Online client sprites behind assets/sprite-pack-x/. Each file is fetched by git blob id from a public GitHub repository and verified by SHA-256. Pixels are composed exactly as the client does; nothing is redrawn or recoloured.",
+ "files": [
+  {
+   "name": "body/crusader_m.spr",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/남/크루세이더_남.spr",
+   "blob": "5512cefe04b378ee29e7eb52da86b47b4c18572f",
+   "bytes": 255311,
+   "sha256": "7965a6b988cc2fc5e016a467d4e0e7d3df8304bf353f9c1e66957ceb4c615520"
+  },
+  {
+   "name": "body/crusader_m.act",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/남/크루세이더_남.act",
+   "blob": "5029cc7ce53f7dcaf15c4fdc4fcfb99b105135bd",
+   "bytes": 48276,
+   "sha256": "02e7ff0a47ec8530f1a9eb2c0a72ec3d42ab60979920201fff4b12dbacc58283"
+  },
+  {
+   "name": "body/paladin_m.spr",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/남/팔라딘_남.spr",
+   "blob": "536ad32cf728fa1abe5ea009d37e3b5b98dd1c8c",
+   "bytes": 270598,
+   "sha256": "ff702b30a17298b09a0a752a2544361a02367c621e76265be088f519225365d3"
+  },
+  {
+   "name": "body/paladin_m.act",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/남/팔라딘_남.act",
+   "blob": "4deb8cb17f42835e081d144dd8b7f1a1489e46f8",
+   "bytes": 48276,
+   "sha256": "f15eb7cccc19af204e829da5e2fa852f5bd53a2e15c98a65157acdbd111081ba"
+  },
+  {
+   "name": "body/royal_guard_m.spr",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/남/가드_남.spr",
+   "blob": "c9254fac838bee92b9c5bea7e5b1c15c25d0419f",
+   "bytes": 242793,
+   "sha256": "7e46767d1cf67b72568999dbb59625d349efa08115102ecb77f388686d6e4864"
+  },
+  {
+   "name": "body/royal_guard_m.act",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/남/가드_남.act",
+   "blob": "485d8b2e77d1fca869eb7cf908f3bd607807bfab",
+   "bytes": 48276,
+   "sha256": "f8c1642025998ecf8d1ceffae5181eb97362e6e5e02b7ba2fa14509f6b6b5c3b"
+  },
+  {
+   "name": "body/sage_m.spr",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/남/세이지_남.spr",
+   "blob": "4d1f51f849ab93004e929e8670aa8059c54e9bf7",
+   "bytes": 236870,
+   "sha256": "4bea61ede4e68191ad6c7d4d17fbf3dc74a630c8d5df22087e8eb432f659f261"
+  },
+  {
+   "name": "body/sage_m.act",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/남/세이지_남.act",
+   "blob": "6941fdd7975e99c5bfcd09d748e3cef7ea2babe2",
+   "bytes": 48276,
+   "sha256": "b426fd5027aaa29efd27d385526f711397f151bd2803eb680dabb07e9ecf9371"
+  },
+  {
+   "name": "body/scholar_m.spr",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/남/프로페서_남.spr",
+   "blob": "2d356b9744d24cee2dee1da12e96f3e272125a6e",
+   "bytes": 275599,
+   "sha256": "9d7b79e2d4a36b3c672880af20fd32943ab33f439c641e9b80f8d5192eafaf07"
+  },
+  {
+   "name": "body/scholar_m.act",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/남/프로페서_남.act",
+   "blob": "973870ab6371ab4d692b646772f584f2b17a4972",
+   "bytes": 48276,
+   "sha256": "a7ecff8e9ff2f33a35e0fd9534348611f215043b2e44ae2cd018a583453d7ed5"
+  },
+  {
+   "name": "body/sorcerer_m.spr",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/남/소서러_남.spr",
+   "blob": "d388bdc6573755b001eaf53ca6a45f22334ab1bf",
+   "bytes": 317981,
+   "sha256": "de4f19a61f01d66d2720b0177069551c76d28b63a63eac40486ddfa13d14dfe3"
+  },
+  {
+   "name": "body/sorcerer_m.act",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/남/소서러_남.act",
+   "blob": "e8d1558c9dd5520f00bb3baa46d0614fa0c1b4be",
+   "bytes": 48276,
+   "sha256": "c854917b5beaab47abeaca248bf3e31ec3a7e019f5c4e56aadcac045e8452fe4"
+  },
+  {
+   "name": "body/alchemist_m.spr",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/남/연금술사_남.spr",
+   "blob": "f794dd83c16cb21e691e42ef942038cf02705050",
+   "bytes": 227915,
+   "sha256": "b76f6e3dff13c23f5917b664f2f8519e13f87c28ee7b1e2f436ad899fcc1bcda"
+  },
+  {
+   "name": "body/alchemist_m.act",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/남/연금술사_남.act",
+   "blob": "7168b2e1a06f90a6e8fe144f31fc53ac1c3c56aa",
+   "bytes": 48276,
+   "sha256": "cab74e235ad0c5225ae6df41c5fd015f0d15cfd3b3a84f2b9cc16090f9be8821"
+  },
+  {
+   "name": "body/biochemist_m.spr",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/남/크리에이터_남.spr",
+   "blob": "e14039d307e67cac8f50878bacd698cf7942afff",
+   "bytes": 221981,
+   "sha256": "9546e2a19b756578173720db274846dffae53ab15a320b485d0c4918b918492a"
+  },
+  {
+   "name": "body/biochemist_m.act",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/남/크리에이터_남.act",
+   "blob": "8275c59c36559615d341f659f02f83b6aeb1b848",
+   "bytes": 48276,
+   "sha256": "bf78ee9cd1b1d75b3e9753541b3b77b69aa796514969d25623de55024fe0c191"
+  },
+  {
+   "name": "body/geneticist_m.spr",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/남/제네릭_남.spr",
+   "blob": "b46e3ee842eb3ac9b4517a1ad546748944c6dc37",
+   "bytes": 260894,
+   "sha256": "a54fc20bbc26251e857e64a7a776ea01fdd0819bddb66ddbb77f739a479d5f7e"
+  },
+  {
+   "name": "body/geneticist_m.act",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/남/제네릭_남.act",
+   "blob": "a9635c17138a99f081d001df13abe528bf71ab3f",
+   "bytes": 48276,
+   "sha256": "b4b9f48390b85dee900144825a6ee4656696c965502eb17241edfec3774f69fa"
+  },
+  {
+   "name": "body/monk_m.spr",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/남/몽크_남.spr",
+   "blob": "3cf8d11f06fb756269fc841321280d77b06b71ed",
+   "bytes": 240778,
+   "sha256": "73afb2c022110cb87ae110bf70c66d4b039848c6c72f3e5d0f541d923d4dad88"
+  },
+  {
+   "name": "body/monk_m.act",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/남/몽크_남.act",
+   "blob": "51ad647e48636569430ff3715610cbf55f3c585a",
+   "bytes": 48276,
+   "sha256": "b152b56ecdc439892eeeec815e788935fd217d683e5aea0da18abe6dfbe5457f"
+  },
+  {
+   "name": "body/champion_m.spr",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/남/챔피온_남.spr",
+   "blob": "3f0ed2d81cae73d141bda75757e53904cc261cf3",
+   "bytes": 227061,
+   "sha256": "50d596dec0edc8aabb946c3346503ad4b804249265b499e325b5f454a1a7e638"
+  },
+  {
+   "name": "body/champion_m.act",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/남/챔피온_남.act",
+   "blob": "9e24033fc3572e8a39a573834e5add301d5a86ec",
+   "bytes": 48276,
+   "sha256": "6d8da0d811369368e1679de9955547596abdab8aa77e60b70e4c06a14780667a"
+  },
+  {
+   "name": "body/sura_m.spr",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/남/슈라_남.spr",
+   "blob": "f381e790e8cab432cbd52f4b860b7eb995b862fd",
+   "bytes": 242313,
+   "sha256": "f9022da57629625ac07038da8d7bb963cd58bcb6269a4967650934847c0df0fe"
+  },
+  {
+   "name": "body/sura_m.act",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/남/슈라_남.act",
+   "blob": "d64c69a8d262180c83a2e88cf51a38f8bb81a6c6",
+   "bytes": 48276,
+   "sha256": "064479e7707e2d8eb9bba55eabeb9168d03feb01ce1c855ff3a1be2aa8f12cec"
+  },
+  {
+   "name": "body/rogue_m.spr",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/남/로그_남.spr",
+   "blob": "9b749c89890e985185fbebea5ea344be6eea4e11",
+   "bytes": 191294,
+   "sha256": "e624d4ea81d9fdf455657954e880da46ef4fd026625dc58768cc1197cc77e725"
+  },
+  {
+   "name": "body/rogue_m.act",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/남/로그_남.act",
+   "blob": "bb291e48d9ef6d4fa03d314cd8fb8878a7b7ca4d",
+   "bytes": 48276,
+   "sha256": "9d2c4597a6aa2c09d876ae408a06331a938b17305c6966487e3471176ff065ec"
+  },
+  {
+   "name": "body/stalker_m.spr",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/남/스토커_남.spr",
+   "blob": "2a0fc416cd7d6530fdd433b05df72db86937b059",
+   "bytes": 221774,
+   "sha256": "00a36949f70239215b9ff2bc74a2d84d3e43835c8c803f08811b53cf15f9eab3"
+  },
+  {
+   "name": "body/stalker_m.act",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/남/스토커_남.act",
+   "blob": "befce03db6837797d5b557f1276ebdeaacc4a700",
+   "bytes": 48276,
+   "sha256": "897118565231ddf1123c1c853c2976134f9216ea9a8cc70b69b4892955a1ce50"
+  },
+  {
+   "name": "body/shadow_chaser_m.spr",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/남/쉐도우체이서_남.spr",
+   "blob": "5a77ae37f9ad86f0fd0a4df74e946258c87c19e8",
+   "bytes": 267334,
+   "sha256": "02acfd2e2350d0fda6fa4c8c4a518f62c0ffdbe3a533d69127292e6d554639f5"
+  },
+  {
+   "name": "body/shadow_chaser_m.act",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/남/쉐도우체이서_남.act",
+   "blob": "21dccd9519a5b27547996475d7060b18e8e73dad",
+   "bytes": 48276,
+   "sha256": "380ee202fb2014f7d76d2efbda71ae9f27222da6e2df51783f16f5c1652e8b7f"
+  },
+  {
+   "name": "body/bard_m.spr",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/남/바드_남.spr",
+   "blob": "e08a8c2033591a999414e3707443e5359cc5b0f6",
+   "bytes": 227948,
+   "sha256": "e112464543dc46fd2b8007994cb9a91e2bb9945b1b899109b319c964a7711fb9"
+  },
+  {
+   "name": "body/bard_m.act",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/남/바드_남.act",
+   "blob": "3070345ea28752a79a801b2b66d07e2b91fd8162",
+   "bytes": 48276,
+   "sha256": "edc94c8a9beae1fcab8d0664bac148cf7f8fe3628b400ab1eb6f11cb975809fd"
+  },
+  {
+   "name": "body/minstrel_m.spr",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/남/클라운_남.spr",
+   "blob": "6a869cb44c05af119ae341ec555698ce50657c6f",
+   "bytes": 212777,
+   "sha256": "e3f942f851558a31fc179d81e28b7aab19d01f0389ceda384c9f561c1d89dda7"
+  },
+  {
+   "name": "body/minstrel_m.act",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/남/클라운_남.act",
+   "blob": "f14966d9d5e06dcb82c5c53b206476fce5b252a1",
+   "bytes": 48276,
+   "sha256": "ad48202c43d1b8745a4e6120083f39994a647ce62ed8766efc87ee8ea7c07502"
+  },
+  {
+   "name": "body/maestro_m.spr",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/남/민스트럴_남.spr",
+   "blob": "cea6d99e43abe031b67adc08890fa935692b34e2",
+   "bytes": 240078,
+   "sha256": "f76561ca93a7fd4c1c0493da58161d51f168aaec7ec043c0d0906b45f6b8a716"
+  },
+  {
+   "name": "body/maestro_m.act",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/남/민스트럴_남.act",
+   "blob": "c469c75dd93adb5fd0b526dd730518e2db5a89ae",
+   "bytes": 48276,
+   "sha256": "3ee733405d155ba11095e1cc4bc8477af04a971b133f97a73e4e9a6a304f52be"
+  },
+  {
+   "name": "body/ninja_m.spr",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/남/닌자_남.spr",
+   "blob": "a063ae128bd83fb177529a5506257d3ff6b82a5e",
+   "bytes": 245188,
+   "sha256": "c3e0df1efffb1c104a8e659a4aa6c4063b702a23d9e0eb5dcf03caf4c28f1bfc"
+  },
+  {
+   "name": "body/ninja_m.act",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/남/닌자_남.act",
+   "blob": "2b478fb06846a9aee98774695737179d00bea8c1",
+   "bytes": 48276,
+   "sha256": "e0474948458439cad4c35a2997a132d97629e9f33f11e4de6b289f4a87cf08ec"
+  },
+  {
+   "name": "body/gunslinger_m.spr",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/남/건너_남.spr",
+   "blob": "7bc6ecd4c1b723f6ae7cd5b677ead63a43ebcbee",
+   "bytes": 251590,
+   "sha256": "a5976982f00056c0afb2dbe5b767c4fb056d40a52ce873bd5429ff83366c9a9f"
+  },
+  {
+   "name": "body/gunslinger_m.act",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/남/건너_남.act",
+   "blob": "e7176ba1e5870cf428d4c87cfc01feb8237d33a2",
+   "bytes": 48276,
+   "sha256": "5f2fe18943b9ab14daa08d11317226e6c0a369ff9caffeb8b642304941f817ad"
+  },
+  {
+   "name": "body/crusader_f.spr",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/여/크루세이더_여.spr",
+   "blob": "ee35d1c2adfbf7ed8ffa1dc33e9e8f53e1d423d5",
+   "bytes": 248392,
+   "sha256": "d0ebe90f5be39f6a86d9ac4862046e83094df856a0e4195057b2cb72c6466ba7"
+  },
+  {
+   "name": "body/crusader_f.act",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/여/크루세이더_여.act",
+   "blob": "925a6201d560c1b67a84ee8697b56658c9db2014",
+   "bytes": 48276,
+   "sha256": "9f79e9621b1e8f9a0c19309a2dbd289619d932d3d6031ccf471ddfd721833f58"
+  },
+  {
+   "name": "body/paladin_f.spr",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/여/팔라딘_여.spr",
+   "blob": "bd91e5f4303db00fa44a243e321c3134fe7b194f",
+   "bytes": 251973,
+   "sha256": "3e6fc407a9032c6f01fd6121501f39e19a102fcb5e934c13b7064f7c18408626"
+  },
+  {
+   "name": "body/paladin_f.act",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/여/팔라딘_여.act",
+   "blob": "5070ffae8e898560d5e40a1c2de69cba36c0ed95",
+   "bytes": 48276,
+   "sha256": "53e2235923847e6a2b1c58e6b925ccc9cb19baa2a17a9061097fb1f42983de29"
+  },
+  {
+   "name": "body/royal_guard_f.spr",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/여/가드_여.spr",
+   "blob": "1ff4abc68ab35f72050872cef4ee50d255b0ca10",
+   "bytes": 231079,
+   "sha256": "41272f2a39b72ed0bd09cdb7b14dc108cbc4799de85af812c348c502b5816b5e"
+  },
+  {
+   "name": "body/royal_guard_f.act",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/여/가드_여.act",
+   "blob": "de4079c9dc54e6b1b60f018f2fede7a30808b3af",
+   "bytes": 48276,
+   "sha256": "05d25a2df100b45745eba2d1405e7bc9313ab809f95db9d46a6265bfbaa317c1"
+  },
+  {
+   "name": "body/sage_f.spr",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/여/세이지_여.spr",
+   "blob": "12b91d209b13f344916d9b6325e12db051be3b80",
+   "bytes": 199607,
+   "sha256": "00a916e9f23a938b6d16621d43b5a6ad10016a5f254626a442ae822364f1d80d"
+  },
+  {
+   "name": "body/sage_f.act",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/여/세이지_여.act",
+   "blob": "f1b8b66485fb890bf214b00c4fa12ae3ab24f57a",
+   "bytes": 48276,
+   "sha256": "af28c009da4d9872004c73e9cf003c210da1b037cfe4aa46fde2591cb8d9e156"
+  },
+  {
+   "name": "body/scholar_f.spr",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/여/프로페서_여.spr",
+   "blob": "6358a53d5155b7ec1b7af19cdf2c06239e76cfc4",
+   "bytes": 243486,
+   "sha256": "068bf56cba80b167174d1278f3407079d35d24c3e484ab1c1db8bcde4bbc7d31"
+  },
+  {
+   "name": "body/scholar_f.act",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/여/프로페서_여.act",
+   "blob": "f4453f3cc45c1d510d5c98e488f3dc2e4c8e28d3",
+   "bytes": 48276,
+   "sha256": "2b984e1decdfd6364908165cf34ef94041e00cec567482707fbbbfb23a9e7b96"
+  },
+  {
+   "name": "body/sorcerer_f.spr",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/여/소서러_여.spr",
+   "blob": "4fa043261d023f70341ad381d7fb500e6487ffc9",
+   "bytes": 283481,
+   "sha256": "613341ee67804dad89f7340eaee8a08e4be03cf2d534e2568f4f2440ad6564ab"
+  },
+  {
+   "name": "body/sorcerer_f.act",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/여/소서러_여.act",
+   "blob": "cee48098813d40bf580a17cf09a692c0decebe72",
+   "bytes": 48276,
+   "sha256": "687cf1b09cae6f67c7b5a072682c41b0a7b14d3f61e5fd907023c50d26879c49"
+  },
+  {
+   "name": "body/alchemist_f.spr",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/여/연금술사_여.spr",
+   "blob": "2667dd0a86393a90bb805db580fcae86e5e26df4",
+   "bytes": 224408,
+   "sha256": "39a59cafc1ece1399be78243ad0fc5419a407649a6d786e3e0de9ec46e74cd85"
+  },
+  {
+   "name": "body/alchemist_f.act",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/여/연금술사_여.act",
+   "blob": "b39714d12655ede1fab1feafdfaff80d9a34695a",
+   "bytes": 48276,
+   "sha256": "0598db933d0025d2ed0976ee7479c7de33ff2cc0dcf50ae9e31349c6921f0750"
+  },
+  {
+   "name": "body/biochemist_f.spr",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/여/크리에이터_여.spr",
+   "blob": "c42cc3361ef71b786d5e2dd22f49768c891f318e",
+   "bytes": 217775,
+   "sha256": "6315171b2de289460c9148100aebee98dfdc4e3804a681b77cb29a92b295fc9b"
+  },
+  {
+   "name": "body/biochemist_f.act",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/여/크리에이터_여.act",
+   "blob": "9835ac1f31a3f6d877d2595fd5dbf847b41e9ee8",
+   "bytes": 48276,
+   "sha256": "a6a72a2a8ca5b71b8fd0c05fe229179fa246ffa3434a7df244bef3263312fc2b"
+  },
+  {
+   "name": "body/geneticist_f.spr",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/여/제네릭_여.spr",
+   "blob": "1ddfbcfb2698b68611005ee7341618277c630c20",
+   "bytes": 239858,
+   "sha256": "d26eb9e3c2319a67adef949067eb021cad1263405e57568b6f1dc140900c75a7"
+  },
+  {
+   "name": "body/geneticist_f.act",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/여/제네릭_여.act",
+   "blob": "fdd6be9b8186b060954db0155ba7750e8e0b789b",
+   "bytes": 48276,
+   "sha256": "437babddd7b62f74d5a4bcc74bdaa32535c847330f731a2d85be5f3b74484005"
+  },
+  {
+   "name": "body/monk_f.spr",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/여/몽크_여.spr",
+   "blob": "e617e1779ca649a7e6e4a1d38585fc133d072ef1",
+   "bytes": 203808,
+   "sha256": "64ec71691d1a800259b49850ef6f0e4841d77c7e1ad59b29a76f81cfa57b5a92"
+  },
+  {
+   "name": "body/monk_f.act",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/여/몽크_여.act",
+   "blob": "6e239c85e17aa16797640c39757dbed2b8ae0370",
+   "bytes": 48276,
+   "sha256": "6aa4179899c7f48765e22d925df8d230958ea995c9079e0e636a7fe449d1f3f7"
+  },
+  {
+   "name": "body/champion_f.spr",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/여/챔피온_여.spr",
+   "blob": "75002d3b8c93cfd22986124837f78bb42e52fd04",
+   "bytes": 205462,
+   "sha256": "a4458c985f9a2256d8819352c9ef5a4d7fc00f36f50cc9fdd9d595cce589106c"
+  },
+  {
+   "name": "body/champion_f.act",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/여/챔피온_여.act",
+   "blob": "c0167c2863d2f83b1b5d6d84a514f0ee4889becc",
+   "bytes": 48276,
+   "sha256": "7db6db9a7db2b69002a997fcf575ae6238fb556b444e1853a5980ae8dfc51434"
+  },
+  {
+   "name": "body/sura_f.spr",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/여/슈라_여.spr",
+   "blob": "db5dada8ec0f4215c700e1e580aca08a8911847f",
+   "bytes": 220846,
+   "sha256": "149a2ef1af1101f7bb910a2393a7f19a7c55f2a56217c0a5eb9c983fa200141b"
+  },
+  {
+   "name": "body/sura_f.act",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/여/슈라_여.act",
+   "blob": "3f86c997c46b4e047ee8346c71c31a5c0295a68e",
+   "bytes": 48276,
+   "sha256": "95935661da332c6ccfb1c2d91a3589fafcaf424420fba01ae30ac42ea3749b76"
+  },
+  {
+   "name": "body/rogue_f.spr",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/여/로그_여.spr",
+   "blob": "81d20352647c5c9b5de7deabbde9ec9e2893e3e1",
+   "bytes": 187087,
+   "sha256": "0b2a79e575a484e818fd4c70be162a25a4a29f465d0e4d04ba99fcab41cb7fde"
+  },
+  {
+   "name": "body/rogue_f.act",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/여/로그_여.act",
+   "blob": "37ff7423d5b834a524775b21ca8230167650bae0",
+   "bytes": 47444,
+   "sha256": "abd4346a468dd8e6c6a20256e88deacbea12eecb59e3c0d2d84776527250d9f2"
+  },
+  {
+   "name": "body/stalker_f.spr",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/여/스토커_여.spr",
+   "blob": "1a98107b7376ce3268278982afd4943c66dab9da",
+   "bytes": 217333,
+   "sha256": "6ddf53b7a597f066ad47d329e403a37aad4e688393f4d4c4f750966feaa4f8ec"
+  },
+  {
+   "name": "body/stalker_f.act",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/여/스토커_여.act",
+   "blob": "9e46a0d6ce86690d51e364bdd90f94ce6aa951cc",
+   "bytes": 47444,
+   "sha256": "c2f9c9c150959dcc0a0641c693fa05d66161c90e7428619978dc8f8fd5080de6"
+  },
+  {
+   "name": "body/shadow_chaser_f.spr",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/여/쉐도우체이서_여.spr",
+   "blob": "96d143d132e650306fe8833c69dca68fdee35d98",
+   "bytes": 220029,
+   "sha256": "140f35b05a981796b5e9355cf5bcb73f62d8d18c4180f173dc74b4b09c63318f"
+  },
+  {
+   "name": "body/shadow_chaser_f.act",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/여/쉐도우체이서_여.act",
+   "blob": "e37b3dbc4b41e3480a1b91dca8d67a2d31c3307e",
+   "bytes": 47444,
+   "sha256": "acaa98cf9f20e2e1114e6e211c8d4b42f60e4c3c321ce43125d1ecf78a16e6d8"
+  },
+  {
+   "name": "body/dancer_f.spr",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/여/무희_여.spr",
+   "blob": "0bc7feea2d437202c3a4f1acbbce2cc0066160f8",
+   "bytes": 213890,
+   "sha256": "f5ae2e806c0de4ac3d4103062ed40732aede79e07f8292c4b87b82da7e68e706"
+  },
+  {
+   "name": "body/dancer_f.act",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/여/무희_여.act",
+   "blob": "9b853364bd005af8b5f6aca2014321ece2e5eacc",
+   "bytes": 48276,
+   "sha256": "bd1c7214dac5cd32c2ae51fec82ec2bd038681496348320bf5be5f9de42b967c"
+  },
+  {
+   "name": "body/gypsy_f.spr",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/여/집시_여.spr",
+   "blob": "3d56f2d4ad74eb63912bae46091f0e3b09892a23",
+   "bytes": 224109,
+   "sha256": "5203a551e7c2c7490609b2aaf8aea7ef004ffb5fbc968a4a3c16951462fcaa82"
+  },
+  {
+   "name": "body/gypsy_f.act",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/여/집시_여.act",
+   "blob": "7ab19f090cf10c267ba133d63b87a602201e1a92",
+   "bytes": 48276,
+   "sha256": "4c06fac172314472ddcdde5f072324c8cb90d9f2ef02dd1019af1048aabbc542"
+  },
+  {
+   "name": "body/wanderer_f.spr",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/여/원더러_여.spr",
+   "blob": "89a0fbb93fdc5dbb02590e0de6e7927708f3b075",
+   "bytes": 237558,
+   "sha256": "b37457767a498ad4e7de31ae4344aff933ba811587b8d22c2a45d46d54aecee3"
+  },
+  {
+   "name": "body/wanderer_f.act",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/여/원더러_여.act",
+   "blob": "7049ac8a8cafbb50bef0a15001f99e960c73de1e",
+   "bytes": 48276,
+   "sha256": "f0ce4aa9701db58675b9f4bac2f9d05d5a56144fefbd1a6cbebc16a79eb44516"
+  },
+  {
+   "name": "body/ninja_f.spr",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/여/닌자_여.spr",
+   "blob": "cd8a4612444428520b1dbbcdfc214a91c5e1b708",
+   "bytes": 212743,
+   "sha256": "e83aae374ce5ee0b265229b66e39167af6163293ababa9d57800c19237b44183"
+  },
+  {
+   "name": "body/ninja_f.act",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/여/닌자_여.act",
+   "blob": "fad276b708d2c21f0feb9e66b2bff74061653dc7",
+   "bytes": 48276,
+   "sha256": "065cd3be8b8a864ee30a543e6d7316d71bc441259f36e241ce9d101374c9f648"
+  },
+  {
+   "name": "body/gunslinger_f.spr",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/여/건너_여.spr",
+   "blob": "d1527644acd372a8197ac06b7fe4ad956b3d2063",
+   "bytes": 207257,
+   "sha256": "bb711027b74a41e934dfb1bde300d46933d38b3b626651ecf1d4229c8cf85aa4"
+  },
+  {
+   "name": "body/gunslinger_f.act",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/여/건너_여.act",
+   "blob": "60d805dd7462336abaf2cd0dcc804f08b9fbe6ae",
+   "bytes": 48276,
+   "sha256": "e6a54026b5103c56999be8d704bff76a1dd13b2e9c761c3265cfbe27744facf2"
+  },
+  {
+   "name": "head/1_m.spr",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/머리통/남/1_남.spr",
+   "blob": "7dd8b333ae4805c2adeaf68e1f2890aad17895aa",
+   "bytes": 8084,
+   "sha256": "dfc548c5cfd9aeb66616c5912df78773c2798834f9412a309a5a2b4f5868ac95"
+  },
+  {
+   "name": "head/1_m.act",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/머리통/남/1_남.act",
+   "blob": "984956c79f1b6d2fd7b9c1feb66eb727ecba6144",
+   "bytes": 61044,
+   "sha256": "96cb4c7daada65ead29ade650c34da1cba93937d3b360c5468506c3d056219de"
+  },
+  {
+   "name": "head/1_f.spr",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/머리통/여/1_여.spr",
+   "blob": "ff1d161e82c27b4e7bf7f198c1103303c89cd11b",
+   "bytes": 9343,
+   "sha256": "f44fe17b6527feccadc20a5f44659b8fbb5953bc1f2f988af25994b26fe21ca6"
+  },
+  {
+   "name": "head/1_f.act",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/머리통/여/1_여.act",
+   "blob": "a0421962f013ec8c6d8fed463298578e548882de",
+   "bytes": 61044,
+   "sha256": "781abd10543411a9ce0dcbb0d0ea2a9c2a118f05d29fc3427b222067a2519ddb"
+  },
+  {
+   "name": "body/rebellion_m.spr",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/남/rebellion_남.spr",
+   "blob": "cbe64e86f7bca2da332b981b67a0b1b5ace033c8",
+   "bytes": 269046,
+   "sha256": "2210e0fe7f39319e089dbbd255f4c399168f23e80b87946643cf1e89966016ee"
+  },
+  {
+   "name": "body/rebellion_m.act",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/남/rebellion_남.act",
+   "blob": "4e078b39582c96c06e85a29653ffeae9c4a58412",
+   "bytes": 48276,
+   "sha256": "364432dc092f171717b8a86d4a17960fff5ff29b52ea835ffcd283ca58668d7f"
+  },
+  {
+   "name": "body/rebellion_f.spr",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/여/rebellion_여.spr",
+   "blob": "8602610b909de9657a0188a41eff6111a2a4a806",
+   "bytes": 233302,
+   "sha256": "d6d4d5539efca6677986ec2ecb558d42191cc5c73144fab6f748db63f7845c39"
+  },
+  {
+   "name": "body/rebellion_f.act",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/여/rebellion_여.act",
+   "blob": "4591f2f56c9c777b2dd9cabdb60ca3cb61a5b960",
+   "bytes": 48276,
+   "sha256": "704c9b66f5a702d6c7fa9a0c41b61ea93b7b0ffc8b3eaa9d89cd13349674ccaa"
+  },
+  {
+   "name": "body/kagerou_m.spr",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/남/kagerou_남.spr",
+   "blob": "1d6b244e6013eb333dbbe4cb497a4a2a3dfb2390",
+   "bytes": 275547,
+   "sha256": "22708cd73eaf4bd30aac662bad6f7098b8a4044cf3598debf0ea0b684f0efca9"
+  },
+  {
+   "name": "body/kagerou_m.act",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/남/kagerou_남.act",
+   "blob": "fbc357355079da7862a739a46d0a71f4f6d855a9",
+   "bytes": 48404,
+   "sha256": "e61246f1a5982765197bbbc445c7472cbca757da40049436c97b9ed30a7c0781"
+  },
+  {
+   "name": "body/oboro_f.spr",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/여/oboro_여.spr",
+   "blob": "ad9a80c334bc787dcc60065a4f9d6b0156d29def",
+   "bytes": 238816,
+   "sha256": "4dd2c27a9b2c056ff45159852293b25ab02e2805e36d767d7e9a72700861adab"
+  },
+  {
+   "name": "body/oboro_f.act",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/여/oboro_여.act",
+   "blob": "efbc2826fe172869a17b933a76196ec32889e150",
+   "bytes": 48276,
+   "sha256": "d84b520644a4f5c0f7ff842b3d3438c9c88acefb0471e68d43e96fb4e9262bc4"
+  },
+  {
+   "name": "weapon/crusader_m.spr",
+   "repo": "rAthena-Thailand/ClientROThailand",
+   "commit": "6f91cbd1df3b94f3e4ea27c6eeb63a4b9f319e96",
+   "path": "Client-2025-06-04/Pre-Renewal/data/sprite/인간족/크루세이더/크루세이더_남_20161.spr (stored under its CP949 name)",
+   "blob": "5b6dde6514c16db4735ebceeb22071f7892c3779",
+   "bytes": 2132,
+   "sha256": "28241832e39ad13f593a1f7398b39986f93c9cdeb59459bf20badc9c200e2bae"
+  },
+  {
+   "name": "weapon/crusader_m.act",
+   "repo": "rAthena-Thailand/ClientROThailand",
+   "commit": "6f91cbd1df3b94f3e4ea27c6eeb63a4b9f319e96",
+   "path": "Client-2025-06-04/Pre-Renewal/data/sprite/인간족/크루세이더/크루세이더_남_20161.act (stored under its CP949 name)",
+   "blob": "688f458a206330db55652302e3859b02b580a41d",
+   "bytes": 42516,
+   "sha256": "750b7786d3e592cb78b34e6bcb8f9694224ccea86d3b7c5d43034ba25ddf12e9"
+  },
+  {
+   "name": "weapon/crusader_f.spr",
+   "repo": "rAthena-Thailand/ClientROThailand",
+   "commit": "6f91cbd1df3b94f3e4ea27c6eeb63a4b9f319e96",
+   "path": "Client-2025-06-04/Pre-Renewal/data/sprite/인간족/크루세이더/크루세이더_여_20161.spr (stored under its CP949 name)",
+   "blob": "6862422b96951211f22ee9194eac000ccea2d490",
+   "bytes": 3961,
+   "sha256": "b029863a7a9dc347ad9931c52f8209011bb7a1e7537935c2b657acf90328653a"
+  },
+  {
+   "name": "weapon/crusader_f.act",
+   "repo": "rAthena-Thailand/ClientROThailand",
+   "commit": "6f91cbd1df3b94f3e4ea27c6eeb63a4b9f319e96",
+   "path": "Client-2025-06-04/Pre-Renewal/data/sprite/인간족/크루세이더/크루세이더_여_20161.act (stored under its CP949 name)",
+   "blob": "d80e44f5a508ea6459c5bdb2a8262b237e6959a3",
+   "bytes": 43540,
+   "sha256": "2a29eb573d4375cd6c7d65a9e4e21a07e36110db8fef1869d1afedf55db7ed6d"
+  },
+  {
+   "name": "weapon/royal_guard_m.spr",
+   "repo": "rAthena-Thailand/ClientROThailand",
+   "commit": "6f91cbd1df3b94f3e4ea27c6eeb63a4b9f319e96",
+   "path": "Client-2025-06-04/Pre-Renewal/data/sprite/인간족/로얄가드/로얄가드_남_프리스트의검.spr (stored under its CP949 name)",
+   "blob": "71d3aae78c6b208c5f7a996f3a5319262fbb287f",
+   "bytes": 2913,
+   "sha256": "365547e05860a70fe15e5a12af019c9b91d6ed7f22af885a8b49cac4f4582e80"
+  },
+  {
+   "name": "weapon/royal_guard_m.act",
+   "repo": "rAthena-Thailand/ClientROThailand",
+   "commit": "6f91cbd1df3b94f3e4ea27c6eeb63a4b9f319e96",
+   "path": "Client-2025-06-04/Pre-Renewal/data/sprite/인간족/로얄가드/로얄가드_남_프리스트의검.act (stored under its CP949 name)",
+   "blob": "da1cd0cdf6ecaef54709ff64edb4396ef5ab8619",
+   "bytes": 42964,
+   "sha256": "5d01f47e1deef16a180ab7e10ac421016c9a0a498c2734763ebd33e3d322c257"
+  },
+  {
+   "name": "weapon/royal_guard_f.spr",
+   "repo": "rAthena-Thailand/ClientROThailand",
+   "commit": "6f91cbd1df3b94f3e4ea27c6eeb63a4b9f319e96",
+   "path": "Client-2025-06-04/Pre-Renewal/data/sprite/인간족/로얄가드/로얄가드_여_프리스트의검.spr (stored under its CP949 name)",
+   "blob": "293e05fcb4d4a26f3385aa6df5d9ff26c35cebb1",
+   "bytes": 4604,
+   "sha256": "4bfa697c8956dcde8faaa442e7df6369ee75705ecb360ccf866b82137ced23c4"
+  },
+  {
+   "name": "weapon/royal_guard_f.act",
+   "repo": "rAthena-Thailand/ClientROThailand",
+   "commit": "6f91cbd1df3b94f3e4ea27c6eeb63a4b9f319e96",
+   "path": "Client-2025-06-04/Pre-Renewal/data/sprite/인간족/로얄가드/로얄가드_여_프리스트의검.act (stored under its CP949 name)",
+   "blob": "8e8fd21400f95c952d6aaaec043c1d8c80e14dfe",
+   "bytes": 43540,
+   "sha256": "f0c407839dbf791680e272171624a29015fe9981186e680de4a680e4d52188f5"
+  },
+  {
+   "name": "weapon/sage_m.spr",
+   "repo": "rAthena-Thailand/ClientROThailand",
+   "commit": "6f91cbd1df3b94f3e4ea27c6eeb63a4b9f319e96",
+   "path": "Client-2025-06-04/Pre-Renewal/data/sprite/인간족/세이지/세이지_남_28603.spr (stored under its CP949 name)",
+   "blob": "d97c5bd34463c290ddd861448fd0a9529c822345",
+   "bytes": 7497,
+   "sha256": "4b445cfbdadc3b4c29711cf20515169cdedc614c8eb79dd37813ec9a63412b47"
+  },
+  {
+   "name": "weapon/sage_m.act",
+   "repo": "rAthena-Thailand/ClientROThailand",
+   "commit": "6f91cbd1df3b94f3e4ea27c6eeb63a4b9f319e96",
+   "path": "Client-2025-06-04/Pre-Renewal/data/sprite/인간족/세이지/세이지_남_28603.act (stored under its CP949 name)",
+   "blob": "62ed64a978c436b241145b1b527fb8508d4e4237",
+   "bytes": 42580,
+   "sha256": "1f3e8fcd9336c3c3e4f2c25ac903de24aaeb438769774b9d557837060b55c51d"
+  },
+  {
+   "name": "weapon/sage_f.spr",
+   "repo": "rAthena-Thailand/ClientROThailand",
+   "commit": "6f91cbd1df3b94f3e4ea27c6eeb63a4b9f319e96",
+   "path": "Client-2025-06-04/Pre-Renewal/data/sprite/인간족/세이지/세이지_여_28603.spr (stored under its CP949 name)",
+   "blob": "f16a398d01d5f018a0c700f609f12458fecb6aae",
+   "bytes": 3767,
+   "sha256": "b1a4f106eb1183ee59a39646699f1513b7a3121883ed9e9ece849e77148f8ce4"
+  },
+  {
+   "name": "weapon/sage_f.act",
+   "repo": "rAthena-Thailand/ClientROThailand",
+   "commit": "6f91cbd1df3b94f3e4ea27c6eeb63a4b9f319e96",
+   "path": "Client-2025-06-04/Pre-Renewal/data/sprite/인간족/세이지/세이지_여_28603.act (stored under its CP949 name)",
+   "blob": "c32e07413ff4c3d08e8c3dc5a6c6458fae32bc86",
+   "bytes": 42452,
+   "sha256": "b349163abd91ff1460ce2c5156f31604183bd51daf5e9cf9b5d25e1f4c54dd5d"
+  },
+  {
+   "name": "weapon/sorcerer_m.spr",
+   "repo": "rAthena-Thailand/ClientROThailand",
+   "commit": "6f91cbd1df3b94f3e4ea27c6eeb63a4b9f319e96",
+   "path": "Client-2025-06-04/Pre-Renewal/data/sprite/인간족/소서러/소서러_남_28603.spr (stored under its CP949 name)",
+   "blob": "d97c5bd34463c290ddd861448fd0a9529c822345",
+   "bytes": 7497,
+   "sha256": "4b445cfbdadc3b4c29711cf20515169cdedc614c8eb79dd37813ec9a63412b47"
+  },
+  {
+   "name": "weapon/sorcerer_m.act",
+   "repo": "rAthena-Thailand/ClientROThailand",
+   "commit": "6f91cbd1df3b94f3e4ea27c6eeb63a4b9f319e96",
+   "path": "Client-2025-06-04/Pre-Renewal/data/sprite/인간족/소서러/소서러_남_28603.act (stored under its CP949 name)",
+   "blob": "62ed64a978c436b241145b1b527fb8508d4e4237",
+   "bytes": 42580,
+   "sha256": "1f3e8fcd9336c3c3e4f2c25ac903de24aaeb438769774b9d557837060b55c51d"
+  },
+  {
+   "name": "weapon/sorcerer_f.spr",
+   "repo": "rAthena-Thailand/ClientROThailand",
+   "commit": "6f91cbd1df3b94f3e4ea27c6eeb63a4b9f319e96",
+   "path": "Client-2025-06-04/Pre-Renewal/data/sprite/인간족/소서러/소서러_여_28603.spr (stored under its CP949 name)",
+   "blob": "f16a398d01d5f018a0c700f609f12458fecb6aae",
+   "bytes": 3767,
+   "sha256": "b1a4f106eb1183ee59a39646699f1513b7a3121883ed9e9ece849e77148f8ce4"
+  },
+  {
+   "name": "weapon/sorcerer_f.act",
+   "repo": "rAthena-Thailand/ClientROThailand",
+   "commit": "6f91cbd1df3b94f3e4ea27c6eeb63a4b9f319e96",
+   "path": "Client-2025-06-04/Pre-Renewal/data/sprite/인간족/소서러/소서러_여_28603.act (stored under its CP949 name)",
+   "blob": "c32e07413ff4c3d08e8c3dc5a6c6458fae32bc86",
+   "bytes": 42452,
+   "sha256": "b349163abd91ff1460ce2c5156f31604183bd51daf5e9cf9b5d25e1f4c54dd5d"
+  },
+  {
+   "name": "weapon/alchemist_m.spr",
+   "repo": "rAthena-Thailand/ClientROThailand",
+   "commit": "6f91cbd1df3b94f3e4ea27c6eeb63a4b9f319e96",
+   "path": "Client-2025-06-04/Pre-Renewal/data/sprite/인간족/연금술사/연금술사_남_16062.spr (stored under its CP949 name)",
+   "blob": "f5a150aae435c52206d2342e1589d335cbc7c8f5",
+   "bytes": 3912,
+   "sha256": "7521966bf83a6d5d0b107dda2fe2bb737fe2bf169577b24724089b683e690fda"
+  },
+  {
+   "name": "weapon/alchemist_m.act",
+   "repo": "rAthena-Thailand/ClientROThailand",
+   "commit": "6f91cbd1df3b94f3e4ea27c6eeb63a4b9f319e96",
+   "path": "Client-2025-06-04/Pre-Renewal/data/sprite/인간족/연금술사/연금술사_남_16062.act (stored under its CP949 name)",
+   "blob": "d695bd86ae59e282eb7f671209dd6787c113dc19",
+   "bytes": 42772,
+   "sha256": "f2fd62002642e5e8a89d941d07fa58946b488a363571b6f053bdac0ef1c15ede"
+  },
+  {
+   "name": "weapon/alchemist_f.spr",
+   "repo": "rAthena-Thailand/ClientROThailand",
+   "commit": "6f91cbd1df3b94f3e4ea27c6eeb63a4b9f319e96",
+   "path": "Client-2025-06-04/Pre-Renewal/data/sprite/인간족/연금술사/연금술사_여_16062.spr (stored under its CP949 name)",
+   "blob": "0bd466ff20d643a104c3977c08148416d24d84a8",
+   "bytes": 2514,
+   "sha256": "7953e0fbc1698b62ea7e5848f1fa6d2ab0c82e44bd257284852e32d664cbcbbf"
+  },
+  {
+   "name": "weapon/alchemist_f.act",
+   "repo": "rAthena-Thailand/ClientROThailand",
+   "commit": "6f91cbd1df3b94f3e4ea27c6eeb63a4b9f319e96",
+   "path": "Client-2025-06-04/Pre-Renewal/data/sprite/인간족/연금술사/연금술사_여_16062.act (stored under its CP949 name)",
+   "blob": "042873b6f54d0fe9ac1cf970e45006058124490f",
+   "bytes": 42708,
+   "sha256": "7612e47723200b8458afb3a188d7437c8043d84b562365da6c80d48a80aa6a73"
+  },
+  {
+   "name": "weapon/geneticist_m.spr",
+   "repo": "rAthena-Thailand/ClientROThailand",
+   "commit": "6f91cbd1df3b94f3e4ea27c6eeb63a4b9f319e96",
+   "path": "Client-2025-06-04/Pre-Renewal/data/sprite/인간족/제네릭/제네릭_남_16062.spr (stored under its CP949 name)",
+   "blob": "f5a150aae435c52206d2342e1589d335cbc7c8f5",
+   "bytes": 3912,
+   "sha256": "7521966bf83a6d5d0b107dda2fe2bb737fe2bf169577b24724089b683e690fda"
+  },
+  {
+   "name": "weapon/geneticist_m.act",
+   "repo": "rAthena-Thailand/ClientROThailand",
+   "commit": "6f91cbd1df3b94f3e4ea27c6eeb63a4b9f319e96",
+   "path": "Client-2025-06-04/Pre-Renewal/data/sprite/인간족/제네릭/제네릭_남_16062.act (stored under its CP949 name)",
+   "blob": "d695bd86ae59e282eb7f671209dd6787c113dc19",
+   "bytes": 42772,
+   "sha256": "f2fd62002642e5e8a89d941d07fa58946b488a363571b6f053bdac0ef1c15ede"
+  },
+  {
+   "name": "weapon/geneticist_f.spr",
+   "repo": "rAthena-Thailand/ClientROThailand",
+   "commit": "6f91cbd1df3b94f3e4ea27c6eeb63a4b9f319e96",
+   "path": "Client-2025-06-04/Pre-Renewal/data/sprite/인간족/제네릭/제네릭_여_16062.spr (stored under its CP949 name)",
+   "blob": "0bd466ff20d643a104c3977c08148416d24d84a8",
+   "bytes": 2514,
+   "sha256": "7953e0fbc1698b62ea7e5848f1fa6d2ab0c82e44bd257284852e32d664cbcbbf"
+  },
+  {
+   "name": "weapon/geneticist_f.act",
+   "repo": "rAthena-Thailand/ClientROThailand",
+   "commit": "6f91cbd1df3b94f3e4ea27c6eeb63a4b9f319e96",
+   "path": "Client-2025-06-04/Pre-Renewal/data/sprite/인간족/제네릭/제네릭_여_16062.act (stored under its CP949 name)",
+   "blob": "042873b6f54d0fe9ac1cf970e45006058124490f",
+   "bytes": 42708,
+   "sha256": "7612e47723200b8458afb3a188d7437c8043d84b562365da6c80d48a80aa6a73"
+  },
+  {
+   "name": "weapon/rogue_m.spr",
+   "repo": "rAthena-Thailand/ClientROThailand",
+   "commit": "6f91cbd1df3b94f3e4ea27c6eeb63a4b9f319e96",
+   "path": "Client-2025-06-04/Pre-Renewal/data/sprite/인간족/로그/로그_남_라크마.spr (stored under its CP949 name)",
+   "blob": "62a6ec41ee346f57e1ba820c164ddc56500833eb",
+   "bytes": 2069,
+   "sha256": "5512332938c4a564f2cd15998fbfc0a26acb4738e408aff8abaf5386609d6d74"
+  },
+  {
+   "name": "weapon/rogue_m.act",
+   "repo": "rAthena-Thailand/ClientROThailand",
+   "commit": "6f91cbd1df3b94f3e4ea27c6eeb63a4b9f319e96",
+   "path": "Client-2025-06-04/Pre-Renewal/data/sprite/인간족/로그/로그_남_라크마.act (stored under its CP949 name)",
+   "blob": "346b80b7969c47fce9ffb172f58354c2bf601daf",
+   "bytes": 42900,
+   "sha256": "47c1f869617eb96f9d6faebbdc293b04a20961ce81724fcfdc91b6db182240eb"
+  },
+  {
+   "name": "weapon/rogue_f.spr",
+   "repo": "rAthena-Thailand/ClientROThailand",
+   "commit": "6f91cbd1df3b94f3e4ea27c6eeb63a4b9f319e96",
+   "path": "Client-2025-06-04/Pre-Renewal/data/sprite/인간족/로그/로그_여_라크마.spr (stored under its CP949 name)",
+   "blob": "0a4db6dccb4169a074b979a90565d7eddf4b6479",
+   "bytes": 3190,
+   "sha256": "5652b4be4354cccee6f17b2f30ac9d5fc379fa14520f30c8ca76538034ebbee8"
+  },
+  {
+   "name": "weapon/rogue_f.act",
+   "repo": "rAthena-Thailand/ClientROThailand",
+   "commit": "6f91cbd1df3b94f3e4ea27c6eeb63a4b9f319e96",
+   "path": "Client-2025-06-04/Pre-Renewal/data/sprite/인간족/로그/로그_여_라크마.act (stored under its CP949 name)",
+   "blob": "bcefa658166c5d2178f462af023b732f647ff5e7",
+   "bytes": 42196,
+   "sha256": "2c516262cc01b9608d0f69f6c87bb8b73b4303611c96cf554cb0d34097dee0a8"
+  },
+  {
+   "name": "weapon/ninja_m.spr",
+   "repo": "rAthena-Thailand/ClientROThailand",
+   "commit": "6f91cbd1df3b94f3e4ea27c6eeb63a4b9f319e96",
+   "path": "Client-2025-06-04/Pre-Renewal/data/sprite/인간족/닌자/닌자_남_라크마.spr (stored under its CP949 name)",
+   "blob": "4f0166ca423b675c8d81a794ff8ba9bb8619b8f1",
+   "bytes": 1511,
+   "sha256": "e46539622775f903211dcca9a8b65097de8a25405db218b0224b1418f7ed171b"
+  },
+  {
+   "name": "weapon/ninja_m.act",
+   "repo": "rAthena-Thailand/ClientROThailand",
+   "commit": "6f91cbd1df3b94f3e4ea27c6eeb63a4b9f319e96",
+   "path": "Client-2025-06-04/Pre-Renewal/data/sprite/인간족/닌자/닌자_남_라크마.act (stored under its CP949 name)",
+   "blob": "eb7edaae7f109a43f2e916daac84c2f798fd372b",
+   "bytes": 42068,
+   "sha256": "5c180192ce8cf533f2cb3cd58ff40b9626f91ed22eb4d4d5fa90347ded6d30df"
+  },
+  {
+   "name": "weapon/ninja_f.spr",
+   "repo": "rAthena-Thailand/ClientROThailand",
+   "commit": "6f91cbd1df3b94f3e4ea27c6eeb63a4b9f319e96",
+   "path": "Client-2025-06-04/Pre-Renewal/data/sprite/인간족/닌자/닌자_여_라크마.spr (stored under its CP949 name)",
+   "blob": "bbd8ce71c8080d821f512f33a228f3cf12614f89",
+   "bytes": 2164,
+   "sha256": "dfc5786fd1e412daf6df9dc65d65f4f55ec823108e2c128baaeafdf300a73007"
+  },
+  {
+   "name": "weapon/ninja_f.act",
+   "repo": "rAthena-Thailand/ClientROThailand",
+   "commit": "6f91cbd1df3b94f3e4ea27c6eeb63a4b9f319e96",
+   "path": "Client-2025-06-04/Pre-Renewal/data/sprite/인간족/닌자/닌자_여_라크마.act (stored under its CP949 name)",
+   "blob": "e28409f7db0d65b14142abd2473a6c8b994d3c2d",
+   "bytes": 42324,
+   "sha256": "5ca4ee16b9f8614b59765b89c6c972709608c20d4e7989a1385bd0af8dffbe64"
+  },
+  {
+   "name": "weapon/monk_m.spr",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/sprite/인간족/몽크/몽크_남_너클.spr (stored under its CP949 name read as GBK)",
+   "blob": "77bdb501982bb1acaeb7a9e7e64f6c31a8a2abb0",
+   "bytes": 1117,
+   "sha256": "846085c5792778d37ea7a16286003f9f960d85831d4e89d2ef0487e4fef355f6"
+  },
+  {
+   "name": "weapon/monk_m.act",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/sprite/인간족/몽크/몽크_남_너클.act (stored under its CP949 name read as GBK)",
+   "blob": "ab0329e1fe8c8c21c041e6cb11fefa6ee62911dd",
+   "bytes": 40980,
+   "sha256": "896931b23fc8fc2345f5f8128ae2e227d04e4bbee1dc0fb15aa258934153832f"
+  },
+  {
+   "name": "weapon/monk_f.spr",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/sprite/인간족/몽크/몽크_여_너클.spr (stored under its CP949 name read as GBK)",
+   "blob": "77bdb501982bb1acaeb7a9e7e64f6c31a8a2abb0",
+   "bytes": 1117,
+   "sha256": "846085c5792778d37ea7a16286003f9f960d85831d4e89d2ef0487e4fef355f6"
+  },
+  {
+   "name": "weapon/monk_f.act",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/sprite/인간족/몽크/몽크_여_너클.act (stored under its CP949 name read as GBK)",
+   "blob": "ab0329e1fe8c8c21c041e6cb11fefa6ee62911dd",
+   "bytes": 40980,
+   "sha256": "896931b23fc8fc2345f5f8128ae2e227d04e4bbee1dc0fb15aa258934153832f"
+  },
+  {
+   "name": "weapon/gunslinger_m.spr",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/sprite/인간족/건너/건너_남_권총.spr (stored under its CP949 name read as GBK)",
+   "blob": "65c0cc359cd6d3f85d05f229866f9187b65e4f8f",
+   "bytes": 11838,
+   "sha256": "fc5ba7a8b91ffd5eea445745549cc4038ada0bdbc9cb30ecc044bf2040643319"
+  },
+  {
+   "name": "weapon/gunslinger_m.act",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/sprite/인간족/건너/건너_남_권총.act (stored under its CP949 name read as GBK)",
+   "blob": "64c9a2cef0958e4b4f010ea28901b5b42ebaf067",
+   "bytes": 42900,
+   "sha256": "a736f367757a950bb397ca277c4c8c89eefa8cc87000a88881fdcf83596b1761"
+  },
+  {
+   "name": "weapon/gunslinger_f.spr",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/sprite/인간족/건너/건너_여_권총.spr (stored under its CP949 name read as GBK)",
+   "blob": "cca5eef004c3debd702e96d2f1a3ebbcba3dc577",
+   "bytes": 11767,
+   "sha256": "988bfa327523e8e463bd25496dab8ff69deb198f873d2b26d1822a11040dd730"
+  },
+  {
+   "name": "weapon/gunslinger_f.act",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/sprite/인간족/건너/건너_여_권총.act (stored under its CP949 name read as GBK)",
+   "blob": "3920f3a5be12bf5a819c81482ffc739fd429b331",
+   "bytes": 42900,
+   "sha256": "3556a6c3daa67c56167451b9682ceaa2d2546f3372f1fa75518b533c4a5a07a6"
+  },
+  {
+   "name": "weapon/rebellion_m.spr",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/sprite/인간족/rebellion/rebellion_남_권총.spr (stored under its CP949 name read as GBK)",
+   "blob": "e35d7f8725afae01102b4fc47d79a9d9633ca525",
+   "bytes": 17210,
+   "sha256": "b643e36ce2460d580732c00720975bca1612ee53dabc83ddb8175ac1fb5e0444"
+  },
+  {
+   "name": "weapon/rebellion_m.act",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/sprite/인간족/rebellion/rebellion_남_권총.act (stored under its CP949 name read as GBK)",
+   "blob": "77347b98fac434cf10acd50238524c83dfb9ca21",
+   "bytes": 42900,
+   "sha256": "cb42bc59d099157a49338dbb3e2e52d9472a8b023165b7c8013c9374fcd63023"
+  },
+  {
+   "name": "weapon/rebellion_f.spr",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/sprite/인간족/rebellion/rebellion_여_권총.spr (stored under its CP949 name read as GBK)",
+   "blob": "f4bb9bc815af88338fa71334981a2e71d765e3f5",
+   "bytes": 16443,
+   "sha256": "3ae6030c27b55062eee917e8c9e48d922aa52985725a1d62ba72cbd9c0c4f3cb"
+  },
+  {
+   "name": "weapon/rebellion_f.act",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/sprite/인간족/rebellion/rebellion_여_권총.act (stored under its CP949 name read as GBK)",
+   "blob": "7e4b69e5875989d9aa24ec6212ea254c1c72fe97",
+   "bytes": 42900,
+   "sha256": "862c6eaa19b603bb359b74d936313a0111f3195bb6ecd63d25549ac98c711e7a"
+  },
+  {
+   "name": "weapon/rogue_bow_m.spr",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/sprite/인간족/로그/로그_남_1720.spr (stored under its CP949 name read as GBK)",
+   "blob": "9903122d3d4aa96b894c7a7b6b85e3473572a9d5",
+   "bytes": 5259,
+   "sha256": "d18984113027b97ce0e67d393c20b1c4994d6cc2a2fcf4160d68409a4d7d9920"
+  },
+  {
+   "name": "weapon/rogue_bow_m.act",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/sprite/인간족/로그/로그_남_1720.act (stored under its CP949 name read as GBK)",
+   "blob": "78dbe9f7af835bd94c66ec36a85be8e01c79a560",
+   "bytes": 42772,
+   "sha256": "e57701d32a8d9908082dffe468df3a34057f9e2d17a1d3ad5ca8f6106f9aa77c"
+  },
+  {
+   "name": "weapon/rogue_bow_f.spr",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/sprite/인간족/로그/로그_여_1720.spr (stored under its CP949 name read as GBK)",
+   "blob": "df5c48149eb051cdb44e2622b5425ca76ab20224",
+   "bytes": 10778,
+   "sha256": "a32d41c27fcabe264e097e7947c0e5e9cb29e99f854214d158905cf878005274"
+  },
+  {
+   "name": "weapon/rogue_bow_f.act",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/sprite/인간족/로그/로그_여_1720.act (stored under its CP949 name read as GBK)",
+   "blob": "283af76038f20dbad0192ddf65f1448da9b078da",
+   "bytes": 42068,
+   "sha256": "233fa5410cc44f4d9c9a75f01e74ab9cc2ae8efebc12f45e59cda1f66d4ee047"
+  },
+  {
+   "name": "weapon/kagerou_m.spr",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/sprite/인간족/kagerou/kagerou_남_수리검.spr (stored under its CP949 name read as GBK)",
+   "blob": "a7980c0201eef0f7bfb5167ad0788c7d2cc76e79",
+   "bytes": 9371,
+   "sha256": "22b0f11b51e38fb69296bd4bb3639f9ca342254f828e863d5f52a72e9dacbf00"
+  },
+  {
+   "name": "weapon/kagerou_m.act",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/sprite/인간족/kagerou/kagerou_남_수리검.act (stored under its CP949 name read as GBK)",
+   "blob": "79bae4cd09e65784a6e95a770cbd17a7a0a17c91",
+   "bytes": 42900,
+   "sha256": "6cedb6077e93b5768b9273e68dbad2a0440992161b3295150164d15a03e2ec4f"
+  },
+  {
+   "name": "weapon/oboro_f.spr",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/sprite/인간족/oboro/oboro_여_수리검.spr (stored under its CP949 name read as GBK)",
+   "blob": "577c4f445247d66abcc921bdfa23cac3f96ce801",
+   "bytes": 7558,
+   "sha256": "873d6dbc4330b390593a49f526053afc94b75c3ad49b12a0f3d94aabec6f64b5"
+  },
+  {
+   "name": "weapon/oboro_f.act",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/sprite/인간족/oboro/oboro_여_수리검.act (stored under its CP949 name read as GBK)",
+   "blob": "f284e5ffef039642b69f76b18bce6dfd114a05d1",
+   "bytes": 42324,
+   "sha256": "4aa0faee003d030f28c0bc11880ffce981d3599ce91d7a7f478b94c96fb2403e"
+  },
+  {
+   "name": "weapon/bard_inst_m.spr",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/sprite/인간족/바드/바드_남_악기.spr (stored under its CP949 name read as GBK)",
+   "blob": "9012e6c73fda6db48c1f29fb9b3fda36a4b0822e",
+   "bytes": 10149,
+   "sha256": "dab61ffa07341a8ae344a0d0262e9fb37d42d9af33298f2d9276333844c66cc1"
+  },
+  {
+   "name": "weapon/bard_inst_m.act",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/sprite/인간족/바드/바드_남_악기.act (stored under its CP949 name read as GBK)",
+   "blob": "eb815bc8cf411542ca6cfd9d4e90195ed4aa83db",
+   "bytes": 42900,
+   "sha256": "880df65bb1745c067c29a3119a374fbf79b1fcca19b860797bc784d30f950f2d"
+  },
+  {
+   "name": "weapon/dancer_whip_f.spr",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/sprite/인간족/무희/무희_여_채찍.spr (stored under its CP949 name read as GBK)",
+   "blob": "9adcfacf517cc2261e04201f7c312ffd5a20bc99",
+   "bytes": 5062,
+   "sha256": "3242d87eed4355696d6c7b9d0a5dcf11cd7c1e018e8912d513fb5b4705a8b7a4"
+  },
+  {
+   "name": "weapon/dancer_whip_f.act",
+   "repo": "linhan85/rAthenaCN_LeeClient",
+   "commit": "bc268afe2d9686a8d61c87d1821e0c75d1b6431d",
+   "path": "data/sprite/인간족/무희/무희_여_채찍.act (stored under its CP949 name read as GBK)",
+   "blob": "8f9cc57b911686d4b29c995e08047c66ff5a277d",
+   "bytes": 42900,
+   "sha256": "9eb7320734df927ff0567f850ec64bfc09e0a8ac4da5af7c818767c888577caf"
+  }
+ ]
+}

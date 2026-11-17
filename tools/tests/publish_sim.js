@@ -137,6 +137,14 @@ t('the published tree is small enough to stay honest', () => {
   // and one lossless WebP only when a form is shown. It has its own ceiling below,
   // is excluded from classic, and remains part of combined delivery.
   const digimonBytes=walk(path.join(out,'assets/digimon'));
+  // haven-v408: one lossless WebP per expanded-roster body, fetched only when that body is first drawn.
+  const expandedBytes=walk(path.join(out,'assets/sprite-pack-x'));
+  // haven-v410: Wardrobe bodies for the 22 expanded classes, one atlas fetched per class and
+  // gender when it is first worn. Hair and accessories are not copied; they come from v5.
+  const expandedWardrobeBytes=walk(path.join(out,'assets/wardrobe/expanded'));
+  // haven-v412: original Ragnarok Online skill-effect flipbooks (tools/make_ro_fx.py), fetched at boot.
+  const roFxBytes=walk(path.join(out,'assets/ro-fx'));
+  assert.ok(roFxBytes>0&&roFxBytes/1048576<2.5,'RO effect flipbooks exceed 2.5 MiB: '+(roFxBytes/1048576).toFixed(2));
   // Illustrated Rune-Midgard World Atlas pack (v314): only requested when the player opens the
   // World Map window, budgeted separately at < 3.5 MiB (2.69 MiB measured) while still covered by
   // the combined runtime ceiling below.
@@ -174,14 +182,21 @@ t('the published tree is small enough to stay honest', () => {
   // v379-v381 owner pass (DigiPet tabs + Mastery/Titles views + DigiDex redesign, the merged
   // training panel with its Party overview, the painted poker icon and Prontera naming) are
   // classic-tree code and spent the last of the deliberate headroom. v355's note on this line's
-  // original 59.5 stands.
-  assert.ok((bytes-nativeBytes-socialBytes-endgameBytes-worldMapBytes-digimonBytes-fountainBytes)/1048576 < 60.1, 'existing classic runtime assets exceed their 60.1 MiB budget');
+  // original 59.5 stands. haven-v409: 60.2, for the 56 inventory icons (about 50 KB) of the seven
+  // expanded-roster weapon families and their drop / budget code.
+  assert.ok((bytes-nativeBytes-socialBytes-endgameBytes-worldMapBytes-digimonBytes-fountainBytes-expandedBytes-expandedWardrobeBytes-roFxBytes)/1048576 < 60.2, 'existing classic runtime assets exceed their 60.2 MiB budget');
+  assert.ok(expandedWardrobeBytes > 0 && expandedWardrobeBytes/1048576 < 4.5, 'lazy expanded-roster Wardrobe bodies exceed their separate 4.5 MiB budget (4.31 measured 2026-11-15)');
+  assert.ok(expandedBytes > 0 && expandedBytes/1048576 < 3, 'lazy expanded-roster bodies exceed their separate 3 MiB budget (2.86 measured 2026-11-15, 44 bodies)');
   assert.ok(digimonBytes/1048576 < 40, 'lazy Digimon roster exceeds its separate 40 MiB budget');
   assert.ok(nativeBytes/1048576 < 68, 'ten native field sets and seventy lossless monster atlases exceed their separate 68 MiB budget');
   // v342 owner approval: all 280 forms as a roughly 36 MiB on-demand pack. The
   // combined ceiling moves from 143.5 to 180 MiB for that explicit addition;
   // classic remains 59.5 and every optional group retains a separate ceiling.
-  assert.ok(mb < 180, 'combined runtime delivery exceeds the approved 180 MiB ceiling');
+  // haven-v410: 180 -> 185 for the expanded-roster Wardrobe bodies (4.3 MiB, measured total 184.4).
+  // They are lazy - a player downloads one ~100 KiB atlas per class and gender actually worn - and
+  // have their own 4.5 MiB ceiling above. NOT yet owner-approved: flagged in UPDATE-LOG and PR #234.
+  // haven-v412: 185 -> 187.5 for the original RO skill-effect flipbooks (1.7 MiB) and the new weapon layers.
+  assert.ok(mb < 187.5, 'combined runtime delivery exceeds the 187.5 MiB ceiling (was '+mb.toFixed(2)+')');
   const fourth=path.join(out,'assets/wardrobe/fourth/v1');assert.ok(walk(fourth)<6.25*1048576,'six fourth jobs share hair and accessory pixels');
   const wardrobe=path.join(out,'assets/wardrobe/v5');assert.ok(walk(wardrobe)<13.5*1048576,'nineteen classes and fifty-two accessories must share sprites');
   const catalog=JSON.parse(fs.readFileSync(path.join(wardrobe,'catalog.json'),'utf8'));

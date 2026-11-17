@@ -45,7 +45,7 @@ export function equipmentPayload(body,blob) {
     const cls=GM_CATALOG.classes[s.cls];
     if(!cls||!inv.includes(item))bad('Select equipment from their bag.');
     const dual=cls.wt.includes('dagger')&&cls.wt.includes('katar');
-    const shield=/^(Novice|Swordman|Knight|Lord Knight|Acolyte|Priest|High Priest|Merchant|Blacksmith|Whitesmith|Rune Knight|Arch Bishop|Mechanic)$/.test(s.cls);
+    const shield=/^(Novice|Swordman|Knight|Lord Knight|Acolyte|Priest|High Priest|Merchant|Blacksmith|Whitesmith|Rune Knight|Arch Bishop|Mechanic|Crusader|Paladin|Royal Guard|Monk|Champion|Sura|Alchemist|Biochemist|Geneticist)$/.test(s.cls);
     const fits=body.slot==='off'?(item.slot==='off'&&shield||item.wt==='dagger'&&dual):body.slot==='acc1'||body.slot==='acc2'?item.slot==='acc':item.slot===body.slot;
     if(!GM_CATALOG.slots.some(x=>x.id===body.slot)||!fits||Math.min(3,item.sec||0)>Math.max(1,cls.tier)||item.slot==='weapon'&&!cls.wt.includes(item.wt)||body.slot==='off'&&eq.weapon?.wt==='katar')bad('That item does not fit their current class or slot.');
     return {mode:'equip',itemId:item.id,slot:body.slot};

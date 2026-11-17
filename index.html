@@ -1059,7 +1059,7 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <script src="assets/wardrobe.js?v=199"></script>
 <script src="assets/shop-catalog.js?v=321"></script>
 <script src="assets/fourth-jobs.js?v=179"></script>
-<script src="assets/expanded-jobs.js?v=413"></script>
+<script src="assets/expanded-jobs.js?v=415"></script>
 <script src="assets/ascension.js?v=156"></script>
 <script src="assets/native-mob-heights.js?v=153"></script>
 <script src="assets/native-fields.js?v=197"></script>
@@ -1069,8 +1069,8 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <script src="assets/skill-materials.js?v=220"></script>
 <script src="assets/afterglow-animations.js?v=151"></script>
 <script src="assets/skill-overdrive.js?v=220"></script>
-<script src="assets/ro-fx/index.js?v=413"></script>
-<script src="assets/signature-fx.js?v=413"></script>
+<script src="assets/ro-fx/index.js?v=415"></script>
+<script src="assets/signature-fx.js?v=415"></script>
 <script src="assets/skill-afterglow.js?v=220"></script>
 <script src="assets/boss-fx.js?v=249"></script>
 <script src="assets/pets.js?v=130"></script>
@@ -1328,7 +1328,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-15 haven-v415 escort pay split: an MVP escort pair keeps 30 percent of its material and Sigil chance and the MVP collects the rest; Asura boss bonus no longer reaches escorts; expanded roster draft with varied class targets, Sura 17 percent; away pay is half your measured minute, ten levels at most above 120, no replayed-minute rate spikes, afk payouts and bulk sales no longer flagged';
+const BUILD='2026-11-15 haven-v415 escort pay split: an MVP escort pair keeps 30 percent of its material and Sigil chance and the MVP collects the rest; Asura boss bonus no longer reaches escorts; expanded roster with budgets about 10% above the original classes, Sura 17%';
 // v364: this write used to sit AFTER the `//` on the BUILD line, so it was part of the comment and
 // never ran - the login card showed an empty #buildTag and there was no way to confirm which file
 // the browser had loaded. It also has to survive the script running before the login card exists.
@@ -3065,19 +3065,6 @@ const BOSS_CRIT_RES=[0,0,0,0,0,.15,.15,.15,.2,.3],NM_CRIT_RES=[.35,.35,.36,.36,.
 // a perfectly ordinary background minute read as "away" and paid for time the tab had already
 // ground itself. The server uses the same three minutes (functions/api/save.js OFFLINE_MIN_MS).
 const OFFLINE_CAP_MS=4*60*60*1000,OFFLINE_REWARD_MULT=.5,OFFLINE_POPUP_MIN_MS=3*60*1000,OFFLINE_RATE_SAMPLE_MS=60000,OFFLINE_RATE_CAP=30000;
-// v408 (owner: "i would not want to have a cap level but i need the offline rewards to work
-// properly ... offline rewards should be only half of the online players"). There is NO level
-// ceiling on a claim. Away EXP is half of what the measured minute earned, credited minute for
-// minute, and the game's own curve (need() walking in checkLevel) decides what that buys - the
-// same curve an online player pays. What has to be true is that the measured minute is a real
-// minute of play: farmSamplingPaused() below is the guard that stops a replayed or resumed tab
-// from inflating the sample this payout is priced from, and functions/_lib/save-audit.js credits a
-// claim through the identical curve, so the console and the page never disagree about a payout.
-// v408 (owner: "can u make level 120 above, have a cap of 10 levels per offline rewards. this
-// should be hidden from players."). Above Lv 120 a claim pays at most ten levels' worth of EXP -
-// the rest is simply not paid, and the welcome-back popup says nothing about it. Kills, Zeny and
-// the loot each kill rolls are untouched; below 120 nothing is clamped at all.
-const OFFLINE_LEVEL_CAP_LV=120,OFFLINE_LEVEL_CAP=10;
 // The sim catches up at most SIM_CATCHUP (600s) of a frozen gap when the page comes back, so a
 // claim no longer than that, covering a window this page itself has been alive for, is time the
 // game already paid out - see applyOfflineProgress. Keep the two numbers in step.
@@ -3827,18 +3814,8 @@ const farmStageKey=()=>[S.cls,S.mp,S.lvl].join(':');
 const farmKeyMap=key=>{const p=String(key||'').split(':');const m=Number(p[1]);return Number.isInteger(m)?m:-1};
 // A stopped field is not a zero-income farming minute. Discard the partial window
 // so time in the plaza/trials cannot dilute the next real field sample either.
-// v409 (owner, 2026-11-15: "if a tab doesnt run ... a sudden surge of exp and zeny will happen which
-// spike it for abit ... would this might what have happen in this 37 level increase?"). It is
-// exactly that. A throttled, frozen or slept tab replays its owed time through simAdvance(): up to
-// SIM_CATCHUP seconds of grinding land inside a few milliseconds of wall clock. The farm sampler
-// divides the last 60 seconds of EVENTS by 60 seconds of WALL time, so a ten-minute replay read as
-// ten times the real rate - and if the player closed the tab on that minute, the welcome-back claim
-// was priced off the inflated sample. While the sim owes more than a moment of time, a wall-clock
-// rate proves nothing: drop the partial window and start again once the debt is settled.
-const FARM_CATCHUP_PAUSE=2;   // seconds of owed sim time that make a wall-clock rate meaningless
 function farmSamplingPaused(){
- return (typeof simPending==='number'&&simPending>FARM_CATCHUP_PAUSE)||
-  (typeof document!=='undefined'&&document.body?.classList.contains('social-open'))||
+ return (typeof document!=='undefined'&&document.body?.classList.contains('social-open'))||
   (typeof hubFirstPending!=='undefined'&&hubFirstPending)||
   (typeof JOB_RITE!=='undefined'&&JOB_RITE.on)||(typeof TRIAL!=='undefined'&&TRIAL.on)||
   (typeof CLOUD!=='undefined'&&(CLOUD.lost||CLOUD.gate||CLOUD.paused));
@@ -5733,8 +5710,8 @@ function spawn(){
       ...ascensionCombatStats(S.mp,S.lvl,true),exp:fieldExpReward(S.mp,S.lvl,true),zeny:fieldZenyReward(S.mp,S.lvl,true),
       size:1.3,mag:true,lvl:l,sec:F.sec});
     // The first five maps bring three escorts; the five later maps bring five.
-    // v414: they carry `escort` so the payout split can tell an MVP's escort from an ordinary
-    // field mob - only escorts hand 70% of their material/sigil roll to the boss.
+    // v415: they carry `escort` so the payout split can tell an MVP's escort from an ordinary
+    // field mob - only an escort hands 70% of its material/Sigil roll to the boss.
     for(let i=0;i<(S.mp<5?3:5);i++)mobs.push({...minionDef(0),escort:true});
     mobs.forEach((m,i)=>{
       // v231: escorts sat 2.3-2.95 from the MVP (~2.7 between neighbours), inside the new
@@ -5880,23 +5857,9 @@ function showOfflineReward(r){
   if(r.ori||r.elu)detail.push(`Oridecon +${r.ori} · Elunium +${r.elu}`);if(r.pets)detail.push(`Pets +${r.pets}`);if(r.petFolds)detail.push(`${r.petFolds} duplicate pet${r.petFolds===1?'':'s'} folded into Bond`);if(r.petRefunds)detail.push(`${r.petRefunds} full-collection pet refund${r.petRefunds===1?'':'s'}`);if(r.stages)detail.push(`${r.stages} stage${r.stages===1?'':'s'} advanced`);
   const note=[];note.push(r.awayMs>OFFLINE_CAP_MS?'Away rewards are capped at four hours.':'Rewards use the time credited above.');
   note.push(`50% of measured farming income: ${Math.round(r.xpMin||0).toLocaleString()} EXP/min · ${Math.round(r.zenyMin||0).toLocaleString()}z/min. No map or stage advance while offline. Quest rewards and gifts are excluded. After an update or class/map/stage change, farm a fresh minute to replace your saved rate. Until then, the previous measured minute is used, including its original field for drops. No previous sample means no offline income.${r.incomeSource?" Sample: "+r.incomeSource+".":""}`);
-
   const details=$('offlineDetails');if(details)details.textContent=detail.length?detail.join(' · '):'No items, cards, ores or pets dropped this time.';
   const explanation=$('offlineExplanation');if(explanation)explanation.textContent=note.join(' ');
   const modal=$('offlineModal');if(modal)modal.style.display='flex';const button=$('offlineContinue');if(button){button.onclick=()=>{modal.style.display='none'};button.focus()}
-}
-// A claim's EXP is added with earnExp() and settled by checkLevel(), so a level costs the claim
-// exactly what it costs a player in the field - the curve is never re-priced here.
-function offlineExpBudget(lv,levels){const from=Math.max(1,Math.min(149,Math.floor(Number(lv)||1)));let sum=0;for(let i=0;i<levels&&from+i<150;i++)sum+=baseNeedAt(from+i);return sum}
-// The one exception, and it starts the moment the claim reaches OFFLINE_LEVEL_CAP_LV rather than
-// when it starts: everything the sample earned up to 120 is paid, then at most ten more levels.
-// So a claim from 118 ends at 130 at the latest, and a claim from 113 pays its seven levels to 120
-// plus ten - 130 is the highest any single claim can reach, whatever the sample says. Silent: the
-// popup reports what was paid, never that anything was withheld.
-function offlineLevelBudget(lv){
-  const from=Math.max(1,Math.min(149,Math.floor(Number(lv)||1)));
-  const toCeiling=Math.max(0,Math.min(OFFLINE_LEVEL_CAP_LV,150)-from);
-  return offlineExpBudget(from,toCeiling+OFFLINE_LEVEL_CAP);
 }
 function applyOfflineProgress(now=Date.now(),serverClaim=null){
   if(!S)return null;
@@ -5931,8 +5894,7 @@ function applyOfflineProgress(now=Date.now(),serverClaim=null){
     const minutes=plan.creditedMs/60000*OFFLINE_REWARD_MULT;
     const kills=valid?Math.min(plan.kills,Math.floor(Math.min(income.kph,OFFLINE_RATE_CAP)*minutes/60)):0;
     for(let i=0;i<kills;i++)offlineAwardKill(offlineMobForCurrentField(sourceMap,sourceStage),r);
-    const levelBudget=offlineLevelBudget(S.lv);
-    r.exp=valid?Math.min(safeCount(income.xp*minutes),levelBudget):0;r.zeny=valid?safeCount(income.zeny*minutes):0;
+    r.exp=valid?safeCount(income.xp*minutes):0;r.zeny=valid?safeCount(income.zeny*minutes):0;
     earnExp(r.exp);earnZeny(r.zeny);if(valid){gainAscension(r.exp,source[0]);}if(valid)addJob(safeCount(income.job*minutes));checkLevel();
     S.offlineKillRemainder=plan.remainder;
   }
@@ -6202,15 +6164,15 @@ const SKILL_TUNING={
  // haven-v409 expanded roster: fitted by measurement so each class lands on its sibling's sustained
  // damage (1 target and 3 targets) - Crusader line 92%, Monk line 105%, Sage and Alchemist lines 100%,
  // the rest 97%. Budgets and the fit targets are recorded in tools/tests/fixtures/expanded_skill_budget.json.
- // Owner revision: single-MVP damage targets are 108-112% of each class's sibling, with
- // support / area classes lower and damage classes higher. Sura is 117% of Guillotine Cross.
- // Area coefficients were not retuned in this pass, so three-target ratios may change indirectly.
- // Measurements and targets are recorded in tools/tests/fixtures/expanded_skill_budget.json.
+ // haven-v414 (owner): the new classes sit about 10% above their sibling; Royal Guard, Maestro & Wanderer,
+ // Kagerou & Oboro and Rebellion stay close (105%); Sorcerer and Shadow Chaser 115%; Geneticist 110% on
+ // one target and 125% on three. Sura is the single-target ceiling of the fourth jobs: 207% of Rune
+ // Knight, which is 117% of Guillotine Cross, the strongest original fourth job on one target.
  "Crusader": {
   "single": [
-   1.5199,
-   1.5199,
-   1.5199
+   1.5552,
+   1.5552,
+   1.5552
   ],
   "area": [
    0.3404,
@@ -6221,9 +6183,9 @@ const SKILL_TUNING={
  },
  "Paladin": {
   "single": [
-   2.0392,
-   2.0392,
-   2.0392
+   2.0826,
+   2.0826,
+   2.0826
   ],
   "area": [
    0.6903,
@@ -6234,9 +6196,9 @@ const SKILL_TUNING={
  },
  "Royal Guard": {
   "single": [
-   0.8171,
-   0.8171,
-   0.8171
+   0.7858,
+   0.7858,
+   0.7858
   ],
   "area": [
    1.2314,
@@ -6247,9 +6209,9 @@ const SKILL_TUNING={
  },
  "Sage": {
   "single": [
-   1.1775,
-   1.1775,
-   1.1775
+   1.2015,
+   1.2015,
+   1.2015
   ],
   "area": [
    2.4736,
@@ -6260,9 +6222,9 @@ const SKILL_TUNING={
  },
  "Scholar": {
   "single": [
-   1.0723,
-   1.0723,
-   1.0723
+   1.0832,
+   1.0832,
+   1.0832
   ],
   "area": [
    0.8511,
@@ -6273,22 +6235,22 @@ const SKILL_TUNING={
  },
  "Sorcerer": {
   "single": [
-   0.3899,
-   0.3899,
-   0.3899
+   0.4117,
+   0.4117,
+   0.4117
   ],
   "area": [
-   2.3603,
-   2.3603,
-   2.3603
+   2.3959,
+   2.3959,
+   2.3959
   ],
   "companion": 1
  },
  "Alchemist": {
   "single": [
-   3.2849,
-   3.2849,
-   3.2849
+   3.3611,
+   3.3611,
+   3.3611
   ],
   "area": [
    0.4017,
@@ -6299,9 +6261,9 @@ const SKILL_TUNING={
  },
  "Biochemist": {
   "single": [
-   3.2163,
-   3.2163,
-   3.2163
+   3.2529,
+   3.2529,
+   3.2529
   ],
   "area": [
    1.2286,
@@ -6317,17 +6279,17 @@ const SKILL_TUNING={
    1.5006
   ],
   "area": [
-   0.8864,
-   0.8864,
-   0.8864
+   0.6758,
+   0.6758,
+   0.6758
   ],
   "companion": 1
  },
  "Monk": {
   "single": [
-   0.4005,
-   0.4005,
-   0.4005
+   0.3905,
+   0.3905,
+   0.3905
   ],
   "area": [
    4.0381,
@@ -6338,9 +6300,9 @@ const SKILL_TUNING={
  },
  "Champion": {
   "single": [
-   0.9724,
-   0.9724,
-   0.9724
+   0.9506,
+   0.9506,
+   0.9506
   ],
   "area": [
    1,
@@ -6351,9 +6313,9 @@ const SKILL_TUNING={
  },
  "Sura": {
   "single": [
-   1.545,
-   1.545,
-   1.545
+   1.5481,
+   1.5481,
+   1.5481
   ],
   "area": [
    0.2,
@@ -6364,9 +6326,9 @@ const SKILL_TUNING={
  },
  "Rogue": {
   "single": [
-   4.5063,
-   4.5063,
-   4.5063
+   4.4551,
+   4.4551,
+   4.4551
   ],
   "area": [
    1.3698,
@@ -6377,9 +6339,9 @@ const SKILL_TUNING={
  },
  "Stalker": {
   "single": [
-   5.9292,
-   5.9292,
-   5.9292
+   5.8645,
+   5.8645,
+   5.8645
   ],
   "area": [
    1.1579,
@@ -6390,22 +6352,22 @@ const SKILL_TUNING={
  },
  "Shadow Chaser": {
   "single": [
-   1.0334,
-   1.0334,
-   1.0334
+   1.1184,
+   1.1184,
+   1.1184
   ],
   "area": [
-   0.9617,
-   0.9617,
-   0.9617
+   1.0433,
+   1.0433,
+   1.0433
   ],
   "companion": 1
  },
  "Bard & Dancer": {
   "single": [
-   3.2468,
-   3.2468,
-   3.2468
+   3.3247,
+   3.3247,
+   3.3247
   ],
   "area": [
    1.285,
@@ -6416,9 +6378,9 @@ const SKILL_TUNING={
  },
  "Minstrel & Gypsy": {
   "single": [
-   3.6743,
-   3.6743,
-   3.6743
+   3.7152,
+   3.7152,
+   3.7152
   ],
   "area": [
    0.2,
@@ -6429,9 +6391,9 @@ const SKILL_TUNING={
  },
  "Maestro & Wanderer": {
   "single": [
-   1.8261,
-   1.8261,
-   1.8261
+   1.7482,
+   1.7482,
+   1.7482
   ],
   "area": [
    0.4309,
@@ -6442,9 +6404,9 @@ const SKILL_TUNING={
  },
  "Ninja": {
   "single": [
-   7.7239,
-   7.7239,
-   7.7239
+   7.5776,
+   7.5776,
+   7.5776
   ],
   "area": [
    0.785,
@@ -6455,9 +6417,9 @@ const SKILL_TUNING={
  },
  "Kagerou & Oboro": {
   "single": [
-   1.6826,
-   1.6826,
-   1.6826
+   1.5488,
+   1.5488,
+   1.5488
   ],
   "area": [
    0.3813,
@@ -6468,9 +6430,9 @@ const SKILL_TUNING={
  },
  "Rebellion": {
   "single": [
-   1.0861,
-   1.0861,
-   1.0861
+   0.9791,
+   0.9791,
+   0.9791
   ],
   "area": [
    1.149,
@@ -6481,9 +6443,9 @@ const SKILL_TUNING={
  },
  "Gunslinger": {
   "single": [
-   2.9726,
-   2.9726,
-   2.9726
+   2.9123,
+   2.9123,
+   2.9123
   ],
   "area": [
    0.2,
@@ -6846,7 +6808,7 @@ function castSkill(sk,k){
   }
   if(sk.bounce&&dealt>0)bounceStrike(target,sk,raw);
   // haven-v412: the shockwave of a signature blow (Asura Strike) - a fixed share to enemies beside the target.
-  // v414 (owner): the boss bonus belongs to the boss. `shockRaw` strips exactly that one factor, so
+  // v415 (owner): the boss bonus belongs to the boss. `shockRaw` strips exactly that one factor, so
   // an escort standing beside its MVP never inherits Asura's +50%; every other multiplier (spheres,
   // combos, ascension) still applies to the shockwave as before.
   if(sk.shock&&dealt>0){const shockRaw=target.boss&&sk.bossPower?raw/(1+sk.bossPower):raw;
@@ -7003,23 +6965,22 @@ const ASCENSION_MATERIALS=['Astral Shard','Primal Catalyst',"Valkyrie's Sigil"];
 // mob, which flattens every stage of both maps onto one rate: 1.2 materials and 0.3 Sigils an hour
 // per 1M DPS. Bosses keep their 1% Sigil roll and, at 3x a mob's HP, roll 3x its material chance.
 const ASC_MAT_CH=.5,ASC_SIGIL_CH=.125;
-// v414 (owner: "escort and boss payouts are the same per kill"): an escort rolled the same as the
-// mobs it replaces, so a character that clears straight to the MVP collected the boss's roll and
-// skipped most of the field's. ASC_ESCORT_SHIFT moves 70% of every escort's MATERIAL and SIGIL
-// chance onto the MVP it escorts; the escorts keep 30% so a kill still pays, and nothing else moves
-// (Zeny, EXP and Job EXP are the v85/v90.3 split and are untouched).
-//   escort chance  x0.30
-//   boss material  x(1 + escorts*0.7/3)   - the boss roll is already 3x a mob's (3x the HP)
-//   boss sigil     x(1 + escorts*ASC_SIGIL_CH*0.7) - the boss roll is a flat 1%, not 3x
-// Only the boss wave has escorts, so a normal field is untouched.
-const ASC_ESCORT_SHIFT=.7,ASC_ESCORT_KEEP=1-ASC_ESCORT_SHIFT;
-const ascEscortCount=m=>((m??S.mp)<5?3:5);
 let ascDropAnchor=0;
 function ascDropIndex(mob){if(!ascDropAnchor)ascDropAnchor=ascensionCombatStats(10,1).hp;return Math.max(1,(mob.max||mob.hp||ascDropAnchor)/ascDropAnchor)}
-// What one of this stage's ESCORTS would roll, so the MVP's compensation is the exact 70% those
-// escorts gave up. It cannot be a fixed multiple of the MVP's own chance: a boss carries 3x an
+// v415 (owner: "escort and boss payouts are the same per kill"): an escort rolled exactly what the
+// mobs it replaces roll, so a character that clears straight to the MVP collected the boss's roll
+// and skipped most of the field's. ASC_ESCORT_SHIFT moves 70% of every escort's MATERIAL and SIGIL
+// chance onto the MVP it escorts; the escorts keep 30%, so an escort kill still pays. Zeny, EXP and
+// Job EXP are the v85/v90.3 split and are untouched. Only a boss wave has escorts, so a normal
+// field never changes.
+//   escort chance  x0.30
+//   boss           + (escorts x 0.70 x what ONE escort used to roll)
+// The compensation cannot be a fixed multiple of the boss's own chance: a boss carries 3x an
 // escort's HP, and from v191 the Stage-5 escorts sit at half HP on top of that, so the ratio is 6
-// at Stage 5 and 3 elsewhere. Read the stage's real escort stats instead of assuming either.
+// there and 3 elsewhere. ascEscortIndex() reads the stage's real escort stats instead of guessing,
+// which keeps a full clear value-neutral on every stage of both maps.
+const ASC_ESCORT_SHIFT=.7,ASC_ESCORT_KEEP=1-ASC_ESCORT_SHIFT;
+const ascEscortCount=m=>((m??S.mp)<5?3:5);
 function ascEscortIndex(mob){const m=mob.mapIndex??S.mp;return m<10?1:ascDropIndex({max:ascensionCombatStats(m,mob.stage??S.lvl,false).hp})}
 function ascMaterialChance(mob){
   const ch=ASC_MAT_CH*ascDropIndex(mob);
@@ -12820,11 +12781,11 @@ const expandedPack={index:0,bodies:new Map()};
 function expandedRefresh(){heroKey='';if(typeof drawAppearancePreview==='function'){drawAppearancePreview();drawClassPreview()}}
 function requestExpandedBody(name){const PK=window.SPRITE_PACK,X=window.SPRITE_PACK_X;if(!PK||!name)return false;
   if(PK.bodies[name]&&packImg['b:'+name])return true;
-  if(!X){if(!expandedPack.index){expandedPack.index=1;const script=document.createElement('script');script.src='assets/sprite-pack-x/index.js?v=413';
+  if(!X){if(!expandedPack.index){expandedPack.index=1;const script=document.createElement('script');script.src='assets/sprite-pack-x/index.js?v=415';
     script.onload=()=>{expandedPack.index=2;expandedRefresh()};script.onerror=()=>{expandedPack.index=3;script.remove()};document.head.appendChild(script)}return false}
   const rec=X.bodies[name];if(!rec||expandedPack.bodies.has(name))return false;expandedPack.bodies.set(name,'loading');
   const img=new Image();img.onload=()=>{PK.bodies[name]={atlas:img.src,anchors:rec.anchors,cell:X.cell,pivotY:X.pivotY};packImg['b:'+name]=img;expandedPack.bodies.set(name,'ready');expandedRefresh()};
-  img.onerror=()=>expandedPack.bodies.set(name,'failed');img.src=X.dir+encodeURIComponent(rec.file)+'?v=413';return false}
+  img.onerror=()=>expandedPack.bodies.set(name,'failed');img.src=X.dir+encodeURIComponent(rec.file)+'?v=415';return false}
 function packBodyFor(cls,tier,sex){const PK=window.SPRITE_PACK;if(!PK)return null;
   const own=expandedBodyName(cls,sex||(typeof S!=='undefined'&&S&&S.sex)||'m');if(own&&requestExpandedBody(own))return own;
   const n=packBodyName(cls);if(!own&&PK.bodies&&PK.bodies[n])return n;
@@ -14970,7 +14931,7 @@ setInterval(updateWatch,60000);
 // be hours old while the player was on another tab, and the check is a 60-byte text file.
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&(pendingUpdateBuild||Date.now()-PAGE_STARTED_AT>30000))updateWatch()});
 </script>
-<script src="assets/wardrobe-ui.js?v=413"></script>
+<script src="assets/wardrobe-ui.js?v=415"></script>
 <script src="assets/shop.js?v=321"></script>
 <script src="assets/friends.js?v=273"></script>
 <script src="assets/digimon/roster.js?v=415"></script>

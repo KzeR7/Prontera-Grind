@@ -69,6 +69,20 @@ an exhaustive test selection. Follow dependencies across systems and see
 - **Legacy packed bodies/heads:** `assets/sprite_pack_data.js`, `Sprite/`,
   `tools/make_sprite_pack.py`, `tools/montage.py`. Fixed frame counts and the
   stub-based anchors apply to this pack, not native ACT/SPR animation.
+- **Expanded roster (haven-v408):** the 20 extra classes live in `CDX`/`CD4X` and their
+  skills in `SKILLSX` (`index.html`), apart from the shipped `CD`/`CD4`/`SKILLS4`, so the
+  Wardrobe, class-skin and balance fixtures still enumerate the original 25. `EXPANDED_LINE`
+  is the membership test; `hasLv150ThirdClass()` is the unlock. Bodies (haven-v409) are
+  native RO client sprites rendered by `tools/make_expanded_pack.py` with the SPR/ACT reader
+  in `tools/native-expanded/` (sources pinned by git blob id + SHA-256 in
+  `source-manifest.json`, downloaded to `.cache/`) into `assets/sprite-pack-x/` (one
+  lossless WebP per body in 126×134 cells plus `index.js`) and fetched one body at a time
+  by `requestExpandedBody()`; `packTex()` reads `rec.cell` and the optional head column in
+  an anchor. Their weapon families (spear, book, knuckle, instrument, whip, shuriken, gun)
+  are kin of shipped families: `WEAPON_KIN`, `kinDrop()`, `kinWeaponName()` next to `GEAR`;
+  the pools and rates are untouched. Damage budgets sit at the top of `SKILL_TUNING` and are
+  recorded in `tools/tests/fixtures/expanded_skill_budget.json`. Skills borrow a shipped
+  icon (`icon`) and cast effect (`fx`); `tools/tests/expanded_roster_sim.js` covers the lot.
 - **Weapons:** `assets/weapons/`, `assets/weapons_data.js`,
   `assets/weapon_joints_data.js`, `tools/make_weapon_pack.py`.
 - **Map kit:** `assets/kit/`, with original working material under
@@ -218,6 +232,18 @@ full 25-node overview; `ACT.selk` inspects there. `V.skills` renders `rotationBa
 before composition; `arrangePanel` moves it above the skill catalog without
 mutating saves. Check `progression_refresh_sim.js`, `eclipse_ui_sim.js` and
 `panel_layout_smoke.js`.
+
+`assets/signature-fx.js` (`PGSignatureFx`) paints the signature skill effects of the expanded roster
+(Asura Strike's kanji, Crazy Weed, bottles, plants, Spirit Spheres, coins, shuriken, revolver fire)
+on top of the shared effect. `playSkillFx` calls `play(id, ctx)`, `tickSkillFx` calls `tick(dt)`;
+the skill-to-effect table is `MAP` at the bottom of the file. Test: `tools/tests/signature_fx_sim.js`.
+haven-v412: effects that exist in the Ragnarok Online client are flipbooks in `assets/ro-fx/` (`index.js` = `window.RO_FX`), baked by `tools/make_ro_fx.py` from the sources pinned in `tools/native-expanded/fx-source-manifest.json`; a `MAP` step `['book',{book:key,...}]` plays one.
+Signature skills (`core`), `autocast` rows (`AUTOCAST_SOURCES`, `autocastProc`), the Auto-fill table `COMBO_PLAN`, `bossPower` and `shock` are documented where they are declared, just above `GROUND_SKILLS` in `index.html`. Test: `tools/tests/signature_skills_sim.js`.
+
+`assets/expanded-jobs.js` (`PGExpandedJobs`) is the Wardrobe store for the 22 expanded classes:
+bodies from `assets/wardrobe/expanded/v1/` (built by `tools/make_expanded_wardrobe.py`), hair and
+accessories read in place from `assets/wardrobe/v5/` and `assets/social/sitting/` and moved onto
+each body by `Store.route()`. Sources and method: `tools/native-expanded/README.md`.
 
 `assets/fourth-jobs.js` uses the shared bounded native component loader with
 six class routes and `assets/wardrobe/fourth/v1/`. The earlier nineteen-class pack

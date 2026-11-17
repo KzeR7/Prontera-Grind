@@ -31,7 +31,7 @@ try{
  const manifest=JSON.parse(fs.readFileSync('assets/equipment-icons/mythic-manifest.json'));
  for(const a of manifest.assets){const b=fs.readFileSync('assets/equipment-icons/'+a.file);assert.equal(b.subarray(1,4).toString(),'PNG');assert.equal(crypto.createHash('sha256').update(b).digest('hex'),a.sha256)}
  for(const [set,slots]of Object.entries(manifest.sets))for(const [kind,id]of Object.entries(slots)){
-  const weapon=['sword','dagger','axe','mace','staff','katar','bow'].includes(kind),slot=weapon?'weapon':kind;
+  const weapon=['sword','dagger','axe','mace','staff','katar','bow','spear','book','knuckle','instrument','whip','shuriken','gun'].includes(kind),slot=weapon?'weapon':kind;
   assert.equal(ev(`gearItemIconId(makeMythicEquipment('${set}','${slot}','${kind}').item)`),id);
  }
  ev(`tabs.push('skills');renderWin()`);

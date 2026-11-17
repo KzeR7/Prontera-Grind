@@ -67,7 +67,7 @@ test('Bag previews actual item counts and retains card and Loadout navigation',(
  ev(`sub.bag='bag';renderWin()`);doc.querySelector('.bag-items [data-t=equip]').click();assert.ok(doc.querySelector('.eclipse-bag'));
 });
 test('legacy skills keep distinct motifs; fourth skills reuse approved valid artwork',()=>{
- const keys=ev(`SKILLS.filter(s=>!SKILLS4.includes(s)).map(s=>(SKILL_ICON[s.id]||'rune')+':'+(SKILL_EMBLEM[s.id]||''))`);assert.equal(new Set(keys).size,keys.length);
+ const keys=ev(`SKILLS.filter(s=>!SKILLS4.includes(s)&&!SKILLSX.includes(s)).map(s=>(SKILL_ICON[s.id]||'rune')+':'+(SKILL_EMBLEM[s.id]||''))`);assert.equal(new Set(keys).size,keys.length);
  assert.equal(ev(`SKILLS.every(s=>SKILL_PICTO[SKILL_ICON[s.id]]&&(!SKILL_EMBLEM[s.id]||SKILL_PICTO[SKILL_EMBLEM[s.id]]))`),true);
 });
 test('hidden simulation retains logs without rebuilding DOM or allocating skill effects',()=>{

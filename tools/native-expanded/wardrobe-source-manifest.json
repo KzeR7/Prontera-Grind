@@ -1,0 +1,41 @@
+{
+ "description": "Reference Knight body (the job whose assets/wardrobe/v5 routes the expanded Wardrobe pack is derived from). The class bodies themselves are listed in source-manifest.json.",
+ "files": [
+  {
+   "name": "ref/knight_m.spr",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/남/기사_남.spr",
+   "blob": "959d57d565baefdd4303467662171c3d919976cd",
+   "bytes": 234017,
+   "sha256": "d58cb961e41950f612795fd035f395eb2c8d94a4f370fad079df71ce4a179846"
+  },
+  {
+   "name": "ref/knight_m.act",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/남/기사_남.act",
+   "blob": "029118e37d808db635c8ae7a4015c6c498f5d6aa",
+   "bytes": 48396,
+   "sha256": "02e592e339317078a55be3f2328513a74c5cf2ff7b22b81ca2ab4b8fcd08873f"
+  },
+  {
+   "name": "ref/knight_f.spr",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/여/기사_여.spr",
+   "blob": "1c70f5e70487eecced8dd4db538e17f97a6c06a7",
+   "bytes": 177901,
+   "sha256": "0bd3100f5a9026a0e90b3beea3751c67cb2620bf89f4009f3f023893f24793d3"
+  },
+  {
+   "name": "ref/knight_f.act",
+   "repo": "devilm/costume-ro",
+   "commit": "b31ed745a4a8b53297c813c1ceab8220551bb06a",
+   "path": "data/sprite/인간족/몸통/여/기사_여.act",
+   "blob": "256f21256101641aab105607144766e93276b9a4",
+   "bytes": 48396,
+   "sha256": "974ebead24834adc49c6587add816afb35fc4de389afd1ddd42fa840a4475ddd"
+  }
+ ]
+}
