@@ -488,6 +488,48 @@ await T('a missing claim-state migration preserves GET/PUT reward windows until 
     'recovery issues one persistent entitlement for the preserved window');
 });
 
+await T('a legacy save first return freezes its existing same-class sample instead of retiring earned income', async () => {
+  const h=freshEnv(),reg=await api.register(h.env,{u:'FIRSTRETURN',p:'firstreturn-password'});
+  const id=h.sqlite.prepare('SELECT id FROM users WHERE username=?').get('FIRSTRETURN').id;
+  const blob=JSON.parse(saveBlob(30,500));blob.cls='Knight';blob.accountId=id;
+  blob.offlineIncome={version:1,rewardVersion:6,key:'Knight:0:1',at:1,xp:6000,zeny:3000,job:420,kph:120};
+  await api.putSave(h.env,reg.cookie,{version:0,blob:JSON.stringify(blob)});
+  h.sqlite.prepare('UPDATE saves SET last_seen=?,rate_kph=120 WHERE user_id=?').run(Date.now()-4*3600000,id);
+  const first=await api.getSave(h.env,reg.cookie),claim=first.data.offlineClaim;
+  assert.strictEqual(claim.pricingState,'priced','an unmigrated save is not an untrained modern run');
+  assert.strictEqual(claim.runGen,1,'match the client legacy generation-one adoption');
+  assert.deepStrictEqual([claim.pricing.xp,claim.pricing.zeny,claim.pricing.job,claim.pricing.kph],[6000,3000,420,120]);
+  blob.runGen=1;blob.runSeq=1;blob.offlineClaimId=claim.id;
+  blob.offlineIncome={...blob.offlineIncome,aid:id,gen:1,xp:600000,zeny:300000};
+  assert.strictEqual((await api.putSave(h.env,reg.cookie,{version:first.data.version,blob:JSON.stringify(blob),offlineClaimId:claim.id})).status,200);
+  const frozen=h.sqlite.prepare('SELECT income_xp,income_zeny,run_gen FROM offline_reward_claims WHERE id=?').get(claim.id);
+  assert.deepStrictEqual([frozen.income_xp,frozen.income_zeny,frozen.run_gen],[6000,3000,1],
+    'adoption cannot reprice its already-issued first-return entitlement');
+  for(const sample of [
+    {...blob.offlineIncome,aid:id+100},
+    {...blob.offlineIncome,gen:7},
+    {version:1,rewardVersion:6,key:'Novice:0:1',at:1,xp:6000,zeny:3000,job:420,kph:120},
+  ]){
+    const legacy={...blob};delete legacy.runGen;delete legacy.runSeq;delete legacy.offlineClaimId;legacy.offlineIncome=sample;
+    h.sqlite.prepare('UPDATE saves SET blob=?,last_seen=? WHERE user_id=?').run(JSON.stringify(legacy),Date.now()-4*3600000,id);
+    const denied=await api.getSave(h.env,reg.cookie);
+    assert.strictEqual(denied.data.offlineClaim.pricingState,'ineligible','legacy adoption never borrows an explicitly foreign account/class/run');
+    h.sqlite.prepare('UPDATE offline_reward_claims SET claimed_at=? WHERE user_id=? AND claimed_at IS NULL').run(Date.now(),id);
+  }
+  const modern={...blob,runGen:2,runSeq:2};delete modern.offlineClaimId;
+  modern.offlineIncome={version:1,rewardVersion:6,key:'Knight:0:1',at:1,xp:6000,zeny:3000,job:420,kph:120};
+  h.sqlite.prepare('UPDATE saves SET blob=?,last_seen=? WHERE user_id=?').run(JSON.stringify(modern),Date.now()-4*3600000,id);
+  assert.strictEqual((await api.getSave(h.env,reg.cookie)).data.offlineClaim.pricingState,'ineligible',
+    'modern owner metadata cannot be silently inferred when its sample has none');
+  h.sqlite.prepare('UPDATE offline_reward_claims SET claimed_at=? WHERE user_id=? AND claimed_at IS NULL').run(Date.now(),id);
+  const oldNormal={...modern};delete oldNormal.runGen;delete oldNormal.runSeq;
+  oldNormal.offlineIncome={...modern.offlineIncome};delete oldNormal.offlineIncome.rewardVersion;
+  h.sqlite.prepare('UPDATE saves SET blob=?,last_seen=? WHERE user_id=?').run(JSON.stringify(oldNormal),Date.now()-4*3600000,id);
+  const compatible=(await api.getSave(h.env,reg.cookie)).data.offlineClaim;
+  assert.strictEqual(compatible.pricingState,'priced','old normal-field samples without Ascension version remain payable');
+  assert.strictEqual(compatible.pricing.rewardVersion,0);
+});
+
 await T('v422: the smoothed kill rate re-bases across a class or run boundary instead of carrying old-class speed', async () => {
   const h = freshEnv();
   const reg = await api.register(h.env, { u: 'RATEBASE', p: 'ratebase-password' });

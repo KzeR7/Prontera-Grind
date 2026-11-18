@@ -444,6 +444,12 @@ These changes retain versioned exactly-once acknowledgement, retained-run owners
 restore fences and the existing no-new-Social-DO-traffic model; they are not a broader reward-accounting
 redesign.
 
+**First return of a pre-run save (v426):** issuance adopts a stored save with neither run field into
+generation 1, matching the client loader, and freezes its existing same-class minute. Missing sample
+account/run stamps are inferred only for that old-save shape after the save's account ownership is
+verified. Explicit foreign account/class/run stamps remain ineligible; modern untrained saves never
+gain this legacy inference. A later replacement minute cannot reprice the first-return claim.
+
 **Where the plaza's Field card gets its numbers (v390):** it prints the **measured** rate from
 `plazaFarmIncome()` in `index.html`, never the `#expmin`/`#zenymin` HUD samplers. Those are live combat
 readings that reset after `HUD_IDLE_RESET` (30 s) without a kill, so copying them made a paying plaza

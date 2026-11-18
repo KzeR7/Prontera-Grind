@@ -11987,3 +11987,37 @@ re-recording them here would have written wrong numbers into the repository.
   Windows environment adapters; after the timing-sensitive Wardrobe check passed a serial rerun,
   251 passed and only the existing MVP crop/renderer-null failures remain. No assertion was relaxed.
 * **Delivery:** Test-only follow-up for PR #254; no merge, deployment or production-data operation.
+
+### 2026-11-19 — `haven-v426` preserve legacy first-return offline rewards
+* **Fixed:** A returning save from before run ownership existed now freezes its already-stored,
+  same-class measured minute into generation 1, matching the client loader. It is no longer wrongly
+  issued a permanently ineligible first-return claim. Missing sample account/run stamps are inferred
+  only when both saved run fields are absent; explicit foreign account/class/run stamps and modern
+  untrained samples remain ineligible. The original rates are frozen before any later training.
+* **Try it:** In an isolated database, store a pre-run save, model an absence, then return using the
+  new client. Its original minute pays once and survives acknowledgement; a later stronger minute
+  cannot reprice it. Modern untrained and foreign-owner cases must still pay nothing.
+* **Checks:** The first-return API regression fails before the fix and passes after it (78/78).
+  Real API/client claim integration passes 3/3, save/reload recovery 22/22, and CPU hot-path guards
+  36/36. Re-ran progression measurements with `--reuse-baseline`: all measured balance rows remain
+  unchanged; only source/combat hashes changed. Build mirrors and coordinated asset tags are v426.
+  The complete 253-entry gate ran with Windows environment adapters: 251 passed after the CPU
+  profiler's timing-sensitive zero-CPU sample passed a serial rerun (28/28). Only the existing MVP
+  crop-audit and renderer-null failures remain; no assertions or budgets were weakened.
+* **Delivery:** Code-only follow-up for PR #254. Production schema was inspected read-only and
+  migrations 0018–0020 were found missing. The exact reviewed SQL passed a schema-only local
+  rehearsal, and Cloudflare returned a Time Travel recovery bookmark. The separately approved
+  production schema operation is recorded below; no player records were exported for this code fix.
+
+### 2026-11-19 — Approved production offline-claim schema preparation
+* **Changed:** After the owner's explicit approval, applied the reviewed 0018, 0019 and 0020 SQL
+  together to production `pg` (`50a6448b-1f12-466c-a28a-10544bedf750`). Only the offline-claim
+  table was targeted: 14 nullable columns were added and 1,278 historical claims became `legacy`.
+  No wallet, inventory, account credential or save-blob update was executed.
+* **Checks:** Verified the target identity and original nine-column schema, captured a fresh D1
+  Time Travel bookmark, checked the exact migration bundle hash, then verified all 23 expected
+  columns and the resulting legacy claim count. The existing production `/api/me` returned its
+  expected unauthenticated 401 after the operation. The SQL rehearsal used synthetic rows and
+  live schema metadata only; no player-data export was performed.
+* **Delivery:** Production schema preparation completed; these ALTER scripts must not be replayed.
+  PR #254 remains unmerged and its v426 compatibility code still requires final CI before activation.

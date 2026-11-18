@@ -182,4 +182,25 @@ await T('real legacy row still recovers from its matching local minute, while de
   assert.equal(delayed.covered,false);assert.ok(delayed.kills>0&&state.exp>0,'delayed GET cannot consume the issued interval at zero');
 });
 
+await T('first return of an unmigrated save pays its original minute once through real API/client acknowledgement',async()=>{
+  const h=env(),reg=await register(h.env,'FIRSTAWAY','first-away-password');assert.equal(reg.status,201);
+  const id=h.sqlite.prepare('SELECT id FROM users WHERE username=?').get('FIRSTAWAY').id;
+  const oldMinute=minute(id);delete oldMinute.aid;delete oldMinute.gen;
+  const initial=saveBlob(id,oldMinute);delete initial.runGen;delete initial.runSeq;
+  assert.equal((await put(h.env,reg.cookie,'FIRSTAWAY',0,initial)).status,200);
+  h.sqlite.prepare('UPDATE saves SET last_seen=?,rate_kph=100 WHERE user_id=?').run(Date.now()-4*3600000,id);
+  const got=await get(h.env,reg.cookie),claim=got.data.offlineClaim;
+  assert.equal(claim.pricingState,'priced');assert.equal(claim.runGen,1);
+  const app=harness(),later=minute(id,6000,3000,30000),state=clientSave(id,later);state.lv=20;
+  app.setState(state);app.setCloud(true);app.setNow(got.data.serverNow);app.setPageBoot(got.data.serverNow-1000);
+  const paid=app.applyOfflineProgress(got.data.serverNow,claim,{serverNow:got.data.serverNow,clientRequestAt:got.data.serverNow});
+  assert.equal(paid.exp,7200);assert.equal(paid.zeny,3600,'the original 30z/min is frozen, not the later 3000z/min');
+  const ack={...JSON.parse(got.data.blob),runGen:1,runSeq:1,offlineIncome:later,offlineClaimId:claim.id,
+    exp:state.exp,zeny:state.zeny,kills:state.kills};
+  assert.equal((await put(h.env,reg.cookie,'FIRSTAWAY',got.data.version,ack,claim.id)).status,200);
+  assert.ok(h.sqlite.prepare('SELECT claimed_at FROM offline_reward_claims WHERE id=?').get(claim.id).claimed_at>0);
+  assert.equal(app.applyOfflineProgress(got.data.serverNow,claim).alreadyApplied,true);
+  assert.equal((await get(h.env,reg.cookie)).data.offlineClaim,null);
+});
+
 console.log(`\n${pass} passed, ${fail} failed`);process.exit(fail?1:0);

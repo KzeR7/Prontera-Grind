@@ -98,17 +98,22 @@ const publicClaim = row => {
 // The owner context frozen at issuance comes from the STORED save's top-level view - the parse the
 // request already paid for (GET: saveView, PUT: storedStamp), never a fresh parse of the blob.
 const runGenOf = v => Number.isSafeInteger(Number(v)) && Number(v) >= 1 ? Math.floor(Number(v)) : null;
+// Match load()'s generation-one adoption for saves that predate both run fields. Freeze the
+// already-stored same-class sample on first return; never turn a modern untrained run into legacy.
+const legacyRewardSave = view => !!view && view.runGen == null && view.runSeq == null;
 const claimOwnerOf = view => ({
   cls: view && typeof view.cls === 'string' ? view.cls.slice(0, 32) : null,
-  runGen: view ? runGenOf(view.runGen) : null,
+  runGen: view ? legacyRewardSave(view) ? 1 : runGenOf(view.runGen) : null,
 });
 // A pricing snapshot is accepted only from a sample that proves it belongs to the stored account,
 // class and numbered progression run. This does not make browser-authored rates authoritative; it
 // makes one already-issued browser-priced entitlement immutable across delay/retry/sample changes.
 const claimPricingOf = (view, owner, userId, intervalStartAt, intervalEndAt) => {
-  const income=view?.offlineIncome, source=String(income?.key || '').split(':');
+  const income=view?.offlineIncome, source=String(income?.key || '').split(':'),legacy=legacyRewardSave(view);
   const sourceMap=safeInt(source[1]),sourceStage=safeInt(source[2]),incomeVersion=safeInt(income?.version),
-    rewardVersion=safeInt(income?.rewardVersion),sampledAt=safeInt(income?.at),aid=safeInt(income?.aid),gen=safeInt(income?.gen),
+    rewardVersion=safeInt(income?.rewardVersion) ?? (legacy&&sourceMap!==null&&sourceMap<10&&income?.rewardVersion==null?0:null),
+    sampledAt=safeInt(income?.at),aid=legacy&&income?.aid==null?safeInt(userId):safeInt(income?.aid),
+    gen=legacy&&income?.gen==null?owner.runGen:safeInt(income?.gen),
     start=safeInt(intervalStartAt),end=safeInt(intervalEndAt);
   if(!income||source.length!==3||typeof owner?.cls!=='string'||!Number.isSafeInteger(owner?.runGen)
     || source[0]!==owner.cls||aid!==Number(userId)||gen!==owner.runGen

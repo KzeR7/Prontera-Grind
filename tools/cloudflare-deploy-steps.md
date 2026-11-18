@@ -1,4 +1,4 @@
-# Putting Horizon Haven on Cloudflare (historical setup + held v425 offline-claim release)
+# Putting Horizon Haven on Cloudflare (historical setup + held v426 offline-claim release)
 
 **Historical setup guide:** the current account security changes remain a draft and are not
 launch-ready. For the existing live `pg`, the owner reported applying and verifying 0007
@@ -6,11 +6,11 @@ manually on 2026-10-28; do not rerun it or blindly run Wrangler migrations. Use
 [Launch security](../docs/LAUNCH-SECURITY.md) for the current checklist.
 
 > **PR #254 is held. Do not run this release procedure, deploy, merge, or edit production player
-> data while its review remains open.** The v425 section below is the future operator checklist: it
+> data while its review remains open.** The v426 section below is the future operator checklist: it
 > records the required migration order and verification so the schema is complete *before* the new
 > Functions/client behaviour is activated.
 
-## Held v425 release: immutable offline-claim state and issued bounds
+## Held v426 release: immutable offline-claim state and issued bounds
 
 This follows the owner/context schema in `0018`, then `0019_offline_claim_pricing_snapshot.sql`,
 then `0020_offline_claim_pricing_state.sql` **in that order**. On an existing database, first inspect
@@ -54,10 +54,10 @@ no-double-pay coverage without using response delay or its own wall clock to reb
 The only added schema check occurs when a qualifying interval would issue a new claim; normal syncs add
 neither an unconditional D1 read nor Social Durable Object traffic.
 
-The player-visible build label is **`2026-11-18 haven-v425 preserve offline claims during schema upgrades`**.
-The release also bumps every coordinated v422 asset query to `?v=424`: v423 changed the Social/Fishing
+The player-visible build label is **`2026-11-19 haven-v426 preserve legacy first-return offline rewards`**.
+The release also bumps every coordinated asset query to `?v=426`: v423 changed the Social/Fishing
 runtime as well as the inline client, so retaining the old label would permit a stale cached runtime.
-Confirm `version.txt`, `index.html`, and the two equipment-reference mirrors carry the v424 build label
+Confirm `version.txt`, `index.html`, and the two equipment-reference mirrors carry the v426 build label
 after the site build.
 
 The click-by-click. **Nothing here costs money** and none of it needs a credit card: the whole point
@@ -190,7 +190,7 @@ Open the `*.pages.dev` address Cloudflare gives the project, and walk this list:
 | Check | Expected |
 |---|---|
 | The login card | says **“☁ Cloud accounts are on — register or sign in…”** |
-| Build tag at the bottom of the card | `2026-11-18 haven-v425 preserve offline claims during schema upgrades` |
+| Build tag at the bottom of the card | `2026-11-19 haven-v426 preserve legacy first-return offline rewards` |
 | `<your-site>/api/me` while signed out | `{"err":"Not logged in."}` with HTTP 401 — JSON, not an HTML page |
 
 That second-browser line is the entire point of the shift: it is progress following the player
