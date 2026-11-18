@@ -130,8 +130,14 @@ export const onRequestGet = guard(async ({ request, env }) => {
   // the old loader drops every tuple row (and every fish) and its next upload would save that loss.
   const format = clientSaveFormat(request);
   let row = await db.saveByUser(D, user.id), offlineClaim = null;
+  // The parity rule the client and the server share (docs: "the save this page is handed is the save
+  // this page can read"). `saveView` is the parsed stored save this request already needed - for the
+  // ownership check below, and for the offline-claim plan - and it is what the version read and the
+  // expansion path use, so a GET parses the stored blob ONCE whatever the client's format header says.
+  let saveView = null;
 
   if (row) {
+    saveView = parseSave(row.blob);
     // v88.6 / v280: a stored save that belongs to another account is never handed out - not even to
     // its own account's session. The account id decides where the blob carries one, so a RENAME no
     // longer looks like somebody else's save; a blob with no id falls back to the name, as before.
@@ -158,7 +164,7 @@ export const onRequestGet = guard(async ({ request, env }) => {
   const pending = grants.results.map(g => ({ id: g.id, kind: g.kind, payload: JSON.parse(g.payload || '{}'), note: g.note }));
   // `owner` says whose save this is, so a tab playing another account never applies it (see PUT).
   if (!row) return json({ version: 0, blob: null, savedAt: null, offlineClaim: null, pending, owner: user.username });
-  return json({ version: row.version, blob: blobForClient(row.blob, format), savedAt: row.saved_at,
+  return json({ version: row.version, blob: blobForClient(row.blob, format, saveView), savedAt: row.saved_at,
     updatedAt: row.updated_at, serverNow: now, offlineClaim, pending, owner: user.username });
 });
 
@@ -316,11 +322,11 @@ export const onRequestPut = guard(async ({ request, env }) => {
   const fenceAt = storedRestoreAt(storedBlob);
   if (!restoreAllowsWrite(row.blob, save, fenceAt)) {
     return early({ err: RESTORE_FENCED, restoreFenced: true, restoreAt: fenceAt,
-      conflict: true, version: row.version, blob: blobForClient(row.blob, format), savedAt: row.saved_at,
+      conflict: true, version: row.version, blob: blobForClient(row.blob, format, storedStamp), savedAt: row.saved_at,
       updatedAt: row.updated_at, offlineClaim: publicClaim(pending) }, 409);
   }
   if (clientVersion !== row.version) {
-    return early({ conflict: true, version: row.version, blob: blobForClient(row.blob, format), savedAt: row.saved_at,
+    return early({ conflict: true, version: row.version, blob: blobForClient(row.blob, format, storedStamp), savedAt: row.saved_at,
       updatedAt: row.updated_at, offlineClaim: publicClaim(pending) }, 409);
   }
 
@@ -364,7 +370,7 @@ export const onRequestPut = guard(async ({ request, env }) => {
     const acknowledged = Number(results?.[1]?.meta?.changes ?? results?.[1]?.meta?.rows_written ?? 0);
     if (!changed || !acknowledged) {
       const latest = await db.saveByUser(D, user.id);
-      return early({ conflict: true, version: latest?.version ?? row.version, blob: blobForClient(latest?.blob ?? row.blob, format),
+      return early({ conflict: true, version: latest?.version ?? row.version, blob: blobForClient(latest?.blob ?? row.blob, format, latest ? parseSave(latest.blob) : storedStamp),
         savedAt: latest?.saved_at ?? row.saved_at, updatedAt: latest?.updated_at ?? row.updated_at,
         offlineClaim: publicClaim(await db.pendingOfflineClaim(D, user.id)) }, 409);
     }
@@ -372,7 +378,7 @@ export const onRequestPut = guard(async ({ request, env }) => {
     const result = await update.run();
     if (!Number(result?.meta?.changes)) {
       const latest = await db.saveByUser(D, user.id);
-      return early({ conflict: true, version: latest?.version ?? row.version, blob: blobForClient(latest?.blob ?? row.blob, format),
+      return early({ conflict: true, version: latest?.version ?? row.version, blob: blobForClient(latest?.blob ?? row.blob, format, latest ? parseSave(latest.blob) : storedStamp),
         savedAt: latest?.saved_at ?? row.saved_at, updatedAt: latest?.updated_at ?? row.updated_at,
         offlineClaim: publicClaim(await db.pendingOfflineClaim(D, user.id)) }, 409);
     }

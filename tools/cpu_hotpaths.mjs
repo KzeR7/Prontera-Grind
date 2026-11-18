@@ -27,10 +27,36 @@ const argv = process.argv.slice(2);
 const flag = (n, d = null) => { const i = argv.indexOf('--' + n); return i >= 0 && argv[i + 1] ? argv[i + 1] : d; };
 
 // ------------------------------------------------------------- profiled child ----
+// v419: the parent used to read these from process.env ONLY, so `--case me` silently profiled the
+// default 40 near-cap PUTs and the header line then LIED about what had run. Both sides now derive the
+// workload from one place: the parent parses and validates the flags, and the child gets the resolved
+// values through the environment (never re-reads argv, which it does not have).
 const CHILD = process.env.PG_PROFILE_CHILD === '1';
-const CASE = process.env.PG_CASE || 'save-put';
-const SIZE = process.env.PG_SIZE || 'nearCap';
-const RUNS = Number(process.env.PG_RUNS || 40);
+const CASES = { 'save-put': 'PUT /api/save (accepted)', 'save-get': 'GET /api/save (X-Save-Format: 112)', me: 'GET /api/me' };
+const SIZES = ['small', 'medium', 'nearCap'];
+const DEFAULT_CASE = 'save-put', DEFAULT_SIZE = 'nearCap', DEFAULT_RUNS = 40;
+
+// One resolver, used by the parent for its own settings and to build the child's environment.
+function resolveWorkload() {
+  const fail = message => { console.error('cpu_hotpaths: ' + message); process.exit(2); };
+  const wantedCase = flag('case', DEFAULT_CASE);
+  const wantedSize = flag('size', DEFAULT_SIZE);
+  const rawRuns = flag('runs', String(DEFAULT_RUNS));
+  if (!Object.hasOwn(CASES, wantedCase)) fail('--case must be one of ' + Object.keys(CASES).join(', ') + ' (got ' + JSON.stringify(wantedCase) + ')');
+  if (!SIZES.includes(wantedSize)) fail('--size must be one of ' + SIZES.join(', ') + ' (got ' + JSON.stringify(wantedSize) + ')');
+  if (!/^\d+$/.test(String(rawRuns)) || Number(rawRuns) < 1 || Number(rawRuns) > 100_000)
+    fail('--runs must be a whole number between 1 and 100000 (got ' + JSON.stringify(rawRuns) + ')');
+  const top = flag('top', '30');
+  if (!/^\d+$/.test(String(top)) || Number(top) < 1) fail('--top must be a positive whole number (got ' + JSON.stringify(top) + ')');
+  return { case: wantedCase, size: wantedSize, runs: Number(rawRuns), top: Number(top) };
+}
+const WORKLOAD = CHILD
+  ? { case: process.env.PG_CASE || DEFAULT_CASE, size: process.env.PG_SIZE || DEFAULT_SIZE,
+      runs: Number(process.env.PG_RUNS || DEFAULT_RUNS), top: Number(process.env.PG_TOP || 30) }
+  : resolveWorkload();
+const CASE = WORKLOAD.case;
+const SIZE = WORKLOAD.size;
+const RUNS = WORKLOAD.runs;
 
 function makeD1(sqlite) {
   const wrap = (stmt, args = []) => ({
@@ -116,18 +142,31 @@ if (CHILD) {
   await session.post('Profiler.enable');
   await session.post('Profiler.setSamplingInterval', { interval: 100 });
   await session.post('Profiler.start');
+  let ran = 0; const statuses = [];
   for (let i = 0; i < RUNS; i++) {
+    let res;
     if (CASE === 'save-put') {
-      const r = await save.onRequestPut({ request: mk('PUT', '/api/save', { cookie, body: JSON.stringify({ owner: name, version, blob: stored }) }), env });
-      await take(r); version++;
+      res = await save.onRequestPut({ request: mk('PUT', '/api/save', { cookie, body: JSON.stringify({ owner: name, version, blob: stored }) }), env });
+      version++;
     } else if (CASE === 'save-get') {
-      await take(await save.onRequestGet({ request: mk('GET', '/api/save', { cookie, headers: { 'x-save-format': '112' } }), env }));
+      res = await save.onRequestGet({ request: mk('GET', '/api/save', { cookie, headers: { 'x-save-format': '112' } }), env });
     } else if (CASE === 'me') {
-      await take(await me.onRequestGet({ request: mk('GET', '/api/me', { cookie }), env }));
+      res = await me.onRequestGet({ request: mk('GET', '/api/me', { cookie }), env });
+    } else {
+      throw new Error('unreachable case ' + CASE);   // resolveWorkload() already rejected it
     }
+    await take(res);
+    statuses.push(res.status);
+    ran++;
+    // A profiled loop that is answering errors is measuring the error path. Fail loudly instead of
+    // publishing a table of somebody else's work.
+    if (res.status !== 200) throw new Error(CASE + ' answered ' + res.status + ' on run ' + i);
   }
   const { profile } = await session.post('Profiler.stop');
-  fs.writeFileSync(process.env.PG_PROFILE_FILE, JSON.stringify(profile));
+  // Record what really ran, so the parent reports the workload it measured instead of assuming it.
+  const executed = { case: CASE, size: SIZE, runs: RUNS, requests: ran,
+    fixtureBytes: fixture.length, storedBytes: stored.length, statuses: [...new Set(statuses)] };
+  fs.writeFileSync(process.env.PG_PROFILE_FILE, JSON.stringify({ profile, executed }));
   process.exit(0);
 }
 
@@ -135,11 +174,13 @@ if (CHILD) {
 const profileFile = process.env.PG_PROFILE_FILE || path.join(os.tmpdir(), 'pg-cpu-' + process.pid + '.json');
 const child = spawnSync(process.execPath, [selfPath], {
   env: { ...process.env, PG_PROFILE_CHILD: '1', PG_CASE: CASE, PG_SIZE: SIZE, PG_RUNS: String(RUNS),
-    PG_PROFILE_FILE: profileFile },
+    PG_TOP: String(WORKLOAD.top), PG_PROFILE_FILE: profileFile },
   stdio: 'inherit',
 });
 if (child.status !== 0) process.exit(child.status || 1);
-const prof = JSON.parse(fs.readFileSync(profileFile, 'utf8'));
+const captured = JSON.parse(fs.readFileSync(profileFile, 'utf8'));
+const prof = captured.profile;
+const executed = captured.executed || {};
 const byId = new Map(prof.nodes.map(n => [n.id, n]));
 // Samples -> leaf self time; the delta between consecutive timestamps is charged to the leaf.
 const self = new Map();
@@ -189,8 +230,14 @@ for (const [id, us] of inclusive) {
   const cur = incl.get(key) || { fn: cf.functionName || '(anonymous)', url, line: (cf.lineNumber || 0) + 1, us: 0 };
   cur.us += us; incl.set(key, cur);
 }
-const top = [...group.values()].sort((a, b) => b.us - a.us).slice(0, Number(flag('top', 30)));
-console.log(`case ${CASE} / ${SIZE} / ${RUNS} runs - V8 self time (sampling), ${(total / 1000).toFixed(1)} ms sampled total\n`);
+// The settings the CHILD reported, not the ones the parent hoped for.
+if (executed.case !== CASE || executed.size !== SIZE || executed.runs !== RUNS)
+  console.error('cpu_hotpaths: the profiled child ran ' + JSON.stringify(executed) + ', which is not what was requested');
+const top = [...group.values()].sort((a, b) => b.us - a.us).slice(0, WORKLOAD.top);
+console.log(`case ${executed.case || CASE} (${CASES[executed.case || CASE]}) / ${executed.size || SIZE} / ` +
+  `${executed.runs || RUNS} runs, ${executed.requests || RUNS} requests answered 200` +
+  (executed.storedBytes ? `, ${executed.storedBytes} B stored` : '') +
+  ` - V8 self time (sampling), ${(total / 1000).toFixed(1)} ms sampled total\n`);
 console.log('  self_ms   share  hits  location');
 for (const x of top) {
   console.log('  ' + (x.us / 1000).toFixed(2).padStart(7) + ' ' + ((x.us / total) * 100).toFixed(1).padStart(6) + '%' +
@@ -198,7 +245,7 @@ for (const x of top) {
 }
 if (argv.includes('--inclusive')) {
   const rows2 = [...incl.values()].filter(x => x.url.startsWith('functions/') || x.url.startsWith('tools/cpu_hotpaths'))
-    .sort((a, b) => b.us - a.us).slice(0, Number(flag('top', 24)));
+    .sort((a, b) => b.us - a.us).slice(0, WORKLOAD.top);
   console.log('\n  INCLUSIVE (this function and everything it called)');
   console.log('  incl_ms   share  location');
   for (const x of rows2) {

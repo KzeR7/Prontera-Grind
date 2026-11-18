@@ -281,5 +281,45 @@ const signup = async (env, u) => {
   void owner;
 }
 
+// ------------------------------------------- 5. the profiler CLI is honest ----
+//
+// v419: `tools/cpu_hotpaths.mjs` read --case/--size/--runs but then profiled its own defaults, so
+// `--case me --size small --runs 1` reported 40 near-cap PUTs under a header claiming otherwise. A
+// benchmark that does not run the workload it names is worse than no benchmark: the numbers get quoted.
+// These cases drive the real CLI as a child process and check both the validation and the workload.
+{
+  const { spawnSync } = await import('node:child_process');
+  const profiler = path.join(root, 'tools', 'cpu_hotpaths.mjs');
+  const run = (...args) => {
+    const r = spawnSync(process.execPath, [profiler, ...args], { encoding: 'utf8', timeout: 300_000 });
+    return { code: r.status, out: String(r.stdout || ''), err: String(r.stderr || '') };
+  };
+
+  // Refusals: an unusable setting must stop the run, not be silently replaced by a default.
+  for (const [args, why] of [[['--case', 'nonsense'], 'an unknown --case'],
+                             [['--size', 'huge'], 'an unknown --size'],
+                             [['--runs', '0'], 'a zero --runs'],
+                             [['--runs', 'many'], 'a non-numeric --runs'],
+                             [['--case', 'save-put', '--runs', '1', '--top', 'x'], 'an unknown --top']]) {
+    const r = run(...args);
+    ok('the profiler refuses ' + why, r.code === 2 && /cpu_hotpaths:/.test(r.err), 'exit ' + r.code + ' ' + r.err.slice(0, 60));
+  }
+
+  // A real profile of the smallest possible workload: the header must name what actually ran.
+  const r = run('--case', 'me', '--size', 'small', '--runs', '1', '--top', '3');
+  ok('a one-request profile of --case me exits 0', r.code === 0, 'exit ' + r.code + ' ' + r.err.slice(0, 120));
+  ok('  ...and its header names GET /api/me, not the default PUT', /case me \(GET \/api\/me\)/.test(r.out),
+    r.out.split('\n')[0]);
+  ok('  ...and reports the size, run count and the request it answered', /\/ small \/ 1 runs, 1 requests answered 200/.test(r.out),
+    r.out.split('\n')[0]);
+  ok('  ...and does not claim the near-cap PUT workload', !/save-put|nearCap/.test(r.out.split('\n')[0]),
+    r.out.split('\n')[0]);
+
+  const g = run('--case', 'save-get', '--size', 'small', '--runs', '2', '--top', '3');
+  ok('--case save-get runs GET /api/save', g.code === 0 && /case save-get \(GET \/api\/save/.test(g.out),
+    g.out.split('\n')[0] || g.err.slice(0, 80));
+  ok('  ...for exactly the requested number of requests', /2 runs, 2 requests answered 200/.test(g.out), g.out.split('\n')[0]);
+}
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);

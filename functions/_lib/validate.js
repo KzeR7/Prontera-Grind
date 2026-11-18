@@ -75,81 +75,43 @@ export function clientSaveFormat(request) {
 // capability is not a promise about formats invented after that build.
 //
 // v416 (CPU): this used to `JSON.parse` the WHOLE stored blob - up to 300 KB - merely to read four
-// top-level scalars. `blobForClient` calls it on every GET and on every conflict reply, so a near-cap
-// player paid a full parse (measured 2.3 ms locally, 2.4 ms with the memo cold) per request for that
-// one number, and a 300 KB GET parsed the blob TWICE. The version is now read from the text.
+// top-level scalars, on every `blobForClient` call (every GET, every conflict reply).
 //
-// Why the text search is not a guess, and why it cannot lie in the permissive direction:
-//   * `packSave` writes the marker as its LAST top-level key (`Object.assign({}, save, {__v: N})`, and
-//     nothing is added after it), so the LAST `"__v":` in the text is always the top-level one even
-//     when an extras bucket carries an unrelated `__v` of its own;
-//   * the reader walks brace/string nesting to find that key at DEPTH 1 only, so a `"__v":` inside a
-//     nested object, a string value or an escape sequence cannot be mistaken for it;
-//   * anything unexpected (truncated text, an unreadable number, a future value) answers null, and a
-//     caller only ever treats null as "not compact", which is the CONSERVATIVE answer - a compact row
-//     read that way is handed over as-is rather than expanded, and the unpacks below still decode it.
-// `tools/tests/save_codec_canread_sim.mjs` checks this against JSON.parse over every stored shape,
-// including adversarial ones, and fails if the two ever disagree.
-const PACKED_MARKER = '"__v":';
-// The pre-v416 reader, kept as the reference answer: it is what every deployed build answered, so any
-// shape the fast reader is not SURE about has to fall back to it rather than guess.
-const packedVersionByParse = blob => {
-  try { const o = JSON.parse(blob); return isPacked(o) ? Number(o.__v) || 1 : null; } catch { return null; }
+// v419: an earlier version of this read the version by SCANNING THE TEXT for a literal `"__v":`. That
+// was a compatibility bug and it is gone. A JSON text can spell the same key in ways a literal search
+// cannot see - `{"\u005f_v":4}` is `{__v:4}` after unescaping - and a scan that answers "plain save"
+// there hands compact item tuples to a page that cannot decode them. Duplicate keys and malformed
+// suffixes (`{"__v":4,}`) made it disagree with `JSON.parse` in both directions too.
+//
+// So the version now comes from A PARSED VIEW of the blob, never from its spelling:
+//   * the caller may hand over the view it already has (`blobForClient(blob, format, view)`), and
+//     `parseSave`'s one-entry memo keyed on the exact string supplies it for free on the paths that
+//     read the stored save anyway (GET ownership/claim checks, the PUT conflict replies);
+//   * otherwise the blob is parsed here, by the ORIGINAL reader, and the memo is filled so the next
+//     helper in the same request reuses that parse instead of repeating it.
+// Cost on a near-cap GET: the stored blob is already parsed once for the ownership/restore checks
+// (which this handler must do regardless), so `clientCanRead` adds no parse at all - it used to add a
+// second full one. On a path with no view it costs exactly what the pre-v416 code cost, never more.
+//
+// `jsLiteralVersion` below is ONLY a consistency check on text we are about to accept from a client
+// (the incoming payload of a PUT): it can prove that a text contains no `__v` key at all, which lets
+// `checkSaveBlob` answer without a parse. It is never used to decide what an old client can read.
+const packedVersionByParse = save => {
+  if (typeof save === 'string') {
+    try { save = JSON.parse(save); } catch { return null; }
+  }
+  return isPacked(save) ? Number(save.__v) || 1 : null;
 };
-export function packedVersion(blob) {
+// The reference reader, unchanged from every deployed build before v416: parse, then read `__v`.
+// `view` is an already-parsed save for `blob` when the caller has one; it is trusted only after
+// `parseStamp` has keyed it to that exact string.
+export function packedVersion(blob, view) {
   if (typeof blob !== 'string' || !blob) return null;
-  const at = blob.lastIndexOf(PACKED_MARKER);
-  if (at < 0) {
-    // No marker anywhere means no compact save... unless a nested object spells its key differently
-    // (e.g. whitespace around the colon). That is not a shape packSave writes, so it is answered the
-    // slow, exact way instead of being assumed away.
-    return blob.indexOf('"__v"') < 0 ? null : packedVersionByParse(blob);
-  }
-  // Depth AT that offset: +1 for every '{'/'[' before it that is not inside a string, -1 for every
-  // closing one. A top-level key of the save object therefore sits at depth 1, its neighbours at 0.
-  // One forward pass of four charCode comparisons per byte and no allocation: measured at ~1.1 ms on a
-  // 296 KB blob against 2.3 ms for the parse it replaces. (Counting the four bracket bytes with four
-  // `indexOf` scans was tried and measured at 2.7 ms - four passes over the string lose to one loop -
-  // so it stays a single loop.)
-  let depth = 0, inString = false, escaped = false;
-  for (let i = 0; i < at; i++) {
-    const c = blob.charCodeAt(i);
-    if (inString) {
-      if (escaped) escaped = false;
-      else if (c === 92) escaped = true;          // backslash
-      else if (c === 34) inString = false;        // closing quote
-      continue;
-    }
-    if (c === 34) inString = true;
-    else if (c === 123 || c === 91) depth++;      // '{' or '['
-    else if (c === 125 || c === 93) depth--;      // '}' or ']'
-  }
-  // Anything that is not a clean "this key sits at the top level" answer is decided by the reference
-  // reader. That is the memo-safe trade: the fast path covers every blob packSave writes (and every
-  // plausible hand-written one), and the slow path covers the rest EXACTLY as before. Worst case is
-  // therefore the old cost, never a different answer.
-  if (inString || depth !== 1) return packedVersionByParse(blob);
-  let end = at + PACKED_MARKER.length;
-  while (end < blob.length && isSpace(blob.charCodeAt(end))) end++;
-  if (blob.charCodeAt(end) === 34) return packedVersionByParse(blob);   // a quoted value: ask the reference
-  let n = 0, digits = 0;
-  while (end < blob.length) {
-    const c = blob.charCodeAt(end);
-    if (c < 48 || c > 57) break;
-    n = n * 10 + (c - 48); digits++; end++;
-    if (digits > 9) return packedVersionByParse(blob);
-  }
-  if (!digits) return packedVersionByParse(blob);                      // a negative or non-numeric value
-  let after = end;
-  while (after < blob.length && isSpace(blob.charCodeAt(after))) after++;
-  const next = blob.charCodeAt(after);
-  // The value must END the member. `4.5`, `4e3`, `4abc` continue, so those are the reference's call.
-  if (next !== 44 && next !== 125) return packedVersionByParse(blob);
-  return n || 1;
+  if (view && typeof view === 'object' && !Array.isArray(view)) return packedVersionByParse(view);
+  return packedVersionByParse(parseSave(blob));
 }
-const isSpace = c => c === 32 || c === 9 || c === 10 || c === 13;
-export const clientCanRead = (blob, format) => {
-  const v = packedVersion(blob);
+export const clientCanRead = (blob, format, view) => {
+  const v = packedVersion(blob, view);
   if (v === null) return true;                         // not a compact blob: everyone can read it
   if (format < SAVE_FORMAT_COMPACT) return false;      // no codec at all
   if (v <= 2) return true;                             // the original compact codec
@@ -160,9 +122,11 @@ export const clientCanRead = (blob, format) => {
 
 // The body a save endpoint should return for `blob` to a client of `format`. Never throws: an
 // unreadable blob is the caller's problem, not a reason to fail the request.
-export function blobForClient(blob, format) {
-  if (!blob || clientCanRead(blob, format)) return blob;
-  try { return JSON.stringify(unpackSave(JSON.parse(blob))); } catch { return blob; }
+export function blobForClient(blob, format, view) {
+  if (!blob || clientCanRead(blob, format, view)) return blob;
+  // The expansion path already has to parse; reuse the view the caller supplied when it matches.
+  try { return JSON.stringify(unpackSave(view && typeof view === 'object' ? view : JSON.parse(blob))); }
+  catch { return blob; }
 }
 
 export function checkSaveBlob(blob) {

@@ -52,6 +52,7 @@ git fetch origin d164bd0527cfe335f9c183d0e576800716b7dd26
 ```sh
 node tools/tests/save_max_state_sim.mjs
 node tools/tests/save_codec_canread_sim.mjs
+node tools/tests/save_format_parity_sim.mjs
 node tools/tests/cpu_hot_paths_sim.mjs
 node tools/tests/save_codec_item_state_sim.mjs
 node tools/tests/save_codec_real_sim.mjs
@@ -115,11 +116,22 @@ production-length ids and the fish dex/stats. Do not replace it with short handw
 half-starred cards. The measured case is 338,180 characters under the merged v3 encoder and 295,175
 under v4, against the unchanged 307,200 limit. This is a finite regression, **not a global maximum**.
 
-`save_codec_canread_sim.mjs` (haven-v419) proves the text reader that replaced the
-`JSON.parse` version lookup in `_lib/validate.js` agrees with the old reader on **every** stored
-shape: codec output v1–v4 × 0/1/5/50 records, plain saves, and adversarial text (nested `"__v"`,
-quoted/negative/floating values, unbalanced nesting, truncated blobs, escapes). Any disagreement
-fails the suite, so a save can never be handed to a page that cannot decode it.
+`save_codec_canread_sim.mjs` (haven-v419) is a **differential** test: it compares the codec-version
+decision in `_lib/validate.js` against the pre-v416 `JSON.parse` reader - the oracle here is the code
+that shipped before the version lookup changed, not a second implementation of the new one. Cases include
+escaped property names (`{"\u005f_v":4}` is `{__v:4}`), duplicate keys with different spacing, whitespace
+around the colon, malformed suffixes JSON.parse rejects, nested/irrelevant placements, non-numeric values,
+every codec version at 0/1/5/50 records, plain saves, and the production constructor fixture; plus the
+capability matrix and the "an incompatible client is served EXPANDED items, never tuples" property.
+141 checks. A text scan for a literal `"__v":` fails 7 of them, which is exactly the regression
+v416 shipped and v419 removed.
+
+`save_format_parity_sim.mjs` (haven-v419) proves the same thing at the API boundary, where item loss
+would actually happen: a real row written by the handler and a row seeded directly into storage with an
+escaped marker, read back with **no header / 110 / 111 / 112**, on **GET and on a 409 conflict reply**,
+asserting status, authoritative version, and that every page below the row's codec version receives plain
+items with `refine`/`lock` intact (and that a page which can decode receives the stored bytes
+unchanged). 46 checks.
 
 `cpu_hot_paths_sim.mjs` (haven-v419) pins the four CPU-diet changes by **behaviour, not timing**:
 `GET /api/save` reads the save row once and parses its blob once; an accepted sync whose leaderboard

@@ -289,132 +289,170 @@ on quiet days, item (1) is the floor that has to come down.
 
 ---
 
-## Current state (2026-11-18)
+## Current state (2026-11-18, revised after review)
 
-Everything in this section was measured on the v419 tree (`haven-v419`, base `c4b4f43`) against the
-same fixtures. Method, so the numbers can be re-run and argued with:
+Everything here was re-measured after the first version of this change was reviewed and rejected. Three
+things were wrong in it and are corrected below, because the corrections matter more than the wins:
 
-* **Harness** `tools/cpu_profile.mjs`: Node 22.22.3, the real Pages Functions handlers, the real
-  migrations in `node:sqlite`, a D1 shim. Each sample is the **median over 11 rounds of the mean of 10
-  identical requests** (a single GC pause therefore cannot move a sample), and the figure below is the
-  median of **3 alternating rounds** against `git stash`ed baseline. Every case runs in one process.
-* **Attribution** `tools/cpu_hotpaths.mjs`: V8 sampling profiler via `node:inspector`, self and
-  inclusive time per function, for one request shape at a time.
-* **Fixtures** `tools/tests/helpers/full-storage-save.js` — the production constructors
-  (`genGear()`/`newCard()`/`addCatch()`), i.e. refined/locked equipment, starred and socketed cards, a
-  full fishing collection. `small` is a fresh account (3,168 B stored), `medium` is 55,890 B, `nearCap`
-  is the v415/v419 measured state at **295,699 B** against the unchanged 307,200 B ceiling.
-* **What this is not.** *None of these are Cloudflare cpu_ms.* workerd is a different runtime
-  with a different allocator and GC; a real deployment also pays for cold starts and is observed by
-  Tail Workers, neither of which this harness models. The numbers compare two trees; they do not
-  predict a hosted millisecond. The Free Tier ceiling is 10 ms/invocation, and a local request measured
-  at 3 ms can be far over it on Cloudflare.
+1. **The version reader was a compatibility bug.** v416's text scan for a literal `"__v":` answered
+   "plain save" for `{"\u005f_v":4}` - which is `{__v:4}` to JSON.parse - and so handed v4 item tuples
+   to a page that cannot decode them. Duplicate keys and malformed suffixes disagreed too. **Removed.**
+   The version now comes from a PARSED view of the blob (the one the handler already has, or a parse by
+   the original reader), so it is the pre-v416 answer by construction.
+2. **The conflict benchmark measured the wrong request.** It sent no `X-Save-Format`, so every "conflict"
+   it timed was a LEGACY plain-save expansion, not a modern client's conflict. The 32-36 ms figure was
+   therefore not the cost of a conflict; the modern one is **11.5 ms**. The harness now measures modern
+   (112) and legacy (no header) separately and asserts status, version and served encoding on every
+   timed request.
+3. **The profiler ignored its own flags.** `--case/--size/--runs` were parsed but never forwarded, so
+   `--case me --size small --runs 1` profiled 40 near-cap PUTs. Fixed, validated, and pinned by tests.
 
-### Where the CPU actually goes on a near-cap save
+Method (unchanged): `tools/cpu_profile.mjs`, Node 22.22.3, the real handlers, the real migrations in
+`node:sqlite`, a D1 shim. Each sample is the median over 11 rounds of the mean of 10 identical requests;
+the figure is the median of 3 alternating rounds against a `git stash`ed baseline. Fixtures are the
+production constructors (`full-storage-save.js`): refined/locked gear, starred/socketed cards, a full
+fishing collection - `small` 3,169 B, `medium` 55,883 B, `nearCap` 295,699 B against the unchanged
+307,200 B ceiling.
 
-Inclusive share of a complete accepted `PUT /api/save` at 295,699 B (V8, 60 requests):
+***None of these are Cloudflare `cpu_ms`.*** workerd has a different allocator and GC, a deployed request
+pays cold starts, and the local D1 shim is not the production database. These numbers compare two trees.
 
-| path | self | note |
-| --- | ---: | --- |
-| `checkSaveBlob` | 21.3 % | size/shape validation over the whole text |
-| GC | 9.7 % | allocation from parsing and unpacking |
-| `JSON.parse` (`readJson` + the blob itself) | ~12 % | the envelope and the incoming save |
-| `unpackSave` + `fromTuple`/`unpackCard` | 8.8 % | positional → object expansion for the rules below |
-| `auditStaticSave` | 2.4 % | 0.21 ms measured directly |
+### Before / after, by client kind
 
-Component costs on the same 295,675 B packed blob, median CPU (ms): `JSON.parse` **2.26**,
-`JSON.stringify` **2.27**, `packedVersion` text read **1.12**, `unpackSave` **1.17**, `clientCanRead`
-**1.12**, `auditStaticSave` **0.21**, `saveBelongsTo` / ownership stamp **~0.001** (`lastIndexOf`).
+| case (what the client actually sends) | base | v419 | Δ |
+| --- | ---: | ---: | ---: |
+| `PUT /api/save` near cap, **modern 112** | 7.039 | 7.070 | +0.4 % (noise) |
+| `PUT /api/save` near cap, **legacy, no header** | - | - | not measurable: the expanded body is 1,657,687 B, over the 600,000 B envelope limit (413) |
+| `PUT /api/save` medium, modern | 2.024 | 1.777 | −12 % |
+| `PUT /api/save` small, modern | 0.773 | 0.772 | flat |
+| `PUT` **conflict** near cap, modern 112 | 36.526 | 11.486 | **−69 %** (the base column is legacy expansion, see below) |
+| `PUT` conflict medium, modern | 4.572 | 2.426 | −47 % |
+| `GET /api/save` near cap, modern 112 | 3.125 | 2.326 | **−26 %** |
+| `GET /api/save` near cap, **legacy, no header** | - | - | 32.8 ms: it must expand 1.66 MB of JSON |
+| `GET /api/save` medium, modern | 0.839 | 0.635 | −24 % |
+| `GET /api/me` (all sizes) | 0.220-0.232 | 0.227-0.247 | flat |
 
-Two figures that used to be quoted here need correcting, and the corrections matter more than the
-wins:
+The conflict row needs care. The base column is the OLD harness's conflict case, which sent no format
+header; its 36.5 ms is the cost of expanding a near-cap save for a legacy page, and a modern client
+never pays it. Measured on the same request, modern conflicts are **11.5 ms in v419**. The like-for-like
+modern conflict change is not separable from the version-reader revert with this data, and is not
+claimed.
 
-* **`packedVersion` is 1.12 ms, not 0.57 ms.** The earlier "bare loop" figure was a loop that only
-  *read* every byte (`charCodeAt` summed), which a JIT can do in 0.54 ms. A depth scan that also tracks
-  string/escape state costs ~1.0 ms on its own, whatever it is named. It is still **half** the 2.26 ms
-  `JSON.parse` it replaces, which is the only comparison that justified the change. Skipping strings
-  with native `indexOf` measured 0.97 ms — within noise of the single loop, so it was not taken.
-* **`String.prototype.lastIndexOf` on a 296 KB string is ~0.001 ms** because it runs in C++; the
-  marker lookup was never the cost. The scan is.
+### What v419 changed
 
-### What v419 changed, and what it measured
+1. **`_lib/validate.js` - the version comes from a parsed view, never from text.** `blobForClient` now
+   takes the view the handler already parsed (for GET ownership/claims and for conflict replies) and
+   falls back to `parseSave`, whose one-entry memo is keyed on the exact string. A GET therefore parses
+   the stored blob ONCE - it used to parse it twice, once for the checks and once for the version. No
+   scanner, no guess, and the answer is the old one by construction.
+2. **`api/save.js` (GET) - one read of the save row.** The handler re-read the row after `touchSeen`;
+   the touch writes `updated_at = updated_at` and `last_seen`, and `last_seen` is not in the response.
+   That second read fetched a whole save-sized blob to learn nothing (6 statements → 5).
+3. **`_lib/db.js` + `api/save.js` (PUT) - an unchanged projection is not rewritten.** When
+   `level/cls/zeny/kills_total/playtime/rate_kph` would not change, the row is written by a statement
+   that leaves those columns alone - but still writes `version`, `blob`, `saved_at`, `updated_at`,
+   `last_seen`, under the same `AND version = ?` guard. Acknowledgement, 409 handling and the restore
+   fence are unchanged.
+4. **`api/save.js` - the last claim's remainder is read only when a claim could be issued**
+   (`awayQualifies`), instead of on every sync.
 
-Identical fixtures, base `c4b4f43` vs v419, median of 3 alternating rounds (ms of comparative CPU):
+### What middleware costs (measured separately, not omitted)
 
-| case | before | after | Δ | D1 statements |
-| --- | ---: | ---: | ---: | ---: |
-| `GET /api/save` small | 0.443 | 0.390 | −12 % | 5 → 5 |
-| `GET /api/save` medium | 1.286 | 0.803 | **−38 %** | 5 → 5 |
-| `GET /api/save` nearCap | 4.572 | 3.063 | **−33 %** | **6 → 5** |
-| `PUT /api/save` small | 0.725 | 0.692 | −5 % | 7 → 7 |
-| `PUT /api/save` medium | 1.831 | 1.794 | −2 % | 8 → 8 |
-| `PUT /api/save` nearCap | 6.208 | 6.292 | +1.4 % (noise) | **8 → 7** |
-| `PUT` conflict small | 0.575 | 0.559 | −3 % | |
-| `PUT` conflict medium | 4.532 | 4.205 | −7 % | |
-| `PUT` conflict nearCap | 34.368 | 32.634 | −5 % | |
-| `GET /api/me` (all sizes) | 0.200–0.225 | 0.216–0.227 | flat | 1 |
+The first version of this harness called the handler directly, which silently skipped
+`functions/api/_middleware.js` - the production-preview refusal, the network-ban hash and lookup, and
+the gate lease. `--middleware` now drives the real `onRequest` with a real client address, and the two
+are reported as separate rows:
 
-1. **The codec version is read from the text, not by parsing the blob** (`_lib/validate.js`).
-   `blobForClient` → `clientCanRead` → `packedVersion` ran on every `GET /api/save` and every conflict
-   reply; it `JSON.parse`d up to 300 KB to read `__v`. It now scans the text for the last top-level
-   `"__v":` and **falls back to the old parser on every shape it is not certain about** (nested key,
-   quoted value, non-integer, trailing junk, unbalanced nesting), so the worst case is the old cost and
-   never a different answer. `tools/tests/save_codec_canread_sim.mjs` (47 checks) compares the two
-   readers over codec output v1–v4 × 0/1/5/50 records, plain saves, and malformed/adversarial text, and
-   fails on any disagreement.
-2. **`GET /api/save` stopped re-reading the save row after `touchSeen`** (`api/save.js`). The touch
-   writes `updated_at = updated_at` and `last_seen`, and `last_seen` is not in the response. The second
-   read fetched a whole save-sized blob to learn nothing — 6 statements down to 5, and at near cap the
-   parse that went with it. This is most of the −33 %/−38 % above.
-3. **An unchanged leaderboard projection is no longer rewritten** (`_lib/db.js`
-   `updateSaveVersionStatement`, `api/save.js` `saveColumnsUnchanged`). `saves.level/cls/zeny/
-   kills_total/playtime/rate_kph` are recomputed from the blob on every accepted sync and a background
-   tab usually changes none of them. The row is still written — `version`, `blob`, `saved_at`,
-   `updated_at`, `last_seen` — under the same `AND version = ?` guard, so the acknowledgement, the 409
-   path and every trigger that matters are unchanged; only the projection columns are left alone.
-   `cpu_hot_paths_sim.mjs` asserts both statements, in both directions.
-4. **The last offline claim's remainder is only read when a claim could be issued** (`api/save.js`
-   `awayQualifies`). Previously every sync read it, then discarded it because the away window was
-   seconds. A claim that *is* due behaves exactly as before (same `OFFLINE_MIN_MS` floor).
+| route | handler only | handler + middleware |
+| --- | ---: | ---: |
+| `GET /api/save` small | 0.482 | 0.353-0.559 (noise) |
+| `GET /api/save` medium | 0.758 | 0.715 |
+| `GET /api/save` near cap | 2.312 | 2.337 |
+| `PUT /api/save` near cap | 8.866 | 8.583 |
+
+The delta is ~0.1-0.4 ms on the cheap routes and inside the noise on the expensive ones; it is a real
+per-request tax that no save-path change removes, and it is now visible instead of assumed away. With
+`WRITE_GATE=required` the gate adds two Durable Object round trips (wall time, not CPU).
 
 ### Two changes that were measured, rejected, and reverted
 
-Reported because a plausible-looking optimisation that makes things worse is worth recording:
-
-* **Sharing one parse between the incoming and the stored blob on a byte-identical re-sync.** A re-sync
-  usually sends back exactly the text the server stored, so one parse can answer both sides. Measured
-  save-sized parses over a near-cap re-sync `PUT`: **3 → 2**. Measured CPU of the same request in a
-  single-route warm bench (30 warm + 40 measured, version advancing): **6.65 ms → 12.68 ms**, and it
-  reproduced across the full matrix (`save-put-nearCap` 6.86 → 9.61 ms, +40 %) while every other case
-  improved. Fewer statements (7.2 vs 8.2) and one fewer parse, yet slower — the extra object stays alive
-  through the whole request, so the memo and the audit's use of it changed the allocation/GC shape.
-  Reverted. **A parse count is not a CPU budget**; if this is ever retried it must be re-measured, not
-  assumed.
-* **Gating Echo settlement behind a durable checkpoint** (migration 0018: completed pass + advisory
-  lease + owner-only `POST /api/gm/echo/settle` + unconditional `GET /api/board`). Fully implemented,
-  tested, and then dropped: the gate's own read costs **one statement** (0.007 ms) and so does the
-  query it replaces (0.014 ms), so it bought **~7 µs** per sync while *adding* two statements plus a
-  delete on every sync where a period really was due — the opposite of a saving on the D1 rows budget,
-  and it needed a migration and a table pair to get there. Settlement is unchanged: one indexed read
-  per accepted save, a batch only when something has ended, retried by later saves and by
-  `GET /api/board`. `cpu_hot_paths_sim.mjs` now pins that behaviour (settles a due period, never pays
-  twice, a refused batch still accepts the save and stays retryable, an empty period closes, a board
-  view settles).
+* **Sharing one parse between incoming and stored on a byte-identical re-sync.** Save-sized parses went
+  3 → 2 and the request got **40 % slower** at near cap (6.9 → 9.6 ms, reproduced in a single-route warm
+  bench at 6.65 → 12.68 ms). Reverted. `api_sim`'s original `assert.strictEqual(parses, 3)` is the guard,
+  and it is NOT relaxed: a normal PUT still uses up to three save-sized parses (envelope, incoming,
+  stored), which is the ceiling the codebase has enforced since v410.
+* **A durable checkpoint for Echo settlement** (migration 0018, advisory lease, owner-only forced pass).
+  Fully implemented and tested, then dropped: the gate's own read costs the same single statement as the
+  query it replaces (0.007 ms vs 0.014 ms), so it bought ~7 µs and ADDED statements whenever a period was
+  due. Settlement is unchanged and pinned by `cpu_hot_paths_sim.mjs`.
 
 ### Still open (owner decisions, not code)
 
-* **The 307,200 B save ceiling.** Per-sync CPU scales with it, and the measured 295,699 B state is
-  already 6.3 ms locally before any hosting overhead. Lowering it changes what players keep.
-* **Near-cap conflicts cost 32.6 ms locally** (5× an ordinary save): a 409 reply carries the live blob
-  through `blobForClient`, and the *client* then re-uploads. The server side is already minimal (2
-  parses, 1 stringify); the rest is inherent to "here is the state you must adopt".
-* **Cloudflare `cpu_ms`.** Watch Pages `exceededResources` and `cpuTimeP50/P99` before and after this
-  build. Codec, parse-count and local-CPU tests are not proof of hosted headroom; the query and the
-  reading order are at the end of this document.
+* **The 307,200 B save ceiling.** Per-sync CPU scales with it; a near-cap modern PUT is 7.1 ms locally
+  before any hosting overhead.
+* **Legacy clients at large saves are not a CPU problem but a size one.** A near-cap save expands to
+  1,657,687 chars, which no page without the codec can upload (413) - and reads cost 32.8 ms of expansion
+  for a page that can. Retiring the pre-v414 read path is an owner decision.
+* **Cloudflare `cpu_ms`.** Unavailable from this sandbox. See the verification plan in the PR.
 
-### One caveat on the whole exercise
 
-`process.cpuUsage()` measures the *process*, including the shim's SQLite work and this harness's own
-serialisation. It is only meaningful as an A/B under identical conditions — which is how it is used
-above, with alternating rounds and a `git stash` baseline — and never as an absolute per-request cost,
-and never as a Cloudflare number.
+## Hosted verification plan (requires authorisation, and a deployment)
+
+Nothing in this file proves the Free Tier CPU problem is solved, and no local measurement can. The plan
+below is what would actually settle it. It needs two things this sandbox does not have: Cloudflare API
+access, and permission to deploy. **Do not deploy on the strength of the local numbers.**
+
+### 0. What is needed first
+
+* `CF_ANALYTICS_TOKEN` (account analytics read) and `CF_ACCOUNT_ID`.
+* The deployment SHA of the build under test (`wrangler pages deployment list`), recorded BEFORE the
+  window opens, so nobody has to guess which build a spike belongs to.
+* The previous build's window kept for comparison - the account's own history is the control, and the
+  nightly request count varies by more than any code change will.
+
+### 1. Baseline, per service, before the change
+
+Three surfaces have separate budgets and must not be summed:
+
+| service | what to query | why |
+| --- | --- | --- |
+| Pages Functions (`/api/*`) | `pagesFunctionsInvocationsAdaptiveGroups` | this is where the save path lives |
+| Social Worker (plaza DO) | `workersInvocationsAdaptive` | separate Worker, separate limit |
+| Recovery-gate Worker | `workersInvocationsAdaptive` | only meaningful with `WRITE_GATE=required` |
+
+A query against `workersInvocationsAdaptive` alone reports a calm week while `/api` is being killed -
+that trap is why the first investigation missed. For the Pages surface, group by `datetimeHour` AND
+`status`, and take `sum{requests,errors}` with `quantiles{cpuTimeP50,cpuTimeP99}`.
+
+### 2. What to read, in order
+
+1. `status: "exceededResources"` rows - these are CPU kills. Count `errors`. If the field is empty the
+   day had none, which is the number that matters.
+2. `status: "scriptThrewException"` and `status: "internalError"` as SEPARATE rows. The first is our bug,
+   the second is a platform-side failure; neither is a CPU kill and neither may be counted as one.
+3. `cpuTimeP50` per quiet hour. If the median moved, the code got heavier for everyone; if only P99
+   moved, a few heavy requests did (near-cap saves, conflicts) and the fix belongs on that path.
+4. Kills as a RATE per thousand requests, not a count, or a busy day looks like a regression.
+
+### 3. What to compare, and what would count as support
+
+* `exceededResources` per 1,000 requests, for the same route mix, before vs after. A drop that survives a
+  comparable request count is support; a drop on a quieter day is not evidence.
+* `cpuTimeP50` and `cpuTimeP99` for the `/api/save` and `/api/me` routes, before vs after, on days with
+  similar traffic.
+* Subrequests per request and `rows_read`/`rows_written` from D1 analytics, to confirm the statement
+  reductions in this change (GET 6 → 5, accepted PUT 8 → 7) show up where the bill is.
+
+### 4. What would falsify it
+
+* `cpuTimeP99` unchanged at ~10,000 µs on killed hours: the code floor is still at the ceiling.
+* Kills concentrated in one hour that also contains a deploy or a reload storm: that is traffic, not
+  per-request cost.
+* Any increase in `exceededResources` rate for a route this change touches.
+
+### 5. Rollback
+
+The change is a single commit with no migration and no new data shape, so a revert is safe in either
+direction and a mixed old/new deployment against one D1 database is fine (the version decision falls back
+to a parse). Verify after a revert with `api_sim`, `save_format_parity_sim` and
+`save_codec_canread_sim`, then one save and one reload on a disposable account.

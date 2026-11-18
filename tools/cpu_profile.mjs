@@ -136,12 +136,75 @@ const makeRequest = (method, url, { body, cookie, headers = {} } = {}) => {
 // decode of a string that already exists. The body is deliberately NOT parsed here: a conflict reply
 // carries the whole live save, and re-parsing it in the harness would charge the server for a parse
 // it never does.
-const call = async (fn, file, request, env) => {
+//
+// v419: `headers` and a light body probe are returned so a case can ASSERT it measured the request it
+// claims to (status, version, encoding). A case that silently measured a refused request - the old
+// conflict case sent no X-Save-Format, so every "conflict" it timed was a legacy plain-save EXPANSION,
+// not a modern client's conflict - is how a 32 ms figure ended up in a report as "the conflict cost".
+// `parse` is opt-in for SETUP calls only. Inside a measured window the reply body is drained but never
+// parsed: parsing a 300 KB conflict reply here would charge the server for the harness's own work.
+const call = async (fn, file, request, env, { parse = false } = {}) => {
+  if (MIDDLEWARE) return runWithMiddleware(fn, file, withClientIp(request), env, { parse });
   const m = await load(file);
   const res = await m[fn]({ request, env, params: {} });
-  await res.text();
-  return { status: res.status };
+  const text = await res.text();
+  let body = null;
+  if (parse && text) { try { body = JSON.parse(text); } catch {} }
+  return { status: res.status, text, body };
 };
+
+// ---------------------------------------------------------------- middleware ----
+// v419: a hostname there is no middleware. `functions/api/_middleware.js` runs BEFORE every handler and
+// is not free: the production-preview refusal, the network-ban check (an address hash plus a cached
+// `ip_bans` membership test) and, when `WRITE_GATE=required`, the Durable Object lease. A harness that
+// calls the handler directly measures the handler and silently omits all of that - which understates
+// every request and hides exactly the kind of per-request tax the CPU investigation is about.
+//
+// So `--middleware` drives the REAL onRequest export with the real request and a `next()` that enters
+// the handler, the way Pages does. It is a separate mode on purpose: handler-only numbers stay
+// comparable with every earlier measurement, and the middleware delta becomes its own line.
+const runWithMiddleware = async (fn, file, request, env, { parse = false } = {}) => {
+  const middleware = await load('api/_middleware.js');
+  const m = await load(file);
+  const started = process.cpuUsage();
+  const res = await middleware.onRequest({
+    request, env, params: {},
+    next: async () => m[fn]({ request, env, params: {} }),
+    // Pages supplies this; the gate release is charged to the request when it is absent, so mirror it.
+    waitUntil: () => {},
+  });
+  const text = await res.text();
+  const cpu = process.cpuUsage(started);
+  let body = null;
+  if (parse && text) { try { body = JSON.parse(text); } catch {} }
+  return { status: res.status, text, body, cpuMs: (cpu.user + cpu.system) / 1000 };
+};
+const MIDDLEWARE = argv.includes('--middleware');
+// In middleware mode the network-ban check has no fingerprint on a plain node request, so it would be
+// skipped and the measurement would again flatter the code. Supply a real client address (and a ban
+// row, when asked) so `ipHash()` + `isIpBanned()` actually run.
+const MIDDLEWARE_IP = flag('client-ip', '203.0.113.7');
+const CLIENT_HEADERS = ['cookie', 'content-type', 'x-save-format'];
+const withClientIp = request => {
+  // Rebuild the request with a real client address added; every original header is preserved, because a
+  // harness that drops the session cookie measures 401s and calls them requests.
+  const added = new Map([['cf-connecting-ip', MIDDLEWARE_IP], ['host', 'pg.test']]);
+  return {
+    method: request.method, url: request.url,
+    headers: {
+      get: k => { const key = String(k).toLowerCase(); return added.has(key) ? added.get(key) : request.headers.get(key); },
+    },
+    text: request.text, body: null,
+  };
+};
+void CLIENT_HEADERS;
+
+// A request whose BODY TEXT is built once, outside the measurement: serialising the envelope is client
+// work, and charging the server for it would inflate every PUT case (and only the PUT cases).
+const putRequest = (cookie, bodyText, format) => makeRequest('PUT', '/api/save', {
+  cookie, body: bodyText,
+  headers: format == null ? {} : { 'x-save-format': String(format) },
+});
 
 // ------------------------------------------------------------- measurement ----
 // process.cpuUsage(previous) already returns the DELTA, so no subtraction here.
@@ -175,6 +238,8 @@ async function measure(name, fn, { runs = RUNS, warm = 2 } = {}) {
 }
 
 const round = n => Math.round(n * 1000) / 1000;
+// The expansion a legacy page is served, built once per size outside every timed window.
+let unpackSaveLocal = x => x;
 
 // ------------------------------------------------------------------- cases ----
 async function main() {
@@ -199,6 +264,7 @@ async function main() {
   for (const [size, save] of Object.entries(fx)) save.owner = 'PROF' + size.toUpperCase();
 
   const codec = await import(pathToFileURL(path.join(root, 'functions/_lib/save-codec.js')).href);
+  unpackSaveLocal = codec.unpackSave;
   const validate = await import(pathToFileURL(path.join(root, 'functions/_lib/validate.js')).href);
 
   for (const [size, save] of Object.entries(fx)) {
@@ -224,35 +290,157 @@ async function main() {
     const putBody = body(version, stored);
     const base = { size, plainBytes: plainLen, compactBytes: packed.length, storedBytes: stored.length };
 
-    if (!ONLY || ONLY.startsWith('save-put')) {
+    // WHAT EACH CASE IS, exactly, because the names get quoted:
+    //   * `save-put`          - a MODERN client (X-Save-Format: 112) re-syncing the blob it was served.
+    //   * `save-put-legacy`   - the same save from a page with NO header (pre-v414). Same write, plus
+    //                           the work of handing it something it can decode.
+    //   * `save-put-conflict` - a MODERN client with a stale version: the row is returned as stored.
+    //   * `save-put-conflict-legacy` - the same conflict for a legacy page, whose reply must be
+    //                           EXPANDED. These are different amounts of work and are never merged.
+    // A modern 112 page is served the stored bytes unchanged, so its body text is literally `stored`;
+    // the legacy re-sync sends those same served bytes (expanded) and gets compact text back.
+    // Each case block re-reads the row, because the previous block's accepted writes advanced the
+    // version. Building bodies from a stale version is exactly how the old conflict case ended up
+    // measuring legacy expansion instead of a conflict.
+    // Put the row back into a known state before a block: a compact blob at the current version. Without
+    // this, the legacy block (which stores an EXPANDED row) silently changes what the following
+    // conflict block is measuring - and "the modern reply is compact" then fails for a legitimate reason.
+    const ensureCompactRow = async () => {
+      const cur = await currentVersionRef();
+      const r = await call('onRequestPut', 'api/save.js', putRequest(cookie, body(cur, stored), 112), env);
+      if (r.status !== 200) throw new Error('ensureCompactRow -> ' + r.status);
+    };
+    const currentVersionRef = async () => {
+      const r = await call('onRequestGet', 'api/save.js',
+        makeRequest('GET', '/api/save', { cookie, headers: { 'x-save-format': '112' } }), env, { parse: true });
+      if (r.status !== 200) throw new Error('version probe -> ' + r.status);
+      return r.body.version;
+    };
+    const currentVersion = currentVersionRef;
+    const storedJson = JSON.parse(stored);
+    const expandedForLegacy = JSON.stringify(unpackSaveLocal(storedJson));
+    // A legacy page UPLOADS the expanded text, and the envelope limit is 600 KB, so a client with no
+    // codec cannot sync a save whose expansion is larger than that at all - it gets a 413 long before CPU
+    // matters. Report the legacy UPLOAD cases only where the request is physically possible, and say so
+    // instead of printing a number for a request the server will refuse.
+    const LEGACY_ENVELOPE_MAX = 600_000;
+    const legacyUploadPossible = expandedForLegacy.length < LEGACY_ENVELOPE_MAX;
+    if (!legacyUploadPossible) results.push({ ...base, name: `save-put-legacy-${size}`, cpuMs: null, client: 'legacy (no header)',
+      note: `not measured: expanded body ${expandedForLegacy.length} B exceeds the ${LEGACY_ENVELOPE_MAX} B envelope limit (413)` });
+    if (!legacyUploadPossible) results.push({ ...base, name: `save-put-conflict-legacy-${size}`, cpuMs: null,
+      client: 'legacy (no header)', note: 'not measured: same 413 - a legacy page cannot send this body' });
+    // Verify each requested encoding BEFORE timing, so a wrong fixture is a hard error, not a number.
+    // Validates status, version and served ENCODING on every timed request. Inside a measured window the
+    // reply is not re-parsed by `call` (that would charge the server for harness work), so the fields are
+    // read straight from the reply TEXT here and the parse cost lands in the harness's own accounting.
+    const assertServed = (label, r, expect, wantVersion) => {
+      if (r.status !== expect) throw new Error(label + ': answered ' + r.status + ', expected ' + expect);
+      if (expect === 409) {
+        const body = JSON.parse(r.text);
+        if (body.conflict !== true) throw new Error(label + ': 409 without conflict:true');
+        if (wantVersion != null && body.version !== wantVersion)
+          throw new Error(label + ': version ' + body.version + ', expected ' + wantVersion);
+        const blob = String(body.blob || '');
+        const compact = Array.isArray(JSON.parse(blob).inv?.[0]);
+        if (label.includes('legacy') && compact) throw new Error(label + ': legacy client was served compact tuples');
+        if (label.includes('modern') && !compact) throw new Error(label + ': modern client was not served the stored blob');
+      } else if (wantVersion != null) {
+        const body = JSON.parse(r.text);
+        if (body.version !== wantVersion) throw new Error(label + ': version ' + body.version + ', expected ' + wantVersion);
+      }
+    };
+
+    if ((!ONLY || ONLY.startsWith('save-put') || ONLY.startsWith('save-put-legacy') ||
+         ONLY.startsWith('save-put-conflict')) && !ONLY?.startsWith('save-put-conflict')) await ensureCompactRow();
+    if (ONLY?.startsWith('save-put-conflict')) await ensureCompactRow();
+
+    if (!ONLY || ONLY.startsWith('save-put') || ONLY.startsWith('save-put-legacy')) {
       // A re-sync of the stored blob: the version advances each time, so this is the real steady
       // state (no re-stamp, no claim pending, nothing new to settle).
-      let v = version;
+      // Bodies (and the version each one claims) are prepared up front: serialising a 300 KB envelope
+      // is CLIENT work and must not be inside the server measurement. A well-behaved sync sends the
+      // version it holds, so body i claims `version + i` and the server must answer `version + i + 1`.
+      const startAt = await currentVersion();
+      const modernBodies = [];
+      for (let i = 0; i < RUNS * BATCH + 2 * BATCH; i++) modernBodies.push({ text: body(startAt + i, stored), v: startAt + i });
+      let mi = 0;
       const one = await measure(`save-put-${size}`, async () => {
-        const r = await call('onRequestPut', 'api/save.js',
-          makeRequest('PUT', '/api/save', { cookie, body: body(v, stored) }), env);
-        if (r.status !== 200) throw new Error('put ' + size + ' -> ' + r.status);
-        v++;
+        const item = modernBodies[mi++];
+        if (!item) throw new Error('save-put: ran out of prebuilt bodies');
+        const r = await call('onRequestPut', 'api/save.js', putRequest(cookie, item.text, 112), env);
+        assertServed('save-put-modern', r, 200, item.v + 1);
       });
-      results.push({ ...base, ...one });
+      results.push({ ...base, ...one, client: 'modern (112)', expect: 200 });
+    }
+
+    if ((!ONLY || ONLY.startsWith('save-put-legacy')) && legacyUploadPossible) {
+      const legacyStart = await currentVersion();
+      const legacyBodies = [];
+      for (let i = 0; i < RUNS * BATCH + 2 * BATCH; i++) legacyBodies.push({ text: body(legacyStart + i, expandedForLegacy), v: legacyStart + i });
+      let li = 0;
+      const legacy = await measure(`save-put-legacy-${size}`, async () => {
+        const item = legacyBodies[li++];
+        if (!item) throw new Error('save-put-legacy: ran out of prebuilt bodies');
+        const r = await call('onRequestPut', 'api/save.js', putRequest(cookie, item.text, null), env);
+        assertServed('save-put-legacy', r, 200, item.v + 1);
+      });
+      results.push({ ...base, ...legacy, client: 'legacy (no header)', expect: 200 });
     }
 
     if (!ONLY || ONLY.startsWith('save-put-conflict')) {
-      // A stale version: the cheapest write path, and the one a reconnecting tab hits first.
-      const stale = await measure(`save-put-conflict-${size}`, async () => {
-        const r = await call('onRequestPut', 'api/save.js',
-          makeRequest('PUT', '/api/save', { cookie, body: body(0, stored) }), env);
-        if (r.status !== 409) throw new Error('conflict ' + size + ' -> ' + r.status);
+      await ensureCompactRow();   // the legacy block above leaves an expanded row behind
+      // A stale version: the write is refused and the live row is returned.
+      // A modern client's conflict MUST reply with the bytes as stored. If that assertion starts failing
+      // here (as it did while this harness was being written), the case is measuring an expansion.
+      const conflictProbe = await call('onRequestPut', 'api/save.js', putRequest(cookie, body(0, stored), 112), env, { parse: true });
+      assertServed('save-put-conflict-modern (probe)', conflictProbe, 409, null);
+      const staleModern = body(0, stored);
+      const conflictVersion = await currentVersion();
+      const c = await measure(`save-put-conflict-${size}`, async () => {
+        const r = await call('onRequestPut', 'api/save.js', putRequest(cookie, staleModern, 112), env);
+        assertServed('save-put-conflict-modern', r, 409, conflictVersion);   // unchanged: nothing was written
       });
-      results.push({ ...base, ...stale });
+      results.push({ ...base, ...c, client: 'modern (112)', expect: 409 });
+    }
+
+    if ((!ONLY || ONLY.startsWith('save-put-conflict-legacy')) && legacyUploadPossible) {
+      const staleLegacy = body(0, expandedForLegacy);
+      const legacyConflictVersion = await currentVersion();
+      const c = await measure(`save-put-conflict-legacy-${size}`, async () => {
+        const r = await call('onRequestPut', 'api/save.js', putRequest(cookie, staleLegacy, null), env);
+        assertServed('save-put-conflict-legacy', r, 409, legacyConflictVersion);
+      });
+      results.push({ ...base, ...c, client: 'legacy (no header)', expect: 409 });
     }
 
     if (!ONLY || ONLY.startsWith('save-get')) {
-      const get = await measure(`save-get-${size}`, async () => {
-        await call('onRequestGet', 'api/save.js',
+      const getModernText = await (async () => {
+        const r = await call('onRequestGet', 'api/save.js',
           makeRequest('GET', '/api/save', { cookie, headers: { 'x-save-format': '112' } }), env);
+        return r.text;
+      })();
+      // A modern page is served the stored bytes; a legacy page is served the expanded text. Both are
+      // full parses of the row here, and only the modern one may skip the expansion.
+      const getModern = await measure(`save-get-${size}`, async () => {
+        const r = await call('onRequestGet', 'api/save.js',
+          makeRequest('GET', '/api/save', { cookie, headers: { 'x-save-format': '112' } }), env);
+        // Served bytes must be exactly what the row holds now (earlier PUT cases may have re-stamped
+        // it). `parse` is off inside the window, so compare against the version probe's text instead.
+        if (r.status !== 200) throw new Error('save-get modern -> ' + r.status);
+        if (r.text.length !== getModernText.length) throw new Error('save-get modern: not the stored bytes');
       });
-      results.push({ ...base, ...get });
+      results.push({ ...base, ...getModern, client: 'modern (112)', expect: 200 });
+    }
+    if (!ONLY || ONLY.startsWith('save-get-legacy')) {
+      const getLegacy = await measure(`save-get-legacy-${size}`, async () => {
+        const r = await call('onRequestGet', 'api/save.js',
+          makeRequest('GET', '/api/save', { cookie }), env);
+        if (r.status !== 200) throw new Error('save-get legacy -> ' + r.status);
+        // Read the served encoding out of the reply TEXT (this window is not parsing bodies for us).
+        const served = JSON.parse(JSON.parse(r.text).blob);
+        if (Array.isArray(served.inv?.[0])) throw new Error('save-get legacy: served compact tuples');
+      });
+      results.push({ ...base, ...getLegacy, client: 'legacy (no header)', expect: 200 });
     }
 
     if (!ONLY || ONLY.startsWith('me')) {
@@ -301,6 +489,52 @@ async function main() {
 
     results.push(...parts.map(p => ({ ...base, ...p })));
     sqlite.close();
+  }
+
+  // Handler-only versus handler+middleware, for the routes that matter, measured the same way.
+  // The delta is what the front door costs: proxy/host checks, the ban hash and lookup, and (when
+  // WRITE_GATE=required) the gate lease. It is reported separately because it is a per-request tax that
+  // no save-path optimisation can remove.
+  {
+    const out = [];
+    for (const size of Object.keys(fx)) {
+      const { env } = freshEnv();
+      const name = 'MW' + size.toUpperCase();
+      const cookie = await register(env, name);
+      const packed = JSON.stringify(codec.packSave({ ...fx[size], owner: name }));
+      const first = await call('onRequestPut', 'api/save.js',
+        putRequest(cookie, JSON.stringify({ owner: name, version: 0, blob: packed }), 112), env);
+      if (first.status !== 200) throw new Error('middleware setup PUT -> ' + first.status);
+      const row = await call('onRequestGet', 'api/save.js',
+        makeRequest('GET', '/api/save', { cookie, headers: { 'x-save-format': '112' } }), env, { parse: true });
+      const version = row.body.version, storedBlob = row.body.blob;
+      // Handler only, then the same request through the middleware, with identical bodies.
+      const handlerOnly = await measure(`mw:handler-only-get-${size}`, async () => {
+        const r = await call('onRequestGet', 'api/save.js',
+          makeRequest('GET', '/api/save', { cookie, headers: { 'x-save-format': '112' } }), env);
+        if (r.status !== 200) throw new Error('get -> ' + r.status);
+      });
+      out.push({ ...handlerOnly, mwMode: 'handler-only' });
+      const fullText = JSON.stringify({ owner: name, version, blob: storedBlob });
+      const throughBoth = await measure(`mw:middleware+get-${size}`, async () => {
+        const r = await runWithMiddleware('onRequestGet', 'api/save.js',
+          withClientIp(makeRequest('GET', '/api/save', { cookie, headers: { 'x-save-format': '112' } })), env);
+        if (r.status !== 200) throw new Error('mw get -> ' + r.status);
+      });
+      out.push({ ...throughBoth, mwMode: 'handler+middleware' });
+      const putOnly = await measure(`mw:handler-only-put-${size}`, async () => {
+        const r = await call('onRequestPut', 'api/save.js', putRequest(cookie, fullText, 112), env);
+        if (r.status !== 200 && r.status !== 409) throw new Error('put -> ' + r.status);
+      });
+      out.push({ ...putOnly, mwMode: 'handler-only' });
+      const putBoth = await measure(`mw:middleware+put-${size}`, async () => {
+        const r = await runWithMiddleware('onRequestPut', 'api/save.js',
+          withClientIp(putRequest(cookie, fullText, 112)), env);
+        if (r.status !== 200 && r.status !== 409) throw new Error('mw put -> ' + r.status);
+      });
+      out.push({ ...putBoth, mwMode: 'handler+middleware' });
+    }
+    results.push(...out);
   }
 
   // Where the whole-request CPU goes, phase by phase, in ONE accepted PUT. A single instrumented run
@@ -374,13 +608,14 @@ async function main() {
   if (VERBOSE || !JSON_OUT) {
     console.log(payload.label + ' · node ' + payload.node + ' · median of ' + RUNS + ' samples x ' + BATCH + ' requests');
     console.log('');
-    console.log('  ' + 'case'.padEnd(34) + 'bytes/st'.padStart(9) + 'cpu_ms'.padStart(9) + 'p90'.padStart(9) + 'wall_max'.padStart(10));
+    console.log('  ' + 'case'.padEnd(34) + 'bytes/st'.padStart(9) + 'cpu_ms'.padStart(9) + 'p90'.padStart(9) + 'wall_max'.padStart(10) + '  client / note');
     for (const r of results) {
       const amt = r.storedBytes ? String(r.storedBytes) : r.statements != null ? String(r.statements) + ' st' + (r.status && r.status !== 200 ? '/' + r.status : '') : '';
       console.log('  ' + String(r.name).padEnd(34) + amt.padStart(9) +
         (r.cpuMs != null ? r.cpuMs.toFixed(3) : '-').padStart(9) +
         (r.cpuP90Ms != null ? r.cpuP90Ms.toFixed(3) : '-').padStart(9) +
-        (r.wallMaxMs != null ? r.wallMaxMs.toFixed(2) : '-').padStart(10));
+        (r.wallMaxMs != null ? r.wallMaxMs.toFixed(2) : '-').padStart(10) +
+        (r.client ? '  ' + r.client : '') + (r.note ? '  ' + r.note : ''));
     }
     console.log('');
     console.log('CPU is process.cpuUsage() around the complete handler call. Wall time is kept separate.');
