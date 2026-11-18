@@ -11842,3 +11842,23 @@ re-recording them here would have written wrong numbers into the repository.
 * **Checks:** `node tools/tests/update_watch_sim.js` (22 passed), `node tools/tests/eclipse_ui_sim.js` (60 passed), `node tools/tests/panel_layout_smoke.js` (42 passed), `node tools/tests/mobile_layout_sim.js` (34 passed), `node tools/tests/ui_sim.js` (64 passed), `node tools/tests/publish_sim.js` (20 passed), `bash tools/build_site.sh` succeeds with matching `dist/version.txt` and `_headers`.
 * **Delivery:** Branch `arena/8eedab04-prontera-grind`.
 
+### 2026-11-18 — `haven-v421` plaza AFK class-switch exploit fix
+* **Fixed:** The social hub no longer pays another class's measured farming minute. `plazaFarmIncome()`
+  validated that the sample key named *a* real class, but never that it named the *current* one — so
+  after `changeClass()` the plaza (including its loot replay) kept paying the old class's EXP/Zeny/Job
+  rate to the new class: a maxed class's measured minute could idle a Base Lv 25 Novice upward. The
+  check now requires the sample's class to be `S.cls`. The stored sample is deliberately kept, not
+  cleared: the away claim is documented to keep using it until a full field minute replaces it, and
+  switching back to the class that earned it resumes its own plaza pay. Client-only change — no Social
+  Durable Object or Pages Function changes.
+* **Try it:** Farm one full minute in the Field, open the social hub and confirm "Plaza AFK" pays the
+  measured rate. Change class (J) and return to the hub: the Field card shows no measured rate and no
+  EXP/Zeny accrues until the new class farms its own full field minute. Switch back to the first class
+  and its measured rate resumes.
+* **Checks:** `node tools/tests/plaza_afk_income_sim.js` (extended with the class-switch regression:
+  refuses the old class rate, pays nothing on switch, resumes on switch-back, honours the replacement
+  minute), `class_change_sim.js` (28), `update_watch_sim.js` (22), `afterdark_ui_sim.js`,
+  `plaza_loot_sim.js`, `plaza_field_rate_card_sim.js`, `plaza_rate_survives_stage_advance_sim.js`,
+  `plaza_stranded_still_paid_sim.js`, `adventurer_updates_sim.js` (29), `offline_sim.js` (15),
+  `mvp_exp_sim.js` (5), `base_pacing_sim.js` (8), `ascension_tracks_sim.js` (16) — all pass.
+* **Delivery:** Branch `arena/d30d4310-prontera-grind`.

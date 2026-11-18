@@ -396,6 +396,13 @@ stage still lives in `farmStageKey()`, which is what gets stored in `S.offlineIn
 for the label and the offline-reward source. If you add anything that restarts sampling, key it on the
 **map**, and remember `applyOfflineProgress`'s validator expects the three-part key.
 
+**Who a measured minute may pay (v421):** the plaza side of that validator — `plazaFarmIncome()` —
+also requires the key's class to be the current `S.cls`. The key always carried the class, but the
+check used to accept any valid class *name*, so `changeClass()` let a fresh class idle in the plaza at
+the old class's measured rate (EXP, Zeny, Job and the loot replay). The sample is deliberately NOT
+cleared on a class change: the away claim is documented to keep using it until a full field minute
+replaces it, and switching back to the class that earned it resumes its own plaza pay.
+
 **Where the plaza's Field card gets its numbers (v390):** it prints the **measured** rate from
 `plazaFarmIncome()` in `index.html`, never the `#expmin`/`#zenymin` HUD samplers. Those are live combat
 readings that reset after `HUD_IDLE_RESET` (30 s) without a kill, so copying them made a paying plaza
