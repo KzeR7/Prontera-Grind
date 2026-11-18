@@ -555,6 +555,10 @@ function normalize(raw){
   // v295: permanent bag upgrade tier and the equipped fishing title.
   bagTier:Math.max(0,Math.min(BAG_TIERS.length-1,Math.floor(Number(f.bagTier)||0))),
   title:typeof f.title==='string'&&FISHING_TITLE_BY_ID[f.title]?f.title:null,
+  // v422: the one-catch-per-spawn MVP marker persists in the save. A spawn lives ten minutes and a
+  // room spawns one every hour or two, so the newest 32 ids cover days of fishing; older entries
+  // can never recur, so trimming them is not a second chance.
+  mvpCaught:[...new Set((Array.isArray(f.mvpCaught)?f.mvpCaught:[]).filter(id=>typeof id==='string'&&id.length<=40&&/^mvp:[a-z0-9]+:[a-z0-9]+$/.test(id)))].slice(-32),
  };
 }
 // v295: buying a bag tier spends Fishcoins once and raises the cap permanently. Buying is
@@ -745,7 +749,13 @@ const ui={phase:'off',pond:-1,holding:false,chargeT0:0,castR:null,mods:null,bite
  tab:'bag',auto:false,autoNext:0,autoPower:.8,autoHookAt:0,autoSampleAt:0,autoTarget:.5,rigTarget:null,walkT0:0};
 // MVP fishing: active spawn from the Social Worker, one catch per spawn per player.
 let mvpActive=null; // {sp,id,spawnedAt,endsAt}
-const mvpClaimed=new Set(); // spawn ids already caught by this player
+// v422: the claimed marker lives IN THE SAVE (state().mvpCaught) - a reload used to wipe this
+// in-memory Set and the same spawn could be caught again. The Set is only a lookup cache for the
+// save's array, rebuilt whenever the fishing state OBJECT changes (reload, account switch, cloud
+// adopt), so one account's marker can never leak into another's session either.
+let mvpClaimedState=null,mvpClaimedSet=new Set();
+const mvpClaimed=()=>{const st=state();if(mvpClaimedState!==st){mvpClaimedState=st;mvpClaimedSet=new Set(Array.isArray(st.mvpCaught)?st.mvpCaught:[])}return mvpClaimedSet};
+function markMvpClaimed(id){const st=state();mvpClaimed().add(id);st.mvpCaught=[...mvpClaimedSet].slice(-32);mvpClaimedSet=new Set(st.mvpCaught);persist()}
 const MVP_HOOK_CHANCE=.10,MVP_REEL_CATCH_CHANCE=.30,AUTO_REEL_SAMPLE_MS=130;
 // Kept pure and exported so the odds test drives the same predictive aim used by live Auto fishing.
 const autoReelTarget=s=>s.fish+s.fishVel*.18;
@@ -889,7 +899,7 @@ function renderMvpBanner(){
  const sp=speciesById(mvpActive.sp);
  const name=sp?sp.name:mvpActive.sp;
  const secs=mvpTimeLeft();
- const claimed=mvpClaimed.has(mvpActive.id);
+ const claimed=mvpClaimed().has(mvpActive.id);
  const mins=Math.floor(secs/60), sec=String(secs%60).padStart(2,'0');
  els.mvpBanner.hidden=false;
  els.mvpBanner.innerHTML=(claimed?`✅ <b>${esc(name)}</b> caught! Next spawn soon.`:`⚠️ <b>MVP ${esc(name)}</b> at the pond! ${mins}:${sec} left · one per spawn`);
@@ -1641,7 +1651,7 @@ function hook(){
  const f=sceneFishing();f&&f.bite(false);
  let rng=Math.random;
  // MVP: when a 10-min spawn is active and we have not yet caught it, 10% of hooks become the MVP.
- if(mvpActive&&!mvpClaimed.has(mvpActive.id)&&rng()<MVP_HOOK_CHANCE){
+ if(mvpActive&&!mvpClaimed().has(mvpActive.id)&&rng()<MVP_HOOK_CHANCE){
   const sp=speciesById(mvpActive.sp);
   if(sp){
    const wb=Math.max(0,Math.min(3,(ui.mods&&ui.mods.weight)||0));
@@ -1664,7 +1674,7 @@ function finishReel(kind){
  ui.holding=false;
  // MVP: even a perfect reel only lands 30% of the time, and one per spawn per player.
  if(kind==='catch'&&ui.roll&&ui.roll.rarity==='mvp'){
-  if(mvpActive&&mvpClaimed.has(mvpActive.id)) kind='escape';
+  if(mvpActive&&mvpClaimed().has(mvpActive.id)) kind='escape';
   else if(Math.random()>=MVP_REEL_CATCH_CHANCE) kind='mvp_escape';
  }
  if(kind==='catch'){
@@ -1691,7 +1701,7 @@ function finishReel(kind){
   // v297: a pond monster or a secret find goes to the room's Local chat. Fired from the catch
   // itself (not the Show off button) so auto-fishing announces too.
   if(sp&&ui.roll&&ui.roll.rarity==='mvp'){
-   if(mvpActive) mvpClaimed.add(mvpActive.id);
+   if(mvpActive) markMvpClaimed(mvpActive.id);
    if(typeof opts.announce==='function'){try{opts.announce({sp:sp.id,name:sp.name,w:ui.result.entry.w,kind:'secret'})}catch{}}
    if(els) status('MVP CAUGHT! '+sp.name+' '+ui.result.entry.w+' kg — one per spawn claimed.');
   } else if(sp&&typeof opts.announce==='function'&&(sp.mega||sp.rarity==='secret')){
@@ -2096,7 +2106,7 @@ return {
  // v309: painted bait icons, so the shop no longer depends on Unicode-13 emoji fonts.
  baitSprite,baitSpriteURL,baitHTML,titleBadge,titleBadgeURL,
  // MVP
- MVP_REEL_CATCH_CHANCE,AUTO_REEL_SAMPLE_MS,autoReelTarget,setMvp,clearMvp,getMvp:()=>mvpActive, isMvpClaimed:id=>mvpClaimed.has(id),
+ MVP_REEL_CATCH_CHANCE,AUTO_REEL_SAMPLE_MS,autoReelTarget,setMvp,clearMvp,getMvp:()=>mvpActive, markMvpClaimed, isMvpClaimed:id=>mvpClaimed().has(id),
  // UI
  bind,toggle,pondClick,hubClosed,onLocalMessage,
  refresh:()=>{if(els){renderDockGear();renderPanel();renderMvpBanner()}},

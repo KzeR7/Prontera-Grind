@@ -982,6 +982,64 @@ await test('A restore-fenced conflict with a real offline claim completes and pr
   } finally { c.close(); }
 });
 
+// 11. v422: the one-catch-per-spawn MVP marker lives in the save. It used to be an in-memory Set,
+//     so a reload (or the update reload that fishing's own save race tests exercise) wiped it and
+//     the same spawn could be caught again. Now it must survive a full page reload, be capped so
+//     the save stays small, and never cross accounts.
+await test('MVP one-catch marker persists across reload, is capped, and normalize admits only real spawn ids', async () => {
+  const srv = await createAccountServer();
+  const profile = createProfileStorage();
+  const transport = makeServerTransport(srv);
+  const c1 = bootClient({ profile, transport });
+  try {
+    await c1.signInSession(srv);
+    assert.equal(await c1.ev('cloudPush(true)'), 'ok');
+    const before = c1.ev(`(()=>{
+      const F=window.PGSocialFishing;
+      F.bind({ host:()=>S, save:()=>save(), self:()=>({x:0,z:0}), isUpdating:()=>false });
+      F.markMvpClaimed('mvp:k7f2q1:first1');
+      for(let i=0;i<40;i++) F.markMvpClaimed('mvp:k7f2q1:fill'+i.toString(36));
+      return { ring:S.fishing.mvpCaught.length,
+        kept:F.isMvpClaimed('mvp:k7f2q1:fillr'),
+        evicted:F.isMvpClaimed('mvp:k7f2q1:first1'),
+        saved:unpackSave(JSON.parse(lsGet(saveKey()))).fishing.mvpCaught.length };
+    })()`);
+    assert.equal(before.ring, 32, 'the ring is capped at 32 spawns (a spawn lives 10 minutes; 32 covers days)');
+    assert.equal(before.saved, 32, 'the save on disk carries the capped ring');
+    assert.equal(before.kept, true, 'the newest marker is live for the escape/catch checks');
+    assert.equal(before.evicted, false, 'the oldest marker falls off the ring (that spawn is long gone)');
+    assert.equal(await c1.ev('cloudPush(true)'), 'ok', 'the ring reaches the server copy too');
+  } finally { c1.close(); }
+
+  // Reload: same browser storage, fresh page, fresh in-memory state.
+  const c2 = bootClient({ profile, transport });
+  try {
+    await c2.signInSession(srv);
+    const after = c2.ev(`(()=>{
+      const F=window.PGSocialFishing;
+      F.bind({ host:()=>S, save:()=>save(), self:()=>({x:0,z:0}), isUpdating:()=>false });
+      return { ring:(S.fishing.mvpCaught||[]).length, kept:F.isMvpClaimed('mvp:k7f2q1:fillr'), absent:F.isMvpClaimed('mvp:k7f2q1:never9') };
+    })()`);
+    assert.equal(after.ring, 32, 'the ring survived the reload');
+    assert.equal(after.kept, true, 'a caught spawn is still caught after the reload: no second MVP from one spawn');
+    assert.equal(after.absent, false, 'a spawn this account never caught is unaffected');
+    const norm = c2.ev(`JSON.stringify(window.PGSocialFishing.normalize({mvpCaught:['mvp:k7f2q1:a1b2c3','nope',123,null,'mvp:HAS UPPER:x','mvp:k7f2q1:a1b2c3']}).mvpCaught)`);
+    assert.equal(norm, JSON.stringify(['mvp:k7f2q1:a1b2c3']), 'normalize keeps unique, well-formed spawn ids only');
+  } finally { c2.close(); }
+
+  // Another account on the same browser never inherits the marker.
+  const srv3 = await createAccountServer();
+  const profile3 = createProfileStorage();
+  const c3 = bootClient({ profile: profile3, transport: makeServerTransport(srv3) });
+  try {
+    await c3.signInSession(srv3);
+    const foreign = c3.ev(`(()=>{const F=window.PGSocialFishing;
+      F.bind({ host:()=>S, save:()=>save(), self:()=>({x:0,z:0}), isUpdating:()=>false });
+      return F.isMvpClaimed('mvp:k7f2q1:fillr');})()`);
+    assert.equal(foreign, false, 'another account has its own (empty) ring');
+  } finally { c3.close(); }
+});
+
 const failed = results.filter(r => !r.ok);
 console.log(`\n${results.length - failed.length} passed, ${failed.length} failed`);
 if (failed.length) process.exit(1);
