@@ -73,16 +73,45 @@ export function clientSaveFormat(request) {
 // existed understands __v 1-2 and nothing later; handing it a __v 3 row gave it cards with no normal
 // fields and a fish whose `at` was a [seconds, millis] pair instead of a timestamp. Advertising a
 // capability is not a promise about formats invented after that build.
-const isPackedText = blob => {
-  if (typeof blob !== 'string' || !blob) return false;
-  try { return isPacked(JSON.parse(blob)); } catch { return false; }
+//
+// v416 (CPU): this used to `JSON.parse` the WHOLE stored blob - up to 300 KB - merely to read four
+// top-level scalars, on every `blobForClient` call (every GET, every conflict reply).
+//
+// v419: an earlier version of this read the version by SCANNING THE TEXT for a literal `"__v":`. That
+// was a compatibility bug and it is gone. A JSON text can spell the same key in ways a literal search
+// cannot see - `{"\u005f_v":4}` is `{__v:4}` after unescaping - and a scan that answers "plain save"
+// there hands compact item tuples to a page that cannot decode them. Duplicate keys and malformed
+// suffixes (`{"__v":4,}`) made it disagree with `JSON.parse` in both directions too.
+//
+// So the version now comes from A PARSED VIEW of the blob, never from its spelling:
+//   * the caller may hand over the view it already has (`blobForClient(blob, format, view)`), and
+//     `parseSave`'s one-entry memo keyed on the exact string supplies it for free on the paths that
+//     read the stored save anyway (GET ownership/claim checks, the PUT conflict replies);
+//   * otherwise the blob is parsed here, by the ORIGINAL reader, and the memo is filled so the next
+//     helper in the same request reuses that parse instead of repeating it.
+// Cost on a near-cap GET: the stored blob is already parsed once for the ownership/restore checks
+// (which this handler must do regardless), so `clientCanRead` adds no parse at all - it used to add a
+// second full one. On a path with no view it costs exactly what the pre-v416 code cost, never more.
+//
+// `jsLiteralVersion` below is ONLY a consistency check on text we are about to accept from a client
+// (the incoming payload of a PUT): it can prove that a text contains no `__v` key at all, which lets
+// `checkSaveBlob` answer without a parse. It is never used to decide what an old client can read.
+const packedVersionByParse = save => {
+  if (typeof save === 'string') {
+    try { save = JSON.parse(save); } catch { return null; }
+  }
+  return isPacked(save) ? Number(save.__v) || 1 : null;
 };
-const packedVersion = blob => {
+// The reference reader, unchanged from every deployed build before v416: parse, then read `__v`.
+// `view` is an already-parsed save for `blob` when the caller has one; it is trusted only after
+// `parseStamp` has keyed it to that exact string.
+export function packedVersion(blob, view) {
   if (typeof blob !== 'string' || !blob) return null;
-  try { const o = JSON.parse(blob); return isPacked(o) ? Number(o.__v) || 1 : null; } catch { return null; }
-};
-export const clientCanRead = (blob, format) => {
-  const v = packedVersion(blob);
+  if (view && typeof view === 'object' && !Array.isArray(view)) return packedVersionByParse(view);
+  return packedVersionByParse(parseSave(blob));
+}
+export const clientCanRead = (blob, format, view) => {
+  const v = packedVersion(blob, view);
   if (v === null) return true;                         // not a compact blob: everyone can read it
   if (format < SAVE_FORMAT_COMPACT) return false;      // no codec at all
   if (v <= 2) return true;                             // the original compact codec
@@ -93,9 +122,11 @@ export const clientCanRead = (blob, format) => {
 
 // The body a save endpoint should return for `blob` to a client of `format`. Never throws: an
 // unreadable blob is the caller's problem, not a reason to fail the request.
-export function blobForClient(blob, format) {
-  if (!blob || clientCanRead(blob, format)) return blob;
-  try { return JSON.stringify(unpackSave(JSON.parse(blob))); } catch { return blob; }
+export function blobForClient(blob, format, view) {
+  if (!blob || clientCanRead(blob, format, view)) return blob;
+  // The expansion path already has to parse; reuse the view the caller supplied when it matches.
+  try { return JSON.stringify(unpackSave(view && typeof view === 'object' ? view : JSON.parse(blob))); }
+  catch { return blob; }
 }
 
 export function checkSaveBlob(blob) {
@@ -191,6 +222,7 @@ const parseStamp = v => {
 // Explicit name for the same rule, for callers that want to parse a stored blob ONCE and hand the
 // object to several helpers. Returns null for "no save" (null/''/garbage), never throws.
 export const parseSave = parseStamp;
+
 
 export function storedSaveAccountId(blob) {
   return saveAccountId(parseStamp(blob));

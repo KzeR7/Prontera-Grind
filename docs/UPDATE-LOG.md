@@ -11842,6 +11842,37 @@ re-recording them here would have written wrong numbers into the repository.
 * **Checks:** `node tools/tests/update_watch_sim.js` (22 passed), `node tools/tests/eclipse_ui_sim.js` (60 passed), `node tools/tests/panel_layout_smoke.js` (42 passed), `node tools/tests/mobile_layout_sim.js` (34 passed), `node tools/tests/ui_sim.js` (64 passed), `node tools/tests/publish_sim.js` (20 passed), `bash tools/build_site.sh` succeeds with matching `dist/version.txt` and `_headers`.
 * **Delivery:** Branch `arena/8eedab04-prontera-grind`.
 
+### 2026-11-18 — `haven-v419` save-path CPU diet
+* **Changed:** Four measured reductions on the hottest API routes, plus one correctness fix the CPU work
+  turned up. (1) The codec version is read from a PARSED view of the stored save (the one the handler
+  already needed, or `parseSave`'s memo), never by scanning the text: an earlier text scanner classified
+  valid compact JSON such as `{"\u005f_v":4}` as a plain save and could hand v4 item tuples to a page
+  that cannot decode them. (2) `GET /api/save` reads the save row once instead of twice - the second read
+  fetched a whole save-sized blob to learn a `last_seen` the response does not carry. (3) An accepted
+  sync whose leaderboard projection did not change no longer rewrites those columns, while still writing
+  `version`/`blob`/timestamps under the same `AND version = ?` guard. (4) An accepted sync only reads the
+  last offline claim's remainder when the away window could mint a claim. A fifth change (a durable
+  settlement checkpoint) and a sixth (sharing one parse on a byte-identical re-sync) were implemented,
+  measured, and reverted - see `docs/CPU-LIMIT.md`.
+* **Try it:** Save normally on a current page and on an old one; both still receive a save they can
+  decode, an offline claim still arrives after a long absence, and a stale tab still gets its 409 with the
+  live blob. Nothing about play changes.
+* **Checks:** Local comparative CPU with the corrected harness (prepare/execute/validate separated; two
+  explicit invokers; identical workloads against main), median of 3 alternating rounds: accepted `PUT
+  /api/save` near cap 7.882 → 6.428 ms (−18 %), `GET /api/save` near cap 4.906 → 1.924 ms (−61 %), GET
+  medium 1.254 → 0.599 ms (−52 %); `GET /api/me` and `GET /api/board` unchanged. Conflicts are reported
+  separately (near cap 10.963 → 7.379 ms) and are not accepted-save CPU. Earlier conflict figures from
+  this branch were harness artefacts (the reply was drained inside the CPU sample) and are withdrawn.
+  New tests: `save_codec_canread_sim.mjs` (141 differential checks against the pre-v416 reader),
+  `save_format_parity_sim.mjs` (46 real-API checks with headers absent/110/111/112 on GET and 409),
+  `cpu_profile_invoker_sim.mjs` (28 checks: 0 middleware entries for handler-only, 1 per middleware
+  request, validation outside the sample), `cpu_hot_paths_sim.mjs` (36 checks). `api_sim` 70/70,
+  save/reload 18/18, `cloud_sim` 100/100; `api_sim`'s three-parse ceiling is unchanged.
+* **Delivery:** Local comparative evidence only. Cloudflare CPU quantiles, deployment SHA and per-status
+  invocation counts remain unavailable from this sandbox, so this does not claim the Free Tier CPU
+  problem is solved. No merge, deployment, production data change, reward-rule change or new Social
+  Durable Object traffic.
+
 ### 2026-11-18 — `haven-v421` plaza AFK class-switch exploit fix
 * **Fixed:** The social hub no longer pays another class's measured farming minute. `plazaFarmIncome()`
   validated that the sample key named *a* real class, but never that it named the *current* one — so

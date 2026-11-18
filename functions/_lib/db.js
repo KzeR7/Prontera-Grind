@@ -69,6 +69,24 @@ export const updateSaveStatement = (db, userId, version, blob, savedAt, pub, rat
 export const updateSave = (db, userId, version, blob, savedAt, pub, rateKph, expectedVersion = null) =>
   updateSaveStatement(db, userId, version, blob, savedAt, pub, rateKph, expectedVersion).run();
 
+// v416: the same acknowledgement with the denormalised columns left exactly as they are.
+//
+// `saves.level/cls/zeny/kills_total/playtime` are a projection of the blob for the leaderboard and the
+// GM list; they only change when the player actually gains something. Most accepted syncs change none
+// of them - a backgrounded tab flushes the same figures every minute - and rewriting identical values
+// still writes the row and fires every trigger on it. /api/save compares the projection with the row it
+// just read (see saveColumnsUnchanged) and takes this statement when nothing moved. Nothing is dropped:
+// version, blob, saved_at, updated_at and last_seen are written exactly as before, so the save is
+// acknowledged and the version advances under the same optimistic-concurrency guard. A conflict still
+// changes zero rows, because the guard is unchanged.
+export const updateSaveVersionStatement = (db, userId, version, blob, savedAt, expectedVersion = null) => {
+  const versionGuard = expectedVersion == null ? '' : ' AND version = ?';
+  const args = [version, blob, savedAt, now(), now(), userId];
+  if (expectedVersion != null) args.push(expectedVersion);
+  return db.prepare(`UPDATE saves SET version = ?, blob = ?, saved_at = ?, updated_at = ?, last_seen = ?
+              WHERE user_id = ?${versionGuard}`).bind(...args);
+};
+
 export const touchSeen = (db, userId, at = now()) =>
   db.prepare('UPDATE saves SET last_seen = ?, updated_at = updated_at WHERE user_id = ?')
     .bind(at, userId).run();

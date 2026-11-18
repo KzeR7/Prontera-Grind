@@ -51,6 +51,10 @@ git fetch origin d164bd0527cfe335f9c183d0e576800716b7dd26
 
 ```sh
 node tools/tests/save_max_state_sim.mjs
+node tools/tests/save_codec_canread_sim.mjs
+node tools/tests/save_format_parity_sim.mjs
+node tools/tests/cpu_profile_invoker_sim.mjs
+node tools/tests/cpu_hot_paths_sim.mjs
 node tools/tests/save_codec_item_state_sim.mjs
 node tools/tests/save_codec_real_sim.mjs
 node tools/tests/save_codec_catalog_sim.mjs
@@ -112,6 +116,32 @@ the update watcher 22/22. Actual benchmark reruns preserve all 126 pre-merge mea
 production-length ids and the fish dex/stats. Do not replace it with short handwritten fish ids or
 half-starred cards. The measured case is 338,180 characters under the merged v3 encoder and 295,175
 under v4, against the unchanged 307,200 limit. This is a finite regression, **not a global maximum**.
+
+`save_codec_canread_sim.mjs` (haven-v419) is a **differential** test: it compares the codec-version
+decision in `_lib/validate.js` against the pre-v416 `JSON.parse` reader - the oracle here is the code
+that shipped before the version lookup changed, not a second implementation of the new one. Cases include
+escaped property names (`{"\u005f_v":4}` is `{__v:4}`), duplicate keys with different spacing, whitespace
+around the colon, malformed suffixes JSON.parse rejects, nested/irrelevant placements, non-numeric values,
+every codec version at 0/1/5/50 records, plain saves, and the production constructor fixture; plus the
+capability matrix and the "an incompatible client is served EXPANDED items, never tuples" property.
+141 checks. A text scan for a literal `"__v":` fails 7 of them, which is exactly the regression
+v416 shipped and v419 removed.
+
+`save_format_parity_sim.mjs` (haven-v419) proves the same thing at the API boundary, where item loss
+would actually happen: a real row written by the handler and a row seeded directly into storage with an
+escaped marker, read back with **no header / 110 / 111 / 112**, on **GET and on a 409 conflict reply**,
+asserting status, authoritative version, and that every page below the row's codec version receives plain
+items with `refine`/`lock` intact (and that a page which can decode receives the stored bytes
+unchanged). 46 checks.
+
+`cpu_hot_paths_sim.mjs` (haven-v419) pins the four CPU-diet changes by **behaviour, not timing**:
+`GET /api/save` reads the save row once and parses its blob once; an accepted sync whose leaderboard
+projection did not change still writes `version/blob/saved_at/updated_at/last_seen` under the same
+`AND version = ?` guard while leaving `level/cls/zeny/kills_total/playtime` alone, and a sync that did
+change them writes them; a stale version is still a 409 with nothing written; and Echo settlement
+still settles a due day/week, never pays twice, keeps the save accepted when a batch is refused,
+closes an empty period and settles from `GET /api/board`. It also asserts that the dropped
+checkpoint endpoint does not exist, so it cannot come back silently.
 
 `save_codec_item_state_sim` checks all 51 refinement/lock-presence states, permanent enum mappings,
 page/server decoding in both directions, malformed/future-value preservation and the client capability
@@ -727,3 +757,43 @@ roster without horizontal overflow, and the 14-entry stage-not-listed filter.
 This is not an exhaustive visual review of all 280 forms or a physical-touch
 performance pass. The Digimon Up sprites still require separate publication
 rights authorization; the upstream fan-use statement is not a rights grant.
+
+## CPU work (haven-v419)
+
+The CPU work has its own harnesses, and none of them is a Cloudflare measurement:
+
+```sh
+node tools/cpu_profile.mjs --runs 11 --batch 10 --json /tmp/after.json --label v419
+# A/B against main: revert ONLY the three server files, same harness, same fixtures
+git show origin/main:functions/api/save.js > functions/api/save.js   # etc, then restore
+node tools/cpu_hotpaths.mjs --case save-put --size nearCap --runs 60
+```
+
+`cpu_profile.mjs` runs the real handlers against the real migrations in `:memory:` SQLite with a D1 shim
+and counts statements. Three phases are kept strictly apart, because the earlier harness mixed them and
+reported the harness's own work as the server's:
+
+* **prepare** - module resolution and request construction happen BEFORE the CPU sample opens;
+* **execute** - only the request; the sample is read when the `Response` object exists, and the body is
+  never drained;
+* **validate** - status, version and served encoding are checked AFTER the sample closes, and every
+  assertion still throws.
+
+It has two explicit invokers, not a global flag: `handler-only` (never imports the middleware module) and
+`middleware` (the real `onRequest` with a real client address). Every run prints a measured invoker
+counter and a list of the production components it does **not** include: workerd, the D1 binding, the
+recovery-gate Durable Object and its two round trips, Tail Workers, the Social Worker. `cpu_hotpaths.mjs`
+attributes self/inclusive time with the V8 sampling profiler and validates its own `--case/--size/--runs`.
+
+`cpu_profile_invoker_sim.mjs` (28 checks) proves the claims above: middleware enters **0** times for
+handler-only requests and **once** per middleware request, `execute()` never drains a body, `validate()`
+is the only place that does, preparation precedes the sample, and conflict rows are labelled 409 rather
+than accepted-save rows. `docs/CPU-LIMIT.md` records the numbers and the two experiments that were
+measured and reverted.
+
+**2026-11-18 gate, `haven-v419` + `main` (haven-v420), Node 22.22.3:** see the PR for the run after the
+merge. The six known-red suites are unchanged from the base commit and do not touch this code:
+`card_star_balance_sim` and `skill_balance_sim` (shallow clone, `git show d164bd0:index.html`),
+`hosted_scrypt_prepare_sim` and `hosted_launch_stage_sim` (staging/git tooling), `panel_layout_smoke` and
+`render_lost_boot_smoke` (DOM assertions). No assertion was weakened, no budget loosened and no fixture
+re-hashed; `api_sim`'s save-sized parse count stays `assert.strictEqual(parses, 3)`.
