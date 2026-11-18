@@ -52,6 +52,7 @@ function createProfileStorage() {
   const ls = new Map();
   const idbStores = new Map(); // dbName -> Map(storeName -> Map(key -> structuredClone(val)))
   let quotaExceeded = false;
+  let idbAbortWrites = false;
   let lsWrites = 0;
 
   function makeLocalStorage() {
@@ -94,7 +95,10 @@ function createProfileStorage() {
               const tx = { oncomplete: null, onerror: null, onabort: null, error: null };
               let pending = 0;
               const finish = () => {
-                if (pending === 0) queueMicrotask(() => { if (typeof tx.oncomplete === 'function') tx.oncomplete({ target: tx }); });
+                if (pending === 0) queueMicrotask(() => {
+                  const handler = _mode === 'readwrite' && idbAbortWrites ? tx.onabort : tx.oncomplete;
+                  if (typeof handler === 'function') handler({ target: tx });
+                });
               };
               queueMicrotask(finish);
               return Object.assign(tx, {
@@ -119,7 +123,7 @@ function createProfileStorage() {
                   };
                   return {
                     get: k => op(s => { const v = s.get(String(k)); return v === undefined ? undefined : structuredClone(v); }),
-                    put: (v, k) => op(s => { s.set(String(k), structuredClone(v)); return k; }),
+                    put: (v, k) => op(s => { if (!idbAbortWrites) s.set(String(k), structuredClone(v)); return k; }),
                     delete: k => op(s => { s.delete(String(k)); return undefined; }),
                     getAllKeys: () => op(s => Array.from(s.keys())),
                   };
@@ -141,6 +145,7 @@ function createProfileStorage() {
     idbStores,
     get lsWrites() { return lsWrites; },
     setQuotaExceeded(v) { quotaExceeded = !!v; },
+    setIdbAbortWrites(v) { idbAbortWrites = !!v; },
     makeLocalStorage,
     makeIndexedDB,
   };
@@ -840,6 +845,141 @@ await test('CLOUD.updating pauses fishing minigame input/timers and freezes comb
   } finally {
     c1.close();
   }
+});
+
+
+// Follow-up regressions reproduced on PR #248 before the fixes.
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+await test('Independent browser writers cannot overwrite a newer foreign save', async () => {
+ const srv=await createAccountServer();
+ const pa=createProfileStorage(),pb=createProfileStorage(),ta=makeServerTransport(srv),tb=makeServerTransport(srv);
+ const a=bootClient({profile:pa,transport:ta}),b=bootClient({profile:pb,transport:tb});
+ try{
+  await a.signInSession(srv);await a.ev('cloudPush(true)');
+  for(let i=0;i<3;i++)a.catchFish({sp:'minnow',w:.4,perfect:false});
+  await b.signInSession(srv);
+  const f=b.catchFish({sp:'salmon',w:2,perfect:false});await b.ev('cloudPush(true)');
+  assert.notEqual(a.ev('CLOUD.cid'),b.ev('CLOUD.cid'),'each page has its own writer');
+  await a.signInSession(srv);
+  const row=await ta.readServerSave();const s=C.unpackSave(JSON.parse(row.blob));
+  assert.ok(s.fishing.bag.some(x=>x.id===f.entry.id),'the newer browser save is authoritative');
+ }finally{a.close();b.close()}
+});
+
+await test('Tabs sharing localStorage still use independent writer identities', async () => {
+ const srv=await createAccountServer();
+ const pa=createProfileStorage(),pb=pa,ta=makeServerTransport(srv),tb=makeServerTransport(srv);
+ const a=bootClient({profile:pa,transport:ta}),b=bootClient({profile:pb,transport:tb});
+ try{
+  await a.signInSession(srv);await a.ev('cloudPush(true)');
+  for(let i=0;i<3;i++)a.catchFish({sp:'minnow',w:.4,perfect:false});
+  await b.signInSession(srv);
+  const f=b.catchFish({sp:'salmon',w:2,perfect:false});await b.ev('cloudPush(true)');
+  assert.notEqual(a.ev('CLOUD.cid'),b.ev('CLOUD.cid'),'each page has its own writer');
+  await a.signInSession(srv);
+  const row=await ta.readServerSave();const s=C.unpackSave(JSON.parse(row.blob));
+  assert.ok(s.fishing.bag.some(x=>x.id===f.entry.id),'the newer browser save is authoritative');
+ }finally{a.close();b.close()}
+});
+
+await test('IndexedDB recovery survives reload while localStorage remains full', async () => {
+ const srv=await createAccountServer(),profile=createProfileStorage(),transport=makeServerTransport(srv);
+ let c=bootClient({profile,transport});let fish;
+ try{
+  await c.signInSession(srv);await c.ev('cloudPush(true)');
+  profile.setQuotaExceeded(true);
+  fish=c.catchFish({sp:'minnow',w:.4,perfect:false,lock:true});
+  transport.interceptNextSavePut(async()=>{throw Error('offline')});
+  await c.ev('cloudPush(true)');await sleep(60);
+  assert.equal(c.ev('CLOUD.outboxDurable'),true,'IDB transaction committed before reload');
+ }finally{c.close()}
+ c=bootClient({profile,transport});
+ try{
+  await c.signInSession(srv);await sleep(50);
+  const row=await transport.readServerSave();const server=C.unpackSave(JSON.parse(row.blob));
+  assert.equal(c.ev('S.fishing.bag.length'),1);assert.ok(server.fishing.bag.some(f=>f.id===fish.entry.id),'the recovered payload, not the stale slot, was uploaded');
+ }finally{c.close()}
+});
+
+await test('Legacy local metadata recovers the newer outbox savedAt', async () => {
+ const srv=await createAccountServer(),profile=createProfileStorage(),transport=makeServerTransport(srv);
+ let c=bootClient({profile,transport});let fish;
+ try{
+  await c.signInSession(srv);await c.ev('cloudPush(true)');
+  c.ev(`(()=>{const old=JSON.parse(localStorage.getItem(saveKey()));old.cloud={v:CLOUD.ver,at:Date.now()-1000};old.offlineAt=Date.now()-500;localStorage.setItem(saveKey(),JSON.stringify(old));})()`);
+  profile.setQuotaExceeded(true);
+  fish=c.catchFish({sp:'minnow',w:.4,perfect:false,lock:true});
+  transport.interceptNextSavePut(async()=>{throw Error('offline')});await c.ev('cloudPush(true)');await sleep(50);
+ }finally{c.close()}
+ profile.setQuotaExceeded(false);c=bootClient({profile,transport});
+ try{
+  await c.signInSession(srv);
+  assert.equal(c.ev('S.fishing.bag.length'),1);assert.ok(C.unpackSave(JSON.parse((await transport.readServerSave()).blob)).fishing.bag.some(f=>f.id===fish.entry.id));
+ }finally{c.close()}
+});
+
+await test('Keep playing cancels navigation from an outstanding update save', async () => {
+ const srv=await createAccountServer(),profile=createProfileStorage(),transport=makeServerTransport(srv);
+ const c=bootClient({profile,transport}),gate=createDeferred(),entered=createDeferred();
+ try{
+  await c.signInSession(srv);await c.ev('cloudPush(true)');
+  c.catchFish({sp:'minnow',w:.4,perfect:false});
+  transport.interceptNextSavePut(async({executeServer})=>{entered.resolve();await gate.promise;return executeServer()});
+  c.ev(`showUpdatePrompt('test-new-build')`);
+  const first=c.w.document.querySelector('#updatePrompt button');const navigation=first.onclick();await entered.promise;
+  c.w.document.querySelector('#updatePrompt [data-update-later]').click();
+  assert.equal(c.w.document.getElementById('updatePrompt'),null);assert.equal(c.ev('CLOUD.updating'),false);
+  gate.resolve();await navigation;
+  assert.equal(c.reloads().length,0,'dismissed update cannot navigate later');
+ }finally{gate.resolve();c.close()}
+});
+
+await test('Conflict adoption with a real offline claim finishes without self-await', async () => {
+ const srv=await createAccountServer(),profile=createProfileStorage(),transport=makeServerTransport(srv);
+ const c=bootClient({profile,transport});
+ try{
+  await c.signInSession(srv);await c.ev('cloudPush(true)');
+  const row=await transport.readServerSave();const other=C.unpackSave(JSON.parse(row.blob));other.cloud.cid='foreign-lineage';
+  c.catchFish({sp:'minnow',w:.4,perfect:false});
+  srv.db.prepare('UPDATE saves SET version=version+1,blob=?,last_seen=? WHERE user_id=?').run(JSON.stringify(C.packSave(other)),Date.now()-240000,srv.accountId);
+  const p=c.ev('cloudFlushNow()');
+  const outcome=await Promise.race([p,sleep(2000).then(()=>'STILL PENDING')]);
+  assert.equal(outcome,'ok');assert.equal(c.ev('CLOUD.pushing'),false);assert.ok(c.ev('S.offlineClaimId')>0);const saved=C.unpackSave(JSON.parse((await transport.readServerSave()).blob));assert.equal(saved.offlineClaimId,c.ev('S.offlineClaimId'),'claim acknowledgement reached durable storage');
+ }finally{c.close()}
+});
+
+await test('An IndexedDB request success followed by transaction abort never claims durability', async () => {
+  const srv = await createAccountServer(), profile = createProfileStorage(), transport = makeServerTransport(srv);
+  const c = bootClient({ profile, transport });
+  try {
+    await c.signInSession(srv); await c.ev('cloudPush(true)');
+    profile.setQuotaExceeded(true); profile.setIdbAbortWrites(true);
+    c.catchFish({ sp: 'minnow', w: .4, perfect: false });
+    await sleep(30);
+    assert.equal(c.ev('CLOUD.outboxDurable'), false);
+    assert.ok(c.ev('logs.some(e=>e.m.includes("only in this tab"))'));
+    assert.equal(c.ev('logs.some(e=>e.m.includes("held in the durable outbox"))'), false);
+    assert.equal(c.reloads().length, 0);
+  } finally { c.close(); }
+});
+
+await test('A restore-fenced conflict with a real offline claim completes and preserves the GM restore', async () => {
+  const srv = await createAccountServer(), profile = createProfileStorage(), transport = makeServerTransport(srv);
+  const c = bootClient({ profile, transport });
+  try {
+    await c.signInSession(srv); await c.ev('cloudPush(true)');
+    const restored = C.unpackSave(JSON.parse((await transport.readServerSave()).blob));
+    restored.gmRestore = { at: Date.now(), by: 'gm' };
+    const unsynced = c.catchFish({ sp: 'minnow', w: .4, perfect: false });
+    srv.db.prepare('UPDATE saves SET version=version+1,blob=?,last_seen=? WHERE user_id=?')
+      .run(JSON.stringify(C.packSave(restored)), Date.now()-240000, srv.accountId);
+    const outcome = await Promise.race([c.ev('cloudFlushNow()'), sleep(2000).then(()=>'STILL PENDING')]);
+    assert.equal(outcome, 'ok'); assert.equal(c.ev('CLOUD.pushing'), false);
+    const saved = C.unpackSave(JSON.parse((await transport.readServerSave()).blob));
+    assert.equal(saved.gmRestore.at, restored.gmRestore.at);
+    assert.ok(saved.offlineClaimId > 0);
+    assert.equal(saved.fishing.bag.some(f=>f.id===unsynced.entry.id), false, 'the stale device never undoes the restore');
+  } finally { c.close(); }
 });
 
 const failed = results.filter(r => !r.ok);

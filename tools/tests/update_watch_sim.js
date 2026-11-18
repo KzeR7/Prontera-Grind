@@ -405,6 +405,40 @@ await T('cloud auto-update waits past jitter, refuses to reload when upload fail
   assert.match(prompt.textContent, /too large/i);
 });
 
+await T('Keep playing cancels queued auto-update jitter and snoozes the next poll', async () => {
+  const h = harness({ answer: 'new build', freshPage: true, runTimers: true, cloud: {} });
+  h.calls.scheduled.length = 0;
+  const pending = h.box.updateWatch();
+  await new Promise(r => setImmediate(r));
+  assert.strictEqual(h.calls.scheduled.length, 1);
+  h.box.showUpdatePrompt('new build');
+  h.box.document.querySelector('[data-update-later]').click();
+  h.calls.scheduled.shift()();
+  await pending;
+  await h.box.updateWatch();
+  assert.strictEqual(h.calls.reloads, 0);
+  assert.strictEqual(h.calls.scheduled.length, 0, 'the next poll respects the snooze');
+  assert.strictEqual(h.box.document.querySelector('#updateToast'), null, 'cancelled updates leave no stale toast');
+  assert.ok(!h.calls.order.includes('save'), 'cancelled jitter never starts a save or reload');
+});
+
+await T('A cancelled refresh cannot navigate or unpause a newer refresh attempt', async () => {
+  let releaseOld, releaseNew, attempt = 0;
+  const oldSave = new Promise(r => { releaseOld = r; });
+  const newSave = new Promise(r => { releaseNew = r; });
+  const h = harness({ cloud: {}, flush: () => ++attempt === 1 ? oldSave : newSave });
+  h.box.showUpdatePrompt('new build');
+  const oldNavigation = h.box.document.querySelector('#updatePrompt button').onclick();
+  h.box.document.querySelector('[data-update-later]').click();
+  h.box.showUpdatePrompt('another build');
+  const newNavigation = h.box.document.querySelector('#updatePrompt button').onclick();
+  releaseOld('ok'); await oldNavigation;
+  assert.strictEqual(h.calls.reloads, 0);
+  assert.strictEqual(h.box.CLOUD.updating, true, 'the newer attempt still owns the pause');
+  releaseNew('ok'); await newNavigation;
+  assert.strictEqual(h.calls.reloads, 1);
+});
+
 // The build tag is copied into a few documents so a reader can tell which build a sheet or a note is about.
 // A bump that leaves one of those copies behind would show a stale build name to whoever reads it.
 t('every build-tag mirror names the BUILD this page runs (a bump that misses one fails here)', () => {

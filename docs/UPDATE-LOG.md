@@ -11793,3 +11793,22 @@ re-recording them here would have written wrong numbers into the repository.
   (hash re-stamp only; all 126 measured + 126 baseline rows unchanged), `docs/TESTING.md`, and this log.
 
 
+### 2026-11-18 — `haven-v419` save recovery follow-up
+* **Changed:** Each page creates its own writer identity, so a downloaded character or another
+  tab cannot impersonate an earlier upload. Recovery reads the newest in-memory overlay while
+  localStorage remains full, uses the outbox's actual `savedAt` for legacy saves, and only reports
+  an IndexedDB write committed after its transaction completes. Failed recovery writes warn the
+  player to keep the tab open. Conflict/GM-restore adoption leaves pending offline claims for the
+  save coordinator instead of waiting on its own active upload. Keep playing cancels outstanding
+  update navigation, removes the update toast, and snoozes subsequent polls.
+* **Try it:** Catch fish during a slow upload, choose refresh, then Keep playing; the pending
+  upload must not navigate later. On a full-storage browser, reload after an IndexedDB checkpoint
+  and confirm the recovered fish reaches the cloud. Use disposable accounts for testing.
+* **Checks:** Save/reload regression 18/18; update watcher 22/22; Pages configuration and all three
+  generated-asset checks pass. Full gate: 229/240 passing, with the same 11 Windows/baseline failures
+  reproduced against original PR #248 source (listed in Testing). All 126 fresh combat measurement
+  rows match between original and patched clients; fixtures were regenerated through real benchmark
+  runs with unchanged assertions, historical baseline rows, and budgets. No production CPU claim.
+* **Delivery:** Follow-up for PR #248 on `arena/870d97ba-prontera-grind`; no merge, deployment,
+  production account changes, new Social Durable Object traffic, or reward-rule changes.
+

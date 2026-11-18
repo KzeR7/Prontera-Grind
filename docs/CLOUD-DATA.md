@@ -212,6 +212,25 @@ and source-art folders. `docs/` was also added to the advisory `.assetsignore` l
 **publishing only `dist/` is the tested boundary**, not relying on root-directory
 ignore behavior. Do not publish the repository root to save a build step.
 
+## Pending browser saves (haven-v419)
+
+Each page has its own cloud writer identity (`cloud.cid`). A downloaded character and shared
+localStorage never supply a new page's identity. An unacknowledged local blob keeps its original
+identity for login reconciliation; subsequent writes use the current page's identity. This
+prevents another browser/tab's save being mistaken for this page's lost HTTP response.
+
+The localStorage/IndexedDB outbox stores `savedAt`, server base version, and exact `rev`/`ackRev`.
+Recovery compares `savedAt` against legacy timestamps when revisions are absent. If localStorage
+remains full, the recovered in-memory overlay takes precedence over its stale persisted slot,
+so the loader and uploader use the recovered payload. The outbox is cleared after server
+confirmation or an authoritative conflict/GM-restore adoption, with the existing backup policy.
+
+An IndexedDB write counts as committed only after transaction `oncomplete`; request success
+alone is insufficient. If browser persistence fails, keep the tab open until the cloud save is
+confirmed. Browser storage can also be cleared/evicted, so an outbox is recovery assistance,
+not a replacement for a successful server save. `Keep playing` cancels any outstanding update
+navigation and snoozes that build's next poll; a cancelled attempt cannot unpause a newer one.
+
 ## When a player says their save is gone
 
 Do not guess from the symptom - read what the server actually holds for that account. The query, and
