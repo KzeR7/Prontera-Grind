@@ -1,9 +1,58 @@
-# Putting Horizon Haven on Cloudflare (initial setup + v67 server-timed offline claims)
+# Putting Horizon Haven on Cloudflare (historical setup + held v424 offline-claim release)
 
 **Historical setup guide:** the current account security changes remain a draft and are not
 launch-ready. For the existing live `pg`, the owner reported applying and verifying 0007
 manually on 2026-10-28; do not rerun it or blindly run Wrangler migrations. Use
 [Launch security](../docs/LAUNCH-SECURITY.md) for the current checklist.
+
+> **PR #254 is held. Do not run this release procedure, deploy, merge, or edit production player
+> data while its review remains open.** The v424 section below is the future operator checklist: it
+> records the required migration order and verification so the schema is complete *before* the new
+> Functions/client behaviour is activated.
+
+## Held v424 release: immutable offline-claim state and issued bounds
+
+This follows the owner/context schema in `0018`, then `0019_offline_claim_pricing_snapshot.sql`,
+then `0020_offline_claim_pricing_state.sql` **in that order**. On an existing database, first inspect
+which columns are already present and apply **only the missing scripts in numerical order**. Do not
+blindly replay `ALTER TABLE` files. Take a verified backup and put writes in the documented maintenance
+window before the first production command.
+
+```sh
+# Read-only schema check first; do not infer migration state from a successful Function fallback.
+npx wrangler d1 execute pg --remote --command "PRAGMA table_info(offline_reward_claims);"
+
+# Run only if each prior migration has not already added these columns:
+npx wrangler d1 execute pg --remote --file=migrations/0018_offline_claim_owner_context.sql
+npx wrangler d1 execute pg --remote --file=migrations/0019_offline_claim_pricing_snapshot.sql
+npx wrangler d1 execute pg --remote --file=migrations/0020_offline_claim_pricing_state.sql
+
+# Verify 0020 before releasing the Functions/client build.
+npx wrangler d1 execute pg --remote --command "PRAGMA table_info(offline_reward_claims);"
+npx wrangler d1 execute pg --remote --command "SELECT pricing_state, COUNT(*) AS claims FROM offline_reward_claims GROUP BY pricing_state;"
+```
+
+`0020` is additive but deliberately classifies existing **claim rows** once: all-null historic rows
+become `legacy`, complete frozen 0019 snapshots become `priced`, and partial/malformed snapshots become
+`corrupt`. It does not modify saves, balances, pending grants or Social Durable Object state. New claims
+are either `priced` or `ineligible`; the latter is an acknowledged zero payout, not permission to price
+an old interval from a later field minute. `legacy` remains the explicit compatibility recovery path.
+A valid `priced` claim continues to pay its retained class/run and source; a retired owner or corrupt
+snapshot is safely acknowledged without redirecting rewards. A genuine `legacy` row without issued
+bounds is paid/reconciled under its compatibility rules but is not coverage-suppressed from a
+response-time reconstruction; the client must not invent a bound and silently consume it.
+
+After migration verification, release the matching Functions and `index.html` together. `GET /api/save`
+now carries the server-clock anchor plus immutable interval bounds, so the client can preserve
+no-double-pay coverage without using response delay or its own wall clock to rebuild the interval.
+The only added schema check occurs when a qualifying interval would issue a new claim; normal syncs add
+neither an unconditional D1 read nor Social Durable Object traffic.
+
+The player-visible build label is **`2026-11-18 haven-v424 frozen offline claim states and issued bounds`**.
+The release also bumps every coordinated v422 asset query to `?v=424`: v423 changed the Social/Fishing
+runtime as well as the inline client, so retaining the old label would permit a stale cached runtime.
+Confirm `version.txt`, `index.html`, and the two equipment-reference mirrors carry the v424 build label
+after the site build.
 
 The click-by-click. **Nothing here costs money** and none of it needs a credit card: the whole point
 of choosing Cloudflare was that the free plan never expires, unlike the Render free database.
@@ -135,7 +184,7 @@ Open the `*.pages.dev` address Cloudflare gives the project, and walk this list:
 | Check | Expected |
 |---|---|
 | The login card | says **“☁ Cloud accounts are on — register or sign in…”** |
-| Build tag at the bottom of the card | `2026-11-18 haven-v422 measured rewards belong to the account, class and run that earned them` |
+| Build tag at the bottom of the card | `2026-11-18 haven-v424 frozen offline claim states and issued bounds` |
 | `<your-site>/api/me` while signed out | `{"err":"Not logged in."}` with HTTP 401 — JSON, not an HTML page |
 
 That second-browser line is the entire point of the shift: it is progress following the player

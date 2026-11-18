@@ -921,13 +921,13 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="preload" href="assets/ui/fonts/font-5.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-6.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-7.ttf" as="font" type="font/ttf" crossorigin>
-<link rel="stylesheet" href="assets/ui/eclipse.css?v=422">
-<link rel="stylesheet" href="assets/ui/mobile.css?v=422">
+<link rel="stylesheet" href="assets/ui/eclipse.css?v=424">
+<link rel="stylesheet" href="assets/ui/mobile.css?v=424">
 <script src="assets/ui/mobile.js?v=274"></script>
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
-<link rel="stylesheet" href="assets/social.css?v=422">
+<link rel="stylesheet" href="assets/social.css?v=424">
 <link rel="stylesheet" href="assets/social-battle.css?v=393">
-  <link rel="stylesheet" href="assets/social-fishing.css?v=422"><link rel="stylesheet" href="assets/friends.css?v=273">
+  <link rel="stylesheet" href="assets/social-fishing.css?v=424"><link rel="stylesheet" href="assets/friends.css?v=273">
 </head>
 <body>
 <div id="loginOverlay"><div class="eclipse-login-world" aria-hidden="true"></div><header class="eclipse-login-header"><a href="./" class="eclipse-brand"><span>HH</span><b>HORIZON HAVEN<small>YOUR IDLE ADVENTURE</small></b></a><div class="eclipse-palettes" role="group" aria-label="Interface palette"><button type="button" data-palette="moonstone">Moonstone</button><button type="button" data-palette="aurora">Aurora</button><button type="button" data-palette="ember">Ember</button></div></header><main class="eclipse-login-layout"><section class="login-brand"><div class="login-eyebrow">A WORLD WORTH RETURNING TO</div><h1>Your next <br>chapter <em>awaits.</em></h1><p>Explore a world beyond the horizon.<br>Collect rare gear, master every class, and build your haven.</p><div class="eclipse-login-art"><img src="assets/ui/eclipse-knight.png" alt="Lord Knight ready for adventure"><span>01 / PRONTERA<small>THE JOURNEY BEGINS HERE</small></span><div><img src="assets/equipment-icons/1142.png" alt=""><span>YOUR NEXT UPGRADE<small>Somewhere out there.</small></span></div></div><div class="login-footnote">EXPLORE · GROW · CONQUER</div></section><div class="login-card"><div class="eclipse-access">ADVENTURER ACCESS <span>◇</span></div><h2 id="authHeading">Welcome back.</h2><p class="login-intro" id="authIntro">Your adventure is right where you left it.</p><div class="atabs" id="authTabs"><button type="button" id="tabLogin" class="on">Login</button><button type="button" id="tabReg">Register</button></div>
@@ -1333,7 +1333,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-18 haven-v422 measured rewards belong to the account, class and run that earned them';
+const BUILD='2026-11-18 haven-v424 frozen offline claim states and issued bounds';
 // v364: this write used to sit AFTER the `//` on the BUILD line, so it was part of the comment and
 // never ran - the login card showed an empty #buildTag and there was no way to confirm which file
 // the browser had loaded. It also has to survive the script running before the login card exists.
@@ -4751,7 +4751,21 @@ function cloudBadgeStale(why){
   cloudBadge('☁ …',(why||'Not on the server yet')+(hhmm?' - last save reached it at '+hhmm:''));
 }
 function cloudLoginLine(txt){const e=$('loginCloud');if(e)e.textContent=txt||''}
+// Offline-claim coverage compares a server-frozen interval with this page's local lifetime. Keep the
+// request-start timestamp beside each response so the server's clock is anchored before transport
+// delay; response receipt time would make a slow retry look like time this page already simulated.
+const cloudResponseTiming=new WeakMap();
+function cloudClaimAnchor(response,data){
+  const t=response&&cloudResponseTiming.get(response),n=v=>v!==null&&v!==undefined&&Number.isFinite(Number(v))?Number(v):null;
+  const serverNow=n(data&&data.serverNow),clientRequestAt=n(t&&t.clientRequestAt);
+  return serverNow===null||clientRequestAt===null?null:{serverNow,clientRequestAt};
+}
+function cloudClaimEnvelope(response,data){
+  if(data&&typeof data==='object'&&!Array.isArray(data))data._offlineClaimAnchor=cloudClaimAnchor(response,data);
+  return data;
+}
 async function cloudFetch(path,opt){
+  const requestStartedAt=Date.now();
   const o=opt||{},hdrs=Object.assign({'Content-Type':'application/json','X-Save-Format':String(SAVE_FORMAT)},
     CLOUD.previewToken?{'X-Preview-Session':CLOUD.previewToken}:null,o.headers||{});
   const epoch=CLOUD.epoch||0;
@@ -4771,6 +4785,7 @@ async function cloudFetch(path,opt){
   let res;
   try{res=await fetch(cloudUrl(path),init)}
   finally{if(timer!==null){try{clearTimeout(timer)}catch(e){}timer=null}}
+  try{if(res&&typeof res==='object')cloudResponseTiming.set(res,{clientRequestAt:requestStartedAt})}catch(e){}
   // v253: one live session per account (functions/api/sessions.js). A 401 while this tab holds a
   // session means another device signed in as this player, so this tab stops instead of grinding
   // a copy nobody will ever see and losing it to the next save conflict.
@@ -5077,7 +5092,7 @@ async function cloudPush(push,leave,_coord){
         cloudSay('Your save has grown too large to upload ('+(c.err||'refused by the server')+'). Your character keeps playing on this device, but it will not reach the cloud until the save is smaller. Nothing you own has been deleted.','r0');
         return outcome='too-large'}
       throw new Error(c.err||'HTTP 413')}
-    if(r.status===409){const c=await r.json();
+    if(r.status===409){const c=cloudClaimEnvelope(r,await r.json());
       if(c.saveMismatch){cloudSaveRefused(c.err);return outcome='idle'}
       if(c.accountMismatch){cloudAccountMismatch(c.owner);return outcome='idle'}
       // haven-v396: the server refused this write because the account carries a GM restore this
@@ -5151,8 +5166,8 @@ async function cloudPush(push,leave,_coord){
       await cloudAdopt(c);
       cloudSay('Your account had a newer save, so it was loaded. The copy this device held was kept as a backup.','r1');
       return outcome='adopted'}
-    if(r.status===428){const d=await r.json().catch(()=>({}));
-      if(d.offlineClaim){const claimId=Number(d.offlineClaim.id)||0;applyOfflineProgress(Date.now(),d.offlineClaim);
+    if(r.status===428){const d=cloudClaimEnvelope(r,await r.json().catch(()=>({})));
+      if(d.offlineClaim){const claimId=Number(d.offlineClaim.id)||0;applyOfflineProgress(Date.now(),d.offlineClaim,d._offlineClaimAnchor);
         cloudBumpSaveRev(Date.now());CLOUD.dirty=true;
         // v326: the 428 handshake is one round trip - apply the away claim, then push it back with its
         // id. If the server answers the SAME claim a second time, the id is already in the save and
@@ -5224,7 +5239,7 @@ async function cloudReadSave(){
     // reconnect. The flag only changes what the player is told.
     if(r.status===503){const d=await r.json().catch(()=>({}));return{offline:true,maintenance:!!(d&&d.maintenance)}}
     if(r.status===409){const d=await r.json().catch(()=>({}));return d&&d.saveMismatch?{refused:d}:{data:null}}
-    return{data:r.ok?await r.json():null};
+    return{data:r.ok?cloudClaimEnvelope(r,await r.json()):null};
   }catch(e){return{offline:true}}
 }
 // v88.6: a save that belongs to another account is never loaded or uploaded. This tab stops syncing (so
@@ -5548,7 +5563,7 @@ async function cloudAdopt(server,resumeOffline=false){
   cloudStampBase(server.version,false);   // v326: this copy now IS the account's version
   cloudOutboxClearAll(currentUser);
   if(server.offlineClaim){
-    applyOfflineProgress(Date.now(),server.offlineClaim);
+    applyOfflineProgress(Date.now(),server.offlineClaim,server._offlineClaimAnchor);
     // A 409 adoption runs inside cloudPush. Its owner must finish before the coordinator
     // can upload the claim; awaiting that same active push here deadlocks both callers.
     if(!CLOUD.pushing)await cloudFlushNow();
@@ -5572,7 +5587,7 @@ async function cloudJoin(u,localBlob){
   if(got.refused){cloudSaveRefused(got.refused.err);return}
   const data=got.data||null;
   if(!cloudOwnedBy(data,u)){cloudAccountMismatch(data.owner);return}
-  if(!data||!data.blob){CLOUD.ver=0;CLOUD.dirty=true;if(data&&data.offlineClaim)applyOfflineProgress(Date.now(),data.offlineClaim);await cloudFlushNow();return}
+  if(!data||!data.blob){CLOUD.ver=0;CLOUD.dirty=true;if(data&&data.offlineClaim)applyOfflineProgress(Date.now(),data.offlineClaim,data._offlineClaimAnchor);await cloudFlushNow();return}
   if(saveRefusal(data.blob,u)){cloudSaveRefused();return}
   const sFigs=saveFigures(data.blob),lFigs=saveFigures(localBlob);
   let localSave=null;try{localSave=JSON.parse(localBlob)}catch(e){}
@@ -5583,13 +5598,13 @@ async function cloudJoin(u,localBlob){
   if(sameSave(data.blob,localBlob)){CLOUD.ver=data.version;CLOUD.dirty=false;cloudBadgeSaved();   // v282: same save both sides
     cloudStampBase(data.version,false);
     cloudOutboxAck(u,data.version,CLOUD.ackRev);
-    if(data.offlineClaim){applyOfflineProgress(Date.now(),data.offlineClaim);await cloudFlushNow()}return}
+    if(data.offlineClaim){applyOfflineProgress(Date.now(),data.offlineClaim,data._offlineClaimAnchor);await cloudFlushNow()}return}
   // v395: NEVER over a GM restore this device has not seen.
   if(sawRestore(restoreStamp(data.blob))&&localAheadOfServer(data,localSave)){
     CLOUD.ver=data.version;CLOUD.dirty=true;
     if(lBase&&lBase.rev!==null)CLOUD.rev=Math.max(Number(CLOUD.rev)||0,lBase.rev);
     if(lBase&&lBase.ackRev!==null)CLOUD.ackRev=Math.max(Number(CLOUD.ackRev)||0,lBase.ackRev);
-    if(data.offlineClaim)applyOfflineProgress(Date.now(),data.offlineClaim);
+    if(data.offlineClaim)applyOfflineProgress(Date.now(),data.offlineClaim,data._offlineClaimAnchor);
     const sent=await cloudFlushNow();
     if(sent==='ok'){
       cloudSay('Kept this device\'s save: it is your account\'s save plus play the server had not received yet (Lv '+(S&&S.lv)+').','r1');
@@ -5618,7 +5633,7 @@ async function cloudRefresh(){
   if(sameSave(data.blob,local)){CLOUD.ver=data.version;CLOUD.dirty=false;
     cloudStampBase(data.version,false);   // v326
     cloudOutboxAck(currentUser,data.version,CLOUD.ackRev);
-    if(data.offlineClaim){applyOfflineProgress(Date.now(),data.offlineClaim);await cloudFlushNow()}return}
+    if(data.offlineClaim){applyOfflineProgress(Date.now(),data.offlineClaim,data._offlineClaimAnchor);await cloudFlushNow()}return}
   let localSave=null;try{localSave=JSON.parse(local)}catch(e){}
   // v395: the same rule for a returning tab.
   if(sawRestore(restoreStamp(data.blob))&&((CLOUD.dirty&&Number(data.version)===Number(CLOUD.ver))||localAheadOfServer(data,localSave))){
@@ -5982,7 +5997,7 @@ async function initSessionFromCloud(u,gm,isNew,id){
       cloudStampBase(data.version,false);   // v326: play from here on is newer than this version
       cloudBadgeSaved();   // v282
       log('Loaded your cloud save (Lv '+S.lv+').','r1','cloud');
-      if(data.offlineClaim){applyOfflineProgress(Date.now(),data.offlineClaim);await cloudFlushNow()}
+      if(data.offlineClaim){applyOfflineProgress(Date.now(),data.offlineClaim,data._offlineClaimAnchor);await cloudFlushNow()}
     }else{
       S=fresh();S.gm=!!gm;S.q=['kill','loot','boss'].map(newQuest);CLOUD.ver=0;CLOUD.rev=1;CLOUD.ackRev=0;CLOUD.dirty=true;
       if(typeof BGM!=='undefined')BGM.sync(S.mp);
@@ -6861,17 +6876,41 @@ function noteClaimOutcome(claim,outcome){
 function frozenClaimPricing(claim){
   const p=claim&&claim.pricing;
   if(!p||typeof p!=='object')return null;
-  const map=Math.floor(Number(p.sourceMap)),stage=Math.floor(Number(p.sourceStage)),incomeVersion=Math.floor(Number(p.incomeVersion)),rewardVersion=Math.floor(Number(p.rewardVersion)),
-    sampledAt=Math.floor(Number(p.sampledAt)),start=Math.floor(Number(p.intervalStartAt)),end=Math.floor(Number(p.intervalEndAt));
-  if(!Number.isInteger(map)||map<0||map>=MAPS.length||!Number.isInteger(stage)||stage<1||stage>(map>=10?5:15)
-    ||incomeVersion!==1||!Number.isInteger(rewardVersion)||rewardVersion<0||(map>=10&&rewardVersion!==ASC_REWARD_VERSION)
-    ||!Number.isInteger(sampledAt)||sampledAt<0||!Number.isInteger(start)||start<0||!Number.isInteger(end)||end<start
-    ||!['xp','zeny','job','kph'].every(k=>Number.isFinite(Number(p[k]))&&Number(p[k])>=0)
-    ||Number(p.kph)>OFFLINE_RATE_CAP)return null;
-  return{xp:Number(p.xp),zeny:Number(p.zeny),job:Number(p.job),kph:Number(p.kph),sourceMap:map,sourceStage:stage,
+  const int=v=>v!==null&&v!==undefined&&v!==''&&Number.isSafeInteger(Number(v))?Math.floor(Number(v)):null;
+  const num=v=>v!==null&&v!==undefined&&v!==''&&Number.isFinite(Number(v))?Number(v):null;
+  const map=int(p.sourceMap),stage=int(p.sourceStage),incomeVersion=int(p.incomeVersion),rewardVersion=int(p.rewardVersion),
+    sampledAt=int(p.sampledAt),start=int(p.intervalStartAt),end=int(p.intervalEndAt),values=['xp','zeny','job','kph'].map(k=>num(p[k]));
+  if(map===null||map<0||map>=MAPS.length||stage===null||stage<1||stage>(map>=10?5:15)
+    ||incomeVersion!==1||rewardVersion===null||rewardVersion<0||(map>=10&&rewardVersion!==ASC_REWARD_VERSION)
+    ||sampledAt===null||sampledAt<0||start===null||start<0||end===null||end<start
+    ||values.some(v=>v===null||v<0)||values[3]>OFFLINE_RATE_CAP)return null;
+  return{xp:values[0],zeny:values[1],job:values[2],kph:values[3],sourceMap:map,sourceStage:stage,
     incomeVersion,rewardVersion,sampledAt,intervalStartAt:start,intervalEndAt:end};
 }
-function applyOfflineProgress(now=Date.now(),serverClaim=null){
+// The interval is public claim metadata, not a pricing hint. It is validated independently so an
+// explicitly ineligible (zero-reward) claim still acknowledges the interval the server froze.
+function frozenClaimInterval(claim,plan){
+  const int=v=>v!==null&&v!==undefined&&v!==''&&Number.isSafeInteger(Number(v))?Math.floor(Number(v)):null;
+  const start=int(claim&&claim.intervalStartAt),end=int(claim&&claim.intervalEndAt),away=int(plan&&plan.awayMs);
+  if(start===null||start<0||end===null||end<start||away===null||away<0||end-start!==away)return null;
+  return{start,end};
+}
+function claimPricingState(claim){
+  // A missing state is an old-row contract. Only that historical shape may use local-sample
+  // recovery; a modern ineligible row remains zero even after the browser later learns a rate.
+  const state=claim&&claim.pricingState;
+  if(state===undefined||state===null)return'legacy';
+  return state==='priced'||state==='ineligible'||state==='legacy'||state==='corrupt'?state:'corrupt';
+}
+function claimPageBootAtServer(anchor){
+  const n=v=>v!==null&&v!==undefined&&v!==''&&Number.isFinite(Number(v))?Number(v):null;
+  const serverNow=n(anchor&&anchor.serverNow),requestAt=n(anchor&&anchor.clientRequestAt);
+  const elapsed=requestAt===null?null:requestAt-PAGE_BOOT_AT;
+  // Anchor the local page lifetime at request START, not response receipt. A slow/retried response
+  // therefore cannot slide the issued window past PAGE_BOOT_AT; different wall-clock offsets cancel.
+  return serverNow===null||elapsed===null||elapsed<0?null:serverNow-elapsed;
+}
+function applyOfflineProgress(now=Date.now(),serverClaim=null,claimAnchor=null){
   if(!S)return null;
   let plan;
   if(CLOUD.on){
@@ -6885,28 +6924,31 @@ function applyOfflineProgress(now=Date.now(),serverClaim=null){
       remainder:cl(Number(serverClaim.remainder)||0,0,.999999),rateKph:cl(Number(serverClaim.rateKph)||0,0,OFFLINE_RATE_CAP)};
     S.offlineClaimId=id;
   }else plan=offlinePlan(S.offlineAt,now,S.offlineKph,S.offlineKillRemainder);
-  // v73: a claim that this page has been alive for, and that fits inside the sim's own catch-up
-  // budget, is time the running game already ground (the hidden-tab ticker never pauses) or
-  // replayed on the way back from a freeze. Paying it would double those minutes and pop a
-  // "welcome back" for ordinary background farming. Acknowledge the claim, pay nothing, stay
-  // quiet - but still advance the timestamps so the same window can never be paid later.
-  const awayStart=now-Math.max(0,Number(plan.awayMs)||0);
-  // v2: a gate window is the one exception - the sim was frozen while the gate was up, so those
-  // minutes were never ground here and the server's claim must pay them. That is exactly the
-  // owner's rule: a lost connection is away time, not progress.
-  const covered=!CLOUD.gate&&!!plan.show&&Number.isFinite(awayStart)&&awayStart>=PAGE_BOOT_AT&&plan.awayMs<=OFFLINE_SIM_COVER_MS;
+  // v424: suppression is allowed only when immutable issued bounds and a request-start server/client
+  // anchor prove that this running page covered the whole short window. Never reconstruct a window
+  // from response-time `now - awayMs`: network delay, retries and clock offsets can move that start
+  // across page boot and silently consume a real entitlement.
+  const interval=CLOUD.on?frozenClaimInterval(serverClaim,plan):null;
+  const pageBootAtServer=CLOUD.on?claimPageBootAtServer(claimAnchor):null;
+  // A gate window is the one exception: simulation was frozen while the gate was up, so its server
+  // claim must pay even if this document itself is older than the frozen interval.
+  const covered=!CLOUD.gate&&!!plan.show&&!!interval&&pageBootAtServer!==null
+    &&interval.start>=pageBootAtServer&&(interval.end-interval.start)<=OFFLINE_SIM_COVER_MS;
   const r={...plan,show:!!plan.show&&!covered,covered,kills:0,drops:0,exp:0,zeny:0,items:0,storedItems:0,autoSold:0,overflow:0,cards:0,cardsFull:false,ori:0,elu:0,pets:0,petRefunds:0,petFolds:0,stages:0};
   if(plan.show&&!covered){
     const frozenOwner=serverClaim&&typeof serverClaim.cls==='string'&&Number.isSafeInteger(serverClaim.runGen)&&serverClaim.runGen>=1
       ?{cls:serverClaim.cls,runGen:serverClaim.runGen}:null;
     const target=frozenOwner?claimTarget(frozenOwner.cls,frozenOwner.runGen):{cls:S.cls,runGen:rewardRunGen(),active:true,rec:null,get lv(){return S.lv}};
-    const pricingPresent=!!serverClaim&&Object.hasOwn(serverClaim,'pricing')&&serverClaim.pricing!=null;
-    const frozen=frozenClaimPricing(serverClaim);
+    const pricingState=claimPricingState(serverClaim),frozen=frozenClaimPricing(serverClaim);
     let income=null,sourceMap=-1,sourceStage=0,valid=false;
-    if(pricingPresent){
-      // A non-null snapshot is a v423 entitlement, never a hint to fall back to mutable local
-      // income. If its owner or fields do not validate, record that policy and acknowledge it;
-      // only pricing:null/absent is the documented pre-0019 compatibility form.
+    if(pricingState==='ineligible'){
+      // This is not a missing hint. 0020 recorded that no eligible stored sample existed at issuance;
+      // a later minute, class switch or reload must never turn it into a payout.
+      r.outcome='ineligible-pricing';noteClaimOutcome(serverClaim,r.outcome);
+    }else if(pricingState==='corrupt'){
+      r.outcome='invalid-pricing';noteClaimOutcome(serverClaim,r.outcome);
+    }else if(pricingState==='priced'){
+      // A priced state is a strict immutable contract, never a route back to mutable offlineIncome.
       if(!frozen||!frozenOwner){r.outcome='invalid-pricing';noteClaimOutcome(serverClaim,r.outcome)}
       else{
         income=frozen;sourceMap=frozen.sourceMap;sourceStage=frozen.sourceStage;
@@ -6914,9 +6956,8 @@ function applyOfflineProgress(now=Date.now(),serverClaim=null){
         else valid=true;
       }
     }else{
-      // Old pending rows have no immutable snapshot. They remain recoverable only from a local
-      // sample that demonstrably belongs to the recorded (or current legacy) owner; this is an
-      // explicit compatibility path, not a claim that pre-0019 rows had frozen pricing.
+      // Only true legacy rows may recover from a matching local sample. This preserves pre-0019
+      // accounts/rows without granting the same escape hatch to a modern ineligible claim.
       income=S.offlineIncome;const source=String(income?.key||'').split(':');sourceMap=Number(source[1]);sourceStage=Number(source[2]);
       const sampleOwner=target&&incomeOwnedBy(income,target.cls,target.runGen,rewardAccountId());
       valid=!!target&&income&&income.version===1&&(sourceMap<10||income.rewardVersion===ASC_REWARD_VERSION)&&source.length===3&&Object.hasOwn(CLASSES,source[0])&&sampleOwner&&Number.isInteger(sourceMap)&&sourceMap>=0&&sourceMap<MAPS.length&&Number.isInteger(sourceStage)&&sourceStage>=1&&sourceStage<=(sourceMap>=10?5:15)&&Number.isFinite(income.at)&&income.at<=Number(S.offlineAt)&&['xp','zeny','job','kph'].every(k=>Number.isFinite(income[k])&&income[k]>=0);
@@ -16275,20 +16316,20 @@ setInterval(updateWatch,60000);
 // be hours old while the player was on another tab, and the check is a 60-byte text file.
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&(pendingUpdateBuild||Date.now()-PAGE_STARTED_AT>30000))updateWatch()});
 </script>
-<script src="assets/wardrobe-ui.js?v=422"></script>
+<script src="assets/wardrobe-ui.js?v=424"></script>
 <script src="assets/shop.js?v=321"></script>
 <script src="assets/friends.js?v=273"></script>
-<script src="assets/digimon/roster.js?v=422"></script>
-<script src="assets/digimon/base-stats.js?v=422"></script>
-<script src="assets/social-rules.js?v=422"></script>
-<script src="assets/social-poker.js?v=422"></script>
-<script src="assets/digimon-sanctuary.js?v=422"></script>
+<script src="assets/digimon/roster.js?v=424"></script>
+<script src="assets/digimon/base-stats.js?v=424"></script>
+<script src="assets/social-rules.js?v=424"></script>
+<script src="assets/social-poker.js?v=424"></script>
+<script src="assets/digimon-sanctuary.js?v=424"></script>
 <script src="assets/digimon-battle.js?v=393"></script>
-<script src="assets/social-digimon.js?v=422"></script>
+<script src="assets/social-digimon.js?v=424"></script>
 <script src="assets/social-gym-redesign.js?v=393"></script>
 <script src="assets/social-pond-design.js?v=393"></script>
-<script src="assets/social-scene.js?v=422"></script>
-<script src="assets/social-fishing.js?v=422"></script>
-<script src="assets/plaza-bots.js?v=422"></script>
-<script src="assets/social.js?v=422"></script></body>
+<script src="assets/social-scene.js?v=424"></script>
+<script src="assets/social-fishing.js?v=424"></script>
+<script src="assets/plaza-bots.js?v=424"></script>
+<script src="assets/social.js?v=424"></script></body>
 </html>

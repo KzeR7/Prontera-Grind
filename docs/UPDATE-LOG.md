@@ -11901,3 +11901,47 @@ re-recording them here would have written wrong numbers into the repository.
 * **Try it:** Farm a full Field minute as Swordman, leave the game long enough for an offline claim, then choose Novice with **J** before returning. The previous Swordman reward is never paid to the new Novice; a new Novice-owned claim still works normally. Returning to a stored class continues that class's own run and measured rate.
 * **Checks:** `api_sim.js` (72), `cloud_sim.js` (100), `echo_board_sim.js` (7, including the pre-0018 rollout fallback), `class_reward_ownership_sim.js`, `fishing_save_reload_sim.mjs` (20, including real reload/claim/reset flow), `class_change_sim.js` (29), `plaza_afk_income_sim.js`, `ascension_tracks_sim.js`, `offline_sim.js` (15), save/reload/owner/format/max-state suites, `ui_sim.js` (64), and `skill_balance_sim.js` — all pass.
 * **Delivery:** Branch `arena/d30d4310-prontera-grind`.
+
+### 2026-11-18 — `haven-v423/v424` immutable offline-claim pricing state and frozen coverage bounds
+
+* **Fixed:** A freshly issued cloud claim with no eligible stored field-minute can no longer share
+  `pricing:null` with a genuine historical claim. Migration
+  `0019_offline_claim_pricing_snapshot.sql` freezes the source/rules/interval where an eligible
+  sample exists; new `0020_offline_claim_pricing_state.sql` then records `priced` or `ineligible`
+  for new rows and classifies carried history as `legacy`, `priced`, or `corrupt`. A post-0020
+  `ineligible` claim is an exactly-once zero-payout acknowledgement even if the player learns a
+  high rate later. Genuine old rows retain their explicit matching-local-sample recovery path;
+  malformed snapshots are rejected rather than repriced. Retained class/run ownership, restore
+  fences, versioned acknowledgement and no-auto-equip retained rewards are unchanged.
+* **Fixed:** Claim coverage now validates the immutable issued `intervalStartAt`/`intervalEndAt`
+  before suppression. The client anchors page boot to the server time returned for the **request
+  start**, not response receipt, so delayed responses, retries, reloads and client/server clock
+  offsets cannot move an interval across page boot and consume a real payout. Short windows actually
+  simulated by the page remain suppressed to prevent double pay; a connection-gated window remains
+  payable because simulation was frozen. A genuinely old `legacy` row with no frozen bounds is not
+  coverage-suppressed — the client refuses to invent bounds from response time — but it remains
+  versioned/exactly-once acknowledged after its compatibility payout.
+* **Schema/release order:** On an existing database inspect schema first, then apply only missing
+  migrations in numerical order: `0018_offline_claim_owner_context.sql`,
+  `0019_offline_claim_pricing_snapshot.sql`, then
+  `0020_offline_claim_pricing_state.sql`. Verify `pricing_state` with `PRAGMA table_info` and its
+  classification counts before activating the matching Functions/client build. A function-first
+  rollout intentionally issues no new claim until 0020 is verified; fallback reads preserve old
+  pending rows but are not pricing protection. The bounded 0020 classification changes no save,
+  balance, grant or Social Durable Object state, and normal syncs add no unconditional D1 read or
+  Social DO traffic.
+* **Checks:** Real D1-shaped registration/save-handler tests now cover valid, ineligible, legacy,
+  corrupt and pre-0020 rows (`api_sim.js`). `offline_sim.js` drives the production client applier
+  through immediate/delayed/retry/reload, already-covered, connection-gated and clock-offset cases.
+  `offline_claim_e2e_sim.mjs` joins real registration/save handlers to the extracted production
+  applier for untrained/ineligible, legacy recovery and delayed-bound regressions. Migration tests
+  pin the 0020 classification. Current focused results: `api_sim.js` 75/75, `offline_sim.js` 17/17,
+  `offline_claim_e2e_sim.mjs` 2/2, `migration_sim.js` 10/10, `cloud_sim.js` 100/100,
+  `update_watch_sim.js` 22/22 and `publish_sim.js` 20/20.
+* **Release state:** Player-visible label is `2026-11-18 haven-v424 frozen offline claim states and
+  issued bounds`. The coordinated Social/Fishing and UI runtime asset labels are bumped from `?v=422` to
+  `?v=424`, matching the player-visible release label. The measured classic publish group is
+  60.3021 MiB, so its explicit source-byte guard moves from 60.30 to 60.31 MiB; optional asset
+  groups are unchanged. PR #254 remains held: this log entry is release preparation only — no merge,
+  deployment, production-player-data operation, balance change or broader unified reward-accounting
+  redesign is claimed.

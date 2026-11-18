@@ -71,7 +71,7 @@ function harness() {
       offlineExpBudget, offlineLevelBudget,
       mapSelection(){return[mapM,mapL]},
       OFFLINE_POPUP_MIN_MS, OFFLINE_SIM_COVER_MS, OFFLINE_CAP_MS,
-      setState(v){S=v;farmSession=null;if(!Object.hasOwn(S,'offlineIncome'))S.offlineIncome={version:1,key:farmStageKey(),at:S.offlineAt,xp:60,zeny:60,job:42,kph:30000};}, getState(){return S}, setNow(v){clock.now=v}, setCloud(v){CLOUD.on=!!v},
+      setState(v){S=v;farmSession=null;if(!Object.hasOwn(S,'offlineIncome'))S.offlineIncome={version:1,key:farmStageKey(),at:S.offlineAt,xp:60,zeny:60,job:42,kph:30000};}, getState(){return S}, setNow(v){clock.now=v}, setCloud(v){CLOUD.on=!!v}, setGate(v){CLOUD.gate=!!v},
       setPageBoot(v){PAGE_BOOT_AT=v}, getPageBoot(){return PAGE_BOOT_AT},
       addSessionZeny(n){zenyEarned+=n}, getSessionZeny(){return zenyEarned},
       recordFarmIncome, hasFarmSession(){return !!farmSession}, elements, $, state
@@ -295,7 +295,7 @@ t('a claim this page has been alive for is acknowledged, never paid again (v73)'
   assert.strictEqual(h.hasFarmSession(), true);
   // a five-minute window inside this page's lifetime: the sim replayed it (or ground it while
   // hidden) at full rate, so paying the server budget too would double those minutes
-  const r = h.applyOfflineProgress(now, { id:44, awayMs:5 * 60000, creditedMs:5 * 60000, rateKph:100, kills:5, remainder:0 });
+  const r = h.applyOfflineProgress(now, { id:44, awayMs:5 * 60000, creditedMs:5 * 60000, rateKph:100, kills:5, remainder:0, intervalStartAt:now-5*60000, intervalEndAt:now }, {serverNow:now,clientRequestAt:now});
   assert.strictEqual(r.covered, true, 'the window lies inside this page lifetime');
   assert.strictEqual(r.show, false, 'a covered claim must not open the popup');
   assert.strictEqual(r.kills, 0, 'and must not simulate the same minutes twice');
@@ -322,7 +322,8 @@ t('a real absence is still paid in full (page born after the window)', () => {
   h.setState(S); h.setCloud(true); h.setNow(now);
   h.setPageBoot(now - 60000);                        // this page just booted; the 3h window predates it
   h.$('offlineModal').style.display = 'none';
-  const r = h.applyOfflineProgress(now, claim);
+  claim.intervalStartAt=now-3*3600000;claim.intervalEndAt=now;
+  const r = h.applyOfflineProgress(now, claim, {serverNow:now,clientRequestAt:now});
   assert.strictEqual(r.covered, false);
   assert.strictEqual(r.kills, 150, 'a tab that was closed pays the whole server budget');
   assert.strictEqual(S.kills, 150);
@@ -335,6 +336,55 @@ t('a real absence is still paid in full (page born after the window)', () => {
   assert.strictEqual(r2.kills, 20, 'a later claim uses the previous measured minute until a fresh sample replaces it');
   assert.strictEqual(S.offlineIncome.xp, 60, 'offline rewards do not change the saved online rate');
   h.setCloud(false);
+});
+
+t('an explicit ineligible claim is acknowledged at zero even after a later high-rate sample appears', () => {
+  const S={offlineAt:1,offlineKph:0,offlineRateAt:0,offlineRateKills:0,offlineKillRemainder:0,kills:0,kl:0,mp:0,lvl:1,prog:[1],exp:0,zeny:0,ore:{ori:0,elu:0},cards:[],inv:[],eq:{},pets:[],auto:false,autoSell:[],jobs:{},q:[],st:{str:1,agi:1,dex:1,luk:1,int:1,vit:1},sk:{},skOff:{},cls:'Novice',base:{},hp:100,
+    // This is deliberately the later first minute from the review reproduction. It is strong, but
+    // the four-hour entitlement was issued before it existed.
+    offlineIncome:{version:1,key:'Novice:0:1',at:1,xp:6000,zeny:3000,job:420,kph:30000}};
+  const now=6*3600000,claim={id:88,awayMs:4*3600000,creditedMs:4*3600000,rateKph:100,kills:200,remainder:0,
+    pricingState:'ineligible',pricing:null,intervalStartAt:now-4*3600000,intervalEndAt:now};
+  h.setState(S);h.setCloud(true);h.setNow(now);h.setPageBoot(now-1000);
+  const r=h.applyOfflineProgress(now,claim,{serverNow:now,clientRequestAt:now});
+  assert.strictEqual(r.outcome,'ineligible-pricing');
+  assert.deepStrictEqual([r.kills,r.exp,r.zeny,S.kills,S.exp,S.zeny],[0,0,0,0,0,0],
+    'the later 6,000 XP/min sample cannot reprice an explicit zero entitlement');
+  assert.strictEqual(S.offlineClaimId,88,'it is still saved for the server exactly-once acknowledgement');
+  assert.strictEqual(h.applyOfflineProgress(now,claim,{serverNow:now,clientRequestAt:now}).alreadyApplied,true,
+    'retry/reload state cannot pay the same ineligible claim later');
+  h.setCloud(false);
+});
+
+t('frozen issued bounds, request-start anchors and the connection gate preserve coverage without delay or clock-offset errors', () => {
+  const make=()=>({offlineAt:1,offlineKph:30000,offlineRateAt:0,offlineRateKills:0,offlineKillRemainder:0,kills:0,kl:0,mp:0,lvl:1,prog:[1],exp:0,zeny:0,ore:{ori:0,elu:0},cards:[],inv:[],eq:{},pets:[],auto:false,autoSell:[],jobs:{},q:[],st:{str:1,agi:1,dex:1,luk:1,int:1,vit:1},sk:{},skOff:{},cls:'Novice',base:{},hp:100,
+    offlineIncome:{version:1,key:'Novice:0:1',at:1,xp:60,zeny:30,job:0,kph:100}});
+  const ms=5*60000,serverEnd=300000,covered={id:89,awayMs:ms,creditedMs:ms,rateKph:100,kills:5,remainder:0,
+    intervalStartAt:0,intervalEndAt:serverEnd};
+  // Clock is +10 seconds at the client. At request start, the page existed before the window, so
+  // immediate AND delayed response paths correctly acknowledge without a second payout.
+  h.setState(make());h.setCloud(true);h.setPageBoot(10000);h.setNow(310000);
+  const immediate=h.applyOfflineProgress(310000,covered,{serverNow:serverEnd,clientRequestAt:310000});
+  assert.strictEqual(immediate.covered,true,'a frozen window wholly after boot is suppressed');
+  const delayedState=make();h.setState(delayedState);h.setPageBoot(10000);h.setNow(312000);
+  const delayed=h.applyOfflineProgress(312000,{...covered,id:90},{serverNow:serverEnd,clientRequestAt:310000});
+  assert.strictEqual(delayed.covered,true,'two seconds of response delay does not move the frozen start');
+  assert.strictEqual(delayedState.kills,0);
+  // Reload retry carries the saved ID and remains non-paying even if the new document has a different boot.
+  const reload=h.applyOfflineProgress(312000,{...covered,id:90},{serverNow:serverEnd,clientRequestAt:310000});
+  assert.strictEqual(reload.alreadyApplied,true,'the acknowledgement is robust across the retry/reload path');
+  // Now let the frozen interval begin one server second BEFORE page boot. A two-second response delay
+  // would reconstruct it after boot with `responseNow-awayMs`; the request-start anchor pays it.
+  const realState=make(),beforeXp=realState.exp;h.setState(realState);h.setPageBoot(11000);h.setNow(312000);
+  const real=h.applyOfflineProgress(312000,{...covered,id:91},{serverNow:serverEnd,clientRequestAt:310000});
+  assert.strictEqual(real.covered,false,'frozen start before boot cannot be consumed by response delay');
+  assert.ok(real.kills>0&&realState.exp>beforeXp,'the genuinely uncovered short gap still pays');
+  // A connection gate freezes simulation; it always wins over ordinary covered-window suppression.
+  const gatedState=make();h.setState(gatedState);h.setPageBoot(10000);h.setGate(true);
+  const gated=h.applyOfflineProgress(310000,{...covered,id:92},{serverNow:serverEnd,clientRequestAt:310000});
+  assert.strictEqual(gated.covered,false,'the connection-gated interval was not simulated locally');
+  assert.ok(gated.kills>0,'the gate preserves the real away payout');
+  h.setGate(false);h.setCloud(false);
 });
 
 t('the client and the server share the three-minute away window, not the old one minute', () => {
@@ -351,7 +401,7 @@ t('the client and the server share the three-minute away window, not the old one
 
 t('initial local and cloud session paths are wired to apply offline progress and the popup fields exist', () => {
   assert.match(src, /function initSession\(gm,newAccount=false\)[\s\S]*?applyOfflineProgress\(\)/);
-  assert.match(src, /async function cloudJoin\(u,localBlob\)[\s\S]*?applyOfflineProgress\(Date\.now\(\),data\.offlineClaim\)/);
+  assert.match(src, /async function cloudJoin\(u,localBlob\)[\s\S]*?applyOfflineProgress\(Date\.now\(\),data\.offlineClaim,data\._offlineClaimAnchor\)/);
   for (const id of ['offlineAway','offlineCredited','offlineDrops','offlineExp','offlineItems','offlineCards','offlineContinue'])
     assert.ok(src.includes(`id="${id}"`), `offline summary is missing ${id}`);
 });

@@ -356,31 +356,78 @@ await T('v422: an issued claim freezes the class and progression run it was pric
     'the acknowledgement cannot rewrite an already-issued entitlement with a later sample');
 });
 
-await T('v423: a deployment before additive migration 0019 keeps issuing/acknowledging owner claims with pricing:null', async () => {
-  // This is a real 0018-only SQLite schema, matching the short rollout window where function code
-  // reaches D1 before the additive 0019 migration. It must stay saveable rather than trapping a
-  // pending entitlement or rejecting an old client upload.
-  const h = freshEnv({ throughMigration: 18 });
-  const reg = await api.register(h.env, { u: 'PRE0019', p: 'pre0019-password' });
-  const id = h.sqlite.prepare('SELECT id FROM users WHERE username=?').get('PRE0019').id;
+await T('v424: an ineligible post-0020 claim is explicit, bounded, zero-priced and still exactly-once acknowledged', async () => {
+  const h = freshEnv();
+  const reg = await api.register(h.env, { u: 'UNTRAINED', p: 'untrained-password' });
+  const id = h.sqlite.prepare('SELECT id FROM users WHERE username=?').get('UNTRAINED').id;
   const blob = JSON.parse(saveBlob(30, 500));
-  blob.cls = 'Knight'; blob.runSeq = 2; blob.runGen = 2; blob.accountId = id;
-  blob.offlineIncome = { version: 1, rewardVersion: 6, key: 'Knight:0:1', at: 1000, aid: id, gen: 2,
-    xp: 6000, zeny: 3000, job: 420, kph: 120 };
-  const initial = await api.putSave(h.env, reg.cookie, { version: 0, blob: JSON.stringify(blob), savedAt: 1 });
-  assert.strictEqual(initial.status, 200);
-  h.sqlite.prepare('UPDATE saves SET last_seen=?, rate_kph=? WHERE user_id=?').run(Date.now() - 4 * 3600000, 120, id);
-  const got = await api.getSave(h.env, reg.cookie), claim = got.data.offlineClaim;
-  assert.ok(claim && claim.id > 0);
-  assert.strictEqual(claim.cls, 'Knight'); assert.strictEqual(claim.runGen, 2);
-  assert.strictEqual(claim.pricing, null, 'missing 0019 columns use the explicit legacy pricing signal');
-  assert.ok(h.sqlite.prepare('PRAGMA table_info(offline_reward_claims)').all().some(c => c.name === 'cls'));
-  assert.equal(h.sqlite.prepare('PRAGMA table_info(offline_reward_claims)').all().some(c => c.name === 'income_xp'), false,
-    'this test really ran against the old schema, not a simulated response');
-  const ack = JSON.parse(got.data.blob); ack.offlineClaimId = claim.id;
-  const accepted = await api.putSave(h.env, reg.cookie, { version: got.data.version, blob: JSON.stringify(ack), offlineClaimId: claim.id, savedAt: 2 });
-  assert.strictEqual(accepted.status, 200, 'the fallback claim keeps the existing restore-fenced acknowledgement flow');
-  assert.ok(h.sqlite.prepare('SELECT claimed_at FROM offline_reward_claims WHERE id=?').get(claim.id).claimed_at > 0);
+  blob.cls = 'Swordman'; blob.runSeq = 2; blob.runGen = 2; blob.accountId = id;
+  // No offlineIncome minute exists yet. A later first minute must not price this already-issued gap.
+  await api.putSave(h.env, reg.cookie, { version: 0, blob: JSON.stringify(blob), savedAt: 1 });
+  const awayAt=Date.now()-4*3600000;
+  h.sqlite.prepare('UPDATE saves SET last_seen=?, rate_kph=? WHERE user_id=?').run(awayAt,120,id);
+  const got=await api.getSave(h.env,reg.cookie),claim=got.data.offlineClaim;
+  assert.ok(claim&&claim.id>0,'the handler issues the durable acknowledgement claim');
+  assert.strictEqual(claim.pricingState,'ineligible','new no-sample rows never impersonate legacy pricing:null');
+  assert.strictEqual(claim.pricing,null);
+  assert.strictEqual(claim.intervalStartAt,awayAt,'the interval is frozen even though pricing is not');
+  assert.ok(claim.intervalEndAt>=claim.intervalStartAt);
+  assert.strictEqual(got.data.serverNow,claim.intervalEndAt,'GET uses its one server clock for both bounds and anchor');
+  const durable=h.sqlite.prepare('SELECT pricing_state, income_xp, interval_start_at, interval_end_at FROM offline_reward_claims WHERE id=?').get(claim.id);
+  assert.deepStrictEqual([durable.pricing_state,durable.income_xp,durable.interval_start_at],['ineligible',null,awayAt]);
+  // A deliberately stronger later sample travels in the acknowledgement save but cannot rewrite
+  // this entitlement; the client-side real-applier regression proves it cannot pay from this either.
+  const ack=JSON.parse(got.data.blob);ack.offlineClaimId=claim.id;
+  ack.offlineIncome={version:1,rewardVersion:6,key:'Swordman:0:1',at:Date.now(),aid:id,gen:2,xp:6000,zeny:3000,job:420,kph:120};
+  const accepted=await api.putSave(h.env,reg.cookie,{version:got.data.version,blob:JSON.stringify(ack),offlineClaimId:claim.id,savedAt:2});
+  assert.strictEqual(accepted.status,200);
+  assert.ok(h.sqlite.prepare('SELECT claimed_at FROM offline_reward_claims WHERE id=?').get(claim.id).claimed_at>0);
+  assert.strictEqual(h.sqlite.prepare('SELECT income_xp, pricing_state FROM offline_reward_claims WHERE id=?').get(claim.id).income_xp,null,
+    'acknowledgement cannot turn an ineligible row into a later priced claim');
+});
+
+await T('v424: 0020 classifies historical rows and only legacy rows retain the compatibility signal', async () => {
+  const h=freshEnv();
+  const reg=await api.register(h.env,{u:'CLAIMSTATE',p:'claimstate-password'});
+  const id=h.sqlite.prepare('SELECT id FROM users WHERE username=?').get('CLAIMSTATE').id;
+  const base=JSON.parse(saveBlob(20,40));base.cls='Knight';base.runSeq=2;base.runGen=2;
+  await api.putSave(h.env,reg.cookie,{version:0,blob:JSON.stringify(base),savedAt:1});
+  const issued=Date.now();
+  // Simulate an old all-null row carried through migration 0020. It must remain recoverable, not
+  // re-labelled as one of today's ineligible rows.
+  h.sqlite.prepare(`INSERT INTO offline_reward_claims(user_id,away_ms,credited_ms,rate_kph,kills,remainder,issued_at,
+    cls,run_gen,pricing_state) VALUES(?,?,?,?,?,?,?,?,?,?)`).run(id,4*3600000,4*3600000,120,240,0,issued,'Knight',2,'legacy');
+  const legacy=await api.getSave(h.env,reg.cookie);
+  assert.strictEqual(legacy.data.offlineClaim.pricingState,'legacy');
+  assert.strictEqual(legacy.data.offlineClaim.pricing,null);
+  const ack=JSON.parse(legacy.data.blob);ack.offlineClaimId=legacy.data.offlineClaim.id;
+  assert.strictEqual((await api.putSave(h.env,reg.cookie,{version:legacy.data.version,blob:JSON.stringify(ack),offlineClaimId:ack.offlineClaimId})).status,200,
+    'legacy recovery rows remain versioned/restore-fenced acknowledgements');
+  // State and fields disagreeing is corruption, never another local-sample fallback.
+  h.sqlite.prepare(`INSERT INTO offline_reward_claims(user_id,away_ms,credited_ms,rate_kph,kills,remainder,issued_at,
+    cls,run_gen,income_xp,pricing_state) VALUES(?,?,?,?,?,?,?,?,?,?,?)`).run(id,4*3600000,4*3600000,120,240,0,issued+1,'Knight',2,99,'ineligible');
+  const corrupt=await api.getSave(h.env,reg.cookie);
+  assert.strictEqual(corrupt.data.offlineClaim.pricingState,'corrupt');
+  assert.strictEqual(corrupt.data.offlineClaim.pricing,null);
+});
+
+await T('v424: no state column means old rows can be acknowledged, but new issuance waits for migration 0020', async () => {
+  const h = freshEnv({ throughMigration: 19 });
+  const reg = await api.register(h.env, { u: 'PRE0020', p: 'pre0020-password' });
+  const id = h.sqlite.prepare('SELECT id FROM users WHERE username=?').get('PRE0020').id;
+  const blob = JSON.parse(saveBlob(30, 500)); blob.cls='Knight';blob.runSeq=2;blob.runGen=2;blob.accountId=id;
+  await api.putSave(h.env,reg.cookie,{version:0,blob:JSON.stringify(blob),savedAt:1});
+  h.sqlite.prepare('UPDATE saves SET last_seen=?, rate_kph=? WHERE user_id=?').run(Date.now()-4*3600000,120,id);
+  const noState=await api.getSave(h.env,reg.cookie);
+  assert.strictEqual(noState.data.offlineClaim,null,'a code-first rollout cannot issue an ambiguous new pricing:null row');
+  assert.equal(h.sqlite.prepare('PRAGMA table_info(offline_reward_claims)').all().some(c=>c.name==='pricing_state'),false);
+  // A genuinely pre-0020 pending row is still returned/acknowledged under its legacy contract.
+  h.sqlite.prepare('INSERT INTO offline_reward_claims(user_id,away_ms,credited_ms,rate_kph,kills,remainder,issued_at,cls,run_gen) VALUES(?,?,?,?,?,?,?,?,?)')
+    .run(id,4*3600000,4*3600000,120,240,0,Date.now(),'Knight',2);
+  const legacy=await api.getSave(h.env,reg.cookie);
+  assert.strictEqual(legacy.data.offlineClaim.pricingState,'legacy');
+  const ack=JSON.parse(legacy.data.blob);ack.offlineClaimId=legacy.data.offlineClaim.id;
+  assert.strictEqual((await api.putSave(h.env,reg.cookie,{version:legacy.data.version,blob:JSON.stringify(ack),offlineClaimId:ack.offlineClaimId})).status,200);
 });
 
 await T('v422: the smoothed kill rate re-bases across a class or run boundary instead of carrying old-class speed', async () => {

@@ -417,6 +417,27 @@ new character. `repairSave` adopts pre-ownership saves into generation 1, so mig
 The fishing one-catch-per-spawn MVP marker persists in the save (`fishing.mvpCaught`, newest 32 ids)
 instead of an in-memory Set that a reload wiped.
 
+**Frozen offline entitlement state and timing (v423/v424):** `0019_offline_claim_pricing_snapshot.sql`
+added the immutable pricing/source fields and issued interval fields. `0020_offline_claim_pricing_state.sql`
+then classifies the historical rows once and adds `offline_reward_claims.pricing_state`: **`legacy`** is
+the only old-row/local-sample recovery path, **`priced`** is a complete immutable snapshot,
+**`ineligible`** is a newly issued, permanently zero-payout acknowledgement when no eligible minute
+exists, and a state/field mismatch is reported to the client as **`corrupt`** and rejected. New claim
+issuance verifies that 0020 exists only after an away interval qualifies; it does not add a per-sync
+D1 read, and a function-first rollout issues no ambiguous new claim until the schema is applied.
+
+`functions/api/save.js` returns `pricingState`, `intervalStartAt`, `intervalEndAt`, and `serverNow`.
+`applyOfflineProgress()` never reconstructs coverage from response-time `now - awayMs`: it validates
+those immutable bounds first and maps `PAGE_BOOT_AT` to server time with the request-start timestamp
+saved by `cloudFetch()`. A slow response, retry, reload or client/server clock offset therefore cannot
+move an interval across page boot and consume a real payout. Suppression still protects a short window
+actually covered by this running page; `CLOUD.gate` always disables suppression because the simulation
+was frozen. A true legacy row without issued bounds is not coverage-suppressed: the client will not
+invent a bound from response time, while the normal versioned acknowledgement still prevents replay.
+These changes retain versioned exactly-once acknowledgement, retained-run ownership,
+restore fences and the existing no-new-Social-DO-traffic model; they are not a broader reward-accounting
+redesign.
+
 **Where the plaza's Field card gets its numbers (v390):** it prints the **measured** rate from
 `plazaFarmIncome()` in `index.html`, never the `#expmin`/`#zenymin` HUD samplers. Those are live combat
 readings that reset after `HUD_IDLE_RESET` (30 s) without a kill, so copying them made a paying plaza

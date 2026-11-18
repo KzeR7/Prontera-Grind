@@ -41,28 +41,54 @@ const RATE_SMOOTHING_MS = 5 * 60 * 1000;
 const saveMismatch = user => json({ err: SAVE_MISMATCH, saveMismatch: true, owner: user.username }, 409);
 
 const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, Number(n) || 0));
-const finite = v => Number.isFinite(Number(v));
-const safeInt = v => Number.isSafeInteger(Number(v)) ? Math.floor(Number(v)) : null;
-// v423: the claim names both its owner and, when it was available in the stored save, the exact
-// measured minute/source/rules it was priced from. A client never re-reads its latest offlineIncome
-// for this shape: replacing a sample after a claim was issued cannot increase, decrease or redirect
-// an already-issued entitlement. Nullable pricing is the intentional pre-0019 recovery shape.
+// `Number(null) === 0` is not validation. Snapshot/state fields must be present before a numeric
+// zero is accepted, otherwise a partial corrupt row can impersonate a real zero-rate entitlement.
+const finite = v => v !== null && v !== undefined && v !== '' && Number.isFinite(Number(v));
+const safeInt = v => v !== null && v !== undefined && v !== '' && Number.isSafeInteger(Number(v)) ? Math.floor(Number(v)) : null;
+// v424: pricing state and issued bounds are distinct immutable data.  A valid snapshot freezes
+// payout; `ineligible` freezes a zero payout; `legacy` is the sole compatibility path for rows that
+// predate the state column.  Never infer either state from nullable snapshot values on a new row.
+const SNAPSHOT_VALUE_COLUMNS=['income_xp','income_zeny','income_job','income_kph','source_map','source_stage',
+  'income_version','reward_version','sampled_at'];
+const snapshotHasValue = row => SNAPSHOT_VALUE_COLUMNS.some(k=>row?.[k]!==null&&row?.[k]!==undefined);
+const publicInterval = row => {
+  const intervalStartAt=safeInt(row?.interval_start_at),intervalEndAt=safeInt(row?.interval_end_at);
+  return intervalStartAt!==null&&intervalStartAt>=0&&intervalEndAt!==null&&intervalEndAt>=intervalStartAt
+    ? {intervalStartAt,intervalEndAt} : null;
+};
 const publicPricing = row => {
   const sourceMap=safeInt(row?.source_map),sourceStage=safeInt(row?.source_stage),incomeVersion=safeInt(row?.income_version),
-    rewardVersion=safeInt(row?.reward_version),sampledAt=safeInt(row?.sampled_at),
-    intervalStartAt=safeInt(row?.interval_start_at),intervalEndAt=safeInt(row?.interval_end_at);
+    rewardVersion=safeInt(row?.reward_version),sampledAt=safeInt(row?.sampled_at),interval=publicInterval(row);
   if(!finite(row?.income_xp)||!finite(row?.income_zeny)||!finite(row?.income_job)||!finite(row?.income_kph)
-    || [sourceMap,sourceStage,incomeVersion,rewardVersion,sampledAt,intervalStartAt,intervalEndAt].some(v=>v===null)
-    || sourceMap<0||sourceStage<1||incomeVersion<1||rewardVersion<0||sampledAt<0
-    || intervalStartAt<0||intervalEndAt<intervalStartAt) return null;
+    || [sourceMap,sourceStage,incomeVersion,rewardVersion,sampledAt].some(v=>v===null)||!interval
+    || sourceMap<0||sourceStage<1||incomeVersion<1||rewardVersion<0||sampledAt<0) return null;
   return { xp:Number(row.income_xp), zeny:Number(row.income_zeny), job:Number(row.income_job), kph:Number(row.income_kph),
-    sourceMap,sourceStage,incomeVersion,rewardVersion,sampledAt,intervalStartAt,intervalEndAt };
+    sourceMap,sourceStage,incomeVersion,rewardVersion,sampledAt,...interval };
 };
-const publicClaim = row => row ? ({
-  id: Number(row.id), awayMs: Number(row.away_ms), creditedMs: Number(row.credited_ms),
-  rateKph: Number(row.rate_kph), kills: Number(row.kills), remainder: Number(row.remainder),
-  cls: row.cls ?? null, runGen: row.run_gen == null ? null : Number(row.run_gen), pricing: publicPricing(row),
-}) : null;
+const pricingStateOf = row => {
+  const state=row?.pricing_state;
+  if(state==='priced') return publicPricing(row)?'priced':'corrupt';
+  // Ineligible rows deliberately have NULL pricing values but do carry their own issued interval.
+  if(state==='ineligible') return snapshotHasValue(row)?'corrupt':'ineligible';
+  if(state==='legacy') return snapshotHasValue(row)?'corrupt':'legacy';
+  // A no-state row is old schema/history. A complete 0019 snapshot is already immutable and can
+  // safely be honoured; all-null remains the documented local-sample recovery shape.
+  if(state===null||state===undefined) return publicPricing(row)?'priced':'legacy';
+  return 'corrupt';
+};
+const publicClaim = row => {
+  if(!row)return null;
+  const pricingState=pricingStateOf(row), interval=publicInterval(row);
+  return {
+    id: Number(row.id), awayMs: Number(row.away_ms), creditedMs: Number(row.credited_ms),
+    rateKph: Number(row.rate_kph), kills: Number(row.kills), remainder: Number(row.remainder),
+    cls: row.cls ?? null, runGen: row.run_gen == null ? null : Number(row.run_gen), pricingState,
+    // Bounds are public claim metadata rather than part of pricing: an ineligible claim must still
+    // be acknowledged against the interval the server actually issued, never `response-now - away`.
+    intervalStartAt:interval?.intervalStartAt ?? null, intervalEndAt:interval?.intervalEndAt ?? null,
+    pricing: pricingState==='priced'||pricingState==='legacy' ? publicPricing(row) : null,
+  };
+};
 // The owner context frozen at issuance comes from the STORED save's top-level view - the parse the
 // request already paid for (GET: saveView, PUT: storedStamp), never a fresh parse of the blob.
 const runGenOf = v => Number.isSafeInteger(Number(v)) && Number(v) >= 1 ? Math.floor(Number(v)) : null;
@@ -89,8 +115,9 @@ const claimPricingOf = (view, owner, userId, intervalStartAt, intervalEndAt) => 
     sourceMap,sourceStage,incomeVersion,rewardVersion,sampledAt,intervalStartAt:start,intervalEndAt:end };
 };
 const claimContextOf = (view, userId, row, now) => {
-  const owner=claimOwnerOf(view);
-  return { owner, pricing:claimPricingOf(view,owner,userId,Number(row?.last_seen)||now,now) };
+  const owner=claimOwnerOf(view), start=safeInt(row?.last_seen) ?? safeInt(now), end=safeInt(now);
+  const interval=start!==null&&start>=0&&end!==null&&end>=start?{intervalStartAt:start,intervalEndAt:end}:null;
+  return { owner, interval, pricing:interval?claimPricingOf(view,owner,userId,start,end):null };
 };
 
 // Is the away window long enough for a claim to exist at all? <3 minutes never mints one, and the
@@ -116,6 +143,9 @@ async function pendingOrIssueOfflineClaim(D, userId, row, now, claimContext = nu
   // unconditionally cost every sync a D1 statement whose answer an actively-playing client (away for
   // seconds) never used - on top of the pending-claim read immediately above.
   if (!pending && awayQualifies(row, now)) {
+    // A compatibility SELECT can read legacy rows, but it cannot make a new pricing:null row
+    // unambiguous. Verify migration 0020 only on this rare issuance path before writing one.
+    if (!await db.offlineClaimPricingStateReady(D)) return null;
     const remainder = await db.lastOfflineRemainder(D, userId);
     const plan = issueOfflineClaim(row, now, remainder);
     if (plan) {
@@ -136,7 +166,7 @@ async function pendingOrIssueOfflineClaim(D, userId, row, now, claimContext = nu
 // retry is not later counted as time spent away.
 const earlyReturn = (D, userId, at) => async (payload, status) => {
   await db.touchSeen(D, userId, at);
-  return json(payload, status);
+  return json(Object.assign({}, payload, { serverNow: at }), status);
 };
 
 // Measure actual server-accepted kill-count increases between syncs. Subtract a pending offline

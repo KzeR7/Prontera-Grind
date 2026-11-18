@@ -95,11 +95,10 @@ export const touchSeen = (db, userId, at = now()) =>
 // save containing its ID is accepted, so retrying login or losing a response can neither reroll nor
 // duplicate the same away period.
 //
-// A Pages deployment may run new code for the few seconds before its matching D1 migration does.
-// Keep that rollout window (and pre-0018/0019 disaster recovery) saveable: a legacy query returns
-// the exact old claim shape and publicClaim simply omits absent ownership/pricing context. The
-// current-schema path is still one query; fallbacks run only after D1 says an additive column is
-// absent, never after an unrelated database error.
+// The claim schema grew in 0018 (owner), 0019 (snapshot) and 0020 (explicit pricing state). A
+// deployment can briefly run new Functions before an additive migration reaches D1. Reads therefore
+// retain old-row recovery, but issuance verifies 0020 before writing a NEW claim: a fallback query
+// is compatibility, not proof that a newly unpriceable claim is safe to issue.
 const missingColumn = (err, names) => {
   const text=String(err?.message || err);
   const m=/(?:no such column(?::|\s+named)|has no column named)\s*([a-z_]+)\b/i.exec(text);
@@ -108,15 +107,33 @@ const missingColumn = (err, names) => {
 const OWNER_COLUMNS=new Set(['cls','run_gen']);
 const PRICING_COLUMNS=new Set(['income_xp','income_zeny','income_job','income_kph','source_map','source_stage',
   'income_version','reward_version','sampled_at','interval_start_at','interval_end_at']);
+const PRICING_STATE_COLUMNS=new Set(['pricing_state']);
 const claimFields = 'id, away_ms, credited_ms, rate_kph, kills, remainder, issued_at, claimed_at';
 const claimOwnerFields = claimFields + ', cls, run_gen';
 const claimPricingFields = claimOwnerFields + ', income_xp, income_zeny, income_job, income_kph, source_map, source_stage,'
   + ' income_version, reward_version, sampled_at, interval_start_at, interval_end_at';
+const claimStateFields = claimPricingFields + ', pricing_state';
 
 async function selectClaimWithFallback(db, where, args) {
   try {
-    return await db.prepare(`SELECT ${claimPricingFields} FROM offline_reward_claims ${where}`).bind(...args).first();
+    return await db.prepare(`SELECT ${claimStateFields} FROM offline_reward_claims ${where}`).bind(...args).first();
   } catch (err) {
+    // 0020 absent: this is a historical row, so preserve its deliberate legacy recovery shape.
+    if (missingColumn(err, PRICING_STATE_COLUMNS)) {
+      try {
+        return await db.prepare(`SELECT ${claimPricingFields} FROM offline_reward_claims ${where}`).bind(...args).first();
+      } catch (pricingErr) {
+        if (missingColumn(pricingErr, OWNER_COLUMNS))
+          return db.prepare(`SELECT ${claimFields} FROM offline_reward_claims ${where}`).bind(...args).first();
+        if (!missingColumn(pricingErr, PRICING_COLUMNS)) throw pricingErr;
+        try {
+          return await db.prepare(`SELECT ${claimOwnerFields} FROM offline_reward_claims ${where}`).bind(...args).first();
+        } catch (ownerErr) {
+          if (!missingColumn(ownerErr, OWNER_COLUMNS)) throw ownerErr;
+          return db.prepare(`SELECT ${claimFields} FROM offline_reward_claims ${where}`).bind(...args).first();
+        }
+      }
+    }
     if (missingColumn(err, OWNER_COLUMNS))
       return db.prepare(`SELECT ${claimFields} FROM offline_reward_claims ${where}`).bind(...args).first();
     if (!missingColumn(err, PRICING_COLUMNS)) throw err;
@@ -135,6 +152,19 @@ export const pendingOfflineClaim = (db, userId) =>
 export const offlineClaimById = (db, userId, id) =>
   selectClaimWithFallback(db, 'WHERE user_id = ? AND id = ?', [userId, id]);
 
+// Only called after an away window qualifies and no pending row exists. This is intentionally not
+// an unconditional per-sync read: it is the deployment fence that prevents a function-first rollout
+// from creating another ambiguous pricing:null entitlement before migration 0020 is live.
+export const offlineClaimPricingStateReady = async db => {
+  try {
+    await db.prepare('SELECT pricing_state FROM offline_reward_claims LIMIT 1').first();
+    return true;
+  } catch (err) {
+    if (missingColumn(err, PRICING_STATE_COLUMNS)) return false;
+    throw err;
+  }
+};
+
 export const lastOfflineRemainder = async (db, userId) => {
   const row = await db.prepare(`SELECT remainder FROM offline_reward_claims
                                 WHERE user_id = ? AND claimed_at IS NOT NULL ORDER BY id DESC LIMIT 1`)
@@ -142,13 +172,16 @@ export const lastOfflineRemainder = async (db, userId) => {
   return Number(row?.remainder) || 0;
 };
 
-// v423: ctx freezes WHO a claim belongs to (0018) and, where the stored sample can prove that
-// owner, WHAT minute/source/rules priced it (0019). Both pieces are nullable so previous installs
-// and their pending rows retain a deliberate legacy recovery path instead of becoming unclaimable.
+// v424: 0020 makes the pricing meaning explicit.  `priced` freezes an eligible minute; `ineligible`
+// is a durable zero-payout acknowledgement.  `legacy` exists only for backfilled/pre-0020 rows.
+// The interval is stored independently of the sample so coverage can use the issued bounds even
+// when no sample was eligible.
 export const insertOfflineClaim = async (db, userId, claim, issuedAt, ctx = null) => {
-  const owner=ctx?.owner || ctx || null, pricing=ctx?.pricing || null;
+  const owner=ctx?.owner || ctx || null, pricing=ctx?.pricing || null, interval=ctx?.interval || pricing || null;
   const ownerArgs=[owner && typeof owner.cls === 'string' ? owner.cls.slice(0,32) : null,
     owner && Number.isSafeInteger(owner.runGen) && owner.runGen>=1 ? Math.floor(owner.runGen) : null];
+  const intervalStart=interval && Number.isSafeInteger(interval.intervalStartAt) ? interval.intervalStartAt : null;
+  const intervalEnd=interval && Number.isSafeInteger(interval.intervalEndAt) ? interval.intervalEndAt : null;
   const pricingArgs=[
     pricing && Number.isFinite(pricing.xp) ? pricing.xp : null,
     pricing && Number.isFinite(pricing.zeny) ? pricing.zeny : null,
@@ -159,9 +192,9 @@ export const insertOfflineClaim = async (db, userId, claim, issuedAt, ctx = null
     pricing && Number.isSafeInteger(pricing.incomeVersion) ? pricing.incomeVersion : null,
     pricing && Number.isSafeInteger(pricing.rewardVersion) ? pricing.rewardVersion : null,
     pricing && Number.isSafeInteger(pricing.sampledAt) ? pricing.sampledAt : null,
-    pricing && Number.isSafeInteger(pricing.intervalStartAt) ? pricing.intervalStartAt : null,
-    pricing && Number.isSafeInteger(pricing.intervalEndAt) ? pricing.intervalEndAt : null,
+    intervalStart, intervalEnd,
   ];
+  const pricingState=pricing ? 'priced' : 'ineligible';
   const baseArgs=[userId, claim.awayMs, claim.creditedMs, claim.rateKph, claim.kills, claim.remainder, issuedAt];
   const writeLegacy=() => db.prepare(`INSERT OR IGNORE INTO offline_reward_claims
       (user_id, away_ms, credited_ms, rate_kph, kills, remainder, issued_at)
@@ -169,14 +202,21 @@ export const insertOfflineClaim = async (db, userId, claim, issuedAt, ctx = null
   const writeOwner=() => db.prepare(`INSERT OR IGNORE INTO offline_reward_claims
       (user_id, away_ms, credited_ms, rate_kph, kills, remainder, issued_at, cls, run_gen)
       VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)`).bind(...baseArgs,...ownerArgs).run();
-  try {
-    return await db.prepare(`INSERT OR IGNORE INTO offline_reward_claims
+  const writePricing=() => db.prepare(`INSERT OR IGNORE INTO offline_reward_claims
       (user_id, away_ms, credited_ms, rate_kph, kills, remainder, issued_at, cls, run_gen,
        income_xp, income_zeny, income_job, income_kph, source_map, source_stage,
        income_version, reward_version, sampled_at, interval_start_at, interval_end_at)
       VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
       .bind(...baseArgs,...ownerArgs,...pricingArgs).run();
+  try {
+    return await db.prepare(`INSERT OR IGNORE INTO offline_reward_claims
+      (user_id, away_ms, credited_ms, rate_kph, kills, remainder, issued_at, cls, run_gen,
+       income_xp, income_zeny, income_job, income_kph, source_map, source_stage,
+       income_version, reward_version, sampled_at, interval_start_at, interval_end_at, pricing_state)
+      VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+      .bind(...baseArgs,...ownerArgs,...pricingArgs,pricingState).run();
   } catch (err) {
+    if (missingColumn(err, PRICING_STATE_COLUMNS)) return writePricing();
     if (missingColumn(err, OWNER_COLUMNS)) return writeLegacy();
     if (!missingColumn(err, PRICING_COLUMNS)) throw err;
     try { return await writeOwner(); }
