@@ -11885,3 +11885,139 @@ re-recording them here would have written wrong numbers into the repository.
 * **Changed:** Included the updated Wardrobe loader in the hosted staging package and regenerated the Map Journey review captures with the same loader. Guarded the Asura visual hook when called outside a running character session.
 * **Checks:** Generated assets, Pages configuration, hosted packaging, and the full simulation/smoke gate were checked. Two suites still fail on the unchanged branch base as well: `skill_balance_sim.js` (stale progression fixture) and `render_lost_boot_smoke.js` (no-WebGL boot). Software-WebGL Map Journey checks passed with no browser errors.
 * **Delivery:** Prepared the branch for a pull request; no deployment.
+
+### 2026-11-18 — `haven-v423/v424` immutable offline-claim pricing state and frozen coverage bounds
+
+* **Fixed:** A freshly issued cloud claim with no eligible stored field-minute can no longer share
+  `pricing:null` with a genuine historical claim. Migration
+  `0019_offline_claim_pricing_snapshot.sql` freezes the source/rules/interval where an eligible
+  sample exists; new `0020_offline_claim_pricing_state.sql` then records `priced` or `ineligible`
+  for new rows and classifies carried history as `legacy`, `priced`, or `corrupt`. A post-0020
+  `ineligible` claim is an exactly-once zero-payout acknowledgement even if the player learns a
+  high rate later. Genuine old rows retain their explicit matching-local-sample recovery path;
+  malformed snapshots are rejected rather than repriced. Retained class/run ownership, restore
+  fences, versioned acknowledgement and no-auto-equip retained rewards are unchanged.
+* **Fixed:** Claim coverage now validates the immutable issued `intervalStartAt`/`intervalEndAt`
+  before suppression. The client anchors page boot to the server time returned for the **request
+  start**, not response receipt, so delayed responses, retries, reloads and client/server clock
+  offsets cannot move an interval across page boot and consume a real payout. Short windows actually
+  simulated by the page remain suppressed to prevent double pay; a connection-gated window remains
+  payable because simulation was frozen. A genuinely old `legacy` row with no frozen bounds is not
+  coverage-suppressed — the client refuses to invent bounds from response time — but it remains
+  versioned/exactly-once acknowledged after its compatibility payout.
+* **Schema/release order:** On an existing database inspect schema first, then apply only missing
+  migrations in numerical order: `0018_offline_claim_owner_context.sql`,
+  `0019_offline_claim_pricing_snapshot.sql`, then
+  `0020_offline_claim_pricing_state.sql`. Verify `pricing_state` with `PRAGMA table_info` and its
+  classification counts before activating the matching Functions/client build. A function-first
+  rollout intentionally issues no new claim until 0020 is verified; fallback reads preserve old
+  pending rows but are not pricing protection. The bounded 0020 classification changes no save,
+  balance, grant or Social Durable Object state, and normal syncs add no unconditional D1 read or
+  Social DO traffic.
+* **Checks:** Real D1-shaped registration/save-handler tests now cover valid, ineligible, legacy,
+  corrupt and pre-0020 rows (`api_sim.js`). `offline_sim.js` drives the production client applier
+  through immediate/delayed/retry/reload, already-covered, connection-gated and clock-offset cases.
+  `offline_claim_e2e_sim.mjs` joins real registration/save handlers to the extracted production
+  applier for untrained/ineligible, legacy recovery and delayed-bound regressions. Migration tests
+  pin the 0020 classification. Current focused results: `api_sim.js` 75/75, `offline_sim.js` 17/17,
+  `offline_claim_e2e_sim.mjs` 2/2, `migration_sim.js` 10/10, `cloud_sim.js` 100/100,
+  `update_watch_sim.js` 22/22 and `publish_sim.js` 20/20.
+* **Release state:** Player-visible label is `2026-11-18 haven-v424 frozen offline claim states and
+  issued bounds`. The coordinated Social/Fishing and UI runtime asset labels are bumped from `?v=422` to
+  `?v=424`, matching the player-visible release label. The measured classic publish group is
+  60.3021 MiB, so its explicit source-byte guard moves from 60.30 to 60.31 MiB; optional asset
+  groups are unchanged. PR #254 remains held: this log entry is release preparation only — no merge,
+  deployment, production-player-data operation, balance change or broader unified reward-accounting
+  redesign is claimed.
+
+### 2026-11-18 — `haven-v424` post-main reconciliation and final local checks
+
+* **Reconciled:** Merged current `main` (including the native Asura Strike one-hand-down pose,
+  Wardrobe assets and hosted-package coverage) into the held v424 branch. The player/cache label
+  remains `2026-11-18 haven-v424 frozen offline claim states and issued bounds`; `wardrobe.js` and
+  `expanded-jobs.js` now use the coordinated `?v=424` cache key as well.
+* **Hardened:** A no-`pricing_state` historical row is legacy only when every frozen snapshot value
+  is absent. A complete 0019 snapshot stays priced; a partial snapshot is now explicitly `corrupt`
+  on both handler and client paths and cannot fall through to a later local sample. The explicit
+  `ineligible-pricing` zero-payout outcome is retained through save normalization and explained in
+  the offline result. The pre-0020 Echo-schema regression now verifies the intended migration fence:
+  fresh issuance waits rather than creating an ambiguous row, while old pending-row recovery remains
+  separately covered.
+* **Balance evidence:** Re-ran gear, encounter and growth progression measurement with
+  `--reuse-baseline`. The three fixture diffs contain only `sourceHash` and `combatHash`; all 42
+  gear, 21 encounter and 63 growth rows stayed byte-identical. No balance values changed.
+* **Checks:** Focused API/client/migration/cloud/cache/publish checks pass (API 75/75, offline 17/17,
+  E2E 2/2, migration 10/10, cloud 100/100, update watcher 22/22, publish 20/20), as do reward
+  ownership, pre-0006 Echo fencing, Asura pose, expanded Wardrobe and hosted-launch staging checks.
+  The complete local gate ran 253 entries: **251 passed, 2 failed**. The remaining failures are both
+  unchanged from `main`: `mvp_art_crop.py --check` reports the seven shipped MVP crops drifting from
+  their source, and `render_lost_boot_smoke.js` has the established renderer-null/guide assertions.
+  They were not hidden or weakened; all v424/Asura/reconciliation checks passed.
+* **Delivery:** PR #254 remains held. No merge, deployment, production-data operation, balance
+  change, recurring Social Durable Object traffic or broader reward-accounting claim is made here.
+
+### 2026-11-18 — `haven-v425` preserve offline claims during schema upgrades
+* **Fixed:** A qualifying return before migration 0020 is ready now retries with a specific 503
+  instead of advancing `last_seen` without an entitlement. GET and PUT preserve the exact saved
+  version, blob and away baseline; after the migration, the original window issues one claim.
+  Existing pending legacy claims remain recoverable and active non-qualifying saves still work.
+* **Fixed:** Historical rows with interval-only frozen fragments are corrupt, not legacy pricing
+  candidates. Both absent-state and explicit-legacy rows require every frozen field to be absent;
+  valid ineligible rows may still carry their issued bounds. No new migration or reward formula.
+* **Try it:** On an isolated database through 0019, return after an eligible absence, retry GET/PUT,
+  then apply 0020: the original away window is retained. An interval-only historical row must never
+  fall back to a later farming sample. Apply/verify production migrations before activating a release.
+* **Checks:** The new API regressions fail before the patch and pass after it (77/77). The complete
+  253-entry local gate was run; after unchanged assertions were rerun with Windows environment/path
+  adapters and required test dependencies, 250 passed. The seven existing MVP crop drifts and the
+  renderer-null smoke failure remain; the Windows SQLite cleanup `EBUSY` in `session_lost_sim`
+  also reproduces on the original PR head after its gameplay assertions pass. No new failure was
+  hidden. The 42 gear, 21 encounter and 63 growth measurement rows are byte-identical after real
+  `--reuse-baseline` remeasurement; only source/combat hashes changed. All build mirrors and the
+  17 coordinated asset URLs now identify v425, including the merged Wardrobe/expanded-job assets.
+* **Delivery:** Review fixes prepared for PR #254. No merge, deployment, production-data operation,
+  balance change, source-art change or new Social Durable Object traffic.
+
+### 2026-11-19 — Windows session-test database cleanup
+* **Fixed:** `session_lost_sim.js` explicitly closes the SQLite handle it owns after stopping its
+  HTTP server, before removing its temporary directory. Its session/cookie assertions are unchanged;
+  Windows no longer fails cleanup with `EBUSY`. No game/server runtime or release label changed.
+* **Checks:** The original head reproduced the cleanup error after its functional assertions passed.
+  The corrected test passes 10/10 with the same assertions. The required 253-entry gate ran with
+  Windows environment adapters; after the timing-sensitive Wardrobe check passed a serial rerun,
+  251 passed and only the existing MVP crop/renderer-null failures remain. No assertion was relaxed.
+* **Delivery:** Test-only follow-up for PR #254; no merge, deployment or production-data operation.
+
+### 2026-11-19 — `haven-v426` preserve legacy first-return offline rewards
+* **Fixed:** A returning save from before run ownership existed now freezes its already-stored,
+  same-class measured minute into generation 1, matching the client loader. It is no longer wrongly
+  issued a permanently ineligible first-return claim. Missing sample account/run stamps are inferred
+  only when both saved run fields are absent; explicit foreign account/class/run stamps and modern
+  untrained samples remain ineligible. The original rates are frozen before any later training.
+* **Try it:** In an isolated database, store a pre-run save, model an absence, then return using the
+  new client. Its original minute pays once and survives acknowledgement; a later stronger minute
+  cannot reprice it. Modern untrained and foreign-owner cases must still pay nothing.
+* **Checks:** The first-return API regression fails before the fix and passes after it (78/78).
+  Real API/client claim integration passes 3/3, save/reload recovery 22/22, and CPU hot-path guards
+  36/36. Re-ran progression measurements with `--reuse-baseline`: all measured balance rows remain
+  unchanged; only source/combat hashes changed. Build mirrors and coordinated asset tags are v426.
+  The complete 253-entry gate ran with Windows environment adapters: 251 passed after the CPU
+  profiler's timing-sensitive zero-CPU sample passed a serial rerun (28/28). Only the existing MVP
+  crop-audit and renderer-null failures remain; no assertions or budgets were weakened.
+* **Delivery:** Code-only follow-up for PR #254. Production schema was inspected read-only and
+  migrations 0018–0020 were found missing. The exact reviewed SQL passed a schema-only local
+  rehearsal, and Cloudflare returned a Time Travel recovery bookmark. The separately approved
+  production schema operation is recorded below; no player records were exported for this code fix.
+
+### 2026-11-19 — Approved production offline-claim schema preparation
+* **Changed:** After the owner's explicit approval, applied the reviewed 0018, 0019 and 0020 SQL
+  together to production `pg` (`50a6448b-1f12-466c-a28a-10544bedf750`). Only the offline-claim
+  table was targeted: 14 nullable columns were added and 1,278 historical claims became `legacy`.
+  No wallet, inventory, account credential or save-blob update was executed.
+* **Checks:** Verified the target identity and original nine-column schema, captured a fresh D1
+  Time Travel bookmark, checked the exact migration bundle hash, then verified all 23 expected
+  columns and the resulting legacy claim count. The existing production `/api/me` returned its
+  expected unauthenticated 401 after the operation. The SQL rehearsal used synthetic rows and
+  live schema metadata only; no player-data export was performed.
+* **Delivery:** Production schema preparation completed; these ALTER scripts must not be replayed.
+  PR #254 remains unmerged and its v426 compatibility code still requires final CI before activation.

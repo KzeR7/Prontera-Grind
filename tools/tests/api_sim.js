@@ -56,10 +56,11 @@ function makeD1(sqlite, stats) {
   };
 }
 
-function freshEnv() {
+function freshEnv({ throughMigration = Infinity } = {}) {
   const sqlite = new DatabaseSync(':memory:');
   const dir = path.join(root, 'migrations');
   for (const name of fs.readdirSync(dir).filter(n => /^\d+_.*\.sql$/.test(n)).sort()) {
+    if (Number(name.slice(0, name.indexOf('_'))) > throughMigration) continue;
     sqlite.exec(fs.readFileSync(path.join(dir, name), 'utf8'));
   }
   const stats = { writes: 0, byTable: {}, sql: [] };
@@ -298,6 +299,265 @@ await T('offline time is server-timed, capped, half-rate, persistent until claim
   directSave.offlineClaimId=direct.data.offlineClaim.id;
   const directAccepted=await api.putSave(env,c,{version:after.data.version,blob:JSON.stringify(directSave),offlineClaimId:directSave.offlineClaimId});
   assert.strictEqual(directAccepted.status,200,'the corrected retry acknowledges the issued claim');
+});
+
+await T('v422: an issued claim freezes the class and progression run it was priced for', async () => {
+  const h = freshEnv();
+  const reg = await api.register(h.env, { u: 'OWNERCTX', p: 'ownerctx-password' });
+  const id = h.sqlite.prepare('SELECT id FROM users WHERE username = ?').get('OWNERCTX').id;
+  const blob = JSON.parse(saveBlob(30, 500));
+  blob.cls = 'Knight'; blob.runSeq = 2; blob.runGen = 2; blob.accountId = id;
+  // This is the exact stored sample the four-hour entitlement must freeze. A later client save
+  // deliberately replaces it below; the pending claim must not be repriced by that mutation.
+  blob.offlineIncome = { version: 1, rewardVersion: 6, key: 'Knight:0:1', at: 1000, aid: id, gen: 2,
+    xp: 6000, zeny: 3000, job: 420, kph: 120 };
+  await api.putSave(h.env, reg.cookie, { version: 0, blob: JSON.stringify(blob), savedAt: 1 });
+  const awayAt = Date.now() - 4 * 3600000;
+  h.sqlite.prepare('UPDATE saves SET last_seen = ?, rate_kph = ? WHERE user_id = ?').run(awayAt, 100, id);
+  const got = await api.getSave(h.env, reg.cookie);
+  const claim = got.data.offlineClaim;
+  assert.ok(claim && claim.id > 0, 'a claim is issued for the away window');
+  assert.strictEqual(claim.cls, 'Knight', 'the claim freezes the class it was priced for');
+  assert.strictEqual(claim.runGen, 2, 'and the progression run');
+  assert.deepStrictEqual(claim.pricing && {
+    xp: claim.pricing.xp, zeny: claim.pricing.zeny, job: claim.pricing.job, kph: claim.pricing.kph,
+    sourceMap: claim.pricing.sourceMap, sourceStage: claim.pricing.sourceStage,
+    incomeVersion: claim.pricing.incomeVersion, rewardVersion: claim.pricing.rewardVersion,
+  }, { xp: 6000, zeny: 3000, job: 420, kph: 120, sourceMap: 0, sourceStage: 1, incomeVersion: 1, rewardVersion: 6 },
+    'the claim freezes the complete measured minute and source, not only its owner');
+  assert.ok(claim.pricing.intervalEndAt >= claim.pricing.intervalStartAt, 'the server also freezes explicit interval bounds');
+  const stored = h.sqlite.prepare(`SELECT cls, run_gen, income_xp, income_zeny, income_job, income_kph,
+    source_map, source_stage, income_version, reward_version, sampled_at, interval_start_at, interval_end_at
+    FROM offline_reward_claims WHERE id = ?`).get(claim.id);
+  assert.strictEqual(stored.cls, 'Knight', 'the freeze is durable, not just reported');
+  assert.strictEqual(stored.run_gen, 2);
+  assert.deepStrictEqual([stored.income_xp, stored.income_zeny, stored.income_job, stored.income_kph,
+    stored.source_map, stored.source_stage, stored.income_version, stored.reward_version, stored.sampled_at],
+    [6000, 3000, 420, 120, 0, 1, 1, 6, 1000], 'the D1 row holds immutable pricing and source fields');
+  assert.strictEqual(stored.interval_start_at, awayAt,
+    'the frozen interval starts at the stored away baseline, before the GET advances it');
+  assert.ok(stored.interval_end_at >= stored.interval_start_at);
+  const retry = await api.getSave(h.env, reg.cookie);
+  assert.strictEqual(retry.data.offlineClaim.id, claim.id, 'a retry returns the same frozen claim');
+  assert.strictEqual(retry.data.offlineClaim.cls, 'Knight');
+  assert.strictEqual(retry.data.offlineClaim.runGen, 2);
+  assert.deepStrictEqual(retry.data.offlineClaim.pricing, claim.pricing, 'retry returns the original immutable pricing, not a reissued plan');
+  const base = JSON.parse(retry.data.blob); base.offlineClaimId = claim.id;
+  // A newer minute can be stronger/weaker and from another field, but it cannot reprice this claim.
+  base.offlineIncome = { ...base.offlineIncome, key: 'Knight:1:2', xp: 600000, zeny: 300000, job: 42000, kph: 30000 };
+  const accepted = await api.putSave(h.env, reg.cookie, { version: retry.data.version, blob: JSON.stringify(base), offlineClaimId: claim.id, savedAt: 2 });
+  assert.strictEqual(accepted.status, 200, 'the frozen claim is consumed by the versioned save exactly as before');
+  const consumed = h.sqlite.prepare('SELECT claimed_at, cls, run_gen FROM offline_reward_claims WHERE id = ?').get(claim.id);
+  assert.ok(consumed.claimed_at > 0, 'exactly-once consumption is unchanged');
+  assert.strictEqual(consumed.cls, 'Knight', 'consumption never rewrites the frozen owner');
+  assert.strictEqual(consumed.run_gen, 2);
+  const pricedAfterAck = h.sqlite.prepare('SELECT income_xp, income_zeny, source_map, source_stage FROM offline_reward_claims WHERE id = ?').get(claim.id);
+  assert.deepStrictEqual([pricedAfterAck.income_xp, pricedAfterAck.income_zeny, pricedAfterAck.source_map, pricedAfterAck.source_stage], [6000, 3000, 0, 1],
+    'the acknowledgement cannot rewrite an already-issued entitlement with a later sample');
+});
+
+await T('v424: an ineligible post-0020 claim is explicit, bounded, zero-priced and still exactly-once acknowledged', async () => {
+  const h = freshEnv();
+  const reg = await api.register(h.env, { u: 'UNTRAINED', p: 'untrained-password' });
+  const id = h.sqlite.prepare('SELECT id FROM users WHERE username=?').get('UNTRAINED').id;
+  const blob = JSON.parse(saveBlob(30, 500));
+  blob.cls = 'Swordman'; blob.runSeq = 2; blob.runGen = 2; blob.accountId = id;
+  // No offlineIncome minute exists yet. A later first minute must not price this already-issued gap.
+  await api.putSave(h.env, reg.cookie, { version: 0, blob: JSON.stringify(blob), savedAt: 1 });
+  const awayAt=Date.now()-4*3600000;
+  h.sqlite.prepare('UPDATE saves SET last_seen=?, rate_kph=? WHERE user_id=?').run(awayAt,120,id);
+  const got=await api.getSave(h.env,reg.cookie),claim=got.data.offlineClaim;
+  assert.ok(claim&&claim.id>0,'the handler issues the durable acknowledgement claim');
+  assert.strictEqual(claim.pricingState,'ineligible','new no-sample rows never impersonate legacy pricing:null');
+  assert.strictEqual(claim.pricing,null);
+  assert.strictEqual(claim.intervalStartAt,awayAt,'the interval is frozen even though pricing is not');
+  assert.ok(claim.intervalEndAt>=claim.intervalStartAt);
+  assert.strictEqual(got.data.serverNow,claim.intervalEndAt,'GET uses its one server clock for both bounds and anchor');
+  const durable=h.sqlite.prepare('SELECT pricing_state, income_xp, interval_start_at, interval_end_at FROM offline_reward_claims WHERE id=?').get(claim.id);
+  assert.deepStrictEqual([durable.pricing_state,durable.income_xp,durable.interval_start_at],['ineligible',null,awayAt]);
+  // A deliberately stronger later sample travels in the acknowledgement save but cannot rewrite
+  // this entitlement; the client-side real-applier regression proves it cannot pay from this either.
+  const ack=JSON.parse(got.data.blob);ack.offlineClaimId=claim.id;
+  ack.offlineIncome={version:1,rewardVersion:6,key:'Swordman:0:1',at:Date.now(),aid:id,gen:2,xp:6000,zeny:3000,job:420,kph:120};
+  const accepted=await api.putSave(h.env,reg.cookie,{version:got.data.version,blob:JSON.stringify(ack),offlineClaimId:claim.id,savedAt:2});
+  assert.strictEqual(accepted.status,200);
+  assert.ok(h.sqlite.prepare('SELECT claimed_at FROM offline_reward_claims WHERE id=?').get(claim.id).claimed_at>0);
+  assert.strictEqual(h.sqlite.prepare('SELECT income_xp, pricing_state FROM offline_reward_claims WHERE id=?').get(claim.id).income_xp,null,
+    'acknowledgement cannot turn an ineligible row into a later priced claim');
+});
+
+await T('v424: 0020 classifies historical rows and only legacy rows retain the compatibility signal', async () => {
+  const h=freshEnv();
+  const reg=await api.register(h.env,{u:'CLAIMSTATE',p:'claimstate-password'});
+  const id=h.sqlite.prepare('SELECT id FROM users WHERE username=?').get('CLAIMSTATE').id;
+  const base=JSON.parse(saveBlob(20,40));base.cls='Knight';base.runSeq=2;base.runGen=2;
+  await api.putSave(h.env,reg.cookie,{version:0,blob:JSON.stringify(base),savedAt:1});
+  const issued=Date.now();
+  // Simulate an old all-null row carried through migration 0020. It must remain recoverable, not
+  // re-labelled as one of today's ineligible rows.
+  h.sqlite.prepare(`INSERT INTO offline_reward_claims(user_id,away_ms,credited_ms,rate_kph,kills,remainder,issued_at,
+    cls,run_gen,pricing_state) VALUES(?,?,?,?,?,?,?,?,?,?)`).run(id,4*3600000,4*3600000,120,240,0,issued,'Knight',2,'legacy');
+  const legacy=await api.getSave(h.env,reg.cookie);
+  assert.strictEqual(legacy.data.offlineClaim.pricingState,'legacy');
+  assert.strictEqual(legacy.data.offlineClaim.pricing,null);
+  const ack=JSON.parse(legacy.data.blob);ack.offlineClaimId=legacy.data.offlineClaim.id;
+  assert.strictEqual((await api.putSave(h.env,reg.cookie,{version:legacy.data.version,blob:JSON.stringify(ack),offlineClaimId:ack.offlineClaimId})).status,200,
+    'legacy recovery rows remain versioned/restore-fenced acknowledgements');
+  // State and fields disagreeing is corruption, never another local-sample fallback.
+  h.sqlite.prepare(`INSERT INTO offline_reward_claims(user_id,away_ms,credited_ms,rate_kph,kills,remainder,issued_at,
+    cls,run_gen,income_xp,pricing_state) VALUES(?,?,?,?,?,?,?,?,?,?,?)`).run(id,4*3600000,4*3600000,120,240,0,issued+1,'Knight',2,99,'ineligible');
+  const corrupt=await api.getSave(h.env,reg.cookie);
+  assert.strictEqual(corrupt.data.offlineClaim.pricingState,'corrupt');
+  assert.strictEqual(corrupt.data.offlineClaim.pricing,null);
+});
+
+await T('v424: no state column means old rows can be acknowledged, but new issuance waits for migration 0020', async () => {
+  const h = freshEnv({ throughMigration: 19 });
+  const reg = await api.register(h.env, { u: 'PRE0020', p: 'pre0020-password' });
+  const id = h.sqlite.prepare('SELECT id FROM users WHERE username=?').get('PRE0020').id;
+  const blob = JSON.parse(saveBlob(30, 500)); blob.cls='Knight';blob.runSeq=2;blob.runGen=2;blob.accountId=id;
+  await api.putSave(h.env,reg.cookie,{version:0,blob:JSON.stringify(blob),savedAt:1});
+  const awayAt=Date.now()-4*3600000;
+  h.sqlite.prepare('UPDATE saves SET last_seen=?, rate_kph=? WHERE user_id=?').run(awayAt,120,id);
+  const noState=await api.getSave(h.env,reg.cookie);
+  assert.strictEqual(noState.status,503,'a qualifying return retries until its reward window can be persisted');
+  assert.strictEqual(noState.data.offlineClaimsUnavailable,true);
+  assert.strictEqual(h.sqlite.prepare('SELECT last_seen FROM saves WHERE user_id=?').get(id).last_seen,awayAt,
+    'waiting for the schema must not erase the unclaimed away window');
+  assert.equal(h.sqlite.prepare('PRAGMA table_info(offline_reward_claims)').all().some(c=>c.name==='pricing_state'),false);
+  // A genuinely pre-0020 pending row is still returned/acknowledged under its legacy contract.
+  h.sqlite.prepare('INSERT INTO offline_reward_claims(user_id,away_ms,credited_ms,rate_kph,kills,remainder,issued_at,cls,run_gen) VALUES(?,?,?,?,?,?,?,?,?)')
+    .run(id,4*3600000,4*3600000,120,240,0,Date.now(),'Knight',2);
+  const legacy=await api.getSave(h.env,reg.cookie);
+  assert.strictEqual(legacy.data.offlineClaim.pricingState,'legacy');
+  const ack=JSON.parse(legacy.data.blob);ack.offlineClaimId=legacy.data.offlineClaim.id;
+  assert.strictEqual((await api.putSave(h.env,reg.cookie,{version:legacy.data.version,blob:JSON.stringify(ack),offlineClaimId:ack.offlineClaimId})).status,200);
+  // A historical no-state row is legacy only when the old snapshot fields are all absent. A partial
+  // 0019 snapshot is corrupt; it must not fall through to a mutable local sample merely because
+  // pricing_state was added later.
+  h.sqlite.prepare(`INSERT INTO offline_reward_claims(user_id,away_ms,credited_ms,rate_kph,kills,remainder,issued_at,
+    cls,run_gen,income_xp) VALUES(?,?,?,?,?,?,?,?,?,?)`).run(id,4*3600000,4*3600000,120,240,0,Date.now()+1,'Knight',2,99);
+  const partial=await api.getSave(h.env,reg.cookie);
+  assert.strictEqual(partial.data.offlineClaim.pricingState,'corrupt');
+  assert.strictEqual(partial.data.offlineClaim.pricing,null);
+});
+
+await T('offline claim classification treats interval-only historical snapshots as corrupt', async () => {
+  const h=freshEnv(),reg=await api.register(h.env,{u:'PARTIALTIME',p:'partialtime-password'});
+  const id=h.sqlite.prepare('SELECT id FROM users WHERE username=?').get('PARTIALTIME').id;
+  await api.putSave(h.env,reg.cookie,{version:0,blob:saveBlob(30,500)});
+  const end=Date.now(),start=end-4*3600000;
+  h.sqlite.prepare(`INSERT INTO offline_reward_claims(user_id,away_ms,credited_ms,rate_kph,kills,remainder,issued_at)
+    VALUES(?,?,?,?,?,?,?)`).run(id,4*3600000,4*3600000,120,240,0,end);
+  assert.strictEqual((await api.getSave(h.env,reg.cookie)).data.offlineClaim.pricingState,'legacy',
+    'a truly empty historical snapshot remains recoverable');
+  for(const state of [null,'legacy'])for(const bounds of [[start,null],[null,end],[start,end]]){
+    h.sqlite.prepare('UPDATE offline_reward_claims SET pricing_state=?,interval_start_at=?,interval_end_at=? WHERE user_id=? AND claimed_at IS NULL')
+      .run(state,...bounds,id);
+    const got=await api.getSave(h.env,reg.cookie);
+    assert.strictEqual(got.data.offlineClaim.pricingState,'corrupt',
+      'partial frozen bounds cannot authorize mutable-sample fallback: '+JSON.stringify({state,bounds}));
+    assert.strictEqual(got.data.offlineClaim.pricing,null);
+  }
+});
+
+await T('a missing claim-state migration preserves GET/PUT reward windows until issuance can resume', async () => {
+  const h=freshEnv({throughMigration:19}),reg=await api.register(h.env,{u:'MIGWAIT',p:'migrationwait-password'});
+  const id=h.sqlite.prepare('SELECT id FROM users WHERE username=?').get('MIGWAIT').id;
+  const blob=JSON.parse(saveBlob(30,500));blob.cls='Knight';blob.runGen=2;blob.runSeq=2;blob.accountId=id;
+  blob.offlineIncome={version:1,rewardVersion:6,key:'Knight:0:1',aid:id,gen:2,at:1,xp:6000,zeny:3000,job:420,kph:120};
+  await api.putSave(h.env,reg.cookie,{version:0,blob:JSON.stringify(blob)});
+  const awayAt=Date.now()-4*3600000-10000;
+  h.sqlite.prepare('UPDATE saves SET last_seen=?,rate_kph=120 WHERE user_id=?').run(awayAt,id);
+  const before=h.sqlite.prepare('SELECT version,blob,last_seen FROM saves WHERE user_id=?').get(id);
+  for(const attempt of [()=>api.getSave(h.env,reg.cookie),()=>api.putSave(h.env,reg.cookie,{version:1,blob:JSON.stringify(blob)})]){
+    const refused=await attempt();
+    assert.strictEqual(refused.status,503);
+    assert.strictEqual(refused.data.offlineClaimsUnavailable,true);
+    assert.deepStrictEqual(h.sqlite.prepare('SELECT version,blob,last_seen FROM saves WHERE user_id=?').get(id),before,
+      'neither a read nor a rejected sync may consume the waiting window');
+    assert.strictEqual(h.sqlite.prepare('SELECT COUNT(*) AS n FROM offline_reward_claims').get().n,0);
+  }
+  h.sqlite.exec(fs.readFileSync(path.join(root,'migrations/0020_offline_claim_pricing_state.sql'),'utf8'));
+  const resumed=await api.getSave(h.env,reg.cookie);
+  assert.strictEqual(resumed.status,200);
+  assert.strictEqual(resumed.data.offlineClaim.pricingState,'priced');
+  assert.strictEqual(resumed.data.offlineClaim.intervalStartAt,awayAt);
+  assert.strictEqual(resumed.data.offlineClaim.creditedMs,4*3600000);
+  assert.strictEqual((await api.getSave(h.env,reg.cookie)).data.offlineClaim.id,resumed.data.offlineClaim.id,
+    'recovery issues one persistent entitlement for the preserved window');
+});
+
+await T('a legacy save first return freezes its existing same-class sample instead of retiring earned income', async () => {
+  const h=freshEnv(),reg=await api.register(h.env,{u:'FIRSTRETURN',p:'firstreturn-password'});
+  const id=h.sqlite.prepare('SELECT id FROM users WHERE username=?').get('FIRSTRETURN').id;
+  const blob=JSON.parse(saveBlob(30,500));blob.cls='Knight';blob.accountId=id;
+  blob.offlineIncome={version:1,rewardVersion:6,key:'Knight:0:1',at:1,xp:6000,zeny:3000,job:420,kph:120};
+  await api.putSave(h.env,reg.cookie,{version:0,blob:JSON.stringify(blob)});
+  h.sqlite.prepare('UPDATE saves SET last_seen=?,rate_kph=120 WHERE user_id=?').run(Date.now()-4*3600000,id);
+  const first=await api.getSave(h.env,reg.cookie),claim=first.data.offlineClaim;
+  assert.strictEqual(claim.pricingState,'priced','an unmigrated save is not an untrained modern run');
+  assert.strictEqual(claim.runGen,1,'match the client legacy generation-one adoption');
+  assert.deepStrictEqual([claim.pricing.xp,claim.pricing.zeny,claim.pricing.job,claim.pricing.kph],[6000,3000,420,120]);
+  blob.runGen=1;blob.runSeq=1;blob.offlineClaimId=claim.id;
+  blob.offlineIncome={...blob.offlineIncome,aid:id,gen:1,xp:600000,zeny:300000};
+  assert.strictEqual((await api.putSave(h.env,reg.cookie,{version:first.data.version,blob:JSON.stringify(blob),offlineClaimId:claim.id})).status,200);
+  const frozen=h.sqlite.prepare('SELECT income_xp,income_zeny,run_gen FROM offline_reward_claims WHERE id=?').get(claim.id);
+  assert.deepStrictEqual([frozen.income_xp,frozen.income_zeny,frozen.run_gen],[6000,3000,1],
+    'adoption cannot reprice its already-issued first-return entitlement');
+  for(const sample of [
+    {...blob.offlineIncome,aid:id+100},
+    {...blob.offlineIncome,gen:7},
+    {version:1,rewardVersion:6,key:'Novice:0:1',at:1,xp:6000,zeny:3000,job:420,kph:120},
+  ]){
+    const legacy={...blob};delete legacy.runGen;delete legacy.runSeq;delete legacy.offlineClaimId;legacy.offlineIncome=sample;
+    h.sqlite.prepare('UPDATE saves SET blob=?,last_seen=? WHERE user_id=?').run(JSON.stringify(legacy),Date.now()-4*3600000,id);
+    const denied=await api.getSave(h.env,reg.cookie);
+    assert.strictEqual(denied.data.offlineClaim.pricingState,'ineligible','legacy adoption never borrows an explicitly foreign account/class/run');
+    h.sqlite.prepare('UPDATE offline_reward_claims SET claimed_at=? WHERE user_id=? AND claimed_at IS NULL').run(Date.now(),id);
+  }
+  const modern={...blob,runGen:2,runSeq:2};delete modern.offlineClaimId;
+  modern.offlineIncome={version:1,rewardVersion:6,key:'Knight:0:1',at:1,xp:6000,zeny:3000,job:420,kph:120};
+  h.sqlite.prepare('UPDATE saves SET blob=?,last_seen=? WHERE user_id=?').run(JSON.stringify(modern),Date.now()-4*3600000,id);
+  assert.strictEqual((await api.getSave(h.env,reg.cookie)).data.offlineClaim.pricingState,'ineligible',
+    'modern owner metadata cannot be silently inferred when its sample has none');
+  h.sqlite.prepare('UPDATE offline_reward_claims SET claimed_at=? WHERE user_id=? AND claimed_at IS NULL').run(Date.now(),id);
+  const oldNormal={...modern};delete oldNormal.runGen;delete oldNormal.runSeq;
+  oldNormal.offlineIncome={...modern.offlineIncome};delete oldNormal.offlineIncome.rewardVersion;
+  h.sqlite.prepare('UPDATE saves SET blob=?,last_seen=? WHERE user_id=?').run(JSON.stringify(oldNormal),Date.now()-4*3600000,id);
+  const compatible=(await api.getSave(h.env,reg.cookie)).data.offlineClaim;
+  assert.strictEqual(compatible.pricingState,'priced','old normal-field samples without Ascension version remain payable');
+  assert.strictEqual(compatible.pricing.rewardVersion,0);
+});
+
+await T('v422: the smoothed kill rate re-bases across a class or run boundary instead of carrying old-class speed', async () => {
+  const h = freshEnv();
+  const reg = await api.register(h.env, { u: 'RATEBASE', p: 'ratebase-password' });
+  const id = h.sqlite.prepare('SELECT id FROM users WHERE username = ?').get('RATEBASE').id;
+  const rateRow = () => Number(h.sqlite.prepare('SELECT rate_kph FROM saves WHERE user_id = ?').get(id).rate_kph);
+  const sw = JSON.parse(saveBlob(40, 900)); sw.cls = 'Swordman'; sw.runSeq = 1; sw.runGen = 1;
+  await api.putSave(h.env, reg.cookie, { version: 0, blob: JSON.stringify(sw), savedAt: 1 });
+  h.sqlite.prepare('UPDATE saves SET last_seen = ?, rate_kph = ? WHERE user_id = ?').run(Date.now() - 60000, 240, id);
+  // Class change: the Hunter must not price away claims from the Swordman's smoothed speed.
+  const hunter = JSON.parse(JSON.stringify(sw)); hunter.cls = 'Hunter'; hunter.runSeq = 2; hunter.runGen = 2; hunter.kills = sw.kills + 10;
+  const switched = await api.putSave(h.env, reg.cookie, { version: 1, blob: JSON.stringify(hunter), savedAt: 2 });
+  assert.strictEqual(switched.status, 200);
+  assert.strictEqual(rateRow(), 0, 'the old class rate is not carried into the new class');
+  // Same class name, new progression run (the Novice reset shape): still a boundary.
+  h.sqlite.prepare('UPDATE saves SET last_seen = ?, rate_kph = ? WHERE user_id = ?').run(Date.now() - 60000, 240, id);
+  const h3 = JSON.parse(JSON.stringify(hunter)); h3.runSeq = 3; h3.runGen = 3; h3.kills = hunter.kills + 10;
+  const reran = await api.putSave(h.env, reg.cookie, { version: 2, blob: JSON.stringify(h3), savedAt: 3 });
+  assert.strictEqual(reran.status, 200);
+  assert.strictEqual(rateRow(), 0, 'a new run of the same class re-bases too');
+  // A stored save from before runs were numbered is NOT a boundary: migration erases nothing,
+  // and the first post-migration sync keeps smoothing from the legacy rate.
+  const legacyStored = JSON.parse(JSON.stringify(h3)); delete legacyStored.runGen; delete legacyStored.runSeq;
+  h.sqlite.prepare('UPDATE saves SET blob = ?, last_seen = ?, rate_kph = ? WHERE user_id = ?')
+    .run(JSON.stringify(legacyStored), Date.now() - 60000, 240, id);
+  const h4 = JSON.parse(JSON.stringify(h3)); h4.runSeq = 4; h4.runGen = 4; h4.kills = h3.kills + 12;
+  const cont = await api.putSave(h.env, reg.cookie, { version: 3, blob: JSON.stringify(h4), savedAt: 4 });
+  assert.strictEqual(cont.status, 200);
+  assert.ok(rateRow() > 0, 'a pre-ownership stored save keeps smoothing into the numbered run');
 });
 
 await T('a login does not erase the away window: the offline claim survives signing in', async () => {

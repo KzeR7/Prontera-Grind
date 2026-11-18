@@ -213,6 +213,18 @@ await t('pre-0006 database: save and kills work; Echo fails closed until migrati
     cookie: ck, body: { owner: 'PreUser', version: 1, savedAt: Date.now(), blob: JSON.stringify({ lv: 101, kills: 25, cls: 'Novice', zeny: 0, owner: 'PreUser', trial }) },
   });
   assert.equal(s2.status, 200, 'subsequent save syncs succeed before migration 0006');
+  // v424 does not create another ambiguous pricing:null entitlement before migration 0020 is
+  // verified. Active saves/boards remain usable, but a qualifying return must preserve its window;
+  // genuinely pending old rows are still read/acknowledged by the compatibility paths elsewhere.
+  const awayAt=Date.now()-4*3600000;
+  preSqlite.prepare('UPDATE saves SET last_seen = ?, rate_kph = ? WHERE user_id = (SELECT id FROM users WHERE username = ?)')
+    .run(awayAt, 120, 'PreUser');
+  const stagedClaim = await callPre('api/save.js', 'onRequestGet', 'GET', '/api/save', { cookie: ck });
+  assert.equal(stagedClaim.status, 503, 'a qualifying return retries while explicit claim state is unavailable');
+  assert.equal(stagedClaim.data.offlineClaimsUnavailable, true);
+  assert.equal(preSqlite.prepare('SELECT last_seen FROM saves WHERE user_id=(SELECT id FROM users WHERE username=?)')
+    .get('PreUser').last_seen,awayAt,'the schema fence preserves the unpaid away interval');
+  assert.equal(preSqlite.prepare('SELECT COUNT(*) AS n FROM offline_reward_claims').get().n, 0, 'the fence writes no ambiguous new legacy row');
   const killsBoard = await callPre('api/board.js', 'onRequestGet', 'GET', '/api/board?period=daily&board=kills', { cookie: ck });
   assert.equal(killsBoard.status, 200, 'kills board works before migration 0006');
   const echoBoard = await callPre('api/board.js', 'onRequestGet', 'GET', '/api/board?period=daily&board=echo', { cookie: ck });

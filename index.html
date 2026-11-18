@@ -921,13 +921,13 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="preload" href="assets/ui/fonts/font-5.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-6.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-7.ttf" as="font" type="font/ttf" crossorigin>
-<link rel="stylesheet" href="assets/ui/eclipse.css?v=421">
-<link rel="stylesheet" href="assets/ui/mobile.css?v=421">
+<link rel="stylesheet" href="assets/ui/eclipse.css?v=426">
+<link rel="stylesheet" href="assets/ui/mobile.css?v=426">
 <script src="assets/ui/mobile.js?v=274"></script>
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
-<link rel="stylesheet" href="assets/social.css?v=421">
+<link rel="stylesheet" href="assets/social.css?v=426">
 <link rel="stylesheet" href="assets/social-battle.css?v=393">
-  <link rel="stylesheet" href="assets/social-fishing.css?v=421"><link rel="stylesheet" href="assets/friends.css?v=273">
+  <link rel="stylesheet" href="assets/social-fishing.css?v=426"><link rel="stylesheet" href="assets/friends.css?v=273">
 </head>
 <body>
 <div id="loginOverlay"><div class="eclipse-login-world" aria-hidden="true"></div><header class="eclipse-login-header"><a href="./" class="eclipse-brand"><span>HH</span><b>HORIZON HAVEN<small>YOUR IDLE ADVENTURE</small></b></a><div class="eclipse-palettes" role="group" aria-label="Interface palette"><button type="button" data-palette="moonstone">Moonstone</button><button type="button" data-palette="aurora">Aurora</button><button type="button" data-palette="ember">Ember</button></div></header><main class="eclipse-login-layout"><section class="login-brand"><div class="login-eyebrow">A WORLD WORTH RETURNING TO</div><h1>Your next <br>chapter <em>awaits.</em></h1><p>Explore a world beyond the horizon.<br>Collect rare gear, master every class, and build your haven.</p><div class="eclipse-login-art"><img src="assets/ui/eclipse-knight.png" alt="Lord Knight ready for adventure"><span>01 / PRONTERA<small>THE JOURNEY BEGINS HERE</small></span><div><img src="assets/equipment-icons/1142.png" alt=""><span>YOUR NEXT UPGRADE<small>Somewhere out there.</small></span></div></div><div class="login-footnote">EXPLORE · GROW · CONQUER</div></section><div class="login-card"><div class="eclipse-access">ADVENTURER ACCESS <span>◇</span></div><h2 id="authHeading">Welcome back.</h2><p class="login-intro" id="authIntro">Your adventure is right where you left it.</p><div class="atabs" id="authTabs"><button type="button" id="tabLogin" class="on">Login</button><button type="button" id="tabReg">Register</button></div>
@@ -1056,10 +1056,10 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <div id="tooltip"></div>
 <link rel="stylesheet" href="assets/wardrobe.css?v=138">
 <link rel="stylesheet" href="assets/shop.css?v=318">
-<script src="assets/wardrobe.js?v=421"></script>
+<script src="assets/wardrobe.js?v=426"></script>
 <script src="assets/shop-catalog.js?v=321"></script>
 <script src="assets/fourth-jobs.js?v=179"></script>
-<script src="assets/expanded-jobs.js?v=421"></script>
+<script src="assets/expanded-jobs.js?v=426"></script>
 <script src="assets/ascension.js?v=156"></script>
 <script src="assets/native-mob-heights.js?v=153"></script>
 <script src="assets/native-fields.js?v=197"></script>
@@ -1333,7 +1333,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-18 haven-v421 Asura Strike one-hand-down pose';
+const BUILD='2026-11-19 haven-v426 preserve legacy first-return offline rewards';
 // v364: this write used to sit AFTER the `//` on the BUILD line, so it was part of the comment and
 // never ran - the login card showed an empty #buildTag and there was no way to confirm which file
 // the browser had loaded. It also has to survive the script running before the login card exists.
@@ -3740,7 +3740,7 @@ function ascUpgradeText(id,rank=5){const u=ASC_UPGRADES[id]||{},labels={damage:'
  return Object.entries(u).map(([k,n])=>k==='burn'?(rank===5?'Burn: 10% of cast power over 3s':'Burn unlocks at rank 5'):k==='bounce'?(rank===5?'+1 bounce to another target':'Extra bounce unlocks at rank 5'):`+${Number((n*ascUpgradeScale(k,rank)).toFixed(2))}${['range','stun','root','duration','critical','slow','flee','barrier'].includes(k)||(k==='buff'&&id==='ab_duple')?'':'%'} ${labels[k]||k}`).join(' · ');
 }
 
-const fresh=()=>({ascension:cleanAscension(null),progressionVersion:PROGRESSION_VERSION,skillVersion:SKILL_VERSION,skillRefund:0,skillRespec:{},pets:[],bond:[],cls:'Novice',sex:'m',hair:0,appearance:null,lv:1,exp:0,hp:100,zeny:0,kills:0,indexXp:0,mobKills:{},equippedTitle:null,shards:0,refineScrolls:0,mythicScrolls:0,nmMatVersion:3,nmMat:[0],dps:0,trial:{day:trialDay(),used:0,best:0,runs:0},dailyWheel:{day:trialDay(),spun:0,bonusRolls:0,lastReward:null,totalSpins:0},poker:{day:trialDay(),chips:1000,freeClaimed:0,ledgerApplied:[]},fishing:{v:1,bag:[],dex:{},stats:{casts:0,catches:0,escapes:0,perfects:0},settings:{fish:true,sound:true},coins:0,rods:['twig'],rod:'twig',bait:{},baitSel:null,bagTier:0,title:null},mail:[],mailSeeded:false,cardIndex:emptyCardIndex(),dmg:0,pts:10,jobs:{Novice:{jl:1,jx:0}},sk:{aid:1},skOff:{},skillPriority:[],skillCombos:{},dmgShort:true,dmgShow:true,cameraShake:true,base:{},mp:0,lvl:1,prog:MAPS.map(()=>1),mapClears:MAPS.map(()=>false),ascensionMat:[0,0,0],ascensionStageVersion:1,kl:0,auto:true,adv:true,kite:false,feed:true,hints:true,clickSell:false,bg:true,autoSell:[false,false,false,false,false,false,false],logOff:{},q:null,cards:[],ore:{ori:0,elu:0},offlineAt:0,offlineKph:0,offlineRateAt:0,offlineRateKills:0,offlineKillRemainder:0,gm:false,gmx:100,bgm:{enabled:true,volume:.05,muted:false},
+const fresh=()=>({ascension:cleanAscension(null),progressionVersion:PROGRESSION_VERSION,skillVersion:SKILL_VERSION,skillRefund:0,skillRespec:{},pets:[],bond:[],cls:'Novice',sex:'m',hair:0,appearance:null,lv:1,exp:0,hp:100,zeny:0,kills:0,indexXp:0,mobKills:{},equippedTitle:null,shards:0,refineScrolls:0,mythicScrolls:0,nmMatVersion:3,nmMat:[0],dps:0,trial:{day:trialDay(),used:0,best:0,runs:0},dailyWheel:{day:trialDay(),spun:0,bonusRolls:0,lastReward:null,totalSpins:0},poker:{day:trialDay(),chips:1000,freeClaimed:0,ledgerApplied:[]},fishing:{v:1,bag:[],dex:{},stats:{casts:0,catches:0,escapes:0,perfects:0},settings:{fish:true,sound:true},coins:0,rods:['twig'],rod:'twig',bait:{},baitSel:null,bagTier:0,title:null,mvpCaught:[]},mail:[],mailSeeded:false,cardIndex:emptyCardIndex(),dmg:0,pts:10,jobs:{Novice:{jl:1,jx:0}},sk:{aid:1},skOff:{},skillPriority:[],skillCombos:{},dmgShort:true,dmgShow:true,cameraShake:true,base:{},mp:0,lvl:1,prog:MAPS.map(()=>1),mapClears:MAPS.map(()=>false),ascensionMat:[0,0,0],ascensionStageVersion:1,kl:0,auto:true,adv:true,kite:false,feed:true,hints:true,clickSell:false,bg:true,autoSell:[false,false,false,false,false,false,false],logOff:{},q:null,cards:[],ore:{ori:0,elu:0},offlineAt:0,offlineKph:0,offlineRateAt:0,offlineRateKills:0,offlineKillRemainder:0,offlineClaimOutcomes:[],runSeq:1,runGen:1,gm:false,gmx:100,bgm:{enabled:true,volume:.05,muted:false},
   st:{str:1,agi:1,dex:1,luk:1,int:1,vit:1},eq:{weapon:{id:1,slot:'weapon',wt:'dagger',tier:0,val:5,name:'Novice Knife',aff:[],slots:1,cards:[],sec:0},armor:null,head:null,off:null,leg:null,acc1:null,acc2:null},inv:[]});
 const saveKey=()=>'pg_save3_'+currentUser;
 // ---------- the save-owner stamp (v88.6) ----------
@@ -4154,6 +4154,11 @@ const s=unpackSave(JSON.parse(raw));if(s&&s.lv){const F=fresh(),f=Object.assign(
   if(!Array.isArray(f.gmReceipts))f.gmReceipts=[];
   else if(f.gmReceipts.length>GMRECEIPTS_MAX)f.gmReceipts=f.gmReceipts.slice(-GMRECEIPTS_MAX);
   f.offlineAt=Math.max(0,Math.floor(num_(f.offlineAt,0)));f.offlineKph=cl(num_(f.offlineKph,0),0,OFFLINE_RATE_CAP);f.offlineRateAt=Math.max(0,Math.floor(num_(f.offlineRateAt,0)));f.offlineRateKills=safeCount(f.offlineRateKills);f.offlineKillRemainder=cl(num_(f.offlineKillRemainder,0),0,.999999);
+  // Outcome receipts make a deliberate no-payout policy auditable without letting a malformed save
+  // grow forever. They are not reward authority: claim-id idempotency remains server-side.
+  const claimOutcomes=new Set(['retired-owner','invalid-pricing','ineligible-pricing','legacy-unpriced']);
+  f.offlineClaimOutcomes=Array.isArray(f.offlineClaimOutcomes)?f.offlineClaimOutcomes.filter(o=>o&&typeof o==='object'&&Number.isSafeInteger(o.id)&&o.id>0&&claimOutcomes.has(o.outcome)).slice(-32).map(o=>({
+    id:o.id,outcome:o.outcome,cls:typeof o.cls==='string'?o.cls.slice(0,32):null,runGen:Number.isSafeInteger(o.runGen)&&o.runGen>=1?o.runGen:null,at:Math.max(0,Math.floor(num_(o.at,0)))})):[];
   if(!Array.isArray(f.prog)||!f.prog.length)f.prog=F.prog.slice();else f.prog=f.prog.map(v=>num_(v,1));
   while(f.prog.length<MAPS.length)f.prog.push(1);
   f.mapClears=MAPS.map((_,i)=>f.mapClears?.[i]===true);
@@ -4251,7 +4256,25 @@ const s=unpackSave(JSON.parse(raw));if(s&&s.lv){const F=fresh(),f=Object.assign(
     const n=Object.assign({},newQuest(type),q);
     n.type=type;n.goal=Math.max(1,Math.floor(+n.goal||1));n.prog=Math.max(0,Math.floor(+n.prog||0));
     n.z=Math.max(0,Math.floor(+n.z||0));n.xp=Math.max(0,Math.floor(+n.xp||0));return n});
-  f.ascension=cleanAscension(f.ascension);if(Number(String(f.offlineIncome?.key||'').split(':')[1])>=10&&f.offlineIncome?.rewardVersion!==ASC_REWARD_VERSION)f.offlineIncome=null;repairMastery(f);repairProgression(f,s.progressionVersion);return f}}catch(e){}return fresh()}
+  f.ascension=cleanAscension(f.ascension);if(Number(String(f.offlineIncome?.key||'').split(':')[1])>=10&&f.offlineIncome?.rewardVersion!==ASC_REWARD_VERSION)f.offlineIncome=null;
+  // v422 reward ownership: a measured reward names WHO earned it - this account (aid), this class
+  // (the income key's first part) and this progression run (gen). Saves from before runs were
+  // numbered join generation 1 across the board: the same class keeps paying exactly as before, and
+  // the first class change or Novice reset after this migration starts generation 2+, so a
+  // pre-migration sample can never leak into a post-migration run of the same-named class.
+  f.runSeq=Math.max(1,Math.floor(num_(f.runSeq,1)));f.runGen=cl(Math.floor(num_(f.runGen,1)),1,f.runSeq);
+  if(f.base&&typeof f.base==='object'&&!Array.isArray(f.base))for(const bk in f.base){const rec=f.base[bk];if(rec&&typeof rec==='object')rec.gen=Math.max(1,Math.floor(num_(rec.gen,1)))}
+  if(f.offlineIncome&&typeof f.offlineIncome==='object'&&!Array.isArray(f.offlineIncome)){
+    const oi=f.offlineIncome,ok=String(oi.key||'').split(':')[0];
+    if(!Number.isSafeInteger(oi.aid)||oi.aid<0)oi.aid=Math.max(0,Math.floor(num_(f.accountId,0)));
+    if(!Number.isSafeInteger(oi.gen)||oi.gen<1){
+      // Adopt by the key's class: the current class's sample joins the current run; a benched
+      // class's sample joins that class's recorded run; anything else gets gen 0, which matches no
+      // live run, and sits inert until a full fresh minute replaces it.
+      oi.gen=ok===f.cls?f.runGen:Math.max(0,Math.floor(num_(f.base&&f.base[ok]&&f.base[ok].gen,0)));
+    }
+  }
+  repairMastery(f);repairProgression(f,s.progressionVersion);return f}}catch(e){}return fresh()}
 let farmSession=null;
 // v391 (owner: "field have exp and go social hub nothing" - Thor Volcano Stage 1, Lv 150):
 // the sampling key used to include the STAGE (S.lvl). With Auto-advance on, a stage clears after
@@ -4287,13 +4310,29 @@ function farmSamplingPaused(){
   (typeof JOB_RITE!=='undefined'&&JOB_RITE.on)||(typeof TRIAL!=='undefined'&&TRIAL.on)||
   (typeof CLOUD!=='undefined'&&(CLOUD.lost||CLOUD.gate||CLOUD.paused||CLOUD.updating));
 }
+// v422: reward ownership = stable account id + class + progression-run generation, never the class
+// name alone - a reset Novice is a NEW owner with the same name, and a restored class continues the
+// run recorded in its S.base entry. `runGen` moves only in changeClass(); `runSeq` is the counter.
+const rewardAccountId=()=>Math.max(0,Math.floor(Number(S&&S.accountId)||0));
+const rewardRunGen=()=>Math.max(1,Math.floor(Number(S&&S.runGen)||1));
+// Does a measured income sample belong to this exact account/class/run? The retained-class claim
+// path uses the same predicate without ever changing S.cls; a reset Novice has the same class name
+// but a new run and therefore cannot borrow the old one. Legacy fields fall back only to the owner
+// supplied by the caller, so old saves stay readable without making an absent field a wildcard.
+const incomeOwnedBy=(income,cls,gen,aid)=>{
+  if(!income||typeof income!=='object'||String(income.key||'').split(':')[0]!==cls)return false;
+  const sampleGen=Number.isSafeInteger(income.gen)?income.gen:gen;
+  const sampleAid=Number.isSafeInteger(income.aid)?income.aid:aid;
+  return sampleGen===gen&&sampleAid===aid;
+};
+const incomeOwnedByCurrent=income=>incomeOwnedBy(income,S.cls,rewardRunGen(),rewardAccountId());
 function farmSample(now=Date.now()){
  if(farmSamplingPaused()){farmSession=null;return}
  if(!farmSession||farmSession.owner!==S||farmSession.key!==farmKey()||now<farmSession.start){farmSession={owner:S,key:farmKey(),start:now,events:[]};}
  const f=farmSession;f.events=f.events.filter(e=>e.at>now-60000);
  const elapsed=Math.min(60000,now-f.start);if(elapsed<60000)return;
  const sum=f.events.reduce((a,e)=>({xp:a.xp+e.xp,zeny:a.zeny+e.zeny,job:a.job+e.job,kills:a.kills+e.kills}),{xp:0,zeny:0,job:0,kills:0});
- S.offlineIncome={rewardVersion:ASC_REWARD_VERSION,key:farmStageKey(),at:now,version:1,xp:sum.xp*60000/elapsed,zeny:sum.zeny*60000/elapsed,job:sum.job*60000/elapsed,kph:Math.min(OFFLINE_RATE_CAP,sum.kills*3600000/elapsed)};
+ S.offlineIncome={rewardVersion:ASC_REWARD_VERSION,key:farmStageKey(),at:now,version:1,aid:rewardAccountId(),gen:rewardRunGen(),xp:sum.xp*60000/elapsed,zeny:sum.zeny*60000/elapsed,job:sum.job*60000/elapsed,kph:Math.min(OFFLINE_RATE_CAP,sum.kills*3600000/elapsed)};
 }
 function recordFarmIncome(xp,zeny,job,kills=1,now=Date.now()){
  farmSample(now);if(!farmSession)return;farmSession.events.push({at:now,xp,zeny,job,kills});farmSample(now);
@@ -4307,7 +4346,14 @@ function plazaFarmIncome(){
   // refused writes or is in maintenance, where a wrong local number would be adopted on reconnect).
   if(typeof CLOUD!=='undefined'&&(CLOUD.gate||CLOUD.paused||CLOUD.updating))return null;
   const income=S.offlineIncome,source=String(income?.key||'').split(':'),sourceMap=Number(source[1]),sourceStage=Number(source[2]);
-  const valid=income&&income.version===1&&(sourceMap<10||income.rewardVersion===ASC_REWARD_VERSION)&&source.length===3&&Object.hasOwn(CLASSES,source[0])&&Number.isInteger(sourceMap)&&sourceMap>=0&&sourceMap<MAPS.length&&Number.isInteger(sourceStage)&&sourceStage>=1&&sourceStage<=(sourceMap>=10?5:15)&&Number.isFinite(income.at)&&['xp','zeny','job'].every(k=>Number.isFinite(income[k])&&income[k]>=0);
+  // v421/v422 (class-switch exploit): the measured minute belongs to the character that earned it -
+  // this account, this class, this progression run. farmStageKey() always stamped the class and the
+  // sample now carries aid+gen, but the check used to accept any valid class NAME: after
+  // changeClass() the plaza kept paying the old class's rate to the new one, and a reset Novice
+  // reused the previous Novice run's minute. The sample itself is NOT cleared: the away claim keeps
+  // its own copy rule (see applyOfflineProgress), and switching back to the class that earned it -
+  // the SAME run - resumes its plaza pay. The plaza simply refuses to pay it to anyone else.
+  const valid=income&&income.version===1&&(sourceMap<10||income.rewardVersion===ASC_REWARD_VERSION)&&source.length===3&&Object.hasOwn(CLASSES,source[0])&&incomeOwnedByCurrent(income)&&Number.isInteger(sourceMap)&&sourceMap>=0&&sourceMap<MAPS.length&&Number.isInteger(sourceStage)&&sourceStage>=1&&sourceStage<=(sourceMap>=10?5:15)&&Number.isFinite(income.at)&&['xp','zeny','job'].every(k=>Number.isFinite(income[k])&&income[k]>=0);
   return valid&&['xp','zeny','job'].some(k=>income[k]>0)?income:null;
 }
 let plazaAfkAcc={t:0,xp:0,zeny:0,job:0};
@@ -4362,6 +4408,19 @@ function plazaLootNotice(r){
   log('Plaza AFK found '+bits.join(', ')+(r.overflow?' · bag full, '+r.overflow+' left behind':'')
     +(r.cardsFull?' · card collection full, no cards kept':''),'','kills');
 }
+// Move only WHOLE earned units into S. Normal save checkpoints call this too: the fractional
+// balances and the partial second stay in RAM, so save frequency cannot shave a kill or rounding
+// remainder, while a 0.5 s burst at a high rate is no longer omitted from the serialized save.
+function checkpointPlazaAfk(){
+  const xp=S?Math.floor(plazaAfkAcc.xp+1e-9):0,zeny=S?Math.floor(plazaAfkAcc.zeny+1e-9):0,job=S?Math.floor(plazaAfkAcc.job+1e-9):0;
+  plazaAfkAcc.xp-=xp;plazaAfkAcc.zeny-=zeny;plazaAfkAcc.job-=job;
+  if(!S)return{xp:0,zeny:0,job:0};
+  if(xp){earnExp(xp);if(typeof gainAscension==='function')gainAscension(xp,S.cls)}
+  if(zeny)earnZeny(zeny);
+  if(job&&typeof addJob==='function')addJob(job);
+  if((xp||zeny||job)&&typeof checkLevel==='function')checkLevel();
+  return{xp,zeny,job};
+}
 function plazaAfkTick(dt){
   const income=plazaFarmIncome();if(!income||!(dt>0))return;
   // v393: drops accrue on the same measured rate. Loot only - the EXP/Zeny below are the
@@ -4370,13 +4429,17 @@ function plazaAfkTick(dt){
   try{plazaLootTick(income,dt)}catch(e){console.error(e)}
   plazaAfkAcc.t+=dt;plazaAfkAcc.xp+=income.xp*dt/60;plazaAfkAcc.zeny+=income.zeny*dt/60;plazaAfkAcc.job+=income.job*dt/60;
   if(plazaAfkAcc.t<1-1e-9)return;plazaAfkAcc.t=Math.max(0,plazaAfkAcc.t-Math.floor(plazaAfkAcc.t+1e-9));
-  const xp=Math.floor(plazaAfkAcc.xp+1e-9),zeny=Math.floor(plazaAfkAcc.zeny+1e-9),job=Math.floor(plazaAfkAcc.job+1e-9);
-  plazaAfkAcc.xp-=xp;plazaAfkAcc.zeny-=zeny;plazaAfkAcc.job-=job;
-  if(xp){earnExp(xp);if(typeof gainAscension==='function')gainAscension(xp,String(income.key).split(':')[0])}
-  if(zeny){earnZeny(zeny)}
-  if(job&&typeof addJob==='function')addJob(job);
-  if((xp||zeny||job)&&typeof checkLevel==='function')checkLevel();
+  checkpointPlazaAfk();
   if(typeof bars==='function')bars();
+}
+// v423: class/logout transitions settle whole pending income, then deliberately discard only the
+// residual fractions that cannot yet be a currency/EXP/Job unit or a replayed loot kill. Ordinary
+// saves call checkpointPlazaAfk instead and preserve those fractions, so saving more often never
+// changes earnings.
+function settlePlazaAfk(){
+  checkpointPlazaAfk();
+  plazaAfkAcc={t:0,xp:0,zeny:0,job:0};
+  plazaKillAcc.frac=0;   // a fraction of one replayed kill is not a kill; it is never rolled
 }
 function offlineRateSample(now=Date.now()){
   if(!S)return;
@@ -4394,6 +4457,10 @@ function offlineRateSample(now=Date.now()){
 let saveElsewhereSaid=null;   // the last refusal said aloud, so a refused slot does not spam the log every 5 seconds
 function saveElsewhere(other){if(saveElsewhereSaid===other)return;saveElsewhereSaid=other;log('This browser\'s save for '+currentUser+' belongs to '+other+', so nothing was written over it. '+(CLOUD.on?'Your progress still syncs to your account.':'Progress from now on is not kept in this browser.')+' Restore this browser\'s copy from a backup to save here again.','r0')}
 function save(forceDuringUpdate=false){if(!currentUser||!S||(typeof CLOUD!=='undefined'&&CLOUD.updating&&!forceDuringUpdate))return;const now=Date.now();
+  // A pending half-second of Plaza AFK can contain thousands of whole units at endgame rates.
+  // Checkpoint those units before cloudBumpSaveRev/localStorage capture, but leave residual
+  // fractions and plazaKillAcc.frac alone so repeated ordinary saves never tax the player.
+  if(typeof checkpointPlazaAfk==='function')checkpointPlazaAfk();
   // v332: never write or upload a copy that belongs to another account... but decide that by the id,
   // as everything else does. A stale *name* on our own copy is repaired here, not turned into a
   // permanent refusal to save.
@@ -4528,6 +4595,7 @@ $('loginForm').addEventListener('submit',submitAuth);$('tabLogin').onclick=()=>s
 async function logout(){
   if(logout.inflight)return;
   logout.inflight=true;
+  settlePlazaAfk();                            // pay this session's sub-second plaza accrual before it is saved
   save();
   if(CLOUD.on)cloudBadge('☁ ⇅','Saving before logout…');
   try{await cloudLogout()}catch(e){}
@@ -4554,7 +4622,7 @@ function initSession(gm,newAccount=false){
   const elsewhere=saveRefusal(lsGet(saveKey()),currentUser);
   if(elsewhere){const who=currentUser;currentUser=null;showErr(saveBlockedText(who,elsewhere,false));return}
   try{
-    hudRate=null;zenyEarned=0;expEarned=0;S=load();S.gm=gm;if(S.q)qRefresh();if(!S.q)S.q=['kill','loot','boss'].map(newQuest);if(S.mp>=MAPS.length||S.lvl>(S.mp>=10?5:15)){S.mp=0;S.lvl=1}
+    hudRate=null;zenyEarned=0;expEarned=0;plazaAfkAcc={t:0,xp:0,zeny:0,job:0};plazaKillAcc.frac=0;S=load();S.gm=gm;if(S.q)qRefresh();if(!S.q)S.q=['kill','loot','boss'].map(newQuest);if(S.mp>=MAPS.length||S.lvl>(S.mp>=10?5:15)){S.mp=0;S.lvl=1}
   if(typeof BGM!=='undefined')BGM.sync(S.mp);
     // v74: a save made before the class-tier gate can be wearing gear its class may not use (a
     // Novice in High-tier armour). The sweep runs here too, so the rule holds from the first
@@ -4683,7 +4751,21 @@ function cloudBadgeStale(why){
   cloudBadge('☁ …',(why||'Not on the server yet')+(hhmm?' - last save reached it at '+hhmm:''));
 }
 function cloudLoginLine(txt){const e=$('loginCloud');if(e)e.textContent=txt||''}
+// Offline-claim coverage compares a server-frozen interval with this page's local lifetime. Keep the
+// request-start timestamp beside each response so the server's clock is anchored before transport
+// delay; response receipt time would make a slow retry look like time this page already simulated.
+const cloudResponseTiming=new WeakMap();
+function cloudClaimAnchor(response,data){
+  const t=response&&cloudResponseTiming.get(response),n=v=>v!==null&&v!==undefined&&Number.isFinite(Number(v))?Number(v):null;
+  const serverNow=n(data&&data.serverNow),clientRequestAt=n(t&&t.clientRequestAt);
+  return serverNow===null||clientRequestAt===null?null:{serverNow,clientRequestAt};
+}
+function cloudClaimEnvelope(response,data){
+  if(data&&typeof data==='object'&&!Array.isArray(data))data._offlineClaimAnchor=cloudClaimAnchor(response,data);
+  return data;
+}
 async function cloudFetch(path,opt){
+  const requestStartedAt=Date.now();
   const o=opt||{},hdrs=Object.assign({'Content-Type':'application/json','X-Save-Format':String(SAVE_FORMAT)},
     CLOUD.previewToken?{'X-Preview-Session':CLOUD.previewToken}:null,o.headers||{});
   const epoch=CLOUD.epoch||0;
@@ -4703,6 +4785,7 @@ async function cloudFetch(path,opt){
   let res;
   try{res=await fetch(cloudUrl(path),init)}
   finally{if(timer!==null){try{clearTimeout(timer)}catch(e){}timer=null}}
+  try{if(res&&typeof res==='object')cloudResponseTiming.set(res,{clientRequestAt:requestStartedAt})}catch(e){}
   // v253: one live session per account (functions/api/sessions.js). A 401 while this tab holds a
   // session means another device signed in as this player, so this tab stops instead of grinding
   // a copy nobody will ever see and losing it to the next save conflict.
@@ -5009,7 +5092,7 @@ async function cloudPush(push,leave,_coord){
         cloudSay('Your save has grown too large to upload ('+(c.err||'refused by the server')+'). Your character keeps playing on this device, but it will not reach the cloud until the save is smaller. Nothing you own has been deleted.','r0');
         return outcome='too-large'}
       throw new Error(c.err||'HTTP 413')}
-    if(r.status===409){const c=await r.json();
+    if(r.status===409){const c=cloudClaimEnvelope(r,await r.json());
       if(c.saveMismatch){cloudSaveRefused(c.err);return outcome='idle'}
       if(c.accountMismatch){cloudAccountMismatch(c.owner);return outcome='idle'}
       // haven-v396: the server refused this write because the account carries a GM restore this
@@ -5083,8 +5166,8 @@ async function cloudPush(push,leave,_coord){
       await cloudAdopt(c);
       cloudSay('Your account had a newer save, so it was loaded. The copy this device held was kept as a backup.','r1');
       return outcome='adopted'}
-    if(r.status===428){const d=await r.json().catch(()=>({}));
-      if(d.offlineClaim){const claimId=Number(d.offlineClaim.id)||0;applyOfflineProgress(Date.now(),d.offlineClaim);
+    if(r.status===428){const d=cloudClaimEnvelope(r,await r.json().catch(()=>({})));
+      if(d.offlineClaim){const claimId=Number(d.offlineClaim.id)||0;applyOfflineProgress(Date.now(),d.offlineClaim,d._offlineClaimAnchor);
         cloudBumpSaveRev(Date.now());CLOUD.dirty=true;
         // v326: the 428 handshake is one round trip - apply the away claim, then push it back with its
         // id. If the server answers the SAME claim a second time, the id is already in the save and
@@ -5156,7 +5239,7 @@ async function cloudReadSave(){
     // reconnect. The flag only changes what the player is told.
     if(r.status===503){const d=await r.json().catch(()=>({}));return{offline:true,maintenance:!!(d&&d.maintenance)}}
     if(r.status===409){const d=await r.json().catch(()=>({}));return d&&d.saveMismatch?{refused:d}:{data:null}}
-    return{data:r.ok?await r.json():null};
+    return{data:r.ok?cloudClaimEnvelope(r,await r.json()):null};
   }catch(e){return{offline:true}}
 }
 // v88.6: a save that belongs to another account is never loaded or uploaded. This tab stops syncing (so
@@ -5472,12 +5555,15 @@ async function cloudAdopt(server,resumeOffline=false){
   cloudNoteAdoptLedger(server,replacedBlob,replacedKey);
   lsPut(saveKeyFor(currentUser),server.blob);
   const wasGm=S&&S.gm;S=load();S.gm=!!wasGm;
+  // v422: the adopted copy is a different owner context; plaza residue from the replaced copy is
+  // sub-unit and belongs to a save this account no longer runs, so it is dropped, never carried.
+  plazaAfkAcc={t:0,xp:0,zeny:0,job:0};plazaKillAcc.frac=0;
   if(S.q)qRefresh();if(!S.q)S.q=['kill','loot','boss'].map(newQuest);
   CLOUD.ver=server.version;CLOUD.dirty=false;CLOUD.paused=false;
   cloudStampBase(server.version,false);   // v326: this copy now IS the account's version
   cloudOutboxClearAll(currentUser);
   if(server.offlineClaim){
-    applyOfflineProgress(Date.now(),server.offlineClaim);
+    applyOfflineProgress(Date.now(),server.offlineClaim,server._offlineClaimAnchor);
     // A 409 adoption runs inside cloudPush. Its owner must finish before the coordinator
     // can upload the claim; awaiting that same active push here deadlocks both callers.
     if(!CLOUD.pushing)await cloudFlushNow();
@@ -5501,7 +5587,7 @@ async function cloudJoin(u,localBlob){
   if(got.refused){cloudSaveRefused(got.refused.err);return}
   const data=got.data||null;
   if(!cloudOwnedBy(data,u)){cloudAccountMismatch(data.owner);return}
-  if(!data||!data.blob){CLOUD.ver=0;CLOUD.dirty=true;if(data&&data.offlineClaim)applyOfflineProgress(Date.now(),data.offlineClaim);await cloudFlushNow();return}
+  if(!data||!data.blob){CLOUD.ver=0;CLOUD.dirty=true;if(data&&data.offlineClaim)applyOfflineProgress(Date.now(),data.offlineClaim,data._offlineClaimAnchor);await cloudFlushNow();return}
   if(saveRefusal(data.blob,u)){cloudSaveRefused();return}
   const sFigs=saveFigures(data.blob),lFigs=saveFigures(localBlob);
   let localSave=null;try{localSave=JSON.parse(localBlob)}catch(e){}
@@ -5512,13 +5598,13 @@ async function cloudJoin(u,localBlob){
   if(sameSave(data.blob,localBlob)){CLOUD.ver=data.version;CLOUD.dirty=false;cloudBadgeSaved();   // v282: same save both sides
     cloudStampBase(data.version,false);
     cloudOutboxAck(u,data.version,CLOUD.ackRev);
-    if(data.offlineClaim){applyOfflineProgress(Date.now(),data.offlineClaim);await cloudFlushNow()}return}
+    if(data.offlineClaim){applyOfflineProgress(Date.now(),data.offlineClaim,data._offlineClaimAnchor);await cloudFlushNow()}return}
   // v395: NEVER over a GM restore this device has not seen.
   if(sawRestore(restoreStamp(data.blob))&&localAheadOfServer(data,localSave)){
     CLOUD.ver=data.version;CLOUD.dirty=true;
     if(lBase&&lBase.rev!==null)CLOUD.rev=Math.max(Number(CLOUD.rev)||0,lBase.rev);
     if(lBase&&lBase.ackRev!==null)CLOUD.ackRev=Math.max(Number(CLOUD.ackRev)||0,lBase.ackRev);
-    if(data.offlineClaim)applyOfflineProgress(Date.now(),data.offlineClaim);
+    if(data.offlineClaim)applyOfflineProgress(Date.now(),data.offlineClaim,data._offlineClaimAnchor);
     const sent=await cloudFlushNow();
     if(sent==='ok'){
       cloudSay('Kept this device\'s save: it is your account\'s save plus play the server had not received yet (Lv '+(S&&S.lv)+').','r1');
@@ -5547,7 +5633,7 @@ async function cloudRefresh(){
   if(sameSave(data.blob,local)){CLOUD.ver=data.version;CLOUD.dirty=false;
     cloudStampBase(data.version,false);   // v326
     cloudOutboxAck(currentUser,data.version,CLOUD.ackRev);
-    if(data.offlineClaim){applyOfflineProgress(Date.now(),data.offlineClaim);await cloudFlushNow()}return}
+    if(data.offlineClaim){applyOfflineProgress(Date.now(),data.offlineClaim,data._offlineClaimAnchor);await cloudFlushNow()}return}
   let localSave=null;try{localSave=JSON.parse(local)}catch(e){}
   // v395: the same rule for a returning tab.
   if(sawRestore(restoreStamp(data.blob))&&((CLOUD.dirty&&Number(data.version)===Number(CLOUD.ver))||localAheadOfServer(data,localSave))){
@@ -5911,7 +5997,7 @@ async function initSessionFromCloud(u,gm,isNew,id){
       cloudStampBase(data.version,false);   // v326: play from here on is newer than this version
       cloudBadgeSaved();   // v282
       log('Loaded your cloud save (Lv '+S.lv+').','r1','cloud');
-      if(data.offlineClaim){applyOfflineProgress(Date.now(),data.offlineClaim);await cloudFlushNow()}
+      if(data.offlineClaim){applyOfflineProgress(Date.now(),data.offlineClaim,data._offlineClaimAnchor);await cloudFlushNow()}
     }else{
       S=fresh();S.gm=!!gm;S.q=['kill','loot','boss'].map(newQuest);CLOUD.ver=0;CLOUD.rev=1;CLOUD.ackRev=0;CLOUD.dirty=true;
       if(typeof BGM!=='undefined')BGM.sync(S.mp);
@@ -6664,7 +6750,9 @@ function offlineStoreGear(it,r){
   if(autoSellMatches(it)){const value=r.measured?0:sellVal(it);earnZeny(value);r.zeny+=value;r.autoSold++;qProg('loot');if(!Array.isArray(S.cards))S.cards=[];(it.cards||[]).forEach(c=>S.cards.push(c));return}
   if(S.inv.length>=BAGMAX){r.overflow++;return}
   S.inv.push(it);r.storedItems++;qProg('loot');
-  if(S.auto!==false&&canUse(it))autoEquip(it)
+  // A retained-class claim can generate source-class gear while another class is visible. It is
+  // account inventory, but it must never auto-equip itself onto that unrelated visible character.
+  if(!r.noAutoEquip&&S.auto!==false&&canUse(it))autoEquip(it)
 }
 function offlineAwardKill(mob,r){
   // v393: `r.noKillCount` = the plaza replaying a measured rate. It must pay loot WITHOUT moving
@@ -6676,7 +6764,9 @@ function offlineAwardKill(mob,r){
   recordMonsterKill(mob);if(!r.measured)S.kl=safeCount(S.kl)+1;qProg('kill');if(mob.boss)qProg('boss');
   const z=r.measured?0:Math.round(mob.zeny*(1+pv('zeny')/100)*nmZenyRoll(mob))*gx(),xp=r.measured?0:Math.round(mob.exp*expRate());earnZeny(z);r.zeny+=z;earnExp(xp);r.exp+=xp;
   if(!r.measured){gainAscension(xp);addJob(Math.round(Math.round(mob.exp*.7)*expRate()));checkLevel();}
-  for(const[T,ch]of mob.drops)if(Math.random()*100<ch)offlineStoreGear(genGear((typeof kinDrop==='function'?kinDrop(T,S.cls,S.sex,mob.mapIndex):T),mob.lvl,mob.sec,mob.boss,mob.tier,mob.mapIndex),r);
+  // Retained-run claims use the source class's drop family without swapping the visible class.
+  const rewardCls=typeof r.rewardCls==='string'?r.rewardCls:S.cls;
+  for(const[T,ch]of mob.drops)if(Math.random()*100<ch)offlineStoreGear(genGear((typeof kinDrop==='function'?kinDrop(T,rewardCls,S.sex,mob.mapIndex):T),mob.lvl,mob.sec,mob.boss,mob.tier,mob.mapIndex),r);
   if(Math.random()*100<mob.cardCh){const g=mob.card.g;if(addCard(newCard(mob.card),{quiet:true})){questEvent('card');r.cards++;r.drops++}else r.cardsFull=true}
   for(const item of ascensionDrops(mob)){S.ascensionMat[item.ascMat]=safeCount(S.ascensionMat[item.ascMat])+1;r.drops++}
   if(mob.boss)recordMapClear(mob.mapIndex??S.mp,mob.stage??S.lvl);
@@ -6721,7 +6811,11 @@ function showOfflineReward(r){
   if(r.cardsFull)detail.push('card collection full (no cards kept)');
   if(r.ori||r.elu)detail.push(`Oridecon +${r.ori} · Elunium +${r.elu}`);if(r.pets)detail.push(`Pets +${r.pets}`);if(r.petFolds)detail.push(`${r.petFolds} duplicate pet${r.petFolds===1?'':'s'} folded into Bond`);if(r.petRefunds)detail.push(`${r.petRefunds} full-collection pet refund${r.petRefunds===1?'':'s'}`);if(r.stages)detail.push(`${r.stages} stage${r.stages===1?'':'s'} advanced`);
   const note=[];note.push(r.awayMs>OFFLINE_CAP_MS?'Away rewards are capped at four hours.':'Rewards use the time credited above.');
-  note.push(`50% of measured farming income: ${Math.round(r.xpMin||0).toLocaleString()} EXP/min · ${Math.round(r.zenyMin||0).toLocaleString()}z/min. No map or stage advance while offline. Quest rewards and gifts are excluded. After an update or class/map/stage change, farm a fresh minute to replace your saved rate. Until then, the previous measured minute is used, including its original field for drops. No previous sample means no offline income.${r.incomeSource?" Sample: "+r.incomeSource+".":""}`);
+  note.push(`50% of measured farming income: ${Math.round(r.xpMin||0).toLocaleString()} EXP/min · ${Math.round(r.zenyMin||0).toLocaleString()}z/min. No map or stage advance while offline. Quest rewards and gifts are excluded. After an update or a map/stage change, the previous measured minute is used until you farm a fresh one, including its original field for drops. A class change keeps a retained source class's frozen claim with that class and run; a Novice reset retires its old run. No previous sample means no offline income.${r.incomeSource?" Sample: "+r.incomeSource+".":""}`);
+  if(r.outcome==='retired-owner')note.push('This claim belonged to a run that was reset or retired before it could be paid. It was acknowledged without a payout, and that outcome is recorded in this save.');
+  if(r.outcome==='invalid-pricing')note.push('This claim’s frozen pricing record was incomplete, so it was acknowledged without a payout and recorded for recovery.');
+  if(r.outcome==='ineligible-pricing')note.push('No eligible measured farming minute existed when this claim was issued, so it was acknowledged without a payout. A later sample cannot change it.');
+  if(r.outcome==='legacy-unpriced')note.push('This older claim had no frozen pricing snapshot and no matching recoverable sample, so it was acknowledged without a payout and recorded for recovery.');
 
   const details=$('offlineDetails');if(details)details.textContent=detail.length?detail.join(' · '):'No items, cards, ores or pets dropped this time.';
   const explanation=$('offlineExplanation');if(explanation)explanation.textContent=note.join(' ');
@@ -6740,7 +6834,88 @@ function offlineLevelBudget(lv){
   const toCeiling=Math.max(0,Math.min(OFFLINE_LEVEL_CAP_LV,150)-from);
   return offlineExpBudget(from,toCeiling+OFFLINE_LEVEL_CAP);
 }
-function applyOfflineProgress(now=Date.now(),serverClaim=null){
+// Claim rewards may be credited to a retained source run without visually switching the player
+// back to it. Class snapshots already own Base Lv/EXP/stats, and jobs are per class in S.jobs.
+// This avoids current-class skill/runtime side effects while preserving the same level and job curves.
+function claimTarget(cls,runGen){
+  if(S.cls===cls&&rewardRunGen()===runGen)return{cls,runGen,active:true,rec:null,get lv(){return S.lv}};
+  const rec=S.base&&S.base[cls];
+  if(rec&&Math.floor(Number(rec.gen)||0)===runGen)return{cls,runGen,active:false,rec,get lv(){return Math.max(1,Math.floor(Number(rec.lv)||1))}};
+  return null;
+}
+function claimJobNeed(cls,jl){
+  const tier=CLASSES[cls]?.tier||0,L=jl+JOFF[tier],n=(tier>0&&jl<=EARLY_JOB_LV?needAt(L)*JOB_EARLY:needAt(L)),e=epkOf(L);
+  return Math.max(1,Math.floor(.7*n*e/(e+n*qrOf(L))))*(tier===4?40:1);
+}
+function creditClaimExp(target,amount){
+  const n=Math.max(0,Math.floor(Number(amount)||0));if(!n)return;
+  if(target.active){earnExp(n);return}
+  target.rec.exp=Math.max(0,Number(target.rec.exp)||0)+n;
+}
+function settleClaimLevels(target){
+  if(target.active){checkLevel();return}
+  const rec=target.rec;
+  rec.lv=Math.max(1,Math.min(150,Math.floor(Number(rec.lv)||1)));rec.exp=Math.max(0,Number(rec.exp)||0);rec.pts=Math.max(0,Math.floor(Number(rec.pts)||0));
+  while(rec.lv<150&&rec.exp>=baseNeedAt(rec.lv)){rec.exp-=baseNeedAt(rec.lv);rec.lv++;rec.pts+=4+Math.floor(rec.lv/5)}
+}
+function creditClaimJob(target,amount){
+  const n=Math.max(0,Math.floor(Number(amount)||0));if(!n||!CLASSES[target.cls])return;
+  if(!S.jobs||typeof S.jobs!=='object')S.jobs={};
+  const max=CLASSES[target.cls].mj,j=S.jobs[target.cls]&&typeof S.jobs[target.cls]==='object'?S.jobs[target.cls]:S.jobs[target.cls]={jl:1,jx:0};
+  j.jl=Math.max(1,Math.min(max,Math.floor(Number(j.jl)||1)));j.jx=Math.max(0,Number(j.jx)||0);
+  if(j.jl>=max){j.jx=0;return}j.jx+=n;
+  while(j.jl<max&&j.jx>=claimJobNeed(target.cls,j.jl)){j.jx-=claimJobNeed(target.cls,j.jl);j.jl++}
+  if(j.jl>=max)j.jx=0;
+}
+function noteClaimOutcome(claim,outcome){
+  const id=Number(claim&&claim.id);if(!Number.isSafeInteger(id)||id<=0)return;
+  const entries=Array.isArray(S.offlineClaimOutcomes)?S.offlineClaimOutcomes:[];
+  if(entries.some(e=>Number(e&&e.id)===id))return;
+  entries.push({id,outcome,cls:typeof claim.cls==='string'?claim.cls:null,runGen:Number.isSafeInteger(claim.runGen)?claim.runGen:null,at:Date.now()});
+  S.offlineClaimOutcomes=entries.slice(-32);
+}
+function frozenClaimPricing(claim){
+  const p=claim&&claim.pricing;
+  if(!p||typeof p!=='object')return null;
+  const int=v=>v!==null&&v!==undefined&&v!==''&&Number.isSafeInteger(Number(v))?Math.floor(Number(v)):null;
+  const num=v=>v!==null&&v!==undefined&&v!==''&&Number.isFinite(Number(v))?Number(v):null;
+  const map=int(p.sourceMap),stage=int(p.sourceStage),incomeVersion=int(p.incomeVersion),rewardVersion=int(p.rewardVersion),
+    sampledAt=int(p.sampledAt),start=int(p.intervalStartAt),end=int(p.intervalEndAt),values=['xp','zeny','job','kph'].map(k=>num(p[k]));
+  if(map===null||map<0||map>=MAPS.length||stage===null||stage<1||stage>(map>=10?5:15)
+    ||incomeVersion!==1||rewardVersion===null||rewardVersion<0||(map>=10&&rewardVersion!==ASC_REWARD_VERSION)
+    ||sampledAt===null||sampledAt<0||start===null||start<0||end===null||end<start
+    ||values.some(v=>v===null||v<0)||values[3]>OFFLINE_RATE_CAP)return null;
+  return{xp:values[0],zeny:values[1],job:values[2],kph:values[3],sourceMap:map,sourceStage:stage,
+    incomeVersion,rewardVersion,sampledAt,intervalStartAt:start,intervalEndAt:end};
+}
+// The interval is public claim metadata, not a pricing hint. It is validated independently so an
+// explicitly ineligible (zero-reward) claim still acknowledges the interval the server froze.
+function frozenClaimInterval(claim,plan){
+  const int=v=>v!==null&&v!==undefined&&v!==''&&Number.isSafeInteger(Number(v))?Math.floor(Number(v)):null;
+  const start=int(claim&&claim.intervalStartAt),end=int(claim&&claim.intervalEndAt),away=int(plan&&plan.awayMs);
+  if(start===null||start<0||end===null||end<start||away===null||away<0||end-start!==away)return null;
+  return{start,end};
+}
+function claimPricingState(claim){
+  // A missing state is historical only when it has no frozen values. A complete 0019 snapshot is
+  // already immutable, while a partial one is corrupt; neither may fall through to mutable local
+  // income. A modern ineligible row remains zero after the browser later learns a rate.
+  const state=claim&&claim.pricingState;
+  if(state===undefined||state===null){
+    if(claim&&claim.pricing&&typeof claim.pricing==='object')return frozenClaimPricing(claim)?'priced':'corrupt';
+    return'legacy';
+  }
+  return state==='priced'||state==='ineligible'||state==='legacy'||state==='corrupt'?state:'corrupt';
+}
+function claimPageBootAtServer(anchor){
+  const n=v=>v!==null&&v!==undefined&&v!==''&&Number.isFinite(Number(v))?Number(v):null;
+  const serverNow=n(anchor&&anchor.serverNow),requestAt=n(anchor&&anchor.clientRequestAt);
+  const elapsed=requestAt===null?null:requestAt-PAGE_BOOT_AT;
+  // Anchor the local page lifetime at request START, not response receipt. A slow/retried response
+  // therefore cannot slide the issued window past PAGE_BOOT_AT; different wall-clock offsets cancel.
+  return serverNow===null||elapsed===null||elapsed<0?null:serverNow-elapsed;
+}
+function applyOfflineProgress(now=Date.now(),serverClaim=null,claimAnchor=null){
   if(!S)return null;
   let plan;
   if(CLOUD.on){
@@ -6754,28 +6929,56 @@ function applyOfflineProgress(now=Date.now(),serverClaim=null){
       remainder:cl(Number(serverClaim.remainder)||0,0,.999999),rateKph:cl(Number(serverClaim.rateKph)||0,0,OFFLINE_RATE_CAP)};
     S.offlineClaimId=id;
   }else plan=offlinePlan(S.offlineAt,now,S.offlineKph,S.offlineKillRemainder);
-  // v73: a claim that this page has been alive for, and that fits inside the sim's own catch-up
-  // budget, is time the running game already ground (the hidden-tab ticker never pauses) or
-  // replayed on the way back from a freeze. Paying it would double those minutes and pop a
-  // "welcome back" for ordinary background farming. Acknowledge the claim, pay nothing, stay
-  // quiet - but still advance the timestamps so the same window can never be paid later.
-  const awayStart=now-Math.max(0,Number(plan.awayMs)||0);
-  // v2: a gate window is the one exception - the sim was frozen while the gate was up, so those
-  // minutes were never ground here and the server's claim must pay them. That is exactly the
-  // owner's rule: a lost connection is away time, not progress.
-  const covered=!CLOUD.gate&&!!plan.show&&Number.isFinite(awayStart)&&awayStart>=PAGE_BOOT_AT&&plan.awayMs<=OFFLINE_SIM_COVER_MS;
+  // v424: suppression is allowed only when immutable issued bounds and a request-start server/client
+  // anchor prove that this running page covered the whole short window. Never reconstruct a window
+  // from response-time `now - awayMs`: network delay, retries and clock offsets can move that start
+  // across page boot and silently consume a real entitlement.
+  const interval=CLOUD.on?frozenClaimInterval(serverClaim,plan):null;
+  const pageBootAtServer=CLOUD.on?claimPageBootAtServer(claimAnchor):null;
+  // A gate window is the one exception: simulation was frozen while the gate was up, so its server
+  // claim must pay even if this document itself is older than the frozen interval.
+  const covered=!CLOUD.gate&&!!plan.show&&!!interval&&pageBootAtServer!==null
+    &&interval.start>=pageBootAtServer&&(interval.end-interval.start)<=OFFLINE_SIM_COVER_MS;
   const r={...plan,show:!!plan.show&&!covered,covered,kills:0,drops:0,exp:0,zeny:0,items:0,storedItems:0,autoSold:0,overflow:0,cards:0,cardsFull:false,ori:0,elu:0,pets:0,petRefunds:0,petFolds:0,stages:0};
   if(plan.show&&!covered){
-    const income=S.offlineIncome,source=String(income?.key||'').split(':'),sourceMap=Number(source[1]),sourceStage=Number(source[2]);
-    const valid=income&&income.version===1&&(sourceMap<10||income.rewardVersion===ASC_REWARD_VERSION)&&source.length===3&&Object.hasOwn(CLASSES,source[0])&&Number.isInteger(sourceMap)&&sourceMap>=0&&sourceMap<MAPS.length&&Number.isInteger(sourceStage)&&sourceStage>=1&&sourceStage<=(sourceMap>=10?5:15)&&Number.isFinite(income.at)&&income.at<=Number(S.offlineAt)&&['xp','zeny','job','kph'].every(k=>Number.isFinite(income[k])&&income[k]>=0);
+    const frozenOwner=serverClaim&&typeof serverClaim.cls==='string'&&Number.isSafeInteger(serverClaim.runGen)&&serverClaim.runGen>=1
+      ?{cls:serverClaim.cls,runGen:serverClaim.runGen}:null;
+    const target=frozenOwner?claimTarget(frozenOwner.cls,frozenOwner.runGen):{cls:S.cls,runGen:rewardRunGen(),active:true,rec:null,get lv(){return S.lv}};
+    const pricingState=claimPricingState(serverClaim),frozen=frozenClaimPricing(serverClaim);
+    let income=null,sourceMap=-1,sourceStage=0,valid=false;
+    if(pricingState==='ineligible'){
+      // This is not a missing hint. 0020 recorded that no eligible stored sample existed at issuance;
+      // a later minute, class switch or reload must never turn it into a payout.
+      r.outcome='ineligible-pricing';noteClaimOutcome(serverClaim,r.outcome);
+    }else if(pricingState==='corrupt'){
+      r.outcome='invalid-pricing';noteClaimOutcome(serverClaim,r.outcome);
+    }else if(pricingState==='priced'){
+      // A priced state is a strict immutable contract, never a route back to mutable offlineIncome.
+      if(!frozen||!frozenOwner){r.outcome='invalid-pricing';noteClaimOutcome(serverClaim,r.outcome)}
+      else{
+        income=frozen;sourceMap=frozen.sourceMap;sourceStage=frozen.sourceStage;
+        if(!target){r.outcome='retired-owner';noteClaimOutcome(serverClaim,r.outcome)}
+        else valid=true;
+      }
+    }else{
+      // Only true legacy rows may recover from a matching local sample. This preserves pre-0019
+      // accounts/rows without granting the same escape hatch to a modern ineligible claim.
+      income=S.offlineIncome;const source=String(income?.key||'').split(':');sourceMap=Number(source[1]);sourceStage=Number(source[2]);
+      const sampleOwner=target&&incomeOwnedBy(income,target.cls,target.runGen,rewardAccountId());
+      valid=!!target&&income&&income.version===1&&(sourceMap<10||income.rewardVersion===ASC_REWARD_VERSION)&&source.length===3&&Object.hasOwn(CLASSES,source[0])&&sampleOwner&&Number.isInteger(sourceMap)&&sourceMap>=0&&sourceMap<MAPS.length&&Number.isInteger(sourceStage)&&sourceStage>=1&&sourceStage<=(sourceMap>=10?5:15)&&Number.isFinite(income.at)&&income.at<=Number(S.offlineAt)&&['xp','zeny','job','kph'].every(k=>Number.isFinite(income[k])&&income[k]>=0);
+      if(serverClaim&&frozenOwner&&!target){r.outcome='retired-owner';noteClaimOutcome(serverClaim,r.outcome)}
+      else if(serverClaim&&frozenOwner&&!valid){r.outcome='legacy-unpriced';noteClaimOutcome(serverClaim,r.outcome)}
+    }
+    r.ownerClass=target&&target.cls||frozenOwner&&frozenOwner.cls||'';
     r.incomeSource=valid?MAPS[sourceMap].n+' Stage '+sourceStage:'';
     r.measured=true;r.xpMin=valid?income.xp:0;r.zenyMin=valid?income.zeny:0;
     const minutes=plan.creditedMs/60000*OFFLINE_REWARD_MULT;
     const kills=valid?Math.min(plan.kills,Math.floor(Math.min(income.kph,OFFLINE_RATE_CAP)*minutes/60)):0;
+    r.rewardCls=target&&target.cls;r.noAutoEquip=!!target&&!target.active;
     for(let i=0;i<kills;i++)offlineAwardKill(offlineMobForCurrentField(sourceMap,sourceStage),r);
-    const levelBudget=offlineLevelBudget(S.lv);
+    const levelBudget=target?offlineLevelBudget(target.lv):0;
     r.exp=valid?Math.min(safeCount(income.xp*minutes),levelBudget):0;r.zeny=valid?safeCount(income.zeny*minutes):0;
-    earnExp(r.exp);earnZeny(r.zeny);if(valid){gainAscension(r.exp,source[0]);}if(valid)addJob(safeCount(income.job*minutes));checkLevel();
+    if(valid){creditClaimExp(target,r.exp);earnZeny(r.zeny);gainAscension(r.exp,target.cls);creditClaimJob(target,safeCount(income.job*minutes));settleClaimLevels(target)}
     S.offlineKillRemainder=plan.remainder;
   }
   if(!covered)farmSession=null;
@@ -8635,7 +8838,7 @@ function classRec(n){return (S.base&&S.base[n])||null}
 function snapClass(){
   if(!S.cls)return;S.base=S.base||{};
   const eq={};for(const k in S.eq)eq[k]=S.eq[k]?S.eq[k].id:null;
-  S.base[S.cls]={lv:S.lv,exp:S.exp,pts:S.pts,hp:S.hp,st:Object.assign({},S.st),eq}}
+  S.base[S.cls]={lv:S.lv,exp:S.exp,pts:S.pts,hp:S.hp,st:Object.assign({},S.st),eq,gen:Math.max(1,Math.floor(Number(S.runGen)||1))}}
 // A katar occupies both hands. Keep the displaced item and its cards in the bag.
 function stowKatarOffHand(){
   if(S.eq.weapon?.wt!=='katar'||!S.eq.off)return;
@@ -8651,6 +8854,9 @@ function equipRec(ids){                       // put the stored loadout back on,
 function freshBuild(){for(const k in S.st)S.st[k]=1;S.pts=totalPts()}
 function clearClassSkills(n){for(const id in S.sk){const s=SKILLS.find(x=>x.id===id);if(id!=='aid'&&s&&s.cls.includes(n))delete S.sk[id]}}
 function noviceRun(){                         // a real restart: 25 Base Lv, Job Lv 0, stats refunded
+  // A new Novice is not a stored class restoration. Remove the prior Novice snapshot so a frozen
+  // claim can distinguish a genuinely retained source class from this deliberately retired run.
+  if(S.base)delete S.base.Novice;
   S.jobs.Novice={jl:1,jx:0};clearClassSkills('Novice');
   if(S.lv>25){S.lv=25;S.exp=0}
   if(S.base)delete S.base.Novice;             // nothing carried out of a restart
@@ -8706,6 +8912,7 @@ function stowUnfit(from){
   return n}
 function changeClass(n){if(classBlock(n))return;
   if(CLASSES[n]?.tier===4&&!playedClass(n)&&JOB_RITE.passed!==n)return startJobRite(n);
+  settlePlazaAfk();                            // pending plaza rewards belong to the class being left
   snapClass();                                 // remember the class we are stepping away from
   const from=S.cls;S.cls=n;jobOf();if(typeof resetSkillRuntime==='function'){swing=null;resetSkillRuntime();for(const id in skCd)delete skCd[id];}
   const rec=n==='Novice'?null:classRec(n);     // a class you left earlier picks up where it stopped
@@ -8718,6 +8925,11 @@ function changeClass(n){if(classBlock(n))return;
     freshBuild();
   }
   else if(from==='Novice')freshBuild();       // promotions preserve allocated stats and unspent points
+  // v422: reward ownership follows the RUN. A restored class continues the run recorded on it, so
+  // its own measured minute (and a claim frozen for it) still recognises it. Every other path here
+  // STARTS a run - Novice reset, an unplayed class, a tier-2 fresh start - and is a new owner.
+  if(rec){S.runGen=Math.max(1,Math.floor(Number(rec.gen)||1));S.runSeq=Math.max(Math.floor(Number(S.runSeq)||1),S.runGen)}
+  else{S.runSeq=Math.max(1,Math.floor(Number(S.runSeq)||1))+1;S.runGen=S.runSeq}
   if(S.mp>=10&&!ascensionOpen(S.mp))gotoField(9,10);
   stowUnfit(from);                            // shields, unusable weapon types and too-high class tiers
   S.hp=Math.max(1,Math.min(rec&&rec.hp||maxHp(),maxHp()));
@@ -16096,20 +16308,20 @@ setInterval(updateWatch,60000);
 // be hours old while the player was on another tab, and the check is a 60-byte text file.
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&(pendingUpdateBuild||Date.now()-PAGE_STARTED_AT>30000))updateWatch()});
 </script>
-<script src="assets/wardrobe-ui.js?v=421"></script>
+<script src="assets/wardrobe-ui.js?v=426"></script>
 <script src="assets/shop.js?v=321"></script>
 <script src="assets/friends.js?v=273"></script>
-<script src="assets/digimon/roster.js?v=421"></script>
-<script src="assets/digimon/base-stats.js?v=421"></script>
-<script src="assets/social-rules.js?v=421"></script>
-<script src="assets/social-poker.js?v=421"></script>
-<script src="assets/digimon-sanctuary.js?v=421"></script>
+<script src="assets/digimon/roster.js?v=426"></script>
+<script src="assets/digimon/base-stats.js?v=426"></script>
+<script src="assets/social-rules.js?v=426"></script>
+<script src="assets/social-poker.js?v=426"></script>
+<script src="assets/digimon-sanctuary.js?v=426"></script>
 <script src="assets/digimon-battle.js?v=393"></script>
-<script src="assets/social-digimon.js?v=421"></script>
+<script src="assets/social-digimon.js?v=426"></script>
 <script src="assets/social-gym-redesign.js?v=393"></script>
 <script src="assets/social-pond-design.js?v=393"></script>
-<script src="assets/social-scene.js?v=421"></script>
-<script src="assets/social-fishing.js?v=421"></script>
-<script src="assets/plaza-bots.js?v=421"></script>
-<script src="assets/social.js?v=421"></script></body>
+<script src="assets/social-scene.js?v=426"></script>
+<script src="assets/social-fishing.js?v=426"></script>
+<script src="assets/plaza-bots.js?v=426"></script>
+<script src="assets/social.js?v=426"></script></body>
 </html>

@@ -37,6 +37,27 @@ t('offline-claim migration is safe to reapply', () => {
   assert.equal(db.prepare("SELECT COUNT(*) AS n FROM sqlite_master WHERE type='table' AND name='offline_reward_claims'").get().n, 1);
 });
 
+t('0020 classifies existing snapshot rows once and leaves a state contract for new issuance', () => {
+  const D=new DatabaseSync(':memory:');
+  D.exec(migration('0001_init.sql'));D.exec(migration('0003_server_timed_offline_claims.sql'));
+  D.exec(migration('0018_offline_claim_owner_context.sql'));D.exec(migration('0019_offline_claim_pricing_snapshot.sql'));
+  const uid=D.prepare("INSERT INTO users(username,pass_hash,created_at) VALUES('StateRows','h',1)").run().lastInsertRowid;
+  const add=(values)=>{const r=D.prepare(`INSERT INTO offline_reward_claims(user_id,away_ms,credited_ms,rate_kph,kills,remainder,issued_at,
+    income_xp,income_zeny,income_job,income_kph,source_map,source_stage,income_version,reward_version,sampled_at,interval_start_at,interval_end_at)
+    VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(uid,240000,240000,10,0,0,1,...values);
+    // The production index allows one pending row; classification applies to claim history too.
+    D.prepare('UPDATE offline_reward_claims SET claimed_at=id WHERE id=?').run(r.lastInsertRowid);};
+  add([null,null,null,null,null,null,null,null,null,null,null]);                 // pre-0019/legacy
+  add([60,30,4,10,0,1,1,6,1,100,200]);                                           // complete frozen minute
+  add([60,null,4,10,0,1,1,6,1,100,200]);                                        // partial/corrupt
+  D.exec(migration('0020_offline_claim_pricing_state.sql'));
+  assert.deepEqual(D.prepare('SELECT pricing_state FROM offline_reward_claims ORDER BY id').all().map(r=>r.pricing_state),
+    ['legacy','priced','corrupt']);
+  assert.equal(D.prepare("PRAGMA table_info(offline_reward_claims)").all().some(c=>c.name==='pricing_state'),true);
+  // ALTER migrations run once, but the backfill itself only touches unclassified history.
+  assert.match(migration('0020_offline_claim_pricing_state.sql'), /WHERE pricing_state IS NULL;/);
+});
+
 t('existing cloud saves backfill all-time kills, not old daily/weekly kills', () => {
   assert.equal(db.prepare("SELECT kills FROM leaderboard_kills WHERE user_id=? AND period_key='all'").get(user).kills, 1200);
   assert.equal(db.prepare("SELECT COUNT(*) AS n FROM leaderboard_kills WHERE user_id=? AND period_key<>'all'").get(user).n, 0);
@@ -113,9 +134,10 @@ t('the GM rename migration moves one account, re-stamps its save, and spares eve
 
 // Every `NNNN_*.sql` is executed automatically by tools/dev_server.js and by `wrangler d1 execute
 // --file=`. That loader already wraps each file in its own transaction, so a file containing
-// BEGIN/COMMIT fails on a nested transaction - and a file containing a data change would run on every
-// local boot. 0013 is a run-by-hand playbook for renaming an account to the owner name `GM`, so it must
-// stay comment-only.
+// BEGIN/COMMIT fails on a nested transaction. 0013 is a run-by-hand playbook for renaming an account
+// to the owner name `GM`, so it must stay comment-only. 0020 is the deliberately bounded exception:
+// its NULL-only offline-claim classification is required to preserve legacy recovery while introducing
+// explicit pricing state; its behaviour is pinned above rather than silently treated as a generic edit.
 t('migrations stay auto-runnable: no file opens its own transaction or edits live rows', () => {
   const dir = path.join(root, 'migrations');
   for (const name of fs.readdirSync(dir).filter(n => /^\d+_.*\.sql$/.test(n))) {

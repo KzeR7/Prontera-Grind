@@ -156,6 +156,10 @@ const PGFriends={state:{loaded:false,incoming:[]}};
 const mobs=[],drops=[],logs=[];
 let boardPeriod='daily',boardKind='kills',boardCache={},boardLoading=false,boardError='';
 const CLOUD={api:false,on:false};
+// v422: the real class switch settles the departing class's Plaza AFK fraction. The UI extraction
+// does not include the simulation/plaza module; class_change_sim tests the real settlement, while
+// this renderer harness needs only the switcher's no-op-free dependency.
+const settlePlazaAfk=()=>{};
 const lsGet=()=>null,mem={};   // no browser storage in here
 const $=id=>({style:{},set innerHTML(v){globalThis['h_'+id]=v},get innerHTML(){return globalThis['h_'+id]||''},textContent:'',onclick:null});
 const dr=()=>1;

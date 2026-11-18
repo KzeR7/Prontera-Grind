@@ -982,6 +982,222 @@ await test('A restore-fenced conflict with a real offline claim completes and pr
   } finally { c.close(); }
 });
 
+// 11. v422: the one-catch-per-spawn MVP marker lives in the save. It used to be an in-memory Set,
+//     so a reload (or the update reload that fishing's own save race tests exercise) wiped it and
+//     the same spawn could be caught again. Now it must survive a full page reload, be capped so
+//     the save stays small, and never cross accounts.
+await test('MVP one-catch marker persists across reload, is capped, and normalize admits only real spawn ids', async () => {
+  const srv = await createAccountServer();
+  const profile = createProfileStorage();
+  const transport = makeServerTransport(srv);
+  const c1 = bootClient({ profile, transport });
+  try {
+    await c1.signInSession(srv);
+    assert.equal(await c1.ev('cloudPush(true)'), 'ok');
+    const before = c1.ev(`(()=>{
+      const F=window.PGSocialFishing;
+      F.bind({ host:()=>S, save:()=>save(), self:()=>({x:0,z:0}), isUpdating:()=>false });
+      F.markMvpClaimed('mvp:k7f2q1:first1');
+      for(let i=0;i<40;i++) F.markMvpClaimed('mvp:k7f2q1:fill'+i.toString(36));
+      return { ring:S.fishing.mvpCaught.length,
+        kept:F.isMvpClaimed('mvp:k7f2q1:fillr'),
+        evicted:F.isMvpClaimed('mvp:k7f2q1:first1'),
+        saved:unpackSave(JSON.parse(lsGet(saveKey()))).fishing.mvpCaught.length };
+    })()`);
+    assert.equal(before.ring, 32, 'the ring is capped at 32 spawns (a spawn lives 10 minutes; 32 covers days)');
+    assert.equal(before.saved, 32, 'the save on disk carries the capped ring');
+    assert.equal(before.kept, true, 'the newest marker is live for the escape/catch checks');
+    assert.equal(before.evicted, false, 'the oldest marker falls off the ring (that spawn is long gone)');
+    assert.equal(await c1.ev('cloudPush(true)'), 'ok', 'the ring reaches the server copy too');
+  } finally { c1.close(); }
+
+  // Reload: same browser storage, fresh page, fresh in-memory state.
+  const c2 = bootClient({ profile, transport });
+  try {
+    await c2.signInSession(srv);
+    const after = c2.ev(`(()=>{
+      const F=window.PGSocialFishing;
+      F.bind({ host:()=>S, save:()=>save(), self:()=>({x:0,z:0}), isUpdating:()=>false });
+      return { ring:(S.fishing.mvpCaught||[]).length, kept:F.isMvpClaimed('mvp:k7f2q1:fillr'), absent:F.isMvpClaimed('mvp:k7f2q1:never9') };
+    })()`);
+    assert.equal(after.ring, 32, 'the ring survived the reload');
+    assert.equal(after.kept, true, 'a caught spawn is still caught after the reload: no second MVP from one spawn');
+    assert.equal(after.absent, false, 'a spawn this account never caught is unaffected');
+    const norm = c2.ev(`JSON.stringify(window.PGSocialFishing.normalize({mvpCaught:['mvp:k7f2q1:a1b2c3','nope',123,null,'mvp:HAS UPPER:x','mvp:k7f2q1:a1b2c3']}).mvpCaught)`);
+    assert.equal(norm, JSON.stringify(['mvp:k7f2q1:a1b2c3']), 'normalize keeps unique, well-formed spawn ids only');
+  } finally { c2.close(); }
+
+  // Another account on the same browser never inherits the marker.
+  const srv3 = await createAccountServer();
+  const profile3 = createProfileStorage();
+  const c3 = bootClient({ profile: profile3, transport: makeServerTransport(srv3) });
+  try {
+    await c3.signInSession(srv3);
+    const foreign = c3.ev(`(()=>{const F=window.PGSocialFishing;
+      F.bind({ host:()=>S, save:()=>save(), self:()=>({x:0,z:0}), isUpdating:()=>false });
+      return F.isMvpClaimed('mvp:k7f2q1:fillr');})()`);
+    assert.equal(foreign, false, 'another account has its own (empty) ring');
+  } finally { c3.close(); }
+});
+
+// 12. v422 integrated: the whole class-switch claim chain through the real handlers and a real
+//     reload. A claim frozen for the synced run pays that run after a reload; after a Novice reset
+//     the next claim is frozen for the new run, pays nothing (its measured minute belongs to the
+//     run that was reset away), and is consumed so the save can never trap in 428s.
+await test('v422 integrated: frozen claim pays its owning run after reload, pays nothing after a Novice reset, and never traps the sync', async () => {
+  const srv = await createAccountServer();
+  const profile = createProfileStorage();
+  const transport = makeServerTransport(srv);
+  const c1 = bootClient({ profile, transport });
+  try {
+    await c1.signInSession(srv);
+    assert.equal(await c1.ev('cloudPush(true)'), 'ok');
+    // A REAL class change, then the new class measures one full field minute of its own.
+    c1.ev(`S.jobs.Novice={jl:10,jx:0};changeClass('Swordman');
+      farmSession=null;farmSample(1000000);recordFarmIncome(120,60,42,1,1030000);farmSample(1060000);`);
+    assert.equal(c1.ev('S.runGen'), 2, 'the class change started run 2');
+    assert.equal(c1.ev('S.offlineIncome.gen'), 2, 'the minute is owned by run 2');
+    assert.equal(await c1.ev('cloudPush(true)'), 'ok', 'the Swordman run and its measured minute sync');
+    srv.db.prepare('UPDATE saves SET last_seen=?, rate_kph=? WHERE user_id=?').run(Date.now() - 4 * 3600000, 100, srv.accountId);
+  } finally { c1.close(); }
+
+  // Reload: the claim is issued frozen for the Swordman run; login applies it and syncs it back.
+  const c2 = bootClient({ profile, transport });
+  let killsAfterFirstClaim, preAway = null;
+  try {
+    await c2.signInSession(srv);
+    const claim1 = srv.db.prepare('SELECT id, cls, run_gen, claimed_at FROM offline_reward_claims WHERE user_id=? ORDER BY id DESC').get(srv.accountId);
+    assert.equal(claim1.cls, 'Swordman', 'the claim froze the class the stored save was playing');
+    assert.equal(claim1.run_gen, 2, 'and its progression run');
+    assert.ok(c2.ev('S.lv') > 1, 'the owning run is paid its away EXP after the reload');
+    assert.ok(c2.ev('S.zeny') > 0, 'and its Zeny');
+    assert.equal(c2.ev('S.offlineClaimId'), claim1.id, 'the claim is acknowledged in the save');
+    assert.ok(claim1.claimed_at > 0, 'and consumed exactly once server-side');
+    assert.equal(c2.ev('CLOUD.dirty'), false, 'the acknowledgement synced - no 428 trap');
+    killsAfterFirstClaim = c2.ev('S.kills');
+
+    // Second leg: a Novice reset (same class name as the first run ever was, a brand-new run).
+    c2.ev(`changeClass('Novice')`);
+    assert.equal(c2.ev('S.runGen'), 3, 'the Novice reset is run 3');
+    assert.equal(await c2.ev('cloudPush(true)'), 'ok');
+    preAway = C.unpackSave(JSON.parse((await transport.readServerSave()).blob));
+    srv.db.prepare('UPDATE saves SET last_seen=?, rate_kph=? WHERE user_id=?').run(Date.now() - 4 * 3600000, 100, srv.accountId);
+  } finally { c2.close(); }
+
+  const c3 = bootClient({ profile, transport });
+  try {
+    await c3.signInSession(srv);
+    const claim2 = srv.db.prepare('SELECT id, cls, run_gen, claimed_at FROM offline_reward_claims WHERE user_id=? ORDER BY id DESC').get(srv.accountId);
+    assert.equal(claim2.cls, 'Novice', 'the second claim froze the reset run');
+    assert.equal(claim2.run_gen, 3);
+    assert.equal(c3.ev('S.lv'), preAway.lv, 'the reset run is paid nothing from the old class minute');
+    assert.equal(c3.ev('S.exp'), preAway.exp, 'no EXP crosses the reset');
+    assert.equal(c3.ev('S.kills'), killsAfterFirstClaim, 'no loot kills replay into the reset run');
+    assert.equal(c3.ev('S.offlineClaimId'), claim2.id, 'the claim is still acknowledged');
+    assert.ok(claim2.claimed_at > 0, 'and consumed - the account is never trapped by a claim its current run cannot spend');
+    assert.equal(c3.ev('CLOUD.dirty'), false);
+  } finally { c3.close(); }
+});
+
+// 13. v423: a server-issued claim is allowed to arrive after the player selected another class.
+// Its source class is retained in S.base, so the immutable original pricing must pay that source run
+// and the shared wallet exactly once; the newly visible Novice receives no Base/Job EXP.
+await test('v423 integrated: delayed frozen claim pays its retained source run at its original rate, then survives retry and reload', async () => {
+  const srv = await createAccountServer();
+  const profile = createProfileStorage();
+  const transport = makeServerTransport(srv);
+  const c1 = bootClient({ profile, transport });
+  let settled = null;
+  try {
+    await c1.signInSession(srv);
+    assert.equal(await c1.ev('cloudPush(true)'), 'ok');
+    c1.ev(`document.body.classList.remove('social-open');hubFirstPending=false;respawn=0;
+      S.jobs.Novice={jl:10,jx:0};changeClass('Swordman');S.mp=0;S.lvl=1;
+      farmSession=null;farmSample(1000000);recordFarmIncome(6000,3000,420,120,1030000);farmSample(1060000);`);
+    assert.equal(await c1.ev('cloudPush(true)'), 'ok');
+    srv.db.prepare('UPDATE saves SET last_seen=?, rate_kph=? WHERE user_id=?').run(Date.now() - 4 * 3600000, 120, srv.accountId);
+
+    // This GET issues the real server entitlement but deliberately does not hand it to the page yet.
+    const issued = await transport.readServerSave();
+    assert.deepEqual(issued.offlineClaim.pricing && [issued.offlineClaim.pricing.xp, issued.offlineClaim.pricing.zeny,
+      issued.offlineClaim.pricing.sourceMap, issued.offlineClaim.pricing.sourceStage], [6000, 3000, 0, 1]);
+    const sourceBefore = c1.ev(`JSON.stringify({lv:S.lv,exp:S.exp,jx:S.jobs.Swordman.jx,zeny:S.zeny})`);
+
+    // Train a replacement minute that is 100x stronger and from another field. It is deliberately
+    // local while the original claim is pending; the original frozen claim must ignore it.
+    c1.ev(`S.mp=1;S.lvl=1;farmSession=null;farmSample(2000000);
+      recordFarmIncome(600000,300000,42000,30000,2030000);farmSample(2060000);changeClass('Novice');
+      window.__dest={lv:S.lv,exp:S.exp,jx:S.jobs.Novice.jx};`);
+    assert.equal(c1.ev('S.cls'), 'Novice');
+    assert.equal(c1.ev('S.offlineIncome.xp'), 600000, 'the latest client sample really is different');
+
+    assert.equal(await c1.ev('cloudFlushNow()'), 'ok', 'the 428 handshake applies then acknowledges the delayed claim');
+    const sourceAfter = c1.ev(`JSON.stringify(S.base.Swordman)`);
+    const destination = JSON.parse(c1.ev(`JSON.stringify({lv:S.lv,exp:S.exp,jx:S.jobs.Novice.jx})`));
+    const source0 = JSON.parse(sourceBefore), source1 = JSON.parse(sourceAfter), dest0 = JSON.parse(c1.ev('JSON.stringify(window.__dest)'));
+    assert.ok(source1.exp > source0.exp || source1.lv > source0.lv, 'the retained Swordman run receives Base EXP');
+    assert.ok(source1 && c1.ev('S.jobs.Swordman.jx') > source0.jx, 'the retained Swordman job receives Job EXP');
+    assert.deepEqual(destination, dest0, 'the visible Novice receives no source-class Base or Job EXP');
+    assert.equal(c1.ev('S.zeny'), source0.zeny + 360000, 'wallet uses original 3,000 z/min, not the replacement 300,000 z/min');
+    const row = srv.db.prepare('SELECT id, claimed_at, income_xp, income_zeny, source_map, source_stage FROM offline_reward_claims WHERE user_id=? ORDER BY id DESC').get(srv.accountId);
+    assert.ok(row.claimed_at > 0, 'the claim is consumed by the successful versioned acknowledgement');
+    assert.deepEqual([row.income_xp, row.income_zeny, row.source_map, row.source_stage], [6000, 3000, 0, 1]);
+    settled = { source: sourceAfter, zeny: c1.ev('S.zeny'), claimId: row.id };
+    assert.equal(await c1.ev('cloudFlushNow()'), 'ok', 'a retry remains clean after acknowledgement');
+    assert.equal(c1.ev('S.zeny'), settled.zeny, 'retry cannot pay the frozen entitlement twice');
+  } finally { c1.close(); }
+
+  const c2 = bootClient({ profile, transport });
+  try {
+    await c2.signInSession(srv);
+    assert.equal(c2.ev('S.offlineClaimId'), settled.claimId, 'the acknowledgement survives a real reload');
+    assert.equal(c2.ev('JSON.stringify(S.base.Swordman)'), settled.source, 'the paid retained source snapshot survives reload');
+    assert.equal(c2.ev('S.zeny'), settled.zeny, 'the shared wallet survives reload without duplicate payout');
+    assert.equal(await c2.ev('cloudFlushNow()'), 'ok');
+  } finally { c2.close(); }
+});
+
+// 14. v423: manual update uses the exact save coordinator path (showUpdatePrompt -> save(true) ->
+// cloudFlushNow). Whole rewards accrued in less than one Plaza second must enter that snapshot;
+// residual fractions remain in memory until a genuine owner transition instead of being taxed per save.
+await test('v423 integrated: manual update checkpoints whole sub-second Plaza AFK income before reload without duplicate payment', async () => {
+  const srv = await createAccountServer();
+  const profile = createProfileStorage();
+  const transport = makeServerTransport(srv);
+  const c1 = bootClient({ profile, transport });
+  let expected;
+  try {
+    await c1.signInSession(srv);
+    assert.equal(await c1.ev('cloudPush(true)'), 'ok');
+    const pendingRaw = c1.ev(`document.body.classList.remove('social-open');hubFirstPending=false;respawn=0;S.mp=0;S.lvl=1;
+      farmSession=null;farmSample(3000000);recordFarmIncome(600000,300000,420000,1,3030000);farmSample(3060000);
+      plazaAfkAcc={t:0,xp:0,zeny:0,job:0};plazaKillAcc.frac=0;window.__before={lv:S.lv,exp:S.exp,zeny:S.zeny,jx:S.jobs.Novice.jx};
+      plazaAfkTick(.5);JSON.stringify({xp:plazaAfkAcc.xp,zeny:plazaAfkAcc.zeny,job:plazaAfkAcc.job,frac:plazaKillAcc.frac});`);
+    const pending = JSON.parse(pendingRaw);
+    assert.ok(pending.xp >= 5000, 'the real half-second tick accumulated whole endgame EXP before its normal one-second payout');
+    assert.ok(pending.zeny >= 2500);
+    c1.ev(`showUpdatePrompt('2026-11-18 haven-v423 plaza-checkpoint')`);
+    const button = c1.w.document.querySelector('#updatePrompt button');
+    await button.onclick();
+    assert.equal(c1.reloads().length, 1, 'the real manual update path waited for a confirmed save then requested reload');
+    expected = JSON.parse(c1.ev(`JSON.stringify({lv:S.lv,exp:S.exp,zeny:S.zeny,jx:S.jobs.Novice.jx,residual:{t:plazaAfkAcc.t,xp:plazaAfkAcc.xp,zeny:plazaAfkAcc.zeny,job:plazaAfkAcc.job,frac:plazaKillAcc.frac}})`));
+    assert.equal(expected.zeny, c1.ev('window.__before.zeny') + 2500, 'whole sub-second Zeny was checkpointed before the update save');
+    assert.ok(expected.lv > c1.ev('window.__before.lv') || expected.exp > c1.ev('window.__before.exp'), 'whole sub-second EXP was checkpointed before the update save');
+    assert.ok(expected.residual.xp >= 0 && expected.residual.xp < 1 && expected.residual.zeny >= 0 && expected.residual.zeny < 1,
+      'ordinary update checkpoint preserves only the sub-unit rounding residue');
+    const stored = C.unpackSave(JSON.parse((await transport.readServerSave()).blob));
+    assert.deepEqual({lv:stored.lv,exp:stored.exp,zeny:stored.zeny,jx:stored.jobs.Novice.jx},
+      {lv:expected.lv,exp:expected.exp,zeny:expected.zeny,jx:expected.jx}, 'the update coordinator serialized the checkpointed state');
+  } finally { c1.close(); }
+
+  const c2 = bootClient({ profile, transport });
+  try {
+    await c2.signInSession(srv);
+    assert.deepEqual(JSON.parse(c2.ev(`JSON.stringify({lv:S.lv,exp:S.exp,zeny:S.zeny,jx:S.jobs.Novice.jx})`)),
+      {lv:expected.lv,exp:expected.exp,zeny:expected.zeny,jx:expected.jx}, 'reload/rejoin keeps the exact whole checkpoint once');
+  } finally { c2.close(); }
+});
+
 const failed = results.filter(r => !r.ok);
 console.log(`\n${results.length - failed.length} passed, ${failed.length} failed`);
 if (failed.length) process.exit(1);

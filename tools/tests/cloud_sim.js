@@ -78,7 +78,10 @@ assert.ok(start > 0 && end > start, 'the cloud block is not where this suite exp
 // block, and the block calls them - so they are extracted with it.
 const stampStart = src.indexOf('// ---------- the save-owner stamp (v88.6) ----------'), stampEnd = src.indexOf('const num_= (v,d)', stampStart);
 assert.ok(stampStart > 0 && stampEnd > stampStart, 'the save-owner helpers are not where this suite expects them');
-const cloudCode = src.slice(stampStart, stampEnd) + '\n' + src.slice(start, end + "addEventListener('load',()=>{setTimeout(cloudProbe,80)});".length);
+// v422: cloudAdopt clears the fractional plaza-loot accumulator after it replaces a save.
+// The accumulator lives in the combat block rather than the cloud block, so provide its tiny
+// shape here just as the real page does before either block runs.
+const cloudCode = 'let plazaKillAcc={frac:0};\n' + src.slice(stampStart, stampEnd) + '\n' + src.slice(start, end + "addEventListener('load',()=>{setTimeout(cloudProbe,80)});".length);
 
 // Every dependency the block has on the game, stubbed so the suite can drive it directly.
 function harness(opts = {}) {
