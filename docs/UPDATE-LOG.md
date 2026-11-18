@@ -11977,3 +11977,13 @@ re-recording them here would have written wrong numbers into the repository.
   17 coordinated asset URLs now identify v425, including the merged Wardrobe/expanded-job assets.
 * **Delivery:** Review fixes prepared for PR #254. No merge, deployment, production-data operation,
   balance change, source-art change or new Social Durable Object traffic.
+
+### 2026-11-19 — Windows session-test database cleanup
+* **Fixed:** `session_lost_sim.js` explicitly closes the SQLite handle it owns after stopping its
+  HTTP server, before removing its temporary directory. Its session/cookie assertions are unchanged;
+  Windows no longer fails cleanup with `EBUSY`. No game/server runtime or release label changed.
+* **Checks:** The original head reproduced the cleanup error after its functional assertions passed.
+  The corrected test passes 10/10 with the same assertions. The required 253-entry gate ran with
+  Windows environment adapters; after the timing-sensitive Wardrobe check passed a serial rerun,
+  251 passed and only the existing MVP crop/renderer-null failures remain. No assertion was relaxed.
+* **Delivery:** Test-only follow-up for PR #254; no merge, deployment or production-data operation.
