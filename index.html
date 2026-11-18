@@ -921,13 +921,13 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="preload" href="assets/ui/fonts/font-5.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-6.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-7.ttf" as="font" type="font/ttf" crossorigin>
-<link rel="stylesheet" href="assets/ui/eclipse.css?v=324">
-<link rel="stylesheet" href="assets/ui/mobile.css?v=324">
+<link rel="stylesheet" href="assets/ui/eclipse.css?v=418">
+<link rel="stylesheet" href="assets/ui/mobile.css?v=418">
 <script src="assets/ui/mobile.js?v=274"></script>
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
-<link rel="stylesheet" href="assets/social.css?v=417">
+<link rel="stylesheet" href="assets/social.css?v=418">
 <link rel="stylesheet" href="assets/social-battle.css?v=393">
-  <link rel="stylesheet" href="assets/social-fishing.css?v=417"><link rel="stylesheet" href="assets/friends.css?v=273">
+  <link rel="stylesheet" href="assets/social-fishing.css?v=418"><link rel="stylesheet" href="assets/friends.css?v=273">
 </head>
 <body>
 <div id="loginOverlay"><div class="eclipse-login-world" aria-hidden="true"></div><header class="eclipse-login-header"><a href="./" class="eclipse-brand"><span>HH</span><b>HORIZON HAVEN<small>YOUR IDLE ADVENTURE</small></b></a><div class="eclipse-palettes" role="group" aria-label="Interface palette"><button type="button" data-palette="moonstone">Moonstone</button><button type="button" data-palette="aurora">Aurora</button><button type="button" data-palette="ember">Ember</button></div></header><main class="eclipse-login-layout"><section class="login-brand"><div class="login-eyebrow">A WORLD WORTH RETURNING TO</div><h1>Your next <br>chapter <em>awaits.</em></h1><p>Explore a world beyond the horizon.<br>Collect rare gear, master every class, and build your haven.</p><div class="eclipse-login-art"><img src="assets/ui/eclipse-knight.png" alt="Lord Knight ready for adventure"><span>01 / PRONTERA<small>THE JOURNEY BEGINS HERE</small></span><div><img src="assets/equipment-icons/1142.png" alt=""><span>YOUR NEXT UPGRADE<small>Somewhere out there.</small></span></div></div><div class="login-footnote">EXPLORE · GROW · CONQUER</div></section><div class="login-card"><div class="eclipse-access">ADVENTURER ACCESS <span>◇</span></div><h2 id="authHeading">Welcome back.</h2><p class="login-intro" id="authIntro">Your adventure is right where you left it.</p><div class="atabs" id="authTabs"><button type="button" id="tabLogin" class="on">Login</button><button type="button" id="tabReg">Register</button></div>
@@ -1134,7 +1134,7 @@ const RAR5={n:'N'},RAR6={n:'N+'},RAR7={n:'Mythic'},RARALL=RAR.concat([RAR5,RAR6,
 //   and card_sim.js; measured in Updates/cards-gear-audit/.
 const AM=[1.7,2.72,4.42,6.8,11.05],GRADE=['Common','Uncommon','Rare','Legendary'],GI=[0,1,2,4],CV=[3.2,6.4,9.6,16];
 const SLOTS={weapon:{label:'Weapon',stat:'ATK',ic:'⚔️'},armor:{label:'Armor',stat:'DEF',ic:'🥼'},head:{label:'Headgear',stat:'HP',ic:'🎩'},off:{label:'Shield',stat:'DEF',ic:'🛡️'},leg:{label:'Legwear',stat:'DEF',ic:'👖'},acc:{label:'Accessory',stat:'HP',ic:'💍'}};
-// haven-v417: the seven expanded families need their own symbols, and section 6 (Thor Volcano's
+// haven-v418: the seven expanded families need their own symbols, and section 6 (Thor Volcano's
 // Mythic/Primal shelf) needs its own name - it printed "undefined" on the item card without it.
 const WICON={dagger:'🗡️',katar:'🥊',staff:'🪄',bow:'🏹',axe:'🪓',sword:'⚔️',mace:'🔨',
   spear:'🔱',book:'📖',knuckle:'🥊',instrument:'🎻',whip:'🪢',shuriken:'✴️',gun:'🔫'},
@@ -1333,7 +1333,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-15 haven-v417 new equipment: the Nightmare N rows of all ten maps carry the seven expanded weapon families as real items (their N+ exists only on Astral Citadel), and Astral Citadel and Thor Volcano now drop equipment - Astral the Nightmare tier, Thor the Mythic/Primal tier, all fourteen families on each; a Nightmare kin drop hands over the family N piece instead of minting an N+';
+const BUILD='2026-11-18 haven-v418 redesigned Class Tree: dual-branch tree table, Novice hub, family tabs, right inspector, and authentic Ragnarok class icons';
 // v364: this write used to sit AFTER the `//` on the BUILD line, so it was part of the comment and
 // never ran - the login card showed an empty #buildTag and there was no way to confirm which file
 // the browser had loaded. It also has to survive the script running before the login card exists.
@@ -9654,6 +9654,57 @@ function insertUI(sel){if(!(sel.slots>0))return'<small>No card slots on this ite
 // Presentation composition: move the existing controls into task-specific layouts. Nodes are
 // moved, never recreated, so action values, disabled states, confirmation paths and tooltips
 // remain owned by the original renderers. No game/save state is changed here.
+var RO_ICONS={
+  'Novice':'icon_jsxq_big_101.png',
+  'Swordman':'icon_jsxq_big_201.png',
+  'Knight':'icon_jsxq_big_212.png',
+  'Lord Knight':'icon_jsxq_big_213.png',
+  'Rune Knight':'icon_job_js_qslz.png',
+  'Crusader':'icon_jsxq_big_222.png',
+  'Paladin':'icon_jsxq_big_223.png',
+  'Royal Guard':'icon_job_js_sdszj.png',
+  'Mage':'icon_jsxq_big_301.png',
+  'Wizard':'icon_jsxq_big_312.png',
+  'High Wizard':'icon_jsxq_big_313.png',
+  'Warlock':'icon_job_mfs_cmds.png',
+  'Sage':'icon_jsxq_big_322.png',
+  'Scholar':'icon_jsxq_big_323.png',
+  'Sorcerer':'icon_job_mfs_sorcerer.png',
+  'Archer':'icon_jsxq_big_401.png',
+  'Hunter':'icon_jsxq_big_412.png',
+  'Sniper':'icon_jsxq_big_413.png',
+  'Ranger':'icon_job_gjs_sss.png',
+  'Bard & Dancer':'icon_jsxq_big_422.png',
+  'Minstrel & Gypsy':'icon_jsxq_big_423.png',
+  'Maestro & Wanderer':'icon_job_lr_yxlr.png',
+  'Thief':'icon_jsxq_big_601.png',
+  'Assassin':'icon_jsxq_big_612.png',
+  'Assassin Cross':'icon_jsxq_big_613.png',
+  'Guillotine Cross':'icon_job_dz_szck.png',
+  'Rogue':'icon_jsxq_big_622.png',
+  'Stalker':'icon_jsxq_big_623.png',
+  'Shadow Chaser':'icon_job_dz_sxtb.png',
+  'Acolyte':'icon_jsxq_big_501.png',
+  'Priest':'icon_jsxq_big_512.png',
+  'High Priest':'icon_jsxq_big_513.png',
+  'Arch Bishop':'icon_job_fs_sg.png',
+  'Monk':'icon_jsxq_big_522.png',
+  'Champion':'icon_jsxq_big_523.png',
+  'Sura':'icon_job_fs_wszs.png',
+  'Merchant':'icon_jsxq_big_701.png',
+  'Blacksmith':'icon_jsxq_big_712.png',
+  'Whitesmith':'icon_jsxq_big_713.png',
+  'Mechanic':'icon_job_sr_jxgj.png',
+  'Alchemist':'icon_jsxq_big_722.png',
+  'Biochemist':'icon_jsxq_big_723.png',
+  'Geneticist':'icon_job_sr_geneticist.png',
+  'Gunslinger':'icon_jsxq_big_801.png',
+  'Rebellion':'icon_jsxq_big_812.png',
+  'Night Watch':'icon_job_sqs_yxz.png',
+  'Ninja':'icon_job_ninja.png',
+  'Kagerou & Oboro':'icon_job_kagerou.png',
+  'Shinkiro & Shiranui':'icon_job_shinkiro.png'
+};
 function eclipseClassEmblem(name){
   const c=CLASSES[name];
   const fam=(c&&lineOf(name)[1])||'Novice';
@@ -9669,7 +9720,9 @@ function eclipseClassEmblem(name){
     Merchant:'<path d="m10 10 13-3 9 10-9 9-13-16Zm10 14L9 35m-3-4 6 6M23 9l6 7"/><circle cx="12" cy="16" r="4"/>'
   };
   const pathData=art[family]||art.Novice;
-  return '<span class="eclipse-class-emblem tier-'+tier+'"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path class="crest-frame" d="M24 2 43 12v20L24 46 5 32V12Z"/><g transform="translate(4 3)">'+pathData+'</g>'+(tier>=2?'<path d="m12 36 12 7 12-7"/>':'')+(tier>=3?'<path d="m17 7 2 3 5-5 5 5 2-3"/>':'')+'</svg></span>';
+  const svg='<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path class="crest-frame" d="M24 2 43 12v20L24 46 5 32V12Z"/><g transform="translate(4 3)">'+pathData+'</g>'+(tier>=2?'<path d="m12 36 12 7 12-7"/>':'')+(tier>=3?'<path d="m17 7 2 3 5-5 5 5 2-3"/>':'')+'</svg>';
+  const ro=RO_ICONS[name];
+  return '<span class="eclipse-class-emblem tier-'+tier+'">'+(ro?'<img class="class-ro-icon" src="assets/ro_icons/'+ro+'" alt="'+esc(name)+'" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'block\'"><span style="display:none">'+svg+'</span>':svg)+'</span>';
 }
 function arrangePanel(k,root){
   const make=(tag,cls,text)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(text)e.textContent=text;return e};
@@ -15613,20 +15666,20 @@ setInterval(updateWatch,60000);
 // be hours old while the player was on another tab, and the check is a 60-byte text file.
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&(pendingUpdateBuild||Date.now()-PAGE_STARTED_AT>30000))updateWatch()});
 </script>
-<script src="assets/wardrobe-ui.js?v=417"></script>
+<script src="assets/wardrobe-ui.js?v=418"></script>
 <script src="assets/shop.js?v=321"></script>
 <script src="assets/friends.js?v=273"></script>
-<script src="assets/digimon/roster.js?v=417"></script>
-<script src="assets/digimon/base-stats.js?v=417"></script>
-<script src="assets/social-rules.js?v=417"></script>
-<script src="assets/social-poker.js?v=417"></script>
-<script src="assets/digimon-sanctuary.js?v=417"></script>
+<script src="assets/digimon/roster.js?v=418"></script>
+<script src="assets/digimon/base-stats.js?v=418"></script>
+<script src="assets/social-rules.js?v=418"></script>
+<script src="assets/social-poker.js?v=418"></script>
+<script src="assets/digimon-sanctuary.js?v=418"></script>
 <script src="assets/digimon-battle.js?v=393"></script>
-<script src="assets/social-digimon.js?v=417"></script>
+<script src="assets/social-digimon.js?v=418"></script>
 <script src="assets/social-gym-redesign.js?v=393"></script>
 <script src="assets/social-pond-design.js?v=393"></script>
-<script src="assets/social-scene.js?v=417"></script>
-<script src="assets/social-fishing.js?v=417"></script>
-<script src="assets/plaza-bots.js?v=417"></script>
-<script src="assets/social.js?v=417"></script></body>
+<script src="assets/social-scene.js?v=418"></script>
+<script src="assets/social-fishing.js?v=418"></script>
+<script src="assets/plaza-bots.js?v=418"></script>
+<script src="assets/social.js?v=418"></script></body>
 </html>

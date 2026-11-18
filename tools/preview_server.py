@@ -34,7 +34,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # own routes underneath it. EXCEPTION: set PREVIEW_PAGE to a repo-relative page (e.g.
 # PREVIEW_PAGE=tools/skill_fx_preview.html) and '/' serves that page instead - use it when a
 # dev page IS the thing the owner should see, without un-pinning the game as the default.
-_root_page = os.environ.get('PREVIEW_PAGE', 'docs/proposals/class-tree-redesign-visual.html')
+_root_page = os.environ.get('PREVIEW_PAGE', 'index.html')
 PAGES = {'/': _root_page,
          '/game': 'index.html',
          '/classtree': 'docs/proposals/class-tree-redesign-visual.html',

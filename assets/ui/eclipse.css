@@ -1869,6 +1869,7 @@ body:not(.playing) #comboFieldStatus:empty{display:none}
 #wins .alt-branch-card:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 
 #wins .class-card-emblem{display:grid;place-items:center;width:52px;height:52px;border:1px solid var(--edge2);border-radius:50%;font-size:26px;color:var(--gold);background:radial-gradient(circle,rgba(215,183,122,.1),transparent 70%);margin:2px 0}
+#wins .class-card-emblem .class-ro-icon{width:36px;height:36px;object-fit:contain;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.6))}
 
 /* Novice Hub View */
 #wins .novice-hub-view{width:100%;display:flex;flex-direction:column;gap:12px}
