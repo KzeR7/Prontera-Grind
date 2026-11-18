@@ -31,19 +31,19 @@ function validateMeta(m,rec,stances=['idle','walk','attack']){
 const digest=async b=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',b)),x=>x.toString(16).padStart(2,'0')).join('');
 class Store{
  constructor({base='assets/wardrobe/v5/',classes=CLASSES,fetcher=(...a)=>fetch(...a),decode=b=>createImageBitmap(new Blob([b],{type:'image/png'})),budget=16*1024*1024,stances=['idle','walk','attack']}={}){this.stances=stances;this.base=base;this.classes=classes;this.fetcher=fetcher;this.decode=decode;this.budget=budget;this.cache=new Map();this.clients=new Map();this.queue=Promise.resolve();this.serial=0;this.catalog=null;this.metadataCache=new Map();this.metadataBytes=0;this.metadataBudget=1024*1024}
- async bytes(path,limit,sha){const abort=new AbortController(),timer=setTimeout(()=>abort.abort(),15000);try{
-  const r=await this.fetcher(this.base+path,{signal:abort.signal});if(!r.ok)throw Error('Sprite download failed ('+r.status+')');if(+(r.headers.get('content-length')||0)>limit)throw Error('Oversized sprite');
+ async bytes(path,limit,sha,cache){const abort=new AbortController(),timer=setTimeout(()=>abort.abort(),15000);try{
+  const r=await this.fetcher(this.base+path,{signal:abort.signal,cache});if(!r.ok)throw Error('Sprite download failed ('+r.status+')');if(+(r.headers.get('content-length')||0)>limit)throw Error('Oversized sprite');
   let b;if(r.body&&r.body.getReader){const reader=r.body.getReader(),parts=[];let n=0;try{for(;;){const {done,value}=await reader.read();if(done)break;n+=value.length;if(n>limit)throw Error('Oversized sprite');parts.push(value)}}catch(e){await reader.cancel().catch(()=>{});throw e}b=new Uint8Array(n);let at=0;for(const p of parts){b.set(p,at);at+=p.length}}else{b=new Uint8Array(await r.arrayBuffer());if(b.length>limit)throw Error('Oversized sprite')}
   if(sha&&(b.length!==limit||await digest(b)!==sha))throw Error('Sprite checksum mismatch');return b;
  }finally{clearTimeout(timer)}}
- async init(){if(this.catalog)return this.catalog;const c=JSON.parse(new TextDecoder().decode(await this.bytes('catalog.json',512*1024)));if(c.version!==2||!c.assets)throw Error('Invalid wardrobe catalog');
+ async init(){if(this.catalog)return this.catalog;const c=JSON.parse(new TextDecoder().decode(await this.bytes('catalog.json',512*1024,undefined,'no-cache')));if(c.version!==2||!c.assets)throw Error('Invalid wardrobe catalog');
   for(const r of Object.values(c.assets)){if(!/^poses-[a-f0-9]{20}\.json$/.test(r.meta)||!/^atlas-[a-f0-9]{20}\.png$/.test(r.image)||![r.metaSha256,r.imageSha256].every(s=>/^[a-f0-9]{64}$/.test(s))||![r.width,r.height,r.metaBytes,r.imageBytes].every(Number.isInteger)||r.width<1||r.width>4096||r.height<1||r.height>4096||r.width*r.height*4>4*1024*1024||r.metaBytes<1||r.metaBytes>256*1024||r.imageBytes<1||r.imageBytes>1024*1024)throw Error('Invalid atlas catalog')}
   this.catalog=c;return c;
  }
  pinned(extra=[]){return new Set([...extra,...[...this.clients.values()].flatMap(c=>c.ready?c.ready.ids:[])])}
  trim(extra=[],incoming=0){const pin=this.pinned(extra);let total=[...this.cache.values()].reduce((s,r)=>s+r.bytes,0);for(const [k,v] of this.cache){if(total+incoming<=this.budget&&this.cache.size<6)break;if(!pin.has(k)){v.image.close();this.cache.delete(k);total-=v.bytes}}if(total+incoming>this.budget)throw Error('Wardrobe memory limit reached')}
- async metadata(rec){const cached=this.metadataCache.get(rec.metaSha256);if(cached){if(cached.bytes!==rec.metaBytes||cached.value.width!==rec.width||cached.value.height!==rec.height)throw Error('Mismatched atlas metadata');this.metadataCache.delete(rec.metaSha256);this.metadataCache.set(rec.metaSha256,cached);return cached.value}
-  const value=JSON.parse(new TextDecoder().decode(await this.bytes(rec.meta,rec.metaBytes,rec.metaSha256)));validateMeta(value,rec,this.stances);
+ async metadata(rec,stances=this.stances){const cached=this.metadataCache.get(rec.metaSha256);if(cached){if(cached.bytes!==rec.metaBytes||cached.value.width!==rec.width||cached.value.height!==rec.height)throw Error('Mismatched atlas metadata');this.metadataCache.delete(rec.metaSha256);this.metadataCache.set(rec.metaSha256,cached);return cached.value}
+  const value=JSON.parse(new TextDecoder().decode(await this.bytes(rec.meta,rec.metaBytes,rec.metaSha256)));validateMeta(value,rec,stances);
   while(this.metadataBytes+rec.metaBytes>this.metadataBudget&&this.metadataCache.size){const [key,old]=this.metadataCache.entries().next().value;this.metadataCache.delete(key);this.metadataBytes-=old.bytes}
   if(rec.metaBytes<=this.metadataBudget){this.metadataCache.set(rec.metaSha256,{value,bytes:rec.metaBytes});this.metadataBytes+=rec.metaBytes}return value;
  }

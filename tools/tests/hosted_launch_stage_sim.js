@@ -41,7 +41,7 @@ try{
  // lines or the owner's rehearsal stops at "MISSING ... the game would load broken from this
  // build". These are exactly the files that were missing while the overlay was a hand-written list.
  for(const required of ['assets/sprite-pack-x/index.js','assets/ro-fx/index.js','assets/signature-fx.js',
-  'assets/expanded-jobs.js','assets/wardrobe/expanded/v1/catalog.json'])
+  'assets/wardrobe.js','assets/expanded-jobs.js','assets/wardrobe/expanded/v1/catalog.json'])
   assert.equal(typeof payload[required],'string','overlay must carry the build dependency '+required);
  // The per-file packs the client fetches by URL after load: each index names its files, and a
  // staged site that serves the index but not the files renders a blank class or a missing effect.

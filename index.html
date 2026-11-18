@@ -1056,10 +1056,10 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <div id="tooltip"></div>
 <link rel="stylesheet" href="assets/wardrobe.css?v=138">
 <link rel="stylesheet" href="assets/shop.css?v=318">
-<script src="assets/wardrobe.js?v=199"></script>
+<script src="assets/wardrobe.js?v=421"></script>
 <script src="assets/shop-catalog.js?v=321"></script>
 <script src="assets/fourth-jobs.js?v=179"></script>
-<script src="assets/expanded-jobs.js?v=414"></script>
+<script src="assets/expanded-jobs.js?v=421"></script>
 <script src="assets/ascension.js?v=156"></script>
 <script src="assets/native-mob-heights.js?v=153"></script>
 <script src="assets/native-fields.js?v=197"></script>
@@ -15712,25 +15712,17 @@ function syncBossSkillFx(){
   layer.draw(casts,R.domElement.clientWidth,R.domElement.clientHeight,
     (x,y,z)=>scr(x,y+floor(x,z),z),devicePixelRatio||1);
 }
-// haven-v416 (owner: "asura strike doesn't have the asura strike pose, hands on the ground").
-// The client has that pose: it is the 'sit' stance (body ACT action 16), which the expanded bodies
-// already carry and the Social Hub already draws. So the hero drops into it for the length of one
-// cast instead of standing through the hit; no new art and no change to any other skill.
-const KNEEL_SKILLS=new Set(['ch_asura']);
-const KNEEL_SECONDS=1.1;
-let kneelUntil=0,kneelLook=null,kneelAsk='';
-function kneelWanted(id){return KNEEL_SKILLS.has(id)&&typeof wardrobeExpandedClass==='function'&&wardrobeExpandedClass(S&&S.cls)}
-function kneelPose(id){if(!kneelWanted(id))return;
-  kneelUntil=performance.now()+KNEEL_SECONDS*1000;
-  // The kneeling look costs one atlas the first time; until it arrives the standing one keeps drawing.
-  const a=wardrobeAppearance(),k=JSON.stringify([S.cls,a]);
-  if(kneelAsk===k)return; kneelAsk=k; kneelLook=null;
-  wardrobeStore.selectKneel('kneel',a,S.cls).then(look=>{if(look&&kneelAsk===k)kneelLook=look}).catch(()=>{})}
+// Asura's one-hand-down impact is part of the Monk line's regular wardrobe atlas.
+const ASURA_POSE_MS=1100;
+let asuraPose=null;
+function triggerAsuraPose(id){if(id==='ch_asura'&&typeof S!=='undefined'&&S&&['Monk','Champion','Sura'].includes(S.cls))
+  asuraPose={owner:S,cls:S.cls,until:performance.now()+ASURA_POSE_MS}}
+function asuraPoseActive(now){if(asuraPose&&(asuraPose.owner!==S||asuraPose.cls!==S.cls||now>=asuraPose.until))asuraPose=null;return !!asuraPose}
 function playSkillFx(id,target,color){
   if(simVisualsOff())return;
   // haven-v411: signature effects (Asura's kanji, Crazy Weed, bottles, plants...) play on top of the
   // shared effect. A field replays its effect every tick; the signature plays once, for its whole life.
-  kneelPose(id);
+  triggerAsuraPose(id);
   if(typeof PGSignatureFx!=='undefined'&&!(target&&target.sk&&target.sk.field&&target.age>1e-6))PGSignatureFx.play(id,{THREE,scene,from:{x:pl.x,z:pl.z},to:target&&Number.isFinite(target.x)?{x:target.x,z:target.z}:null,
     floor:typeof KIT!=='undefined'&&KIT.nativeWorld&&typeof actorFloorY==='function'?actorFloorY():0,unit:SKIN_H,life:target&&target.sk&&target.sk.field?target.sk.field.duration:0});
   const r=skillFxSpec(id,color);if(!r)return;
@@ -15831,12 +15823,7 @@ function draw(){
   const pFace=mob?Math.atan2(mob.z-pl.z,mob.x-pl.x):pl.run?-pl.ry: -az+Math.PI;
   if(heroSpr){const hd=viewDir(pFace),sk=heroSpr.userData.skin;
     if(heroSpr.userData.wardrobe){
-      // haven-v416: kneel through the cast. The look is the same appearance read from a store that
-      // carries the sit stance, so hair, head and accessories come with it; past the window the
-      // standing frames resume on the very next tick. The direction is turned to face whatever the
-      // strike is aimed at, because the pose reads worst from behind.
-      if(kneelLook&&performance.now()<kneelUntil)captureWardrobeFrame(heroSpr,mob?viewDir(pFace):hd,false,0,undefined,kneelLook);
-      else captureWardrobeFrame(heroSpr,hd,pl.run,atkAnim)}
+      const now=performance.now();captureWardrobeFrame(heroSpr,hd,pl.run,atkAnim,now,asuraPoseActive(now))}
     else if(sk){const route=skinRoute(sk.p,hd,atkAnim);route.weaponType=wt;
       // Paint the APNG frame and its matching saved weapon placement onto the GPU texture.
       // The class skin's own delay table drives both through this same render path.

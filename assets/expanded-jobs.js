@@ -31,8 +31,10 @@ class Store extends PGWardrobe.Store{
   }
   this.catalog={...own,assets};return this.catalog;
  }
- // A body atlas carries standing and sitting poses; each store keeps only the stances it draws.
- async metadata(rec){const value=await super.metadata(rec);for(const name of Object.keys(value.actions))if(!name.includes(':')&&!this.stances.includes(name.replace(/\d$/,'')))delete value.actions[name];return value}
+ // The field store keeps the optional Asura stance; the plaza store still reads only sit.
+ bodyStances(rec){return rec.asura===true&&this.stances.includes('idle')?[...this.stances,'asura']:this.stances}
+ async metadata(rec){const stances=this.bodyStances(rec);
+  const value=await super.metadata(rec,stances);for(const name of Object.keys(value.actions))if(!name.includes(':')&&!stances.includes(name.replace(/\d$/,'')))delete value.actions[name];return value}
  // Hair and accessory atlases only know the shipped jobs. Hand the shared loader this job's routes,
  // derived from the reference job's, under the "<job>:<stance><dir>" names it selects by.
  async asset(id,ids){const r=await super.asset(id,ids);if(id.startsWith('base-'))return r;
@@ -41,9 +43,12 @@ class Store extends PGWardrobe.Store{
   const key=job+sex;if(jobs.has(key))return {...r,metadata:jobs.get(key)};
   const c=this.catalog,track=c.tracks[sex]&&c.tracks[sex][job],reference=c.reference[sex];if(!track||!reference)throw Error('Appearance is unavailable');
   const actions={};
-  for(const stance of this.stances)for(let d=0;d<8;d++){const name=stance+d,ref=r.metadata.actions[c.referenceJob+':'+name];
-   if(!ref||!track[name]||!reference[name])throw Error('Mismatched animation layers');
-   actions[job+':'+name]=reroute(ref,reference[name].length,reference[name],track[name].a,track[name].d,r.metadata.clock);
+  const stances=this.bodyStances(c.assets[ids[0]]);
+  for(const stance of stances)for(let d=0;d<8;d++){const name=stance+d;
+   // The shared Knight has no Asura route; pin the same-facing neutral head to the impact anchor.
+   const source=stance==='asura'?'idle'+d:name,ref=r.metadata.actions[c.referenceJob+':'+source],anchor=reference[source];
+   if(!ref||!track[name]||!anchor)throw Error('Mismatched animation layers');
+   actions[job+':'+name]=reroute(ref,anchor.length,anchor,track[name].a,track[name].d,r.metadata.clock);
   }
   const metadata={clock:r.metadata.clock,actions};jobs.set(key,metadata);return {...r,metadata};
  }

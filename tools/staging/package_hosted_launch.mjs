@@ -48,7 +48,7 @@ const files=['index.html','gm.html','tools/build_site.sh','tools/optimize_delive
  // v415: runtime files that exist in the archived base but that this branch modified. The hand list
  // never caught up with them, so staging would have received the BASE copy of each while the rest of
  // the candidate was v415 - the mixed-version deployment this guard exists to prevent.
- 'assets/wardrobe-ui.js',
+ 'assets/wardrobe-ui.js','assets/wardrobe.js',
  // v415: the Eclipse/mobile UI bundle and its scripts are modified in the base too.
  'assets/ui/eclipse.css','assets/ui/mobile.css','assets/ui/mobile.js',
  // Provenance metadata, not runtime: only tools/tests read these. They ride along so the staged

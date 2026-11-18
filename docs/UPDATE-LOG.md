@@ -11873,34 +11873,18 @@ re-recording them here would have written wrong numbers into the repository.
   problem is solved. No merge, deployment, production data change, reward-rule change or new Social
   Durable Object traffic.
 
-### 2026-11-18 — `haven-v421` plaza AFK class-switch exploit fix
-* **Fixed:** The social hub no longer pays another class's measured farming minute. `plazaFarmIncome()`
-  validated that the sample key named *a* real class, but never that it named the *current* one — so
-  after `changeClass()` the plaza (including its loot replay) kept paying the old class's EXP/Zeny/Job
-  rate to the new class: a maxed class's measured minute could idle a Base Lv 25 Novice upward. The
-  check now requires the sample's class to be `S.cls`. The stored sample is deliberately kept, not
-  cleared: the away claim is documented to keep using it until a full field minute replaces it, and
-  switching back to the class that earned it resumes its own plaza pay. Client-only change — no Social
-  Durable Object or Pages Function changes.
-* **Try it:** Farm one full minute in the Field, open the social hub and confirm "Plaza AFK" pays the
-  measured rate. Change class (J) and return to the hub: the Field card shows no measured rate and no
-  EXP/Zeny accrues until the new class farms its own full field minute. Switch back to the first class
-  and its measured rate resumes.
-* **Checks:** `node tools/tests/plaza_afk_income_sim.js` (extended with the class-switch regression:
-  refuses the old class rate, pays nothing on switch, resumes on switch-back, honours the replacement
-  minute), `class_change_sim.js` (28), `update_watch_sim.js` (22), `afterdark_ui_sim.js`,
-  `plaza_loot_sim.js`, `plaza_field_rate_card_sim.js`, `plaza_rate_survives_stage_advance_sim.js`,
-  `plaza_stranded_still_paid_sim.js`, `adventurer_updates_sim.js` (29), `offline_sim.js` (15),
-  `mvp_exp_sim.js` (5), `base_pacing_sim.js` (8), `ascension_tracks_sim.js` (16) — all pass.
-* **Delivery:** Branch `arena/d30d4310-prontera-grind`.
+### 2026-11-18 — haven-v421 Asura Strike one-hand-down pose
 
-### 2026-11-18 — `haven-v422` measured rewards belong to their account, class and run
-* **Fixed:** A measured farming minute is now owned by the account, class **and progression run** that earned it. A class reset makes a new run even when it returns to the same class name, so neither the social-hub Plaza AFK timer nor an offline claim can transfer the outgoing character's EXP, Zeny, Job, loot replay or farming speed into a fresh Novice. Changing class or logging out first settles the departing owner's pending Plaza AFK earnings; only sub-unit remainders (less than one EXP/Zeny/Job and one loot kill) are discarded. The smoothed kill-rate estimate re-bases at zero on a class/run boundary rather than pricing the new character with the old one's speed.
-* **Fixed:** Offline reward claims now freeze their owning class and run on the server when issued (migration `0018_offline_claim_owner_context.sql`). Reloads and retry requests return the same frozen claim, and consuming it never changes its owner. The client pays it only when it still belongs to the character it was priced for; a mismatched claim is safely acknowledged with no reward, so sync cannot remain stuck. Existing claims without ownership context remain payable for backward compatibility, and existing saves are adopted into generation 1 without deleting progress.
-* **Fixed:** The one-catch-per-spawn fishing MVP marker is saved with the account (most recent 32 ids) instead of only an in-memory set, so reloading cannot re-enable a previously claimed spawn.
-* **Try it:** Farm a full Field minute as Swordman, leave the game long enough for an offline claim, then choose Novice with **J** before returning. The previous Swordman reward is never paid to the new Novice; a new Novice-owned claim still works normally. Returning to a stored class continues that class's own run and measured rate.
-* **Checks:** `api_sim.js` (72), `cloud_sim.js` (100), `echo_board_sim.js` (7, including the pre-0018 rollout fallback), `class_reward_ownership_sim.js`, `fishing_save_reload_sim.mjs` (20, including real reload/claim/reset flow), `class_change_sim.js` (29), `plaza_afk_income_sim.js`, `ascension_tracks_sim.js`, `offline_sim.js` (15), save/reload/owner/format/max-state suites, `ui_sim.js` (64), and `skill_balance_sim.js` — all pass.
-* **Delivery:** Branch `arena/d30d4310-prontera-grind`.
+* **Changed:** Monk, Champion and Sura now hold the native one-hand-down impact pose on Asura Strike instead of sitting. The pose uses the current hairstyle and accessories, works in all eight directions for both genders, and loads with the normal field appearance. Damage, skill effects and Social Hub sitting are unchanged.
+* **Try it:** Cast Asura Strike with Spirit Spheres on a Monk-line character. The hero briefly braces on one hand, then resumes the normal field animation.
+* **Checks:** Asura cast/render, expanded Wardrobe, normal Wardrobe, signature skills/effects, update watcher and publish checks passed. All 48 impact frames and anchors matched the pinned native source, and the existing body frames remained pixel-identical.
+* **Delivery:** Implemented in the working branch; not deployed.
+
+### 2026-11-18 — Asura pose pull request checks
+
+* **Changed:** Included the updated Wardrobe loader in the hosted staging package and regenerated the Map Journey review captures with the same loader. Guarded the Asura visual hook when called outside a running character session.
+* **Checks:** Generated assets, Pages configuration, hosted packaging, and the full simulation/smoke gate were checked. Two suites still fail on the unchanged branch base as well: `skill_balance_sim.js` (stale progression fixture) and `render_lost_boot_smoke.js` (no-WebGL boot). Software-WebGL Map Journey checks passed with no browser errors.
+* **Delivery:** Prepared the branch for a pull request; no deployment.
 
 ### 2026-11-18 — `haven-v423/v424` immutable offline-claim pricing state and frozen coverage bounds
 

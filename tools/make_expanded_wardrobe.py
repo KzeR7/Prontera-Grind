@@ -69,6 +69,9 @@ JOBS = {
 }
 STANCES = ('idle', 'walk', 'attack', 'sit')   # 'sit' is only used by the Social Hub (assets/social/sitting/)
 KEYS = [s + str(d) for s in STANCES for d in range(8)]
+ASURA_CLASSES = {'Monk', 'Champion', 'Sura'}
+# The visually verified one-hand-down impact in the pinned Monk-line ACT files (zero-based).
+ASURA_ACTION, ASURA_FRAME = 96, 2
 STAND = [k for k in KEYS if not k.startswith('sit')]
 SITTING = os.path.join(REPO, 'assets', 'social', 'sitting')
 
@@ -118,17 +121,22 @@ def paint(frame, imgs, rgba, shift=(0, 0)):
     return out.crop(box), box[0] - pad, box[1] - pad
 
 
-def job_frames(src, sex):
+def job_frames(src, sex, asura=False):
     """ACT frames per stance+direction, their delay, and the gun (if the job holds one)."""
     act, imgs, rgba = pack.load('body/%s_%s' % (src, sex))
     held = pack.held_weapon(src, sex)
     first = {'idle': 0, 'walk': 8, 'attack': pack.attack_action(src, held), 'sit': 16}
     frames, delay, guns = {}, {}, {}
-    for stance in STANCES:
+    if asura:
+        first['asura'] = ASURA_ACTION
+    for stance in first:
         for d in range(8):
             fs = act['actions'][first[stance] + d]
             key = stance + str(d)
-            frames[key] = [fs[0]] * 3 if stance in ('idle', 'sit') else fs[:32]
+            if stance == 'asura':
+                frames[key] = [fs[ASURA_FRAME]]
+            else:
+                frames[key] = [fs[0]] * 3 if stance in ('idle', 'sit') else fs[:32]
             delay[key] = int(round(act['delays'][first[stance] + d] * 25))
             if held and stance == 'attack':
                 guns[key] = held[0]['actions'][first[stance] + d]
@@ -271,11 +279,12 @@ def build():
         job_anchor, job_delay = {}, {}
         for cls, (job, male) in JOBS.items():
             src = male if sex == 'm' else pack.FEMALE_OF.get(male, male)
-            frames, delay, imgs, rgba, held, guns = job_frames(src, sex)
+            asura = cls in ASURA_CLASSES
+            frames, delay, imgs, rgba, held, guns = job_frames(src, sex, asura)
             atlas, raw = Atlas(), {}
             sid = atlas.add(shadow_im)
             anchors = {}
-            for key in KEYS:
+            for key in frames:
                 back = key[-1] in '2345'
                 poses = []
                 anchors[key] = [f['anchors'][0] for f in frames[key]]
@@ -294,7 +303,7 @@ def build():
                 raw[key] = poses
             sheet, pos = atlas.finish()
             actions = {}
-            for key in KEYS:
+            for key in frames:
                 out = []
                 for layers in raw[key]:
                     out.append([fit([pos[i][0], pos[i][1], atlas.images[i].width, atlas.images[i].height, x, y, z, slot])
@@ -304,6 +313,8 @@ def build():
             meta = {'version': 2, 'width': sheet.width, 'height': sheet.height, 'layers': ltab, 'poses': ptab, 'actions': atab}
             rec = record(files, meta, png(sheet))
             rec.update(width=sheet.width, height=sheet.height)
+            if asura:
+                rec['asura'] = True
             # v5's rule: height of body + default hair in the resting pose (keeps world scale)
             b0 = [l for l in actions['idle0']['frames'][0] if l[7] == 'body']
             h0 = reroute({'delay': 100, 'frames': [ref_hair0]}, 1, ref_anchor['idle0'][:1], anchors['idle0'][:1], 100, None)['frames'][0]
@@ -312,7 +323,7 @@ def build():
             assets['base-%d-%s' % (job, sex)] = rec
             job_anchor[job], job_delay[job] = anchors, delay
 
-        tracks[sex] = {str(job): {key: {'d': job_delay[job][key], 'a': [list(x) for x in job_anchor[job][key]]} for key in KEYS} for job in job_anchor}
+        tracks[sex] = {str(job): {key: {'d': job_delay[job][key], 'a': [list(x) for x in job_anchor[job][key]]} for key in job_anchor[job]} for job in job_anchor}
         reference[sex] = {key: [list(x) for x in ref_anchor[key]] for key in KEYS}
 
     # "shared" + "reference" + "tracks" are all the runtime needs to move a v5 hair / accessory
