@@ -403,6 +403,20 @@ the old class's measured rate (EXP, Zeny, Job and the loot replay). The sample i
 cleared on a class change: the away claim is documented to keep using it until a full field minute
 replaces it, and switching back to the class that earned it resumes its own plaza pay.
 
+**Who a measured reward belongs to (v422):** class alone was not enough — a reset Novice is a new
+character with the same name. Every measured minute now also carries the account id and a progression
+run generation (`S.runSeq`/`S.runGen`; `snapClass()` records the run on `S.base[cls]` so a restored
+class continues it), and both `plazaFarmIncome()` and the away-claim validator require all three to
+match the character standing here (`incomeOwnedByCurrent()`). `changeClass()`/`logout()` settle the
+outgoing class's pending plaza accrual through the normal earn path (`settlePlazaAfk()`); only
+sub-unit remainders (less than one EXP/Zeny/Job and one loot kill) are dropped. Server claims freeze
+the class and run they were priced for
+(`offline_reward_claims.cls/run_gen`, migration 0018 — NULL means a legacy claim, payable as before),
+and the smoothed kill rate re-bases to 0 across a class/run boundary so old-class speed never prices a
+new character. `repairSave` adopts pre-ownership saves into generation 1, so migration erases nothing.
+The fishing one-catch-per-spawn MVP marker persists in the save (`fishing.mvpCaught`, newest 32 ids)
+instead of an in-memory Set that a reload wiped.
+
 **Where the plaza's Field card gets its numbers (v390):** it prints the **measured** rate from
 `plazaFarmIncome()` in `index.html`, never the `#expmin`/`#zenymin` HUD samplers. Those are live combat
 readings that reset after `HUD_IDLE_RESET` (30 s) without a kill, so copying them made a paying plaza

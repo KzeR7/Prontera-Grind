@@ -135,7 +135,7 @@ Open the `*.pages.dev` address Cloudflare gives the project, and walk this list:
 | Check | Expected |
 |---|---|
 | The login card | says **“☁ Cloud accounts are on — register or sign in…”** |
-| Build tag at the bottom of the card | `2026-11-18 haven-v421 plaza AFK pays only the class that measured the minute` |
+| Build tag at the bottom of the card | `2026-11-18 haven-v422 measured rewards belong to the account, class and run that earned them` |
 | `<your-site>/api/me` while signed out | `{"err":"Not logged in."}` with HTTP 401 — JSON, not an HTML page |
 
 That second-browser line is the entire point of the shift: it is progress following the player

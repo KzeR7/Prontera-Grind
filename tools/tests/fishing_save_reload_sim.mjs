@@ -1040,6 +1040,65 @@ await test('MVP one-catch marker persists across reload, is capped, and normaliz
   } finally { c3.close(); }
 });
 
+// 12. v422 integrated: the whole class-switch claim chain through the real handlers and a real
+//     reload. A claim frozen for the synced run pays that run after a reload; after a Novice reset
+//     the next claim is frozen for the new run, pays nothing (its measured minute belongs to the
+//     run that was reset away), and is consumed so the save can never trap in 428s.
+await test('v422 integrated: frozen claim pays its owning run after reload, pays nothing after a Novice reset, and never traps the sync', async () => {
+  const srv = await createAccountServer();
+  const profile = createProfileStorage();
+  const transport = makeServerTransport(srv);
+  const c1 = bootClient({ profile, transport });
+  try {
+    await c1.signInSession(srv);
+    assert.equal(await c1.ev('cloudPush(true)'), 'ok');
+    // A REAL class change, then the new class measures one full field minute of its own.
+    c1.ev(`S.jobs.Novice={jl:10,jx:0};changeClass('Swordman');
+      farmSession=null;farmSample(1000000);recordFarmIncome(120,60,42,1,1030000);farmSample(1060000);`);
+    assert.equal(c1.ev('S.runGen'), 2, 'the class change started run 2');
+    assert.equal(c1.ev('S.offlineIncome.gen'), 2, 'the minute is owned by run 2');
+    assert.equal(await c1.ev('cloudPush(true)'), 'ok', 'the Swordman run and its measured minute sync');
+    srv.db.prepare('UPDATE saves SET last_seen=?, rate_kph=? WHERE user_id=?').run(Date.now() - 4 * 3600000, 100, srv.accountId);
+  } finally { c1.close(); }
+
+  // Reload: the claim is issued frozen for the Swordman run; login applies it and syncs it back.
+  const c2 = bootClient({ profile, transport });
+  let killsAfterFirstClaim, preAway = null;
+  try {
+    await c2.signInSession(srv);
+    const claim1 = srv.db.prepare('SELECT id, cls, run_gen, claimed_at FROM offline_reward_claims WHERE user_id=? ORDER BY id DESC').get(srv.accountId);
+    assert.equal(claim1.cls, 'Swordman', 'the claim froze the class the stored save was playing');
+    assert.equal(claim1.run_gen, 2, 'and its progression run');
+    assert.ok(c2.ev('S.lv') > 1, 'the owning run is paid its away EXP after the reload');
+    assert.ok(c2.ev('S.zeny') > 0, 'and its Zeny');
+    assert.equal(c2.ev('S.offlineClaimId'), claim1.id, 'the claim is acknowledged in the save');
+    assert.ok(claim1.claimed_at > 0, 'and consumed exactly once server-side');
+    assert.equal(c2.ev('CLOUD.dirty'), false, 'the acknowledgement synced - no 428 trap');
+    killsAfterFirstClaim = c2.ev('S.kills');
+
+    // Second leg: a Novice reset (same class name as the first run ever was, a brand-new run).
+    c2.ev(`changeClass('Novice')`);
+    assert.equal(c2.ev('S.runGen'), 3, 'the Novice reset is run 3');
+    assert.equal(await c2.ev('cloudPush(true)'), 'ok');
+    preAway = C.unpackSave(JSON.parse((await transport.readServerSave()).blob));
+    srv.db.prepare('UPDATE saves SET last_seen=?, rate_kph=? WHERE user_id=?').run(Date.now() - 4 * 3600000, 100, srv.accountId);
+  } finally { c2.close(); }
+
+  const c3 = bootClient({ profile, transport });
+  try {
+    await c3.signInSession(srv);
+    const claim2 = srv.db.prepare('SELECT id, cls, run_gen, claimed_at FROM offline_reward_claims WHERE user_id=? ORDER BY id DESC').get(srv.accountId);
+    assert.equal(claim2.cls, 'Novice', 'the second claim froze the reset run');
+    assert.equal(claim2.run_gen, 3);
+    assert.equal(c3.ev('S.lv'), preAway.lv, 'the reset run is paid nothing from the old class minute');
+    assert.equal(c3.ev('S.exp'), preAway.exp, 'no EXP crosses the reset');
+    assert.equal(c3.ev('S.kills'), killsAfterFirstClaim, 'no loot kills replay into the reset run');
+    assert.equal(c3.ev('S.offlineClaimId'), claim2.id, 'the claim is still acknowledged');
+    assert.ok(claim2.claimed_at > 0, 'and consumed - the account is never trapped by a claim its current run cannot spend');
+    assert.equal(c3.ev('CLOUD.dirty'), false);
+  } finally { c3.close(); }
+});
+
 const failed = results.filter(r => !r.ok);
 console.log(`\n${results.length - failed.length} passed, ${failed.length} failed`);
 if (failed.length) process.exit(1);
