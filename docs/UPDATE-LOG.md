@@ -11829,3 +11829,42 @@ re-recording them here would have written wrong numbers into the repository.
   pass. Actual reruns of all 126 combat measurements match the pre-merge rows and historical baseline.
 * **Delivery:** Integration on PR #248's branch for the owner to merge; no production deployment,
   production account edits, reward-rule changes or new Social Durable Object traffic.
+
+### 2026-11-18 — `haven-v419` save-path CPU diet
+* **Changed:** Four measured reductions on the hottest API routes, none of which changes an answer:
+  (1) `_lib/validate.js` reads a compact save's codec version out of the TEXT instead of `JSON.parse`ing
+  the whole stored blob for one number — `blobForClient` calls it on every `GET /api/save` and on every
+  conflict reply, so a 300 KB save paid a full parse twice per read. It falls back to the old parse
+  reader on every shape it is not certain about, so the worst case is the old cost, never a different
+  answer. (2) `GET /api/save` no longer re-reads the save row after `touchSeen`: the touch changes
+  neither field the response carries, and the second read fetched a whole save-sized blob for nothing.
+  (3) An accepted sync whose leaderboard projection (`level/cls/zeny/kills_total/playtime/rate_kph`) is
+  unchanged writes the row with a statement that leaves those columns alone; version, blob, `saved_at`,
+  `updated_at` and `last_seen` are still written under the same optimistic-concurrency guard, so the
+  acknowledgement and the 409 path are unchanged. (4) An accepted sync only reads the last offline
+  claim's remainder when the away window could actually mint a claim, instead of on every sync.
+  A fifth change was prototyped and **dropped on measurement**: a durable checkpoint so Echo settlement
+  did not query for ended periods on every save. Its own read costs the same single statement as the
+  query it replaces (0.007 ms vs 0.014 ms), so it saved ~7 µs and added two statements whenever a period
+  was due — no migration, no new table, no owner-only endpoint. A sixth (sharing one parse between the
+  incoming and stored blob on a byte-identical re-sync) was also reverted: it made a near-cap `PUT`
+  40 % SLOWER (6.9 → 9.6 ms) in a controlled bench despite one fewer parse.
+* **Try it:** Save normally, then let a background tab idle-sync: nothing visibly changes. A save made
+  on an old page that cannot decode the compact format still receives a blob it can read, and a stale
+  tab still gets its 409 with the live blob.
+* **Checks:** Local comparative CPU (Node 22 + the real handlers + the D1 shim, `tools/cpu_profile.mjs`,
+  11 batched samples × 3 alternating rounds, median of rounds): `GET /api/save` −33 % near cap
+  (4.57 → 3.06 ms) and −38 % at medium, conflicts −5 to −7 %, `PUT /api/save` −2 to −5 %; near-cap
+  `PUT` unchanged (+1.4 %, within noise) after reverting the parse-sharing experiment. New
+  `cpu_hot_paths_sim.mjs` (25 checks) pins the read count, the parse count, both write statements, the
+  409 path, and that every accepted save still settles Echo and cannot pay twice. New
+  `save_codec_canread_sim.mjs` (47 checks) proves the text reader agrees with `JSON.parse` on every
+  stored shape including adversarial text. `api_sim` 70/0, `save_codec_chain_sim`,
+  `save_codec_item_state_sim` 12/0, `save_codec_gm_sim` 8, `unverified_echo_launch_sim`,
+  `echo_board_sim` 7/0, `fishing_save_reload_sim` 18/0, `cloud_sim` 100/0. Full gate 237/243 with the
+  six known-red suites unchanged from the base commit.
+* **Delivery:** Local comparative evidence only. Cloudflare CPU quantiles, deployment SHA and
+  per-invocation-status counts remain unavailable from this sandbox, so this does **not** claim the
+  Free Tier CPU problem is solved; see [CPU verification](CPU-LIMIT.md) for the hosted measurement
+  that would settle it. No merge, deployment, production data change, reward-rule change or new
+  Social Durable Object traffic.

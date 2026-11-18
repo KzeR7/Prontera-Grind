@@ -51,6 +51,8 @@ git fetch origin d164bd0527cfe335f9c183d0e576800716b7dd26
 
 ```sh
 node tools/tests/save_max_state_sim.mjs
+node tools/tests/save_codec_canread_sim.mjs
+node tools/tests/cpu_hot_paths_sim.mjs
 node tools/tests/save_codec_item_state_sim.mjs
 node tools/tests/save_codec_real_sim.mjs
 node tools/tests/save_codec_catalog_sim.mjs
@@ -112,6 +114,21 @@ the update watcher 22/22. Actual benchmark reruns preserve all 126 pre-merge mea
 production-length ids and the fish dex/stats. Do not replace it with short handwritten fish ids or
 half-starred cards. The measured case is 338,180 characters under the merged v3 encoder and 295,175
 under v4, against the unchanged 307,200 limit. This is a finite regression, **not a global maximum**.
+
+`save_codec_canread_sim.mjs` (haven-v419) proves the text reader that replaced the
+`JSON.parse` version lookup in `_lib/validate.js` agrees with the old reader on **every** stored
+shape: codec output v1–v4 × 0/1/5/50 records, plain saves, and adversarial text (nested `"__v"`,
+quoted/negative/floating values, unbalanced nesting, truncated blobs, escapes). Any disagreement
+fails the suite, so a save can never be handed to a page that cannot decode it.
+
+`cpu_hot_paths_sim.mjs` (haven-v419) pins the four CPU-diet changes by **behaviour, not timing**:
+`GET /api/save` reads the save row once and parses its blob once; an accepted sync whose leaderboard
+projection did not change still writes `version/blob/saved_at/updated_at/last_seen` under the same
+`AND version = ?` guard while leaving `level/cls/zeny/kills_total/playtime` alone, and a sync that did
+change them writes them; a stale version is still a 409 with nothing written; and Echo settlement
+still settles a due day/week, never pays twice, keeps the save accepted when a batch is refused,
+closes an empty period and settles from `GET /api/board`. It also asserts that the dropped
+checkpoint endpoint does not exist, so it cannot come back silently.
 
 `save_codec_item_state_sim` checks all 51 refinement/lock-presence states, permanent enum mappings,
 page/server decoding in both directions, malformed/future-value preservation and the client capability
@@ -727,3 +744,31 @@ roster without horizontal overflow, and the 14-entry stage-not-listed filter.
 This is not an exhaustive visual review of all 280 forms or a physical-touch
 performance pass. The Digimon Up sprites still require separate publication
 rights authorization; the upstream fan-use statement is not a rights grant.
+
+## CPU work (haven-v419)
+
+The CPU work has its own harnesses, and none of them is a Cloudflare measurement:
+
+```sh
+node tools/cpu_profile.mjs --runs 11 --batch 10 --json /tmp/after.json --label v419
+git stash && node tools/cpu_profile.mjs --runs 11 --batch 10 --json /tmp/before.json --label base && git stash pop
+node tools/cpu_hotpaths.mjs --case save-put --size nearCap --runs 60 --top 10 --inclusive
+```
+
+`cpu_profile.mjs` runs the real handlers against the real migrations in `node:sqlite` with a D1 shim
+that counts statements, and reports the median of `--runs` samples where each sample is the mean of
+`--batch` requests. Read the A/B (before/after with identical fixtures), never a single figure, and
+never as `cpu_ms`. `cpu_hotpaths.mjs` attributes self/inclusive time with the V8 sampling profiler.
+Both print a header saying so. `docs/CPU-LIMIT.md` records the results and the two changes that were
+measured and reverted.
+
+**2026-11-18 gate, `haven-v419`, Node 22.22.3:** **237 suites pass / 6 fail** out of 243 gate
+entries. All six failures are pre-existing and reproduce on the base commit `c4b4f43`:
+`card_star_balance_sim` and `skill_balance_sim` (shallow clone — `git show d164bd0:index.html`),
+`hosted_scrypt_prepare_sim` and `hosted_launch_stage_sim` (local staging/git tooling), and
+`panel_layout_smoke` / `render_lost_boot_smoke` (DOM assertions). None of them touches the save, API,
+settlement or recovery paths this change edits. No assertion was weakened, no budget loosened and no
+fixture re-hashed; the one assertion the CPU change touches (`api_sim`'s save-sized parse count) was
+restored to its original `assert.strictEqual(parses, 3)` when the parse-sharing experiment was
+reverted. Save/reload is 18/18, `api_sim` 70/70, `save_codec_canread_sim` 47/47,
+`cpu_hot_paths_sim` 25/25, `save_codec_item_state_sim` 12/12, `cloud_sim` 100/100.

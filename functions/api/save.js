@@ -46,6 +46,10 @@ const publicClaim = row => row ? ({
   rateKph: Number(row.rate_kph), kills: Number(row.kills), remainder: Number(row.remainder),
 }) : null;
 
+// Is the away window long enough for a claim to exist at all? <3 minutes never mints one, and the
+// test lives here so the read that only a real claim needs can be skipped without duplicating it.
+const awayQualifies = (row, now) => now - (Number(row.last_seen) || now) >= OFFLINE_MIN_MS;
+
 function issueOfflineClaim(row, now, savedRemainder = 0) {
   const lastSeen = Number(row.last_seen) || now;
   const awayMs = Math.max(0, now - lastSeen);
@@ -60,7 +64,11 @@ function issueOfflineClaim(row, now, savedRemainder = 0) {
 
 async function pendingOrIssueOfflineClaim(D, userId, row, now) {
   let pending = await db.pendingOfflineClaim(D, userId);
-  if (!pending) {
+  // v416 (CPU): the remainder of the last claim is only needed by a claim that is actually being
+  // issued, and one is only issued once the away window is longer than OFFLINE_MIN_MS. Reading it
+  // unconditionally cost every sync a D1 statement whose answer an actively-playing client (away for
+  // seconds) never used - on top of the pending-claim read immediately above.
+  if (!pending && awayQualifies(row, now)) {
     const remainder = await db.lastOfflineRemainder(D, userId);
     const plan = issueOfflineClaim(row, now, remainder);
     if (plan) {
@@ -97,6 +105,23 @@ function updatedRate(row, pub, now, appliedClaim) {
   return Math.round((previous * (1 - alpha) + sample * alpha) * 100) / 100;
 }
 
+// True when this sync would write exactly the denormalised values the row already holds.
+// `saved_at`/`updated_at`/`last_seen`/`version` are deliberately NOT part of the comparison: they are
+// the sync itself, and skipping them would stop the save being an acknowledgement.
+function saveColumnsUnchanged(row, pub, rateKph) {
+  const same = (stored, incoming) => {
+    if (stored == null && incoming == null) return true;
+    if (stored == null || incoming == null) return false;
+    return Number(stored) === Number(incoming);
+  };
+  return same(row.kills_total, pub.kills ?? 0)
+    && same(row.level, pub.lv ?? null)
+    && (row.cls ?? null) === (pub.cls ?? null)
+    && same(row.zeny, pub.zeny ?? null)
+    && same(row.playtime, pub.playtime ?? null)
+    && same(row.rate_kph, rateKph);
+}
+
 export const onRequestGet = guard(async ({ request, env }) => {
   const user = await currentUser(request, env.DB);
   if (!user) return await unauth(request);
@@ -115,10 +140,18 @@ export const onRequestGet = guard(async ({ request, env }) => {
     // Return a pending claim unchanged after a lost response/reload. Otherwise snapshot server time,
     // persisted server rate and remainder once. The authenticated GET advances the baseline itself
     // (it writes no save row, so it must).
-    const pendingClaim = await pendingOrIssueOfflineClaim(D, user.id, row, now);
+    //
+    // v416 (CPU): this used to re-read the row after `touchSeen` so the answer carried the new
+    // `last_seen`/`updated_at`. `updated_at` is written as `updated_at = updated_at` - the touch does
+    // not change it - and `last_seen` is not in the GET response at all, so that second read fetched
+    // a whole save-sized blob (up to the 300 KB ceiling) to learn nothing. The response fields come
+    // from the row already in hand; `last_seen` is folded into the claim in the same way the split
+    // read's result would have shown it.
+    const claim = await pendingOrIssueOfflineClaim(D, user.id, row, now);
     await db.touchSeen(D, user.id, now);
-    offlineClaim = publicClaim(pendingClaim);
-    row = await db.saveByUser(D, user.id);
+    offlineClaim = publicClaim(claim);
+    // No field this response carries was changed by the touch, so the row in hand is still the
+    // authoritative one: version, saved_at, updated_at and blob are untouched by `touchSeen`.
   }
 
   const grants = await db.pendingGrants(D, user.id);
@@ -225,7 +258,16 @@ export const onRequestPut = guard(async ({ request, env }) => {
     try { await recordUnverifiedEcho(D,user.id,save,savedAt); }
     catch { console.warn('Unverified leaderboard update unavailable; cloud save remains accepted.'); return false; }
     // Settlement is retried independently on later saves and board reads.
-    try { await settleUnverifiedEcho(D,savedAt); }
+    //
+    // v416: this was prototyped behind a DURABLE checkpoint (a completed pass newer than the start of
+    // the current day and week skipped the query; an owner-only endpoint forced one; GET /api/board
+    // stayed unconditional) and then thrown away on the measurement: the gate's own read
+    // (`echo_settlement_checked_at` by primary key, 0.007 ms) costs the same ONE statement as the
+    // query it replaces (`competition_periods` where ended, 0.014 ms), so it bought ~7 us of CPU per
+    // sync - noise beside the 0.66 ms request - and ADDED two statements on every sync where a period
+    // really was due. A migration, two tables and an endpoint are not worth that. Settlement here is
+    // unchanged: one indexed read, and a batch only when something has ended.
+    try { await settleUnverifiedEcho(D, savedAt); }
     catch { console.warn('Echo prizes temporarily unavailable; settlement will be retried.'); }
     return true;
   };
@@ -300,8 +342,18 @@ export const onRequestPut = guard(async ({ request, env }) => {
   }
 
   const next = row.version + 1;
+  // v416 (CPU): a sync that changed none of the denormalised columns must not rewrite them on the
+  // leaderboard's behalf. `saves.level/cls/zeny/kills_total/playtime` are recomputed from the blob on
+  // every accepted save, and a background tab syncing every minute usually changed none of them -
+  // the row was rewritten with identical values and the columns' triggers fired for nothing. The
+  // numbers still come from the server's own `publicFields`, never from the client object, and the
+  // comparison is against the row just read under `version`, so a conflict still fails the guard
+  // instead of silently skipping a write. `rate_kph` is included because it is a stored measurement,
+  // not a player-visible ranking: if it moved, the row is written.
   const rateKph = updatedRate(row, pub, savedAt, appliedClaim);
-  const update = db.updateSaveStatement(D, user.id, next, stored, savedAt, pub, rateKph, row.version);
+  const update = saveColumnsUnchanged(row, pub, rateKph)
+    ? db.updateSaveVersionStatement(D, user.id, next, stored, savedAt, row.version)
+    : db.updateSaveStatement(D, user.id, next, stored, savedAt, pub, rateKph, row.version);
 
   if (appliedClaim) {
     // D1 batch runs both writes atomically. A version race cannot consume a claim without saving
