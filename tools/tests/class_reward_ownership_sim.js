@@ -73,16 +73,42 @@ try{
  ev(`S.accountId=7`);
  assert.equal(ev('plazaFarmIncome()&&plazaFarmIncome().xp'),90,'and back');
 
- // ---- a server claim frozen for another run pays nothing, but is still acknowledged ----
- ev(`CLOUD.on=true;S.offlineAt=Date.now()-3600000;S.offlineKph=600;`);
- r=ev(`applyOfflineProgress(Date.now(),{id:901,awayMs:3600000,creditedMs:3600000,kills:60,remainder:0,rateKph:600,cls:'Swordman',runGen:9})`);
- assert.equal(r.exp,0,'a claim priced for run 9 pays run 2 nothing');
- assert.equal(r.kills,0,'and replays none of its kills');
- assert.equal(ev('S.offlineClaimId'),901,'but it is still acknowledged: the next sync passes the 428 gate, no trap');
- r=ev(`applyOfflineProgress(Date.now(),{id:902,awayMs:3600000,creditedMs:3600000,kills:60,remainder:0,rateKph:600,cls:'Swordman',runGen:2})`);
- assert.ok(r.exp>0,'a claim priced for this exact run pays its owner normally');
+ // ---- a frozen claim follows a retained source class, not whichever class is visible ----
+ // The existing Swordman run is now stored while a new Novice run is active. The payout must update
+ // that stored run + shared wallet without temporarily changing S.cls or leaking EXP/Job into Novice.
+ ev(`CLOUD.on=true;changeClass('Novice');S.offlineAt=Date.now()-3600000;S.offlineKph=600;
+   window.__source=JSON.parse(JSON.stringify(S.base.Swordman));window.__noviceExp=S.exp;window.__noviceJob=S.jobs.Novice.jx;window.__wallet=S.zeny;`);
+ r=ev(`applyOfflineProgress(Date.now(),{id:901,awayMs:3600000,creditedMs:3600000,kills:60,remainder:0,rateKph:600,cls:'Swordman',runGen:2,
+   pricing:{xp:120,zeny:60,job:84,kph:120,sourceMap:0,sourceStage:1,incomeVersion:1,rewardVersion:ASC_REWARD_VERSION,sampledAt:1,intervalStartAt:1,intervalEndAt:2}})`);
+ assert.equal(ev('S.cls'),'Novice','the destination class was never switched just to apply a claim');
+ assert.ok(ev('S.base.Swordman.exp')>ev('window.__source.exp')||ev('S.base.Swordman.lv')>ev('window.__source.lv'),'the retained source class receives its EXP');
+ assert.ok(ev('S.zeny')>ev('window.__wallet'),'the shared wallet receives its frozen Zeny');
+ assert.equal(ev('S.exp'),ev('window.__noviceExp'),'the destination class receives no EXP');
+ assert.equal(ev('S.jobs.Novice.jx'),ev('window.__noviceJob'),'the destination class receives no Job EXP');
+ assert.equal(ev('S.offlineClaimId'),901,'the retained-source payout is acknowledged normally');
+ // A genuinely unavailable run has an explicit recorded outcome rather than being silently called paid.
+ r=ev(`applyOfflineProgress(Date.now(),{id:902,awayMs:3600000,creditedMs:3600000,kills:60,remainder:0,rateKph:600,cls:'Swordman',runGen:9,
+   pricing:{xp:120,zeny:60,job:84,kph:120,sourceMap:0,sourceStage:1,incomeVersion:1,rewardVersion:ASC_REWARD_VERSION,sampledAt:1,intervalStartAt:1,intervalEndAt:2}})`);
+ assert.equal(r.exp,0,'a claim priced for an unavailable run pays nobody');
+ assert.equal(r.outcome,'retired-owner','the unavailable owner has an explicit policy outcome');
+ assert.equal(ev('S.offlineClaimOutcomes.at(-1).outcome'),'retired-owner','that outcome is persisted with the acknowledgement');
+ // Restoring Swordman makes its run current again; an owner-less pre-0018 row uses the documented
+ // legacy local-sample path, while new rows above use their immutable pricing.
+ ev(`changeClass('Swordman');S.offlineAt=Date.now()-3600000;`);
  r=ev(`applyOfflineProgress(Date.now(),{id:903,awayMs:3600000,creditedMs:3600000,kills:60,remainder:0,rateKph:600})`);
  assert.ok(r.exp>0,'a legacy claim with no frozen owner falls back to the sample ownership rule');
+ // A non-null but malformed snapshot is never permitted to fall through to that legacy sample.
+ ev(`window.__mal={exp:S.exp,zeny:S.zeny,jx:S.jobs.Swordman.jx};S.offlineAt=Date.now()-3600000;`);
+ r=ev(`applyOfflineProgress(Date.now(),{id:904,awayMs:3600000,creditedMs:3600000,kills:60,remainder:0,rateKph:600,cls:'Swordman',runGen:2,pricing:{xp:'not-a-number'}})`);
+ assert.equal(r.outcome,'invalid-pricing','a malformed frozen snapshot has an explicit no-payout policy');
+ assert.equal(r.exp,0);assert.equal(ev('S.exp'),ev('window.__mal.exp'),'invalid pricing cannot fall back to the mutable local sample');
+ assert.equal(ev('S.zeny'),ev('window.__mal.zeny'));assert.equal(ev('S.jobs.Swordman.jx'),ev('window.__mal.jx'));
+ // pricing:null is the intentionally weaker old-row compatibility signal. Without a matching
+ // local sample it, too, is acknowledged visibly rather than looking like a paid owner mismatch.
+ ev(`S.offlineIncome=null;S.offlineAt=Date.now()-3600000;`);
+ r=ev(`applyOfflineProgress(Date.now(),{id:905,awayMs:3600000,creditedMs:3600000,kills:60,remainder:0,rateKph:600,cls:'Swordman',runGen:2,pricing:null})`);
+ assert.equal(r.outcome,'legacy-unpriced','an unrecoverable old claim records its compatibility policy');
+ assert.equal(r.exp,0);assert.equal(ev('S.offlineClaimOutcomes.at(-1).outcome'),'legacy-unpriced');
  ev(`CLOUD.on=false`);
 
  // ---- migration: a pre-ownership save is adopted, not wiped and not exploitably open ----

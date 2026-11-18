@@ -755,7 +755,9 @@ let mvpActive=null; // {sp,id,spawnedAt,endsAt}
 // adopt), so one account's marker can never leak into another's session either.
 let mvpClaimedState=null,mvpClaimedSet=new Set();
 const mvpClaimed=()=>{const st=state();if(mvpClaimedState!==st){mvpClaimedState=st;mvpClaimedSet=new Set(Array.isArray(st.mvpCaught)?st.mvpCaught:[])}return mvpClaimedSet};
-function markMvpClaimed(id){const st=state();mvpClaimed().add(id);st.mvpCaught=[...mvpClaimedSet].slice(-32);mvpClaimedSet=new Set(st.mvpCaught);persist()}
+// `persistNow=false` lets finishReel place the marker in the same durable economic snapshot as
+// the catch/index/auto-sale. The standalone public helper keeps its old immediate-save behaviour.
+function markMvpClaimed(id,persistNow=true){const st=state();mvpClaimed().add(id);st.mvpCaught=[...mvpClaimedSet].slice(-32);mvpClaimedSet=new Set(st.mvpCaught);if(persistNow)persist();return true}
 const MVP_HOOK_CHANCE=.10,MVP_REEL_CATCH_CHANCE=.30,AUTO_REEL_SAMPLE_MS=130;
 // Kept pure and exported so the odds test drives the same predictive aim used by live Auto fishing.
 const autoReelTarget=s=>s.fish+s.fishVel*.18;
@@ -1660,7 +1662,9 @@ function hook(){
    const w=Math.round((sp.min+(sp.max-sp.min)*heft)*100)/100;
    const roll=rng();let acc=0,mut=null;
    for(const [id,m] of Object.entries(MUTATIONS)){acc+=Math.min(.5,m.chance*mm);if(roll<acc){mut=id;break}}
-   ui.roll={sp:sp.id,rarity:'mvp',w,mut};
+   // Carry the exact spawn through the reel. If another worker spawn replaces it before the
+   // reel ends, finishReel must not mark the new spawn as caught.
+   ui.roll={sp:sp.id,rarity:'mvp',w,mut,mvpSpawnId:mvpActive.id};
   } else ui.roll=rollCatch(rng,!!(ui.castR&&ui.castR.perfect),ui.mods);
  } else ui.roll=rollCatch(rng,!!(ui.castR&&ui.castR.perfect),ui.mods);
  ui.reel=makeReel(ui.roll,Math.random,(ui.mods&&ui.mods.control)||0);
@@ -1672,36 +1676,44 @@ function hook(){
 function finishReel(kind){
  const f=sceneFishing();
  ui.holding=false;
- // MVP: even a perfect reel only lands 30% of the time, and one per spawn per player.
+ // MVP: a completed reel is tied to the spawn that produced ui.roll, not whatever happens to be
+ // active now. A despawn/replacement between hook and finish is an escape, never a marker for a
+ // different fish. The 30% land roll is still exactly the same once the identity is valid.
+ let mvpSpawnId=null;
  if(kind==='catch'&&ui.roll&&ui.roll.rarity==='mvp'){
-  if(mvpActive&&mvpClaimed().has(mvpActive.id)) kind='escape';
-  else if(Math.random()>=MVP_REEL_CATCH_CHANCE) kind='mvp_escape';
+  const active=mvpActive,rollSpawn=String(ui.roll.mvpSpawnId||'');
+  if(!active||!rollSpawn||String(active.id)!==rollSpawn||active.sp!==ui.roll.sp||mvpClaimed().has(active.id))kind='escape';
+  else if(Math.random()>=MVP_REEL_CATCH_CHANCE)kind='mvp_escape';
+  else mvpSpawnId=active.id;
  }
  if(kind==='catch'){
-  const isNew=!state().dex[ui.roll.sp];
-  // v311 (owner: "players with the qualifying fish don't get their titles"): the ladder is checked
-  // on the catch itself, so a title that unlocks is announced the moment it does instead of waiting
-  // for the angler to reopen the Titles tab and wonder what went wrong.
-  const heldBefore=new Set(FISHING_TITLES.filter(t=>titleUnlocked(state(),t)).map(t=>t.id));
-  const entry=addCatch(state(),{...ui.roll,perfect:ui.reel.perfect});
+  const st=state(),isNew=!st.dex[ui.roll.sp];
+  // Capture all economic state first. In particular, an MVP's Index/bag (or its auto-sale
+  // proceeds) and one-per-spawn marker become one saved mutation before any sound, DOM, scene or
+  // room-announcement code can throw or be interrupted.
+  const heldBefore=new Set(FISHING_TITLES.filter(t=>titleUnlocked(st,t)).map(t=>t.id));
+  const entry=addCatch(st,{...ui.roll,perfect:ui.reel.perfect});
+  let autoSold=0;
+  if(entry&&shouldAutoSell(st,entry)){
+   const res=sellFish(st,entry.id);
+   if(res&&res.ok)autoSold=res.coins;
+  }
+  if(mvpSpawnId)markMvpClaimed(mvpSpawnId,false);
   persist();
-  const fresh=FISHING_TITLES.filter(t=>!heldBefore.has(t.id)&&titleUnlocked(state(),t));
+
+  // Presentation deliberately starts after the one durable write above.
+  const fresh=FISHING_TITLES.filter(t=>!heldBefore.has(t.id)&&titleUnlocked(st,t));
   if(fresh.length)status('New title unlocked · '+fresh.map(t=>t.name).join(' · '));
   if(els&&!els.titlesView.hidden)renderTitles();
   const sp=speciesById(ui.roll.sp);
   sound(entry&&entry.perfect?'perfect':'catch');
+  if(autoSold){ui.result={kind:'catch',entry:entry||{...ui.roll,id:'',at:Date.now(),perfect:ui.reel.perfect},isNew,autoSold};sound('coin')}
+  else ui.result={kind:'catch',entry:entry||{...ui.roll,id:'',at:Date.now(),perfect:ui.reel.perfect},isNew};
   if(f)f.catchFly({spId:sp.id,mut:entry?entry.mut:ui.roll.mut,glyph:sp.glyph,hue:sp.hue},null,()=>{});
-  ui.result={kind:'catch',entry:entry||{...ui.roll,id:'',at:Date.now(),perfect:ui.reel.perfect},isNew};
-  // v294 auto-sell: a kept catch that is just a lighter dupe goes straight to Fishcoins.
-  if(entry&&shouldAutoSell(state(),entry)){
-   const res=sellFish(state(),entry.id);
-   if(res&&res.ok){persist();ui.result.autoSold=res.coins;sound('coin')}
-  }
   if(!entry)status('Bag full — fish released, but the catch is recorded in your Index!');
   // v297: a pond monster or a secret find goes to the room's Local chat. Fired from the catch
   // itself (not the Show off button) so auto-fishing announces too.
-  if(sp&&ui.roll&&ui.roll.rarity==='mvp'){
-   if(mvpActive) markMvpClaimed(mvpActive.id);
+  if(sp&&mvpSpawnId){
    if(typeof opts.announce==='function'){try{opts.announce({sp:sp.id,name:sp.name,w:ui.result.entry.w,kind:'secret'})}catch{}}
    if(els) status('MVP CAUGHT! '+sp.name+' '+ui.result.entry.w+' kg — one per spawn claimed.');
   } else if(sp&&typeof opts.announce==='function'&&(sp.mega||sp.rarity==='secret')){

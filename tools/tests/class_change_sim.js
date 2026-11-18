@@ -23,9 +23,10 @@ if (!/const totalPts=\(\)=>\{let p=10;for\(let l=2;l<=S\.lv;l\+\+\)p\+=4\+Math\.
 // this fails instead of letting the sweep tests below pass against a stale rule.
 const gearTierRule=grab('gearTierOK=(it,cls=S.cls)=>',',gearUserOf=');
 if (!/function stowUnfit\(from\)\{/.test(src)) throw new Error('stowUnfit() disappeared from index.html');
-// v422: changeClass() settles pending plaza rewards (settlePlazaAfk) before anything is swapped.
-// The function lives outside the grabbed range, so pull in its real source - if it changes, the
-// grab markers move and this fails loudly instead of testing a stale copy.
+// v423: changeClass() settles pending plaza rewards before anything is swapped, while ordinary
+// save checkpoints preserve the fractions. These functions live outside the grabbed range, so pull
+// their real source - if either changes, the grab markers move and this fails loudly.
+const checkpointSrc = grab('function checkpointPlazaAfk(){', 'function plazaAfkTick');
 const settleSrc = grab('function settlePlazaAfk(){', 'function offlineRateSample');
 
 const harness = `
@@ -34,6 +35,7 @@ const plazaKillAcc = {frac:0};
 const __paid = {xp:0,zeny:0,job:0};
 const earnExp = v => { __paid.xp += v; };
 const earnZeny = v => { __paid.zeny += v; };
+${checkpointSrc}
 ${settleSrc}
 ${code}
 const jobOf = () => S.jobs[S.cls] || (S.jobs[S.cls] = {jl:1, jx:0});
@@ -55,7 +57,7 @@ const ${gearTierRule};
 const iname = it => (it.r ? '+' + it.r + ' ' : '') + it.name;
 const canUse = it => gearTierOK(it) && (it.slot === 'off' ? canShield() : (it.slot !== 'weapon' || !it.wt || C().wt.includes(it.wt)));
 this.__h = {changeClass, classBlock, playedClass, playedClasses, t3Total, collDmg, classRec, snapClass, equipRec, noviceRun, clearClassSkills, stowUnfit, canUse, gearTierOK, CLASSES, EXPANDED_LINE,
-            plazaKillAcc, __paid, settlePlazaAfk,
+            plazaKillAcc, __paid, checkpointPlazaAfk, settlePlazaAfk,
             get plazaAfkAcc(){return plazaAfkAcc}, set plazaAfkAcc(v){plazaAfkAcc=v},
             set S(v){S=v}, get S(){return S}};
 `;
@@ -459,7 +461,21 @@ t('the collection bonus is wired into atk(), and reads each class own Base Lv', 
   assert.ok(/const t3At150=n=>/.test(src), 'each transcendent class carries its own Base Lv 150 gate');
 });
 
-t('v422: a class change settles the outgoing class pending plaza rewards and carries no residue across', () => {
+t('v423: a normal save checkpoint writes whole Plaza AFK rewards without shaving residual fractions', () => {
+  H.S = mk({ cls: 'Novice', lv: 25, jobs: { Novice: { jl: 10, jx: 0 } } });
+  H.plazaAfkAcc = { t: .5, xp: 5000.75, zeny: 1200.25, job: 50.5 };
+  H.plazaKillAcc.frac = .8;
+  H.__paid.xp = 0; H.__paid.zeny = 0; H.__paid.job = 0;
+  H.checkpointPlazaAfk();
+  assert.strictEqual(H.__paid.xp, 5000, 'a sub-second high-rate accrual writes all whole EXP');
+  assert.strictEqual(H.__paid.zeny, 1200, 'and whole Zeny');
+  assert.deepStrictEqual(JSON.parse(JSON.stringify(H.plazaAfkAcc)), { t: .5, xp: .75, zeny: .25, job: .5 }, 'only residual fractions remain in the ordinary checkpoint');
+  assert.strictEqual(H.plazaKillAcc.frac, .8, 'the unfinished loot kill survives ordinary saves');
+  H.checkpointPlazaAfk();
+  assert.strictEqual(H.__paid.xp, 5000, 'repeated checkpoints cannot re-pay or shave a residue');
+});
+
+t('v423: a class change settles the outgoing class pending plaza rewards and carries no residue across', () => {
   H.S = mk({ cls: 'Novice', lv: 25, jobs: { Novice: { jl: 10, jx: 0 } } });
   H.plazaAfkAcc = { t: .4, xp: 37.6, zeny: 12.4, job: 5.9 };
   H.plazaKillAcc.frac = .8;

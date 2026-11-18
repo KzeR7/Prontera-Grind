@@ -3740,7 +3740,7 @@ function ascUpgradeText(id,rank=5){const u=ASC_UPGRADES[id]||{},labels={damage:'
  return Object.entries(u).map(([k,n])=>k==='burn'?(rank===5?'Burn: 10% of cast power over 3s':'Burn unlocks at rank 5'):k==='bounce'?(rank===5?'+1 bounce to another target':'Extra bounce unlocks at rank 5'):`+${Number((n*ascUpgradeScale(k,rank)).toFixed(2))}${['range','stun','root','duration','critical','slow','flee','barrier'].includes(k)||(k==='buff'&&id==='ab_duple')?'':'%'} ${labels[k]||k}`).join(' · ');
 }
 
-const fresh=()=>({ascension:cleanAscension(null),progressionVersion:PROGRESSION_VERSION,skillVersion:SKILL_VERSION,skillRefund:0,skillRespec:{},pets:[],bond:[],cls:'Novice',sex:'m',hair:0,appearance:null,lv:1,exp:0,hp:100,zeny:0,kills:0,indexXp:0,mobKills:{},equippedTitle:null,shards:0,refineScrolls:0,mythicScrolls:0,nmMatVersion:3,nmMat:[0],dps:0,trial:{day:trialDay(),used:0,best:0,runs:0},dailyWheel:{day:trialDay(),spun:0,bonusRolls:0,lastReward:null,totalSpins:0},poker:{day:trialDay(),chips:1000,freeClaimed:0,ledgerApplied:[]},fishing:{v:1,bag:[],dex:{},stats:{casts:0,catches:0,escapes:0,perfects:0},settings:{fish:true,sound:true},coins:0,rods:['twig'],rod:'twig',bait:{},baitSel:null,bagTier:0,title:null,mvpCaught:[]},mail:[],mailSeeded:false,cardIndex:emptyCardIndex(),dmg:0,pts:10,jobs:{Novice:{jl:1,jx:0}},sk:{aid:1},skOff:{},skillPriority:[],skillCombos:{},dmgShort:true,dmgShow:true,cameraShake:true,base:{},mp:0,lvl:1,prog:MAPS.map(()=>1),mapClears:MAPS.map(()=>false),ascensionMat:[0,0,0],ascensionStageVersion:1,kl:0,auto:true,adv:true,kite:false,feed:true,hints:true,clickSell:false,bg:true,autoSell:[false,false,false,false,false,false,false],logOff:{},q:null,cards:[],ore:{ori:0,elu:0},offlineAt:0,offlineKph:0,offlineRateAt:0,offlineRateKills:0,offlineKillRemainder:0,runSeq:1,runGen:1,gm:false,gmx:100,bgm:{enabled:true,volume:.05,muted:false},
+const fresh=()=>({ascension:cleanAscension(null),progressionVersion:PROGRESSION_VERSION,skillVersion:SKILL_VERSION,skillRefund:0,skillRespec:{},pets:[],bond:[],cls:'Novice',sex:'m',hair:0,appearance:null,lv:1,exp:0,hp:100,zeny:0,kills:0,indexXp:0,mobKills:{},equippedTitle:null,shards:0,refineScrolls:0,mythicScrolls:0,nmMatVersion:3,nmMat:[0],dps:0,trial:{day:trialDay(),used:0,best:0,runs:0},dailyWheel:{day:trialDay(),spun:0,bonusRolls:0,lastReward:null,totalSpins:0},poker:{day:trialDay(),chips:1000,freeClaimed:0,ledgerApplied:[]},fishing:{v:1,bag:[],dex:{},stats:{casts:0,catches:0,escapes:0,perfects:0},settings:{fish:true,sound:true},coins:0,rods:['twig'],rod:'twig',bait:{},baitSel:null,bagTier:0,title:null,mvpCaught:[]},mail:[],mailSeeded:false,cardIndex:emptyCardIndex(),dmg:0,pts:10,jobs:{Novice:{jl:1,jx:0}},sk:{aid:1},skOff:{},skillPriority:[],skillCombos:{},dmgShort:true,dmgShow:true,cameraShake:true,base:{},mp:0,lvl:1,prog:MAPS.map(()=>1),mapClears:MAPS.map(()=>false),ascensionMat:[0,0,0],ascensionStageVersion:1,kl:0,auto:true,adv:true,kite:false,feed:true,hints:true,clickSell:false,bg:true,autoSell:[false,false,false,false,false,false,false],logOff:{},q:null,cards:[],ore:{ori:0,elu:0},offlineAt:0,offlineKph:0,offlineRateAt:0,offlineRateKills:0,offlineKillRemainder:0,offlineClaimOutcomes:[],runSeq:1,runGen:1,gm:false,gmx:100,bgm:{enabled:true,volume:.05,muted:false},
   st:{str:1,agi:1,dex:1,luk:1,int:1,vit:1},eq:{weapon:{id:1,slot:'weapon',wt:'dagger',tier:0,val:5,name:'Novice Knife',aff:[],slots:1,cards:[],sec:0},armor:null,head:null,off:null,leg:null,acc1:null,acc2:null},inv:[]});
 const saveKey=()=>'pg_save3_'+currentUser;
 // ---------- the save-owner stamp (v88.6) ----------
@@ -4154,6 +4154,11 @@ const s=unpackSave(JSON.parse(raw));if(s&&s.lv){const F=fresh(),f=Object.assign(
   if(!Array.isArray(f.gmReceipts))f.gmReceipts=[];
   else if(f.gmReceipts.length>GMRECEIPTS_MAX)f.gmReceipts=f.gmReceipts.slice(-GMRECEIPTS_MAX);
   f.offlineAt=Math.max(0,Math.floor(num_(f.offlineAt,0)));f.offlineKph=cl(num_(f.offlineKph,0),0,OFFLINE_RATE_CAP);f.offlineRateAt=Math.max(0,Math.floor(num_(f.offlineRateAt,0)));f.offlineRateKills=safeCount(f.offlineRateKills);f.offlineKillRemainder=cl(num_(f.offlineKillRemainder,0),0,.999999);
+  // Outcome receipts make a deliberate no-payout policy auditable without letting a malformed save
+  // grow forever. They are not reward authority: claim-id idempotency remains server-side.
+  const claimOutcomes=new Set(['retired-owner','invalid-pricing','legacy-unpriced']);
+  f.offlineClaimOutcomes=Array.isArray(f.offlineClaimOutcomes)?f.offlineClaimOutcomes.filter(o=>o&&typeof o==='object'&&Number.isSafeInteger(o.id)&&o.id>0&&claimOutcomes.has(o.outcome)).slice(-32).map(o=>({
+    id:o.id,outcome:o.outcome,cls:typeof o.cls==='string'?o.cls.slice(0,32):null,runGen:Number.isSafeInteger(o.runGen)&&o.runGen>=1?o.runGen:null,at:Math.max(0,Math.floor(num_(o.at,0)))})):[];
   if(!Array.isArray(f.prog)||!f.prog.length)f.prog=F.prog.slice();else f.prog=f.prog.map(v=>num_(v,1));
   while(f.prog.length<MAPS.length)f.prog.push(1);
   f.mapClears=MAPS.map((_,i)=>f.mapClears?.[i]===true);
@@ -4310,18 +4315,17 @@ function farmSamplingPaused(){
 // run recorded in its S.base entry. `runGen` moves only in changeClass(); `runSeq` is the counter.
 const rewardAccountId=()=>Math.max(0,Math.floor(Number(S&&S.accountId)||0));
 const rewardRunGen=()=>Math.max(1,Math.floor(Number(S&&S.runGen)||1));
-// Does a measured income sample belong to the character standing here right now? The class in the
-// key, the run generation and the account id must all three match. repairSave adopts legacy samples
-// (stamping the missing fields), so a field absent here means a hand-built sample - it falls back
-// to the current owner instead of bricking it.
-const incomeOwnedByCurrent=income=>{
-  if(!income||typeof income!=='object')return false;
-  if(String(income.key||'').split(':')[0]!==S.cls)return false;
-  const gen=Number.isSafeInteger(income.gen)?income.gen:rewardRunGen();
-  if(gen!==rewardRunGen())return false;
-  const aid=Number.isSafeInteger(income.aid)?income.aid:rewardAccountId();
-  return aid===rewardAccountId();
+// Does a measured income sample belong to this exact account/class/run? The retained-class claim
+// path uses the same predicate without ever changing S.cls; a reset Novice has the same class name
+// but a new run and therefore cannot borrow the old one. Legacy fields fall back only to the owner
+// supplied by the caller, so old saves stay readable without making an absent field a wildcard.
+const incomeOwnedBy=(income,cls,gen,aid)=>{
+  if(!income||typeof income!=='object'||String(income.key||'').split(':')[0]!==cls)return false;
+  const sampleGen=Number.isSafeInteger(income.gen)?income.gen:gen;
+  const sampleAid=Number.isSafeInteger(income.aid)?income.aid:aid;
+  return sampleGen===gen&&sampleAid===aid;
 };
+const incomeOwnedByCurrent=income=>incomeOwnedBy(income,S.cls,rewardRunGen(),rewardAccountId());
 function farmSample(now=Date.now()){
  if(farmSamplingPaused()){farmSession=null;return}
  if(!farmSession||farmSession.owner!==S||farmSession.key!==farmKey()||now<farmSession.start){farmSession={owner:S,key:farmKey(),start:now,events:[]};}
@@ -4404,6 +4408,19 @@ function plazaLootNotice(r){
   log('Plaza AFK found '+bits.join(', ')+(r.overflow?' · bag full, '+r.overflow+' left behind':'')
     +(r.cardsFull?' · card collection full, no cards kept':''),'','kills');
 }
+// Move only WHOLE earned units into S. Normal save checkpoints call this too: the fractional
+// balances and the partial second stay in RAM, so save frequency cannot shave a kill or rounding
+// remainder, while a 0.5 s burst at a high rate is no longer omitted from the serialized save.
+function checkpointPlazaAfk(){
+  const xp=S?Math.floor(plazaAfkAcc.xp+1e-9):0,zeny=S?Math.floor(plazaAfkAcc.zeny+1e-9):0,job=S?Math.floor(plazaAfkAcc.job+1e-9):0;
+  plazaAfkAcc.xp-=xp;plazaAfkAcc.zeny-=zeny;plazaAfkAcc.job-=job;
+  if(!S)return{xp:0,zeny:0,job:0};
+  if(xp){earnExp(xp);if(typeof gainAscension==='function')gainAscension(xp,S.cls)}
+  if(zeny)earnZeny(zeny);
+  if(job&&typeof addJob==='function')addJob(job);
+  if((xp||zeny||job)&&typeof checkLevel==='function')checkLevel();
+  return{xp,zeny,job};
+}
 function plazaAfkTick(dt){
   const income=plazaFarmIncome();if(!income||!(dt>0))return;
   // v393: drops accrue on the same measured rate. Loot only - the EXP/Zeny below are the
@@ -4412,31 +4429,17 @@ function plazaAfkTick(dt){
   try{plazaLootTick(income,dt)}catch(e){console.error(e)}
   plazaAfkAcc.t+=dt;plazaAfkAcc.xp+=income.xp*dt/60;plazaAfkAcc.zeny+=income.zeny*dt/60;plazaAfkAcc.job+=income.job*dt/60;
   if(plazaAfkAcc.t<1-1e-9)return;plazaAfkAcc.t=Math.max(0,plazaAfkAcc.t-Math.floor(plazaAfkAcc.t+1e-9));
-  const xp=Math.floor(plazaAfkAcc.xp+1e-9),zeny=Math.floor(plazaAfkAcc.zeny+1e-9),job=Math.floor(plazaAfkAcc.job+1e-9);
-  plazaAfkAcc.xp-=xp;plazaAfkAcc.zeny-=zeny;plazaAfkAcc.job-=job;
-  if(xp){earnExp(xp);if(typeof gainAscension==='function')gainAscension(xp,String(income.key).split(':')[0])}
-  if(zeny){earnZeny(zeny)}
-  if(job&&typeof addJob==='function')addJob(job);
-  if((xp||zeny||job)&&typeof checkLevel==='function')checkLevel();
+  checkpointPlazaAfk();
   if(typeof bars==='function')bars();
 }
-// v422 (class-switch exploit, settlement half): plazaAfkAcc holds rewards the CURRENT class has
-// earned but not yet been paid (the sub-second accrual between one-second payouts), and
-// plazaKillAcc.frac is a fraction of the next replayed loot kill. changeClass() settles these into
-// the OUTGOING class before anything is swapped or snapshotted, so legitimate earnings are paid to
-// their owner instead of being silently carried (or blindly discarded). Only sub-unit residue is
-// dropped: less than one EXP/Zeny/Job and less than one kill - the fraction of a second of income
-// that never became a whole unit. Leaving a session (logout, account adopt, login) does the same
-// zeroing: the residue belonged to a page that no longer exists, never to another account.
+// v423: class/logout transitions settle whole pending income, then deliberately discard only the
+// residual fractions that cannot yet be a currency/EXP/Job unit or a replayed loot kill. Ordinary
+// saves call checkpointPlazaAfk instead and preserve those fractions, so saving more often never
+// changes earnings.
 function settlePlazaAfk(){
-  const xp=S?Math.floor(plazaAfkAcc.xp+1e-9):0,zeny=S?Math.floor(plazaAfkAcc.zeny+1e-9):0,job=S?Math.floor(plazaAfkAcc.job+1e-9):0;
+  checkpointPlazaAfk();
   plazaAfkAcc={t:0,xp:0,zeny:0,job:0};
   plazaKillAcc.frac=0;   // a fraction of one replayed kill is not a kill; it is never rolled
-  if(!S)return;
-  if(xp){earnExp(xp);if(typeof gainAscension==='function')gainAscension(xp,S.cls)}
-  if(zeny)earnZeny(zeny);
-  if(job&&typeof addJob==='function')addJob(job);
-  if((xp||zeny||job)&&typeof checkLevel==='function')checkLevel();
 }
 function offlineRateSample(now=Date.now()){
   if(!S)return;
@@ -4454,6 +4457,10 @@ function offlineRateSample(now=Date.now()){
 let saveElsewhereSaid=null;   // the last refusal said aloud, so a refused slot does not spam the log every 5 seconds
 function saveElsewhere(other){if(saveElsewhereSaid===other)return;saveElsewhereSaid=other;log('This browser\'s save for '+currentUser+' belongs to '+other+', so nothing was written over it. '+(CLOUD.on?'Your progress still syncs to your account.':'Progress from now on is not kept in this browser.')+' Restore this browser\'s copy from a backup to save here again.','r0')}
 function save(forceDuringUpdate=false){if(!currentUser||!S||(typeof CLOUD!=='undefined'&&CLOUD.updating&&!forceDuringUpdate))return;const now=Date.now();
+  // A pending half-second of Plaza AFK can contain thousands of whole units at endgame rates.
+  // Checkpoint those units before cloudBumpSaveRev/localStorage capture, but leave residual
+  // fractions and plazaKillAcc.frac alone so repeated ordinary saves never tax the player.
+  if(typeof checkpointPlazaAfk==='function')checkpointPlazaAfk();
   // v332: never write or upload a copy that belongs to another account... but decide that by the id,
   // as everything else does. A stale *name* on our own copy is repaired here, not turned into a
   // permanent refusal to save.
@@ -6728,7 +6735,9 @@ function offlineStoreGear(it,r){
   if(autoSellMatches(it)){const value=r.measured?0:sellVal(it);earnZeny(value);r.zeny+=value;r.autoSold++;qProg('loot');if(!Array.isArray(S.cards))S.cards=[];(it.cards||[]).forEach(c=>S.cards.push(c));return}
   if(S.inv.length>=BAGMAX){r.overflow++;return}
   S.inv.push(it);r.storedItems++;qProg('loot');
-  if(S.auto!==false&&canUse(it))autoEquip(it)
+  // A retained-class claim can generate source-class gear while another class is visible. It is
+  // account inventory, but it must never auto-equip itself onto that unrelated visible character.
+  if(!r.noAutoEquip&&S.auto!==false&&canUse(it))autoEquip(it)
 }
 function offlineAwardKill(mob,r){
   // v393: `r.noKillCount` = the plaza replaying a measured rate. It must pay loot WITHOUT moving
@@ -6740,7 +6749,9 @@ function offlineAwardKill(mob,r){
   recordMonsterKill(mob);if(!r.measured)S.kl=safeCount(S.kl)+1;qProg('kill');if(mob.boss)qProg('boss');
   const z=r.measured?0:Math.round(mob.zeny*(1+pv('zeny')/100)*nmZenyRoll(mob))*gx(),xp=r.measured?0:Math.round(mob.exp*expRate());earnZeny(z);r.zeny+=z;earnExp(xp);r.exp+=xp;
   if(!r.measured){gainAscension(xp);addJob(Math.round(Math.round(mob.exp*.7)*expRate()));checkLevel();}
-  for(const[T,ch]of mob.drops)if(Math.random()*100<ch)offlineStoreGear(genGear((typeof kinDrop==='function'?kinDrop(T,S.cls,S.sex,mob.mapIndex):T),mob.lvl,mob.sec,mob.boss,mob.tier,mob.mapIndex),r);
+  // Retained-run claims use the source class's drop family without swapping the visible class.
+  const rewardCls=typeof r.rewardCls==='string'?r.rewardCls:S.cls;
+  for(const[T,ch]of mob.drops)if(Math.random()*100<ch)offlineStoreGear(genGear((typeof kinDrop==='function'?kinDrop(T,rewardCls,S.sex,mob.mapIndex):T),mob.lvl,mob.sec,mob.boss,mob.tier,mob.mapIndex),r);
   if(Math.random()*100<mob.cardCh){const g=mob.card.g;if(addCard(newCard(mob.card),{quiet:true})){questEvent('card');r.cards++;r.drops++}else r.cardsFull=true}
   for(const item of ascensionDrops(mob)){S.ascensionMat[item.ascMat]=safeCount(S.ascensionMat[item.ascMat])+1;r.drops++}
   if(mob.boss)recordMapClear(mob.mapIndex??S.mp,mob.stage??S.lvl);
@@ -6785,7 +6796,10 @@ function showOfflineReward(r){
   if(r.cardsFull)detail.push('card collection full (no cards kept)');
   if(r.ori||r.elu)detail.push(`Oridecon +${r.ori} · Elunium +${r.elu}`);if(r.pets)detail.push(`Pets +${r.pets}`);if(r.petFolds)detail.push(`${r.petFolds} duplicate pet${r.petFolds===1?'':'s'} folded into Bond`);if(r.petRefunds)detail.push(`${r.petRefunds} full-collection pet refund${r.petRefunds===1?'':'s'}`);if(r.stages)detail.push(`${r.stages} stage${r.stages===1?'':'s'} advanced`);
   const note=[];note.push(r.awayMs>OFFLINE_CAP_MS?'Away rewards are capped at four hours.':'Rewards use the time credited above.');
-  note.push(`50% of measured farming income: ${Math.round(r.xpMin||0).toLocaleString()} EXP/min · ${Math.round(r.zenyMin||0).toLocaleString()}z/min. No map or stage advance while offline. Quest rewards and gifts are excluded. After an update or a map/stage change, the previous measured minute is used until you farm a fresh one, including its original field for drops. A class change or Novice reset ends that: a measured minute only ever pays the class and run that earned it, so farm one fresh minute as the class you are playing. No previous sample means no offline income.${r.incomeSource?" Sample: "+r.incomeSource+".":""}`);
+  note.push(`50% of measured farming income: ${Math.round(r.xpMin||0).toLocaleString()} EXP/min · ${Math.round(r.zenyMin||0).toLocaleString()}z/min. No map or stage advance while offline. Quest rewards and gifts are excluded. After an update or a map/stage change, the previous measured minute is used until you farm a fresh one, including its original field for drops. A class change keeps a retained source class's frozen claim with that class and run; a Novice reset retires its old run. No previous sample means no offline income.${r.incomeSource?" Sample: "+r.incomeSource+".":""}`);
+  if(r.outcome==='retired-owner')note.push('This claim belonged to a run that was reset or retired before it could be paid. It was acknowledged without a payout, and that outcome is recorded in this save.');
+  if(r.outcome==='invalid-pricing')note.push('This claim’s frozen pricing record was incomplete, so it was acknowledged without a payout and recorded for recovery.');
+  if(r.outcome==='legacy-unpriced')note.push('This older claim had no frozen pricing snapshot and no matching recoverable sample, so it was acknowledged without a payout and recorded for recovery.');
 
   const details=$('offlineDetails');if(details)details.textContent=detail.length?detail.join(' · '):'No items, cards, ores or pets dropped this time.';
   const explanation=$('offlineExplanation');if(explanation)explanation.textContent=note.join(' ');
@@ -6803,6 +6817,59 @@ function offlineLevelBudget(lv){
   const from=Math.max(1,Math.min(149,Math.floor(Number(lv)||1)));
   const toCeiling=Math.max(0,Math.min(OFFLINE_LEVEL_CAP_LV,150)-from);
   return offlineExpBudget(from,toCeiling+OFFLINE_LEVEL_CAP);
+}
+// Claim rewards may be credited to a retained source run without visually switching the player
+// back to it. Class snapshots already own Base Lv/EXP/stats, and jobs are per class in S.jobs.
+// This avoids current-class skill/runtime side effects while preserving the same level and job curves.
+function claimTarget(cls,runGen){
+  if(S.cls===cls&&rewardRunGen()===runGen)return{cls,runGen,active:true,rec:null,get lv(){return S.lv}};
+  const rec=S.base&&S.base[cls];
+  if(rec&&Math.floor(Number(rec.gen)||0)===runGen)return{cls,runGen,active:false,rec,get lv(){return Math.max(1,Math.floor(Number(rec.lv)||1))}};
+  return null;
+}
+function claimJobNeed(cls,jl){
+  const tier=CLASSES[cls]?.tier||0,L=jl+JOFF[tier],n=(tier>0&&jl<=EARLY_JOB_LV?needAt(L)*JOB_EARLY:needAt(L)),e=epkOf(L);
+  return Math.max(1,Math.floor(.7*n*e/(e+n*qrOf(L))))*(tier===4?40:1);
+}
+function creditClaimExp(target,amount){
+  const n=Math.max(0,Math.floor(Number(amount)||0));if(!n)return;
+  if(target.active){earnExp(n);return}
+  target.rec.exp=Math.max(0,Number(target.rec.exp)||0)+n;
+}
+function settleClaimLevels(target){
+  if(target.active){checkLevel();return}
+  const rec=target.rec;
+  rec.lv=Math.max(1,Math.min(150,Math.floor(Number(rec.lv)||1)));rec.exp=Math.max(0,Number(rec.exp)||0);rec.pts=Math.max(0,Math.floor(Number(rec.pts)||0));
+  while(rec.lv<150&&rec.exp>=baseNeedAt(rec.lv)){rec.exp-=baseNeedAt(rec.lv);rec.lv++;rec.pts+=4+Math.floor(rec.lv/5)}
+}
+function creditClaimJob(target,amount){
+  const n=Math.max(0,Math.floor(Number(amount)||0));if(!n||!CLASSES[target.cls])return;
+  if(!S.jobs||typeof S.jobs!=='object')S.jobs={};
+  const max=CLASSES[target.cls].mj,j=S.jobs[target.cls]&&typeof S.jobs[target.cls]==='object'?S.jobs[target.cls]:S.jobs[target.cls]={jl:1,jx:0};
+  j.jl=Math.max(1,Math.min(max,Math.floor(Number(j.jl)||1)));j.jx=Math.max(0,Number(j.jx)||0);
+  if(j.jl>=max){j.jx=0;return}j.jx+=n;
+  while(j.jl<max&&j.jx>=claimJobNeed(target.cls,j.jl)){j.jx-=claimJobNeed(target.cls,j.jl);j.jl++}
+  if(j.jl>=max)j.jx=0;
+}
+function noteClaimOutcome(claim,outcome){
+  const id=Number(claim&&claim.id);if(!Number.isSafeInteger(id)||id<=0)return;
+  const entries=Array.isArray(S.offlineClaimOutcomes)?S.offlineClaimOutcomes:[];
+  if(entries.some(e=>Number(e&&e.id)===id))return;
+  entries.push({id,outcome,cls:typeof claim.cls==='string'?claim.cls:null,runGen:Number.isSafeInteger(claim.runGen)?claim.runGen:null,at:Date.now()});
+  S.offlineClaimOutcomes=entries.slice(-32);
+}
+function frozenClaimPricing(claim){
+  const p=claim&&claim.pricing;
+  if(!p||typeof p!=='object')return null;
+  const map=Math.floor(Number(p.sourceMap)),stage=Math.floor(Number(p.sourceStage)),incomeVersion=Math.floor(Number(p.incomeVersion)),rewardVersion=Math.floor(Number(p.rewardVersion)),
+    sampledAt=Math.floor(Number(p.sampledAt)),start=Math.floor(Number(p.intervalStartAt)),end=Math.floor(Number(p.intervalEndAt));
+  if(!Number.isInteger(map)||map<0||map>=MAPS.length||!Number.isInteger(stage)||stage<1||stage>(map>=10?5:15)
+    ||incomeVersion!==1||!Number.isInteger(rewardVersion)||rewardVersion<0||(map>=10&&rewardVersion!==ASC_REWARD_VERSION)
+    ||!Number.isInteger(sampledAt)||sampledAt<0||!Number.isInteger(start)||start<0||!Number.isInteger(end)||end<start
+    ||!['xp','zeny','job','kph'].every(k=>Number.isFinite(Number(p[k]))&&Number(p[k])>=0)
+    ||Number(p.kph)>OFFLINE_RATE_CAP)return null;
+  return{xp:Number(p.xp),zeny:Number(p.zeny),job:Number(p.job),kph:Number(p.kph),sourceMap:map,sourceStage:stage,
+    incomeVersion,rewardVersion,sampledAt,intervalStartAt:start,intervalEndAt:end};
 }
 function applyOfflineProgress(now=Date.now(),serverClaim=null){
   if(!S)return null;
@@ -6830,22 +6897,42 @@ function applyOfflineProgress(now=Date.now(),serverClaim=null){
   const covered=!CLOUD.gate&&!!plan.show&&Number.isFinite(awayStart)&&awayStart>=PAGE_BOOT_AT&&plan.awayMs<=OFFLINE_SIM_COVER_MS;
   const r={...plan,show:!!plan.show&&!covered,covered,kills:0,drops:0,exp:0,zeny:0,items:0,storedItems:0,autoSold:0,overflow:0,cards:0,cardsFull:false,ori:0,elu:0,pets:0,petRefunds:0,petFolds:0,stages:0};
   if(plan.show&&!covered){
-    const income=S.offlineIncome,source=String(income?.key||'').split(':'),sourceMap=Number(source[1]),sourceStage=Number(source[2]);
-    // v422: a server claim carries the class and run it was priced for (Commit B). When those say
-    // the claim belongs to a character that no longer stands here - a class we switched away from,
-    // a Novice run that was reset - the claim is still acknowledged (the server requires it before
-    // the next sync; it can never be a trap) but pays nothing. Legacy claims (no frozen owner) are
-    // payable under the sample's own ownership rule, exactly as before.
-    const claimOwned=!serverClaim||(typeof serverClaim.cls!=='string'||serverClaim.cls===S.cls)&&(!Number.isSafeInteger(serverClaim.runGen)||serverClaim.runGen===rewardRunGen());
-    const valid=claimOwned&&income&&income.version===1&&(sourceMap<10||income.rewardVersion===ASC_REWARD_VERSION)&&source.length===3&&Object.hasOwn(CLASSES,source[0])&&incomeOwnedByCurrent(income)&&Number.isInteger(sourceMap)&&sourceMap>=0&&sourceMap<MAPS.length&&Number.isInteger(sourceStage)&&sourceStage>=1&&sourceStage<=(sourceMap>=10?5:15)&&Number.isFinite(income.at)&&income.at<=Number(S.offlineAt)&&['xp','zeny','job','kph'].every(k=>Number.isFinite(income[k])&&income[k]>=0);
+    const frozenOwner=serverClaim&&typeof serverClaim.cls==='string'&&Number.isSafeInteger(serverClaim.runGen)&&serverClaim.runGen>=1
+      ?{cls:serverClaim.cls,runGen:serverClaim.runGen}:null;
+    const target=frozenOwner?claimTarget(frozenOwner.cls,frozenOwner.runGen):{cls:S.cls,runGen:rewardRunGen(),active:true,rec:null,get lv(){return S.lv}};
+    const pricingPresent=!!serverClaim&&Object.hasOwn(serverClaim,'pricing')&&serverClaim.pricing!=null;
+    const frozen=frozenClaimPricing(serverClaim);
+    let income=null,sourceMap=-1,sourceStage=0,valid=false;
+    if(pricingPresent){
+      // A non-null snapshot is a v423 entitlement, never a hint to fall back to mutable local
+      // income. If its owner or fields do not validate, record that policy and acknowledge it;
+      // only pricing:null/absent is the documented pre-0019 compatibility form.
+      if(!frozen||!frozenOwner){r.outcome='invalid-pricing';noteClaimOutcome(serverClaim,r.outcome)}
+      else{
+        income=frozen;sourceMap=frozen.sourceMap;sourceStage=frozen.sourceStage;
+        if(!target){r.outcome='retired-owner';noteClaimOutcome(serverClaim,r.outcome)}
+        else valid=true;
+      }
+    }else{
+      // Old pending rows have no immutable snapshot. They remain recoverable only from a local
+      // sample that demonstrably belongs to the recorded (or current legacy) owner; this is an
+      // explicit compatibility path, not a claim that pre-0019 rows had frozen pricing.
+      income=S.offlineIncome;const source=String(income?.key||'').split(':');sourceMap=Number(source[1]);sourceStage=Number(source[2]);
+      const sampleOwner=target&&incomeOwnedBy(income,target.cls,target.runGen,rewardAccountId());
+      valid=!!target&&income&&income.version===1&&(sourceMap<10||income.rewardVersion===ASC_REWARD_VERSION)&&source.length===3&&Object.hasOwn(CLASSES,source[0])&&sampleOwner&&Number.isInteger(sourceMap)&&sourceMap>=0&&sourceMap<MAPS.length&&Number.isInteger(sourceStage)&&sourceStage>=1&&sourceStage<=(sourceMap>=10?5:15)&&Number.isFinite(income.at)&&income.at<=Number(S.offlineAt)&&['xp','zeny','job','kph'].every(k=>Number.isFinite(income[k])&&income[k]>=0);
+      if(serverClaim&&frozenOwner&&!target){r.outcome='retired-owner';noteClaimOutcome(serverClaim,r.outcome)}
+      else if(serverClaim&&frozenOwner&&!valid){r.outcome='legacy-unpriced';noteClaimOutcome(serverClaim,r.outcome)}
+    }
+    r.ownerClass=target&&target.cls||frozenOwner&&frozenOwner.cls||'';
     r.incomeSource=valid?MAPS[sourceMap].n+' Stage '+sourceStage:'';
     r.measured=true;r.xpMin=valid?income.xp:0;r.zenyMin=valid?income.zeny:0;
     const minutes=plan.creditedMs/60000*OFFLINE_REWARD_MULT;
     const kills=valid?Math.min(plan.kills,Math.floor(Math.min(income.kph,OFFLINE_RATE_CAP)*minutes/60)):0;
+    r.rewardCls=target&&target.cls;r.noAutoEquip=!!target&&!target.active;
     for(let i=0;i<kills;i++)offlineAwardKill(offlineMobForCurrentField(sourceMap,sourceStage),r);
-    const levelBudget=offlineLevelBudget(S.lv);
+    const levelBudget=target?offlineLevelBudget(target.lv):0;
     r.exp=valid?Math.min(safeCount(income.xp*minutes),levelBudget):0;r.zeny=valid?safeCount(income.zeny*minutes):0;
-    earnExp(r.exp);earnZeny(r.zeny);if(valid){gainAscension(r.exp,source[0]);}if(valid)addJob(safeCount(income.job*minutes));checkLevel();
+    if(valid){creditClaimExp(target,r.exp);earnZeny(r.zeny);gainAscension(r.exp,target.cls);creditClaimJob(target,safeCount(income.job*minutes));settleClaimLevels(target)}
     S.offlineKillRemainder=plan.remainder;
   }
   if(!covered)farmSession=null;
@@ -8721,6 +8808,9 @@ function equipRec(ids){                       // put the stored loadout back on,
 function freshBuild(){for(const k in S.st)S.st[k]=1;S.pts=totalPts()}
 function clearClassSkills(n){for(const id in S.sk){const s=SKILLS.find(x=>x.id===id);if(id!=='aid'&&s&&s.cls.includes(n))delete S.sk[id]}}
 function noviceRun(){                         // a real restart: 25 Base Lv, Job Lv 0, stats refunded
+  // A new Novice is not a stored class restoration. Remove the prior Novice snapshot so a frozen
+  // claim can distinguish a genuinely retained source class from this deliberately retired run.
+  if(S.base)delete S.base.Novice;
   S.jobs.Novice={jl:1,jx:0};clearClassSkills('Novice');
   if(S.lv>25){S.lv=25;S.exp=0}
   if(S.base)delete S.base.Novice;             // nothing carried out of a restart

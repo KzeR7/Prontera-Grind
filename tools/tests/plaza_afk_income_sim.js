@@ -54,5 +54,27 @@ ev('CLOUD.gate=false');
  assert.equal(ev('plazaFarmIncome()&&plazaFarmIncome().xp'),120,'the plaza pays the new class its own measured rate');
  ev(`changeClass('Novice')`);
  assert.equal(ev('plazaFarmIncome()'),null,'the replaced sample no longer pays the class that left it behind');
- console.log('PASS Plaza AFK: hub autosave preservation, direct login rewards, single-count income, pause and fresh field sampling, class-switch rate refusal');
+ // v423: generic saves invoke this checkpoint rather than settlement. At a deliberately high rate
+ // every 0.1 s contains whole rewards plus a residue: a checkpoint after every tick must converge
+ // exactly to one checkpoint at the end, while preserving the unfinished loot-kill fraction. The
+ // real save/update integration is covered in fishing_save_reload_sim.mjs (this game helper stubs
+ // save itself so combat behavior tests cannot write browser storage).
+ ev(`window.__plazaCheckpointRun=frequent=>{
+   S=fresh();currentUser='plaza-test';CLOUD.on=false;CLOUD.gate=false;CLOUD.paused=false;CLOUD.updating=false;hubFirstPending=false;respawn=1e9;
+   document.body.classList.add('social-open');S.mp=0;S.lvl=1;
+   S.offlineIncome={version:1,rewardVersion:ASC_REWARD_VERSION,key:'Novice:0:1',at:1,aid:rewardAccountId(),gen:rewardRunGen(),xp:600005,zeny:300007,job:60011,kph:0};
+   plazaAfkAcc={t:0,xp:0,zeny:0,job:0};plazaKillAcc.frac=.73;window.__job=0;
+   const realAdd=addJob;addJob=x=>{window.__job+=x;realAdd(x)};
+   for(let i=0;i<5;i++){plazaAfkTick(.1);if(frequent)checkpointPlazaAfk()}
+   if(!frequent)checkpointPlazaAfk();addJob=realAdd;
+   return JSON.stringify({lv:S.lv,exp:S.exp,zeny:S.zeny,jx:S.jobs.Novice.jx,job:window.__job,acc:plazaAfkAcc,loot:plazaKillAcc.frac});
+ };`);
+ const frequent=JSON.parse(ev('__plazaCheckpointRun(true)')),single=JSON.parse(ev('__plazaCheckpointRun(false)'));
+ const {acc:frequentAcc,...frequentWhole}=frequent,{acc:singleAcc,...singleWhole}=single;
+ assert.deepEqual(frequentWhole,singleWhole,'ordinary checkpoint frequency leaves every whole Plaza reward identical');
+ for(const k of['t','xp','zeny','job'])assert.ok(Math.abs(frequentAcc[k]-singleAcc[k])<1e-9,
+   'ordinary checkpoint frequency preserves the '+k+' residual apart from IEEE rounding noise');
+ assert.equal(frequent.loot,.73,'ordinary checkpoints retain a partial loot kill');
+ assert.ok(frequent.zeny>=2500,'a sub-second high-rate interval writes whole Zeny at its checkpoint');
+ console.log('PASS Plaza AFK: hub autosave preservation, direct login rewards, single-count income, pause and fresh field sampling, class-switch rate refusal, save-frequency checkpointing');
 }finally{g.close()}

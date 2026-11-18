@@ -41,13 +41,27 @@ const RATE_SMOOTHING_MS = 5 * 60 * 1000;
 const saveMismatch = user => json({ err: SAVE_MISMATCH, saveMismatch: true, owner: user.username }, 409);
 
 const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, Number(n) || 0));
-// v422: the claim names its owner so the paying client can tell "priced for the character standing
-// here" from "priced for a class/run that no longer stands here". Legacy rows (NULL) stay payable
-// under the client's own sample-ownership rules - consumption is unchanged either way.
+const finite = v => Number.isFinite(Number(v));
+const safeInt = v => Number.isSafeInteger(Number(v)) ? Math.floor(Number(v)) : null;
+// v423: the claim names both its owner and, when it was available in the stored save, the exact
+// measured minute/source/rules it was priced from. A client never re-reads its latest offlineIncome
+// for this shape: replacing a sample after a claim was issued cannot increase, decrease or redirect
+// an already-issued entitlement. Nullable pricing is the intentional pre-0019 recovery shape.
+const publicPricing = row => {
+  const sourceMap=safeInt(row?.source_map),sourceStage=safeInt(row?.source_stage),incomeVersion=safeInt(row?.income_version),
+    rewardVersion=safeInt(row?.reward_version),sampledAt=safeInt(row?.sampled_at),
+    intervalStartAt=safeInt(row?.interval_start_at),intervalEndAt=safeInt(row?.interval_end_at);
+  if(!finite(row?.income_xp)||!finite(row?.income_zeny)||!finite(row?.income_job)||!finite(row?.income_kph)
+    || [sourceMap,sourceStage,incomeVersion,rewardVersion,sampledAt,intervalStartAt,intervalEndAt].some(v=>v===null)
+    || sourceMap<0||sourceStage<1||incomeVersion<1||rewardVersion<0||sampledAt<0
+    || intervalStartAt<0||intervalEndAt<intervalStartAt) return null;
+  return { xp:Number(row.income_xp), zeny:Number(row.income_zeny), job:Number(row.income_job), kph:Number(row.income_kph),
+    sourceMap,sourceStage,incomeVersion,rewardVersion,sampledAt,intervalStartAt,intervalEndAt };
+};
 const publicClaim = row => row ? ({
   id: Number(row.id), awayMs: Number(row.away_ms), creditedMs: Number(row.credited_ms),
   rateKph: Number(row.rate_kph), kills: Number(row.kills), remainder: Number(row.remainder),
-  cls: row.cls ?? null, runGen: row.run_gen == null ? null : Number(row.run_gen),
+  cls: row.cls ?? null, runGen: row.run_gen == null ? null : Number(row.run_gen), pricing: publicPricing(row),
 }) : null;
 // The owner context frozen at issuance comes from the STORED save's top-level view - the parse the
 // request already paid for (GET: saveView, PUT: storedStamp), never a fresh parse of the blob.
@@ -56,6 +70,28 @@ const claimOwnerOf = view => ({
   cls: view && typeof view.cls === 'string' ? view.cls.slice(0, 32) : null,
   runGen: view ? runGenOf(view.runGen) : null,
 });
+// A pricing snapshot is accepted only from a sample that proves it belongs to the stored account,
+// class and numbered progression run. This does not make browser-authored rates authoritative; it
+// makes one already-issued browser-priced entitlement immutable across delay/retry/sample changes.
+const claimPricingOf = (view, owner, userId, intervalStartAt, intervalEndAt) => {
+  const income=view?.offlineIncome, source=String(income?.key || '').split(':');
+  const sourceMap=safeInt(source[1]),sourceStage=safeInt(source[2]),incomeVersion=safeInt(income?.version),
+    rewardVersion=safeInt(income?.rewardVersion),sampledAt=safeInt(income?.at),aid=safeInt(income?.aid),gen=safeInt(income?.gen),
+    start=safeInt(intervalStartAt),end=safeInt(intervalEndAt);
+  if(!income||source.length!==3||typeof owner?.cls!=='string'||!Number.isSafeInteger(owner?.runGen)
+    || source[0]!==owner.cls||aid!==Number(userId)||gen!==owner.runGen
+    || sourceMap===null||sourceMap<0||sourceMap>99||sourceStage===null||sourceStage<1||sourceStage>15
+    || incomeVersion!==1||rewardVersion===null||rewardVersion<0||sampledAt===null||sampledAt<0
+    || start===null||start<0||end===null||end<start
+    || !['xp','zeny','job','kph'].every(k=>finite(income[k])&&Number(income[k])>=0)
+    || Number(income.kph)>OFFLINE_RATE_CAP) return null;
+  return { xp:Number(income.xp),zeny:Number(income.zeny),job:Number(income.job),kph:Number(income.kph),
+    sourceMap,sourceStage,incomeVersion,rewardVersion,sampledAt,intervalStartAt:start,intervalEndAt:end };
+};
+const claimContextOf = (view, userId, row, now) => {
+  const owner=claimOwnerOf(view);
+  return { owner, pricing:claimPricingOf(view,owner,userId,Number(row?.last_seen)||now,now) };
+};
 
 // Is the away window long enough for a claim to exist at all? <3 minutes never mints one, and the
 // test lives here so the read that only a real claim needs can be skipped without duplicating it.
@@ -73,7 +109,7 @@ function issueOfflineClaim(row, now, savedRemainder = 0) {
   return { awayMs, creditedMs, rateKph, kills, remainder: budget - kills };
 }
 
-async function pendingOrIssueOfflineClaim(D, userId, row, now, ownerCtx = null) {
+async function pendingOrIssueOfflineClaim(D, userId, row, now, claimContext = null) {
   let pending = await db.pendingOfflineClaim(D, userId);
   // v416 (CPU): the remainder of the last claim is only needed by a claim that is actually being
   // issued, and one is only issued once the away window is longer than OFFLINE_MIN_MS. Reading it
@@ -83,7 +119,7 @@ async function pendingOrIssueOfflineClaim(D, userId, row, now, ownerCtx = null) 
     const remainder = await db.lastOfflineRemainder(D, userId);
     const plan = issueOfflineClaim(row, now, remainder);
     if (plan) {
-      await db.insertOfflineClaim(D, userId, plan, now, ownerCtx);
+      await db.insertOfflineClaim(D, userId, plan, now, claimContext);
       pending = await db.pendingOfflineClaim(D, userId);
     }
   }
@@ -170,7 +206,7 @@ export const onRequestGet = guard(async ({ request, env }) => {
     // a whole save-sized blob (up to the 300 KB ceiling) to learn nothing. The response fields come
     // from the row already in hand; `last_seen` is folded into the claim in the same way the split
     // read's result would have shown it.
-    const claim = await pendingOrIssueOfflineClaim(D, user.id, row, now, claimOwnerOf(saveView));
+    const claim = await pendingOrIssueOfflineClaim(D, user.id, row, now, claimContextOf(saveView, user.id, row, now));
     await db.touchSeen(D, user.id, now);
     offlineClaim = publicClaim(claim);
     // No field this response carries was changed by the touch, so the row in hand is still the
@@ -323,7 +359,7 @@ export const onRequestPut = guard(async ({ request, env }) => {
   // with - that is what makes a rename survivable.
   if (!saveBelongsTo(storedBlob, user)) return saveMismatch(user);
 
-  const pending = await pendingOrIssueOfflineClaim(D, user.id, row, savedAt, claimOwnerOf(storedStamp));
+  const pending = await pendingOrIssueOfflineClaim(D, user.id, row, savedAt, claimContextOf(storedStamp, user.id, row, savedAt));
 
   // haven-v396: the GM restore fence. A restore is a decision about the account, so it is enforced
   // here, on the write, rather than being asked of each browser (v394 did the 409 branch, v395 the

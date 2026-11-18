@@ -94,38 +94,46 @@ export const touchSeen = (db, userId, at = now()) =>
 // An offline claim is a server-timed, persistent entitlement. It remains pending until a versioned
 // save containing its ID is accepted, so retrying login or losing a response can neither reroll nor
 // duplicate the same away period.
+//
 // A Pages deployment may run new code for the few seconds before its matching D1 migration does.
-// Keep that rollout window (and pre-0018 disaster recovery) saveable: the legacy query returns the
-// exact old claim shape and publicClaim simply omits its absent ownership context. This is a
-// single-query fast path on current schema; the fallback runs only after D1 says a new column is
+// Keep that rollout window (and pre-0018/0019 disaster recovery) saveable: a legacy query returns
+// the exact old claim shape and publicClaim simply omits absent ownership/pricing context. The
+// current-schema path is still one query; fallbacks run only after D1 says an additive column is
 // absent, never after an unrelated database error.
-const claimOwnerColumnMissing = err => /(?:no such column(?::|\s+named)|has no column named)\s*(cls|run_gen)\b/i.test(String(err?.message || err));
+const missingColumn = (err, names) => {
+  const text=String(err?.message || err);
+  const m=/(?:no such column(?::|\s+named)|has no column named)\s*([a-z_]+)\b/i.exec(text);
+  return !!m&&names.has(m[1].toLowerCase());
+};
+const OWNER_COLUMNS=new Set(['cls','run_gen']);
+const PRICING_COLUMNS=new Set(['income_xp','income_zeny','income_job','income_kph','source_map','source_stage',
+  'income_version','reward_version','sampled_at','interval_start_at','interval_end_at']);
 const claimFields = 'id, away_ms, credited_ms, rate_kph, kills, remainder, issued_at, claimed_at';
-const claimFieldsWithOwner = claimFields + ', cls, run_gen';
+const claimOwnerFields = claimFields + ', cls, run_gen';
+const claimPricingFields = claimOwnerFields + ', income_xp, income_zeny, income_job, income_kph, source_map, source_stage,'
+  + ' income_version, reward_version, sampled_at, interval_start_at, interval_end_at';
 
-export const pendingOfflineClaim = async (db, userId) => {
+async function selectClaimWithFallback(db, where, args) {
   try {
-    return await db.prepare(`SELECT ${claimFieldsWithOwner} FROM offline_reward_claims
-                             WHERE user_id = ? AND claimed_at IS NULL ORDER BY id DESC LIMIT 1`)
-      .bind(userId).first();
+    return await db.prepare(`SELECT ${claimPricingFields} FROM offline_reward_claims ${where}`).bind(...args).first();
   } catch (err) {
-    if (!claimOwnerColumnMissing(err)) throw err;
-    return db.prepare(`SELECT ${claimFields} FROM offline_reward_claims
-                       WHERE user_id = ? AND claimed_at IS NULL ORDER BY id DESC LIMIT 1`)
-      .bind(userId).first();
+    if (missingColumn(err, OWNER_COLUMNS))
+      return db.prepare(`SELECT ${claimFields} FROM offline_reward_claims ${where}`).bind(...args).first();
+    if (!missingColumn(err, PRICING_COLUMNS)) throw err;
+    try {
+      return await db.prepare(`SELECT ${claimOwnerFields} FROM offline_reward_claims ${where}`).bind(...args).first();
+    } catch (ownerErr) {
+      if (!missingColumn(ownerErr, OWNER_COLUMNS)) throw ownerErr;
+      return db.prepare(`SELECT ${claimFields} FROM offline_reward_claims ${where}`).bind(...args).first();
+    }
   }
-};
+}
 
-export const offlineClaimById = async (db, userId, id) => {
-  try {
-    return await db.prepare(`SELECT ${claimFieldsWithOwner} FROM offline_reward_claims WHERE user_id = ? AND id = ?`)
-      .bind(userId, id).first();
-  } catch (err) {
-    if (!claimOwnerColumnMissing(err)) throw err;
-    return db.prepare(`SELECT ${claimFields} FROM offline_reward_claims WHERE user_id = ? AND id = ?`)
-      .bind(userId, id).first();
-  }
-};
+export const pendingOfflineClaim = (db, userId) =>
+  selectClaimWithFallback(db, 'WHERE user_id = ? AND claimed_at IS NULL ORDER BY id DESC LIMIT 1', [userId]);
+
+export const offlineClaimById = (db, userId, id) =>
+  selectClaimWithFallback(db, 'WHERE user_id = ? AND id = ?', [userId, id]);
 
 export const lastOfflineRemainder = async (db, userId) => {
   const row = await db.prepare(`SELECT remainder FROM offline_reward_claims
@@ -134,22 +142,48 @@ export const lastOfflineRemainder = async (db, userId) => {
   return Number(row?.remainder) || 0;
 };
 
-// v422: `ctx` freezes who the claim was priced for (the stored save's class and progression run at
-// issuance). Both may be null - a save from before runs were numbered - which is exactly the legacy
-// claim shape: payable under the client's sample-ownership rules, consumable as always.
+// v423: ctx freezes WHO a claim belongs to (0018) and, where the stored sample can prove that
+// owner, WHAT minute/source/rules priced it (0019). Both pieces are nullable so previous installs
+// and their pending rows retain a deliberate legacy recovery path instead of becoming unclaimable.
 export const insertOfflineClaim = async (db, userId, claim, issuedAt, ctx = null) => {
-  const args = [userId, claim.awayMs, claim.creditedMs, claim.rateKph, claim.kills, claim.remainder, issuedAt,
-    ctx && typeof ctx.cls === 'string' ? ctx.cls.slice(0, 32) : null,
-    ctx && Number.isSafeInteger(ctx.runGen) && ctx.runGen >= 1 ? Math.floor(ctx.runGen) : null];
+  const owner=ctx?.owner || ctx || null, pricing=ctx?.pricing || null;
+  const ownerArgs=[owner && typeof owner.cls === 'string' ? owner.cls.slice(0,32) : null,
+    owner && Number.isSafeInteger(owner.runGen) && owner.runGen>=1 ? Math.floor(owner.runGen) : null];
+  const pricingArgs=[
+    pricing && Number.isFinite(pricing.xp) ? pricing.xp : null,
+    pricing && Number.isFinite(pricing.zeny) ? pricing.zeny : null,
+    pricing && Number.isFinite(pricing.job) ? pricing.job : null,
+    pricing && Number.isFinite(pricing.kph) ? pricing.kph : null,
+    pricing && Number.isSafeInteger(pricing.sourceMap) ? pricing.sourceMap : null,
+    pricing && Number.isSafeInteger(pricing.sourceStage) ? pricing.sourceStage : null,
+    pricing && Number.isSafeInteger(pricing.incomeVersion) ? pricing.incomeVersion : null,
+    pricing && Number.isSafeInteger(pricing.rewardVersion) ? pricing.rewardVersion : null,
+    pricing && Number.isSafeInteger(pricing.sampledAt) ? pricing.sampledAt : null,
+    pricing && Number.isSafeInteger(pricing.intervalStartAt) ? pricing.intervalStartAt : null,
+    pricing && Number.isSafeInteger(pricing.intervalEndAt) ? pricing.intervalEndAt : null,
+  ];
+  const baseArgs=[userId, claim.awayMs, claim.creditedMs, claim.rateKph, claim.kills, claim.remainder, issuedAt];
+  const writeLegacy=() => db.prepare(`INSERT OR IGNORE INTO offline_reward_claims
+      (user_id, away_ms, credited_ms, rate_kph, kills, remainder, issued_at)
+      VALUES(?, ?, ?, ?, ?, ?, ?)`).bind(...baseArgs).run();
+  const writeOwner=() => db.prepare(`INSERT OR IGNORE INTO offline_reward_claims
+      (user_id, away_ms, credited_ms, rate_kph, kills, remainder, issued_at, cls, run_gen)
+      VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)`).bind(...baseArgs,...ownerArgs).run();
   try {
     return await db.prepare(`INSERT OR IGNORE INTO offline_reward_claims
-                             (user_id, away_ms, credited_ms, rate_kph, kills, remainder, issued_at, cls, run_gen)
-                             VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)`).bind(...args).run();
+      (user_id, away_ms, credited_ms, rate_kph, kills, remainder, issued_at, cls, run_gen,
+       income_xp, income_zeny, income_job, income_kph, source_map, source_stage,
+       income_version, reward_version, sampled_at, interval_start_at, interval_end_at)
+      VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+      .bind(...baseArgs,...ownerArgs,...pricingArgs).run();
   } catch (err) {
-    if (!claimOwnerColumnMissing(err)) throw err;
-    return db.prepare(`INSERT OR IGNORE INTO offline_reward_claims
-                       (user_id, away_ms, credited_ms, rate_kph, kills, remainder, issued_at)
-                       VALUES(?, ?, ?, ?, ?, ?, ?)`).bind(...args.slice(0, 7)).run();
+    if (missingColumn(err, OWNER_COLUMNS)) return writeLegacy();
+    if (!missingColumn(err, PRICING_COLUMNS)) throw err;
+    try { return await writeOwner(); }
+    catch (ownerErr) {
+      if (!missingColumn(ownerErr, OWNER_COLUMNS)) throw ownerErr;
+      return writeLegacy();
+    }
   }
 };
 

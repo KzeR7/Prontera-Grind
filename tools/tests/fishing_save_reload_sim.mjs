@@ -1099,6 +1099,105 @@ await test('v422 integrated: frozen claim pays its owning run after reload, pays
   } finally { c3.close(); }
 });
 
+// 13. v423: a server-issued claim is allowed to arrive after the player selected another class.
+// Its source class is retained in S.base, so the immutable original pricing must pay that source run
+// and the shared wallet exactly once; the newly visible Novice receives no Base/Job EXP.
+await test('v423 integrated: delayed frozen claim pays its retained source run at its original rate, then survives retry and reload', async () => {
+  const srv = await createAccountServer();
+  const profile = createProfileStorage();
+  const transport = makeServerTransport(srv);
+  const c1 = bootClient({ profile, transport });
+  let settled = null;
+  try {
+    await c1.signInSession(srv);
+    assert.equal(await c1.ev('cloudPush(true)'), 'ok');
+    c1.ev(`document.body.classList.remove('social-open');hubFirstPending=false;respawn=0;
+      S.jobs.Novice={jl:10,jx:0};changeClass('Swordman');S.mp=0;S.lvl=1;
+      farmSession=null;farmSample(1000000);recordFarmIncome(6000,3000,420,120,1030000);farmSample(1060000);`);
+    assert.equal(await c1.ev('cloudPush(true)'), 'ok');
+    srv.db.prepare('UPDATE saves SET last_seen=?, rate_kph=? WHERE user_id=?').run(Date.now() - 4 * 3600000, 120, srv.accountId);
+
+    // This GET issues the real server entitlement but deliberately does not hand it to the page yet.
+    const issued = await transport.readServerSave();
+    assert.deepEqual(issued.offlineClaim.pricing && [issued.offlineClaim.pricing.xp, issued.offlineClaim.pricing.zeny,
+      issued.offlineClaim.pricing.sourceMap, issued.offlineClaim.pricing.sourceStage], [6000, 3000, 0, 1]);
+    const sourceBefore = c1.ev(`JSON.stringify({lv:S.lv,exp:S.exp,jx:S.jobs.Swordman.jx,zeny:S.zeny})`);
+
+    // Train a replacement minute that is 100x stronger and from another field. It is deliberately
+    // local while the original claim is pending; the original frozen claim must ignore it.
+    c1.ev(`S.mp=1;S.lvl=1;farmSession=null;farmSample(2000000);
+      recordFarmIncome(600000,300000,42000,30000,2030000);farmSample(2060000);changeClass('Novice');
+      window.__dest={lv:S.lv,exp:S.exp,jx:S.jobs.Novice.jx};`);
+    assert.equal(c1.ev('S.cls'), 'Novice');
+    assert.equal(c1.ev('S.offlineIncome.xp'), 600000, 'the latest client sample really is different');
+
+    assert.equal(await c1.ev('cloudFlushNow()'), 'ok', 'the 428 handshake applies then acknowledges the delayed claim');
+    const sourceAfter = c1.ev(`JSON.stringify(S.base.Swordman)`);
+    const destination = JSON.parse(c1.ev(`JSON.stringify({lv:S.lv,exp:S.exp,jx:S.jobs.Novice.jx})`));
+    const source0 = JSON.parse(sourceBefore), source1 = JSON.parse(sourceAfter), dest0 = JSON.parse(c1.ev('JSON.stringify(window.__dest)'));
+    assert.ok(source1.exp > source0.exp || source1.lv > source0.lv, 'the retained Swordman run receives Base EXP');
+    assert.ok(source1 && c1.ev('S.jobs.Swordman.jx') > source0.jx, 'the retained Swordman job receives Job EXP');
+    assert.deepEqual(destination, dest0, 'the visible Novice receives no source-class Base or Job EXP');
+    assert.equal(c1.ev('S.zeny'), source0.zeny + 360000, 'wallet uses original 3,000 z/min, not the replacement 300,000 z/min');
+    const row = srv.db.prepare('SELECT id, claimed_at, income_xp, income_zeny, source_map, source_stage FROM offline_reward_claims WHERE user_id=? ORDER BY id DESC').get(srv.accountId);
+    assert.ok(row.claimed_at > 0, 'the claim is consumed by the successful versioned acknowledgement');
+    assert.deepEqual([row.income_xp, row.income_zeny, row.source_map, row.source_stage], [6000, 3000, 0, 1]);
+    settled = { source: sourceAfter, zeny: c1.ev('S.zeny'), claimId: row.id };
+    assert.equal(await c1.ev('cloudFlushNow()'), 'ok', 'a retry remains clean after acknowledgement');
+    assert.equal(c1.ev('S.zeny'), settled.zeny, 'retry cannot pay the frozen entitlement twice');
+  } finally { c1.close(); }
+
+  const c2 = bootClient({ profile, transport });
+  try {
+    await c2.signInSession(srv);
+    assert.equal(c2.ev('S.offlineClaimId'), settled.claimId, 'the acknowledgement survives a real reload');
+    assert.equal(c2.ev('JSON.stringify(S.base.Swordman)'), settled.source, 'the paid retained source snapshot survives reload');
+    assert.equal(c2.ev('S.zeny'), settled.zeny, 'the shared wallet survives reload without duplicate payout');
+    assert.equal(await c2.ev('cloudFlushNow()'), 'ok');
+  } finally { c2.close(); }
+});
+
+// 14. v423: manual update uses the exact save coordinator path (showUpdatePrompt -> save(true) ->
+// cloudFlushNow). Whole rewards accrued in less than one Plaza second must enter that snapshot;
+// residual fractions remain in memory until a genuine owner transition instead of being taxed per save.
+await test('v423 integrated: manual update checkpoints whole sub-second Plaza AFK income before reload without duplicate payment', async () => {
+  const srv = await createAccountServer();
+  const profile = createProfileStorage();
+  const transport = makeServerTransport(srv);
+  const c1 = bootClient({ profile, transport });
+  let expected;
+  try {
+    await c1.signInSession(srv);
+    assert.equal(await c1.ev('cloudPush(true)'), 'ok');
+    const pendingRaw = c1.ev(`document.body.classList.remove('social-open');hubFirstPending=false;respawn=0;S.mp=0;S.lvl=1;
+      farmSession=null;farmSample(3000000);recordFarmIncome(600000,300000,420000,1,3030000);farmSample(3060000);
+      plazaAfkAcc={t:0,xp:0,zeny:0,job:0};plazaKillAcc.frac=0;window.__before={lv:S.lv,exp:S.exp,zeny:S.zeny,jx:S.jobs.Novice.jx};
+      plazaAfkTick(.5);JSON.stringify({xp:plazaAfkAcc.xp,zeny:plazaAfkAcc.zeny,job:plazaAfkAcc.job,frac:plazaKillAcc.frac});`);
+    const pending = JSON.parse(pendingRaw);
+    assert.ok(pending.xp >= 5000, 'the real half-second tick accumulated whole endgame EXP before its normal one-second payout');
+    assert.ok(pending.zeny >= 2500);
+    c1.ev(`showUpdatePrompt('2026-11-18 haven-v423 plaza-checkpoint')`);
+    const button = c1.w.document.querySelector('#updatePrompt button');
+    await button.onclick();
+    assert.equal(c1.reloads().length, 1, 'the real manual update path waited for a confirmed save then requested reload');
+    expected = JSON.parse(c1.ev(`JSON.stringify({lv:S.lv,exp:S.exp,zeny:S.zeny,jx:S.jobs.Novice.jx,residual:{t:plazaAfkAcc.t,xp:plazaAfkAcc.xp,zeny:plazaAfkAcc.zeny,job:plazaAfkAcc.job,frac:plazaKillAcc.frac}})`));
+    assert.equal(expected.zeny, c1.ev('window.__before.zeny') + 2500, 'whole sub-second Zeny was checkpointed before the update save');
+    assert.ok(expected.lv > c1.ev('window.__before.lv') || expected.exp > c1.ev('window.__before.exp'), 'whole sub-second EXP was checkpointed before the update save');
+    assert.ok(expected.residual.xp >= 0 && expected.residual.xp < 1 && expected.residual.zeny >= 0 && expected.residual.zeny < 1,
+      'ordinary update checkpoint preserves only the sub-unit rounding residue');
+    const stored = C.unpackSave(JSON.parse((await transport.readServerSave()).blob));
+    assert.deepEqual({lv:stored.lv,exp:stored.exp,zeny:stored.zeny,jx:stored.jobs.Novice.jx},
+      {lv:expected.lv,exp:expected.exp,zeny:expected.zeny,jx:expected.jx}, 'the update coordinator serialized the checkpointed state');
+  } finally { c1.close(); }
+
+  const c2 = bootClient({ profile, transport });
+  try {
+    await c2.signInSession(srv);
+    assert.deepEqual(JSON.parse(c2.ev(`JSON.stringify({lv:S.lv,exp:S.exp,zeny:S.zeny,jx:S.jobs.Novice.jx})`)),
+      {lv:expected.lv,exp:expected.exp,zeny:expected.zeny,jx:expected.jx}, 'reload/rejoin keeps the exact whole checkpoint once');
+  } finally { c2.close(); }
+});
+
 const failed = results.filter(r => !r.ok);
 console.log(`\n${results.length - failed.length} passed, ${failed.length} failed`);
 if (failed.length) process.exit(1);
