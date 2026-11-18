@@ -11830,6 +11830,18 @@ re-recording them here would have written wrong numbers into the repository.
 * **Delivery:** Integration on PR #248's branch for the owner to merge; no production deployment,
   production account edits, reward-rule changes or new Social Durable Object traffic.
 
+### 2026-11-18 — Class Tree icon centering and preview alignment
+* **Changed:** Centered class card emblem icons inside circular badges by stripping inherited outer 52x56px dimensions and radial gradient on child `.eclipse-class-emblem` inside `.class-card-emblem`, setting `display: flex !important` and centering the 28px RO class icon. Lengthened the character preview stage from 122px to 213px with scaled sprite presentation, and anchored the action button row to the bottom of `.class-path-focus` so that the preview panel aligns flush with the 4T (T4) progression bar with no vertical scrollbar.
+* **Try it:** Open Class Tree (J), switch to Thief lineage (or any job family), and observe that all class card icons are centered cleanly in their circular badges without clipping or downward offset. Observe that the character preview box on the right is prominently displayed and the panel extends down so the Change Class button aligns flush with the bottom of the T4 cards.
+* **Checks:** `node tools/tests/eclipse_ui_sim.js` (60 passed), `node tools/tests/panel_layout_smoke.js` (42 passed), `node tools/tests/ui_sim.js` (64 passed). Headless Chromium visual rendering verified icon centering and 4T bar alignment.
+* **Delivery:** Committed and pushed to `arena/d443256d-prontera-grind`.
+
+### 2026-11-18 — `haven-v420` cache bust & update watcher trigger
+* **Changed:** Bumped `BUILD` to `haven-v420` across all four required mirrors (`index.html`, `Updates/cards-gear-audit/affix-ranges.html`, `Updates/cards-gear-audit/equipment-cards-tuning.html`, and `tools/cloudflare-deploy-steps.md`). Busted asset query strings in `index.html` to `?v=420` for `assets/ui/eclipse.css`, `assets/ui/mobile.css`, and coordinated social/Digimon runtime assets. Added `assets/ui/eclipse.css` and `assets/ui/mobile.css` to `tools/tests/update_watch_sim.js` asset verification suite. This ensures Cloudflare CDN and player browser disk caches revalidate and fetch the updated Eclipse UI stylesheet containing PR #251's class tree icon centering and preview alignment fixes, and the in-game update watcher triggers an update prompt/reload on existing active client sessions.
+* **Try it:** Open the game client or refresh `index.html`. Verify `#buildTag` displays `build 2026-11-18 haven-v420...`. Verify that `assets/ui/eclipse.css?v=420` is fetched rather than served from stale cache. Check Class Tree (J) to confirm centered emblems and lengthened preview aligned with 4T bar.
+* **Checks:** `node tools/tests/update_watch_sim.js` (22 passed), `node tools/tests/eclipse_ui_sim.js` (60 passed), `node tools/tests/panel_layout_smoke.js` (42 passed), `node tools/tests/mobile_layout_sim.js` (34 passed), `node tools/tests/ui_sim.js` (64 passed), `node tools/tests/publish_sim.js` (20 passed), `bash tools/build_site.sh` succeeds with matching `dist/version.txt` and `_headers`.
+* **Delivery:** Branch `arena/8eedab04-prontera-grind`.
+
 ### 2026-11-18 — `haven-v419` save-path CPU diet
 * **Changed:** Four measured reductions on the hottest API routes, none of which changes an answer:
   (1) `_lib/validate.js` reads a compact save's codec version out of the TEXT instead of `JSON.parse`ing

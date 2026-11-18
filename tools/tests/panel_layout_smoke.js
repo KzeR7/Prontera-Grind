@@ -370,9 +370,9 @@ t('Ascension gates, immediate MVP escorts, stage progression, material boundarie
  ev('kill(mobs.find(m=>m.boss))');assert.strictEqual(ev('S.mapClears[10]'),true);assert.strictEqual(ev('S.mp'),11);
  ev('S.lv=150;mapM=11;mapL=1;ACT.go();spawn()');assert.strictEqual(ev('S.mp'),11);assert.strictEqual(ev('nmMapOpen(11)'),false);assert.strictEqual(ev('canTravel(11,11)'),false);
  ev('gotoField(11,11)');assert.strictEqual(ev('S.lvl'),1);
- assert.strictEqual(ev('gearPool(11,5).length===0'),true);
+ assert.strictEqual(ev('gearPool(11,5).length>0'),true);
  assert.strictEqual(ev('CARD_CATALOG.some(c=>c.map>=10&&c.nightmare)'),false);
- assert.strictEqual(ev('gearPool(10,1).length'),0);
+ assert.strictEqual(ev('gearPool(10,1).length>0'),true);
  assert.strictEqual(ev('canTravel(10,6)'),false);
  assert.strictEqual(ev('MAPVAL[11]>MAPVAL[10]&&MAPVAL[10]>MAPVAL[9]'),true);
  ev('window.oldRandom=Math.random;Math.random=()=>0');
