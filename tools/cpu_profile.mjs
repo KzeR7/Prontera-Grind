@@ -132,62 +132,21 @@ const makeRequest = (method, url, { body, cookie, headers = {} } = {}) => {
     text: async () => body ?? '', body: null };
 };
 
-// The handler's own JSON.stringify is counted (it happens inside `json()`); draining the body is a
-// decode of a string that already exists. The body is deliberately NOT parsed here: a conflict reply
-// carries the whole live save, and re-parsing it in the harness would charge the server for a parse
-// it never does.
+// ------------------------------------------------------------------ invokers ----
+// Two EXPLICIT invokers. There is no global flag that silently redirects the baseline: a case names the
+// invoker it uses, and a handler-only case cannot accidentally run middleware because the middleware
+// module is never imported on that path.
 //
-// v419: `headers` and a light body probe are returned so a case can ASSERT it measured the request it
-// claims to (status, version, encoding). A case that silently measured a refused request - the old
-// conflict case sent no X-Save-Format, so every "conflict" it timed was a legacy plain-save EXPANSION,
-// not a modern client's conflict - is how a 32 ms figure ended up in a report as "the conflict cost".
-// `parse` is opt-in for SETUP calls only. Inside a measured window the reply body is drained but never
-// parsed: parsing a 300 KB conflict reply here would charge the server for the harness's own work.
-const call = async (fn, file, request, env, { parse = false } = {}) => {
-  if (MIDDLEWARE) return runWithMiddleware(fn, file, withClientIp(request), env, { parse });
-  const m = await load(file);
-  const res = await m[fn]({ request, env, params: {} });
-  const text = await res.text();
-  let body = null;
-  if (parse && text) { try { body = JSON.parse(text); } catch {} }
-  return { status: res.status, text, body };
-};
-
-// ---------------------------------------------------------------- middleware ----
-// v419: a hostname there is no middleware. `functions/api/_middleware.js` runs BEFORE every handler and
-// is not free: the production-preview refusal, the network-ban check (an address hash plus a cached
-// `ip_bans` membership test) and, when `WRITE_GATE=required`, the Durable Object lease. A harness that
-// calls the handler directly measures the handler and silently omits all of that - which understates
-// every request and hides exactly the kind of per-request tax the CPU investigation is about.
-//
-// So `--middleware` drives the REAL onRequest export with the real request and a `next()` that enters
-// the handler, the way Pages does. It is a separate mode on purpose: handler-only numbers stay
-// comparable with every earlier measurement, and the middleware delta becomes its own line.
-const runWithMiddleware = async (fn, file, request, env, { parse = false } = {}) => {
-  const middleware = await load('api/_middleware.js');
-  const m = await load(file);
-  const started = process.cpuUsage();
-  const res = await middleware.onRequest({
-    request, env, params: {},
-    next: async () => m[fn]({ request, env, params: {} }),
-    // Pages supplies this; the gate release is charged to the request when it is absent, so mirror it.
-    waitUntil: () => {},
-  });
-  const text = await res.text();
-  const cpu = process.cpuUsage(started);
-  let body = null;
-  if (parse && text) { try { body = JSON.parse(text); } catch {} }
-  return { status: res.status, text, body, cpuMs: (cpu.user + cpu.system) / 1000 };
-};
-const MIDDLEWARE = argv.includes('--middleware');
-// In middleware mode the network-ban check has no fingerprint on a plain node request, so it would be
-// skipped and the measurement would again flatter the code. Supply a real client address (and a ban
-// row, when asked) so `ipHash()` + `isIpBanned()` actually run.
+//   handlerOnly()  - the Function export directly, exactly what Pages' `next()` would call. Middleware
+//                    is NOT run (asserted by tools/tests/cpu_profile_invoker_sim.mjs, which counts
+//                    middleware entries: 0 for these requests, 1 for middleware requests).
+//   withMiddleware() - the real `_middleware.onRequest` with a real `next()`, the way Pages runs it:
+//                    production-preview refusal, network-ban hash + lookup, and (with
+//                    WRITE_GATE=required) the Durable Object lease.
 const MIDDLEWARE_IP = flag('client-ip', '203.0.113.7');
-const CLIENT_HEADERS = ['cookie', 'content-type', 'x-save-format'];
+// In middleware mode the network-ban check has no fingerprint on a plain node request, so it would be
+// skipped and the measurement would again flatter the code. Supply a real client address.
 const withClientIp = request => {
-  // Rebuild the request with a real client address added; every original header is preserved, because a
-  // harness that drops the session cookie measures 401s and calls them requests.
   const added = new Map([['cf-connecting-ip', MIDDLEWARE_IP], ['host', 'pg.test']]);
   return {
     method: request.method, url: request.url,
@@ -197,7 +156,105 @@ const withClientIp = request => {
     text: request.text, body: null,
   };
 };
-void CLIENT_HEADERS;
+
+// Outcome counters, per invoker, so the report can say what actually ran rather than what was intended.
+const invokerStats = {
+  'handler-only': { requests: 0, middlewareEntries: 0 },
+  'middleware': { requests: 0, middlewareEntries: 0 },
+};
+
+// PREPARE. Resolving the module and building the request object happen OUTSIDE every timed window: a
+// dynamic `import()` on the first call is module evaluation, and `JSON.stringify` of a 300 KB envelope
+// is client work. Both would otherwise be charged to the server.
+// The middleware entry is COUNTED, not assumed: the module is loaded once and its `onRequest` is wrapped,
+// so `invokerStats[...].middlewareEntries` is a measurement the report can stand behind. A handler-only
+// case never takes this branch, which is what makes the zero a fact rather than a convention.
+const middlewareEntryCount = { n: 0 };
+const loadMiddlewareCounting = async () => {
+  const m = await load('api/_middleware.js');
+  if (m.__counted) return m;
+  const original = m.onRequest;
+  const counted = { ...m, onRequest: (...args) => { middlewareEntryCount.n++; return original(...args); } };
+  Object.defineProperty(counted, '__counted', { value: true });
+  mods.set('api/_middleware.js', counted);
+  return counted;
+};
+const prepare = async ({ invoker, fn, file, request, env }) => {
+  const handler = await load(file);
+  if (invoker === 'handler-only') return { invoker, handler, fn, request, env };
+  const middleware = await loadMiddlewareCounting();
+  return { invoker, handler, middleware, fn, request: withClientIp(request), env };
+};
+
+// EXECUTE. Only the request itself. The CPU sample starts here and STOPS before the response body is
+// touched: draining and parsing a reply is the harness reading bytes the server already produced, and
+// it used to be inside the sample (which is why a conflict case looked so expensive - its reply carries
+// the whole live save).
+const execute = async call => {
+  invokerStats[call.invoker].requests++;
+  const started = process.cpuUsage();
+  // A component probe: no HTTP response, just the work itself (parse, unpack, a leaderboard hook).
+  if (call.sync) {
+    await call.sync();
+    const cpu = process.cpuUsage(started);
+    return { cpuMs: (cpu.user + cpu.system) / 1000, res: null };
+  }
+  let res;
+  if (call.invoker === 'handler-only') {
+    res = await call.handler[call.fn]({ request: call.request, env: call.env, params: {} });
+  } else {
+    const beforeEntries = middlewareEntryCount.n;
+    res = await call.middleware.onRequest({
+      request: call.request, env: call.env, params: {},
+      next: async () => call.handler[call.fn]({ request: call.request, env: call.env, params: {} }),
+      // Pages supplies this; the gate release is charged to the request when it is absent, so mirror it.
+      waitUntil: () => {},
+    });
+    invokerStats[call.invoker].middlewareEntries += middlewareEntryCount.n - beforeEntries;
+  }
+  const cpu = process.cpuUsage(started);
+  return { res, cpuMs: (cpu.user + cpu.system) / 1000 };
+};
+
+// VALIDATE. Outside the sample. Every assertion the earlier harness made is preserved - status, the
+// authoritative version, and the served encoding - and now none of them can inflate the number.
+const validate = async (outcome, check) => {
+  if (!outcome.res) return { cpuMs: outcome.cpuMs };   // component probe: nothing to assert
+  const res = outcome.res;
+  const text = await res.text();
+  const result = { status: res.status, text, cpuMs: outcome.cpuMs };
+  if (!check) return result;
+  if (check.status != null && res.status !== check.status)
+    throw new Error(`${check.label}: answered ${res.status}, expected ${check.status}`);
+  let body = null;
+  try { body = text ? JSON.parse(text) : null; } catch { body = null; }
+  result.body = body;
+  if (check.version != null && body && body.version !== check.version)
+    throw new Error(`${check.label}: version ${body.version}, expected ${check.version}`);
+  if (check.conflict && (!body || body.conflict !== true))
+    throw new Error(`${check.label}: expected conflict:true in a 409`);
+  if (check.encoding) {
+    if (!body) throw new Error(`${check.label}: no JSON body to check the encoding of`);
+    const blob = String(body.blob ?? '');
+    const compact = Array.isArray(JSON.parse(blob).inv?.[0]);
+    if (check.encoding === 'compact' && !compact)
+      throw new Error(`${check.label}: expected the stored compact blob, got an expanded one`);
+    if (check.encoding === 'expanded' && compact)
+      throw new Error(`${check.label}: served raw codec tuples to a client that cannot decode them`);
+    if (check.sameText != null && blob !== check.sameText)
+      throw new Error(`${check.label}: served bytes differ from the stored row`);
+  }
+  return result;
+};
+
+// One measured pass: PREPARE (untimed) -> EXECUTE (samples CPU) -> VALIDATE (untimed).
+const runOnce = async (call, check) => validate(await execute(call), check);
+
+// A convenience for the many cases that just need "do it, prove it, throw if wrong".
+const call = async (fn, file, request, env, { invoker = 'handler-only', check = null } = {}) => {
+  const prepared = await prepare({ invoker, fn, file, request, env });
+  return runOnce(prepared, check);
+};
 
 // A request whose BODY TEXT is built once, outside the measurement: serialising the envelope is client
 // work, and charging the server for it would inflate every PUT case (and only the PUT cases).
@@ -212,32 +269,77 @@ const cpuMs = delta => (delta.user + delta.system) / 1000;
 
 // BATCHED, not per-request: one GC pause inside a single request's window dominates that sample, and
 // the whole point of this harness is that a difference between two versions is not that noise. Each
-// sample is the mean over BATCH requests, and the reported figure is the median of SAMPLES samples -
-// so a median-of-means, on identical fixtures, in one process.
+// sample is the mean over BATCH requests, and the reported figure is the median of samples.
+//
+// `plan(i)` returns the PREPARED call for request i (must be built before the sample opens), `check(i)`
+// its expected outcome. Both are evaluated outside the CPU window.
 const BATCH = Math.max(1, Number(flag('batch', 10)) || 10);
-async function measure(name, fn, { runs = RUNS, warm = 2 } = {}) {
-  for (let i = 0; i < warm * BATCH; i++) await fn();
+async function measure(name, { plan, check = null, runs = RUNS, warm = 2, invoker: invokerOverride = null, meta = {} } = {}) {
+  // The invoker is whatever the PREPARED call actually carries - not a parameter the caller can get
+  // wrong. (A meta.invoker once overwrote this and every middleware row claimed to be handler-only.)
+  let observedInvoker = invokerOverride;
+  // Warmup: real requests through the same path, so JIT and caches settle - and so a PUT loop can
+  // advance its version counter through them.
+  for (let i = 0; i < warm * BATCH; i++) {
+    const prepared = await plan(i);
+    observedInvoker = observedInvoker || prepared.invoker;
+    await runOnce(prepared, check ? check(i) : null);
+  }
   const samples = [];
   let peakWall = 0;
+  let index = warm * BATCH;
   for (let i = 0; i < runs; i++) {
-    const c0 = process.cpuUsage();
-    let wall = 0;
+    // PREPARE everything this sample will run, BEFORE the clock starts.
+    const preparedBatch = [];
+    const checks = [];
     for (let j = 0; j < BATCH; j++) {
-      const w0 = performance.now();
-      await fn();
-      wall += performance.now() - w0;
+      const prepared = await plan(index);
+      observedInvoker = observedInvoker || prepared.invoker;
+      preparedBatch.push(prepared);
+      checks.push(check ? check(index) : null);
+      index++;
     }
-    samples.push(cpuMs(process.cpuUsage(c0)) / BATCH);
+    const c0 = process.cpuUsage();
+    const w0 = performance.now();
+    const outcomes = [];
+    for (let j = 0; j < BATCH; j++) outcomes.push(await execute(preparedBatch[j]));
+    const wall = performance.now() - w0;
+    const delta = process.cpuUsage(c0);
+    // VALIDATE only after the sample is closed.
+    for (let j = 0; j < BATCH; j++) await validate(outcomes[j], checks[j]);
+    samples.push(cpuMs(delta) / BATCH);
     peakWall = Math.max(peakWall, wall / BATCH);
   }
   samples.sort((a, b) => a - b);
   const median = samples[Math.floor(samples.length / 2)];
   const p90 = samples[Math.min(samples.length - 1, Math.floor(samples.length * 0.9))];
-  return { name, cpuMs: round(median), cpuP90Ms: round(p90), cpuMaxMs: round(samples[samples.length - 1]),
-    wallMaxMs: round(peakWall), runs, batch: BATCH };
+  // `invoker` goes LAST: the earlier spread let meta.invoker overwrite it, so every middleware PUT row
+  // claimed to be handler-only.
+  return { ...meta, name, cpuMs: round(median), cpuP90Ms: round(p90), cpuMaxMs: round(samples[samples.length - 1]),
+    wallMaxMs: round(peakWall), runs, batch: BATCH, expect: meta.expect ?? null,
+    invoker: observedInvoker || 'handler-only' };
 }
 
 const round = n => Math.round(n * 1000) / 1000;
+// The stored blob after a write, read straight from the row: the server re-stamps its identity, so the
+// text the test SENT is not the text that is stored.
+const storedBlobFor = async (env, cookie) => {
+  const r = await call('onRequestGet', 'api/save.js',
+    makeRequest('GET', '/api/save', { cookie, headers: { 'x-save-format': '112' } }), env,
+    { check: { label: 'stored-row probe', status: 200 } });
+  return r.body.blob;
+};
+const currentVersionFor = async (env, cookie) => {
+  const r = await call('onRequestGet', 'api/save.js',
+    makeRequest('GET', '/api/save', { cookie, headers: { 'x-save-format': '112' } }), env,
+    { check: { label: 'version probe', status: 200 } });
+  return r.body.version;
+};
+const ensureCompactRowFor = async (env, cookie, storedBlob, name) => {
+  const cur = await currentVersionFor(env, cookie);
+  await call('onRequestPut', 'api/save.js', putRequest(cookie, JSON.stringify({ owner: name, version: cur, blob: storedBlob }), 112), env,
+    { check: { label: 'ensureCompactRow', status: 200 } });
+};
 // The expansion a legacy page is served, built once per size outside every timed window.
 let unpackSaveLocal = x => x;
 
@@ -305,18 +407,17 @@ async function main() {
     // Put the row back into a known state before a block: a compact blob at the current version. Without
     // this, the legacy block (which stores an EXPANDED row) silently changes what the following
     // conflict block is measuring - and "the modern reply is compact" then fails for a legitimate reason.
-    const ensureCompactRow = async () => {
-      const cur = await currentVersionRef();
-      const r = await call('onRequestPut', 'api/save.js', putRequest(cookie, body(cur, stored), 112), env);
-      if (r.status !== 200) throw new Error('ensureCompactRow -> ' + r.status);
-    };
-    const currentVersionRef = async () => {
+    const currentVersion = async () => {
       const r = await call('onRequestGet', 'api/save.js',
-        makeRequest('GET', '/api/save', { cookie, headers: { 'x-save-format': '112' } }), env, { parse: true });
-      if (r.status !== 200) throw new Error('version probe -> ' + r.status);
+        makeRequest('GET', '/api/save', { cookie, headers: { 'x-save-format': '112' } }), env,
+        { check: { label: 'version probe', status: 200 } });
       return r.body.version;
     };
-    const currentVersion = currentVersionRef;
+    const ensureCompactRow = async () => {
+      const cur = await currentVersion();
+      await call('onRequestPut', 'api/save.js', putRequest(cookie, body(cur, stored), 112), env,
+        { check: { label: 'ensureCompactRow', status: 200 } });
+    };
     const storedJson = JSON.parse(stored);
     const expandedForLegacy = JSON.stringify(unpackSaveLocal(storedJson));
     // A legacy page UPLOADS the expanded text, and the envelope limit is 600 KB, so a client with no
@@ -325,135 +426,131 @@ async function main() {
     // instead of printing a number for a request the server will refuse.
     const LEGACY_ENVELOPE_MAX = 600_000;
     const legacyUploadPossible = expandedForLegacy.length < LEGACY_ENVELOPE_MAX;
-    if (!legacyUploadPossible) results.push({ ...base, name: `save-put-legacy-${size}`, cpuMs: null, client: 'legacy (no header)',
+    if (!legacyUploadPossible) results.push({ ...base, name: `save-put-legacy-${size}`, cpuMs: null,
+      client: 'legacy (no header)', notMeasured: true, expect: 200,
       note: `not measured: expanded body ${expandedForLegacy.length} B exceeds the ${LEGACY_ENVELOPE_MAX} B envelope limit (413)` });
     if (!legacyUploadPossible) results.push({ ...base, name: `save-put-conflict-legacy-${size}`, cpuMs: null,
-      client: 'legacy (no header)', note: 'not measured: same 413 - a legacy page cannot send this body' });
+      client: 'legacy (no header)', notMeasured: true, expect: 409,
+      note: 'not measured: same 413 - a legacy page cannot send this body' });
     // Verify each requested encoding BEFORE timing, so a wrong fixture is a hard error, not a number.
     // Validates status, version and served ENCODING on every timed request. Inside a measured window the
     // reply is not re-parsed by `call` (that would charge the server for harness work), so the fields are
     // read straight from the reply TEXT here and the parse cost lands in the harness's own accounting.
-    const assertServed = (label, r, expect, wantVersion) => {
-      if (r.status !== expect) throw new Error(label + ': answered ' + r.status + ', expected ' + expect);
-      if (expect === 409) {
-        const body = JSON.parse(r.text);
-        if (body.conflict !== true) throw new Error(label + ': 409 without conflict:true');
-        if (wantVersion != null && body.version !== wantVersion)
-          throw new Error(label + ': version ' + body.version + ', expected ' + wantVersion);
-        const blob = String(body.blob || '');
-        const compact = Array.isArray(JSON.parse(blob).inv?.[0]);
-        if (label.includes('legacy') && compact) throw new Error(label + ': legacy client was served compact tuples');
-        if (label.includes('modern') && !compact) throw new Error(label + ': modern client was not served the stored blob');
-      } else if (wantVersion != null) {
-        const body = JSON.parse(r.text);
-        if (body.version !== wantVersion) throw new Error(label + ': version ' + body.version + ', expected ' + wantVersion);
-      }
-    };
 
-    if ((!ONLY || ONLY.startsWith('save-put') || ONLY.startsWith('save-put-legacy') ||
-         ONLY.startsWith('save-put-conflict')) && !ONLY?.startsWith('save-put-conflict')) await ensureCompactRow();
-    if (ONLY?.startsWith('save-put-conflict')) await ensureCompactRow();
-
-    if (!ONLY || ONLY.startsWith('save-put') || ONLY.startsWith('save-put-legacy')) {
-      // A re-sync of the stored blob: the version advances each time, so this is the real steady
-      // state (no re-stamp, no claim pending, nothing new to settle).
-      // Bodies (and the version each one claims) are prepared up front: serialising a 300 KB envelope
-      // is CLIENT work and must not be inside the server measurement. A well-behaved sync sends the
-      // version it holds, so body i claims `version + i` and the server must answer `version + i + 1`.
-      const startAt = await currentVersion();
+    // ---- PUT: an accepted sync, modern client (X-Save-Format: 112) ----------------------------
+    // The version advances through EVERY request, warmup included: body i claims the version the
+    // server answered for i-1, so each sample is a real accepted sync and never a conflict. A sample
+    // that does not answer 200 throws, which stops the run instead of reporting a refused request as
+    // accepted-save CPU.
+    if (!ONLY || ONLY.startsWith('save-put')) {
+      await ensureCompactRow();
+      let claimed = await currentVersion();
       const modernBodies = [];
-      for (let i = 0; i < RUNS * BATCH + 2 * BATCH; i++) modernBodies.push({ text: body(startAt + i, stored), v: startAt + i });
-      let mi = 0;
-      const one = await measure(`save-put-${size}`, async () => {
-        const item = modernBodies[mi++];
-        if (!item) throw new Error('save-put: ran out of prebuilt bodies');
-        const r = await call('onRequestPut', 'api/save.js', putRequest(cookie, item.text, 112), env);
-        assertServed('save-put-modern', r, 200, item.v + 1);
+      for (let i = 0; i < (RUNS + 2) * BATCH + 4; i++) modernBodies.push({ text: body(claimed + i, stored), v: claimed + i });
+      const one = await measure(`save-put-${size}`, {
+        meta: { client: 'modern (112)', expect: 200 },
+        plan: async i => {
+          const item = modernBodies[i];
+          if (!item) throw new Error('save-put: ran out of prebuilt bodies');
+          return prepare({ invoker: 'handler-only', fn: 'onRequestPut', file: 'api/save.js',
+            request: putRequest(cookie, item.text, 112), env });
+        },
+        check: i => ({ label: 'save-put-modern', status: 200, version: modernBodies[i].v + 1 }),
       });
-      results.push({ ...base, ...one, client: 'modern (112)', expect: 200 });
+      results.push({ ...base, ...one });
     }
 
+    // ---- PUT: the same save from a page with no codec (no header) ------------------------------
+    // Only where the request is physically possible: the envelope limit is 600 KB and a near-cap save
+    // expands to ~1.66 MB, so a legacy page cannot upload it at all (413). Reported, not faked.
     if ((!ONLY || ONLY.startsWith('save-put-legacy')) && legacyUploadPossible) {
-      const legacyStart = await currentVersion();
-      const legacyBodies = [];
-      for (let i = 0; i < RUNS * BATCH + 2 * BATCH; i++) legacyBodies.push({ text: body(legacyStart + i, expandedForLegacy), v: legacyStart + i });
-      let li = 0;
-      const legacy = await measure(`save-put-legacy-${size}`, async () => {
-        const item = legacyBodies[li++];
-        if (!item) throw new Error('save-put-legacy: ran out of prebuilt bodies');
-        const r = await call('onRequestPut', 'api/save.js', putRequest(cookie, item.text, null), env);
-        assertServed('save-put-legacy', r, 200, item.v + 1);
+      await ensureCompactRow();
+      const startAt = await currentVersion();
+      const bodies = [];
+      for (let i = 0; i < (RUNS + 2) * BATCH + 4; i++) bodies.push({ text: body(startAt + i, expandedForLegacy), v: startAt + i });
+      const legacy = await measure(`save-put-legacy-${size}`, {
+        meta: { client: 'legacy (no header)', expect: 200 },
+        plan: async i => {
+          const item = bodies[i];
+          if (!item) throw new Error('save-put-legacy: ran out of prebuilt bodies');
+          return prepare({ invoker: 'handler-only', fn: 'onRequestPut', file: 'api/save.js',
+            request: putRequest(cookie, item.text, null), env });
+        },
+        check: i => ({ label: 'save-put-legacy', status: 200, version: bodies[i].v + 1 }),
       });
-      results.push({ ...base, ...legacy, client: 'legacy (no header)', expect: 200 });
+      results.push({ ...base, ...legacy });
     }
 
+    // ---- PUT: a 409 conflict, measured SEPARATELY from accepted saves --------------------------
+    // A stale version is refused and the live row is returned; it is NOT accepted-save CPU and is
+    // never reported as such. The reply must carry the bytes as stored for a modern client.
     if (!ONLY || ONLY.startsWith('save-put-conflict')) {
-      await ensureCompactRow();   // the legacy block above leaves an expanded row behind
-      // A stale version: the write is refused and the live row is returned.
-      // A modern client's conflict MUST reply with the bytes as stored. If that assertion starts failing
-      // here (as it did while this harness was being written), the case is measuring an expansion.
-      const conflictProbe = await call('onRequestPut', 'api/save.js', putRequest(cookie, body(0, stored), 112), env, { parse: true });
-      assertServed('save-put-conflict-modern (probe)', conflictProbe, 409, null);
-      const staleModern = body(0, stored);
+      await ensureCompactRow();
+      const staleText = body(0, stored);
       const conflictVersion = await currentVersion();
-      const c = await measure(`save-put-conflict-${size}`, async () => {
-        const r = await call('onRequestPut', 'api/save.js', putRequest(cookie, staleModern, 112), env);
-        assertServed('save-put-conflict-modern', r, 409, conflictVersion);   // unchanged: nothing was written
+      const c = await measure(`save-put-conflict-${size}`, {
+        meta: { client: 'modern (112)', expect: 409 },
+        plan: async () => prepare({ invoker: 'handler-only', fn: 'onRequestPut', file: 'api/save.js',
+          request: putRequest(cookie, staleText, 112), env }),
+        check: () => ({ label: 'save-put-conflict-modern', status: 409, version: conflictVersion,
+          conflict: true, encoding: 'compact' }),
       });
-      results.push({ ...base, ...c, client: 'modern (112)', expect: 409 });
+      results.push({ ...base, ...c });
     }
 
     if ((!ONLY || ONLY.startsWith('save-put-conflict-legacy')) && legacyUploadPossible) {
+      await ensureCompactRow();
       const staleLegacy = body(0, expandedForLegacy);
       const legacyConflictVersion = await currentVersion();
-      const c = await measure(`save-put-conflict-legacy-${size}`, async () => {
-        const r = await call('onRequestPut', 'api/save.js', putRequest(cookie, staleLegacy, null), env);
-        assertServed('save-put-conflict-legacy', r, 409, legacyConflictVersion);
+      const c = await measure(`save-put-conflict-legacy-${size}`, {
+        meta: { client: 'legacy (no header)', expect: 409 },
+        plan: async () => prepare({ invoker: 'handler-only', fn: 'onRequestPut', file: 'api/save.js',
+          request: putRequest(cookie, staleLegacy, null), env }),
+        check: () => ({ label: 'save-put-conflict-legacy', status: 409, version: legacyConflictVersion,
+          conflict: true, encoding: 'expanded' }),
       });
-      results.push({ ...base, ...c, client: 'legacy (no header)', expect: 409 });
+      results.push({ ...base, ...c });
     }
 
+    // ---- GET: a modern page is served the stored bytes; a legacy page is served the expansion --
     if (!ONLY || ONLY.startsWith('save-get')) {
-      const getModernText = await (async () => {
-        const r = await call('onRequestGet', 'api/save.js',
-          makeRequest('GET', '/api/save', { cookie, headers: { 'x-save-format': '112' } }), env);
-        return r.text;
-      })();
-      // A modern page is served the stored bytes; a legacy page is served the expanded text. Both are
-      // full parses of the row here, and only the modern one may skip the expansion.
-      const getModern = await measure(`save-get-${size}`, async () => {
-        const r = await call('onRequestGet', 'api/save.js',
-          makeRequest('GET', '/api/save', { cookie, headers: { 'x-save-format': '112' } }), env);
-        // Served bytes must be exactly what the row holds now (earlier PUT cases may have re-stamped
-        // it). `parse` is off inside the window, so compare against the version probe's text instead.
-        if (r.status !== 200) throw new Error('save-get modern -> ' + r.status);
-        if (r.text.length !== getModernText.length) throw new Error('save-get modern: not the stored bytes');
+      const current = await call('onRequestGet', 'api/save.js',
+        makeRequest('GET', '/api/save', { cookie, headers: { 'x-save-format': '112' } }), env, { check: { label: 'save-get probe', status: 200 } });
+      const storedText = current.body.blob;
+      const getModern = await measure(`save-get-${size}`, {
+        meta: { client: 'modern (112)', expect: 200 },
+        plan: async () => prepare({ invoker: 'handler-only', fn: 'onRequestGet', file: 'api/save.js',
+          request: makeRequest('GET', '/api/save', { cookie, headers: { 'x-save-format': '112' } }), env }),
+        check: () => ({ label: 'save-get modern', status: 200, encoding: 'compact', sameText: storedText }),
       });
-      results.push({ ...base, ...getModern, client: 'modern (112)', expect: 200 });
+      results.push({ ...base, ...getModern });
     }
     if (!ONLY || ONLY.startsWith('save-get-legacy')) {
-      const getLegacy = await measure(`save-get-legacy-${size}`, async () => {
-        const r = await call('onRequestGet', 'api/save.js',
-          makeRequest('GET', '/api/save', { cookie }), env);
-        if (r.status !== 200) throw new Error('save-get legacy -> ' + r.status);
-        // Read the served encoding out of the reply TEXT (this window is not parsing bodies for us).
-        const served = JSON.parse(JSON.parse(r.text).blob);
-        if (Array.isArray(served.inv?.[0])) throw new Error('save-get legacy: served compact tuples');
+      const getLegacy = await measure(`save-get-legacy-${size}`, {
+        meta: { client: 'legacy (no header)', expect: 200 },
+        plan: async () => prepare({ invoker: 'handler-only', fn: 'onRequestGet', file: 'api/save.js',
+          request: makeRequest('GET', '/api/save', { cookie }), env }),
+        check: () => ({ label: 'save-get legacy', status: 200, encoding: 'expanded' }),
       });
-      results.push({ ...base, ...getLegacy, client: 'legacy (no header)', expect: 200 });
+      results.push({ ...base, ...getLegacy });
     }
 
     if (!ONLY || ONLY.startsWith('me')) {
-      const me = await measure(`me-${size}`, async () => {
-        await call('onRequestGet', 'api/me.js', makeRequest('GET', '/api/me', { cookie }), env);
+      const me = await measure(`me-${size}`, {
+        meta: { client: 'modern (112)', expect: 200 },
+        plan: async () => prepare({ invoker: 'handler-only', fn: 'onRequestGet', file: 'api/me.js',
+          request: makeRequest('GET', '/api/me', { cookie }), env }),
+        check: () => ({ label: 'me', status: 200 }),
       });
       results.push({ ...base, ...me });
     }
 
-    if (!ONLY || ONLY.startsWith('board')) {
-      const board = await measure(`board-echo-${size}`, async () => {
-        await call('onRequestGet', 'api/board.js',
-          makeRequest('GET', '/api/board?period=daily&board=echo', { cookie }), env);
+    if (!ONLY || ONLY.startsWith('board-echo')) {
+      const board = await measure(`board-echo-${size}`, {
+        meta: { client: 'modern (112)', expect: 200 },
+        plan: async () => prepare({ invoker: 'handler-only', fn: 'onRequestGet', file: 'api/board.js',
+          request: makeRequest('GET', '/api/board?period=daily&board=echo', { cookie }), env }),
+        check: () => ({ label: 'board-echo', status: 200 }),
       });
       results.push({ ...base, ...board });
     }
@@ -463,27 +560,30 @@ async function main() {
     // stored blob the request path uses, so the columns add up to a credible shape even though the
     // host runtime is not workerd.
     const parts = [];
-    parts.push(await measure(`  part:json-parse-${size}`, () => { JSON.parse(stored); }));
-    parts.push(await measure(`  part:checkSaveBlob-${size}`, () => { validate.checkSaveBlob(stored); }));
-    parts.push(await measure(`  part:unpackSave-${size}`, () => { codec.unpackSave(JSON.parse(stored)); }));
+    // Synchronous component work has no HTTP request, so there is nothing to resolve in `prepare`; the
+    // fixtures it works on are built once, above, and out of every window as before.
+    const probe = async (name, fn) => measure(name, { plan: async () => ({ invoker: 'handler-only', sync: fn }) });
+    parts.push(await probe(`  part:json-parse-${size}`, () => { JSON.parse(stored); }));
+    parts.push(await probe(`  part:checkSaveBlob-${size}`, () => { validate.checkSaveBlob(stored); }));
+    parts.push(await probe(`  part:unpackSave-${size}`, () => { codec.unpackSave(JSON.parse(stored)); }));
     const parsed = codec.unpackSave(JSON.parse(stored));
-    parts.push(await measure(`  part:publicFields-${size}`, () => { validate.publicFields(parsed); }));
+    parts.push(await probe(`  part:publicFields-${size}`, () => { validate.publicFields(parsed); }));
     const audit = await import(pathToFileURL(path.join(root, 'functions/_lib/save-audit.js')).href);
-    parts.push(await measure(`  part:auditStaticSave-${size}`, () => { audit.auditStaticSave(parsed); }));
+    parts.push(await probe(`  part:auditStaticSave-${size}`, () => { audit.auditStaticSave(parsed); }));
     const shop = await import(pathToFileURL(path.join(root, 'functions/_lib/shop.js')).href);
-    parts.push(await measure(`  part:lockedCosmetics-${size}`, async () => { await shop.lockedCosmetics(env.DB, 1, parsed); }));
+    parts.push(await probe(`  part:lockedCosmetics-${size}`, async () => { await shop.lockedCosmetics(env.DB, 1, parsed); }));
 
     // The two leaderboard hooks, on their own. `recordUnverifiedEcho` is the per-save one;
     // `settleUnverifiedEcho` is the periodic one whose emptiness is what most saves pay for.
     const echo = await import(pathToFileURL(path.join(root, 'functions/_lib/unverified-echo.js')).href);
     const uid = sqlite.prepare('SELECT id FROM users WHERE username=?').get('PROF' + size.toUpperCase()).id;
-    parts.push(await measure(`  part:recordUnverifiedEcho-${size}`, async () => {
+    parts.push(await probe(`  part:recordUnverifiedEcho-${size}`, async () => {
       await echo.recordUnverifiedEcho(env.DB, uid, parsed, Date.now());
     }));
-    parts.push(await measure(`  part:settleUnverifiedEcho-${size}`, async () => {
+    parts.push(await probe(`  part:settleUnverifiedEcho-${size}`, async () => {
       await echo.settleUnverifiedEcho(env.DB, Date.now());
     }));
-    parts.push(await measure(`  part:unverifiedConfig-${size}`, async () => {
+    parts.push(await probe(`  part:unverifiedConfig-${size}`, async () => {
       await echo.unverifiedConfig(env.DB);
     }));
 
@@ -491,10 +591,13 @@ async function main() {
     sqlite.close();
   }
 
-  // Handler-only versus handler+middleware, for the routes that matter, measured the same way.
-  // The delta is what the front door costs: proxy/host checks, the ban hash and lookup, and (when
-  // WRITE_GATE=required) the gate lease. It is reported separately because it is a per-request tax that
-  // no save-path optimisation can remove.
+  // Handler-only versus handler+middleware, for the routes that matter.
+  //
+  // The two are separate INVOKERS, not a global flag: `handler-only` never imports the middleware
+  // module, `middleware` enters the real onRequest. Both PUT loops advance their version through warmup
+  // and measured requests, exactly like the ordinary PUT case - an earlier version reused one body, so
+  // every request after the first was a 409 and the "accepted save" row was measuring refusals.
+  // A 409 conflict has its own case above and is never mixed in here.
   {
     const out = [];
     for (const size of Object.keys(fx)) {
@@ -502,37 +605,45 @@ async function main() {
       const name = 'MW' + size.toUpperCase();
       const cookie = await register(env, name);
       const packed = JSON.stringify(codec.packSave({ ...fx[size], owner: name }));
-      const first = await call('onRequestPut', 'api/save.js',
-        putRequest(cookie, JSON.stringify({ owner: name, version: 0, blob: packed }), 112), env);
-      if (first.status !== 200) throw new Error('middleware setup PUT -> ' + first.status);
-      const row = await call('onRequestGet', 'api/save.js',
-        makeRequest('GET', '/api/save', { cookie, headers: { 'x-save-format': '112' } }), env, { parse: true });
-      const version = row.body.version, storedBlob = row.body.blob;
-      // Handler only, then the same request through the middleware, with identical bodies.
-      const handlerOnly = await measure(`mw:handler-only-get-${size}`, async () => {
-        const r = await call('onRequestGet', 'api/save.js',
-          makeRequest('GET', '/api/save', { cookie, headers: { 'x-save-format': '112' } }), env);
-        if (r.status !== 200) throw new Error('get -> ' + r.status);
+      await call('onRequestPut', 'api/save.js',
+        putRequest(cookie, JSON.stringify({ owner: name, version: 0, blob: packed }), 112), env,
+        { check: { label: 'middleware setup PUT', status: 200 } });
+      const storedBlob = await storedBlobFor(env, cookie);
+
+      // GET: identical request through each invoker.
+      const getReq = () => makeRequest('GET', '/api/save', { cookie, headers: { 'x-save-format': '112' } });
+      const baseVersion = await currentVersionFor(env, cookie);
+      const handlerOnly = await measure(`mw:handler-only-get-${size}`, {
+        meta: { mwMode: 'handler-only', expect: 200 },
+        plan: async () => prepare({ invoker: 'handler-only', fn: 'onRequestGet', file: 'api/save.js', request: getReq(), env }),
+        check: () => ({ label: 'mw handler-only get', status: 200, version: baseVersion, encoding: 'compact' }),
       });
-      out.push({ ...handlerOnly, mwMode: 'handler-only' });
-      const fullText = JSON.stringify({ owner: name, version, blob: storedBlob });
-      const throughBoth = await measure(`mw:middleware+get-${size}`, async () => {
-        const r = await runWithMiddleware('onRequestGet', 'api/save.js',
-          withClientIp(makeRequest('GET', '/api/save', { cookie, headers: { 'x-save-format': '112' } })), env);
-        if (r.status !== 200) throw new Error('mw get -> ' + r.status);
+      out.push({ ...handlerOnly });
+      const throughBoth = await measure(`mw:middleware+get-${size}`, {
+        meta: { mwMode: 'handler+middleware', expect: 200 },
+        plan: async () => prepare({ invoker: 'middleware', fn: 'onRequestGet', file: 'api/save.js', request: getReq(), env }),
+        check: () => ({ label: 'mw middleware get', status: 200, version: baseVersion, encoding: 'compact' }),
       });
-      out.push({ ...throughBoth, mwMode: 'handler+middleware' });
-      const putOnly = await measure(`mw:handler-only-put-${size}`, async () => {
-        const r = await call('onRequestPut', 'api/save.js', putRequest(cookie, fullText, 112), env);
-        if (r.status !== 200 && r.status !== 409) throw new Error('put -> ' + r.status);
-      });
-      out.push({ ...putOnly, mwMode: 'handler-only' });
-      const putBoth = await measure(`mw:middleware+put-${size}`, async () => {
-        const r = await runWithMiddleware('onRequestPut', 'api/save.js',
-          withClientIp(putRequest(cookie, fullText, 112)), env);
-        if (r.status !== 200 && r.status !== 409) throw new Error('mw put -> ' + r.status);
-      });
-      out.push({ ...putBoth, mwMode: 'handler+middleware' });
+      out.push({ ...throughBoth });
+
+      // PUT: an ACCEPTED save for both invokers. Every request claims the version the previous one was
+      // answered with, warmup included, so no sample is a conflict.
+      for (const invoker of ['handler-only', 'middleware']) {
+        await ensureCompactRowFor(env, cookie, storedBlob, name);
+        let claimed = await currentVersionFor(env, cookie);
+        const texts = [];
+        for (let i = 0; i < (RUNS + 2) * BATCH + 4; i++) texts.push({ text: JSON.stringify({ owner: name, version: claimed + i, blob: storedBlob }), v: claimed + i });
+        const put = await measure(`mw:${invoker === 'middleware' ? 'middleware' : 'handler-only'}-put-${size}`, {
+          meta: { mwMode: invoker === 'middleware' ? 'handler+middleware' : 'handler-only', expect: 200 },
+          plan: async i => {
+            const item = texts[i];
+            if (!item) throw new Error('mw put: ran out of prebuilt bodies');
+            return prepare({ invoker, fn: 'onRequestPut', file: 'api/save.js', request: putRequest(cookie, item.text, 112), env });
+          },
+          check: i => ({ label: 'mw ' + invoker + ' put', status: 200, version: texts[i].v + 1 }),
+        });
+        out.push({ ...put });
+      }
     }
     results.push(...out);
   }
@@ -603,7 +714,27 @@ async function main() {
     counts.forEach(c => { if (process.env.PROFILE_DEBUG) console.log('debug', c); results.push({ size: 'small', statements: c.statements, name: '  count:' + c.label }); });
   }
 
-  const payload = { label: LABEL, runs: RUNS, node: process.version, at: new Date().toISOString(), results };
+  // WHAT THIS RUN IS NOT. Production runs this code inside workerd, behind a real D1 binding, with a
+  // Durable Object gate when WRITE_GATE=required, and with Tail Workers watching. None of that is here,
+  // and a report that does not say so invites the numbers to be read as production CPU.
+  const gateRequired = String(process.env.WRITE_GATE || '').trim().toLowerCase() === 'required';
+  const components = {
+    runtime: 'Node ' + process.version + ' (not workerd)',
+    substituted: ['D1 database: in-process SQLite shim (prepare/bind/first/all/run/batch), not the real D1 binding',
+                  'isolate lifecycle: one long-lived process, so no cold start and no isolate recycling'],
+    absent: [
+      'recovery gate (Durable Object `prontera-gate`): ' + (gateRequired
+        ? 'WRITE_GATE=required is set but no GATE binding exists here, so a gate-required request fails closed and is NOT measured'
+        : 'absent - WRITE_GATE is unset, so the gate lease and its two DO round trips do not run'),
+      'Durable Object lease/release round trips for /api on the real gate',
+      'Tail Workers, Cloudflare analytics, and any hosted CPU accounting',
+      'the Social Worker (plaza Durable Object) - a different budget entirely',
+    ],
+    measured: 'request handler CPU (and, for the middleware rows, the Pages Functions front door: preview guard, ban hash + lookup)',
+  };
+  const invokers = Object.fromEntries(Object.entries(invokerStats).map(([k, v]) => [k, { ...v }]));
+  const payload = { label: LABEL, runs: RUNS, node: process.version, at: new Date().toISOString(),
+    components, invokers, results };
   if (JSON_OUT) fs.writeFileSync(JSON_OUT, JSON.stringify(payload, null, 2));
   if (VERBOSE || !JSON_OUT) {
     console.log(payload.label + ' · node ' + payload.node + ' · median of ' + RUNS + ' samples x ' + BATCH + ' requests');
@@ -618,8 +749,17 @@ async function main() {
         (r.client ? '  ' + r.client : '') + (r.note ? '  ' + r.note : ''));
     }
     console.log('');
-    console.log('CPU is process.cpuUsage() around the complete handler call. Wall time is kept separate.');
-    console.log('This is comparative local evidence against a D1 shim, NOT Cloudflare cpu_ms.');
+    console.log('CPU is process.cpuUsage() around the request only: request construction happens before the');
+    console.log('sample and draining/validating the reply happens after it. Wall time is kept separate.');
+    console.log('');
+    console.log('Not production, and absent in this harness:');
+    for (const c of components.absent) console.log('  - ' + c);
+    console.log('Substituted for production:');
+    for (const c of components.substituted) console.log('  - ' + c);
+    console.log('Invoker counters (measured, not assumed):');
+    for (const [k, v] of Object.entries(invokers)) console.log('  - ' + k.padEnd(14) + v.requests + ' requests, ' + v.middlewareEntries + ' middleware entries');
+    console.log('');
+    console.log('This is comparative local evidence, NOT Cloudflare cpu_ms. Do not quote it as hosted CPU.');
   }
 }
 

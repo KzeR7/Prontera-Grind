@@ -53,6 +53,7 @@ git fetch origin d164bd0527cfe335f9c183d0e576800716b7dd26
 node tools/tests/save_max_state_sim.mjs
 node tools/tests/save_codec_canread_sim.mjs
 node tools/tests/save_format_parity_sim.mjs
+node tools/tests/cpu_profile_invoker_sim.mjs
 node tools/tests/cpu_hot_paths_sim.mjs
 node tools/tests/save_codec_item_state_sim.mjs
 node tools/tests/save_codec_real_sim.mjs
@@ -763,24 +764,36 @@ The CPU work has its own harnesses, and none of them is a Cloudflare measurement
 
 ```sh
 node tools/cpu_profile.mjs --runs 11 --batch 10 --json /tmp/after.json --label v419
-git stash && node tools/cpu_profile.mjs --runs 11 --batch 10 --json /tmp/before.json --label base && git stash pop
-node tools/cpu_hotpaths.mjs --case save-put --size nearCap --runs 60 --top 10 --inclusive
+# A/B against main: revert ONLY the three server files, same harness, same fixtures
+git show origin/main:functions/api/save.js > functions/api/save.js   # etc, then restore
+node tools/cpu_hotpaths.mjs --case save-put --size nearCap --runs 60
 ```
 
-`cpu_profile.mjs` runs the real handlers against the real migrations in `node:sqlite` with a D1 shim
-that counts statements, and reports the median of `--runs` samples where each sample is the mean of
-`--batch` requests. Read the A/B (before/after with identical fixtures), never a single figure, and
-never as `cpu_ms`. `cpu_hotpaths.mjs` attributes self/inclusive time with the V8 sampling profiler.
-Both print a header saying so. `docs/CPU-LIMIT.md` records the results and the two changes that were
+`cpu_profile.mjs` runs the real handlers against the real migrations in `:memory:` SQLite with a D1 shim
+and counts statements. Three phases are kept strictly apart, because the earlier harness mixed them and
+reported the harness's own work as the server's:
+
+* **prepare** - module resolution and request construction happen BEFORE the CPU sample opens;
+* **execute** - only the request; the sample is read when the `Response` object exists, and the body is
+  never drained;
+* **validate** - status, version and served encoding are checked AFTER the sample closes, and every
+  assertion still throws.
+
+It has two explicit invokers, not a global flag: `handler-only` (never imports the middleware module) and
+`middleware` (the real `onRequest` with a real client address). Every run prints a measured invoker
+counter and a list of the production components it does **not** include: workerd, the D1 binding, the
+recovery-gate Durable Object and its two round trips, Tail Workers, the Social Worker. `cpu_hotpaths.mjs`
+attributes self/inclusive time with the V8 sampling profiler and validates its own `--case/--size/--runs`.
+
+`cpu_profile_invoker_sim.mjs` (28 checks) proves the claims above: middleware enters **0** times for
+handler-only requests and **once** per middleware request, `execute()` never drains a body, `validate()`
+is the only place that does, preparation precedes the sample, and conflict rows are labelled 409 rather
+than accepted-save rows. `docs/CPU-LIMIT.md` records the numbers and the two experiments that were
 measured and reverted.
 
-**2026-11-18 gate, `haven-v419`, Node 22.22.3:** **237 suites pass / 6 fail** out of 243 gate
-entries. All six failures are pre-existing and reproduce on the base commit `c4b4f43`:
-`card_star_balance_sim` and `skill_balance_sim` (shallow clone — `git show d164bd0:index.html`),
-`hosted_scrypt_prepare_sim` and `hosted_launch_stage_sim` (local staging/git tooling), and
-`panel_layout_smoke` / `render_lost_boot_smoke` (DOM assertions). None of them touches the save, API,
-settlement or recovery paths this change edits. No assertion was weakened, no budget loosened and no
-fixture re-hashed; the one assertion the CPU change touches (`api_sim`'s save-sized parse count) was
-restored to its original `assert.strictEqual(parses, 3)` when the parse-sharing experiment was
-reverted. Save/reload is 18/18, `api_sim` 70/70, `save_codec_canread_sim` 47/47,
-`cpu_hot_paths_sim` 25/25, `save_codec_item_state_sim` 12/12, `cloud_sim` 100/100.
+**2026-11-18 gate, `haven-v419` + `main` (haven-v420), Node 22.22.3:** see the PR for the run after the
+merge. The six known-red suites are unchanged from the base commit and do not touch this code:
+`card_star_balance_sim` and `skill_balance_sim` (shallow clone, `git show d164bd0:index.html`),
+`hosted_scrypt_prepare_sim` and `hosted_launch_stage_sim` (staging/git tooling), `panel_layout_smoke` and
+`render_lost_boot_smoke` (DOM assertions). No assertion was weakened, no budget loosened and no fixture
+re-hashed; `api_sim`'s save-sized parse count stays `assert.strictEqual(parses, 3)`.

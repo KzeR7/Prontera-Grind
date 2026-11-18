@@ -289,112 +289,113 @@ on quiet days, item (1) is the floor that has to come down.
 
 ---
 
-## Current state (2026-11-18, revised after review)
+## Current state (2026-11-18, third revision)
 
-Everything here was re-measured after the first version of this change was reviewed and rejected. Three
-things were wrong in it and are corrected below, because the corrections matter more than the wins:
+This document has been wrong twice, so the corrections are listed before the results.
 
-1. **The version reader was a compatibility bug.** v416's text scan for a literal `"__v":` answered
-   "plain save" for `{"\u005f_v":4}` - which is `{__v:4}` to JSON.parse - and so handed v4 item tuples
-   to a page that cannot decode them. Duplicate keys and malformed suffixes disagreed too. **Removed.**
-   The version now comes from a PARSED view of the blob (the one the handler already has, or a parse by
-   the original reader), so it is the pre-v416 answer by construction.
-2. **The conflict benchmark measured the wrong request.** It sent no `X-Save-Format`, so every "conflict"
-   it timed was a LEGACY plain-save expansion, not a modern client's conflict. The 32-36 ms figure was
-   therefore not the cost of a conflict; the modern one is **11.5 ms**. The harness now measures modern
-   (112) and legacy (no header) separately and asserts status, version and served encoding on every
-   timed request.
-3. **The profiler ignored its own flags.** `--case/--size/--runs` were parsed but never forwarded, so
-   `--case me --size small --runs 1` profiled 40 near-cap PUTs. Fixed, validated, and pinned by tests.
+**Revision 2 corrections (kept, still true):**
+1. **The version reader was a compatibility bug.** A text scan for a literal `"__v":` answered "plain
+   save" for `{"\u005f_v":4}` (which is `{__v:4}` to `JSON.parse`) and handed v4 item tuples to a page
+   that cannot decode them. Removed; the version now comes from a PARSED view.
+2. **The conflict benchmark measured the wrong request** (no `X-Save-Format`, so it timed legacy
+   expansion). Modern and legacy clients are now separate cases.
+3. **The profiler ignored `--case/--size/--runs`.** Fixed and pinned by tests.
 
-Method (unchanged): `tools/cpu_profile.mjs`, Node 22.22.3, the real handlers, the real migrations in
-`node:sqlite`, a D1 shim. Each sample is the median over 11 rounds of the mean of 10 identical requests;
-the figure is the median of 3 alternating rounds against a `git stash`ed baseline. Fixtures are the
-production constructors (`full-storage-save.js`): refined/locked gear, starred/socketed cards, a full
-fishing collection - `small` 3,169 B, `medium` 55,883 B, `nearCap` 295,699 B against the unchanged
-307,200 B ceiling.
+**Revision 3 corrections (this one):**
+4. **The conflict timing was not handler CPU.** The harness drained and parsed the reply INSIDE the CPU
+   sample, so a 409 - whose reply carries the whole live save - was charged for the harness reading it.
+   Preparation, execution and validation are now separate phases: requests are prepared before the
+   sample, the sample stops when the response object exists, and draining/validating happens after it.
+   The conflict cost fell from 11.5 ms to **7.4 ms** with no server-side change, which is the size of the
+   error. **No earlier conflict figure in this file is valid and none is retained.**
+5. **A global `--middleware` flag redirected the "handler-only" baseline.** There are now two explicit
+   invokers; `handler-only` never imports the middleware module. `tools/tests/cpu_profile_invoker_sim.mjs`
+   measures it: **0 middleware entries** for handler-only requests, **exactly one per request** for
+   middleware requests.
 
-***None of these are Cloudflare `cpu_ms`.*** workerd has a different allocator and GC, a deployed request
-pays cold starts, and the local D1 shim is not the production database. These numbers compare two trees.
+Method: `tools/cpu_profile.mjs`, Node 22.22.3, the real handlers and the real migrations in `node:sqlite`
+with a D1 shim. Each sample is the mean of 10 identical requests; the figure is the median of 11 samples,
+and the reported value is the median of 3 alternating rounds. Fixtures are the production constructors
+(`full-storage-save.js`): refined/locked gear, starred/socketed cards, a full fishing collection -
+`small` ~3.2 KB, `medium` ~56 KB, `nearCap` 295,699 B against the unchanged 307,200 B ceiling.
 
-### Before / after, by client kind
+***These are not Cloudflare `cpu_ms`.*** The harness prints, on every run, what production has and it does
+not: workerd (this is Node), the real D1 binding (this is a shim), the **recovery gate Durable Object**
+(absent unless `WRITE_GATE=required`, and unmeasurable here because there is no GATE binding), the gate's
+two round trips, Tail Workers, and the Social Worker's separate budget.
 
-| case (what the client actually sends) | base | v419 | Δ |
+### Before / after, identical workloads, handler only
+
+Main's tree vs this branch, same harness, same fixtures, alternating rounds:
+
+| case | main | v419 | Δ |
 | --- | ---: | ---: | ---: |
-| `PUT /api/save` near cap, **modern 112** | 7.039 | 7.070 | +0.4 % (noise) |
-| `PUT /api/save` near cap, **legacy, no header** | - | - | not measurable: the expanded body is 1,657,687 B, over the 600,000 B envelope limit (413) |
-| `PUT /api/save` medium, modern | 2.024 | 1.777 | −12 % |
-| `PUT /api/save` small, modern | 0.773 | 0.772 | flat |
-| `PUT` **conflict** near cap, modern 112 | 36.526 | 11.486 | **−69 %** (the base column is legacy expansion, see below) |
-| `PUT` conflict medium, modern | 4.572 | 2.426 | −47 % |
-| `GET /api/save` near cap, modern 112 | 3.125 | 2.326 | **−26 %** |
-| `GET /api/save` near cap, **legacy, no header** | - | - | 32.8 ms: it must expand 1.66 MB of JSON |
-| `GET /api/save` medium, modern | 0.839 | 0.635 | −24 % |
-| `GET /api/me` (all sizes) | 0.220-0.232 | 0.227-0.247 | flat |
+| `PUT /api/save` near cap, accepted (modern 112) | 7.882 | **6.428** | −18 % |
+| `PUT /api/save` medium, accepted | 1.776 | 1.693 | −5 % |
+| `PUT /api/save` small, accepted | 0.721 | 0.643 | −11 % |
+| `GET /api/save` near cap, modern 112 | 4.906 | **1.924** | **−61 %** |
+| `GET /api/save` medium, modern 112 | 1.254 | 0.599 | −52 % |
+| `GET /api/save` near cap, legacy page | 23.223 | 17.526 | −25 % |
+| `GET /api/save` medium, legacy page | 3.666 | 2.225 | −39 % |
+| `PUT /api/save` legacy (no header), small / medium | 0.679 / 3.108 | 0.577 / 2.943 | −15 % / −5 % |
+| `GET /api/me` (all sizes) | 0.173-0.196 | 0.180-0.186 | flat |
+| `GET /api/board?board=echo` | 0.401-0.431 | 0.404-0.423 | flat |
 
-The conflict row needs care. The base column is the OLD harness's conflict case, which sent no format
-header; its 36.5 ms is the cost of expanding a near-cap save for a legacy page, and a modern client
-never pays it. Measured on the same request, modern conflicts are **11.5 ms in v419**. The like-for-like
-modern conflict change is not separable from the version-reader revert with this data, and is not
-claimed.
+**Conflicts are reported separately and are not accepted-save CPU** (a 409 is a refused write, and its
+reply carries the live row which a legitimately syncing client never receives):
 
-### What v419 changed
-
-1. **`_lib/validate.js` - the version comes from a parsed view, never from text.** `blobForClient` now
-   takes the view the handler already parsed (for GET ownership/claims and for conflict replies) and
-   falls back to `parseSave`, whose one-entry memo is keyed on the exact string. A GET therefore parses
-   the stored blob ONCE - it used to parse it twice, once for the checks and once for the version. No
-   scanner, no guess, and the answer is the old one by construction.
-2. **`api/save.js` (GET) - one read of the save row.** The handler re-read the row after `touchSeen`;
-   the touch writes `updated_at = updated_at` and `last_seen`, and `last_seen` is not in the response.
-   That second read fetched a whole save-sized blob to learn nothing (6 statements → 5).
-3. **`_lib/db.js` + `api/save.js` (PUT) - an unchanged projection is not rewritten.** When
-   `level/cls/zeny/kills_total/playtime/rate_kph` would not change, the row is written by a statement
-   that leaves those columns alone - but still writes `version`, `blob`, `saved_at`, `updated_at`,
-   `last_seen`, under the same `AND version = ?` guard. Acknowledgement, 409 handling and the restore
-   fence are unchanged.
-4. **`api/save.js` - the last claim's remainder is read only when a claim could be issued**
-   (`awayQualifies`), instead of on every sync.
-
-### What middleware costs (measured separately, not omitted)
-
-The first version of this harness called the handler directly, which silently skipped
-`functions/api/_middleware.js` - the production-preview refusal, the network-ban hash and lookup, and
-the gate lease. `--middleware` now drives the real `onRequest` with a real client address, and the two
-are reported as separate rows:
-
-| route | handler only | handler + middleware |
+| conflict | main | v419 |
 | --- | ---: | ---: |
-| `GET /api/save` small | 0.482 | 0.353-0.559 (noise) |
-| `GET /api/save` medium | 0.758 | 0.715 |
-| `GET /api/save` near cap | 2.312 | 2.337 |
-| `PUT /api/save` near cap | 8.866 | 8.583 |
+| modern 112, near cap | 10.963 | 7.379 |
+| modern 112, medium | 2.383 | 1.560 |
+| legacy, medium | 6.505 | 4.248 |
 
-The delta is ~0.1-0.4 ms on the cheap routes and inside the noise on the expensive ones; it is a real
-per-request tax that no save-path change removes, and it is now visible instead of assumed away. With
-`WRITE_GATE=required` the gate adds two Durable Object round trips (wall time, not CPU).
+The two legacy near-cap rows are **not measured**: a near-cap save expands to 1,657,687 chars, over the
+600,000 B envelope limit, so a page without the codec cannot upload one at all (413). The harness prints
+that instead of a number.
 
-### Two changes that were measured, rejected, and reverted
+### Front door (middleware), measured as its own invoker
 
-* **Sharing one parse between incoming and stored on a byte-identical re-sync.** Save-sized parses went
-  3 → 2 and the request got **40 % slower** at near cap (6.9 → 9.6 ms, reproduced in a single-route warm
-  bench at 6.65 → 12.68 ms). Reverted. `api_sim`'s original `assert.strictEqual(parses, 3)` is the guard,
-  and it is NOT relaxed: a normal PUT still uses up to three save-sized parses (envelope, incoming,
-  stored), which is the ceiling the codebase has enforced since v410.
-* **A durable checkpoint for Echo settlement** (migration 0018, advisory lease, owner-only forced pass).
-  Fully implemented and tested, then dropped: the gate's own read costs the same single statement as the
-  query it replaces (0.007 ms vs 0.014 ms), so it bought ~7 µs and ADDED statements whenever a period was
-  due. Settlement is unchanged and pinned by `cpu_hot_paths_sim.mjs`.
+| route | handler only (main → v419) | handler + middleware (main → v419) |
+| --- | ---: | ---: |
+| `GET /api/save` near cap | 5.144 → 1.871 | 5.072 → 2.032 |
+| `GET /api/save` medium | 1.183 → 0.614 | 1.417 → 0.720 |
+| `PUT /api/save` near cap | 6.996 → 6.372 | 6.722 → 6.680 |
+| `PUT /api/save` medium | 1.909 → 1.823 | 1.959 → 1.865 |
 
-### Still open (owner decisions, not code)
+The middleware delta (preview guard, ban hash + cached lookup) is ~0.01-0.15 ms on these routes -
+smaller than earlier revision claimed, because the earlier row was polluted by the same drain error.
+With `WRITE_GATE=required` it would additionally pay two Durable Object round trips (wall time, not
+CPU), and that configuration cannot be measured here.
 
-* **The 307,200 B save ceiling.** Per-sync CPU scales with it; a near-cap modern PUT is 7.1 ms locally
-  before any hosting overhead.
-* **Legacy clients at large saves are not a CPU problem but a size one.** A near-cap save expands to
-  1,657,687 chars, which no page without the codec can upload (413) - and reads cost 32.8 ms of expansion
-  for a page that can. Retiring the pre-v414 read path is an owner decision.
-* **Cloudflare `cpu_ms`.** Unavailable from this sandbox. See the verification plan in the PR.
+### What the four server-side changes are
 
+1. **`_lib/validate.js`** - the codec version comes from a parsed view (the caller's, or `parseSave`'s
+   memo), never from the text. This is a correctness fix first: the previous text scan mis-classified
+   escaped property names and could serve tuples to an old page.
+2. **`api/save.js` (GET)** - one read of the save row instead of two; the second read fetched a whole
+   save-sized blob to learn a `last_seen` the response does not carry.
+3. **`_lib/db.js` + `api/save.js` (PUT)** - an unchanged leaderboard projection is not rewritten; the
+   row is still written (version, blob, timestamps) under the same `AND version = ?` guard.
+4. **`api/save.js`** - the last claim's remainder is read only when a claim could be issued.
+
+The GET improvement is most of the near-cap saving: one parse of the stored save instead of two, and one
+row read instead of two.
+
+### Reverted, with measurements (do not retry blind)
+
+* **Parse sharing on a byte-identical re-sync**: parses 3 → 2, CPU +40 % at near cap. Reverted.
+* **Durable settlement checkpoint** (migration 0018, lease, owner-only endpoint): its read cost the same
+  single statement as the query it replaced (~7 µs saved) and added statements when a period was due.
+  Dropped; settlement is unchanged and pinned by `cpu_hot_paths_sim.mjs`.
+
+### Still open
+
+* **The 307,200 B ceiling.** Per-sync CPU scales with it.
+* **Legacy clients at large saves** are a size problem (413 on upload) as much as a CPU one (17.5 ms to
+  serve an expansion).
+* **Hosted `cpu_ms`** is unavailable from this sandbox - see the plan below. Local Node numbers do not
+  prove the Free Tier problem is solved and are not presented as if they do.
 
 ## Hosted verification plan (requires authorisation, and a deployment)
 
