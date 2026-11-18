@@ -11829,3 +11829,10 @@ re-recording them here would have written wrong numbers into the repository.
   pass. Actual reruns of all 126 combat measurements match the pre-merge rows and historical baseline.
 * **Delivery:** Integration on PR #248's branch for the owner to merge; no production deployment,
   production account edits, reward-rule changes or new Social Durable Object traffic.
+
+### 2026-11-18 — Class Tree icon centering and preview alignment
+* **Changed:** Centered class card emblem icons inside circular badges by stripping inherited outer 52x56px dimensions and radial gradient on child `.eclipse-class-emblem` inside `.class-card-emblem`, setting `display: flex !important` and centering the 28px RO class icon. Lengthened the character preview stage from 122px to 213px with scaled sprite presentation, and anchored the action button row to the bottom of `.class-path-focus` so that the preview panel aligns flush with the 4T (T4) progression bar with no vertical scrollbar.
+* **Try it:** Open Class Tree (J), switch to Thief lineage (or any job family), and observe that all class card icons are centered cleanly in their circular badges without clipping or downward offset. Observe that the character preview box on the right is prominently displayed and the panel extends down so the Change Class button aligns flush with the bottom of the T4 cards.
+* **Checks:** `node tools/tests/eclipse_ui_sim.js` (60 passed), `node tools/tests/panel_layout_smoke.js` (42 passed), `node tools/tests/ui_sim.js` (64 passed). Headless Chromium visual rendering verified icon centering and 4T bar alignment.
+* **Delivery:** Committed and pushed to `arena/d443256d-prontera-grind`.
+
