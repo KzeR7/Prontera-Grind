@@ -4156,7 +4156,7 @@ const s=unpackSave(JSON.parse(raw));if(s&&s.lv){const F=fresh(),f=Object.assign(
   f.offlineAt=Math.max(0,Math.floor(num_(f.offlineAt,0)));f.offlineKph=cl(num_(f.offlineKph,0),0,OFFLINE_RATE_CAP);f.offlineRateAt=Math.max(0,Math.floor(num_(f.offlineRateAt,0)));f.offlineRateKills=safeCount(f.offlineRateKills);f.offlineKillRemainder=cl(num_(f.offlineKillRemainder,0),0,.999999);
   // Outcome receipts make a deliberate no-payout policy auditable without letting a malformed save
   // grow forever. They are not reward authority: claim-id idempotency remains server-side.
-  const claimOutcomes=new Set(['retired-owner','invalid-pricing','legacy-unpriced']);
+  const claimOutcomes=new Set(['retired-owner','invalid-pricing','ineligible-pricing','legacy-unpriced']);
   f.offlineClaimOutcomes=Array.isArray(f.offlineClaimOutcomes)?f.offlineClaimOutcomes.filter(o=>o&&typeof o==='object'&&Number.isSafeInteger(o.id)&&o.id>0&&claimOutcomes.has(o.outcome)).slice(-32).map(o=>({
     id:o.id,outcome:o.outcome,cls:typeof o.cls==='string'?o.cls.slice(0,32):null,runGen:Number.isSafeInteger(o.runGen)&&o.runGen>=1?o.runGen:null,at:Math.max(0,Math.floor(num_(o.at,0)))})):[];
   if(!Array.isArray(f.prog)||!f.prog.length)f.prog=F.prog.slice();else f.prog=f.prog.map(v=>num_(v,1));
@@ -6814,6 +6814,7 @@ function showOfflineReward(r){
   note.push(`50% of measured farming income: ${Math.round(r.xpMin||0).toLocaleString()} EXP/min · ${Math.round(r.zenyMin||0).toLocaleString()}z/min. No map or stage advance while offline. Quest rewards and gifts are excluded. After an update or a map/stage change, the previous measured minute is used until you farm a fresh one, including its original field for drops. A class change keeps a retained source class's frozen claim with that class and run; a Novice reset retires its old run. No previous sample means no offline income.${r.incomeSource?" Sample: "+r.incomeSource+".":""}`);
   if(r.outcome==='retired-owner')note.push('This claim belonged to a run that was reset or retired before it could be paid. It was acknowledged without a payout, and that outcome is recorded in this save.');
   if(r.outcome==='invalid-pricing')note.push('This claim’s frozen pricing record was incomplete, so it was acknowledged without a payout and recorded for recovery.');
+  if(r.outcome==='ineligible-pricing')note.push('No eligible measured farming minute existed when this claim was issued, so it was acknowledged without a payout. A later sample cannot change it.');
   if(r.outcome==='legacy-unpriced')note.push('This older claim had no frozen pricing snapshot and no matching recoverable sample, so it was acknowledged without a payout and recorded for recovery.');
 
   const details=$('offlineDetails');if(details)details.textContent=detail.length?detail.join(' · '):'No items, cards, ores or pets dropped this time.';
@@ -6896,10 +6897,14 @@ function frozenClaimInterval(claim,plan){
   return{start,end};
 }
 function claimPricingState(claim){
-  // A missing state is an old-row contract. Only that historical shape may use local-sample
-  // recovery; a modern ineligible row remains zero even after the browser later learns a rate.
+  // A missing state is historical only when it has no frozen values. A complete 0019 snapshot is
+  // already immutable, while a partial one is corrupt; neither may fall through to mutable local
+  // income. A modern ineligible row remains zero after the browser later learns a rate.
   const state=claim&&claim.pricingState;
-  if(state===undefined||state===null)return'legacy';
+  if(state===undefined||state===null){
+    if(claim&&claim.pricing&&typeof claim.pricing==='object')return frozenClaimPricing(claim)?'priced':'corrupt';
+    return'legacy';
+  }
   return state==='priced'||state==='ineligible'||state==='legacy'||state==='corrupt'?state:'corrupt';
 }
 function claimPageBootAtServer(anchor){

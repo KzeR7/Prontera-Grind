@@ -72,8 +72,10 @@ const pricingStateOf = row => {
   if(state==='ineligible') return snapshotHasValue(row)?'corrupt':'ineligible';
   if(state==='legacy') return snapshotHasValue(row)?'corrupt':'legacy';
   // A no-state row is old schema/history. A complete 0019 snapshot is already immutable and can
-  // safely be honoured; all-null remains the documented local-sample recovery shape.
-  if(state===null||state===undefined) return publicPricing(row)?'priced':'legacy';
+  // safely be honoured; only an all-null row remains the documented local-sample recovery shape.
+  // A partial snapshot is neither: treating it as legacy would let corrupt frozen data fall back to
+  // a later mutable local sample, which is exactly the payout ambiguity this state contract closes.
+  if(state===null||state===undefined) return publicPricing(row)?'priced':snapshotHasValue(row)?'corrupt':'legacy';
   return 'corrupt';
 };
 const publicClaim = row => {

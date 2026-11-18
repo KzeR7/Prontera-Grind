@@ -428,6 +428,14 @@ await T('v424: no state column means old rows can be acknowledged, but new issua
   assert.strictEqual(legacy.data.offlineClaim.pricingState,'legacy');
   const ack=JSON.parse(legacy.data.blob);ack.offlineClaimId=legacy.data.offlineClaim.id;
   assert.strictEqual((await api.putSave(h.env,reg.cookie,{version:legacy.data.version,blob:JSON.stringify(ack),offlineClaimId:ack.offlineClaimId})).status,200);
+  // A historical no-state row is legacy only when the old snapshot fields are all absent. A partial
+  // 0019 snapshot is corrupt; it must not fall through to a mutable local sample merely because
+  // pricing_state was added later.
+  h.sqlite.prepare(`INSERT INTO offline_reward_claims(user_id,away_ms,credited_ms,rate_kph,kills,remainder,issued_at,
+    cls,run_gen,income_xp) VALUES(?,?,?,?,?,?,?,?,?,?)`).run(id,4*3600000,4*3600000,120,240,0,Date.now()+1,'Knight',2,99);
+  const partial=await api.getSave(h.env,reg.cookie);
+  assert.strictEqual(partial.data.offlineClaim.pricingState,'corrupt');
+  assert.strictEqual(partial.data.offlineClaim.pricing,null);
 });
 
 await T('v422: the smoothed kill rate re-bases across a class or run boundary instead of carrying old-class speed', async () => {

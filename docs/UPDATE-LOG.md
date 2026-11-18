@@ -11929,3 +11929,29 @@ re-recording them here would have written wrong numbers into the repository.
   groups are unchanged. PR #254 remains held: this log entry is release preparation only — no merge,
   deployment, production-player-data operation, balance change or broader unified reward-accounting
   redesign is claimed.
+
+### 2026-11-18 — `haven-v424` post-main reconciliation and final local checks
+
+* **Reconciled:** Merged current `main` (including the native Asura Strike one-hand-down pose,
+  Wardrobe assets and hosted-package coverage) into the held v424 branch. The player/cache label
+  remains `2026-11-18 haven-v424 frozen offline claim states and issued bounds`; `wardrobe.js` and
+  `expanded-jobs.js` now use the coordinated `?v=424` cache key as well.
+* **Hardened:** A no-`pricing_state` historical row is legacy only when every frozen snapshot value
+  is absent. A complete 0019 snapshot stays priced; a partial snapshot is now explicitly `corrupt`
+  on both handler and client paths and cannot fall through to a later local sample. The explicit
+  `ineligible-pricing` zero-payout outcome is retained through save normalization and explained in
+  the offline result. The pre-0020 Echo-schema regression now verifies the intended migration fence:
+  fresh issuance waits rather than creating an ambiguous row, while old pending-row recovery remains
+  separately covered.
+* **Balance evidence:** Re-ran gear, encounter and growth progression measurement with
+  `--reuse-baseline`. The three fixture diffs contain only `sourceHash` and `combatHash`; all 42
+  gear, 21 encounter and 63 growth rows stayed byte-identical. No balance values changed.
+* **Checks:** Focused API/client/migration/cloud/cache/publish checks pass (API 75/75, offline 17/17,
+  E2E 2/2, migration 10/10, cloud 100/100, update watcher 22/22, publish 20/20), as do reward
+  ownership, pre-0006 Echo fencing, Asura pose, expanded Wardrobe and hosted-launch staging checks.
+  The complete local gate ran 253 entries: **251 passed, 2 failed**. The remaining failures are both
+  unchanged from `main`: `mvp_art_crop.py --check` reports the seven shipped MVP crops drifting from
+  their source, and `render_lost_boot_smoke.js` has the established renderer-null/guide assertions.
+  They were not hidden or weakened; all v424/Asura/reconciliation checks passed.
+* **Delivery:** PR #254 remains held. No merge, deployment, production-data operation, balance
+  change, recurring Social Durable Object traffic or broader reward-accounting claim is made here.

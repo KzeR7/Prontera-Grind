@@ -40,7 +40,10 @@ an old interval from a later field minute. `legacy` remains the explicit compati
 A valid `priced` claim continues to pay its retained class/run and source; a retired owner or corrupt
 snapshot is safely acknowledged without redirecting rewards. A genuine `legacy` row without issued
 bounds is paid/reconciled under its compatibility rules but is not coverage-suppressed from a
-response-time reconstruction; the client must not invent a bound and silently consume it.
+response-time reconstruction; the client must not invent a bound and silently consume it. Before 0020,
+a no-state row is legacy only when all frozen fields are absent; a partial 0019 snapshot is corrupt,
+not a route to reprice from a later local sample. The compatibility reads may acknowledge old pending
+rows, but a qualifying fresh interval deliberately returns no new claim until 0020 is verified.
 
 After migration verification, release the matching Functions and `index.html` together. `GET /api/save`
 now carries the server-clock anchor plus immutable interval bounds, so the client can preserve

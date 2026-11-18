@@ -422,9 +422,12 @@ added the immutable pricing/source fields and issued interval fields. `0020_offl
 then classifies the historical rows once and adds `offline_reward_claims.pricing_state`: **`legacy`** is
 the only old-row/local-sample recovery path, **`priced`** is a complete immutable snapshot,
 **`ineligible`** is a newly issued, permanently zero-payout acknowledgement when no eligible minute
-exists, and a state/field mismatch is reported to the client as **`corrupt`** and rejected. New claim
-issuance verifies that 0020 exists only after an away interval qualifies; it does not add a per-sync
-D1 read, and a function-first rollout issues no ambiguous new claim until the schema is applied.
+exists, and a state/field mismatch is reported to the client as **`corrupt`** and rejected. Before
+0020, a no-state row is legacy only when every frozen snapshot field is absent; a complete 0019 row
+remains `priced`, while even a partial frozen row is `corrupt` and cannot fall back to a later local
+sample. New claim issuance verifies that 0020 exists only after an away interval qualifies; it does
+not add a per-sync D1 read, and a function-first rollout issues no ambiguous new claim until the schema
+is applied.
 
 `functions/api/save.js` returns `pricingState`, `intervalStartAt`, `intervalEndAt`, and `serverNow`.
 `applyOfflineProgress()` never reconstructs coverage from response-time `now - awayMs`: it validates

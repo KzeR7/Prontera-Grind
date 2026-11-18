@@ -213,14 +213,15 @@ await t('pre-0006 database: save and kills work; Echo fails closed until migrati
     cookie: ck, body: { owner: 'PreUser', version: 1, savedAt: Date.now(), blob: JSON.stringify({ lv: 101, kills: 25, cls: 'Novice', zeny: 0, owner: 'PreUser', trial }) },
   });
   assert.equal(s2.status, 200, 'subsequent save syncs succeed before migration 0006');
-  // v422 rolls out after this schema: a qualifying away window must still mint a legacy-shaped
-  // claim rather than making an otherwise usable old database return 500.
+  // v424 does not create another ambiguous pricing:null entitlement before migration 0020 is
+  // verified. The old database remains usable (rather than returning 500), but issuance waits;
+  // genuinely pending old rows are still read/acknowledged by the compatibility paths elsewhere.
   preSqlite.prepare('UPDATE saves SET last_seen = ?, rate_kph = ? WHERE user_id = (SELECT id FROM users WHERE username = ?)')
     .run(Date.now() - 4 * 3600000, 120, 'PreUser');
-  const legacyClaim = await callPre('api/save.js', 'onRequestGet', 'GET', '/api/save', { cookie: ck });
-  assert.equal(legacyClaim.status, 200, 'an old claim table still issues a claim during a staged rollout');
-  assert.deepEqual([legacyClaim.data.offlineClaim.cls, legacyClaim.data.offlineClaim.runGen], [null, null], 'the old row is deliberately legacy-shaped');
-  assert.equal(preSqlite.prepare('SELECT COUNT(*) AS n FROM offline_reward_claims').get().n, 1, 'the legacy claim was persisted');
+  const stagedClaim = await callPre('api/save.js', 'onRequestGet', 'GET', '/api/save', { cookie: ck });
+  assert.equal(stagedClaim.status, 200, 'a pre-0020 database remains readable during a staged rollout');
+  assert.equal(stagedClaim.data.offlineClaim, null, 'new issuance waits for explicit pricing-state schema');
+  assert.equal(preSqlite.prepare('SELECT COUNT(*) AS n FROM offline_reward_claims').get().n, 0, 'the fence writes no ambiguous new legacy row');
   const killsBoard = await callPre('api/board.js', 'onRequestGet', 'GET', '/api/board?period=daily&board=kills', { cookie: ck });
   assert.equal(killsBoard.status, 200, 'kills board works before migration 0006');
   const echoBoard = await callPre('api/board.js', 'onRequestGet', 'GET', '/api/board?period=daily&board=echo', { cookie: ck });

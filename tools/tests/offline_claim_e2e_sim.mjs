@@ -154,6 +154,7 @@ await T('untrained issue -> later minute -> versioned acknowledgement remains pe
   app.setState(state);app.setCloud(true);app.setNow(issued.data.serverNow);app.setPageBoot(issued.data.serverNow-1000);
   const result=app.applyOfflineProgress(issued.data.serverNow,claim,{serverNow:issued.data.serverNow,clientRequestAt:issued.data.serverNow});
   assert.equal(result.outcome,'ineligible-pricing');assert.deepEqual([state.kills,state.exp,state.zeny],[0,0,0]);
+  assert.equal(state.offlineClaimOutcomes.at(-1)?.outcome,'ineligible-pricing','the explicit zero-payout acknowledgement survives client save normalization');
   const ack=JSON.parse(issued.data.blob);ack.offlineClaimId=claim.id;ack.offlineIncome=later;
   assert.equal((await put(h.env,reg.cookie,'E2EUNTRAINED',issued.data.version,ack,claim.id)).status,200);
   assert.ok(h.sqlite.prepare('SELECT claimed_at FROM offline_reward_claims WHERE id=?').get(claim.id).claimed_at>0);
