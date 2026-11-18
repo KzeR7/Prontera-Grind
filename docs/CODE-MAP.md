@@ -396,6 +396,60 @@ stage still lives in `farmStageKey()`, which is what gets stored in `S.offlineIn
 for the label and the offline-reward source. If you add anything that restarts sampling, key it on the
 **map**, and remember `applyOfflineProgress`'s validator expects the three-part key.
 
+**Who a measured minute may pay (v421):** the plaza side of that validator — `plazaFarmIncome()` —
+also requires the key's class to be the current `S.cls`. The key always carried the class, but the
+check used to accept any valid class *name*, so `changeClass()` let a fresh class idle in the plaza at
+the old class's measured rate (EXP, Zeny, Job and the loot replay). The sample is deliberately NOT
+cleared on a class change: the away claim is documented to keep using it until a full field minute
+replaces it, and switching back to the class that earned it resumes its own plaza pay.
+
+**Who a measured reward belongs to (v422):** class alone was not enough — a reset Novice is a new
+character with the same name. Every measured minute now also carries the account id and a progression
+run generation (`S.runSeq`/`S.runGen`; `snapClass()` records the run on `S.base[cls]` so a restored
+class continues it), and both `plazaFarmIncome()` and the away-claim validator require all three to
+match the character standing here (`incomeOwnedByCurrent()`). `changeClass()`/`logout()` settle the
+outgoing class's pending plaza accrual through the normal earn path (`settlePlazaAfk()`); only
+sub-unit remainders (less than one EXP/Zeny/Job and one loot kill) are dropped. Server claims freeze
+the class and run they were priced for
+(`offline_reward_claims.cls/run_gen`, migration 0018 — NULL means a legacy claim, payable as before),
+and the smoothed kill rate re-bases to 0 across a class/run boundary so old-class speed never prices a
+new character. `repairSave` adopts pre-ownership saves into generation 1, so migration erases nothing.
+The fishing one-catch-per-spawn MVP marker persists in the save (`fishing.mvpCaught`, newest 32 ids)
+instead of an in-memory Set that a reload wiped.
+
+**Frozen offline entitlement state and timing (v423/v424):** `0019_offline_claim_pricing_snapshot.sql`
+added the immutable pricing/source fields and issued interval fields. `0020_offline_claim_pricing_state.sql`
+then classifies the historical rows once and adds `offline_reward_claims.pricing_state`: **`legacy`** is
+the only old-row/local-sample recovery path, **`priced`** is a complete immutable snapshot,
+**`ineligible`** is a newly issued, permanently zero-payout acknowledgement when no eligible minute
+exists, and a state/field mismatch is reported to the client as **`corrupt`** and rejected. Before
+0020, a no-state row is legacy only when every frozen snapshot field is absent; a complete 0019 row
+remains `priced`, while even a partial frozen row is `corrupt` and cannot fall back to a later local
+sample. New claim issuance verifies that 0020 exists only after an away interval qualifies; it does
+not add a per-sync D1 read. A function-first rollout returns a retryable 503 for a qualifying new
+claim until the schema is applied, before GET or PUT can advance its unpaid away baseline. Existing
+pending claims remain readable/acknowledgeable, and active non-qualifying saves still work. Historical
+rows with even interval-only frozen fragments are corrupt; only a completely absent snapshot may
+use legacy recovery.
+
+`functions/api/save.js` returns `pricingState`, `intervalStartAt`, `intervalEndAt`, and `serverNow`.
+`applyOfflineProgress()` never reconstructs coverage from response-time `now - awayMs`: it validates
+those immutable bounds first and maps `PAGE_BOOT_AT` to server time with the request-start timestamp
+saved by `cloudFetch()`. A slow response, retry, reload or client/server clock offset therefore cannot
+move an interval across page boot and consume a real payout. Suppression still protects a short window
+actually covered by this running page; `CLOUD.gate` always disables suppression because the simulation
+was frozen. A true legacy row without issued bounds is not coverage-suppressed: the client will not
+invent a bound from response time, while the normal versioned acknowledgement still prevents replay.
+These changes retain versioned exactly-once acknowledgement, retained-run ownership,
+restore fences and the existing no-new-Social-DO-traffic model; they are not a broader reward-accounting
+redesign.
+
+**First return of a pre-run save (v426):** issuance adopts a stored save with neither run field into
+generation 1, matching the client loader, and freezes its existing same-class minute. Missing sample
+account/run stamps are inferred only for that old-save shape after the save's account ownership is
+verified. Explicit foreign account/class/run stamps remain ineligible; modern untrained saves never
+gain this legacy inference. A later replacement minute cannot reprice the first-return claim.
+
 **Where the plaza's Field card gets its numbers (v390):** it prints the **measured** rate from
 `plazaFarmIncome()` in `index.html`, never the `#expmin`/`#zenymin` HUD samplers. Those are live combat
 readings that reset after `HUD_IDLE_RESET` (30 s) without a kill, so copying them made a paying plaza

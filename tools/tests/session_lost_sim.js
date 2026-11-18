@@ -109,6 +109,7 @@ const PW = 'SyntheticPreview123!';
     });
   } finally {
     await srv.close();
+    srv.sqlite.close(); // Windows cannot remove the test database while this owned handle is open.
     fs.rmSync(tmp, { recursive: true, force: true });
   }
 

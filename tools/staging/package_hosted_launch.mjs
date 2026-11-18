@@ -10,6 +10,11 @@ const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../..');
 // Tracked files under a prefix, in git's own order so the payload is reproducible.
 const gitFiles=prefix=>execFileSync('git',['ls-files','-z','--',prefix],{cwd:root,maxBuffer:20*1024*1024})
  .toString().split('\0').filter(Boolean);
+// Migrations are produced as new additive files. Include a not-yet-indexed candidate too, so the
+// staging-package integrity guard tests the exact review tree rather than rejecting the migration
+// until after a commit. Everything still has to be inside the package below.
+const workFiles=prefix=>execFileSync('git',['ls-files','--cached','--others','--exclude-standard','-z','--',prefix],{cwd:root,maxBuffer:20*1024*1024})
+ .toString().split('\0').filter(Boolean);
 // The hand-written part of the overlay: the assets and entry points this project ships that the
 // archived base predates. Everything that can be derived is derived (see launch_overlay.mjs and the
 // groups right after this array) so a new file cannot be forgotten the way the old list was.
@@ -53,7 +58,7 @@ const files=['index.html','gm.html','tools/build_site.sh','tools/optimize_delive
 // staging site builds its own Functions bundle from it, so shipping the whole (small, audited) set
 // is both simpler and safer than a hand list that can miss a newly imported _lib module.
 for(const p of gitFiles('functions/'))files.push(p);
-for(const p of gitFiles('migrations/'))files.push(p);
+for(const p of workFiles('migrations/'))files.push(p);
 // Native Class Tree icons use generated URLs, so static HTML tags cannot discover them.
 // Keep the original PNGs in the integrity-checked source archive; build_site trims duplicates.
 for(const p of gitFiles('assets/ro_icons/'))files.push(p);

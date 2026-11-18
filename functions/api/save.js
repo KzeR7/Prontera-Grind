@@ -19,7 +19,7 @@
 
 import { currentUser } from '../_lib/auth.js';
 import { lockedCosmetics } from '../_lib/shop.js';
-import { json, guard, readJson, fail, unauth } from '../_lib/http.js';
+import { json, guard, readJson, fail, unauth, HttpError } from '../_lib/http.js';
 import { checkSaveBlob, publicFields, saveOwnerStamp, sameAccount, savedElsewhere, saveBelongsTo, withSaveIdentity, storedSaveOwner, SAVE_MISMATCH, restoreAllowsWrite, storedRestoreAt, RESTORE_FENCED, parseSave, clientSaveFormat, blobForClient, SAVE_FORMAT_COMPACT } from '../_lib/validate.js';
 import { unpackSave } from '../_lib/save-codec.js';
 import * as db from '../_lib/db.js';
@@ -41,10 +41,95 @@ const RATE_SMOOTHING_MS = 5 * 60 * 1000;
 const saveMismatch = user => json({ err: SAVE_MISMATCH, saveMismatch: true, owner: user.username }, 409);
 
 const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, Number(n) || 0));
-const publicClaim = row => row ? ({
-  id: Number(row.id), awayMs: Number(row.away_ms), creditedMs: Number(row.credited_ms),
-  rateKph: Number(row.rate_kph), kills: Number(row.kills), remainder: Number(row.remainder),
-}) : null;
+// `Number(null) === 0` is not validation. Snapshot/state fields must be present before a numeric
+// zero is accepted, otherwise a partial corrupt row can impersonate a real zero-rate entitlement.
+const finite = v => v !== null && v !== undefined && v !== '' && Number.isFinite(Number(v));
+const safeInt = v => v !== null && v !== undefined && v !== '' && Number.isSafeInteger(Number(v)) ? Math.floor(Number(v)) : null;
+// v424: pricing state and issued bounds are distinct immutable data.  A valid snapshot freezes
+// payout; `ineligible` freezes a zero payout; `legacy` is the sole compatibility path for rows that
+// predate the state column.  Never infer either state from nullable snapshot values on a new row.
+const SNAPSHOT_VALUE_COLUMNS=['income_xp','income_zeny','income_job','income_kph','source_map','source_stage',
+  'income_version','reward_version','sampled_at'];
+const snapshotHasValue = row => SNAPSHOT_VALUE_COLUMNS.some(k=>row?.[k]!==null&&row?.[k]!==undefined);
+// Ineligible rows legitimately carry bounds without prices. Historical legacy rows must have
+// neither: even an interval-only fragment is a partial frozen snapshot, not mutable pricing.
+const frozenSnapshotHasValue = row => snapshotHasValue(row)
+  || ['interval_start_at','interval_end_at'].some(k=>row?.[k]!==null&&row?.[k]!==undefined);
+const publicInterval = row => {
+  const intervalStartAt=safeInt(row?.interval_start_at),intervalEndAt=safeInt(row?.interval_end_at);
+  return intervalStartAt!==null&&intervalStartAt>=0&&intervalEndAt!==null&&intervalEndAt>=intervalStartAt
+    ? {intervalStartAt,intervalEndAt} : null;
+};
+const publicPricing = row => {
+  const sourceMap=safeInt(row?.source_map),sourceStage=safeInt(row?.source_stage),incomeVersion=safeInt(row?.income_version),
+    rewardVersion=safeInt(row?.reward_version),sampledAt=safeInt(row?.sampled_at),interval=publicInterval(row);
+  if(!finite(row?.income_xp)||!finite(row?.income_zeny)||!finite(row?.income_job)||!finite(row?.income_kph)
+    || [sourceMap,sourceStage,incomeVersion,rewardVersion,sampledAt].some(v=>v===null)||!interval
+    || sourceMap<0||sourceStage<1||incomeVersion<1||rewardVersion<0||sampledAt<0) return null;
+  return { xp:Number(row.income_xp), zeny:Number(row.income_zeny), job:Number(row.income_job), kph:Number(row.income_kph),
+    sourceMap,sourceStage,incomeVersion,rewardVersion,sampledAt,...interval };
+};
+const pricingStateOf = row => {
+  const state=row?.pricing_state;
+  if(state==='priced') return publicPricing(row)?'priced':'corrupt';
+  // Ineligible rows deliberately have NULL pricing values but do carry their own issued interval.
+  if(state==='ineligible') return snapshotHasValue(row)?'corrupt':'ineligible';
+  if(state==='legacy') return frozenSnapshotHasValue(row)?'corrupt':'legacy';
+  // A no-state row is old schema/history. A complete 0019 snapshot is already immutable and can
+  // safely be honoured; only an all-null row remains the documented local-sample recovery shape.
+  // A partial snapshot is neither: treating it as legacy would let corrupt frozen data fall back to
+  // a later mutable local sample, which is exactly the payout ambiguity this state contract closes.
+  if(state===null||state===undefined) return publicPricing(row)?'priced':frozenSnapshotHasValue(row)?'corrupt':'legacy';
+  return 'corrupt';
+};
+const publicClaim = row => {
+  if(!row)return null;
+  const pricingState=pricingStateOf(row), interval=publicInterval(row);
+  return {
+    id: Number(row.id), awayMs: Number(row.away_ms), creditedMs: Number(row.credited_ms),
+    rateKph: Number(row.rate_kph), kills: Number(row.kills), remainder: Number(row.remainder),
+    cls: row.cls ?? null, runGen: row.run_gen == null ? null : Number(row.run_gen), pricingState,
+    // Bounds are public claim metadata rather than part of pricing: an ineligible claim must still
+    // be acknowledged against the interval the server actually issued, never `response-now - away`.
+    intervalStartAt:interval?.intervalStartAt ?? null, intervalEndAt:interval?.intervalEndAt ?? null,
+    pricing: pricingState==='priced'||pricingState==='legacy' ? publicPricing(row) : null,
+  };
+};
+// The owner context frozen at issuance comes from the STORED save's top-level view - the parse the
+// request already paid for (GET: saveView, PUT: storedStamp), never a fresh parse of the blob.
+const runGenOf = v => Number.isSafeInteger(Number(v)) && Number(v) >= 1 ? Math.floor(Number(v)) : null;
+// Match load()'s generation-one adoption for saves that predate both run fields. Freeze the
+// already-stored same-class sample on first return; never turn a modern untrained run into legacy.
+const legacyRewardSave = view => !!view && view.runGen == null && view.runSeq == null;
+const claimOwnerOf = view => ({
+  cls: view && typeof view.cls === 'string' ? view.cls.slice(0, 32) : null,
+  runGen: view ? legacyRewardSave(view) ? 1 : runGenOf(view.runGen) : null,
+});
+// A pricing snapshot is accepted only from a sample that proves it belongs to the stored account,
+// class and numbered progression run. This does not make browser-authored rates authoritative; it
+// makes one already-issued browser-priced entitlement immutable across delay/retry/sample changes.
+const claimPricingOf = (view, owner, userId, intervalStartAt, intervalEndAt) => {
+  const income=view?.offlineIncome, source=String(income?.key || '').split(':'),legacy=legacyRewardSave(view);
+  const sourceMap=safeInt(source[1]),sourceStage=safeInt(source[2]),incomeVersion=safeInt(income?.version),
+    rewardVersion=safeInt(income?.rewardVersion) ?? (legacy&&sourceMap!==null&&sourceMap<10&&income?.rewardVersion==null?0:null),
+    sampledAt=safeInt(income?.at),aid=legacy&&income?.aid==null?safeInt(userId):safeInt(income?.aid),
+    gen=legacy&&income?.gen==null?owner.runGen:safeInt(income?.gen),
+    start=safeInt(intervalStartAt),end=safeInt(intervalEndAt);
+  if(!income||source.length!==3||typeof owner?.cls!=='string'||!Number.isSafeInteger(owner?.runGen)
+    || source[0]!==owner.cls||aid!==Number(userId)||gen!==owner.runGen
+    || sourceMap===null||sourceMap<0||sourceMap>99||sourceStage===null||sourceStage<1||sourceStage>15
+    || incomeVersion!==1||rewardVersion===null||rewardVersion<0||sampledAt===null||sampledAt<0
+    || start===null||start<0||end===null||end<start
+    || !['xp','zeny','job','kph'].every(k=>finite(income[k])&&Number(income[k])>=0)
+    || Number(income.kph)>OFFLINE_RATE_CAP) return null;
+  return { xp:Number(income.xp),zeny:Number(income.zeny),job:Number(income.job),kph:Number(income.kph),
+    sourceMap,sourceStage,incomeVersion,rewardVersion,sampledAt,intervalStartAt:start,intervalEndAt:end };
+};
+const claimContextOf = (view, userId, row, now) => {
+  const owner=claimOwnerOf(view), start=safeInt(row?.last_seen) ?? safeInt(now), end=safeInt(now);
+  const interval=start!==null&&start>=0&&end!==null&&end>=start?{intervalStartAt:start,intervalEndAt:end}:null;
+  return { owner, interval, pricing:interval?claimPricingOf(view,owner,userId,start,end):null };
+};
 
 // Is the away window long enough for a claim to exist at all? <3 minutes never mints one, and the
 // test lives here so the read that only a real claim needs can be skipped without duplicating it.
@@ -62,17 +147,25 @@ function issueOfflineClaim(row, now, savedRemainder = 0) {
   return { awayMs, creditedMs, rateKph, kills, remainder: budget - kills };
 }
 
-async function pendingOrIssueOfflineClaim(D, userId, row, now) {
+async function pendingOrIssueOfflineClaim(D, userId, row, now, claimContext = null) {
   let pending = await db.pendingOfflineClaim(D, userId);
   // v416 (CPU): the remainder of the last claim is only needed by a claim that is actually being
   // issued, and one is only issued once the away window is longer than OFFLINE_MIN_MS. Reading it
   // unconditionally cost every sync a D1 statement whose answer an actively-playing client (away for
   // seconds) never used - on top of the pending-claim read immediately above.
   if (!pending && awayQualifies(row, now)) {
+    // A compatibility SELECT can read legacy rows, but it cannot make a new pricing:null row
+    // unambiguous. Verify migration 0020 only on this rare issuance path before writing one.
+    if (!await db.offlineClaimPricingStateReady(D)) {
+      // Returning an empty claim would let GET/touchSeen or an accepted PUT advance last_seen,
+      // permanently discarding this qualifying absence before the migration can price it.
+      throw new HttpError(503, 'Offline reward storage is being upgraded. Please retry shortly.',
+        { offlineClaimsUnavailable: true, migrationRequired: '0020_offline_claim_pricing_state.sql' });
+    }
     const remainder = await db.lastOfflineRemainder(D, userId);
     const plan = issueOfflineClaim(row, now, remainder);
     if (plan) {
-      await db.insertOfflineClaim(D, userId, plan, now);
+      await db.insertOfflineClaim(D, userId, plan, now, claimContext);
       pending = await db.pendingOfflineClaim(D, userId);
     }
   }
@@ -89,12 +182,18 @@ async function pendingOrIssueOfflineClaim(D, userId, row, now) {
 // retry is not later counted as time spent away.
 const earlyReturn = (D, userId, at) => async (payload, status) => {
   await db.touchSeen(D, userId, at);
-  return json(payload, status);
+  return json(Object.assign({}, payload, { serverNow: at }), status);
 };
 
 // Measure actual server-accepted kill-count increases between syncs. Subtract a pending offline
 // claim's approved kills so away progress is never mislearned as online farming speed.
-function updatedRate(row, pub, now, appliedClaim) {
+// v422: the smoothed rate belongs to the character it was measured on. Across a class or
+// progression-run boundary the old speed must not carry over - a maxed class's kill rate would
+// otherwise price the fresh Novice's next away claim - so the measurement re-bases to 0 and climbs
+// again as the new owner is observed. The client-side measured minute keeps its own ownership rule;
+// this is the server-side half of the same fix.
+function updatedRate(row, pub, now, appliedClaim, ownerChanged = false) {
+  if (ownerChanged) return 0;
   const previous = clamp(row.rate_kph, 0, OFFLINE_RATE_CAP);
   const elapsed = Math.max(0, now - (Number(row.last_seen) || now));
   if (elapsed < 1000) return previous;
@@ -153,7 +252,7 @@ export const onRequestGet = guard(async ({ request, env }) => {
     // a whole save-sized blob (up to the 300 KB ceiling) to learn nothing. The response fields come
     // from the row already in hand; `last_seen` is folded into the claim in the same way the split
     // read's result would have shown it.
-    const claim = await pendingOrIssueOfflineClaim(D, user.id, row, now);
+    const claim = await pendingOrIssueOfflineClaim(D, user.id, row, now, claimContextOf(saveView, user.id, row, now));
     await db.touchSeen(D, user.id, now);
     offlineClaim = publicClaim(claim);
     // No field this response carries was changed by the touch, so the row in hand is still the
@@ -306,7 +405,7 @@ export const onRequestPut = guard(async ({ request, env }) => {
   // with - that is what makes a rename survivable.
   if (!saveBelongsTo(storedBlob, user)) return saveMismatch(user);
 
-  const pending = await pendingOrIssueOfflineClaim(D, user.id, row, savedAt);
+  const pending = await pendingOrIssueOfflineClaim(D, user.id, row, savedAt, claimContextOf(storedStamp, user.id, row, savedAt));
 
   // haven-v396: the GM restore fence. A restore is a decision about the account, so it is enforced
   // here, on the write, rather than being asked of each browser (v394 did the 409 branch, v395 the
@@ -356,7 +455,15 @@ export const onRequestPut = guard(async ({ request, env }) => {
   // comparison is against the row just read under `version`, so a conflict still fails the guard
   // instead of silently skipping a write. `rate_kph` is included because it is a stored measurement,
   // not a player-visible ranking: if it moved, the row is written.
-  const rateKph = updatedRate(row, pub, savedAt, appliedClaim);
+  // v422: the smoothed rate re-bases across a class/run boundary (see updatedRate). The stored
+  // save's run travels in `storedStamp` - the top-level parse this handler already made - so the
+  // comparison costs no extra parse. A save from before runs were numbered (no runGen on either
+  // side) never trips the boundary: only two numbered, DIFFERENT runs do.
+  const storedRunGen = storedStamp ? runGenOf(storedStamp.runGen) : null;
+  const incomingRunGen = runGenOf(save.runGen);
+  const ownerChanged = (pub.cls ?? null) !== (row.cls ?? null)
+    || (storedRunGen !== null && incomingRunGen !== null && storedRunGen !== incomingRunGen);
+  const rateKph = updatedRate(row, pub, savedAt, appliedClaim, ownerChanged);
   const update = saveColumnsUnchanged(row, pub, rateKph)
     ? db.updateSaveVersionStatement(D, user.id, next, stored, savedAt, row.version)
     : db.updateSaveStatement(D, user.id, next, stored, savedAt, pub, rateKph, row.version);
