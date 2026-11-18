@@ -19,7 +19,7 @@
 
 import { currentUser } from '../_lib/auth.js';
 import { lockedCosmetics } from '../_lib/shop.js';
-import { json, guard, readJson, fail, unauth } from '../_lib/http.js';
+import { json, guard, readJson, fail, unauth, HttpError } from '../_lib/http.js';
 import { checkSaveBlob, publicFields, saveOwnerStamp, sameAccount, savedElsewhere, saveBelongsTo, withSaveIdentity, storedSaveOwner, SAVE_MISMATCH, restoreAllowsWrite, storedRestoreAt, RESTORE_FENCED, parseSave, clientSaveFormat, blobForClient, SAVE_FORMAT_COMPACT } from '../_lib/validate.js';
 import { unpackSave } from '../_lib/save-codec.js';
 import * as db from '../_lib/db.js';
@@ -51,6 +51,10 @@ const safeInt = v => v !== null && v !== undefined && v !== '' && Number.isSafeI
 const SNAPSHOT_VALUE_COLUMNS=['income_xp','income_zeny','income_job','income_kph','source_map','source_stage',
   'income_version','reward_version','sampled_at'];
 const snapshotHasValue = row => SNAPSHOT_VALUE_COLUMNS.some(k=>row?.[k]!==null&&row?.[k]!==undefined);
+// Ineligible rows legitimately carry bounds without prices. Historical legacy rows must have
+// neither: even an interval-only fragment is a partial frozen snapshot, not mutable pricing.
+const frozenSnapshotHasValue = row => snapshotHasValue(row)
+  || ['interval_start_at','interval_end_at'].some(k=>row?.[k]!==null&&row?.[k]!==undefined);
 const publicInterval = row => {
   const intervalStartAt=safeInt(row?.interval_start_at),intervalEndAt=safeInt(row?.interval_end_at);
   return intervalStartAt!==null&&intervalStartAt>=0&&intervalEndAt!==null&&intervalEndAt>=intervalStartAt
@@ -70,12 +74,12 @@ const pricingStateOf = row => {
   if(state==='priced') return publicPricing(row)?'priced':'corrupt';
   // Ineligible rows deliberately have NULL pricing values but do carry their own issued interval.
   if(state==='ineligible') return snapshotHasValue(row)?'corrupt':'ineligible';
-  if(state==='legacy') return snapshotHasValue(row)?'corrupt':'legacy';
+  if(state==='legacy') return frozenSnapshotHasValue(row)?'corrupt':'legacy';
   // A no-state row is old schema/history. A complete 0019 snapshot is already immutable and can
   // safely be honoured; only an all-null row remains the documented local-sample recovery shape.
   // A partial snapshot is neither: treating it as legacy would let corrupt frozen data fall back to
   // a later mutable local sample, which is exactly the payout ambiguity this state contract closes.
-  if(state===null||state===undefined) return publicPricing(row)?'priced':snapshotHasValue(row)?'corrupt':'legacy';
+  if(state===null||state===undefined) return publicPricing(row)?'priced':frozenSnapshotHasValue(row)?'corrupt':'legacy';
   return 'corrupt';
 };
 const publicClaim = row => {
@@ -147,7 +151,12 @@ async function pendingOrIssueOfflineClaim(D, userId, row, now, claimContext = nu
   if (!pending && awayQualifies(row, now)) {
     // A compatibility SELECT can read legacy rows, but it cannot make a new pricing:null row
     // unambiguous. Verify migration 0020 only on this rare issuance path before writing one.
-    if (!await db.offlineClaimPricingStateReady(D)) return null;
+    if (!await db.offlineClaimPricingStateReady(D)) {
+      // Returning an empty claim would let GET/touchSeen or an accepted PUT advance last_seen,
+      // permanently discarding this qualifying absence before the migration can price it.
+      throw new HttpError(503, 'Offline reward storage is being upgraded. Please retry shortly.',
+        { offlineClaimsUnavailable: true, migrationRequired: '0020_offline_claim_pricing_state.sql' });
+    }
     const remainder = await db.lastOfflineRemainder(D, userId);
     const plan = issueOfflineClaim(row, now, remainder);
     if (plan) {

@@ -1,4 +1,4 @@
-# Putting Horizon Haven on Cloudflare (historical setup + held v424 offline-claim release)
+# Putting Horizon Haven on Cloudflare (historical setup + held v425 offline-claim release)
 
 **Historical setup guide:** the current account security changes remain a draft and are not
 launch-ready. For the existing live `pg`, the owner reported applying and verifying 0007
@@ -6,11 +6,11 @@ manually on 2026-10-28; do not rerun it or blindly run Wrangler migrations. Use
 [Launch security](../docs/LAUNCH-SECURITY.md) for the current checklist.
 
 > **PR #254 is held. Do not run this release procedure, deploy, merge, or edit production player
-> data while its review remains open.** The v424 section below is the future operator checklist: it
+> data while its review remains open.** The v425 section below is the future operator checklist: it
 > records the required migration order and verification so the schema is complete *before* the new
 > Functions/client behaviour is activated.
 
-## Held v424 release: immutable offline-claim state and issued bounds
+## Held v425 release: immutable offline-claim state and issued bounds
 
 This follows the owner/context schema in `0018`, then `0019_offline_claim_pricing_snapshot.sql`,
 then `0020_offline_claim_pricing_state.sql` **in that order**. On an existing database, first inspect
@@ -43,7 +43,10 @@ bounds is paid/reconciled under its compatibility rules but is not coverage-supp
 response-time reconstruction; the client must not invent a bound and silently consume it. Before 0020,
 a no-state row is legacy only when all frozen fields are absent; a partial 0019 snapshot is corrupt,
 not a route to reprice from a later local sample. The compatibility reads may acknowledge old pending
-rows, but a qualifying fresh interval deliberately returns no new claim until 0020 is verified.
+rows, but a qualifying fresh interval returns a retryable **503** until 0020 is verified. That refusal
+leaves the save version, blob and away baseline unchanged, so retry after applying the migration can
+still issue the original entitlement. Active, non-qualifying saves remain available. A historical
+interval-only snapshot is partial/corrupt, even if all of its pricing values are NULL.
 
 After migration verification, release the matching Functions and `index.html` together. `GET /api/save`
 now carries the server-clock anchor plus immutable interval bounds, so the client can preserve
@@ -51,7 +54,7 @@ no-double-pay coverage without using response delay or its own wall clock to reb
 The only added schema check occurs when a qualifying interval would issue a new claim; normal syncs add
 neither an unconditional D1 read nor Social Durable Object traffic.
 
-The player-visible build label is **`2026-11-18 haven-v424 frozen offline claim states and issued bounds`**.
+The player-visible build label is **`2026-11-18 haven-v425 preserve offline claims during schema upgrades`**.
 The release also bumps every coordinated v422 asset query to `?v=424`: v423 changed the Social/Fishing
 runtime as well as the inline client, so retaining the old label would permit a stale cached runtime.
 Confirm `version.txt`, `index.html`, and the two equipment-reference mirrors carry the v424 build label
@@ -187,7 +190,7 @@ Open the `*.pages.dev` address Cloudflare gives the project, and walk this list:
 | Check | Expected |
 |---|---|
 | The login card | says **“☁ Cloud accounts are on — register or sign in…”** |
-| Build tag at the bottom of the card | `2026-11-18 haven-v424 frozen offline claim states and issued bounds` |
+| Build tag at the bottom of the card | `2026-11-18 haven-v425 preserve offline claims during schema upgrades` |
 | `<your-site>/api/me` while signed out | `{"err":"Not logged in."}` with HTTP 401 — JSON, not an HTML page |
 
 That second-browser line is the entire point of the shift: it is progress following the player

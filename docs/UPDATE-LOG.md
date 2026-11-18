@@ -11955,3 +11955,25 @@ re-recording them here would have written wrong numbers into the repository.
   They were not hidden or weakened; all v424/Asura/reconciliation checks passed.
 * **Delivery:** PR #254 remains held. No merge, deployment, production-data operation, balance
   change, recurring Social Durable Object traffic or broader reward-accounting claim is made here.
+
+### 2026-11-18 — `haven-v425` preserve offline claims during schema upgrades
+* **Fixed:** A qualifying return before migration 0020 is ready now retries with a specific 503
+  instead of advancing `last_seen` without an entitlement. GET and PUT preserve the exact saved
+  version, blob and away baseline; after the migration, the original window issues one claim.
+  Existing pending legacy claims remain recoverable and active non-qualifying saves still work.
+* **Fixed:** Historical rows with interval-only frozen fragments are corrupt, not legacy pricing
+  candidates. Both absent-state and explicit-legacy rows require every frozen field to be absent;
+  valid ineligible rows may still carry their issued bounds. No new migration or reward formula.
+* **Try it:** On an isolated database through 0019, return after an eligible absence, retry GET/PUT,
+  then apply 0020: the original away window is retained. An interval-only historical row must never
+  fall back to a later farming sample. Apply/verify production migrations before activating a release.
+* **Checks:** The new API regressions fail before the patch and pass after it (77/77). The complete
+  253-entry local gate was run; after unchanged assertions were rerun with Windows environment/path
+  adapters and required test dependencies, 250 passed. The seven existing MVP crop drifts and the
+  renderer-null smoke failure remain; the Windows SQLite cleanup `EBUSY` in `session_lost_sim`
+  also reproduces on the original PR head after its gameplay assertions pass. No new failure was
+  hidden. The 42 gear, 21 encounter and 63 growth measurement rows are byte-identical after real
+  `--reuse-baseline` remeasurement; only source/combat hashes changed. All build mirrors and the
+  17 coordinated asset URLs now identify v425, including the merged Wardrobe/expanded-job assets.
+* **Delivery:** Review fixes prepared for PR #254. No merge, deployment, production-data operation,
+  balance change, source-art change or new Social Durable Object traffic.
