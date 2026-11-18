@@ -76,6 +76,20 @@ cp "$ROOT/index.html" "$OUT/index.html"
 cp "$ROOT/gm.html" "$OUT/gm.html"
 cp "$ROOT/_routes.json" "$OUT/_routes.json"
 cp -r "$ROOT/assets" "$OUT/assets"
+# Class Tree source PNGs and alternate encodings stay in the repo. Publish only the exact
+# files the runtime map requests; its WebPs are verified against the source PNG pixels.
+node - "$ROOT" "$OUT" <<'NODE'
+const fs=require('fs'),path=require('path'),vm=require('vm');
+const source=fs.readFileSync(path.join(process.argv[2],'index.html'),'utf8');
+const match=source.match(/var RO_ICONS=(\{[\s\S]*?\n\});/);
+if(!match)throw Error('Missing Class Tree icon map');
+const used=new Set(Object.values(vm.runInNewContext('('+match[1]+')')));
+const dir=path.join(process.argv[3],'assets/ro_icons');
+for(const file of used){
+ if(!/^[a-z0-9_]+\.(png|webp)$/.test(file)||!fs.existsSync(path.join(dir,file)))throw Error('Missing Class Tree icon: '+file);
+}
+for(const file of fs.readdirSync(dir))if(/\.(png|webp)$/.test(file)&&!used.has(file))fs.unlinkSync(path.join(dir,file));
+NODE
 # The preserved first fitting is a development reference; v5 is the live shared class/outfit pack.
 rm -rf "$OUT/assets/wardrobe/v1" "$OUT/assets/wardrobe/v3" "$OUT/assets/wardrobe/v4" "$OUT/assets/fourth-jobs"
 # Development-only art that would otherwise ride along with cp -r assets. Measured with the page

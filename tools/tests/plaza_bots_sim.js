@@ -286,7 +286,7 @@ t('bots can never reach the account-only menus',()=>{
 });
 
 t('index.html loads the crowd module in dependency order at the current build',()=>{
- const build=(page.match(/haven-v(\d+)/)||[])[1];
+ const build=(page.match(/const BUILD='[^']*haven-v(\d+)/)||[])[1];
  assert.ok(build,'the page declares a numbered build');
  const rulesAt=page.indexOf('assets/social-rules.js?v=');
  const botsAt=page.indexOf('assets/plaza-bots.js?v=');

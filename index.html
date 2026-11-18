@@ -925,9 +925,9 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="stylesheet" href="assets/ui/mobile.css?v=418">
 <script src="assets/ui/mobile.js?v=274"></script>
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
-<link rel="stylesheet" href="assets/social.css?v=418">
+<link rel="stylesheet" href="assets/social.css?v=419">
 <link rel="stylesheet" href="assets/social-battle.css?v=393">
-  <link rel="stylesheet" href="assets/social-fishing.css?v=418"><link rel="stylesheet" href="assets/friends.css?v=273">
+  <link rel="stylesheet" href="assets/social-fishing.css?v=419"><link rel="stylesheet" href="assets/friends.css?v=273">
 </head>
 <body>
 <div id="loginOverlay"><div class="eclipse-login-world" aria-hidden="true"></div><header class="eclipse-login-header"><a href="./" class="eclipse-brand"><span>HH</span><b>HORIZON HAVEN<small>YOUR IDLE ADVENTURE</small></b></a><div class="eclipse-palettes" role="group" aria-label="Interface palette"><button type="button" data-palette="moonstone">Moonstone</button><button type="button" data-palette="aurora">Aurora</button><button type="button" data-palette="ember">Ember</button></div></header><main class="eclipse-login-layout"><section class="login-brand"><div class="login-eyebrow">A WORLD WORTH RETURNING TO</div><h1>Your next <br>chapter <em>awaits.</em></h1><p>Explore a world beyond the horizon.<br>Collect rare gear, master every class, and build your haven.</p><div class="eclipse-login-art"><img src="assets/ui/eclipse-knight.png" alt="Lord Knight ready for adventure"><span>01 / PRONTERA<small>THE JOURNEY BEGINS HERE</small></span><div><img src="assets/equipment-icons/1142.png" alt=""><span>YOUR NEXT UPGRADE<small>Somewhere out there.</small></span></div></div><div class="login-footnote">EXPLORE · GROW · CONQUER</div></section><div class="login-card"><div class="eclipse-access">ADVENTURER ACCESS <span>◇</span></div><h2 id="authHeading">Welcome back.</h2><p class="login-intro" id="authIntro">Your adventure is right where you left it.</p><div class="atabs" id="authTabs"><button type="button" id="tabLogin" class="on">Login</button><button type="button" id="tabReg">Register</button></div>
@@ -1333,7 +1333,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-18 haven-v418 redesigned Class Tree: dual-branch tree table, Novice hub, family tabs, right inspector, and authentic Ragnarok class icons';
+const BUILD='2026-11-18 haven-v419 save recovery fixes: isolate page writers, recover pending progress with full storage, finish offline claims without deadlocks, and cancel dismissed update reloads';
 // v364: this write used to sit AFTER the `//` on the BUILD line, so it was part of the comment and
 // never ran - the login card showed an empty #buildTag and there was no way to confirm which file
 // the browser had loaded. It also has to survive the script running before the login card exists.
@@ -4285,7 +4285,7 @@ function farmSamplingPaused(){
   (typeof document!=='undefined'&&document.body?.classList.contains('social-open'))||
   (typeof hubFirstPending!=='undefined'&&hubFirstPending)||
   (typeof JOB_RITE!=='undefined'&&JOB_RITE.on)||(typeof TRIAL!=='undefined'&&TRIAL.on)||
-  (typeof CLOUD!=='undefined'&&(CLOUD.lost||CLOUD.gate||CLOUD.paused));
+  (typeof CLOUD!=='undefined'&&(CLOUD.lost||CLOUD.gate||CLOUD.paused||CLOUD.updating));
 }
 function farmSample(now=Date.now()){
  if(farmSamplingPaused()){farmSession=null;return}
@@ -4305,7 +4305,7 @@ function plazaFarmIncome(){
   // capped by that measurement, so "awaiting connection" is not a reason to stop earning - it is only a
   // reason to stop UPLOADING (the gate/pause states below still stop it: those mean the server has
   // refused writes or is in maintenance, where a wrong local number would be adopted on reconnect).
-  if(typeof CLOUD!=='undefined'&&(CLOUD.gate||CLOUD.paused))return null;
+  if(typeof CLOUD!=='undefined'&&(CLOUD.gate||CLOUD.paused||CLOUD.updating))return null;
   const income=S.offlineIncome,source=String(income?.key||'').split(':'),sourceMap=Number(source[1]),sourceStage=Number(source[2]);
   const valid=income&&income.version===1&&(sourceMap<10||income.rewardVersion===ASC_REWARD_VERSION)&&source.length===3&&Object.hasOwn(CLASSES,source[0])&&Number.isInteger(sourceMap)&&sourceMap>=0&&sourceMap<MAPS.length&&Number.isInteger(sourceStage)&&sourceStage>=1&&sourceStage<=(sourceMap>=10?5:15)&&Number.isFinite(income.at)&&['xp','zeny','job'].every(k=>Number.isFinite(income[k])&&income[k]>=0);
   return valid&&['xp','zeny','job'].some(k=>income[k]>0)?income:null;
@@ -4393,16 +4393,28 @@ function offlineRateSample(now=Date.now()){
 // syncs to the cloud, because that copy is this account's own; only the local slot refuses the other save.
 let saveElsewhereSaid=null;   // the last refusal said aloud, so a refused slot does not spam the log every 5 seconds
 function saveElsewhere(other){if(saveElsewhereSaid===other)return;saveElsewhereSaid=other;log('This browser\'s save for '+currentUser+' belongs to '+other+', so nothing was written over it. '+(CLOUD.on?'Your progress still syncs to your account.':'Progress from now on is not kept in this browser.')+' Restore this browser\'s copy from a backup to save here again.','r0')}
-function save(){if(!currentUser||!S)return;const now=Date.now();
+function save(forceDuringUpdate=false){if(!currentUser||!S||(typeof CLOUD!=='undefined'&&CLOUD.updating&&!forceDuringUpdate))return;const now=Date.now();
   // v332: never write or upload a copy that belongs to another account... but decide that by the id,
   // as everything else does. A stale *name* on our own copy is repaired here, not turned into a
   // permanent refusal to save.
   if(!saveIsOurs(S)){saveElsewhere(S.owner);return}
   if(S.owner&&!sameAccount(S.owner,currentUser))syncLog('restamp',{was:String(S.owner),now:String(currentUser),id:Number(S.accountId)||0});
   offlineRateSample(now);S.offlineAt=now;S.owner=currentUser;S.accountId=CLOUD.id||S.accountId;S.gmStats=gmStatSnapshot();
+  if(typeof cloudBumpSaveRev==='function')cloudBumpSaveRev(now);
   const other=saveRefusal(lsGet(saveKey()),currentUser);
-  if(other)saveElsewhere(other);else lsPut(saveKey(),JSON.stringify(S));
-  CLOUD.localSaveAt=now;   // v332: proof that a save completed, not that one was attempted
+  let storedOk=false;
+  if(other)saveElsewhere(other);
+  else{
+    storedOk=lsPut(saveKey(),JSON.stringify(S))!==false;
+    if(!storedOk&&typeof cloudTryCompactLocalSave==='function')storedOk=cloudTryCompactLocalSave(saveKey(),S);
+  }
+  if(storedOk){
+    CLOUD.localSaveAt=now;   // v332: proof that a durable localStorage save completed, never a RAM-only fallback
+    if(CLOUD.storageFailed)CLOUD.storageFailed=false;
+  }else if(!other&&typeof cloudReportStorageFailure==='function'){
+    cloudReportStorageFailure(now);
+  }
+  if(!other&&typeof cloudRecordOutbox==='function')cloudRecordOutbox(now,storedOk);
   cloudTouch()}
 function offlinePlan(lastAt,now,rateKph,remainder=0){
   const start=Number(lastAt),current=Number(now),awayMs=Number.isFinite(start)&&Number.isFinite(current)?Math.max(0,current-start):0,carry=cl(Number(remainder)||0,0,.999999);
@@ -4414,9 +4426,9 @@ function offlinePlan(lastAt,now,rateKph,remainder=0){
 
 // ---------- accounts (stored in this browser; real cross-device accounts need a server) ----------
 const mem={};
-const lsGet=k=>{try{return localStorage.getItem(k)}catch(e){return mem[k]||null}};
-function lsPut(k,v){try{localStorage.setItem(k,v)}catch(e){mem[k]=v}}
-function lsDel(k){try{localStorage.removeItem(k)}catch(e){delete mem[k]}}
+const lsGet=k=>{if(Object.prototype.hasOwnProperty.call(mem,k))return mem[k];try{return localStorage.getItem(k)}catch(e){return null}};
+function lsPut(k,v){try{localStorage.setItem(k,v);delete mem[k];return true}catch(e){mem[k]=v;return false}}
+function lsDel(k){try{localStorage.removeItem(k)}catch(e){}delete mem[k]}
 const getAcc=()=>{try{return JSON.parse(lsGet('pg_acc4')||'{}')}catch(e){return{}}};
 const setAcc=a=>lsPut('pg_acc4',JSON.stringify(a));
 function hashPw(p){let h1=0xdeadbeef,h2=0x41c6ce57;const s='pg4:'+p;for(let i=0;i<s.length;i++){const c=s.charCodeAt(i);h1=Math.imul(h1^c,2654435761);h2=Math.imul(h2^c,1597334677)}
@@ -4583,6 +4595,9 @@ const CLOUD={api:false,on:false,down:false,probing:false,user:null,id:0,gm:false
   // v328: when the push in flight started, and when this session opened. Without them a request that
   // never settles is indistinguishable from one that is merely slow, and a silent stall has no clock.
   pushSince:0,onSince:0,
+  // Monotonic client revision & durable outbox tracking: local edits increment `rev`, while `ackRev`
+  // advances ONLY to the exact revision a server 200/reconcile confirmed.
+  rev:0,ackRev:0,cid:'',cidUser:'',updating:false,storageFailed:false,outbox:null,
   offline:false,paused:false,checking:false,
   // v2: set when the server cannot be reached at all. While it is true the character is treated as
   // AWAY (the simulation stops), and reconnecting adopts the account's save and pays the gap at the
@@ -4715,12 +4730,227 @@ var cloudAfterAway=false;
 let cloudTouchSeq=0;
 function cloudTouch(){if(!CLOUD.on||CLOUD.paused)return;cloudTouchSeq++;CLOUD.dirty=true}   // v282: no repaint - the badge shows the last push, not the last edit
 
+// Durable pending outbox & monotonic revision helpers.
+// `rev` increments on every local save; `ackRev` advances ONLY to the exact revision confirmed by a
+// server 200 (or reconciled from this browser's own lost-response commit). `pg_outbox1_<user>` and
+// IndexedDB `pg_durable_v1` mirror unacknowledged progress until server confirmation, so neither a
+// catch during an upload nor a localStorage quota failure can vanish across a reload.
+const OUTBOX_PREFIX='pg_outbox1_',OUTBOX_IDB_NAME='pg_durable_v1',OUTBOX_IDB_STORE='outbox';
+let cloudStorageWarnAt=0;
+const cloudIdbLatestRev=Object.create(null);
+function cloudSetUpdating(flag){CLOUD.updating=!!flag}
+function cloudCid(u){
+  const who=String(u||CLOUD.user||currentUser||'').trim();
+  if(!who)return 'c0';
+  if(CLOUD.cid&&CLOUD.cidUser===who)return CLOUD.cid;
+  // A writer belongs to this page, never to a downloaded save or shared localStorage.
+  // Pending saves retain their old lineage in the blob for login reconciliation; new writes
+  // get a fresh identity, including two tabs sharing the same browser profile.
+  const id='c'+Date.now().toString(36)+Math.random().toString(36).slice(2,14);
+  CLOUD.cid=id;CLOUD.cidUser=who;
+  return id;
+}
+function cloudBumpSaveRev(now){
+  if(!S)return 0;
+  const prev=S.cloud&&typeof S.cloud==='object'&&!Array.isArray(S.cloud)?S.cloud:null;
+  const ack=Math.max(Number(CLOUD.ackRev)||0,Number(prev&&prev.ackRev)||0);
+  const next=Math.max(Number(CLOUD.rev)||0,Number(prev&&prev.rev)||0,ack)+1;
+  CLOUD.rev=next;CLOUD.ackRev=ack;
+  const v=Number(CLOUD.ver)||Number(prev&&prev.v)||0;
+  if(CLOUD.on||v>0){
+    const cid=cloudCid(currentUser);
+    S.cloud={v,at:Number(prev&&prev.at)||0,rev:next,ackRev:ack,cid};
+  }
+  return next;
+}
+function cloudTryCompactLocalSave(key,sv){
+  try{
+    if(typeof packSave!=='function')return false;
+    localStorage.setItem(key,JSON.stringify(packSave(sv)));
+    if(typeof mem==='object'&&mem)delete mem[key];
+    return true;
+  }catch(e){return false}
+}
+function cloudReportStorageFailure(now){
+  CLOUD.storageFailed=true;
+  if(!cloudStorageWarnAt||now-cloudStorageWarnAt>60000){
+    cloudStorageWarnAt=now;
+    const figs=saveFigures(S);
+    syncLog('storage-fail',{rev:CLOUD.rev,ackRev:CLOUD.ackRev,ver:CLOUD.ver,zeny:figs&&figs.zeny,fishCatches:figs&&figs.fishCatches,fishCoins:figs&&figs.fishCoins});
+    if(CLOUD.on)cloudBadge('☁ ⚠','Browser storage full/blocked - waiting for cloud save');
+    cloudSay('Browser localStorage could not save this step (storage full or blocked). A recovery write is being attempted. Keep this tab open until the cloud ✓ badge confirms your save.','r0','cloud');
+  }
+}
+function cloudOpenOutboxDb(){
+  if(typeof indexedDB==='undefined'||!indexedDB||typeof indexedDB.open!=='function')return Promise.resolve(null);
+  return new Promise(resolve=>{
+    try{
+      const req=indexedDB.open(OUTBOX_IDB_NAME,1);
+      req.onupgradeneeded=e=>{try{const db=e&&e.target?e.target.result:req.result;if(db&&!db.objectStoreNames.contains(OUTBOX_IDB_STORE))db.createObjectStore(OUTBOX_IDB_STORE)}catch(err){}};
+      req.onsuccess=e=>resolve((e&&e.target?e.target.result:req.result)||null);
+      req.onerror=()=>resolve(null);
+      req.onblocked=()=>resolve(null);
+    }catch(e){resolve(null)}
+  });
+}
+function cloudIdbPutOutbox(acctKey,rec){
+  return cloudOpenOutboxDb().then(db=>{
+    if(!db)return false;
+    return new Promise(resolve=>{
+      try{
+        const cur=cloudIdbLatestRev[acctKey];
+        if(cur&&(rec.rev<cur.rev||cur.clearedRev>=rec.rev)){db.close();resolve(false);return}
+        const tx=db.transaction(OUTBOX_IDB_STORE,'readwrite');
+        tx.oncomplete=()=>{db.close();resolve(true)};
+        tx.onerror=tx.onabort=()=>{db.close();resolve(false)};
+        tx.objectStore(OUTBOX_IDB_STORE).put(rec,acctKey);
+      }catch(e){db.close();resolve(false)}
+    });
+  }).catch(()=>false);
+}
+function cloudIdbDelOutbox(acctKey,ackedRev){
+  cloudOpenOutboxDb().then(db=>{
+    if(!db)return;
+    try{
+      const cur=cloudIdbLatestRev[acctKey];
+      if(cur&&cur.rev>ackedRev)return;
+      const tx=db.transaction(OUTBOX_IDB_STORE,'readwrite');
+      tx.objectStore(OUTBOX_IDB_STORE).delete(acctKey);
+    }catch(e){}
+  });
+}
+function cloudIdbGetOutbox(acctKey){
+  return cloudOpenOutboxDb().then(db=>{
+    if(!db)return null;
+    return new Promise(resolve=>{
+      try{
+        const tx=db.transaction(OUTBOX_IDB_STORE,'readonly');
+        const req=tx.objectStore(OUTBOX_IDB_STORE).get(acctKey);
+        req.onsuccess=e=>resolve((e&&e.target?e.target.result:req.result)||null);
+        req.onerror=()=>resolve(null);
+      }catch(e){resolve(null)}
+    });
+  });
+}
+function cloudRecordOutbox(now,storedOk){
+  if(!S||!currentUser)return;
+  const baseVer=Number(CLOUD.ver)||Number(S.cloud&&S.cloud.v)||0;
+  if(!CLOUD.on&&baseVer<=0&&storedOk!==false)return;
+  const owner=String(currentUser);
+  const acctKey=owner.toLowerCase();
+  const rev=Math.max(Number(CLOUD.rev)||0,Number(S.cloud&&S.cloud.rev)||0,1);
+  const ackRev=Math.max(Number(CLOUD.ackRev)||0,Number(S.cloud&&S.cloud.ackRev)||0);
+  const rec={
+    owner,
+    accountId:Number(S.accountId)||Number(CLOUD.id)||0,
+    cid:cloudCid(owner),
+    baseVer,
+    rev,
+    ackRev,
+    savedAt:now||Date.now(),
+    blob:JSON.stringify(typeof packSave==='function'?packSave(S):S)
+  };
+  CLOUD.outbox=rec;
+  CLOUD.outboxDurable=false;
+  cloudIdbLatestRev[acctKey]={rev,clearedRev:ackRev};
+  if(storedOk!==false){try{localStorage.setItem(OUTBOX_PREFIX+owner,JSON.stringify(rec))}catch(e){}}
+  return cloudIdbPutOutbox(acctKey,rec).then(committed=>{
+    // A request's success is not a committed transaction. Do not promise recovery before
+    // oncomplete, and do not let an older callback describe a newer revision/account.
+    if(CLOUD.outbox!==rec)return committed;
+    CLOUD.outboxDurable=committed;
+    if(storedOk===false&&!committed){
+      cloudBadge('☁ ⚠','Progress only in this tab - cloud save needed');
+      cloudSay('Browser recovery storage also failed. Unsynced progress is only in this tab. Keep it open and retry the cloud save before leaving.','r0','cloud');
+    }
+    return committed;
+  });
+}
+function cloudOutboxAck(u,newVer,ackedRev){
+  const owner=String(u||currentUser||'');
+  if(!owner)return;
+  const acctKey=owner.toLowerCase();
+  const ack=Math.max(0,Number(ackedRev)||0);
+  const cur=CLOUD.outbox;
+  if(cur&&sameAccount(cur.owner,owner)&&Number(cur.rev)>ack){
+    const updated=Object.assign({},cur,{baseVer:Number(newVer)||cur.baseVer,ackRev:ack});
+    CLOUD.outbox=updated;
+    cloudIdbLatestRev[acctKey]={rev:Number(updated.rev)||0,clearedRev:ack};
+    try{localStorage.setItem(OUTBOX_PREFIX+owner,JSON.stringify(updated))}catch(e){}
+    cloudIdbPutOutbox(acctKey,updated);
+    return;
+  }
+  if(!cur||sameAccount(cur.owner,owner))CLOUD.outbox=null;
+  const prev=cloudIdbLatestRev[acctKey];
+  cloudIdbLatestRev[acctKey]={rev:prev?Math.max(prev.rev,ack):ack,clearedRev:ack};
+  try{localStorage.removeItem(OUTBOX_PREFIX+owner)}catch(e){}
+  cloudIdbDelOutbox(acctKey,ack);
+}
+function cloudOutboxClearAll(u){
+  const owner=String(u||currentUser||'');
+  if(!owner)return;
+  const acctKey=owner.toLowerCase();
+  const clearTo=Math.max(Number(CLOUD.rev)||0,Number(CLOUD.ackRev)||0,Number(CLOUD.outbox&&CLOUD.outbox.rev)||0,1e12);
+  if(!CLOUD.outbox||sameAccount(CLOUD.outbox.owner,owner))CLOUD.outbox=null;
+  cloudIdbLatestRev[acctKey]={rev:clearTo,clearedRev:clearTo};
+  try{localStorage.removeItem(OUTBOX_PREFIX+owner)}catch(e){}
+  cloudIdbDelOutbox(acctKey,clearTo);
+}
+async function cloudRecoverOutbox(u){
+  const owner=String(u||'').trim();
+  if(!owner)return lsGet(saveKeyFor(owner));
+  const acctKey=owner.toLowerCase();
+  const rawLocal=lsGet(saveKeyFor(owner));
+  const cands=[];
+  try{const lsRaw=localStorage.getItem(OUTBOX_PREFIX+owner);if(lsRaw)cands.push(JSON.parse(lsRaw))}catch(e){}
+  try{const idbRec=await cloudIdbGetOutbox(acctKey);if(idbRec&&typeof idbRec==='object')cands.push(idbRec)}catch(e){}
+  let best=null;
+  for(const c of cands){
+    if(!c||typeof c!=='object'||typeof c.blob!=='string'||!c.blob)continue;
+    if(!sameAccount(c.owner,owner))continue;
+    if(CLOUD.id&&c.accountId&&Number(c.accountId)!==Number(CLOUD.id))continue;
+    if(saveRefusal(c.blob,owner))continue;
+    if(!best||(Number(c.rev)||0)>(Number(best.rev)||0))best=c;
+  }
+  if(!best)return rawLocal;
+  let localObj=null;
+  try{localObj=rawLocal?JSON.parse(rawLocal):null}catch(e){localObj=null}
+  const localMeta=cloudBaseOf(localObj);
+  const localVer=localMeta?localMeta.v:0;
+  const localOff=Number(localObj&&localObj.offlineAt)||0;
+  const localHasRev=!!(localMeta&&localMeta.rev!==null);
+  const localRev=localHasRev?localMeta.rev:0;
+  const bestRev=Number(best.rev)||0,bestAck=Number(best.ackRev)||0;
+  const bestVer=Number(best.baseVer)||0,bestAt=Number(best.savedAt)||0;
+  const outboxNewer=!rawLocal||(bestVer>=localVer&&(localHasRev?bestRev>localRev:bestAt>localOff));
+  if(bestRev>bestAck&&outboxNewer){
+    if(rawLocal&&saveRefusal(rawLocal,owner))return rawLocal;
+    CLOUD.rev=Math.max(Number(CLOUD.rev)||0,bestRev);
+    CLOUD.ackRev=Math.max(Number(CLOUD.ackRev)||0,bestAck);
+    CLOUD.outbox=best;
+    let patched=best.blob;
+    try{
+      const o=JSON.parse(best.blob);
+      if(o&&typeof o==='object'&&!Array.isArray(o)){
+        o.cloud={v:Number(best.baseVer)||Number(o.cloud&&o.cloud.v)||0,at:Number(o.cloud&&o.cloud.at)||0,rev:bestRev,ackRev:bestAck,cid:best.cid||cloudCid(owner)};
+        patched=JSON.stringify(o);
+      }
+    }catch(e){}
+    try{localStorage.setItem(saveKeyFor(owner),patched);if(typeof mem==='object'&&mem)delete mem[saveKeyFor(owner)]}
+    catch(e){if(typeof mem==='object'&&mem)mem[saveKeyFor(owner)]=patched;CLOUD.storageFailed=true}
+    syncLog('outbox-recover',{rev:bestRev,ackRev:bestAck,baseVer:Number(best.baseVer)||0});
+    return patched;
+  }
+  return rawLocal;
+}
+
 // Push the current save. Returns 'ok' | 'conflict' | 'offline' | 'idle'; never throws, because a dead
 // network must not interrupt play - it only leaves the local copy leading, and the badge says so.
 let cloudLockWarned=false,cloudBoardWarned=false;   // warnings are explained once, not once a minute
 let cloudClaimRetried=0;   // v326: the away claim whose one immediate retry was already spent
 let cloudRebaseRetried=0;  // v330: the version whose rebase retry was already spent
-async function cloudPush(push,leave){
+let cloudActivePush=null,cloudActiveResolve=null;
+async function cloudPush(push,leave,_coord){
   if(!CLOUD.on||!S||!currentUser||CLOUD.paused)return 'idle';
   if(CLOUD.lost)return 'idle';   // the character is away until /api/save answers again
   // A forced push (the tab is going away, a 428 round trip, the player chose a save) always sends.
@@ -4728,7 +4958,15 @@ async function cloudPush(push,leave){
   // played, five while it is hidden - the game keeps grinding while hidden, but nobody is watching
   // the badge, and "how fast the server hears about it" is the whole cost of this feature.
   if(!push&&(!CLOUD.dirty||Date.now()-CLOUD.lastPush<(cloudHidden()?CLOUD_HIDDEN_DEBOUNCE:CLOUD_DEBOUNCE)))return 'idle';
-  if(CLOUD.pushing)return 'idle';
+  while(CLOUD.pushing){
+    if(!push||!cloudActivePush)return 'idle';
+    const prevRes=await cloudActivePush;
+    if(!CLOUD.on||!S||!currentUser||CLOUD.paused||CLOUD.lost)return 'idle';
+    if(CLOUD.blocked==='too-large')return 'too-large';
+    if(_coord)return prevRes;
+    if(!CLOUD.dirty&&(Number(CLOUD.rev)||0)<=(Number(CLOUD.ackRev)||0)&&(prevRes==='ok'||prevRes==='adopted'))return prevRes;
+    if(prevRes!=='ok'&&prevRes!=='adopted')return prevRes;
+  }
   // v88.6: a save that belongs to another account is never uploaded; this tab stops syncing instead.
   if(!saveIsOurs(S)){cloudSaveRefused();return 'idle'}
   const seq=cloudTouchSeq;
@@ -4736,9 +4974,20 @@ async function cloudPush(push,leave){
   // rename used to strand the save so every later sync was refused - while the id never changes.
   S.owner=currentUser;S.accountId=CLOUD.id||S.accountId;
   S.gmStats=gmStatSnapshot();
+  const myCid=cloudCid(currentUser);
+  const prevCloud=S.cloud&&typeof S.cloud==='object'&&!Array.isArray(S.cloud)?S.cloud:null;
+  const ackBefore=Math.max(Number(CLOUD.ackRev)||0,Number(prevCloud&&prevCloud.ackRev)||0);
+  const uploadedRev=Math.max(Number(CLOUD.rev)||0,Number(prevCloud&&prevCloud.rev)||0,ackBefore+(CLOUD.dirty?1:0),1);
+  CLOUD.rev=uploadedRev;CLOUD.ackRev=ackBefore;
+  S.cloud={v:Number(CLOUD.ver)||Number(prevCloud&&prevCloud.v)||0,at:Number(prevCloud&&prevCloud.at)||0,rev:uploadedRev,ackRev:ackBefore,cid:myCid};
+  let finishActive=null;
+  const thisPush=new Promise(r=>{finishActive=r});
+  cloudActivePush=thisPush;cloudActiveResolve=finishActive;
   CLOUD.pushing=true;CLOUD.pushSince=Date.now();cloudBadge('☁ ⇅','Syncing…');
+  let outcome='offline';
   try{
-    const body=JSON.stringify({version:CLOUD.ver,owner:CLOUD.user,blob:JSON.stringify(packSave(S)),savedAt:Date.now(),offlineClaimId:S.offlineClaimId||null});
+    const packedBlob=JSON.stringify(packSave(S));
+    const body=JSON.stringify({version:CLOUD.ver,owner:CLOUD.user,blob:packedBlob,savedAt:Date.now(),offlineClaimId:S.offlineClaimId||null});
     const opt={method:'PUT',body};
     // v326: a push sent on the way out of the page (a reload, a closed tab, the update reload) is
     // cancelled with the page unless the request is marked keepalive - which is one of the ways a
@@ -4758,11 +5007,11 @@ async function cloudPush(push,leave){
         try{localStorage.setItem('pg_sync_blocked_'+String(currentUser||''),String(Date.now()))}catch(e){}
         cloudBadge('☁ ✕','Save too large to sync');
         cloudSay('Your save has grown too large to upload ('+(c.err||'refused by the server')+'). Your character keeps playing on this device, but it will not reach the cloud until the save is smaller. Nothing you own has been deleted.','r0');
-        return 'too-large'}
+        return outcome='too-large'}
       throw new Error(c.err||'HTTP 413')}
     if(r.status===409){const c=await r.json();
-      if(c.saveMismatch){cloudSaveRefused(c.err);return 'idle'}
-      if(c.accountMismatch){cloudAccountMismatch(c.owner);return 'idle'}
+      if(c.saveMismatch){cloudSaveRefused(c.err);return outcome='idle'}
+      if(c.accountMismatch){cloudAccountMismatch(c.owner);return outcome='idle'}
       // haven-v396: the server refused this write because the account carries a GM restore this
       // device's copy predates. The server is the authority here - it will refuse every version
       // number this tab can invent - so take the restored copy, always. This is the branch that
@@ -4772,22 +5021,27 @@ async function cloudPush(push,leave){
         cloudBadge('☁ ↺','A restore was applied to this account - loading it');
         await cloudAdopt(c);
         cloudSay('The GM restored an earlier copy of this account, so it was loaded. The copy this device held was kept as a backup.','r1');
-        return 'adopted';
+        return outcome='adopted';
       }
       // haven-v215: the look wears a Cash Shop item this account does not own. Those slots come off
       // and the save goes straight back up; the character itself is never refused.
-      if(c.cosmeticLocked){if(typeof shopLockedByServer==='function'&&shopLockedByServer(c.locked)){CLOUD.dirty=true;setTimeout(()=>cloudPush(true),0);return 'locked'}if(!cloudLockWarned){cloudLockWarned=true;cloudSay((c.err||'This look uses Cash Shop items this account does not own.')+' Reload the page to pick up the latest build, then open the Wardrobe and reset the look.','r0')}CLOUD.dirty=true;return 'locked'}
-      // v330 (the owner's two screenshots, same badge time 22:58, 33.3M and 31.7M): a 409 whose
-      // server copy is exactly ONE version ahead of ours, while ours is at least as far along in Zeny,
-      // kills and level, is this device's own previous upload whose answer never arrived - not another
-      // device. Adopting there deleted every minute since that upload, and it did it without touching
-      // the badge, which reports the last accepted push and therefore kept saying "saved 22:58".
-      // So that one case rebases instead: take the server's version NUMBER, keep this device's save,
-      // and push it on top. Anything else - further ahead, or ahead of us in any figure - still loses
-      // to the account exactly as v2 decided.
-      const mine=saveFigures(JSON.stringify(S)),theirs=saveFigures(c.blob);
-      const selfEcho=!!(theirs&&mine)&&Number(c.version)===Number(CLOUD.ver)+1
-        &&mine.zeny>=theirs.zeny&&mine.kills>=theirs.kills&&mine.lv>=theirs.lv;
+      if(c.cosmeticLocked){if(typeof shopLockedByServer==='function'&&shopLockedByServer(c.locked)){CLOUD.dirty=true;if(!_coord)setTimeout(()=>cloudPush(true),0);return outcome='locked'}if(!cloudLockWarned){cloudLockWarned=true;cloudSay((c.err||'This look uses Cash Shop items this account does not own.')+' Reload the page to pick up the latest build, then open the Wardrobe and reset the look.','r0')}CLOUD.dirty=true;return outcome='locked'}
+      // Lost-response & self-echo reconciliation:
+      //  * When the server blob carries a client lineage id (`cloud.cid`), ONLY a matching `cid` at
+      //    `CLOUD.ver + 1` can be this browser's own lost-response commit; a distinct `cid` is always
+      //    another device and must never be overwritten, even when Zeny/kills match.
+      //  * Legacy blobs without `cid` keep the v330 + fishing figures guard.
+      //  * GM restores (`!sawRestore(restoreStamp(c.blob))`) always win over both.
+      const mine=saveFigures(S),theirs=saveFigures(c.blob);
+      const serverObj=(()=>{try{return typeof c.blob==='string'?JSON.parse(c.blob):c.blob}catch(e){return null}})();
+      const theirCid=serverObj&&serverObj.cloud&&typeof serverObj.cloud.cid==='string'?serverObj.cloud.cid:'';
+      const theirRev=serverObj&&serverObj.cloud&&Number.isSafeInteger(Number(serverObj.cloud.rev))?Number(serverObj.cloud.rev):null;
+      const oneAhead=Number(c.version)===Number(CLOUD.ver)+1;
+      const cidMatched=!!(theirCid&&myCid&&theirCid===myCid&&oneAhead&&(theirRev===null||theirRev<=uploadedRev));
+      const legacyEcho=!theirCid&&!!(theirs&&mine)&&oneAhead
+        &&mine.zeny>=theirs.zeny&&mine.kills>=theirs.kills&&mine.lv>=theirs.lv
+        &&mine.fishCatches>=theirs.fishCatches&&mine.fishDex>=theirs.fishDex;
+      const selfEcho=cidMatched||legacyEcho;
       // v394: ...unless the account's copy is a GM restore this device has not seen. A restore bumps the
       // version by one and is always behind us in every figure - the exact shape of a self-echo - so
       // rebasing would undo it. This device's copy is stashed by cloudAdopt, so nothing is lost either.
@@ -4796,15 +5050,31 @@ async function cloudPush(push,leave){
         cloudBadge('☁ ↺','A restore was applied to this account - loading it');
         await cloudAdopt(c);
         cloudSay('The GM restored an earlier copy of this account, so it was loaded. The copy this device held was kept as a backup.','r1');
-        return 'adopted';
+        return outcome='adopted';
+      }
+      // Exact duplicate retry: the server ALREADY committed this exact `uploadedRev` from `myCid`
+      // (its response was lost on the wire), and no newer local revision is waiting unless `CLOUD.rev > uploadedRev`.
+      if(cidMatched&&theirRev!==null&&theirRev===uploadedRev&&sameSave(c.blob,packedBlob)){
+        const liveRev=Math.max(Number(CLOUD.rev)||0,Number(S&&S.cloud&&S.cloud.rev)||0,uploadedRev);
+        CLOUD.ver=Number(c.version);CLOUD.lastPush=Date.now();CLOUD.offline=false;CLOUD.blocked=null;
+        cloudClaimRetried=0;cloudRebaseRetried=0;
+        cloudStampBase(c.version,true,uploadedRev);
+        CLOUD.dirty=cloudTouchSeq!==seq||liveRev>uploadedRev;
+        cloudOutboxAck(currentUser,c.version,uploadedRev);
+        syncLog('reconcile-dup',{v:c.version,rev:uploadedRev,liveRev,fishCatches:mine&&mine.fishCatches,fishCoins:mine&&mine.fishCoins});
+        cloudBadgeSaved();
+        if(CLOUD.dirty&&!_coord)setTimeout(()=>cloudPush(true),0);
+        return outcome='ok';
       }
       if(selfEcho&&Number(c.version)!==cloudRebaseRetried){
         cloudRebaseRetried=Number(c.version);
-        syncLog('rebase',{from:CLOUD.ver,to:c.version,serverZeny:theirs.zeny,keptZeny:mine.zeny});
+        if(cidMatched&&theirRev!==null)CLOUD.ackRev=Math.max(Number(CLOUD.ackRev)||0,theirRev);
+        syncLog('rebase',{from:CLOUD.ver,to:c.version,rev:uploadedRev,serverRev:theirRev,serverZeny:theirs&&theirs.zeny,keptZeny:mine&&mine.zeny,keptFish:mine&&mine.fishCatches});
         CLOUD.ver=Number(c.version);CLOUD.dirty=true;
+        cloudOutboxAck(currentUser,c.version,CLOUD.ackRev);
         cloudBadge('☁ ⇅','Re-sending this device\'s save on the account\'s version');
-        setTimeout(()=>cloudPush(true),0);
-        return 'rebase';
+        if(!_coord)setTimeout(()=>cloudPush(true),0);
+        return outcome='rebase';
       }
       // v2 (owner): cloud is the only save, so the ACCOUNT's copy always wins. cloudAdopt keeps the
       // copy this device held under a backup key, so nothing is deleted - there is just no question
@@ -4812,41 +5082,54 @@ async function cloudPush(push,leave){
       cloudBadge('☁ ⚠','The account has a newer save - loading it');
       await cloudAdopt(c);
       cloudSay('Your account had a newer save, so it was loaded. The copy this device held was kept as a backup.','r1');
-      return 'adopted'}
+      return outcome='adopted'}
     if(r.status===428){const d=await r.json().catch(()=>({}));
-      if(d.offlineClaim){const claimId=Number(d.offlineClaim.id)||0;applyOfflineProgress(Date.now(),d.offlineClaim);CLOUD.dirty=true;
+      if(d.offlineClaim){const claimId=Number(d.offlineClaim.id)||0;applyOfflineProgress(Date.now(),d.offlineClaim);
+        cloudBumpSaveRev(Date.now());CLOUD.dirty=true;
         // v326: the 428 handshake is one round trip - apply the away claim, then push it back with its
         // id. If the server answers the SAME claim a second time, the id is already in the save and
         // asking again cannot help, so the loop stops and says what happened (an unanswered retry used
         // to re-arm itself for ever, and every push it refused was progress that never reached D1).
-        if(claimId&&claimId!==cloudClaimRetried){cloudClaimRetried=claimId;setTimeout(()=>cloudPush(true),0);return 'offline-claim'}
+        if(claimId&&claimId!==cloudClaimRetried){cloudClaimRetried=claimId;if(!_coord)setTimeout(()=>cloudPush(true),0);return outcome='offline-claim'}
         cloudBadge('☁ ⚠','Sync waiting for an away-time claim');
         cloudSay('The server asked this save to take an away-time claim again ('+(claimId||'unknown')+'), so nothing was uploaded this time. It retries on the next sync; if this repeats, reload the page.','r0');
-        return 'offline-claim'}
+        return outcome='offline-claim'}
       throw new Error(d.err||'A server-timed offline claim is required.')}
     if(!r.ok)throw new Error('HTTP '+r.status);
-    const d=await r.json();CLOUD.ver=d.version;CLOUD.dirty=cloudTouchSeq!==seq||!!d.leaderboardPending;CLOUD.lastPush=Date.now();CLOUD.offline=false;cloudClaimRetried=0;cloudRebaseRetried=0;
-    syncLog('push-ok',{v:d.version,lv:S&&S.lv,zeny:S&&S.zeny,kills:S&&S.kills,leave:!!leave});
+    const d=await r.json();
+    const liveRevNow=Math.max(Number(CLOUD.rev)||0,Number(S&&S.cloud&&S.cloud.rev)||0,uploadedRev);
+    CLOUD.ver=d.version;CLOUD.blocked=null;
+    CLOUD.dirty=cloudTouchSeq!==seq||liveRevNow>uploadedRev||!!d.leaderboardPending;
+    CLOUD.lastPush=Date.now();CLOUD.offline=false;cloudClaimRetried=0;cloudRebaseRetried=0;
+    try{localStorage.removeItem('pg_sync_blocked_'+String(currentUser||''))}catch(e){}
+    const figs=saveFigures(S);
+    syncLog('push-ok',{v:d.version,rev:uploadedRev,liveRev:liveRevNow,lv:S&&S.lv,zeny:S&&S.zeny,kills:S&&S.kills,fishCatches:figs&&figs.fishCatches,fishCoins:figs&&figs.fishCoins,fishDex:figs&&figs.fishDex,leave:!!leave});
     // v326: remember which account version this device's copy now corresponds to. Without it a login
     // could not tell "this is the account's own save plus a minute of play" from "another device moved
     // on", and it always threw the minute away (see localAheadOfServer/cloudJoin).
-    cloudStampBase(d.version);   // v326: the pushed copy IS this version now
+    cloudStampBase(d.version,true,uploadedRev);   // v326: stamp acknowledgement for `uploadedRev` only
     if(d.leaderboardPending&&!cloudBoardWarned){cloudBoardWarned=true;cloudSay('Your cloud save succeeded, but the Echo leaderboard update is pending. It will retry on the next sync; sync before the period ends.','r0')}
     if(!d.leaderboardPending)cloudBoardWarned=false;
+    if(!d.leaderboardPending)cloudOutboxAck(currentUser,d.version,uploadedRev);
     // v282: this push landed. That is the news the badge reports, even if the player has already
     // played on past it - the next edit is not information until the next attempt.
     cloudBadgeSaved();
-    return 'ok';
+    if(liveRevNow>uploadedRev&&!_coord)setTimeout(()=>cloudPush(false),0);
+    return outcome='ok';
   }catch(e){
     // The save is NOT on the server, so it stays dirty: the next flush (or the next tab-hide) retries
     // it. Clearing the flag here would silently drop the sync until the player changed something.
-    syncLog('push-fail',{err:String((e&&e.message)||e).slice(0,60),ver:CLOUD.ver,leave:!!leave,zeny:S&&S.zeny});
+    const figs=saveFigures(S);
+    syncLog('push-fail',{err:String((e&&e.message)||e).slice(0,60),ver:CLOUD.ver,rev:uploadedRev,ackRev:CLOUD.ackRev,leave:!!leave,zeny:S&&S.zeny,fishCatches:figs&&figs.fishCatches});
     CLOUD.dirty=true;CLOUD.offline=true;
     // v326: a request that was cut short because the page was leaving says nothing about the
     // connection, and by then there is no page to put a gate on. The next ordinary flush confirms it.
     if(!leave)await cloudConnectionLost(e&&e.message);
-    return 'offline';
-  }finally{CLOUD.pushing=false}
+    return outcome='offline';
+  }finally{
+    if(cloudActivePush===thisPush){CLOUD.pushing=false;cloudActivePush=null;cloudActiveResolve=null}
+    finishActive(outcome);
+  }
 }
 // The session cookie is shared by every tab of the site. If another tab (or a sign-in on this device)
 // has put a different account in it, this tab must stop syncing: it keeps its own character on this
@@ -4883,49 +5166,107 @@ function cloudSaveRefused(why){
   cloudBadge('☁ ⛔','Sync stopped: this save belongs to another account');
   cloudSay((why||'This save belongs to another account, so it was not used.')+' Nothing was uploaded, and your local copy is kept.','r0');
 }
+// Serialized save coordinator: waits for any active upload, sends any newer local revision that
+// arrived while that upload was in flight, and completes single-round-trip 428/rebase/locked
+// handshakes before reporting durable confirmation. Never treats 'idle' as confirmed persistence
+// while local work is pending.
+async function cloudCoordinateFlush(leave){
+  if(!CLOUD.on||!S||!currentUser)return 'idle';
+  if(CLOUD.paused||CLOUD.lost)return 'idle';
+  if(CLOUD.blocked==='too-large')return 'too-large';
+  const targetRev=Math.max(Number(CLOUD.rev)||0,Number(S.cloud&&S.cloud.rev)||0);
+  let sentAny=false,last='idle';
+  for(let step=0;step<6;step++){
+    if(CLOUD.pushing&&cloudActivePush){
+      last=await cloudActivePush;
+      sentAny=true;
+    }
+    if(!CLOUD.on||!S||!currentUser)return 'idle';
+    if(CLOUD.paused||CLOUD.lost)return last==='idle'?'offline':last;
+    if(CLOUD.blocked==='too-large')return 'too-large';
+    const curRev=Math.max(Number(CLOUD.rev)||0,Number(S.cloud&&S.cloud.rev)||0);
+    const ackRev=Number(CLOUD.ackRev)||0;
+    const needRev=Math.max(targetRev,curRev);
+    if(sentAny&&!CLOUD.dirty&&ackRev>=needRev&&(last==='ok'||last==='adopted'))return last;
+    if(sentAny&&last!=='ok'&&last!=='adopted'&&last!=='offline-claim'&&last!=='rebase'&&last!=='locked')return last;
+    const prevClaim=cloudClaimRetried,prevRebase=cloudRebaseRetried;
+    last=await cloudPush(true,!!leave,true);
+    sentAny=true;
+    if(last==='ok'||last==='adopted'){
+      const nextRev=Math.max(Number(CLOUD.rev)||0,Number(S&&S.cloud&&S.cloud.rev)||0);
+      if(!CLOUD.dirty&&(Number(CLOUD.ackRev)||0)>=Math.max(targetRev,nextRev))return last;
+      continue;
+    }
+    if(last==='offline-claim'&&cloudClaimRetried!==prevClaim&&CLOUD.dirty)continue;
+    if(last==='rebase'&&cloudRebaseRetried!==prevRebase&&CLOUD.dirty)continue;
+    if(last==='locked'&&CLOUD.dirty&&!cloudLockWarned)continue;
+    return last;
+  }
+  return last;
+}
 function cloudFlush(){return cloudPush(false)}
-function cloudFlushNow(){return cloudPush(true)}
+function cloudFlushNow(){return cloudCoordinateFlush(false)}
 
 // ---------- which copy is newer? (v326) ----------
-// The report that added this: "I ascended the same weapon three times and it went back to N+".
-// Nothing was lost on the server - the account copy is simply the older one. The cloud is a vault and
-// a push happens at most once a minute (v82 budget), so this device always holds up to a minute of
-// progress the account has not seen yet. A reload inside that window used to throw that minute away,
-// and a single Ascension forge - a rare, expensive click - is exactly the kind of thing that lands in
-// it, so the same weapon had to be forged again and again.
-//
-// The rule is deliberately narrow. This device's copy counts as newer ONLY when:
-//   * the account is still on the very version this device last synced (`cloud.v`), i.e. nobody else
-//     has written since - another device, a GM restore or any version this copy never saw keeps the
-//     account winning exactly as before; and
-//   * this device has written its own copy after that sync (`offlineAt` > `cloud.at`), so the local
-//     copy really is that version plus play.
-// The two stamps live inside the save, so they survive a reload.
+// Monotonic revision contract: every local save increments `cloud.rev`, while server acknowledgement
+// advances `cloud.ackRev` ONLY for the revision actually uploaded. Whenever `rev` is present, local
+// progress is ahead iff `rev > ackRev` on the same server base version (or on `base.v + 1` when the
+// server copy carries this browser's own `cid` from a lost HTTP response). Legacy saves without `rev`
+// (including console `restoreFrom` backups) retain the `(server.version === base.v && offlineAt > at)`
+// fallback.
 function cloudBaseOf(save){
   const c=save&&typeof save==='object'?save.cloud:null;
   if(!c||typeof c!=='object')return null;
   const v=Number(c.v),at=Number(c.at);
-  return Number.isSafeInteger(v)&&v>0&&Number.isFinite(at)?{v,at}:null;
+  if(!Number.isSafeInteger(v)||v<1||!Number.isFinite(at))return null;
+  const hasRev=c.rev!==undefined&&c.rev!==null&&Number.isSafeInteger(Number(c.rev))&&Number(c.rev)>=0;
+  const rev=hasRev?Number(c.rev):null;
+  const ackRev=c.ackRev!==undefined&&c.ackRev!==null&&Number.isSafeInteger(Number(c.ackRev))&&Number(c.ackRev)>=0?Number(c.ackRev):null;
+  const cid=typeof c.cid==='string'&&c.cid?c.cid.slice(0,40):null;
+  return {v,at,rev,ackRev,cid};
 }
 function localAheadOfServer(server,localSave){
   const base=cloudBaseOf(localSave);
-  if(!base||!server||Number(server.version)!==base.v)return false;
-  const written=Number(localSave&&localSave.offlineAt);
-  return Number.isFinite(written)&&written>base.at;
+  if(!base||!server)return false;
+  const sv=Number(server.version);
+  if(sv===base.v){
+    if(base.rev!==null)return base.rev>(base.ackRev||0);
+    const written=Number(localSave&&localSave.offlineAt);
+    return Number.isFinite(written)&&written>base.at;
+  }
+  if(sv===base.v+1&&base.rev!==null&&base.cid&&server.blob){
+    try{
+      const so=typeof server.blob==='string'?JSON.parse(server.blob):server.blob;
+      const sc=so&&so.cloud;
+      if(sc&&typeof sc==='object'&&sc.cid===base.cid&&Number.isSafeInteger(Number(sc.rev)))
+        return base.rev>Number(sc.rev);
+    }catch(e){}
+  }
+  return false;
 }
 // Record the account version this copy now corresponds to - after an accepted upload, or after an
-// adopted copy. The stamp goes into the LOCAL copy directly instead of through save(), because save()
-// marks the save dirty: a push that already landed must not queue another one, which would double the
-// rows written that the whole sync cadence is budgeted against.
+// adopted copy. When acknowledging an upload (`ackedRev` provided), ONLY `ackRev` advances to
+// `ackedRev`; any newer `rev` saved while the upload was in flight stays strictly ahead (`rev > ackRev`)
+// and keeps its prior `at` timestamp so neither revision ordering nor legacy timestamp ordering can
+// mistake unacknowledged play for already-uploaded state.
 function cloudStampBase(version,write=true){
   if(!S)return;
   const v=Number(version);
   if(!Number.isSafeInteger(v)||v<1)return;
-  S.cloud={v,at:Date.now()};
-  // After an ADOPT the stored copy stays exactly what the server sent (the 5-second autosave writes
-  // the stamp a moment later). Only an accepted upload needs the local copy stamped immediately, so
-  // that a reload before the next autosave still knows which version it is.
-  if(!write)return;
+  const ackedArg=arguments.length>2?arguments[2]:null;
+  const prev=S.cloud&&typeof S.cloud==='object'&&!Array.isArray(S.cloud)?S.cloud:null;
+  const cid=cloudCid(currentUser);
+  if(!write){
+    const syncRev=Math.max(Number(CLOUD.rev)||0,Number(prev&&prev.rev)||0,1);
+    CLOUD.rev=syncRev;CLOUD.ackRev=syncRev;
+    S.cloud={v,at:Date.now(),rev:syncRev,ackRev:syncRev,cid};
+    return;
+  }
+  const liveRev=Math.max(Number(CLOUD.rev)||0,Number(prev&&prev.rev)||0,1);
+  const ackRev=Number.isSafeInteger(ackedArg)&&ackedArg>=0?Math.max(Number(CLOUD.ackRev)||0,ackedArg):liveRev;
+  CLOUD.rev=Math.max(liveRev,ackRev);CLOUD.ackRev=ackRev;
+  const stampAt=CLOUD.rev>ackRev?(Number(prev&&prev.at)||0):Date.now();
+  S.cloud={v,at:stampAt,rev:CLOUD.rev,ackRev,cid};
   try{
     const raw=lsGet(saveKey());
     if(!raw)return;
@@ -4934,15 +5275,16 @@ function cloudStampBase(version,write=true){
     if(saveRefusal(raw,currentUser))return;
     const copy=JSON.parse(raw);
     if(!copy||typeof copy!=='object'||Array.isArray(copy))return;
-    copy.cloud=S.cloud;
+    const copyRev=Math.max(Number(copy.cloud&&copy.cloud.rev)||0,CLOUD.rev);
+    copy.cloud={v,at:copyRev>ackRev?(Number(copy.cloud&&copy.cloud.at)||0):stampAt,rev:copyRev,ackRev,cid};
     lsPut(saveKey(),JSON.stringify(copy));
   }catch(e){}
 }
 // Leaving the page (reload, closed tab, the v276 update reload): put this moment into the device copy
-// FIRST, then send it with keepalive, so the reload cannot cancel either one.
+// FIRST, then coordinate the leaving upload (using keepalive only below the 64 KB cap).
 function cloudFlushLeaving(){
-  try{save()}catch(e){}
-  return cloudPush(true,true);
+  try{save(true)}catch(e){}
+  return cloudCoordinateFlush(true);
 }
 
 // ---------- the connection gate (v2, 2026-10-27 owner) ----------
@@ -5071,10 +5413,28 @@ const syncLogShow=()=>{try{const rows=JSON.parse(localStorage.getItem(SYNC_LOG_K
 // test noticed. The alias is the documented name, and `cloud_sim` now reads every `pgXxx()` out of
 // docs/CHECK-A-SAVE.md and fails if the page does not define it.
 const pgSyncLog=syncLogShow;
-// The four numbers a lost session is measured in. `null` when a copy is missing rather than zero, so
-// "the account has nothing" can never be confused with "the account has 0 Zeny".
-const saveFigures=blob=>{try{const o=JSON.parse(blob);if(!o||typeof o!=='object')return null;
-  return {lv:Number(o.lv)||0,zeny:Number(o.zeny)||0,kills:Number(o.kills)||0,asc:Number(o.ascension&&o.ascension.level)||0,ver:Number(o.cloud&&o.cloud.v)||0}}catch(e){return null}};
+// Progress counters a lost session is measured in (combat AND fishing, plus client revisions, never
+// raw blobs or credentials). `null` when a copy is missing rather than zero, so "the account has
+// nothing" can never be confused with "the account has 0 Zeny".
+const saveFigures=blob=>{try{
+  const o=typeof blob==='string'?JSON.parse(blob):blob;
+  if(!o||typeof o!=='object'||Array.isArray(o))return null;
+  const f=o.fishing&&typeof o.fishing==='object'&&!Array.isArray(o.fishing)?o.fishing:null;
+  const fst=f&&f.stats&&typeof f.stats==='object'?f.stats:null;
+  const fdex=f&&f.dex&&typeof f.dex==='object'&&!Array.isArray(f.dex)?Object.keys(f.dex).length:0;
+  return {
+    lv:Number(o.lv)||0,zeny:Number(o.zeny)||0,kills:Number(o.kills)||0,
+    asc:Number(o.ascension&&o.ascension.level)||0,
+    ver:Number(o.cloud&&o.cloud.v)||0,
+    rev:Number(o.cloud&&o.cloud.rev)||0,
+    ackRev:Number(o.cloud&&o.cloud.ackRev)||0,
+    fishBag:f&&Array.isArray(f.bag)?f.bag.length:0,
+    fishCoins:Number(f&&f.coins)||0,
+    fishCatches:Number(fst&&fst.catches)||0,
+    fishEscapes:Number(fst&&fst.escapes)||0,
+    fishPerfects:Number(fst&&fst.perfects)||0,
+    fishDex:fdex
+  }}catch(e){return null}};
 // v394: a GM restore (`gmRestore:{at,from}`, stamped by /api/gm/player) is the one change a device must
 // never argue with - it moves the account BACKWARDS on purpose, so the tab's copy always beats it on Zeny,
 // kills and level, which is exactly the v330 self-echo shape. See the guard in cloudPush.
@@ -5082,29 +5442,46 @@ const restoreStamp=blob=>{try{const o=JSON.parse(blob);const g=o&&o.gmRestore;
   return g&&typeof g==='object'&&Number.isFinite(Number(g.at))?{at:Number(g.at),from:Number(g.from)||0}:null}catch(e){return null}};
 const sawRestore=stamp=>{if(!stamp)return true;const seen=Number(S&&S.gmRestore&&S.gmRestore.at)||0;return seen>=stamp.at};
 
+function cloudNoteAdoptLedger(server,replacedBlob,replacedKey){
+  const lost=saveFigures(replacedBlob),got=saveFigures(server.blob);
+  const combatBehind=!!(lost&&got&&lost.zeny>got.zeny&&lost.kills>=got.kills);
+  const fishBehind=!!(lost&&got&&(lost.fishCatches>got.fishCatches||lost.fishDex>got.fishDex||(lost.fishCoins>got.fishCoins&&lost.fishCatches>=got.fishCatches)||(lost.fishBag>got.fishBag&&lost.fishCoins>=got.fishCoins)));
+  const behind=combatBehind||fishBehind;
+  syncLog(behind?'adopt-behind':'adopt',{v:server.version,wasV:CLOUD.ver,
+    rev:lost&&lost.rev,ackRev:lost&&lost.ackRev,serverRev:got&&got.rev,
+    wasZeny:lost&&lost.zeny,nowZeny:got&&got.zeny,wasKills:lost&&lost.kills,nowKills:got&&got.kills,
+    wasLv:lost&&lost.lv,nowLv:got&&got.lv,
+    wasFishCatches:lost&&lost.fishCatches,nowFishCatches:got&&got.fishCatches,
+    wasFishCoins:lost&&lost.fishCoins,nowFishCoins:got&&got.fishCoins,
+    wasFishDex:lost&&lost.fishDex,nowFishDex:got&&got.fishDex,
+    wasFishBag:lost&&lost.fishBag,nowFishBag:got&&got.fishBag,
+    backup:replacedKey?replacedKey.slice(0,34):null});
+  if(behind){
+    const fishNote=fishBehind?' · fishing '+got.fishCatches.toLocaleString()+' vs '+lost.fishCatches.toLocaleString()+' catches, '+got.fishCoins.toLocaleString()+' vs '+lost.fishCoins.toLocaleString()+' Fishcoins, '+got.fishDex+' vs '+lost.fishDex+' Index':'';
+    cloudSay('Your account\'s copy is BEHIND this browser\'s: '+got.zeny.toLocaleString()+' Zeny against '+lost.zeny.toLocaleString()+', '+(lost.lv-got.lv>0?(lost.lv-got.lv)+' levels':'(same level)')+fishNote+'. The account copy was loaded anyway, and the newer one is kept as '+replacedKey+'. Report this line - it is the one that names the loss.','r0','cloud');
+  }
+}
+
 // Take the server's copy as the live save. This device's copy is stashed under its own backup key
 // first, so "keep cloud" is never a deletion either.
 async function cloudAdopt(server,resumeOffline=false){
   // v88.6: a copy that belongs to another account is never written into this account's slot.
   if(saveRefusal(server.blob,currentUser)){cloudSaveRefused();return}
   let replacedKey=null,replacedBlob=null;
-  try{const old=localStorage.getItem(saveKeyFor(currentUser));if(old){replacedKey=saveKeyFor(currentUser)+'_local_'+Date.now();localStorage.setItem(replacedKey,old);replacedBlob=old}}catch(e){}
-  // v330: the account winning is a normal, silent path - which is exactly why a *worse* account copy
-  // used to be indistinguishable from a good one. When the copy being thrown away is ahead of the one
-  // being loaded (more Zeny and no fewer kills), say so with both numbers and name the backup, and
-  // write it to the sync ledger either way.
-  const lost=saveFigures(replacedBlob),got=saveFigures(server.blob);
-  const behind=!!(lost&&got&&lost.zeny>got.zeny&&lost.kills>=got.kills);
-  syncLog(behind?'adopt-behind':'adopt',{v:server.version,wasV:CLOUD.ver,
-    wasZeny:lost&&lost.zeny,nowZeny:got&&got.zeny,wasKills:lost&&lost.kills,nowKills:got&&got.kills,
-    wasLv:lost&&lost.lv,nowLv:got&&got.lv,backup:replacedKey?replacedKey.slice(0,34):null});
-  if(behind)cloudSay('Your account\'s copy is BEHIND this browser\'s: '+got.zeny.toLocaleString()+' Zeny against '+lost.zeny.toLocaleString()+', '+(lost.lv-got.lv>0?(lost.lv-got.lv)+' levels':'(same level)')+'. The account copy was loaded anyway, and the newer one is kept as '+replacedKey+'. Report this line - it is the one that names the loss.','r0','cloud');
+  try{const old=lsGet(saveKeyFor(currentUser));if(old){replacedKey=saveKeyFor(currentUser)+'_local_'+Date.now();lsPut(replacedKey,old);replacedBlob=old}}catch(e){}
+  cloudNoteAdoptLedger(server,replacedBlob,replacedKey);
   lsPut(saveKeyFor(currentUser),server.blob);
   const wasGm=S&&S.gm;S=load();S.gm=!!wasGm;
   if(S.q)qRefresh();if(!S.q)S.q=['kill','loot','boss'].map(newQuest);
   CLOUD.ver=server.version;CLOUD.dirty=false;CLOUD.paused=false;
   cloudStampBase(server.version,false);   // v326: this copy now IS the account's version
-  if(server.offlineClaim){applyOfflineProgress(Date.now(),server.offlineClaim);await cloudPush(true)}
+  cloudOutboxClearAll(currentUser);
+  if(server.offlineClaim){
+    applyOfflineProgress(Date.now(),server.offlineClaim);
+    // A 409 adoption runs inside cloudPush. Its owner must finish before the coordinator
+    // can upload the claim; awaiting that same active push here deadlocks both callers.
+    if(!CLOUD.pushing)await cloudFlushNow();
+  }
   ui();
   // v330: cloudBadgeSaved() reports CLOUD.lastPush, so after an adopt it repainted the time of the last
   // *upload* - a rollback looked exactly like a healthy save. The badge says what actually happened.
@@ -5124,40 +5501,29 @@ async function cloudJoin(u,localBlob){
   if(got.refused){cloudSaveRefused(got.refused.err);return}
   const data=got.data||null;
   if(!cloudOwnedBy(data,u)){cloudAccountMismatch(data.owner);return}
-  if(!data||!data.blob){CLOUD.ver=0;CLOUD.dirty=true;if(data&&data.offlineClaim)applyOfflineProgress(Date.now(),data.offlineClaim);await cloudPush(true);return}
+  if(!data||!data.blob){CLOUD.ver=0;CLOUD.dirty=true;if(data&&data.offlineClaim)applyOfflineProgress(Date.now(),data.offlineClaim);await cloudFlushNow();return}
   if(saveRefusal(data.blob,u)){cloudSaveRefused();return}
-  syncLog('join',{serverV:data.version,localV:(cloudBaseOf((()=>{try{return JSON.parse(localBlob)}catch(e){return null}})())||{}).v,
-    serverZeny:(saveFigures(data.blob)||{}).zeny,localZeny:(saveFigures(localBlob)||{}).zeny});
+  const sFigs=saveFigures(data.blob),lFigs=saveFigures(localBlob);
+  let localSave=null;try{localSave=JSON.parse(localBlob)}catch(e){}
+  const lBase=cloudBaseOf(localSave);
+  syncLog('join',{serverV:data.version,localV:lBase&&lBase.v,rev:lBase&&lBase.rev,ackRev:lBase&&lBase.ackRev,
+    serverZeny:sFigs&&sFigs.zeny,localZeny:lFigs&&lFigs.zeny,
+    serverFish:sFigs&&sFigs.fishCatches,localFish:lFigs&&lFigs.fishCatches});
   if(sameSave(data.blob,localBlob)){CLOUD.ver=data.version;CLOUD.dirty=false;cloudBadgeSaved();   // v282: same save both sides
     cloudStampBase(data.version,false);
-    if(data.offlineClaim){applyOfflineProgress(Date.now(),data.offlineClaim);await cloudPush(true)}return}
-  // v326 (owner: "I ascended the same weapon 3 times and it went back to N+"): this device's copy is
-  // this account's own copy plus the play the last push has not carried yet. Nobody else has written
-  // since (same version), so uploading it keeps that play instead of throwing it away - which is
-  // exactly what the adopt below used to do to every single login. Anything else (an older save, a
-  // version this device never saw, a GM restore) still loses to the account, as decided in v2.
-  let localSave=null;try{localSave=JSON.parse(localBlob)}catch(e){}
-  // v395: NEVER over a GM restore this device has not seen. This is the login branch, and it is a
-  // different hole from the one v394 closed (that guard sits in cloudPush's 409 branch, and this path
-  // does not need a 409 - it pushes on the strength of localAheadOfServer alone). A device whose
-  // stored copy is stamped at exactly the restored version and that played a moment after it
-  // satisfies that test outright, so the login uploaded its pre-restore save straight over the
-  // restore - and the upload carried no `gmRestore` stamp, which destroyed the only marker that a
-  // restore had happened, so every later login was free to do it again. That is exactly what the
-  // owner saw: correct in incognito, then the usual browser put the old save back and saved it.
+    cloudOutboxAck(u,data.version,CLOUD.ackRev);
+    if(data.offlineClaim){applyOfflineProgress(Date.now(),data.offlineClaim);await cloudFlushNow()}return}
+  // v395: NEVER over a GM restore this device has not seen.
   if(sawRestore(restoreStamp(data.blob))&&localAheadOfServer(data,localSave)){
     CLOUD.ver=data.version;CLOUD.dirty=true;
+    if(lBase&&lBase.rev!==null)CLOUD.rev=Math.max(Number(CLOUD.rev)||0,lBase.rev);
+    if(lBase&&lBase.ackRev!==null)CLOUD.ackRev=Math.max(Number(CLOUD.ackRev)||0,lBase.ackRev);
     if(data.offlineClaim)applyOfflineProgress(Date.now(),data.offlineClaim);
-    const sent=await cloudPush(true);
+    const sent=await cloudFlushNow();
     if(sent==='ok'){
       cloudSay('Kept this device\'s save: it is your account\'s save plus play the server had not received yet (Lv '+(S&&S.lv)+').','r1');
       return;
     }
-    // A 428 is NOT a conflict: it is the away-claim handshake, and cloudPush has already applied the
-    // claim and re-armed the push (one retry). Falling through to cloudAdopt here deleted exactly the
-    // play this branch exists to keep - the login pushed, was asked for a claim, and the older account
-    // copy was loaded on top of the not-yet-uploaded forge. 'locked' takes the same road: it re-arms
-    // itself too. Only a real 'adopted' means the account copy already won.
     return;
   }
   // v2 (owner): the account's save is the real one. Whatever this browser held is stashed by
@@ -5177,22 +5543,18 @@ async function cloudRefresh(){
   if(!cloudOwnedBy(data,CLOUD.user)){cloudAccountMismatch(data.owner);return}
   if(!data||!data.blob)return;
   if(saveRefusal(data.blob,currentUser)){cloudSaveRefused();return}   // v88.6
-  const local=localStorage.getItem(saveKeyFor(currentUser));
+  const local=lsGet(saveKeyFor(currentUser));
   if(sameSave(data.blob,local)){CLOUD.ver=data.version;CLOUD.dirty=false;
     cloudStampBase(data.version,false);   // v326
-    if(data.offlineClaim){applyOfflineProgress(Date.now(),data.offlineClaim);await cloudPush(true)}return}
-  // v82: the server's version is the one THIS tab last synced from, so no other device has written
-  // since - our copy is strictly newer and asking the player to choose between them would be a
-  // dialog with one right answer. (The normal cause is a tab the browser suspended for an hour: it
-  // wakes up holding an unsynced save and an old version number.) Push instead of prompting.
-  // v326: the same answer now survives a reload, because it is read from the stamps in the save
-  // rather than from this session's memory.
+    cloudOutboxAck(currentUser,data.version,CLOUD.ackRev);
+    if(data.offlineClaim){applyOfflineProgress(Date.now(),data.offlineClaim);await cloudFlushNow()}return}
   let localSave=null;try{localSave=JSON.parse(local)}catch(e){}
-  // v395: the same rule for a returning tab. v394 taught cloudPush's 409 branch to refuse a push
-  // that would bury a GM restore, but this shortcut pushes without ever reaching a 409, so a tab
-  // that came back holding an equal-or-newer copy could still bury the restore that way. When the
-  // server's copy carries a restore this device has not seen, fall through to cloudAdopt instead.
-  if(sawRestore(restoreStamp(data.blob))&&((CLOUD.dirty&&Number(data.version)===Number(CLOUD.ver))||localAheadOfServer(data,localSave))){await cloudPush(true);return}
+  // v395: the same rule for a returning tab.
+  if(sawRestore(restoreStamp(data.blob))&&((CLOUD.dirty&&Number(data.version)===Number(CLOUD.ver))||localAheadOfServer(data,localSave))){
+    CLOUD.ver=Number(data.version);CLOUD.dirty=true;
+    await cloudFlushNow();
+    return;
+  }
   // v2: the account always wins, including over unsynced work in this tab. Between the server saving
   // and the connection dropping a tab can hold at most one sync interval of play, and a copy that
   // disagrees with the account is a copy another device already moved past.
@@ -5241,6 +5603,7 @@ function cloudPushWatchdog(){
   // The request has outlived its own deadline, so the abort did not reach this path (an older browser
   // without AbortController, or a fetch stubbed by something). The save is still here; let it retry.
   CLOUD.pushing=false;CLOUD.dirty=true;CLOUD.pushSince=0;
+  if(cloudActiveResolve){const r=cloudActiveResolve;cloudActivePush=null;cloudActiveResolve=null;r('offline')}
   cloudBadgeStale('A save request stopped answering');
   cloudSay('The last cloud save request never came back, so it was abandoned and will be retried. Nothing on this device was lost.','r0','cloud');
 }
@@ -5427,6 +5790,13 @@ function ptsSpent(){let c=0;for(const k of['str','agi','dex','luk','int','vit'])
 function cloudSession(u,gm,id){
   CLOUD.epoch=(CLOUD.epoch||0)+1;   // v289: requests already in flight belong to the previous session
   CLOUD.on=true;CLOUD.user=u;CLOUD.gm=!!gm;if(id)CLOUD.id=Number(id);CLOUD.onSince=Date.now();CLOUD.localSaveAt=CLOUD.localSaveAt||Date.now();
+  CLOUD.updating=false;CLOUD.blocked=null;
+  cloudCid(u);
+  const meta=cloudBaseOf(S);
+  if(meta){
+    if(meta.rev!==null)CLOUD.rev=Math.max(Number(CLOUD.rev)||0,meta.rev);
+    if(meta.ackRev!==null)CLOUD.ackRev=Math.max(Number(CLOUD.ackRev)||0,meta.ackRev);
+  }
   if(typeof shopSession==='function')shopSession(u);   // haven-v215: what this account owns in the Cash Shop
   if(typeof friendsSession==='function')friendsSession(u);   // haven-v273: the account's friends list
   cloudBadge('☁ ✓',CLOUD.lastPush?'Signed in as '+u+' · last save '+clockHHMM(CLOUD.lastPush):'Signed in as '+u);
@@ -5510,6 +5880,7 @@ function cloudStart(u,gm){
 }
 async function initSessionFromCloud(u,gm,isNew,id){
   currentUser=u;if(id)CLOUD.id=Number(id);hudRate=null;zenyEarned=0;expEarned=0;
+  CLOUD.rev=0;CLOUD.ackRev=0;CLOUD.updating=false;CLOUD.blocked=null;
   // v363 (owner: "all players spawn in the social hub when they log in"): every cloud login
   // opens the plaza first, whatever the save situation is - a brand-new account, a device that
   // already had a copy, or a fresh device downloading the account. The field render is held back
@@ -5517,7 +5888,7 @@ async function initSessionFromCloud(u,gm,isNew,id){
   // typeof-guarded: builds without the plaza, and the cloud suite that runs this block on its own,
   // have neither the flag nor PGSocial.
   if(typeof PGSocial!=='undefined'&&typeof presentPlazaFirst==='function')presentPlazaFirst();
-  const local=localStorage.getItem(saveKeyFor(u));
+  const local=await cloudRecoverOutbox(u);
   // v88.6: a copy in this browser that belongs to another account is not loaded, and nothing is written over it.
   const elsewhere=saveRefusal(local,u);
   if(elsewhere){currentUser=null;showErr(saveBlockedText(u,elsewhere,true));return}
@@ -5540,9 +5911,9 @@ async function initSessionFromCloud(u,gm,isNew,id){
       cloudStampBase(data.version,false);   // v326: play from here on is newer than this version
       cloudBadgeSaved();   // v282
       log('Loaded your cloud save (Lv '+S.lv+').','r1','cloud');
-      if(data.offlineClaim){applyOfflineProgress(Date.now(),data.offlineClaim);await cloudPush(true)}
+      if(data.offlineClaim){applyOfflineProgress(Date.now(),data.offlineClaim);await cloudFlushNow()}
     }else{
-      S=fresh();S.gm=!!gm;S.q=['kill','loot','boss'].map(newQuest);CLOUD.ver=0;CLOUD.dirty=true;
+      S=fresh();S.gm=!!gm;S.q=['kill','loot','boss'].map(newQuest);CLOUD.ver=0;CLOUD.rev=1;CLOUD.ackRev=0;CLOUD.dirty=true;
       if(typeof BGM!=='undefined')BGM.sync(S.mp);
       // v361: a brand-new cloud account gets the same hub-first welcome as a local one.
       // v363: and so does every other cloud login - the flag is set at the top of this function.
@@ -5629,21 +6000,18 @@ async function cloudAuth(u,p,isReg){
 async function cloudLogout(){
   if(!CLOUD.on)return;
   CLOUD.signingOut=true;      // the session is being ended on purpose; do not report a kick
+  cloudSetUpdating(true);
   // v326: the last minute has to be ON THE SERVER before the session that authorises it is deleted.
-  // This used to be a fire-and-forget cloudFlushNow() racing the DELETE and the reload, so a logout
-  // left the account copy behind on the server - the account-switching report, exactly. The leaving
-  // path writes the device copy and keepalives the upload; the wait is capped so a dead network can
-  // never trap the player on the way out.
-  // Both waits are capped: a server that stops answering must not leave the player stuck on a page
-  // they asked to leave. cloudFetch has no timeout of its own.
+  // Drain any in-flight upload plus the final save through the coordinator before DELETE /sessions,
+  // bounded by the request timeout so a dead network still lets the player leave.
   const cap=(p,ms)=>Promise.race([p.catch(()=>{}),new Promise(r=>setTimeout(r,ms))]);
-  try{await cap(cloudFlushLeaving(),2500)}catch(e){}
+  try{await cap(cloudFlushLeaving(),CLOUD_TIMEOUT_MS+2000)}catch(e){}
   try{await cap(cloudFetch('/sessions',{method:'DELETE',body:JSON.stringify({})}),1500)}catch(e){}
   CLOUD.on=false;CLOUD.user=null;CLOUD.previewToken=null;
   // v280: the signed-in account id is part of the save's identity. It must not outlive the session,
   // or the next login on this browser would judge that player's own old copy by the wrong account.
-  CLOUD.id=0;
-  CLOUD.lost=false;CLOUD.gate=false;CLOUD.paused=false;CLOUD.offline=false;CLOUD.dirty=false;
+  CLOUD.id=0;CLOUD.rev=0;CLOUD.ackRev=0;CLOUD.cid='';CLOUD.cidUser='';CLOUD.updating=false;CLOUD.blocked=null;CLOUD.outbox=null;
+  CLOUD.lost=false;CLOUD.gate=false;CLOUD.paused=false;CLOUD.offline=false;CLOUD.dirty=false;CLOUD.signingOut=false;
   cloudGateHide();
   if(typeof shopReset==='function')shopReset();
   if(typeof friendsReset==='function')friendsReset();   // haven-v273: nobody's friends are shown to the next account
@@ -6411,7 +6779,7 @@ function applyOfflineProgress(now=Date.now(),serverClaim=null){
     S.offlineKillRemainder=plan.remainder;
   }
   if(!covered)farmSession=null;
-  S.offlineAt=now;S.offlineRateAt=now;S.offlineRateKills=safeCount(S.kills);save();if(!covered){zenyEarned=0;expEarned=0;}
+  S.offlineAt=now;S.offlineRateAt=now;S.offlineRateKills=safeCount(S.kills);save(true);if(!covered){zenyEarned=0;expEarned=0;}
   if(plan.show&&!covered)showOfflineReward(r);return r;
 }
 // ---------- skill effects: damage over time, stun, chain ----------
@@ -9655,52 +10023,52 @@ function insertUI(sel){if(!(sel.slots>0))return'<small>No card slots on this ite
 // moved, never recreated, so action values, disabled states, confirmation paths and tooltips
 // remain owned by the original renderers. No game/save state is changed here.
 var RO_ICONS={
-  'Novice':'icon_jsxq_big_101.png',
-  'Swordman':'icon_jsxq_big_201.png',
-  'Knight':'icon_jsxq_big_212.png',
-  'Lord Knight':'icon_jsxq_big_213.png',
-  'Rune Knight':'icon_job_js_qslz.png',
-  'Crusader':'icon_jsxq_big_222.png',
-  'Paladin':'icon_jsxq_big_223.png',
-  'Royal Guard':'icon_job_js_sdszj.png',
-  'Mage':'icon_jsxq_big_301.png',
-  'Wizard':'icon_jsxq_big_312.png',
-  'High Wizard':'icon_jsxq_big_313.png',
-  'Warlock':'icon_job_mfs_cmds.png',
-  'Sage':'icon_jsxq_big_322.png',
-  'Scholar':'icon_jsxq_big_323.png',
+  'Novice':'icon_jsxq_big_101.webp',
+  'Swordman':'icon_jsxq_big_201.webp',
+  'Knight':'icon_jsxq_big_212.webp',
+  'Lord Knight':'icon_jsxq_big_213.webp',
+  'Rune Knight':'icon_job_js_qslz.webp',
+  'Crusader':'icon_jsxq_big_222.webp',
+  'Paladin':'icon_jsxq_big_223.webp',
+  'Royal Guard':'icon_job_js_sdszj.webp',
+  'Mage':'icon_jsxq_big_301.webp',
+  'Wizard':'icon_jsxq_big_312.webp',
+  'High Wizard':'icon_jsxq_big_313.webp',
+  'Warlock':'icon_job_mfs_cmds.webp',
+  'Sage':'icon_jsxq_big_322.webp',
+  'Scholar':'icon_jsxq_big_323.webp',
   'Sorcerer':'icon_job_mfs_sorcerer.png',
-  'Archer':'icon_jsxq_big_401.png',
-  'Hunter':'icon_jsxq_big_412.png',
-  'Sniper':'icon_jsxq_big_413.png',
-  'Ranger':'icon_job_gjs_sss.png',
-  'Bard & Dancer':'icon_jsxq_big_422.png',
-  'Minstrel & Gypsy':'icon_jsxq_big_423.png',
+  'Archer':'icon_jsxq_big_401.webp',
+  'Hunter':'icon_jsxq_big_412.webp',
+  'Sniper':'icon_jsxq_big_413.webp',
+  'Ranger':'icon_job_gjs_sss.webp',
+  'Bard & Dancer':'icon_jsxq_big_422.webp',
+  'Minstrel & Gypsy':'icon_jsxq_big_423.webp',
   'Maestro & Wanderer':'icon_job_lr_yxlr.png',
-  'Thief':'icon_jsxq_big_601.png',
-  'Assassin':'icon_jsxq_big_612.png',
-  'Assassin Cross':'icon_jsxq_big_613.png',
-  'Guillotine Cross':'icon_job_dz_szck.png',
-  'Rogue':'icon_jsxq_big_622.png',
-  'Stalker':'icon_jsxq_big_623.png',
-  'Shadow Chaser':'icon_job_dz_sxtb.png',
-  'Acolyte':'icon_jsxq_big_501.png',
-  'Priest':'icon_jsxq_big_512.png',
-  'High Priest':'icon_jsxq_big_513.png',
-  'Arch Bishop':'icon_job_fs_sg.png',
-  'Monk':'icon_jsxq_big_522.png',
-  'Champion':'icon_jsxq_big_523.png',
-  'Sura':'icon_job_fs_wszs.png',
-  'Merchant':'icon_jsxq_big_701.png',
-  'Blacksmith':'icon_jsxq_big_712.png',
-  'Whitesmith':'icon_jsxq_big_713.png',
-  'Mechanic':'icon_job_sr_jxgj.png',
-  'Alchemist':'icon_jsxq_big_722.png',
-  'Biochemist':'icon_jsxq_big_723.png',
+  'Thief':'icon_jsxq_big_601.webp',
+  'Assassin':'icon_jsxq_big_612.webp',
+  'Assassin Cross':'icon_jsxq_big_613.webp',
+  'Guillotine Cross':'icon_job_dz_szck.webp',
+  'Rogue':'icon_jsxq_big_622.webp',
+  'Stalker':'icon_jsxq_big_623.webp',
+  'Shadow Chaser':'icon_job_dz_sxtb.webp',
+  'Acolyte':'icon_jsxq_big_501.webp',
+  'Priest':'icon_jsxq_big_512.webp',
+  'High Priest':'icon_jsxq_big_513.webp',
+  'Arch Bishop':'icon_job_fs_sg.webp',
+  'Monk':'icon_jsxq_big_522.webp',
+  'Champion':'icon_jsxq_big_523.webp',
+  'Sura':'icon_job_fs_wszs.webp',
+  'Merchant':'icon_jsxq_big_701.webp',
+  'Blacksmith':'icon_jsxq_big_712.webp',
+  'Whitesmith':'icon_jsxq_big_713.webp',
+  'Mechanic':'icon_job_sr_jxgj.webp',
+  'Alchemist':'icon_jsxq_big_722.webp',
+  'Biochemist':'icon_jsxq_big_723.webp',
   'Geneticist':'icon_job_sr_geneticist.png',
-  'Gunslinger':'icon_jsxq_big_801.png',
-  'Rebellion':'icon_jsxq_big_812.png',
-  'Night Watch':'icon_job_sqs_yxz.png',
+  'Gunslinger':'icon_jsxq_big_801.webp',
+  'Rebellion':'icon_jsxq_big_812.webp',
+  'Night Watch':'icon_job_sqs_yxz.webp',
   'Ninja':'icon_job_ninja.png',
   'Kagerou & Oboro':'icon_job_kagerou.png',
   'Shinkiro & Shiranui':'icon_job_shinkiro.png'
@@ -9722,7 +10090,7 @@ function eclipseClassEmblem(name){
   const pathData=art[family]||art.Novice;
   const svg='<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path class="crest-frame" d="M24 2 43 12v20L24 46 5 32V12Z"/><g transform="translate(4 3)">'+pathData+'</g>'+(tier>=2?'<path d="m12 36 12 7 12-7"/>':'')+(tier>=3?'<path d="m17 7 2 3 5-5 5 5 2-3"/>':'')+'</svg>';
   const ro=RO_ICONS[name];
-  return '<span class="eclipse-class-emblem tier-'+tier+'">'+(ro?'<img class="class-ro-icon" src="assets/ro_icons/'+ro+'" alt="'+esc(name)+'" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'block\'"><span style="display:none">'+svg+'</span>':svg)+'</span>';
+  return `<span class="eclipse-class-emblem tier-${tier}">${ro?`<img class="class-ro-icon" src="assets/ro_icons/${ro}" alt="${esc(name)}" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><span style="display:none">${svg}</span>`:svg}</span>`;
 }
 function arrangePanel(k,root){
   const make=(tag,cls,text)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(text)e.textContent=text;return e};
@@ -15391,6 +15759,7 @@ function simSteps(dt){
   for(let i=0;i<speed;i++){update(dt);if(!simVisualsOff())kitTick(dt)}
 }
 function simAdvance(now=performance.now()){
+  if(typeof CLOUD!=='undefined'&&CLOUD.updating){simAt=Math.max(simAt,now);simPending=0;return}
   if(simOwner!==S){simOwner=S;simPending=0;simNeedsUI=false;}
   const elapsed=Math.min(SIM_CATCHUP,Math.max(0,(now-simAt)/1000));simAt=Math.max(simAt,now);
   simPending=Math.min(SIM_CATCHUP,simPending+elapsed);
@@ -15455,7 +15824,7 @@ function bgTick(fromWorker=false){
   const now=performance.now();
   if(fromWorker===true)simWorkerAt=now;
   else if(simWorker&&simWorkerAt>0&&now-simWorkerAt<SIM_BG_MS*2)return;
-  if(CLOUD.lost&&!plazaEarningWhileAway()){simAt=now;simPending=0;return}
+  if((CLOUD.lost&&!plazaEarningWhileAway())||CLOUD.updating){simAt=now;simPending=0;return}
   if(!document.hidden){
     if(!simFrameStarved(now))return;        // a visible tab getting frames is driven by loop(), not by this
     if(!simOccluded){simOccluded=true;if(!awayAt){awayAt=simAt;awayKills=S?S.kills:0;awayZeny=zenyEarned;awayLv=S?S.lv:0}}
@@ -15469,7 +15838,7 @@ function bgTick(fromWorker=false){
   }catch(e){if(!bgTick.e){bgTick.e=1;console.error(e);log('Error: '+e.message,'r0')}}}
 function bgHide(){                      // the tab went to the background: note the moment, then save
   const now=performance.now();awayReturnAt=0;if(!awayAt){awayAt=now;awayKills=S?S.kills:0;awayZeny=zenyEarned;awayLv=S?S.lv:0}
-  simAdvance(now);save();simBgSaveAt=now}
+  if(!CLOUD.updating){simAdvance(now);save();simBgSaveAt=now}}
 function bgShow(){
   const now=performance.now();simOccluded=false;simFrameAt=now;
   if(!awayAt)return;
@@ -15493,7 +15862,7 @@ try{
   if(typeof Worker==='function'&&typeof Blob==='function'&&typeof URL!=='undefined'&&typeof URL.createObjectURL==='function'){
     const u=URL.createObjectURL(new Blob([`setInterval(()=>postMessage(0),${SIM_BG_MS});onmessage=()=>postMessage(1)`],{type:'text/javascript'}));
     simWorker=new Worker(u);if(typeof URL.revokeObjectURL==='function')URL.revokeObjectURL(u);
-    simWorker.onmessage=e=>{if(e&&e.data===1){simWorkerDrain=false;if(simPending>1e-6&&(!CLOUD.lost||plazaEarningWhileAway()))try{simAdvance()}catch(err){console.error(err)}}else bgTick(true)};
+    simWorker.onmessage=e=>{if(e&&e.data===1){simWorkerDrain=false;if(simPending>1e-6&&!CLOUD.updating&&(!CLOUD.lost||plazaEarningWhileAway()))try{simAdvance()}catch(err){console.error(err)}}else bgTick(true)};
     simWorker.onerror=e=>{if(e&&e.preventDefault)e.preventDefault();simWorker=null;simWorkerDrain=false};
   }
 }catch(e){simWorker=null}
@@ -15593,11 +15962,53 @@ function updateToast(){
  t.textContent='Updating to the newest build…';
  document.body.appendChild(t);
 }
-function showUpdatePrompt(build=BUILD){
-  if(document.getElementById('updatePrompt'))return;
+function cloudSavedForUpdate(res,targetRev){
+ if(typeof CLOUD==='undefined'||!CLOUD.on)return true;
+ if(CLOUD.paused||CLOUD.lost||CLOUD.blocked==='too-large'||(typeof cloudReplaced!=='undefined'&&cloudReplaced))return false;
+ if(res!=='ok'&&res!=='adopted')return false;
+ if(CLOUD.dirty)return false;
+ const need=Number(targetRev)||0;
+ return need<=0||(Number(CLOUD.ackRev)||0)>=need;
+}
+function updateFailDetail(res){
+ if(typeof CLOUD!=='undefined'&&CLOUD.blocked==='too-large'||res==='too-large')
+  return 'Your save is currently too large to upload, so the page did not reload. Free bag space or keep playing here until cloud sync succeeds.';
+ if(typeof cloudReplaced!=='undefined'&&cloudReplaced)
+  return 'Your session expired or signed in elsewhere, so the page did not reload over unsaved progress.';
+ if(typeof CLOUD!=='undefined'&&CLOUD.lost&&CLOUD.offline)
+  return 'The server is in maintenance or unreachable. Your progress is kept on this device — retry once the cloud reconnects.';
+ return 'Could not confirm your cloud save ('+(res||'offline')+'). Your progress is kept on this device — retry when ready or keep playing.';
+}
+let updateAttempt=0;
+function ensureUpdateLaterBtn(prompt){
+ let later=prompt.querySelector('[data-update-later]');
+ if(!later){
+  later=document.createElement('button');
+  later.type='button';later.setAttribute('data-update-later','');later.textContent='Keep playing';
+  prompt.appendChild(later);
+ }
+ later.onclick=()=>{
+  updateAttempt++;
+  if(typeof cloudSetUpdating==='function')cloudSetUpdating(false);
+  showUpdatePrompt.until=Date.now()+UPDATE_SNOOZE_MS;
+  const toast=document.getElementById('updateToast');if(toast)toast.remove();
+  prompt.remove();
+ };
+}
+function showUpdatePrompt(build=BUILD,failNote=''){
+  const existing=document.getElementById('updatePrompt');
+  if(existing){
+    if(failNote){
+      const p=existing.querySelector('p'),btn=existing.querySelector('button');
+      if(p)p.textContent=failNote;
+      if(btn){btn.disabled=false;btn.textContent='Retry save & refresh'}
+      ensureUpdateLaterBtn(existing);
+    }
+    return;
+  }
   // Same build already dismissed: stay quiet until the snooze expires. A DIFFERENT build is news
   // even if an older one was dismissed, so it always gets a prompt.
-  if(showUpdatePrompt.build===build&&Date.now()<(showUpdatePrompt.until||0))return;
+  if(!failNote&&showUpdatePrompt.build===build&&Date.now()<(showUpdatePrompt.until||0))return;
   showUpdatePrompt.build=build;
   const insistent=Date.now()-PAGE_STARTED_AT>=UPDATE_INSIST_MS;
   const text=insistent
@@ -15606,14 +16017,33 @@ function showUpdatePrompt(build=BUILD){
   const prompt=document.createElement('section');prompt.id='updatePrompt';
   prompt.setAttribute('role','dialog');prompt.setAttribute('aria-labelledby','updatePromptTitle');
   prompt.innerHTML=text;
+  if(failNote){
+    const p=prompt.querySelector('p'),btn=prompt.querySelector('button');
+    if(p)p.textContent=failNote;
+    if(btn)btn.textContent='Retry save & refresh';
+    ensureUpdateLaterBtn(prompt);
+  }
   prompt.querySelector('button').onclick=async()=>{
     const button=prompt.querySelector('button');if(button.disabled)return;
+    const attempt=++updateAttempt;
     button.disabled=true;button.textContent=insistent?'Saving and reloading…':'Saving and refreshing…';
-    save();
-    try{await cloudFlushNow()}finally{hardReload(build,true)}
+    if(typeof cloudSetUpdating==='function')cloudSetUpdating(true);
+    let ok=false,res='offline';
+    try{
+      save(true);
+      const targetRev=typeof CLOUD!=='undefined'?Math.max(Number(CLOUD.rev)||0,Number(typeof S!=='undefined'&&S&&S.cloud&&S.cloud.rev)||0):0;
+      res=await cloudFlushNow();
+      ok=cloudSavedForUpdate(res,targetRev);
+    }catch(e){ok=false;res='offline'}
+    if(attempt!==updateAttempt||!prompt.isConnected)return;
+    if(ok){hardReload(build,true);return}
+    if(typeof cloudSetUpdating==='function')cloudSetUpdating(false);
+    button.disabled=false;button.textContent='Retry save & refresh';
+    const msgEl=prompt.querySelector('p');
+    if(msgEl)msgEl.textContent=updateFailDetail(res);
+    ensureUpdateLaterBtn(prompt);
   };
-  const later=prompt.querySelector('[data-update-later]');
-  if(later)later.onclick=()=>{showUpdatePrompt.until=Date.now()+UPDATE_SNOOZE_MS;prompt.remove()};
+  if(prompt.querySelector('[data-update-later]'))ensureUpdateLaterBtn(prompt);
   document.body.appendChild(prompt);
 }
 // v411: how long THIS tab waits before the flush that precedes a build reload. One random draw per
@@ -15627,28 +16057,42 @@ function updateWatch(){
   return fetch('version.txt?_='+Date.now(),{cache:'no-store'}).then(r=>r&&r.ok?r.text():null).then(txt=>{
     txt=String(txt||'').trim();
     if(!txt||txt===BUILD)return;
+    if(showUpdatePrompt.build===txt&&Date.now()<(showUpdatePrompt.until||0))return;
     // v371 (owner): a hidden tab never navigates - see pendingUpdateBuild above. It remembers the
     // build instead, and the moment the player returns the visibilitychange handler picks it up.
     if(document.hidden===true){pendingUpdateBuild=txt;return}
-    // v411 (CPU): a deploy used to make EVERY open tab flush its save in the same second - one build
-    // change, one synchronised stampede of the heaviest requests the API serves. That is exactly the
-    // shape of the Nov 15 CPU spike: errors 13/hour -> 394/hour while traffic stayed FLAT
-    // (docs/CPU-LIMIT.md). The reset still happens on the first quiet moment (v299/v371), but the
-    // UPLOAD that precedes it now waits its own small random slice - see cloudUpdateJitterMs().
+    pendingUpdateBuild=null;
+    // v411 (CPU): spread deploy uploads across UPDATE_JITTER_MS, then pause reward mutation, capture
+    // the latest save, drain the serialized save coordinator, and navigate ONLY once the target
+    // revision is confirmed on the server (never racing a 1.5s timer or reloading on failure).
     if(Date.now()-PAGE_STARTED_AT<UPDATE_AUTO_MS){
      updateToast();
-     // v326: this reset is one of the "random" disconnects players report - the socket dies with the
-     // page and Local chat went with it. It is also how the last minute of play used to be lost: a
-     // save over the 64 KB keepalive cap cannot be protected by the leaving flush, so give the upload
-     // a moment to land before navigating instead of racing it. A failure still navigates - the
-     // device copy is kept and stamped, so logging back in picks it up.
      if(typeof cloudFlushNow==='function'&&typeof save==='function'&&typeof CLOUD!=='undefined'&&CLOUD.on&&!CLOUD.lost&&!updateResetSeen(txt)){
-      try{save()}catch(e){}
-      const go=()=>{hardReload(txt)};
-      // v411: draw this tab's slice, then race the upload against it as before. A tab that is already
-      // mid-fight gets its save spread instead of every tab firing together.
+      if(CLOUD.updating)return;
+      const attempt=++updateAttempt;
       const spread=new Promise(r=>setTimeout(r,cloudUpdateJitterMs()));
-      Promise.all([spread]).then(()=>Promise.race([cloudFlushNow().catch(()=>{}),new Promise(r=>setTimeout(r,1500))])).then(go,go);
+      return spread.then(async()=>{
+       if(attempt!==updateAttempt)return;
+       if(document.hidden===true){const t=document.getElementById('updateToast');if(t)t.remove();pendingUpdateBuild=txt;return}
+       if(!CLOUD.on||CLOUD.lost||CLOUD.paused||updateResetSeen(txt)){const t=document.getElementById('updateToast');if(t)t.remove();showUpdatePrompt(txt);return}
+       if(typeof cloudSetUpdating==='function')cloudSetUpdating(true);
+       let ok=false,res='offline';
+       try{
+        save(true);
+        const targetRev=Math.max(Number(CLOUD.rev)||0,Number(typeof S!=='undefined'&&S&&S.cloud&&S.cloud.rev)||0);
+        res=await cloudFlushNow();
+        ok=cloudSavedForUpdate(res,targetRev);
+       }catch(e){ok=false;res='offline'}
+       if(attempt!==updateAttempt)return;
+       if(ok){hardReload(txt);return}
+       if(typeof cloudSetUpdating==='function')cloudSetUpdating(false);
+       const toast=document.getElementById('updateToast');if(toast)toast.remove();
+       showUpdatePrompt(txt,updateFailDetail(res));
+      });
+     }
+     if(typeof CLOUD!=='undefined'&&CLOUD.on&&(CLOUD.lost||CLOUD.paused||CLOUD.dirty)){
+      const toast=document.getElementById('updateToast');if(toast)toast.remove();
+      showUpdatePrompt(txt,updateFailDetail('offline'));
       return;
      }
      if(hardReload(txt))return;
@@ -15666,20 +16110,20 @@ setInterval(updateWatch,60000);
 // be hours old while the player was on another tab, and the check is a 60-byte text file.
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&(pendingUpdateBuild||Date.now()-PAGE_STARTED_AT>30000))updateWatch()});
 </script>
-<script src="assets/wardrobe-ui.js?v=418"></script>
+<script src="assets/wardrobe-ui.js?v=419"></script>
 <script src="assets/shop.js?v=321"></script>
 <script src="assets/friends.js?v=273"></script>
-<script src="assets/digimon/roster.js?v=418"></script>
-<script src="assets/digimon/base-stats.js?v=418"></script>
-<script src="assets/social-rules.js?v=418"></script>
-<script src="assets/social-poker.js?v=418"></script>
-<script src="assets/digimon-sanctuary.js?v=418"></script>
+<script src="assets/digimon/roster.js?v=419"></script>
+<script src="assets/digimon/base-stats.js?v=419"></script>
+<script src="assets/social-rules.js?v=419"></script>
+<script src="assets/social-poker.js?v=419"></script>
+<script src="assets/digimon-sanctuary.js?v=419"></script>
 <script src="assets/digimon-battle.js?v=393"></script>
-<script src="assets/social-digimon.js?v=418"></script>
+<script src="assets/social-digimon.js?v=419"></script>
 <script src="assets/social-gym-redesign.js?v=393"></script>
 <script src="assets/social-pond-design.js?v=393"></script>
-<script src="assets/social-scene.js?v=418"></script>
-<script src="assets/social-fishing.js?v=418"></script>
-<script src="assets/plaza-bots.js?v=418"></script>
-<script src="assets/social.js?v=418"></script></body>
+<script src="assets/social-scene.js?v=419"></script>
+<script src="assets/social-fishing.js?v=419"></script>
+<script src="assets/plaza-bots.js?v=419"></script>
+<script src="assets/social.js?v=419"></script></body>
 </html>

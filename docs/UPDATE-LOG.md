@@ -11748,3 +11748,84 @@ were** - the DPS deltas this sandbox reports (Lord Knight +23%, Sniper +27%) rep
 `origin/main` too, so they are an environment artifact of the benchmark, not a change in the game, and
 re-recording them here would have written wrong numbers into the repository.
 
+### 2026-11-17 — `haven-v418 save sync & update durability`
+
+* **What changed for the player:** fishing catches, locks, auto-sells, Tackle Shop purchases and field
+  progress can no longer be dropped when an update reload races an in-flight cloud upload, when a catch
+  lands while a prior `PUT /api/save` is still on the wire, or when `localStorage` hits a quota error.
+  Clicking **Refresh & log in again** (or hitting the fresh-page automatic update window) now pauses
+  simulation/fishing/plaza mutations, captures the final save, drains the serialized save coordinator,
+  and navigates **only** after the target save revision is confirmed on the server. When the cloud save
+  cannot be confirmed (offline, 413 `too-large`, 503 maintenance, 401 session replaced), the page stays
+  open, unfreezes gameplay, and offers **Retry save & refresh** + **Keep playing** instead of reloading
+  over unsaved progress.
+* **Why those losses happened:**
+  1. `cloudPush()` returned `'idle'` immediately while `CLOUD.pushing` was true, `#updatePrompt`
+     reloaded inside an unconditional `finally { hardReload(...) }`, and `updateWatch()` raced
+     `cloudFlushNow()` against a 1,500 ms `setTimeout`.
+  2. `cloudStampBase(d.version)` stamped `S.cloud = { v, at: Date.now() }` when an earlier upload
+     resolved, so any catch saved *during* that upload got `cloud.at >= S.offlineAt`; on reload
+     `localAheadOfServer` saw `offlineAt <= base.at` and adopted the stale server blob over the newer
+     local fish.
+  3. `lsPut()` caught `QuotaExceededError` and fell back to RAM-only `mem[k]` while `save()` still
+     advanced `CLOUD.localSaveAt` as if durable storage had succeeded.
+* **How it works now:**
+  * **Monotonic revisions + durable outbox:** every `save()` increments `CLOUD.rev` and records
+    `{ rev, ackRev, cid, baseVer, blob }` in `pg_outbox1_<user>` and IndexedDB `pg_durable_v1`;
+    `CLOUD.ackRev` advances only to the exact `uploadedRev` acknowledged by the server, and
+    `localAheadOfServer` checks `rev > ackRev` before falling back to legacy `offlineAt > at`
+    (preserving `restoreFrom` in `docs/CHECK-A-SAVE.md`).
+  * **Serialized save coordinator & `cid`-verified 409 handling:** `cloudCoordinateFlush` /
+    `cloudFlushNow` await any active `cloudActivePush` and drive 428 away-claim / same-`cid` rebase
+    follow-ups until `ackRev >= targetRev`. Lost-response retries where the server already committed
+    this browser's exact `(cid, uploadedRev)` reconcile in zero extra `PUT`s, foreign-`cid` conflicts
+    always adopt + stash `_local_` backups, and GM `restoreFenced` / `gmRestore` fences always win.
+  * **Storage-failure truthfulness & fishing-aware ledger:** `lsPut` retries compact `packSave(S)` on
+    quota failure, leaves `CLOUD.localSaveAt` untouched when `localStorage` fails, sets
+    `CLOUD.storageFailed = true`, and warns in the badge/log. `saveFigures` and `cloudAdopt` now track
+    `fishCatches`, `fishCoins`, `fishDex` and `fishBag` so fishing-only rollbacks record `adopt-behind`
+    in `pgSyncLog()`.
+* **Files touched:** `index.html`, `assets/social-fishing.js`, `assets/social.js`, build-tag mirrors
+  (`Updates/cards-gear-audit/affix-ranges.html`, `Updates/cards-gear-audit/equipment-cards-tuning.html`,
+  `tools/cloudflare-deploy-steps.md`), `tools/tests/fishing_save_reload_sim.mjs` (new, 10 end-to-end
+  scenarios), `tools/tests/update_watch_sim.js`, `tools/tests/plaza_bots_sim.js`,
+  `tools/tests/social_fishing_sim.js`, `tools/tests/fixtures/progression_{encounters,gear,skills}.json`
+  (hash re-stamp only; all 126 measured + 126 baseline rows unchanged), `docs/TESTING.md`, and this log.
+
+
+### 2026-11-18 — `haven-v419` save recovery follow-up
+* **Changed:** Each page creates its own writer identity, so a downloaded character or another
+  tab cannot impersonate an earlier upload. Recovery reads the newest in-memory overlay while
+  localStorage remains full, uses the outbox's actual `savedAt` for legacy saves, and only reports
+  an IndexedDB write committed after its transaction completes. Failed recovery writes warn the
+  player to keep the tab open. Conflict/GM-restore adoption leaves pending offline claims for the
+  save coordinator instead of waiting on its own active upload. Keep playing cancels outstanding
+  update navigation, removes the update toast, and snoozes subsequent polls.
+* **Try it:** Catch fish during a slow upload, choose refresh, then Keep playing; the pending
+  upload must not navigate later. On a full-storage browser, reload after an IndexedDB checkpoint
+  and confirm the recovered fish reaches the cloud. Use disposable accounts for testing.
+* **Checks:** Save/reload regression 18/18; update watcher 22/22; Pages configuration and all three
+  generated-asset checks pass. Full gate: 229/240 passing, with the same 11 Windows/baseline failures
+  reproduced against original PR #248 source (listed in Testing). All 126 fresh combat measurement
+  rows match between original and patched clients; fixtures were regenerated through real benchmark
+  runs with unchanged assertions, historical baseline rows, and budgets. No production CPU claim.
+* **Delivery:** Follow-up for PR #248 on `arena/870d97ba-prontera-grind`; no merge, deployment,
+  production account changes, new Social Durable Object traffic, or reward-rule changes.
+
+### 2026-11-18 — `haven-v419` PR #248 main integration
+* **Changed:** Integrated main `0266d98` into the save-recovery branch and resolved the build-tag,
+  cache-version and deployment-guide conflicts. Preserved the save coordinator and the Class Tree
+  redesign/native icon sources. Runtime delivery selects 43 existing pixel-identical WebPs and six
+  original PNGs for the 49 emblems, omits unused encodings, and carries the portrait sources plus the
+  matching delivery optimizer in the isolated staging package. Published Eclipse/mobile CSS removes
+  standalone comments while keeping every parsed rule identical. Native portraits have an explicit
+  0.3 MiB optional-pack bound; the 60.3 MiB classic and 187.5 MiB combined ceilings are unchanged.
+* **Try it:** Open Class Tree after login, then catch fish, save, refresh and sign in again. The new
+  class portraits and the pending-save recovery must both remain available in the combined build.
+* **Checks:** Final gate 230/241 suites pass, with the same 11 Windows/baseline failures and no new
+  failures. Save/reload 18/18, update watcher 22/22, 49 exact-pixel emblem checks, staging package,
+  Pages configuration and all three generated-asset checks pass. Publication has the same two
+  existing Windows path assertions; its runtime references, icon bytes, CSS rules and size bounds
+  pass. Actual reruns of all 126 combat measurements match the pre-merge rows and historical baseline.
+* **Delivery:** Integration on PR #248's branch for the owner to merge; no production deployment,
+  production account edits, reward-rule changes or new Social Durable Object traffic.

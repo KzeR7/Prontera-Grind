@@ -25,6 +25,11 @@ try{
  const payload=unpackPayload(encoded,sha);assert.equal(payload['index.html'],fs.readFileSync('index.html','utf8'));
  assert.equal(payload['assets/combat-audio.js'],fs.readFileSync('assets/combat-audio.js','utf8'));
  assert.equal(payload['functions/api/save.js'],fs.readFileSync('functions/api/save.js','utf8'));
+ assert.equal(payload['tools/optimize_delivery.js'],fs.readFileSync('tools/optimize_delivery.js','utf8'),'staging build must run the matching delivery optimizer');
+ for(const name of fs.readdirSync('assets/ro_icons')){
+  const rel='assets/ro_icons/'+name;
+  assert.equal(payload[rel],'base64:'+fs.readFileSync(rel).toString('base64'),'Class Tree archive must preserve '+name);
+ }
  // v360: the binary centerpiece must ride the package as base64, byte for byte - an utf8
  // detour would silently corrupt the glTF container.
  assert.equal(payload['assets/Fountainfile/Prontera_Grand_Aetherwell.glb'],'base64:'+fs.readFileSync('assets/Fountainfile/Prontera_Grand_Aetherwell.glb').toString('base64'));

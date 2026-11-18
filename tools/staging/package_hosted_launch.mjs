@@ -13,7 +13,7 @@ const gitFiles=prefix=>execFileSync('git',['ls-files','-z','--',prefix],{cwd:roo
 // The hand-written part of the overlay: the assets and entry points this project ships that the
 // archived base predates. Everything that can be derived is derived (see launch_overlay.mjs and the
 // groups right after this array) so a new file cannot be forgotten the way the old list was.
-const files=['index.html','gm.html','tools/build_site.sh','_routes.json',
+const files=['index.html','gm.html','tools/build_site.sh','tools/optimize_delivery.js','_routes.json',
  // Client-side runtime loaded by index.html.
  'assets/shop-catalog.js','assets/shop.css','assets/shop.js','assets/friends.css','assets/friends.js',
  'assets/combat-audio.js','assets/bgm.js','assets/bgm-tracks.js','assets/social.css','assets/social.js',
@@ -54,6 +54,9 @@ const files=['index.html','gm.html','tools/build_site.sh','_routes.json',
 // is both simpler and safer than a hand list that can miss a newly imported _lib module.
 for(const p of gitFiles('functions/'))files.push(p);
 for(const p of gitFiles('migrations/'))files.push(p);
+// Native Class Tree icons use generated URLs, so static HTML tags cannot discover them.
+// Keep the original PNGs in the integrity-checked source archive; build_site trims duplicates.
+for(const p of gitFiles('assets/ro_icons/'))files.push(p);
 // The catalog is part of the integrity-checked payload. Require exactly the two
 // per-form files it names; no 561-entry duplicate manifest can drift out of sync.
 const digimonCatalog=JSON.parse(fs.readFileSync(path.join(root,'assets/digimon/v3/catalog.json'),'utf8'));
@@ -79,7 +82,7 @@ if(process.argv.length!==3)throw Error('Usage: node tools/staging/package_hosted
 // v275: tools/build_site.sh also decides the published cache headers (_headers). A staging package
 // built with an older copy of it would ship the stale-entry-point bug the v275 change fixes, so the
 // file stays on this list: a local change to it fails closed here instead of shipping quietly.
-const relevant=p=>['index.html','gm.html','_routes.json','tools/build_site.sh'].includes(p)||
+const relevant=p=>['index.html','gm.html','_routes.json','tools/build_site.sh','tools/optimize_delivery.js'].includes(p)||
  p.startsWith('functions/')||p.startsWith('migrations/')||p.startsWith('assets/');
 const baseEntries=execFileSync('git',['ls-tree','-rz','--full-tree',base],{cwd:root,maxBuffer:20*1024*1024}).toString().split('\0').filter(Boolean);
 const baseline=new Map(baseEntries.map(entry=>{const m=entry.match(/^\d+ blob ([0-9a-f]+)\t([\s\S]+)$/);if(!m)throw Error('Unexpected archive tree');return [m[2],m[1]]}));

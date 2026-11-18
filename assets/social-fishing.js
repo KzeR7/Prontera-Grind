@@ -826,9 +826,9 @@ function ensureDom(){
  doc.getElementById('fishingBagBtn').onclick=()=>toggleBag();
  doc.getElementById('fishingPanelClose').onclick=()=>toggleBag(false);
  doc.getElementById('fishingSort').onchange=e=>{ui.sort=e.target.value;renderBag()};
- doc.getElementById('fishingSellDupes').onclick=()=>{const r=sellBulk(state(),'dupes');persist();if(r.sold){sound('coin');status(`Sold ${r.sold} fish for ${fmt(r.coins)} Fishcoins.`)}else status(state().settings.autoSell?'Nothing to sell — auto-sell is on, so dupes never pile up.':'Nothing to sell — every fish is a record, mutated or locked.');ui.selected=null;renderPanel();renderDockGear()};
- doc.getElementById('fishingAutoSell').onchange=e=>{state().settings.autoSell=e.target.checked;persist();status(e.target.checked?'Auto-sell on — dupes are sold as you catch them (records, mutations and 🔒 locked fish are kept).':'Auto-sell off.')};
- doc.getElementById('fishingSound').onchange=e=>{state().settings.sound=e.target.checked;persist()};
+ doc.getElementById('fishingSellDupes').onclick=()=>{if(updatingPaused())return;const r=sellBulk(state(),'dupes');persist();if(r.sold){sound('coin');status(`Sold ${r.sold} fish for ${fmt(r.coins)} Fishcoins.`)}else status(state().settings.autoSell?'Nothing to sell — auto-sell is on, so dupes never pile up.':'Nothing to sell — every fish is a record, mutated or locked.');ui.selected=null;renderPanel();renderDockGear()};
+ doc.getElementById('fishingAutoSell').onchange=e=>{if(updatingPaused()){e.target.checked=!!state().settings.autoSell;return}state().settings.autoSell=e.target.checked;persist();status(e.target.checked?'Auto-sell on — dupes are sold as you catch them (records, mutations and 🔒 locked fish are kept).':'Auto-sell off.')};
+ doc.getElementById('fishingSound').onchange=e=>{if(updatingPaused()){e.target.checked=!!state().settings.sound;return}state().settings.sound=e.target.checked;persist()};
  els.autoBtn.onclick=()=>setAuto(!ui.auto);
  els.gearLine.onclick=()=>{toggleBag(true);switchTab('shop')};
  for(const b of panel.querySelectorAll('#fishingTabs button'))b.onclick=()=>switchTab(b.dataset.ftab);
@@ -1544,7 +1544,7 @@ function renderStage(){
    stage.innerHTML=`<div class="fishing-card" data-rarity="${sp.rarity}" style="--rar:${rar.color}">${r.isNew?'<span class="fishing-new">NEW SPECIES!</span>':''}${glyphHTML(sp,r.entry.mut,'fishing-card-glyph')}<div class="fishing-card-info"><strong>${esc(sp.name)}</strong><span class="fishing-chip" style="background:${rar.color}">${rar.label}</span>${r.entry.mut?`<span class="fishing-chip fishing-mut">${MUTATIONS[r.entry.mut].badge} ${MUTATIONS[r.entry.mut].label}</span>`:''}<p>${r.entry.w} kg · worth ${COIN_HTML} ${fmt(worth)}${r.entry.perfect?' · Perfect ⭐':''}${r.autoSold?` · <b>auto-sold +${fmt(r.autoSold)}</b> ${COIN_HTML}`:''}</p></div><div class="fishing-card-btns"><button id="fishingAgain" type="button">🎣 Cast again</button>${r.autoSold?'':`<button id="fishingBrag" type="button">📣 Show off</button><button id="fishingSellNow" type="button">💰 Sell ${fmt(worth)}</button>`}</div></div>`;
    doc.getElementById('fishingAgain').onclick=()=>{ui.result=null;setPhase('ready')};
    const brag=doc.getElementById('fishingBrag');if(brag)brag.onclick=()=>{showOff(r.entry.id);ui.result=null;setPhase('ready')};
-   const sellNow=doc.getElementById('fishingSellNow');if(sellNow)sellNow.onclick=()=>{const res=sellFish(state(),r.entry.id);if(res&&res.ok){persist();sound('coin');status('Sold for '+fmt(res.coins)+' Fishcoins.')}ui.result=null;setPhase('ready')};
+   const sellNow=doc.getElementById('fishingSellNow');if(sellNow)sellNow.onclick=()=>{if(updatingPaused())return;const res=sellFish(state(),r.entry.id);if(res&&res.ok){persist();sound('coin');status('Sold for '+fmt(res.coins)+' Fishcoins.')}ui.result=null;setPhase('ready')};
    if(!ui.auto)status('Space casts again.');
   }else{
    stage.innerHTML=`<div class="fishing-card is-escape"><span class="fishing-card-glyph">💨</span><div class="fishing-card-info"><strong>${r.kind==='slow'?'Too slow — it got away…':'The line went slack — it escaped!'}</strong><p>Keep the fish inside your bar next time.</p></div><div class="fishing-card-btns"><button id="fishingAgain" type="button">🎣 Try again</button></div></div>`;
@@ -1565,7 +1565,11 @@ function spawnShake(){
  els.shakes.append(b);ui.shakeEl=b;
  setTimeout(()=>{if(ui.shakeEl===b&&!b.classList.contains('popped'))clearShake()},1700);
 }
+function updatingPaused(){
+ return !!((opts&&typeof opts.isUpdating==='function'&&opts.isUpdating())||(root.CLOUD&&root.CLOUD.updating));
+}
 function holdDown(){
+ if(updatingPaused())return;
  if(ui.phase==='ready'){
   if(state().bag.length>=bagMax(state())){status('Bag full ('+bagMax(state())+') — sell, release or upgrade the bag first.');toggleBag(true);if(ui.auto)setAuto(false);return}
   ui.holding=true;ui.chargeT0=now();setPhase('charge');return;
@@ -1575,6 +1579,7 @@ function holdDown(){
  if(ui.phase==='result'){ui.result=null;setPhase('ready');return}
 }
 function holdUp(){
+ if(updatingPaused())return;
  if(ui.phase==='charge'&&ui.holding){ui.holding=false;releaseCast();return}
  if(ui.phase==='reel'&&!ui.auto){ui.holding=false;const c=doc.getElementById('fishingCrank');c&&c.classList.remove('spin')}
 }
@@ -1706,7 +1711,20 @@ function finishReel(kind){
 function tick(t){
  if(ui.phase==='off')return;
  ui.raf=requestAnimationFrame(tick);
- const dt=ui.last?Math.min(.1,Math.max(0,(t-ui.last)/1000)):0;ui.last=t;
+ const prev=ui.last;
+ const dt=prev?Math.min(.1,Math.max(0,(t-prev)/1000)):0;ui.last=t;
+ if(updatingPaused()){
+  const shift=prev?Math.max(0,t-prev):0;
+  if(shift>0){
+   if(ui.biteAt)ui.biteAt+=shift;
+   if(ui.biteEnd)ui.biteEnd+=shift;
+   if(ui.autoNext)ui.autoNext+=shift;
+   if(ui.autoHookAt)ui.autoHookAt+=shift;
+   if(ui.chargeT0)ui.chargeT0+=shift;
+   if(ui.shakeAt)ui.shakeAt+=shift;
+  }
+  return;
+ }
  if(['ready','charge','wait','bite','reel'].includes(ui.phase)&&distToPond()>6.5){
   if(ui.auto&&walkBackToPond('Moved away from the pond — Auto is walking back.'))return;
   stopFishing('You stepped away from the pond.');
@@ -1905,10 +1923,11 @@ function renderDetail(){
  els.detail.hidden=false;
  els.detail.innerHTML=`<div class="fishing-detail-main">${glyphHTML(sp,e.mut,'fishing-detail-glyph')}<div><strong>${esc(sp.name)}</strong> <span class="fishing-chip" style="background:${r.color}">${r.label}</span>${e.mut?` <span class="fishing-chip fishing-mut">${MUTATIONS[e.mut].badge} ${MUTATIONS[e.mut].label}</span>`:''}${e.lock?' <span class="fishing-chip fishing-locked">🔒 Locked</span>':''}<p>${e.w} kg · worth ${COIN_HTML} ${fmt(worth)}${e.perfect?' · Perfect catch ⭐':''}${e.at?' · '+new Date(e.at).toLocaleDateString():''}</p></div></div><div class="fishing-detail-btns"><button id="fishingShowOffBtn" type="button">📣 Show off</button><button id="fishingLockBtn" type="button" title="A locked fish can never be sold or released — not by Sell, Sell dupes or Auto-sell">${e.lock?'🔓 Unlock':'🔒 Lock'}</button><button id="fishingSellBtn" type="button"${e.lock?' disabled title="Locked — unlock this fish to sell it"':''}>💰 Sell ${fmt(worth)}</button><button id="fishingReleaseBtn" type="button"${e.lock?' disabled title="Locked — unlock this fish to release it"':''}>🌊 Release</button></div>`;
  doc.getElementById('fishingShowOffBtn').onclick=()=>showOff(e.id);
- doc.getElementById('fishingLockBtn').onclick=()=>{const res=toggleLock(st,e.id);if(res){persist();status(res.lock?'🔒 Locked — this fish can no longer be sold or released.':'🔓 Unlocked.');renderBag();renderDockGear()}};
- doc.getElementById('fishingSellBtn').onclick=()=>{const res=sellFish(st,e.id);if(res&&res.ok){persist();sound('coin');status('Sold for '+fmt(res.coins)+' Fishcoins.');ui.selected=null;renderPanel();renderDockGear()}else if(res&&res.reason==='locked')status('🔒 That fish is locked — unlock it first.')};
+ doc.getElementById('fishingLockBtn').onclick=()=>{if(updatingPaused())return;const res=toggleLock(st,e.id);if(res){persist();status(res.lock?'🔒 Locked — this fish can no longer be sold or released.':'🔓 Unlocked.');renderBag();renderDockGear()}};
+ doc.getElementById('fishingSellBtn').onclick=()=>{if(updatingPaused())return;const res=sellFish(st,e.id);if(res&&res.ok){persist();sound('coin');status('Sold for '+fmt(res.coins)+' Fishcoins.');ui.selected=null;renderPanel();renderDockGear()}else if(res&&res.reason==='locked')status('🔒 That fish is locked — unlock it first.')};
  const rel=doc.getElementById('fishingReleaseBtn');
  rel.onclick=()=>{
+  if(updatingPaused())return;
   if(e.lock){status('🔒 That fish is locked — unlock it first.');return}
   if(rel.dataset.confirm){const i=st.bag.findIndex(x=>x.id===e.id);if(i>=0)st.bag.splice(i,1);persist();ui.selected=null;renderBag();renderDockGear()}
   else{rel.dataset.confirm='1';rel.textContent='Release?';setTimeout(()=>{if(rel.isConnected){delete rel.dataset.confirm;rel.textContent='🌊 Release'}},2600)}
@@ -1971,6 +1990,7 @@ function renderTitles(){
  }).join('');
  els.titlesView.innerHTML=`<p class="fishing-dex-head">Worn above your head in the plaza. <b>${FISHING_TITLES.filter(t=>titleUnlocked(st,t)).length}/${FISHING_TITLES.length}</b> earned · listed by rarity.</p><div class="fishing-title-list">${rows}</div>${worn?'<div class="fishing-title-none"><button type="button" data-title="none">Wear no fishing title</button></div>':''}`;
  for(const b of els.titlesView.querySelectorAll('button[data-title]'))b.onclick=()=>{
+  if(updatingPaused())return;
   const r=equipTitle(st,b.dataset.title==='none'?null:b.dataset.title);
   if(r.ok){persist();status(r.title?('Wearing '+FISHING_TITLE_BY_ID[r.title].name+'.'):'Fishing title removed.');renderPanel();if(opts&&typeof opts.titleChanged==='function')opts.titleChanged()}
  };
@@ -1995,11 +2015,11 @@ function renderShop(){
  // v295: one permanent bag upgrade per tier, bought in order - never a skip.
  const bagRow=`<div class="fishing-shop-row equipped"><span class="fishing-shop-icon">🧺</span><span class="fishing-shop-name">${esc(tier.label)}<small>holds ${cap} fish · ${st.bag.length}/${cap} stored${next?` · next: ${esc(next.label)} holds ${next.cap}`:' · fully upgraded'}</small></span>${next?`<button type="button" data-bagup ${st.coins<next.cost?'disabled':''}>${COIN_HTML} ${fmt(next.cost)}</button>`:'<button type="button" disabled>Max</button>'}</div>`;
  els.shopView.innerHTML=`<p class="fishing-shop-head">${COIN_HTML} <b>${fmt(st.coins)}</b> Fishcoins — earn them by selling fish from the Bag.</p><h4>Bag <small>permanent capacity · 120 → 200 → 300 → 400 → 500 → 750 → 1000</small></h4>${bagRow}<h4>Rods <small>permanent · luck / control / strength / lure speed</small></h4>${rodRows}<h4>Bait <small>one is used per cast</small></h4>${baitRows}<div class="fishing-shop-row${st.baitSel===null?' equipped':''}"><span class="fishing-shop-icon">🚫</span><span class="fishing-shop-name">No bait<small>fish with the rod alone</small></span><button type="button" data-use="none" ${st.baitSel===null?'disabled':''}>Use</button></div>`;
- for(const b of els.shopView.querySelectorAll('button[data-rod]'))b.onclick=()=>{const r=buyRod(st,b.dataset.rod);if(r.ok){persist();sound('coin');status('Bought and equipped the '+RODS_BY_ID[b.dataset.rod].name+'!')}else if(r.reason==='coins')status('Not enough Fishcoins.');renderPanel()};
- for(const b of els.shopView.querySelectorAll('button[data-equip]'))b.onclick=()=>{equipRod(st,b.dataset.equip);syncRodLook();persist();renderPanel()};
- for(const b of els.shopView.querySelectorAll('button[data-bagup]'))b.onclick=()=>{const r=buyBagUpgrade(st);if(r.ok){persist();sound('coin');status('Bag upgraded — it now holds '+r.cap+' fish.')}else if(r.reason==='coins')status('Not enough Fishcoins.');renderPanel();renderDockGear()};
- for(const b of els.shopView.querySelectorAll('button[data-bait]'))b.onclick=()=>{const r=buyBait(st,b.dataset.bait,Number(b.dataset.n));if(r.ok){persist();sound('coin');if(!st.baitSel)selectBait(st,b.dataset.bait)}else if(r.reason==='coins')status('Not enough Fishcoins.');renderPanel()};
- for(const b of els.shopView.querySelectorAll('button[data-use]'))b.onclick=()=>{selectBait(st,b.dataset.use==='none'?null:b.dataset.use);persist();renderPanel()};
+ for(const b of els.shopView.querySelectorAll('button[data-rod]'))b.onclick=()=>{if(updatingPaused())return;const r=buyRod(st,b.dataset.rod);if(r.ok){persist();sound('coin');status('Bought and equipped the '+RODS_BY_ID[b.dataset.rod].name+'!')}else if(r.reason==='coins')status('Not enough Fishcoins.');renderPanel()};
+ for(const b of els.shopView.querySelectorAll('button[data-equip]'))b.onclick=()=>{if(updatingPaused())return;equipRod(st,b.dataset.equip);syncRodLook();persist();renderPanel()};
+ for(const b of els.shopView.querySelectorAll('button[data-bagup]'))b.onclick=()=>{if(updatingPaused())return;const r=buyBagUpgrade(st);if(r.ok){persist();sound('coin');status('Bag upgraded — it now holds '+r.cap+' fish.')}else if(r.reason==='coins')status('Not enough Fishcoins.');renderPanel();renderDockGear()};
+ for(const b of els.shopView.querySelectorAll('button[data-bait]'))b.onclick=()=>{if(updatingPaused())return;const r=buyBait(st,b.dataset.bait,Number(b.dataset.n));if(r.ok){persist();sound('coin');if(!st.baitSel)selectBait(st,b.dataset.bait)}else if(r.reason==='coins')status('Not enough Fishcoins.');renderPanel()};
+ for(const b of els.shopView.querySelectorAll('button[data-use]'))b.onclick=()=>{if(updatingPaused())return;selectBait(st,b.dataset.use==='none'?null:b.dataset.use);persist();renderPanel()};
 }
 // v295: Show off no longer writes a Local-chat line. The fish (and its weight) is relayed to
 // the room as data and drawn above the angler's head for everyone, so chat stays clean.
