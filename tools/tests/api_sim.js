@@ -300,6 +300,65 @@ await T('offline time is server-timed, capped, half-rate, persistent until claim
   assert.strictEqual(directAccepted.status,200,'the corrected retry acknowledges the issued claim');
 });
 
+await T('v422: an issued claim freezes the class and progression run it was priced for', async () => {
+  const h = freshEnv();
+  const reg = await api.register(h.env, { u: 'OWNERCTX', p: 'ownerctx-password' });
+  const blob = JSON.parse(saveBlob(30, 500));
+  blob.cls = 'Knight'; blob.runSeq = 2; blob.runGen = 2;
+  await api.putSave(h.env, reg.cookie, { version: 0, blob: JSON.stringify(blob), savedAt: 1 });
+  const id = h.sqlite.prepare('SELECT id FROM users WHERE username = ?').get('OWNERCTX').id;
+  h.sqlite.prepare('UPDATE saves SET last_seen = ?, rate_kph = ? WHERE user_id = ?').run(Date.now() - 4 * 3600000, 100, id);
+  const got = await api.getSave(h.env, reg.cookie);
+  const claim = got.data.offlineClaim;
+  assert.ok(claim && claim.id > 0, 'a claim is issued for the away window');
+  assert.strictEqual(claim.cls, 'Knight', 'the claim freezes the class it was priced for');
+  assert.strictEqual(claim.runGen, 2, 'and the progression run');
+  const stored = h.sqlite.prepare('SELECT cls, run_gen FROM offline_reward_claims WHERE id = ?').get(claim.id);
+  assert.strictEqual(stored.cls, 'Knight', 'the freeze is durable, not just reported');
+  assert.strictEqual(stored.run_gen, 2);
+  const retry = await api.getSave(h.env, reg.cookie);
+  assert.strictEqual(retry.data.offlineClaim.id, claim.id, 'a retry returns the same frozen claim');
+  assert.strictEqual(retry.data.offlineClaim.cls, 'Knight');
+  assert.strictEqual(retry.data.offlineClaim.runGen, 2);
+  const base = JSON.parse(retry.data.blob); base.offlineClaimId = claim.id;
+  const accepted = await api.putSave(h.env, reg.cookie, { version: retry.data.version, blob: JSON.stringify(base), offlineClaimId: claim.id, savedAt: 2 });
+  assert.strictEqual(accepted.status, 200, 'the frozen claim is consumed by the versioned save exactly as before');
+  const consumed = h.sqlite.prepare('SELECT claimed_at, cls, run_gen FROM offline_reward_claims WHERE id = ?').get(claim.id);
+  assert.ok(consumed.claimed_at > 0, 'exactly-once consumption is unchanged');
+  assert.strictEqual(consumed.cls, 'Knight', 'consumption never rewrites the frozen owner');
+  assert.strictEqual(consumed.run_gen, 2);
+});
+
+await T('v422: the smoothed kill rate re-bases across a class or run boundary instead of carrying old-class speed', async () => {
+  const h = freshEnv();
+  const reg = await api.register(h.env, { u: 'RATEBASE', p: 'ratebase-password' });
+  const id = h.sqlite.prepare('SELECT id FROM users WHERE username = ?').get('RATEBASE').id;
+  const rateRow = () => Number(h.sqlite.prepare('SELECT rate_kph FROM saves WHERE user_id = ?').get(id).rate_kph);
+  const sw = JSON.parse(saveBlob(40, 900)); sw.cls = 'Swordman'; sw.runSeq = 1; sw.runGen = 1;
+  await api.putSave(h.env, reg.cookie, { version: 0, blob: JSON.stringify(sw), savedAt: 1 });
+  h.sqlite.prepare('UPDATE saves SET last_seen = ?, rate_kph = ? WHERE user_id = ?').run(Date.now() - 60000, 240, id);
+  // Class change: the Hunter must not price away claims from the Swordman's smoothed speed.
+  const hunter = JSON.parse(JSON.stringify(sw)); hunter.cls = 'Hunter'; hunter.runSeq = 2; hunter.runGen = 2; hunter.kills = sw.kills + 10;
+  const switched = await api.putSave(h.env, reg.cookie, { version: 1, blob: JSON.stringify(hunter), savedAt: 2 });
+  assert.strictEqual(switched.status, 200);
+  assert.strictEqual(rateRow(), 0, 'the old class rate is not carried into the new class');
+  // Same class name, new progression run (the Novice reset shape): still a boundary.
+  h.sqlite.prepare('UPDATE saves SET last_seen = ?, rate_kph = ? WHERE user_id = ?').run(Date.now() - 60000, 240, id);
+  const h3 = JSON.parse(JSON.stringify(hunter)); h3.runSeq = 3; h3.runGen = 3; h3.kills = hunter.kills + 10;
+  const reran = await api.putSave(h.env, reg.cookie, { version: 2, blob: JSON.stringify(h3), savedAt: 3 });
+  assert.strictEqual(reran.status, 200);
+  assert.strictEqual(rateRow(), 0, 'a new run of the same class re-bases too');
+  // A stored save from before runs were numbered is NOT a boundary: migration erases nothing,
+  // and the first post-migration sync keeps smoothing from the legacy rate.
+  const legacyStored = JSON.parse(JSON.stringify(h3)); delete legacyStored.runGen; delete legacyStored.runSeq;
+  h.sqlite.prepare('UPDATE saves SET blob = ?, last_seen = ?, rate_kph = ? WHERE user_id = ?')
+    .run(JSON.stringify(legacyStored), Date.now() - 60000, 240, id);
+  const h4 = JSON.parse(JSON.stringify(h3)); h4.runSeq = 4; h4.runGen = 4; h4.kills = h3.kills + 12;
+  const cont = await api.putSave(h.env, reg.cookie, { version: 3, blob: JSON.stringify(h4), savedAt: 4 });
+  assert.strictEqual(cont.status, 200);
+  assert.ok(rateRow() > 0, 'a pre-ownership stored save keeps smoothing into the numbered run');
+});
+
 await T('a login does not erase the away window: the offline claim survives signing in', async () => {
   // The real sequence (v88.1 owner report: "offline reward seems not to be working" on cloud
   // accounts): the player syncs, is gone four hours, and COMES BACK - which means logging in

@@ -41,10 +41,21 @@ const RATE_SMOOTHING_MS = 5 * 60 * 1000;
 const saveMismatch = user => json({ err: SAVE_MISMATCH, saveMismatch: true, owner: user.username }, 409);
 
 const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, Number(n) || 0));
+// v422: the claim names its owner so the paying client can tell "priced for the character standing
+// here" from "priced for a class/run that no longer stands here". Legacy rows (NULL) stay payable
+// under the client's own sample-ownership rules - consumption is unchanged either way.
 const publicClaim = row => row ? ({
   id: Number(row.id), awayMs: Number(row.away_ms), creditedMs: Number(row.credited_ms),
   rateKph: Number(row.rate_kph), kills: Number(row.kills), remainder: Number(row.remainder),
+  cls: row.cls ?? null, runGen: row.run_gen == null ? null : Number(row.run_gen),
 }) : null;
+// The owner context frozen at issuance comes from the STORED save's top-level view - the parse the
+// request already paid for (GET: saveView, PUT: storedStamp), never a fresh parse of the blob.
+const runGenOf = v => Number.isSafeInteger(Number(v)) && Number(v) >= 1 ? Math.floor(Number(v)) : null;
+const claimOwnerOf = view => ({
+  cls: view && typeof view.cls === 'string' ? view.cls.slice(0, 32) : null,
+  runGen: view ? runGenOf(view.runGen) : null,
+});
 
 // Is the away window long enough for a claim to exist at all? <3 minutes never mints one, and the
 // test lives here so the read that only a real claim needs can be skipped without duplicating it.
@@ -62,7 +73,7 @@ function issueOfflineClaim(row, now, savedRemainder = 0) {
   return { awayMs, creditedMs, rateKph, kills, remainder: budget - kills };
 }
 
-async function pendingOrIssueOfflineClaim(D, userId, row, now) {
+async function pendingOrIssueOfflineClaim(D, userId, row, now, ownerCtx = null) {
   let pending = await db.pendingOfflineClaim(D, userId);
   // v416 (CPU): the remainder of the last claim is only needed by a claim that is actually being
   // issued, and one is only issued once the away window is longer than OFFLINE_MIN_MS. Reading it
@@ -72,7 +83,7 @@ async function pendingOrIssueOfflineClaim(D, userId, row, now) {
     const remainder = await db.lastOfflineRemainder(D, userId);
     const plan = issueOfflineClaim(row, now, remainder);
     if (plan) {
-      await db.insertOfflineClaim(D, userId, plan, now);
+      await db.insertOfflineClaim(D, userId, plan, now, ownerCtx);
       pending = await db.pendingOfflineClaim(D, userId);
     }
   }
@@ -94,7 +105,13 @@ const earlyReturn = (D, userId, at) => async (payload, status) => {
 
 // Measure actual server-accepted kill-count increases between syncs. Subtract a pending offline
 // claim's approved kills so away progress is never mislearned as online farming speed.
-function updatedRate(row, pub, now, appliedClaim) {
+// v422: the smoothed rate belongs to the character it was measured on. Across a class or
+// progression-run boundary the old speed must not carry over - a maxed class's kill rate would
+// otherwise price the fresh Novice's next away claim - so the measurement re-bases to 0 and climbs
+// again as the new owner is observed. The client-side measured minute keeps its own ownership rule;
+// this is the server-side half of the same fix.
+function updatedRate(row, pub, now, appliedClaim, ownerChanged = false) {
+  if (ownerChanged) return 0;
   const previous = clamp(row.rate_kph, 0, OFFLINE_RATE_CAP);
   const elapsed = Math.max(0, now - (Number(row.last_seen) || now));
   if (elapsed < 1000) return previous;
@@ -153,7 +170,7 @@ export const onRequestGet = guard(async ({ request, env }) => {
     // a whole save-sized blob (up to the 300 KB ceiling) to learn nothing. The response fields come
     // from the row already in hand; `last_seen` is folded into the claim in the same way the split
     // read's result would have shown it.
-    const claim = await pendingOrIssueOfflineClaim(D, user.id, row, now);
+    const claim = await pendingOrIssueOfflineClaim(D, user.id, row, now, claimOwnerOf(saveView));
     await db.touchSeen(D, user.id, now);
     offlineClaim = publicClaim(claim);
     // No field this response carries was changed by the touch, so the row in hand is still the
@@ -306,7 +323,7 @@ export const onRequestPut = guard(async ({ request, env }) => {
   // with - that is what makes a rename survivable.
   if (!saveBelongsTo(storedBlob, user)) return saveMismatch(user);
 
-  const pending = await pendingOrIssueOfflineClaim(D, user.id, row, savedAt);
+  const pending = await pendingOrIssueOfflineClaim(D, user.id, row, savedAt, claimOwnerOf(storedStamp));
 
   // haven-v396: the GM restore fence. A restore is a decision about the account, so it is enforced
   // here, on the write, rather than being asked of each browser (v394 did the 409 branch, v395 the
@@ -356,7 +373,15 @@ export const onRequestPut = guard(async ({ request, env }) => {
   // comparison is against the row just read under `version`, so a conflict still fails the guard
   // instead of silently skipping a write. `rate_kph` is included because it is a stored measurement,
   // not a player-visible ranking: if it moved, the row is written.
-  const rateKph = updatedRate(row, pub, savedAt, appliedClaim);
+  // v422: the smoothed rate re-bases across a class/run boundary (see updatedRate). The stored
+  // save's run travels in `storedStamp` - the top-level parse this handler already made - so the
+  // comparison costs no extra parse. A save from before runs were numbered (no runGen on either
+  // side) never trips the boundary: only two numbered, DIFFERENT runs do.
+  const storedRunGen = storedStamp ? runGenOf(storedStamp.runGen) : null;
+  const incomingRunGen = runGenOf(save.runGen);
+  const ownerChanged = (pub.cls ?? null) !== (row.cls ?? null)
+    || (storedRunGen !== null && incomingRunGen !== null && storedRunGen !== incomingRunGen);
+  const rateKph = updatedRate(row, pub, savedAt, appliedClaim, ownerChanged);
   const update = saveColumnsUnchanged(row, pub, rateKph)
     ? db.updateSaveVersionStatement(D, user.id, next, stored, savedAt, row.version)
     : db.updateSaveStatement(D, user.id, next, stored, savedAt, pub, rateKph, row.version);

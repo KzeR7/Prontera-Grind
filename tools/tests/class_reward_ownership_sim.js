@@ -73,6 +73,18 @@ try{
  ev(`S.accountId=7`);
  assert.equal(ev('plazaFarmIncome()&&plazaFarmIncome().xp'),90,'and back');
 
+ // ---- a server claim frozen for another run pays nothing, but is still acknowledged ----
+ ev(`CLOUD.on=true;S.offlineAt=Date.now()-3600000;S.offlineKph=600;`);
+ r=ev(`applyOfflineProgress(Date.now(),{id:901,awayMs:3600000,creditedMs:3600000,kills:60,remainder:0,rateKph:600,cls:'Swordman',runGen:9})`);
+ assert.equal(r.exp,0,'a claim priced for run 9 pays run 2 nothing');
+ assert.equal(r.kills,0,'and replays none of its kills');
+ assert.equal(ev('S.offlineClaimId'),901,'but it is still acknowledged: the next sync passes the 428 gate, no trap');
+ r=ev(`applyOfflineProgress(Date.now(),{id:902,awayMs:3600000,creditedMs:3600000,kills:60,remainder:0,rateKph:600,cls:'Swordman',runGen:2})`);
+ assert.ok(r.exp>0,'a claim priced for this exact run pays its owner normally');
+ r=ev(`applyOfflineProgress(Date.now(),{id:903,awayMs:3600000,creditedMs:3600000,kills:60,remainder:0,rateKph:600})`);
+ assert.ok(r.exp>0,'a legacy claim with no frozen owner falls back to the sample ownership rule');
+ ev(`CLOUD.on=false`);
+
  // ---- migration: a pre-ownership save is adopted, not wiped and not exploitably open ----
  ev(`(()=>{
   const legacy=JSON.parse(JSON.stringify(S));

@@ -95,12 +95,12 @@ export const touchSeen = (db, userId, at = now()) =>
 // save containing its ID is accepted, so retrying login or losing a response can neither reroll nor
 // duplicate the same away period.
 export const pendingOfflineClaim = (db, userId) =>
-  db.prepare(`SELECT id, away_ms, credited_ms, rate_kph, kills, remainder, issued_at, claimed_at
+  db.prepare(`SELECT id, away_ms, credited_ms, rate_kph, kills, remainder, issued_at, claimed_at, cls, run_gen
               FROM offline_reward_claims WHERE user_id = ? AND claimed_at IS NULL ORDER BY id DESC LIMIT 1`)
     .bind(userId).first();
 
 export const offlineClaimById = (db, userId, id) =>
-  db.prepare(`SELECT id, away_ms, credited_ms, rate_kph, kills, remainder, issued_at, claimed_at
+  db.prepare(`SELECT id, away_ms, credited_ms, rate_kph, kills, remainder, issued_at, claimed_at, cls, run_gen
               FROM offline_reward_claims WHERE user_id = ? AND id = ?`).bind(userId, id).first();
 
 export const lastOfflineRemainder = async (db, userId) => {
@@ -110,11 +110,16 @@ export const lastOfflineRemainder = async (db, userId) => {
   return Number(row?.remainder) || 0;
 };
 
-export const insertOfflineClaim = (db, userId, claim, issuedAt) =>
+// v422: `ctx` freezes who the claim was priced for (the stored save's class and progression run at
+// issuance). Both may be null - a save from before runs were numbered - which is exactly the legacy
+// claim shape: payable under the client's sample-ownership rules, consumable as always.
+export const insertOfflineClaim = (db, userId, claim, issuedAt, ctx = null) =>
   db.prepare(`INSERT OR IGNORE INTO offline_reward_claims
-              (user_id, away_ms, credited_ms, rate_kph, kills, remainder, issued_at)
-              VALUES(?, ?, ?, ?, ?, ?, ?)`)
-    .bind(userId, claim.awayMs, claim.creditedMs, claim.rateKph, claim.kills, claim.remainder, issuedAt).run();
+              (user_id, away_ms, credited_ms, rate_kph, kills, remainder, issued_at, cls, run_gen)
+              VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+    .bind(userId, claim.awayMs, claim.creditedMs, claim.rateKph, claim.kills, claim.remainder, issuedAt,
+      ctx && typeof ctx.cls === 'string' ? ctx.cls.slice(0, 32) : null,
+      ctx && Number.isSafeInteger(ctx.runGen) && ctx.runGen >= 1 ? Math.floor(ctx.runGen) : null).run();
 
 export const markOfflineClaimStatement = (db, userId, id, claimedAt, version, blob) =>
   db.prepare(`UPDATE offline_reward_claims SET claimed_at = ?
