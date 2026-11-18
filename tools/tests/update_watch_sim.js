@@ -24,7 +24,7 @@ const BUILD = src.match(/const BUILD='([^']+)'/)[1];
 // windows now live above it and the watcher cannot run without them.
 const watcherSrc = src.slice(src.indexOf('const UPDATE_SNOOZE_MS='),src.indexOf('setInterval(updateWatch,60000);'));
 const harness = (opts) => {
-  const calls = { fetch: [], reloads: 0, timers: [], bootTimers: [], order: [] };
+  const calls = { fetch: [], reloads: 0, timers: [], bootTimers: [], order: [], updating: [], scheduled: [] };
   const document = new JSDOM('<body></body>').window.document;
   // A controllable clock, so "half an hour passed" and "a day passed" are testable without waiting.
   const clock = opts.clock || { t: 1700000000000 };
@@ -34,8 +34,10 @@ const harness = (opts) => {
     Date,
     clock,
     document,
-    save: () => calls.order.push("save"),
-    cloudFlushNow: async () => { calls.order.push("flush"); if(opts.flush)await opts.flush(); calls.order.push("flushed"); },
+    Math,
+    save: () => { calls.order.push("save"); if (opts.onSave) opts.onSave(); },
+    cloudFlushNow: async () => { calls.order.push("flush"); const r = opts.flush ? await opts.flush() : 'ok'; calls.order.push("flushed"); return r === undefined ? 'ok' : r; },
+    cloudSetUpdating: (on) => { calls.updating.push(!!on); if (box.CLOUD) box.CLOUD.updating = !!on; },
     fetch: async (url, init) => {
       calls.fetch.push({ url, init });
       if (opts.networkDown) throw new Error('offline');
@@ -58,9 +60,11 @@ const harness = (opts) => {
     setInterval: (fn, ms) => { calls.timers.push(ms); return 0; },
     // v275: the page also schedules a boot-time check. Stubbed so it never fires mid-test; the
     // boot wiring itself is asserted separately.
-    setTimeout: (fn, ms) => { calls.bootTimers.push(ms); return 0; },
+    setTimeout: (fn, ms) => { calls.bootTimers.push(ms); if (opts.runTimers) calls.scheduled.push(fn); return 0; },
     bootTimers: calls.bootTimers,
   };
+  if (opts.cloud) box.CLOUD = Object.assign({ on: true, lost: false, paused: false, dirty: false, blocked: null, rev: 1, ackRev: 1, updating: false }, opts.cloud);
+  if (opts.cloudReplaced !== undefined) box.cloudReplaced = opts.cloudReplaced;
   // v299: jsdom reports document.hidden === true by default (no real renderer), which would look
   // like a backgrounded tab to the new auto-reset. Pin it explicitly - false is "someone is looking".
   Object.defineProperty(document,'hidden',{value:!!opts.hidden,configurable:true});
@@ -326,7 +330,7 @@ t('every asset versioned in index.html points at a build, never at a stale cache
   assert.ok(tags.length > 0, 'index.html versions its assets');
   // v342 adds the complete Digimon roster and uses one coordinated cache bust
   // for the social/Sanctuary runtime, including its shared rules and scene code.
-  const build = (src.match(/haven-v(\d+)/) || [])[1];
+  const build = (BUILD.match(/haven-v(\d+)/) || [])[1];
   assert.ok(build, 'the page declares a numbered build');
   for (const f of ['assets/social.js', 'assets/social.css', 'assets/social-poker.js',
                    'assets/social-rules.js', 'assets/social-scene.js',
@@ -340,14 +344,65 @@ t('every asset versioned in index.html points at a build, never at a stale cache
   }
 });
 
-// v326 (owner: "save rolls back", "random disconnects"): the automatic update reset is one of the
-// disconnects, and it is also the moment the last minute of play can vanish - a save over the 64 KB
-// keepalive cap cannot be protected by the leaving flush. The auto path must land the upload first.
+// v326 + v418: the automatic update reset must land the cloud save before navigating, and NEVER race
+// the upload against a 1.5s timeout or navigate when cloud durability fails.
 t('v326: the automatic update reset flushes the save before it navigates', () => {
   assert.match(watcherSrc,
-    /if\(typeof cloudFlushNow==='function'&&typeof save==='function'&&typeof CLOUD!=='undefined'&&CLOUD\.on&&!CLOUD\.lost&&!updateResetSeen\(txt\)\)\{[\s\S]{0,500}?Promise\.race\(\[cloudFlushNow\(\)/,
-    'the automatic reset waits for the cloud flush instead of racing it');
+    /if\(typeof cloudFlushNow==='function'&&typeof save==='function'&&typeof CLOUD!=='undefined'&&CLOUD\.on&&!CLOUD\.lost&&!updateResetSeen\(txt\)\)\{[\s\S]{0,900}?await cloudFlushNow\(\)[\s\S]{0,200}?cloudSavedForUpdate\(res,targetRev\)/,
+    'the automatic reset awaits cloudFlushNow() and verifies cloudSavedForUpdate before navigating');
+  assert.ok(!/Promise\.race\(\[cloudFlushNow/.test(watcherSrc),
+    'the automatic reset never races cloudFlushNow against a short timer');
   assert.match(watcherSrc, /if\(hardReload\(txt\)\)return;/, 'and still has the plain path for a page with no cloud');
+});
+
+await T('cloud session refuses to reload over an unconfirmed save, restores Keep playing, and reloads once retry succeeds', async () => {
+  let okOnAttempt = false;
+  const h = harness({
+    answer: 'new build',
+    cloud: { on: true, rev: 4, ackRev: 3, dirty: true },
+    onSave() { h.box.CLOUD.rev = 5; h.box.CLOUD.dirty = true; },
+    flush: async () => {
+      if (!okOnAttempt) return 'offline';
+      h.box.CLOUD.dirty = false;
+      h.box.CLOUD.ackRev = h.box.CLOUD.rev;
+      return 'ok';
+    },
+  });
+  h.clock.t += 25 * 60 * 60 * 1000; // insistent (> 24h) still offers Keep playing when save fails
+  await h.box.updateWatch();
+  const prompt = h.box.document.querySelector('#updatePrompt');
+  assert.strictEqual(prompt.querySelector('[data-update-later]'), null, 'insistent prompt starts without Keep playing');
+  await prompt.querySelector('button').onclick();
+  assert.strictEqual(h.calls.reloads, 0, 'never reloads while cloud save is unconfirmed');
+  assert.strictEqual(h.box.CLOUD.updating, false, 'unfreezes updating state on failure');
+  assert.strictEqual(prompt.querySelector('button').disabled, false, 're-enables retry button');
+  assert.match(prompt.querySelector('button').textContent, /Retry/i);
+  assert.ok(prompt.querySelector('[data-update-later]'), 'restores Keep playing escape hatch on failure');
+
+  okOnAttempt = true;
+  await prompt.querySelector('button').onclick();
+  assert.strictEqual(h.calls.reloads, 1, 'reloads once cloud save confirms target revision');
+});
+
+await T('cloud auto-update waits past jitter, refuses to reload when upload fails, and shows prompt instead', async () => {
+  const h = harness({
+    answer: 'new build',
+    freshPage: true,
+    runTimers: true,
+    cloud: { on: true, rev: 2, ackRev: 1, dirty: true, blocked: 'too-large' },
+    flush: async () => 'too-large',
+  });
+  h.calls.scheduled.length = 0; // ignore boot 3000ms timer
+  const watchPromise = h.box.updateWatch();
+  await new Promise(r => setImmediate(r));
+  assert.strictEqual(h.calls.scheduled.length, 1, 'schedules spread jitter timer');
+  h.calls.scheduled.shift()();
+  await watchPromise;
+  assert.strictEqual(h.calls.reloads, 0, 'auto-update does NOT reload when upload fails (413 too-large)');
+  assert.strictEqual(h.box.CLOUD.updating, false, 'unfreezes updating state');
+  const prompt = h.box.document.querySelector('#updatePrompt');
+  assert.ok(prompt, 'shows recovery prompt instead of reloading');
+  assert.match(prompt.textContent, /too large/i);
 });
 
 // The build tag is copied into a few documents so a reader can tell which build a sheet or a note is about.

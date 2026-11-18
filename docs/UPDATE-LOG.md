@@ -11748,3 +11748,48 @@ were** - the DPS deltas this sandbox reports (Lord Knight +23%, Sniper +27%) rep
 `origin/main` too, so they are an environment artifact of the benchmark, not a change in the game, and
 re-recording them here would have written wrong numbers into the repository.
 
+### 2026-11-17 — `haven-v418 save sync & update durability`
+
+* **What changed for the player:** fishing catches, locks, auto-sells, Tackle Shop purchases and field
+  progress can no longer be dropped when an update reload races an in-flight cloud upload, when a catch
+  lands while a prior `PUT /api/save` is still on the wire, or when `localStorage` hits a quota error.
+  Clicking **Refresh & log in again** (or hitting the fresh-page automatic update window) now pauses
+  simulation/fishing/plaza mutations, captures the final save, drains the serialized save coordinator,
+  and navigates **only** after the target save revision is confirmed on the server. When the cloud save
+  cannot be confirmed (offline, 413 `too-large`, 503 maintenance, 401 session replaced), the page stays
+  open, unfreezes gameplay, and offers **Retry save & refresh** + **Keep playing** instead of reloading
+  over unsaved progress.
+* **Why those losses happened:**
+  1. `cloudPush()` returned `'idle'` immediately while `CLOUD.pushing` was true, `#updatePrompt`
+     reloaded inside an unconditional `finally { hardReload(...) }`, and `updateWatch()` raced
+     `cloudFlushNow()` against a 1,500 ms `setTimeout`.
+  2. `cloudStampBase(d.version)` stamped `S.cloud = { v, at: Date.now() }` when an earlier upload
+     resolved, so any catch saved *during* that upload got `cloud.at >= S.offlineAt`; on reload
+     `localAheadOfServer` saw `offlineAt <= base.at` and adopted the stale server blob over the newer
+     local fish.
+  3. `lsPut()` caught `QuotaExceededError` and fell back to RAM-only `mem[k]` while `save()` still
+     advanced `CLOUD.localSaveAt` as if durable storage had succeeded.
+* **How it works now:**
+  * **Monotonic revisions + durable outbox:** every `save()` increments `CLOUD.rev` and records
+    `{ rev, ackRev, cid, baseVer, blob }` in `pg_outbox1_<user>` and IndexedDB `pg_durable_v1`;
+    `CLOUD.ackRev` advances only to the exact `uploadedRev` acknowledged by the server, and
+    `localAheadOfServer` checks `rev > ackRev` before falling back to legacy `offlineAt > at`
+    (preserving `restoreFrom` in `docs/CHECK-A-SAVE.md`).
+  * **Serialized save coordinator & `cid`-verified 409 handling:** `cloudCoordinateFlush` /
+    `cloudFlushNow` await any active `cloudActivePush` and drive 428 away-claim / same-`cid` rebase
+    follow-ups until `ackRev >= targetRev`. Lost-response retries where the server already committed
+    this browser's exact `(cid, uploadedRev)` reconcile in zero extra `PUT`s, foreign-`cid` conflicts
+    always adopt + stash `_local_` backups, and GM `restoreFenced` / `gmRestore` fences always win.
+  * **Storage-failure truthfulness & fishing-aware ledger:** `lsPut` retries compact `packSave(S)` on
+    quota failure, leaves `CLOUD.localSaveAt` untouched when `localStorage` fails, sets
+    `CLOUD.storageFailed = true`, and warns in the badge/log. `saveFigures` and `cloudAdopt` now track
+    `fishCatches`, `fishCoins`, `fishDex` and `fishBag` so fishing-only rollbacks record `adopt-behind`
+    in `pgSyncLog()`.
+* **Files touched:** `index.html`, `assets/social-fishing.js`, `assets/social.js`, build-tag mirrors
+  (`Updates/cards-gear-audit/affix-ranges.html`, `Updates/cards-gear-audit/equipment-cards-tuning.html`,
+  `tools/cloudflare-deploy-steps.md`), `tools/tests/fishing_save_reload_sim.mjs` (new, 10 end-to-end
+  scenarios), `tools/tests/update_watch_sim.js`, `tools/tests/plaza_bots_sim.js`,
+  `tools/tests/social_fishing_sim.js`, `tools/tests/fixtures/progression_{encounters,gear,skills}.json`
+  (hash re-stamp only; all 126 measured + 126 baseline rows unchanged), `docs/TESTING.md`, and this log.
+
+

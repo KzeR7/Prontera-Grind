@@ -58,7 +58,20 @@ node tools/tests/save_codec_chain_sim.mjs
 node tools/tests/save_codec_gm_sim.js
 node tools/tests/api_sim.js
 node tools/tests/gm_tools_sim.js
+node tools/tests/fishing_save_reload_sim.mjs
+node tools/tests/cloud_sim.js
+node tools/tests/update_watch_sim.js
 ```
+
+`fishing_save_reload_sim.mjs` boots the real `index.html` + `assets/social-fishing.js` client against
+`functions/api/{register,me,save,sessions}.js` and an in-memory D1 SQLite database to verify fishing
+and cloud durability across in-flight uploads during `#updatePrompt` clicks, slow (>1.5s) automatic
+update flushes, catches saved while a prior upload is in flight (`rev > ackRev`), `localStorage`
+`QuotaExceededError` recovery via IndexedDB `pg_durable_v1`, 428 away-claim handshakes, 413/401/503
+reload refusal with `Keep playing` + `Retry`, 409 conflict handling (same-`cid` zero-extra-PUT
+deduplication, same-`cid` rebase, foreign-device adopt + `_local_` backup + fishing `adopt-behind`
+ledger, GM `restoreFenced`), bounded `cloudLogout`, the `restoreFrom` workflow from `CHECK-A-SAVE.md`,
+and `CLOUD.updating` mutation pausing.
 
 `helpers/full-storage-save.js` builds the refined/locked, all-three-star account with actual
 `genGear()` / `newCard()` / `addCatch()` calls, a seeded clock/RNG, compatible distinct-family sockets,

@@ -1232,7 +1232,7 @@ function fishingAnnounce(fish){
  if(app.room&&send({type:'fishbrag',sp:fish.sp,w:fish.w,kind:fish.kind==='secret'?'secret':'mega'}))return true;
  return pushFishNote({sp:fish.sp,w:fish.w,kind:fish.kind,name:'You',from:app.id||SOLO_ID,at:Date.now()});
 }
-function bindFishing(){const F=FISHING();if(!F)return;F.bind({host:()=>typeof S==='object'&&S?S:null,scene:()=>app.scene,self:fishingSelf,moveTo:(x,z)=>moveAction(x,z),walkTo:(x,z)=>performMoveAction(x,z,true),showOff:fishingShowOff,announce:fishingAnnounce,rig:fishingRig,titleChanged:fishingTitleChanged,notice,save:()=>{if(typeof save==='function'&&typeof S==='object'&&S)save()},button:$id('socialFishBtn')})}
+function bindFishing(){const F=FISHING();if(!F)return;F.bind({host:()=>typeof S==='object'&&S?S:null,scene:()=>app.scene,self:fishingSelf,moveTo:(x,z)=>moveAction(x,z),walkTo:(x,z)=>performMoveAction(x,z,true),showOff:fishingShowOff,announce:fishingAnnounce,rig:fishingRig,titleChanged:fishingTitleChanged,notice,isUpdating:()=>typeof CLOUD!=='undefined'&&!!CLOUD.updating,save:()=>{if(typeof save==='function'&&typeof S==='object'&&S)save()},button:$id('socialFishBtn')})}
 const digimonSelect=$id('socialDigimon');
 let sanctuaryIndexPage=0,sanctuaryView='partners',sanctuaryHatch=null,sanctuaryIndexBranch=null,sanctuaryPartnerGridKey='';let sanctuaryGearFilterKind='',sanctuaryGearFilterTier='',sanctuaryGearSelected='';
 // v349: four companion slots per player. Training is still one partner at a time, and a
@@ -1549,6 +1549,7 @@ function stopSoloPve(reason='stopped',notify=true){
 }
 function tickSoloPve(){
  const run=soloPve;if(!run)return;if(typeof S!=='object'||S!==run.localOwner||run.localAccount!==(typeof currentUser==='string'?currentUser:null)){stopSoloPve('stopped',false);return}
+ if(typeof CLOUD!=='undefined'&&CLOUD.updating)return;
  const result=globalThis.PGDigimonBattle?.stepPve(run,Date.now(),run.rng);if(!result)return;let end='';
  const self=app.room?app.id:SOLO_ID,idx=Array.isArray(run.members)?run.members.indexOf(self):-1,prof=(idx>=0&&run.profiles[idx])||run.profile;
  for(const event of result.events){if(String(event.type).startsWith('boss_'))bossFxNotice(event);if(event.type==='wave_clear')receiveBattleReward({local:true,kind:'pve',battleId:run.id+':wave'+event.wave+':'+(prof.slot||0),lineId:prof.lineId,form:prof.form,slot:prof.slot,wave:event.wave,reward:{...event.reward},earned:{...run.earned},gearDrop:event.gearDrop||null});if(event.type==='hit')app.scene?.battleEvent?.({kind:'pve',battleId:run.id,to:event.to,amount:event.amount,crit:!!event.crit});if(event.type==='end')end=event.reason}
@@ -1725,6 +1726,7 @@ function worldTrainingTick(){
  if(t.room&&(!CLOUD.on||CLOUD.signingOut||CLOUD.lost||CLOUD.gate||(typeof cloudReplaced!=='undefined'&&cloudReplaced)||!app.connected||!app.socket||app.socket.readyState!==1)){cancelWorldTraining('Gym training stopped after disconnection.');return}
  if(!t.room&&(app.room||CLOUD.on)){cancelWorldTraining('Local gym practice stopped after connecting online.');return}
  if(t.phase!=='active')return;
+ if(typeof CLOUD!=='undefined'&&CLOUD.updating){t.last=Date.now();return}
  const now=Date.now(),delta=Math.max(0,now-t.last);t.last=now;t.elapsed+=delta;
  // Each completion is applied once. Excess elapsed time is bounded by the existing
  // energy/stat caps, so a throttled online tab cannot run an unbounded loop.
