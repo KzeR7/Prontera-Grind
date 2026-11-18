@@ -11872,3 +11872,16 @@ re-recording them here would have written wrong numbers into the repository.
   invocation counts remain unavailable from this sandbox, so this does not claim the Free Tier CPU
   problem is solved. No merge, deployment, production data change, reward-rule change or new Social
   Durable Object traffic.
+
+### 2026-11-18 — haven-v421 Asura Strike one-hand-down pose
+
+* **Changed:** Monk, Champion and Sura now hold the native one-hand-down impact pose on Asura Strike instead of sitting. The pose uses the current hairstyle and accessories, works in all eight directions for both genders, and loads with the normal field appearance. Damage, skill effects and Social Hub sitting are unchanged.
+* **Try it:** Cast Asura Strike with Spirit Spheres on a Monk-line character. The hero briefly braces on one hand, then resumes the normal field animation.
+* **Checks:** Asura cast/render, expanded Wardrobe, normal Wardrobe, signature skills/effects, update watcher and publish checks passed. All 48 impact frames and anchors matched the pinned native source, and the existing body frames remained pixel-identical.
+* **Delivery:** Implemented in the working branch; not deployed.
+
+### 2026-11-18 — Asura pose pull request checks
+
+* **Changed:** Included the updated Wardrobe loader in the hosted staging package and regenerated the Map Journey review captures with the same loader. Guarded the Asura visual hook when called outside a running character session.
+* **Checks:** Generated assets, Pages configuration, hosted packaging, and the full simulation/smoke gate were checked. Two suites still fail on the unchanged branch base as well: `skill_balance_sim.js` (stale progression fixture) and `render_lost_boot_smoke.js` (no-WebGL boot). Software-WebGL Map Journey checks passed with no browser errors.
+* **Delivery:** Prepared the branch for a pull request; no deployment.

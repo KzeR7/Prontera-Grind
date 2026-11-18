@@ -149,3 +149,13 @@ colour picked up belts, boots and trim on most frames.
 
 - Weapons missing from ClientROThailand (revolvers, shuriken, the Rogue bow, instrument, whip, knuckle) come from `linhan85/rAthenaCN_LeeClient` at a pinned commit; `source-manifest.json` now lists 148 files. Attack motions: 40 overhead, 80 one-hand swing / revolvers / instrument / whip, 88 bow / throw / knuckle punch.
 - `tools/make_ro_fx.py` bakes skill effects into `assets/ro-fx/`: `python3 tools/make_ro_fx.py` rebuilds, `--check` verifies the shipped files against a rebuild, `--sheet out.png [keys]` writes a review sheet. Its `BOOKS` table maps a flipbook key to a `.str` timeline, an effect sprite or a set of stills. Sources are pinned in `fx-source-manifest.json` and cached in `.cache/native-fx/`.
+
+## Asura Strike impact pose (haven-v421)
+
+Monk, Champion and Sura use the native one-hand-down frame (`96 + direction`,
+zero-based frame `2`) from their pinned body ACT/SPR pairs in `devilm/costume-ro`.
+The builder puts the eight directions and their head attachment points in each
+male/female field atlas. `PGExpandedJobs.Store` moves the shared hair and
+accessories from the same-facing neutral route to the impact's native anchor.
+The pose is already loaded with the regular field look, so the first cast does
+not need to fetch a sitting look. Social Hub sitting still uses action `16`.

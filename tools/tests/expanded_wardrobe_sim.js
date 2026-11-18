@@ -8,7 +8,7 @@ const box={PGWardrobe:W,TextDecoder};vm.createContext(box);vm.runInContext(fs.re
 if(!global.crypto)global.crypto=webcrypto;
 const X=box.PGExpandedJobs,base='assets/wardrobe/expanded/v1/',catalog=JSON.parse(fs.readFileSync(base+'catalog.json'));
 let closed=0,passed=0;const asked=new Set();
-const options={fetcher:async url=>{const file=path.normalize(url);asked.add(file);return new Response(fs.readFileSync(file))},decode:async bytes=>({width:Buffer.from(bytes).readUInt32BE(16),height:Buffer.from(bytes).readUInt32BE(20),close(){closed++}})};
+const options={fetcher:async (url,init)=>{const file=path.normalize(url);if(file===base+'catalog.json')assert.equal(init.cache,'no-cache','the mutable catalog is revalidated on load');asked.add(file);return new Response(fs.readFileSync(file))},decode:async bytes=>({width:Buffer.from(bytes).readUInt32BE(16),height:Buffer.from(bytes).readUInt32BE(20),close(){closed++}})};
 const ok=name=>{passed++;console.log('  ok   '+name)};
 const STAND=['idle','walk','attack'].flatMap(s=>[0,1,2,3,4,5,6,7].map(d=>s+d));
 function checkLook(look,stances,label){
@@ -51,6 +51,28 @@ function checkLook(look,stances,label){
     assert.equal(held,armed.has(cls),cls+' '+sex);assert.ok(!look.base.metadata.actions.idle0.frames.some(f=>f.some(p=>p[7]==='weapon')))}
   ok('nineteen classes hold their native weapon while attacking; the Monk line punches with its fists');
 
+  const asuraClasses=new Set(['Monk','Champion','Sura']);
+  for(const cls of Object.keys(X.CLASSES))for(const sex of ['m','f']){
+    const a=W.defaults(sex);a.heads[sex]=19;a.headwear='halo';a.backwear='wings';
+    const look=await store.select('hero',a,cls),actions=look.base.metadata.actions;
+    if(!asuraClasses.has(cls)){assert.ok(!Object.keys(actions).some(k=>k.startsWith('asura')),cls);continue}
+    checkLook(look,['asura'],cls+' '+sex);
+    const rec=catalog.assets[`base-${X.CLASSES[cls]}-${sex}`];
+    const raw=JSON.parse(fs.readFileSync(base+rec.meta));
+    for(let d=0;d<8;d++){
+      const name='asura'+d,body=action=>action.frames[0].find(p=>p[7]==='body');
+      const impact=body(actions[name]);
+      const seated=raw.poses[raw.actions['sit'+d].frames[0]].map(i=>raw.layers[i]).find(p=>p[7]==='body');
+      assert.equal(actions[name].frames.length,1);
+      assert.notDeepEqual(impact.slice(0,4),seated.slice(0,4),cls+' '+sex+' '+name+' uses different pixels from sit');
+      assert.notDeepEqual(impact.slice(0,4),body(actions['idle'+d]).slice(0,4));
+      const parts=[];
+      assert.equal(W.draw({clearRect(){},drawImage(...args){parts.push(args)}},look,'asura',d,0,0),0);
+      for(const part of [look.base,look.hair,...look.pieces])assert.ok(parts.some(p=>p[0]===part.image),name+' draws each equipped layer');
+    }
+  }
+  ok('the Monk line draws a distinct one-hand-down body with hair and accessories in all eight directions for both genders');
+
   // The game derives exactly what tools/make_expanded_wardrobe.py derives.
   const fixture=JSON.parse(fs.readFileSync('tools/tests/fixtures/expanded_wardrobe_routes.json')).routes;
   for(const [key,want] of Object.entries(fixture)){const [asset,cls]=key.split('|'),hair=asset.startsWith('hair-'),sex=hair?asset.split('-')[1]:asset.slice(-1),a=W.defaults(sex);
@@ -65,7 +87,7 @@ function checkLook(look,stances,label){
   ok('moving the reference job onto itself changes nothing');
 
   const sit=new X.Store({...options,stances:['sit']});let sat=0;
-  for(const cls of Object.keys(X.CLASSES))for(const sex of ['m','f']){const a=W.defaults(sex);a.headwear='halo';a.backwear='wings';const look=await sit.select('seat',W.normalize(a),cls);checkLook(look,['sit'],cls+' '+sex+' sitting');sat++}
+  for(const cls of Object.keys(X.CLASSES))for(const sex of ['m','f']){const a=W.defaults(sex);a.headwear='halo';a.backwear='wings';const look=await sit.select('seat',W.normalize(a),cls);checkLook(look,['sit'],cls+' '+sex+' sitting');assert.equal(Object.keys(look.base.metadata.actions).length,8);sat++}
   ok(sat+' sitting looks compose from assets/social/sitting/');
 
   const out=JSON.parse(fs.readFileSync('tools/native-expanded/wardrobe-output-manifest.json')).files;
