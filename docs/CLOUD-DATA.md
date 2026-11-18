@@ -59,7 +59,26 @@ compression, browser caches and deployed responses can differ. Resource Timing
 size fields were unavailable in this software-browser environment and are not used
 as a bandwidth measurement.
 
+### Class Tree delivery (haven-v419 integration)
+
+The Class Tree uses the native portraits from PR #249. The source PNGs and alternate encodings
+remain in the repository; `build_site.sh` publishes exactly the files in `RO_ICONS`. Of the 49
+rendered emblems, 43 use existing WebPs that decode to identical RGBA pixels. Six retain PNGs
+because their WebP copies are not pixel-identical. `class_icon_delivery_sim.mjs` checks the real
+renderer and every selected image against its source PNG. The optional portrait group has its
+own 0.3 MiB delivery bound; the existing 60.3 MiB classic and 187.5 MiB combined bounds remain.
+
+The build also removes standalone comments from the published Eclipse/mobile CSS copies.
+Source stylesheets remain unchanged. The publication test compares all parsed CSS rules with
+the originals, including preservation of quoted comment text and inline comments. Together with
+omitting unused portrait encodings, this keeps the combined release within its delivery bounds.
+These are static delivery changes, not evidence of lower Worker request CPU usage.
+
+The isolated staging package includes all original portrait sources and the matching delivery
+optimizer, so a rehearsal builds the same runtime rather than silently using an old helper.
+
 ## The stored save format (haven-v415 / `__v` 4)
+
 
 A save row is stored **compact**: `inv`, `cards`, the fishing bag and the cards socketed inside items
 are written as positional tuples instead of objects; `eq` stays ordinary.

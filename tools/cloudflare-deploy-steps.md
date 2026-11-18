@@ -135,7 +135,8 @@ Open the `*.pages.dev` address Cloudflare gives the project, and walk this list:
 | Check | Expected |
 |---|---|
 | The login card | says **“☁ Cloud accounts are on — register or sign in…”** |
-| Build tag at the bottom of the card | `2026-11-18 haven-v419 save recovery fixes: isolate page writers, recover pending progress with full storage, finish offline claims without deadlocks, and cancel dismissed update reloads<your-site>/api/me` while signed out | `{"err":"Not logged in."}` with HTTP 401 — JSON, not an HTML page |
+| Build tag at the bottom of the card | `2026-11-18 haven-v419 save recovery fixes: isolate page writers, recover pending progress with full storage, finish offline claims without deadlocks, and cancel dismissed update reloads` |
+| `<your-site>/api/me` while signed out | `{"err":"Not logged in."}` with HTTP 401 — JSON, not an HTML page |
 
 That second-browser line is the entire point of the shift: it is progress following the player
 instead of the browser.

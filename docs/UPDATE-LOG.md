@@ -11812,3 +11812,20 @@ re-recording them here would have written wrong numbers into the repository.
 * **Delivery:** Follow-up for PR #248 on `arena/870d97ba-prontera-grind`; no merge, deployment,
   production account changes, new Social Durable Object traffic, or reward-rule changes.
 
+### 2026-11-18 — `haven-v419` PR #248 main integration
+* **Changed:** Integrated main `0266d98` into the save-recovery branch and resolved the build-tag,
+  cache-version and deployment-guide conflicts. Preserved the save coordinator and the Class Tree
+  redesign/native icon sources. Runtime delivery selects 43 existing pixel-identical WebPs and six
+  original PNGs for the 49 emblems, omits unused encodings, and carries the portrait sources plus the
+  matching delivery optimizer in the isolated staging package. Published Eclipse/mobile CSS removes
+  standalone comments while keeping every parsed rule identical. Native portraits have an explicit
+  0.3 MiB optional-pack bound; the 60.3 MiB classic and 187.5 MiB combined ceilings are unchanged.
+* **Try it:** Open Class Tree after login, then catch fish, save, refresh and sign in again. The new
+  class portraits and the pending-save recovery must both remain available in the combined build.
+* **Checks:** Final gate 230/241 suites pass, with the same 11 Windows/baseline failures and no new
+  failures. Save/reload 18/18, update watcher 22/22, 49 exact-pixel emblem checks, staging package,
+  Pages configuration and all three generated-asset checks pass. Publication has the same two
+  existing Windows path assertions; its runtime references, icon bytes, CSS rules and size bounds
+  pass. Actual reruns of all 126 combat measurements match the pre-merge rows and historical baseline.
+* **Delivery:** Integration on PR #248's branch for the owner to merge; no production deployment,
+  production account edits, reward-rule changes or new Social Durable Object traffic.

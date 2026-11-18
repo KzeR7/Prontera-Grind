@@ -60,6 +60,14 @@ t('all fourth-job runtime assets ship byte for byte', () => {
   assert.ok(fs.existsSync(path.join(out,'assets/fourth-jobs.js')));
 });
 
+t('native Class Tree icons ship exactly the requested encodings, byte for byte', () => {
+  const match=src.match(/var RO_ICONS=(\{[\s\S]*?\n\});/);
+  assert.ok(match,'runtime icon map exists');
+  const files=[...new Set(Object.values(require('vm').runInNewContext('('+match[1]+')')))].sort();
+  assert.deepStrictEqual(fs.readdirSync(path.join(out,'assets/ro_icons')).sort(),files,'unused encodings stay out of the publish tree');
+  for(const file of files)assert.deepStrictEqual(fs.readFileSync(path.join(out,'assets/ro_icons',file)),fs.readFileSync(path.join(root,'assets/ro_icons',file)));
+});
+
 t('the class skins the game points at are published (Updates/Sprite/)', () => {
   assert.ok(skinDir && skinFile, 'could not read the class-skin directory/file out of assets/class_skins_data.js');
   assert.strictEqual(path.normalize(skinDir), 'Updates/Sprite', 'class skins moved - build_site.sh must copy the new place too');
@@ -145,6 +153,10 @@ t('the published tree is small enough to stay honest', () => {
   // haven-v412: original Ragnarok Online skill-effect flipbooks (tools/make_ro_fx.py), fetched at boot.
   const roFxBytes=walk(path.join(out,'assets/ro-fx'));
   assert.ok(roFxBytes>0&&roFxBytes/1048576<2.5,'RO effect flipbooks exceed 2.5 MiB: '+(roFxBytes/1048576).toFixed(2));
+  // PR #249 adds native Class Tree portraits, loaded when that panel opens. Bound this
+  // new optional group separately, while retaining the classic and combined ceilings.
+  const classIconBytes=walk(path.join(out,'assets/ro_icons'));
+  assert.ok(classIconBytes>0&&classIconBytes/1048576<0.3,'Class Tree icons exceed 0.3 MiB');
   // Illustrated Rune-Midgard World Atlas pack (v314): only requested when the player opens the
   // World Map window, budgeted separately at < 3.5 MiB (2.69 MiB measured) while still covered by
   // the combined runtime ceiling below.
@@ -189,7 +201,7 @@ t('the published tree is small enough to stay honest', () => {
   // 1,000-card ceiling, gmReceipts bounds, an owner-only account delete). Each line fitted inside
   // 60.2 on its own; together they measured 60.2177 MiB, so this is the same deliberate-headroom
   // step as haven-v409's 60.1 -> 60.2 for the expanded weapon icons.
-  assert.ok((bytes-nativeBytes-socialBytes-endgameBytes-worldMapBytes-digimonBytes-fountainBytes-expandedBytes-expandedWardrobeBytes-roFxBytes)/1048576 < 60.3, 'existing classic runtime assets exceed their 60.3 MiB budget');
+  assert.ok((bytes-nativeBytes-socialBytes-endgameBytes-worldMapBytes-digimonBytes-fountainBytes-expandedBytes-expandedWardrobeBytes-roFxBytes-classIconBytes)/1048576 < 60.3, 'existing classic runtime assets exceed their 60.3 MiB budget');
   assert.ok(expandedWardrobeBytes > 0 && expandedWardrobeBytes/1048576 < 4.5, 'lazy expanded-roster Wardrobe bodies exceed their separate 4.5 MiB budget (4.31 measured 2026-11-15)');
   assert.ok(expandedBytes > 0 && expandedBytes/1048576 < 3, 'lazy expanded-roster bodies exceed their separate 3 MiB budget (2.86 measured 2026-11-15, 44 bodies)');
   assert.ok(digimonBytes/1048576 < 40, 'lazy Digimon roster exceeds its separate 40 MiB budget');
@@ -239,6 +251,24 @@ t('kit JSON delivery is smaller with identical values; native contracts and sour
  const copyFiles=['assets/kit/ro-spritesheet.png','assets/kit/ro-tiles-hd.png','assets/wardrobe/v5/catalog.json','assets/pets/v1/catalog.json','assets/sprite_pack_data.js'];
  for(const file of copyFiles)assert.ok(fs.readFileSync(path.join(root,file)).equals(fs.readFileSync(path.join(out,file))),file+' must remain byte-identical');
  assert.strictEqual(optimizer.optimize(out),0,'Optimisation must be idempotent');
+});
+
+t('published UI styles preserve every parsed CSS rule while removing standalone comments',()=>{
+ const {JSDOM}=require('jsdom'),optimizer=require('../optimize_delivery.js'),dom=new JSDOM('');
+ try{
+  const rules=css=>{const sheet=new dom.window.CSSStyleSheet();sheet.replaceSync(css);return Array.from(sheet.cssRules,rule=>rule.cssText)};
+  for(const file of optimizer.CSS_FILES){
+   const source=fs.readFileSync(path.join(root,file),'utf8'),published=fs.readFileSync(path.join(out,file),'utf8');
+   assert.ok(Buffer.byteLength(published)<Buffer.byteLength(source),file+' comments were removed');
+   assert.ok(rules(source).length>100,'real stylesheet parsed');
+   assert.deepStrictEqual(rules(published),rules(source),file+' CSS rules must remain identical');
+  }
+  const sample='/* remove */\na{content:"/* literal */"}\nb/**/c{color:red}';
+  const compact=optimizer.stripStandaloneCssComments(sample);
+  assert.ok(!compact.includes('/* remove */'));
+  assert.ok(compact.includes('"/* literal */"'));
+  assert.ok(compact.includes('b/**/c'));
+ }finally{dom.window.close()}
 });
 
 t('in-game endgame exploration ships only selected runtime resources with lazy lossless materials',()=>{
