@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Prontera-Grind — Class Lineage Window</title>
 <style>
+@import url('../../assets/ui/fonts.css');
 /* Game's exact Eclipse UI color palette and design tokens */
 :root {
   --ink: #e8edf4;
@@ -20,6 +21,8 @@
   --gold-glow: rgba(215, 183, 122, 0.28);
   --hp: #5fae77;
   --sp: #4a88c7;
+  --e-font: 'DM Sans', "Trebuchet MS", Verdana, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --e-display: 'Manrope', "Trebuchet MS", Verdana, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -27,9 +30,15 @@ html, body {
   width: 100%;
   height: 100%;
   overflow: hidden;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-family: var(--e-font);
   color: var(--ink);
   background: #080d14;
+}
+button, input, select, textarea {
+  font-family: inherit;
+}
+h1, h2, h3, .win-title, .branch-hdr, .insp-kicker, .ruler-tag, .hero-titles h2, .strip-label {
+  font-family: var(--e-display);
 }
 
 /* ==========================================================================
@@ -39,7 +48,10 @@ html, body {
   width: 100vw;
   height: 100vh;
   position: relative;
-  background: url('../assets/ui/eclipse-field.webp') center center / cover no-repeat;
+  background-image: url('../../assets/ui/eclipse-field.webp'), url('/assets/ui/eclipse-field.webp'), url('../assets/ui/eclipse-field.webp');
+  background-position: center center;
+  background-size: cover;
+  background-repeat: no-repeat;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -231,14 +243,14 @@ html, body {
 .current-lineage-strip {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 6px 12px;
+  gap: 8px;
+  padding: 4px 10px;
   background: var(--e-bg);
   border: 1px solid var(--edge2);
   border-radius: 8px;
   flex-shrink: 0;
-  min-height: 38px;
-  max-height: 38px;
+  min-height: 36px;
+  max-height: 36px;
   box-sizing: border-box;
   overflow-x: auto;
   overflow-y: hidden;
@@ -248,9 +260,9 @@ html, body {
   display: none;
 }
 .current-lineage-strip .strip-label {
-  font-size: 9px;
+  font-size: 8.5px;
   font-weight: 800;
-  letter-spacing: .12em;
+  letter-spacing: .1em;
   color: var(--gold);
   white-space: nowrap;
   text-transform: uppercase;
@@ -259,12 +271,12 @@ html, body {
 .current-lineage-strip .current-class-path {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   flex-shrink: 0;
   white-space: nowrap;
 }
 .current-lineage-strip .strip-node {
-  padding: 3px 8px;
+  padding: 2px 7px;
   border: 1px solid var(--edge2);
   border-radius: 5px;
   background: var(--panel);
@@ -278,13 +290,14 @@ html, body {
 }
 .current-lineage-strip .strip-node.current {
   border-color: #4ade80;
-  background: rgba(74, 222, 128, 0.1);
+  background: rgba(74, 222, 128, 0.12);
+  box-shadow: 0 0 8px rgba(74, 222, 128, 0.35);
   color: #4ade80;
   font-weight: 800;
 }
 .current-lineage-strip .strip-arrow {
   color: var(--e-muted);
-  font-size: 13px;
+  font-size: 12px;
   line-height: 1;
   user-select: none;
   flex-shrink: 0;
@@ -711,7 +724,7 @@ html, body {
 .insp-header .status-txt { font-size: 10.5px; color: var(--gold); font-weight: 600; margin-top: 2px; }
 
 /* LONGER CHARACTER SPRITE BOX (Expanded height as requested!) */
-.sprite-display-large {
+.sprite-display-large, .char-preview-box, .preview-card {
   background: radial-gradient(ellipse at center 60%, var(--e-raised), var(--panel) 75%);
   border: 1px solid var(--edge2);
   border-radius: 8px;
@@ -733,9 +746,16 @@ html, body {
   border-radius: 50%;
 }
 .sprite-art-large {
-  width: 75px;
-  height: 105px;
-  background: url('../assets/ui/eclipse-knight.png') center/contain no-repeat;
+  width: 100px;
+  height: 130px;
+  background-image: url('../../assets/ui/eclipse-knight.png'), url('/assets/ui/eclipse-knight.png'), url('../assets/ui/eclipse-knight.png');
+  background-position: center bottom;
+  background-size: contain;
+  background-repeat: no-repeat;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  transform: scale(1.18);
+  transform-origin: center bottom;
   animation: spriteBounce 2s ease-in-out infinite alternate;
   z-index: 2;
 }
@@ -888,7 +908,7 @@ html, body {
               <span class="strip-arrow">›</span>
               <span class="strip-node" onclick="inspectClass('Knight')" style="cursor:pointer;">Knight <small style="color:var(--gold)">Job 50</small></span>
               <span class="strip-arrow">›</span>
-              <span class="strip-node current" onclick="inspectClass('Lord Knight')" style="cursor:pointer;">✦ Lord Knight (Current) <small style="color:var(--gold)">Job 50</small></span>
+              <span class="strip-node current" onclick="inspectClass('Lord Knight')" style="cursor:pointer;">Lord Knight <small style="color:var(--gold)">Job 50</small></span>
               <span class="strip-arrow">›</span>
               <span class="strip-node" onclick="inspectClass('Rune Knight')" style="cursor:pointer;">Rune Knight <small style="color:var(--gold)">Base 150</small></span>
             </div>
@@ -1190,7 +1210,7 @@ html, body {
             </div>
 
             <!-- LONGER CHARACTER SPRITE BOX (Taller stage as requested!) -->
-            <div class="sprite-display-large">
+            <div class="sprite-display-large char-preview-box preview-card">
               <div class="sprite-pedestal"></div>
               <div class="sprite-art-large" id="spritePreviewArt"></div>
             </div>
@@ -1533,7 +1553,7 @@ function updateLineageStrip() {
     const isCur = node.name === currentActiveJob;
     return `
       <span class="strip-node ${isCur ? 'current' : ''}" onclick="inspectClass('${node.name}')" style="cursor:pointer;">
-        ${isCur ? '✦ ' : ''}${node.name}${isCur ? ' (Current)' : ''} <small style="color:var(--gold);">${node.badge}</small>
+        ${node.name} <small style="color:var(--gold);">${node.badge}</small>
       </span>
       ${i < path.length - 1 ? '<span class="strip-arrow">›</span>' : ''}
     `;

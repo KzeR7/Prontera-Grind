@@ -1,6 +1,6 @@
 @import url('fonts.css');
 /* Eclipse: presentation tokens are intentionally independent of rarity and combat effects. */
-:root{--ink:#e8edf4;--panel:#131d29;--edge:#ffffff12;--edge2:#ffffff25;--gold:#d7b77a;--e-bg:#101b27;--e-raised:#1b2834;--e-muted:#8a9bab;--e-soft:#d7b77a16;--e-glass:#101b27f7;--e-font:'DM Sans',system-ui,sans-serif;--e-display:'Manrope',system-ui,sans-serif;--danger:#d7887e;--danger-soft:#e5a59b;--danger-line:#d99c92}
+:root{--ink:#e8edf4;--panel:#131d29;--edge:#ffffff12;--edge2:#ffffff25;--gold:#d7b77a;--e-bg:#101b27;--e-raised:#1b2834;--e-muted:#8a9bab;--e-soft:#d7b77a16;--e-glass:#101b27f7;--e-font:'DM Sans',"Trebuchet MS",Verdana,system-ui,sans-serif;--e-display:'Manrope',"Trebuchet MS",Verdana,system-ui,sans-serif;--danger:#d7887e;--danger-soft:#e5a59b;--danger-line:#d99c92}
 
 :root[data-palette=aurora]{--ink:#e7f3ed;--panel:#182b25;--edge:#365447;--edge2:#638f7c;--gold:#a2dfbf;--e-bg:#0e1a16;--e-raised:#253d33;--e-muted:#a5c2b5;--e-soft:#a2dfbf1a;--e-glass:#182b25f5}
 
@@ -1798,17 +1798,18 @@ body:not(.playing) #comboFieldStatus:empty{display:none}
 #wins .ui-skill-catalog .sk .si,#wins .ui-skill-catalog .skill-art{width:30px;height:30px}
 
 /* v179 / Class tree redesign: centered lineage navigation, dual-branch progression tree, novice hub and action inspector. */
-#wins .current-lineage-strip{display:flex;align-items:center;gap:10px;padding:6px 12px;background:var(--e-bg);border:1px solid var(--edge2);border-radius:8px;margin-bottom:12px;flex-shrink:0;min-height:38px;max-height:38px;box-sizing:border-box;overflow-x:auto;overflow-y:hidden;scrollbar-width:none}
+#wins .ui-panel[data-layout="job"]>.atabs{display:none!important}
+#wins .current-lineage-strip{display:flex;align-items:center;gap:8px;padding:4px 10px;background:var(--e-bg);border:1px solid var(--edge2);border-radius:8px;margin-bottom:10px;flex-shrink:0;min-height:34px;max-height:36px;box-sizing:border-box;overflow-x:auto;overflow-y:hidden;scrollbar-width:none}
 #wins .current-lineage-strip::-webkit-scrollbar{display:none}
-#wins .current-lineage-strip .strip-label{font-size:9px;font-weight:800;letter-spacing:.12em;color:var(--gold);white-space:nowrap;text-transform:uppercase;flex-shrink:0}
-#wins .current-lineage-strip .current-class-path{display:flex;align-items:center;gap:6px;margin:0;padding:0;flex-shrink:0;white-space:nowrap}
-#wins .current-lineage-strip .current-class-card{display:inline-flex;flex-direction:row;align-items:center;gap:6px;min-height:0;padding:3px 8px;border:1px solid var(--edge2);border-radius:5px;background:var(--panel);white-space:nowrap;cursor:pointer;transition:all .15s ease;flex-shrink:0}
-#wins .current-lineage-strip .current-class-card.current{border-color:#4ade80;background:rgba(74,222,128,.08);box-shadow:0 0 8px rgba(74,222,128,.2)}
+#wins .current-lineage-strip .strip-label{font-size:8.5px;font-weight:800;letter-spacing:.1em;color:var(--gold);white-space:nowrap;text-transform:uppercase;flex-shrink:0}
+#wins .current-lineage-strip .current-class-path{display:flex;align-items:center;gap:5px;margin:0;padding:0;flex-shrink:0;white-space:nowrap}
+#wins .current-lineage-strip .current-class-card{display:inline-flex;flex-direction:row;align-items:center;gap:5px;min-height:0;padding:2px 7px;border:1px solid var(--edge2);border-radius:5px;background:var(--panel);white-space:nowrap;cursor:pointer;transition:all .15s ease;flex-shrink:0}
+#wins .current-lineage-strip .current-class-card.current{border-color:#4ade80;background:rgba(74,222,128,.1);box-shadow:0 0 8px rgba(74,222,128,.35)}
 #wins .current-lineage-strip .current-class-card.pick{border-color:var(--gold);box-shadow:0 0 8px rgba(215,183,122,.25)}
 #wins .current-lineage-strip .current-class-card>button{background:none;border:none;padding:0;color:var(--ink);font-size:11px;font-weight:700;cursor:pointer;min-height:0}
 #wins .current-lineage-strip .current-class-card.current>button{color:#4ade80;font-weight:800}
 #wins .current-lineage-strip .current-class-card>button:disabled{opacity:1;cursor:default}
-#wins .current-lineage-strip .strip-arrow{color:var(--e-muted);font-size:13px;line-height:1;user-select:none;flex-shrink:0}
+#wins .current-lineage-strip .strip-arrow{color:var(--e-muted);font-size:12px;line-height:1;user-select:none;flex-shrink:0}
 
 #wins .class-lineage-nav{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin:0 0 14px;padding:4px}
 #wins .class-lineage-nav .lineage-tab-btn{padding:6px 14px;border:1px solid var(--edge2);border-radius:6px;background:var(--panel);color:var(--e-muted);font-size:11.5px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:4px}
@@ -1901,8 +1902,9 @@ body:not(.playing) #comboFieldStatus:empty{display:none}
 #wins .class-path-focus .mob-card{padding:0;border:0;background:none}
 #wins .class-path-focus .insp-kicker{font-size:9px;font-weight:800;letter-spacing:.12em;color:var(--gold);text-transform:uppercase}
 #wins .class-path-focus h3{font-size:22px;margin:4px 0 6px;color:#fff}
-#wins .class-path-focus .hair-preview-card{margin:0;padding:10px;border-radius:8px;border:1px solid var(--edge2);background:linear-gradient(180deg,var(--e-raised),var(--panel));display:flex;flex-direction:column;align-items:center}
-#wins .class-path-focus .hair-preview-stage{width:100%;height:150px;display:flex;align-items:center;justify-content:center;position:relative;background:radial-gradient(ellipse at 50% 65%,rgba(215,183,122,.15),transparent 72%),#151d28;border:1px solid var(--edge);border-radius:6px;box-shadow:inset 0 0 16px rgba(0,0,0,.6)}
+#wins .class-path-focus .hair-preview-card,#wins .class-path-focus .preview-card{margin:0;padding:10px;border-radius:8px;border:1px solid var(--edge2);background:linear-gradient(180deg,var(--e-raised),var(--panel));display:flex;flex-direction:column;align-items:center}
+#wins .class-path-focus .hair-preview-stage,#wins .class-path-focus .char-preview-box{width:100%;height:150px;display:flex;align-items:center;justify-content:center;position:relative;background:radial-gradient(ellipse at 50% 65%,rgba(215,183,122,.15),transparent 72%),#151d28;border:1px solid var(--edge);border-radius:6px;box-shadow:inset 0 0 16px rgba(0,0,0,.6)}
+#wins .class-path-focus .hair-preview-stage canvas,#wins .class-path-focus .char-preview-box canvas{display:block;width:126px;height:134px;transform:scale(1.15);transform-origin:center bottom;image-rendering:pixelated}
 #wins .class-path-focus .levels-summary{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:8px 0}
 #wins .class-path-focus .lv-pill{background:var(--e-bg);border:1px solid var(--edge);border-radius:6px;padding:6px;text-align:center}
 #wins .class-path-focus .lv-pill small{display:block;font-size:8.5px;color:var(--e-muted);text-transform:uppercase;letter-spacing:.05em}
