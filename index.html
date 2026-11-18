@@ -3442,7 +3442,7 @@ const JOFF=[0,9,49,98,100];
 // ---------- state ----------
 // expEarned (v74) is a session counter like zenyEarned: it counts what this login actually
 // earned, so the HUD's EXP/min readout is income, never a level-up's subtraction of it.
-let currentUser=null,S=null,speed=1,zenyEarned=0,expEarned=0,floats=[],drops=[],t=0,shake=0,atkAnim=0,hitAnim=0,shots=[],skillFx=[],barT=0,hudRate=null,logs=[],logSequence=0,tab=null,selB=null,selC=null,selK=null,mapM=0,mapL=1;
+let currentUser=null,S=null,speed=1,zenyEarned=0,expEarned=0,floats=[],drops=[],t=0,shake=0,atkAnim=0,hitAnim=0,shots=[],skillFx=[],barT=0,hudRate=null,logs=[],logSequence=0,tab=null,selB=null,selC=null,selK=null,jobLineTab=null,mapM=0,mapL=1;
 // wt/wx/wz are the roam target: with no mobs on the field the character wanders instead of
 // trudging back to the spawn point. Only a defeat sends you home (see the death handler).
 const pl={x:0,z:Z1-1.5,ry:0,orb:0,run:0,wt:0,wx:0,wz:Z1-1.5},skCd={},petR={};
@@ -9131,24 +9131,116 @@ const V={
     // haven-v408: the alternate line of each first job sits in the same column as that first job.
     const altLines=EXPANDED_JOBS_LIVE?[['Swordman','Crusader','Paladin','Royal Guard'],['Mage','Sage','Scholar','Sorcerer'],['Archer','Bard & Dancer','Minstrel & Gypsy','Maestro & Wanderer'],['Thief','Rogue','Stalker','Shadow Chaser'],['Acolyte','Monk','Champion','Sura'],['Merchant','Alchemist','Biochemist','Geneticist']]:[];
     const soloLines=EXPANDED_JOBS_LIVE?[...EXPANDED_CLASSES].filter(n=>CLASSES[n]).map(n=>[n,...CLASSES[n].kids]):[];
+    const curFamily=S.cls==='Novice'?'Novice':(EXPANDED_CLASSES.has(S.cls)?'expanded':(lines.find(l=>l.includes(S.cls))?.[0]||altLines.find(l=>l.includes(S.cls))?.[0]||'Swordman'));
+    const activeFamily=(typeof jobLineTab!=='undefined'&&jobLineTab)||(selK?(selK==='Novice'?'Novice':(EXPANDED_CLASSES.has(selK)?'expanded':(lines.find(l=>l.includes(selK))?.[0]||altLines.find(l=>l.includes(selK))?.[0]||curFamily))):curFamily);
     const k=selK||S.cls,planned=CD4.find(row=>row[0]===k),c=CLASSES[k],future=!c&&!!planned,blk=future?'Coming soon':classBlock(k),pj=S.jobs[k],rec=future?null:classRec(k);
     const node=n=>CLASSES[n]?tnode(n):`<button class="tn lock${k===n?' pick':''}" data-class-status="lock" data-a="selk" data-v="${n}"><b>${n}</b><small><span class="eclipse-job-status">Coming soon</span> · 4th job</small></button>`;
     const expandedOpen=hasLv150ThirdClass();
     const expanded=altLines.length?`<div class="tree class-expanded-tree" style="margin-top:14px" data-expanded-roster="${expandedOpen?'open':'locked'}"><div class="sec">Expanded roster <small>${expandedOpen?'Unlocked · alternate lines branch from each first job':'Locked · take any 4th job to Base Lv '+ADV4_BASE_LV+' to open these classes'}</small></div>${[1,2,3].map(i=>`<div class="trow">${altLines.map(line=>node(line[i])).join('')}</div>${i<3?'<div class="trunk"></div>':''}`).join('')}<div class="sec">Expanded classes <small>start from Novice · one advanced job each</small></div><div class="trow">${soloLines.map(line=>node(line[0])).join('')}</div>${soloLines.some(line=>line[1])?`<div class="trunk"></div><div class="trow">${soloLines.map(line=>line[1]?node(line[1]):'').join('')}</div>`:''}</div>`:'';
     const overview=`<div class="tree class-lineage-overview"><div class="trow">${node('Novice')}</div><div class="trunk"></div>${[0,1,2,3].map((i)=>`<div class="trow">${lines.map(line=>node(line[i])).join('')}</div>${i<3?'<div class="trunk"></div>':''}`).join('')}</div>${expanded}`;
     const currentLine=soloLines.find(line=>line.includes(S.cls))||altLines.find(line=>line.slice(1).includes(S.cls))||lines.find(line=>line.includes(S.cls)),path=['Novice',...(currentLine||[])];
-    const altLineMatch=altLines.find(al=>currentLine&&al[0]===currentLine[0]);
-    const altPath=altLineMatch?altLineMatch.slice(1):[];
-    const design=`<div class="current-class-path" aria-label="Current class lineage">${path.map((n,i)=>{const c=CLASSES[n],blocked=c?classBlock(n):'Coming soon',pj=S.jobs[n],lvlBadge=n==='Novice'?'Novice':(n===S.cls?`Job ${jobOf().jl}`:(pj?`Job ${pj.jl}`:(c?.tier===4?'Base 150':'Job 1')));return `<article class="current-class-card ${n===S.cls?'current':''} ${n===(selK||S.cls)?'pick':''}" ${n===S.cls?'aria-current="step"':''} data-a="selk" data-v="${n}"><div class="card-header-line"><span class="ui-eyebrow">${i===0?'START':i+' / JOB'}</span><span class="level-badge">${lvlBadge}</span></div><span class="class-card-emblem" aria-hidden="true">${eclipseClassEmblem(n)}</span><strong class="card-name">${n}</strong><div class="card-subtext"><span>Weapons: <strong>${CLASSES[n]?.wt?.join(', ')||'Any'}</strong></span> · <span>Main: <strong>${CLASSES[n]?.main?.toUpperCase()||'All'}</strong></span></div><button data-a="job" data-v="${n}" ${blocked?'disabled':''}>${n}</button><small class="status-pill ${n===S.cls?'cur':playedClass(n)?'played':blocked?'lock':'ok'}">${n===S.cls?'Current class':blocked||'Change class'}</small></article>`}).join('')}</div>${altPath.length?`<div class="alt-branch-section"><div class="alt-branch-header"><span>❖ Branch 2-2 · Alternate Lineage</span></div><div class="alt-branch-grid">${altPath.map(an=>{const ac=CLASSES[an],ablk=ac?classBlock(an):'Coming soon';return `<button type="button" class="alt-branch-card ${an===(selK||S.cls)?'pick':''}" role="button" data-a="selk" data-v="${an}"><span class="class-card-emblem" aria-hidden="true">${eclipseClassEmblem(an)}</span><strong>${an}</strong><small class="status-pill ${an===S.cls?'cur':playedClass(an)?'played':ablk?'lock':'ok'}">${an===S.cls?'Current':ablk||'Available'}</small></button>`}).join('')}</div></div>`:''}${!currentLine?'<p>Select a first class in Class tree to explore its full lineage.</p>':''}`;
-    const allLinePicks=[['Novice','Novice'],['Swordman','Swordsman'],['Mage','Mage'],['Archer','Archer'],['Thief','Thief'],['Acolyte','Acolyte'],['Merchant','Merchant'],['Gunslinger','Expanded']];
-    const navBar=`<div class="class-lineage-nav" aria-label="Class lineages">${allLinePicks.map(([rootClass,label])=>{const isCur=lineOf(S.cls).includes(rootClass)||(rootClass==='Gunslinger'&&EXPANDED_CLASSES.has(S.cls));const isSel=selK?(lineOf(selK).includes(rootClass)||(rootClass==='Gunslinger'&&EXPANDED_CLASSES.has(selK))):isCur;return `<button type="button" class="lineage-tab-btn ${isSel?'active':''}" data-a="selk" data-v="${rootClass}">${label}${isCur?' <span class="badge-cur">CURRENT</span>':''}</button>`}).join('')}</div>`;
-    return `<div class="atabs" aria-label="Jobs views"><button data-a="jobview" data-v="lineage" class="${!eclipseJobsBrowse?'on':''}">Current lineage</button><button data-a="jobview" data-v="browse" class="${eclipseJobsBrowse?'on':''}">Class tree</button></div>${navBar}<div class="class-path-layout"><div class="class-path-canvas">${eclipseJobsBrowse?overview:design}</div>
+    const breadcrumb=`<div class="current-lineage-strip"><span class="strip-label">CURRENT LINEAGE</span><div class="current-class-path" aria-label="Current class lineage">${path.map((n,i)=>{const c=CLASSES[n],blocked=c?classBlock(n):'Coming soon',pj=S.jobs[n],lvlBadge=n==='Novice'?'Novice':(n===S.cls?`Job ${jobOf().jl}`:(pj?`Job ${pj.jl}`:(c?.tier===4?'Base 150':'Job 1')));return `<article class="current-class-card ${n===S.cls?'current':''} ${n===(selK||S.cls)?'pick':''}" ${n===S.cls?'aria-current="step"':''} data-a="selk" data-v="${n}"><button data-a="job" data-v="${n}" ${blocked?'disabled':''}>${n}</button><span class="level-badge">${lvlBadge}</span></article>${i<path.length-1?'<span class="strip-arrow">›</span>':''}`;}).join('')}</div></div>`;
+    const allLinePicks=[['Novice','Novice'],['Swordman','Swordsman'],['Mage','Mage'],['Archer','Archer'],['Thief','Thief'],['Acolyte','Acolyte'],['Merchant','Merchant'],['expanded','Expanded']];
+    const navBar=`<div class="class-lineage-nav" aria-label="Class lineages">${allLinePicks.map(([famKey,label])=>{const isCur=famKey==='Novice'?S.cls==='Novice':(famKey==='expanded'?EXPANDED_CLASSES.has(S.cls):lineOf(S.cls).includes(famKey));const isSel=activeFamily===famKey;return `<button type="button" class="lineage-tab-btn ${isSel?'active':''}" data-a="selfamily" data-v="${famKey}">${label}${isCur?' <span class="badge-cur">CURRENT</span>':''}</button>`}).join('')}</div>`;
+    const cardHtml=(n,tierIdx,isAlt)=>{
+      const ac=CLASSES[n],blocked=ac?classBlock(n):'Coming soon',pjn=S.jobs[n];
+      const tierLabels=['Tier 1 · Foundation','Tier 2 · 2nd Job','Tier 3 · Transcendent','Tier 4 · Ascension'];
+      const tierLabel=tierLabels[tierIdx]||'Class';
+      const lvlBadge=n==='Novice'?'Novice':(n===S.cls?`Job ${jobOf().jl}`:(pjn?`Job ${pjn.jl}`:(ac?.tier===4?'Base 150':(!ac?'Coming soon':'Job 1'))));
+      const isCur=n===S.cls,isPick=n===(selK||S.cls);
+      const statusLabel=isCur?'Current':(ac&&playedClass(n)?'Played':(blocked||'Available'));
+      const statusCls=isCur?'cur':(ac&&playedClass(n)?'played':(blocked?'lock':'ok'));
+      return `<button type="button" class="class-card branch-card ${isAlt?'alt-branch-card':''} ${isCur?'is-current':''} ${isPick?'pick':''}" role="button" data-a="selk" data-v="${n}">
+        <div class="card-header-line"><span>${tierLabel}</span><span class="level-badge">${lvlBadge}</span></div>
+        <span class="class-card-emblem" aria-hidden="true">${eclipseClassEmblem(n)}</span>
+        <strong class="card-name">${n}</strong>
+        <div class="card-subtext"><span>Weapons: <strong>${ac?.wt?.join(', ')||'Specialized'}</strong></span> · <span>Main: <strong>${ac?.main?.toUpperCase()||'All'}</strong></span></div>
+        <small class="status-pill ${statusCls}">${statusLabel}</small>
+      </button>`;
+    };
+    const rootCardHtml=(n)=>{
+      const ac=CLASSES[n],blocked=ac?classBlock(n):'Coming soon',pjn=S.jobs[n];
+      const lvlBadge=n==='Novice'?'Novice':(n===S.cls?`Job ${jobOf().jl}`:(pjn?`Job ${pjn.jl}`:'Job 1'));
+      const isCur=n===S.cls,isPick=n===(selK||S.cls);
+      const statusLabel=isCur?'Current':(playedClass(n)?'Played':(blocked||'Available'));
+      const statusCls=isCur?'cur':(playedClass(n)?'played':(blocked?'lock':'ok'));
+      return `<button type="button" class="class-card root-card ${isCur?'is-current':''} ${isPick?'pick':''}" role="button" data-a="selk" data-v="${n}">
+        <div class="card-header-line"><span>Tier 1 · Foundation</span><span class="level-badge">${lvlBadge}</span></div>
+        <span class="class-card-emblem" aria-hidden="true">${eclipseClassEmblem(n)}</span>
+        <strong class="card-name">${n}</strong>
+        <div class="card-subtext"><span>Weapons: <strong>${ac?.wt?.join(', ')||'Any'}</strong></span> · <span>Main: <strong>${ac?.main?.toUpperCase()||'All'}</strong></span></div>
+        <small class="status-pill ${statusCls}">${statusLabel}</small>
+      </button>`;
+    };
+    const noviceView=`<div class="novice-hub-view">
+      <div class="novice-origin-row">
+        <button type="button" class="class-card root-card ${S.cls==='Novice'?'is-current':''} ${(selK||S.cls)==='Novice'?'pick':''}" role="button" data-a="selk" data-v="Novice">
+          <div class="card-header-line"><span>Tier 0 · Universal Origin</span><span class="level-badge">Base 25</span></div>
+          <span class="class-card-emblem" aria-hidden="true">${eclipseClassEmblem('Novice')}</span>
+          <strong class="card-name">Novice</strong>
+          <div class="card-subtext"><span>Starting Class · <strong>Rebirth Hub</strong></span></div>
+          <small class="status-pill ${S.cls==='Novice'?'cur':'played'}">${S.cls==='Novice'?'Current':'Rebirth Origin'}</small>
+        </button>
+        <div class="novice-fork-line"></div>
+        <div class="novice-fork-bus"></div>
+      </div>
+      <div class="novice-branches-label">❖ Choose a 1st Job Class Path to Explore or Advance</div>
+      <div class="novice-firstjobs-grid">
+        ${[['Swordman','Swordsman','Melee · Tank'],['Mage','Mage','Magic · AoE'],['Archer','Archer','Ranged Physical'],['Thief','Thief','Speed · Dagger'],['Acolyte','Acolyte','Holy · Support'],['Merchant','Merchant','Economy · Axe'],['expanded','Expanded','Gunslinger / Ninja']].map(([famKey,famLabel,famRole])=>{
+          const isCurLine=famKey==='expanded'?EXPANDED_CLASSES.has(S.cls):lineOf(S.cls).includes(famKey);
+          const isPlayed=famKey==='expanded'?[...EXPANDED_CLASSES].some(p=>playedClass(p)):playedClass(famKey);
+          return `<button type="button" class="firstjob-card ${isCurLine?'is-active-line':''}" role="button" data-a="selfamily" data-v="${famKey}">
+            <span class="class-card-emblem" aria-hidden="true">${eclipseClassEmblem(famKey==='expanded'?'Gunslinger':famKey)}</span>
+            <strong>${famLabel}</strong>
+            <small>${famRole}</small>
+            <span class="status-pill ${isCurLine?'cur':isPlayed?'played':'avail'}">${isCurLine?'Active Line':isPlayed?'Played':'Available'}</span>
+          </button>`;
+        }).join('')}
+      </div>
+      <div class="rebirth-panel">
+        <div class="rebirth-header"><span class="gold-sigil">▼</span><span>Switching classes &amp; starting over</span></div>
+        <p class="rebirth-p">Played classes keep their Base Lv, Job Lv, stats, skills and gear. Unplayed classes must meet their parent requirements. Switching to an unplayed 2nd class (e.g. Assassin, Rogue, Sage, Crusader) starts at Base Lv 50, Job Lv 1. Class collection grants +1% damage for each transcendent class at Base Lv 150+.</p>
+        <div class="rebirth-action-row">
+          <button type="button" class="rebirth-restart-btn" data-a="job" data-v="Novice" ${S.cls==='Novice'?'disabled':''}>Restart as Novice (Base Lv 25, job levels cleared)</button>
+        </div>
+      </div>
+    </div>`;
+    const expB1=['Gunslinger','Rebellion','Night Watch'],expB2=['Ninja','Kagerou & Oboro','Shinkiro & Shiranui'];
+    const expandedView=`<div class="tree-table">
+      <div class="branch-hdrs-row" style="margin-top:8px">
+        <div class="tier-badge-cell"><div class="ruler-spine"></div></div>
+        <div class="branch-hdrs-cell"><div class="branch-hdr">Branch: Gunslinger Path</div><div class="branch-hdr">Branch: Ninja Path</div></div>
+      </div>
+      <div class="tier-row"><div class="tier-badge-cell"><span class="ruler-tag">T2</span><div class="ruler-spine"></div></div><div class="tier-content-cell dual-grid">${cardHtml(expB1[0],1,false)}${cardHtml(expB2[0],1,true)}</div></div>
+      <div class="step-line-row"><div class="tier-badge-cell"><div class="ruler-spine"></div></div><div class="step-lines-cell"><div class="step-v-line"></div><div class="step-v-line"></div></div></div>
+      <div class="tier-row"><div class="tier-badge-cell"><span class="ruler-tag">T3</span><div class="ruler-spine"></div></div><div class="tier-content-cell dual-grid">${cardHtml(expB1[1],2,false)}${cardHtml(expB2[1],2,true)}</div></div>
+      <div class="step-line-row"><div class="tier-badge-cell"><div class="ruler-spine"></div></div><div class="step-lines-cell"><div class="step-v-line"></div><div class="step-v-line"></div></div></div>
+      <div class="tier-row"><div class="tier-badge-cell"><span class="ruler-tag">T4</span><div class="ruler-spine"></div></div><div class="tier-content-cell dual-grid">${cardHtml(expB1[2],3,false)}${cardHtml(expB2[2],3,true)}</div></div>
+    </div>`;
+    const b1Line=lines.find(l=>l[0]===activeFamily)||lines[0],b2Line=altLines.find(l=>l[0]===activeFamily)||lines[0];
+    const b1=b1Line.slice(1),b2=b2Line.slice(1);
+    const b1Title=`Branch 2-1: ${b1[0]||'Primary'} Path`,b2Title=`Branch 2-2: ${b2[0]||'Alternate'} Path`;
+    const standardView=`<div class="tree-table">
+      <div class="tier-row"><div class="tier-badge-cell"><span class="ruler-tag">T1</span><div class="ruler-spine"></div></div><div class="tier-content-cell center-content">${rootCardHtml(activeFamily)}</div></div>
+      <div class="conduit-row"><div class="tier-badge-cell"><div class="ruler-spine"></div></div><div class="conduit-cell"><div class="conduit-stem-top"></div><div class="conduit-dual-hanger"><div class="c-arm-left"></div><div class="c-arm-right"></div></div></div></div>
+      <div class="branch-hdrs-row"><div class="tier-badge-cell"><div class="ruler-spine"></div></div><div class="branch-hdrs-cell"><div class="branch-hdr">${b1Title}</div><div class="branch-hdr">${b2Title}</div></div></div>
+      <div class="tier-row"><div class="tier-badge-cell"><span class="ruler-tag">T2</span><div class="ruler-spine"></div></div><div class="tier-content-cell dual-grid">${cardHtml(b1[0],1,false)}${cardHtml(b2[0],1,true)}</div></div>
+      <div class="step-line-row"><div class="tier-badge-cell"><div class="ruler-spine"></div></div><div class="step-lines-cell"><div class="step-v-line"></div><div class="step-v-line"></div></div></div>
+      <div class="tier-row"><div class="tier-badge-cell"><span class="ruler-tag">T3</span><div class="ruler-spine"></div></div><div class="tier-content-cell dual-grid">${cardHtml(b1[1],2,false)}${cardHtml(b2[1],2,true)}</div></div>
+      <div class="step-line-row"><div class="tier-badge-cell"><div class="ruler-spine"></div></div><div class="step-lines-cell"><div class="step-v-line"></div><div class="step-v-line"></div></div></div>
+      <div class="tier-row"><div class="tier-badge-cell"><span class="ruler-tag">T4</span><div class="ruler-spine"></div></div><div class="tier-content-cell dual-grid">${cardHtml(b1[2],3,false)}${cardHtml(b2[2],3,true)}</div></div>
+    </div>`;
+    const design=activeFamily==='Novice'?noviceView:(activeFamily==='expanded'?expandedView:standardView);
+    return `<div class="atabs" aria-label="Jobs views"><button data-a="jobview" data-v="lineage" class="${!eclipseJobsBrowse?'on':''}">Current lineage</button><button data-a="jobview" data-v="browse" class="${eclipseJobsBrowse?'on':''}">Class tree</button></div>
+    ${breadcrumb}
+    ${navBar}
+    <div class="class-path-layout"><div class="class-path-canvas">${eclipseJobsBrowse?overview:design}</div>
     <div class="class-path-focus"><div class="insp-kicker">CLASS PREVIEW</div>
     <div class="ui-inspector">
     <div class="mob-card"><small>${future?'4TH JOB · COMING SOON':(EXPANDED_LINE.has(k)?'EXPANDED · ':'')+{cur:'CURRENT CLASS',played:'PLAYED CLASS',ok:'AVAILABLE CLASS',lock:'LOCKED CLASS'}[classStatus(k)]}</small><h3>${k}</h3>
     ${future?`<p>Advance from <b>${planned[1]}</b> at Base Lv 150 and Job Lv 50.</p><p>Defeat ${JOB_RITE_OPPONENTS[planned[1]].n} in a 30-second Crucible trial. Victory completes the job change automatically.</p><button class="action-switch-btn" disabled>Coming soon</button>`:
     `<small>${c.par?'Before: <b>'+c.par+'</b>':'Starting class'}${c.kids.length?' · Next: <b>'+c.kids.join(', ')+'</b>':''}</small><p>${pj?`Saved ${rec?`Base Lv ${rec.lv} · `:''}Job Lv ${pj.jl}/${c.mj}`:(c.tier===2?'Starts at Base Lv 50, Job Lv 1':'Not played yet')}${playedClass(k)&&k!==S.cls?' · Your saved build is ready to return.':''}</p>`}</div>
-    </div>${future?'':`<div class="hair-preview-card"><div class="hair-preview-stage"><canvas id="classPreview" width="126" height="134" role="img" aria-label="${S.sex==='f'?'female':'male'} ${k} class skin preview"></canvas><span class="hair-preview-loading" id="classPreviewLoading">Loading sprite…</span></div><div class="hair-preview-info"><span class="eyebrow">CLASS PREVIEW</span><b>${k}</b><span>${S.sex==='f'?'Female':'Male'}</span></div></div>`}
+    </div>${future?'':`<div class="hair-preview-card preview-card"><div class="hair-preview-stage char-preview-box"><canvas id="classPreview" width="126" height="134" role="img" aria-label="${S.sex==='f'?'female':'male'} ${k} class skin preview"></canvas><span class="hair-preview-loading" id="classPreviewLoading">Loading sprite…</span></div><div class="hair-preview-info"><span class="eyebrow">CLASS PREVIEW</span><b>${k}</b><span>${S.sex==='f'?'Female':'Male'}</span></div></div>`}
     ${c?`<div class="levels-summary"><div class="lv-pill"><small>Base level</small><strong>${rec?rec.lv:(k===S.cls?S.lv:(c.tier===2&&!pj?50:'—'))}</strong></div><div class="lv-pill"><small>Job level</small><strong>${pj?pj.jl+' / '+c.mj:(k===S.cls?jobOf().jl+' / '+c.mj:(c.tier===2&&!pj?'1 / '+c.mj:'—'))}</strong></div></div><div class="specs-card"><div class="specs-row"><span>Weapons</span><strong>${c.wt.join(', ')}</strong></div><div class="specs-row"><span>Main stat</span><strong>${SU(c.main)}</strong></div><div class="specs-row"><span>Multipliers</span><strong>ATK ×${c.atk} · ASPD ×${c.aspd} · HP ×${c.hp}</strong></div></div><div class="row class-action-row"><button class="action-switch-btn" data-a="job" data-v="${k}" ${blk?'disabled':''}>${k===S.cls?'Current class':c.tier===4&&!playedClass(k)?'Enter advancement trial':'Change to '+k}</button>${blk&&k!==S.cls?`<small class="block-reason r4">${blk}</small>`:''}</div>`:''}</div></div>
     <div class="eclipse-class-bonus"><b>Class collection <strong>+${collDmg()}% damage</strong></b><p>${playedClasses()} / ${t3Total()} transcendent classes at Base Lv 150+. Each earns a permanent +1% damage for every class.</p><div class="footer-bar-wrap"><div class="footer-bar-fill" style="width:${Math.min(100,(playedClasses()/t3Total())*100)}%"></div></div></div>
     <details class="ui-fold"><summary>Switching classes & starting over</summary><p>Played classes keep their Base Lv, Job Lv, stats, skills and gear. Unplayed classes must meet their parent requirements. Switching to an unplayed 2nd class (e.g. Assassin, Rogue, Sage, Crusader) starts at Base Lv 50, Job Lv 1. Class collection grants +1% damage for each transcendent class at Base Lv 150+.</p><button class="full" data-a="job" data-v="Novice" ${S.cls==='Novice'?'disabled':''}>Restart as Novice (Base Lv 25, job levels cleared)</button></details>`},
@@ -9563,7 +9655,10 @@ function insertUI(sel){if(!(sel.slots>0))return'<small>No card slots on this ite
 // moved, never recreated, so action values, disabled states, confirmation paths and tooltips
 // remain owned by the original renderers. No game/save state is changed here.
 function eclipseClassEmblem(name){
-  const c=CLASSES[name],family=lineOf(name)[1]||'Novice',tier=c.tier||0;
+  const c=CLASSES[name];
+  const fam=(c&&lineOf(name)[1])||'Novice';
+  const family=['Swordman','Mage','Archer','Thief','Acolyte','Merchant'].includes(fam)?fam:(fam==='Gunslinger'||name==='Gunslinger'||name==='Rebellion'||name==='Night Watch'?'Archer':fam==='Ninja'||name==='Ninja'||(typeof name==='string'&&(name.includes('Kagerou')||name.includes('Shinkiro')))?'Thief':'Novice');
+  const tier=c?.tier||(name==='Night Watch'||(typeof name==='string'&&name.includes('Shinkiro'))?4:0);
   const art={
     Novice:'<path d="m16 10 4 6 7-3-2 7 7 3-7 3 2 7-7-3-4 6-1-9-7-4 7-3Z"/>',
     Swordman:'<path d="m12 13 8-4 8 4v10c0 6-8 11-8 11s-8-5-8-11Z"/><path d="m11 31 18-19 2-5-5 2-18 19m2-5 7 7"/>',
@@ -9573,7 +9668,8 @@ function eclipseClassEmblem(name){
     Acolyte:'<path d="M17 8h6v9h9v6h-9v10h-6V23H8v-6h9Z"/><path d="m10 9-3-3m23 3 3-3M7 30l3-3m20 0 3 3"/>',
     Merchant:'<path d="m10 10 13-3 9 10-9 9-13-16Zm10 14L9 35m-3-4 6 6M23 9l6 7"/><circle cx="12" cy="16" r="4"/>'
   };
-  return '<span class="eclipse-class-emblem tier-'+tier+'"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path class="crest-frame" d="M24 2 43 12v20L24 46 5 32V12Z"/><g transform="translate(4 3)">'+art[family]+'</g>'+(tier>=2?'<path d="m12 36 12 7 12-7"/>':'')+(tier>=3?'<path d="m17 7 2 3 5-5 5 5 2-3"/>':'')+'</svg></span>';
+  const pathData=art[family]||art.Novice;
+  return '<span class="eclipse-class-emblem tier-'+tier+'"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path class="crest-frame" d="M24 2 43 12v20L24 46 5 32V12Z"/><g transform="translate(4 3)">'+pathData+'</g>'+(tier>=2?'<path d="m12 36 12 7 12-7"/>':'')+(tier>=3?'<path d="m17 7 2 3 5-5 5 5 2-3"/>':'')+'</svg></span>';
 }
 function arrangePanel(k,root){
   const make=(tag,cls,text)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(text)e.textContent=text;return e};
@@ -10055,7 +10151,7 @@ const MAX_TABS=3;
 // v174 (owner, TEMPORARY): single-panel mode - opening a panel closes the rest. Flip to false to restore multi-tab.
 const SINGLE_PANEL=true;const openTab=k=>{if(k==='gm'&&!S.gm)return;globalThis.PGSocial?.focusHubPanel?.('field');const i=tabs.indexOf(k);if(i>=0&&expandedPanels.size&&!expandedPanels.has(k)){expandedPanels.clear();expandedPanels.add(k);renderWin();return}if(i<0)expandedPanels.clear();if(k==='skills'&&i>=0)selS=null;if(k!=='status')eqPick=null;if(i>=0)tabs.splice(i,1);else{if(SINGLE_PANEL)tabs.length=0;else if(tabs.length>=MAX_TABS)tabs.shift();tabs.push(k);
   // Reopening a window starts at its first sub-tab: Status shows Stats, Inventory shows Bag.
-  if(k==='pet')sub.pet='party';if(k==='job'){eclipseJobsBrowse=false;jobBranch=null;selK=null;}if(k==='status')sub.status='stats';if(k==='skills')sub.skills='skilllist';if(k==='bag')sub.bag='bag';if(k==='equip')sub.equip='equip0';
+  if(k==='pet')sub.pet='party';if(k==='job'){eclipseJobsBrowse=false;jobBranch=null;selK=null;jobLineTab=null;}if(k==='status')sub.status='stats';if(k==='skills')sub.skills='skilllist';if(k==='bag')sub.bag='bag';if(k==='equip')sub.equip='equip0';
   if(k==='map'){mapSeason=S.mp>=10?'ascension':'atlas';mapM=S.mp;mapL=S.lvl}}renderWin();if(k==='board'&&tabs.includes('board'))boardRefresh(boardPeriod)};
 // Astral is one continuous bridge. Combat uses local field coordinates; after
 // walking we shift scenery, actors and camera together, preserving the visible world.
@@ -10708,7 +10804,7 @@ const ACT={
     log(`${PETS[p.sp].n} is Bond ${bondRank(p.sp)}/5 - ${PET_TRAIT[p.sp].n} ${PET_TRAIT[p.sp].d(traitVal(p.sp))}.`,'r3','pet');ui();save()}, sell_:v=>{if(!Number.isInteger(+v)||+v<1||+v>(mapM>=10?5:15))return;mapL=+v;renderWin('[data-win="map"] .map-node.picked')},go:()=>{if(canTravel(mapM,mapL)){gotoField(mapM,mapL);log(`Traveled to ${fieldName()}.`)}},
   stat:k=>{if(S.pts>=cost(k)&&S.st[k]<statCap()){S.pts-=cost(k);S.st[k]++;S.hp=Math.min(S.hp,maxHp());ui();save()}},
   stat5:k=>{for(let i=0;i<5;i++)if(S.pts>=cost(k)&&S.st[k]<statCap()){S.pts-=cost(k);S.st[k]++}S.hp=Math.min(S.hp,maxHp());ui();save()},
-  jobview:v=>{eclipseJobsBrowse=v==='browse';renderWin()},bdtree:v=>{bdTreeView=v==='dancer'?'dancer':'bard';renderWin()},jobbranch:v=>{if(!CLASSES.Novice.kids.includes(v))return;jobBranch=jobBranch===v?null:v;selK=v;renderWin()},selk:v=>{if(!CLASSES[v]&&!CD4.some(row=>row[0]===v))return;selK=v;renderWin()},job:n=>{if(n==='Novice'&&S.cls!=='Novice')ask('Restart as Novice? You go back to Base Lv 25, job levels cleared, and your stats are refunded. Classes you leave keep their own Base Lv, stats and gear, so you can switch back to them later.',()=>changeClass(n));else if(CLASSES[n]?.tier===4&&!playedClass(n))ask(`Enter the Crucible? Defeat ${JOB_RITE_OPPONENTS[CLASSES[n].par]?.n} within ${JOB_RITE_SECS} seconds to become ${n}.`,()=>changeClass(n),{yes:'Enter trial',no:'Stay'});else changeClass(n)},
+  jobview:v=>{eclipseJobsBrowse=v==='browse';renderWin()},selfamily:v=>{jobLineTab=v;if(v==='Novice')selK='Novice';else if(v==='expanded')selK='Gunslinger';else selK=v;renderWin()},bdtree:v=>{bdTreeView=v==='dancer'?'dancer':'bard';renderWin()},jobbranch:v=>{if(!CLASSES.Novice.kids.includes(v))return;jobBranch=jobBranch===v?null:v;selK=v;renderWin()},selk:v=>{if(!CLASSES[v]&&!CD4.some(row=>row[0]===v))return;selK=v;renderWin()},job:n=>{if(n==='Novice'&&S.cls!=='Novice')ask('Restart as Novice? You go back to Base Lv 25, job levels cleared, and your stats are refunded. Classes you leave keep their own Base Lv, stats and gear, so you can switch back to them later.',()=>changeClass(n));else if(CLASSES[n]?.tier===4&&!playedClass(n))ask(`Enter the Crucible? Defeat ${JOB_RITE_OPPONENTS[CLASSES[n].par]?.n} within ${JOB_RITE_SECS} seconds to become ${n}.`,()=>changeClass(n),{yes:'Enter trial',no:'Stay'});else changeClass(n)},
   rstat:()=>{const c=statResetCost();if(S.zeny<c)return denied(c,'stats');S.zeny-=c;if(S.skillRespec)delete S.skillRespec[S.cls];for(const k in S.st)S.st[k]=1;S.pts=totalPts();S.hp=Math.min(S.hp,maxHp());log('Stats reset.'+(c?' -'+c.toLocaleString()+'z':''));ui();save()},
   skill:id=>{const s=SKILLS.find(x=>x.id===id);if(!s||s.ascensionOnly||!s.cls.includes(S.cls))return;const nx=lv(id)+1,c=skCost(nx);
     if(nx>s.max||!lineOf(S.cls).includes(s.from))return;

@@ -1,6 +1,6 @@
 @import url('fonts.css');
 /* Eclipse: presentation tokens are intentionally independent of rarity and combat effects. */
-:root{--ink:#e8edf4;--panel:#131d29;--edge:#ffffff12;--edge2:#ffffff25;--gold:#d7b77a;--e-bg:#101b27;--e-raised:#1b2834;--e-muted:#8a9bab;--e-soft:#d7b77a16;--e-glass:#101b27f7;--e-font:'DM Sans',system-ui,sans-serif;--e-display:'Manrope',system-ui,sans-serif;--danger:#d7887e;--danger-soft:#e5a59b;--danger-line:#d99c92}
+:root{--ink:#e8edf4;--panel:#131d29;--edge:#ffffff12;--edge2:#ffffff25;--gold:#d7b77a;--e-bg:#101b27;--e-raised:#1b2834;--e-muted:#8a9bab;--e-soft:#d7b77a16;--e-glass:#101b27f7;--e-font:'DM Sans',"Trebuchet MS",Verdana,system-ui,sans-serif;--e-display:'Manrope',"Trebuchet MS",Verdana,system-ui,sans-serif;--danger:#d7887e;--danger-soft:#e5a59b;--danger-line:#d99c92}
 
 :root[data-palette=aurora]{--ink:#e7f3ed;--panel:#182b25;--edge:#365447;--edge2:#638f7c;--gold:#a2dfbf;--e-bg:#0e1a16;--e-raised:#253d33;--e-muted:#a5c2b5;--e-soft:#a2dfbf1a;--e-glass:#182b25f5}
 
@@ -1797,54 +1797,114 @@ body:not(.playing) #comboFieldStatus:empty{display:none}
 #wins .ui-skill-catalog .sk-level{white-space:normal;overflow-wrap:anywhere}
 #wins .ui-skill-catalog .sk .si,#wins .ui-skill-catalog .skill-art{width:30px;height:30px}
 
-/* v179 / Class tree redesign: centered lineage navigation, two-column cockpit layout, authentic RO emblems and action button. */
+/* v179 / Class tree redesign: centered lineage navigation, dual-branch progression tree, novice hub and action inspector. */
+#wins .ui-panel[data-layout="job"]>.atabs{display:none!important}
+#wins .current-lineage-strip{display:flex;align-items:center;gap:8px;padding:4px 10px;background:var(--e-bg);border:1px solid var(--edge2);border-radius:8px;margin-bottom:10px;flex-shrink:0;min-height:34px;max-height:36px;box-sizing:border-box;overflow-x:auto;overflow-y:hidden;scrollbar-width:none}
+#wins .current-lineage-strip::-webkit-scrollbar{display:none}
+#wins .current-lineage-strip .strip-label{font-size:8.5px;font-weight:800;letter-spacing:.1em;color:var(--gold);white-space:nowrap;text-transform:uppercase;flex-shrink:0}
+#wins .current-lineage-strip .current-class-path{display:flex;align-items:center;gap:5px;margin:0;padding:0;flex-shrink:0;white-space:nowrap}
+#wins .current-lineage-strip .current-class-card{display:inline-flex;flex-direction:row;align-items:center;gap:5px;min-height:0;padding:2px 7px;border:1px solid var(--edge2);border-radius:5px;background:var(--panel);white-space:nowrap;cursor:pointer;transition:all .15s ease;flex-shrink:0}
+#wins .current-lineage-strip .current-class-card.current{border-color:#4ade80;background:rgba(74,222,128,.1);box-shadow:0 0 8px rgba(74,222,128,.35)}
+#wins .current-lineage-strip .current-class-card.pick{border-color:var(--gold);box-shadow:0 0 8px rgba(215,183,122,.25)}
+#wins .current-lineage-strip .current-class-card>button{background:none;border:none;padding:0;color:var(--ink);font-size:11px;font-weight:700;cursor:pointer;min-height:0}
+#wins .current-lineage-strip .current-class-card.current>button{color:#4ade80;font-weight:800}
+#wins .current-lineage-strip .current-class-card>button:disabled{opacity:1;cursor:default}
+#wins .current-lineage-strip .strip-arrow{color:var(--e-muted);font-size:12px;line-height:1;user-select:none;flex-shrink:0}
+
 #wins .class-lineage-nav{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin:0 0 14px;padding:4px}
 #wins .class-lineage-nav .lineage-tab-btn{padding:6px 14px;border:1px solid var(--edge2);border-radius:6px;background:var(--panel);color:var(--e-muted);font-size:11.5px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:4px}
 #wins .class-lineage-nav .lineage-tab-btn:hover{border-color:var(--gold);color:var(--ink);background:rgba(255,255,255,.04)}
 #wins .class-lineage-nav .lineage-tab-btn.active{border-color:var(--gold);color:var(--gold);background:var(--e-soft);box-shadow:0 0 10px rgba(215,183,122,.2)}
-#wins .class-lineage-nav .badge-cur{font-size:8px;background:#4ade80;color:#0b1c11;font-weight:800;padding:1px 4px;border-radius:3px;margin-left:4px}
+#wins .class-lineage-nav .badge-cur{font-size:8px;background:var(--gold);color:#0b111a;font-weight:800;padding:1px 4px;border-radius:3px;margin-left:4px}
 
 #wins .class-path-layout{display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:18px;align-items:start}
-#wins .class-path-canvas{min-width:0;display:flex;flex-direction:column;gap:12px}
+#wins .class-path-canvas{min-width:0;display:flex;flex-direction:column;gap:8px}
 
-#wins .current-class-path{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin:2px 0 14px}
-#wins .current-class-card{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:8px;min-height:224px;padding:12px 10px;white-space:normal;text-align:center;border:1px solid var(--edge2);border-radius:10px;background:linear-gradient(160deg,var(--e-raised),var(--e-bg));color:var(--ink);cursor:pointer;transition:transform .15s,border-color .15s,box-shadow .15s}
-#wins .current-class-card:hover{border-color:var(--gold);transform:translateY(-2px);box-shadow:0 6px 16px rgba(0,0,0,.4)}
-#wins .current-class-card.current{border-color:#4ade80;box-shadow:0 0 0 1px #4ade80,0 0 12px rgba(74,222,128,.25)}
-#wins .current-class-card.pick{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold),0 0 14px rgba(215,183,122,.35)}
-#wins .current-class-card .card-header-line{display:flex;justify-content:space-between;align-items:center;width:100%;font-size:9px;color:var(--e-muted);font-weight:700}
-#wins .current-class-card .level-badge{background:var(--e-soft);color:var(--gold);padding:1px 5px;border-radius:4px;border:1px solid rgba(215,183,122,.3)}
-#wins .current-class-card .card-name{font-size:13px;font-weight:800;color:var(--ink);margin:2px 0}
-#wins .current-class-card .card-subtext{font-size:9px;color:var(--e-muted);line-height:1.35}
-#wins .current-class-card .card-subtext strong{color:var(--ink)}
-#wins .current-class-card .status-pill{font-size:9px;font-weight:800;padding:2px 6px;border-radius:4px;text-transform:uppercase}
-#wins .current-class-card .status-pill.cur{background:rgba(74,222,128,.15);color:#4ade80;border:1px solid rgba(74,222,128,.4)}
-#wins .current-class-card .status-pill.played{background:rgba(215,183,122,.15);color:var(--gold);border:1px solid rgba(215,183,122,.4)}
-#wins .current-class-card .status-pill.ok{background:rgba(56,189,248,.12);color:#38bdf8;border:1px solid rgba(56,189,248,.3)}
-#wins .current-class-card .status-pill.lock{background:rgba(255,255,255,.05);color:var(--e-muted);border:1px solid var(--edge)}
-#wins .current-class-card>button{width:100%;min-height:34px;font-size:11px;font-weight:700;border:1px solid var(--gold);border-radius:6px;background:var(--e-soft);color:var(--gold);cursor:pointer;transition:all .15s}
-#wins .current-class-card>button:hover:not(:disabled){background:var(--gold);color:var(--e-bg)}
-#wins .current-class-card>button:disabled{opacity:.6;cursor:not-allowed}
-#wins .current-class-card:disabled{opacity:.75}
+/* Dual-Branch Progression Tree Table */
+#wins .tree-table{width:100%;flex:1;min-height:0;display:flex;flex-direction:column;gap:0}
+#wins .tier-row{display:grid;grid-template-columns:36px minmax(0,1fr);gap:12px;align-items:center;width:100%}
+#wins .tier-badge-cell{display:flex;align-items:center;justify-content:center;position:relative;height:100%;min-height:48px}
+#wins .ruler-tag{font-size:9px;font-weight:800;color:var(--gold);background:var(--e-soft);border:1px solid var(--gold);padding:2px 4px;border-radius:4px;width:28px;text-align:center;box-shadow:0 0 6px rgba(215,183,122,.2);z-index:2}
+#wins .ruler-spine{position:absolute;top:0;bottom:0;left:50%;transform:translateX(-50%);width:1px;background:var(--edge2);z-index:1}
+#wins .tier-content-cell{width:100%}
+#wins .tier-content-cell.center-content{display:flex;justify-content:center}
+#wins .tier-content-cell.dual-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 
-#wins .alt-branch-section{margin:8px 0 14px;padding:12px;border:1px dashed var(--edge2);border-radius:10px;background:rgba(18,27,39,.5)}
-#wins .alt-branch-header{display:flex;align-items:center;gap:6px;font-size:10px;font-weight:800;color:var(--gold);letter-spacing:.05em;text-transform:uppercase;margin-bottom:8px}
-#wins .alt-branch-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px}
-#wins .alt-branch-card{font-family:inherit;color:inherit;width:100%;padding:10px;border:1px solid var(--edge2);border-radius:8px;background:var(--panel);text-align:center;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;transition:all .15s}
-#wins .alt-branch-card:hover{border-color:var(--gold);background:var(--e-raised);transform:translateY(-1px)}
+/* Conduits */
+#wins .conduit-row{display:grid;grid-template-columns:36px minmax(0,1fr);gap:12px;height:18px}
+#wins .conduit-cell{display:flex;flex-direction:column;align-items:center;position:relative;width:100%}
+#wins .conduit-stem-top{width:2px;height:6px;background:var(--gold);box-shadow:0 0 4px rgba(215,183,122,.3)}
+#wins .conduit-dual-hanger{display:grid;grid-template-columns:1fr 1fr;gap:14px;width:100%;height:12px}
+#wins .c-arm-left{width:50%;margin-left:50%;height:100%;border-top:2px solid var(--gold);border-left:2px solid var(--gold);box-shadow:-2px -2px 4px rgba(215,183,122,.25)}
+#wins .c-arm-right{width:50%;margin-right:50%;height:100%;border-top:2px solid var(--gold);border-right:2px solid var(--gold);box-shadow:2px -2px 4px rgba(215,183,122,.25)}
+
+/* Branch Headers */
+#wins .branch-hdrs-row{display:grid;grid-template-columns:36px minmax(0,1fr);gap:12px;margin:4px 0 6px}
+#wins .branch-hdrs-cell{display:grid;grid-template-columns:1fr 1fr;gap:14px;width:100%}
+#wins .branch-hdr{font-size:9.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--gold);background:var(--e-bg);border:1px solid var(--edge2);padding:3px 8px;border-radius:4px;text-align:center}
+
+/* Vertical Step Lines */
+#wins .step-line-row{display:grid;grid-template-columns:36px minmax(0,1fr);gap:12px;height:14px}
+#wins .step-lines-cell{display:grid;grid-template-columns:1fr 1fr;gap:14px;width:100%}
+#wins .step-v-line{width:2px;height:100%;background:var(--gold);margin:0 auto;box-shadow:0 0 4px rgba(215,183,122,.3)}
+
+/* Class Cards (Tree Nodes) */
+#wins .class-card{font-family:inherit;color:inherit;width:100%;background:linear-gradient(160deg,var(--e-raised),var(--e-bg));border:1px solid var(--edge2);border-radius:8px;cursor:pointer;transition:all .15s ease;position:relative;display:flex;flex-direction:column;align-items:center;text-align:center;padding:8px 12px}
+#wins .class-card:hover{border-color:var(--gold);transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.4)}
+#wins .class-card.pick{border-color:var(--gold);background:linear-gradient(160deg,rgba(215,183,122,.12),var(--e-bg));box-shadow:0 0 0 1px var(--gold),0 0 14px rgba(215,183,122,.35)}
+#wins .class-card.is-current{border-color:#4ade80;box-shadow:0 0 0 1px #4ade80,0 0 12px rgba(74,222,128,.25)}
+#wins .root-card{max-width:260px}
+#wins .class-card .card-header-line{display:flex;align-items:center;justify-content:space-between;width:100%;font-size:8.5px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--e-muted);margin-bottom:2px}
+#wins .class-card .level-badge{color:var(--gold);background:rgba(215,183,122,.12);padding:1px 5px;border-radius:3px;border:1px solid rgba(215,183,122,.3)}
+#wins .class-card .card-name{font-size:13.5px;font-weight:800;color:#fff;line-height:1.15;margin:2px 0}
+#wins .class-card .card-subtext{font-size:9px;color:var(--e-muted);margin:2px 0 4px}
+#wins .class-card .card-subtext strong{color:var(--gold)}
+#wins .class-card .status-pill{font-size:8px;font-weight:800;padding:2px 6px;border-radius:3px;text-transform:uppercase;letter-spacing:.05em}
+#wins .class-card .status-pill.cur{background:rgba(74,222,128,.15);color:#4ade80;border:1px solid rgba(74,222,128,.4)}
+#wins .class-card .status-pill.played{background:rgba(215,183,122,.15);color:var(--gold);border:1px solid rgba(215,183,122,.4)}
+#wins .class-card .status-pill.ok{background:rgba(56,189,248,.12);color:#38bdf8;border:1px solid rgba(56,189,248,.3)}
+#wins .class-card .status-pill.lock{background:rgba(255,255,255,.05);color:var(--e-muted);border:1px solid var(--edge)}
+
+#wins .alt-branch-card{font-family:inherit;color:inherit;width:100%;cursor:pointer;transition:all .15s}
 #wins .alt-branch-card:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
-#wins .alt-branch-card.pick{border-color:var(--gold);box-shadow:0 0 10px rgba(215,183,122,.3)}
-#wins .alt-branch-card strong{font-size:12px;color:var(--ink)}
 
-#wins .class-card-emblem{display:grid;place-items:center;width:58px;height:58px;border:1px solid var(--edge2);border-radius:50%;font-size:30px;color:var(--gold);background:radial-gradient(circle,rgba(215,183,122,.1),transparent 70%)}
+#wins .class-card-emblem{display:grid;place-items:center;width:52px;height:52px;border:1px solid var(--edge2);border-radius:50%;font-size:26px;color:var(--gold);background:radial-gradient(circle,rgba(215,183,122,.1),transparent 70%);margin:2px 0}
+
+/* Novice Hub View */
+#wins .novice-hub-view{width:100%;display:flex;flex-direction:column;gap:12px}
+#wins .novice-origin-row{display:flex;flex-direction:column;align-items:center;position:relative}
+#wins .novice-fork-line{width:2px;height:10px;background:var(--gold);box-shadow:0 0 4px rgba(215,183,122,.3)}
+#wins .novice-fork-bus{width:92%;height:8px;border-top:2px solid var(--gold);border-left:2px solid var(--gold);border-right:2px solid var(--gold);box-shadow:0 -2px 6px rgba(215,183,122,.25)}
+#wins .novice-branches-label{font-size:9.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--gold);text-align:center;margin-top:4px}
+#wins .novice-firstjobs-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;width:100%}
+#wins .firstjob-card{font-family:inherit;color:inherit;background:linear-gradient(160deg,var(--e-raised),var(--e-bg));border:1px solid var(--edge2);border-radius:6px;padding:8px 10px;display:flex;flex-direction:column;align-items:center;text-align:center;cursor:pointer;transition:all .15s ease}
+#wins .firstjob-card:hover{border-color:var(--gold);transform:translateY(-1px);box-shadow:0 4px 10px rgba(0,0,0,.4)}
+#wins .firstjob-card.is-active-line{border-color:var(--gold);background:linear-gradient(160deg,rgba(215,183,122,.12),var(--e-bg));box-shadow:0 0 10px rgba(215,183,122,.2)}
+#wins .firstjob-card strong{font-size:11.5px;font-weight:800;color:#fff;margin-top:2px}
+#wins .firstjob-card small{font-size:8.5px;color:var(--e-muted)}
+#wins .firstjob-card .status-pill{font-size:7.5px;font-weight:800;padding:1px 5px;border-radius:2px;margin-top:4px;text-transform:uppercase}
+#wins .firstjob-card .status-pill.cur{background:rgba(74,222,128,.15);color:#4ade80;border:1px solid rgba(74,222,128,.4)}
+#wins .firstjob-card .status-pill.played{background:rgba(215,183,122,.15);color:var(--gold);border:1px solid rgba(215,183,122,.35)}
+#wins .firstjob-card .status-pill.avail{background:rgba(56,189,248,.12);color:#38bdf8;border:1px solid rgba(56,189,248,.3)}
+
+/* Rebirth Panel */
+#wins .rebirth-panel{background:linear-gradient(180deg,rgba(19,29,41,.95),var(--e-bg));border:1px solid var(--gold);border-radius:6px;padding:10px 14px;display:flex;flex-direction:column;gap:6px;box-shadow:inset 0 0 12px rgba(215,183,122,.08)}
+#wins .rebirth-header{display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;color:var(--gold)}
+#wins .rebirth-header .gold-sigil{font-size:10px}
+#wins .rebirth-p{font-size:10px;color:var(--ink);line-height:1.45}
+#wins .rebirth-action-row{display:flex;align-items:center;justify-content:flex-end;margin-top:2px}
+#wins .rebirth-restart-btn{padding:6px 14px;background:var(--e-raised);border:1px solid var(--gold);border-radius:4px;color:var(--gold);font-size:10.5px;font-weight:800;cursor:pointer;transition:all .15s ease}
+#wins .rebirth-restart-btn:hover:not(:disabled){background:var(--gold);color:#0b111a}
+#wins .rebirth-restart-btn:disabled{opacity:.5;cursor:not-allowed}
 
 #wins .class-path-focus{display:flex;flex-direction:column;gap:12px;padding:16px;border:1px solid var(--edge2);border-radius:10px;background:var(--panel);box-shadow:0 8px 24px rgba(0,0,0,.4)}
 #wins .class-path-focus .ui-inspector{padding:0;border:0;background:none}
 #wins .class-path-focus .mob-card{padding:0;border:0;background:none}
 #wins .class-path-focus .insp-kicker{font-size:9px;font-weight:800;letter-spacing:.12em;color:var(--gold);text-transform:uppercase}
 #wins .class-path-focus h3{font-size:22px;margin:4px 0 6px;color:#fff}
-#wins .class-path-focus .hair-preview-card{margin:0;padding:10px;border-radius:8px;border:1px solid var(--edge2);background:linear-gradient(180deg,var(--e-raised),var(--panel));display:flex;flex-direction:column;align-items:center}
-#wins .class-path-focus .hair-preview-stage{width:100%;height:150px;display:flex;align-items:center;justify-content:center;position:relative;background:radial-gradient(ellipse at 50% 65%,rgba(215,183,122,.15),transparent 72%),#151d28;border:1px solid var(--edge);border-radius:6px;box-shadow:inset 0 0 16px rgba(0,0,0,.6)}
+#wins .class-path-focus .hair-preview-card,#wins .class-path-focus .preview-card{margin:0;padding:10px;border-radius:8px;border:1px solid var(--edge2);background:linear-gradient(180deg,var(--e-raised),var(--panel));display:flex;flex-direction:column;align-items:center}
+#wins .class-path-focus .hair-preview-stage,#wins .class-path-focus .char-preview-box{width:100%;height:150px;display:flex;align-items:center;justify-content:center;position:relative;background:radial-gradient(ellipse at 50% 65%,rgba(215,183,122,.15),transparent 72%),#151d28;border:1px solid var(--edge);border-radius:6px;box-shadow:inset 0 0 16px rgba(0,0,0,.6)}
+#wins .class-path-focus .hair-preview-stage canvas,#wins .class-path-focus .char-preview-box canvas{display:block;width:126px;height:134px;transform:scale(1.15);transform-origin:center bottom;image-rendering:pixelated}
 #wins .class-path-focus .levels-summary{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:8px 0}
 #wins .class-path-focus .lv-pill{background:var(--e-bg);border:1px solid var(--edge);border-radius:6px;padding:6px;text-align:center}
 #wins .class-path-focus .lv-pill small{display:block;font-size:8.5px;color:var(--e-muted);text-transform:uppercase;letter-spacing:.05em}
@@ -1894,7 +1954,6 @@ body:not(.playing) #comboFieldStatus:empty{display:none}
 #trial .trial-act:hover{background:var(--e-raised);border-color:var(--gold)}
 #trial .trial-choice-mark{background:var(--e-soft);color:var(--gold)}
 #wins .reforge-pool{padding:12px;border:1px solid var(--edge2);background:var(--e-bg);margin:8px 0}
-#wins .current-class-card>button{border-color:var(--gold);min-height:38px;font-size:13px}
 #wins .mastery-map>summary{background:var(--e-raised);border-color:var(--edge2);color:var(--ink)}
 #trial :is(.trial-head,.trial-close,.trial-choice-timer,.trial-rung,.trial-reward-details>summary){background:var(--e-raised);border-color:var(--edge2);color:var(--ink)}
 #trial .trial-rung.next{background:var(--e-soft);border-color:var(--gold)}

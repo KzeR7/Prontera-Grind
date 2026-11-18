@@ -34,9 +34,11 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # own routes underneath it. EXCEPTION: set PREVIEW_PAGE to a repo-relative page (e.g.
 # PREVIEW_PAGE=tools/skill_fx_preview.html) and '/' serves that page instead - use it when a
 # dev page IS the thing the owner should see, without un-pinning the game as the default.
-_root_page = os.environ.get('PREVIEW_PAGE', 'index.html')
+_root_page = os.environ.get('PREVIEW_PAGE', 'docs/proposals/class-tree-redesign-visual.html')
 PAGES = {'/': _root_page,
          '/game': 'index.html',
+         '/classtree': 'docs/proposals/class-tree-redesign-visual.html',
+         '/tree': 'docs/proposals/class-tree-redesign-visual.html',
          # the tuner pages (PR #29/#30) keep their own routes - they are tools, not the game
          '/skillfx': 'tools/skill_fx_preview.html',
          # every MVP's signature moves, on a live 3D field (loads the real assets/boss-fx.js)
@@ -92,7 +94,9 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         except OSError as e:
             return self._err(500, 'cannot read %s (%s)' % (rel, e))
         body = _preview_html(rel, body, query)
-        ctype = 'text/html; charset=utf-8' if rel.endswith('.html') else 'application/octet-stream'
+        import mimetypes
+        guess = mimetypes.guess_type(rel)[0]
+        ctype = guess if guess else ('text/html; charset=utf-8' if rel.endswith('.html') else 'application/octet-stream')
         self.send_response(200)
         self.send_header('Content-Type', ctype)
         self.send_header('Content-Length', str(len(body)))
@@ -112,12 +116,16 @@ class Handler(http.server.SimpleHTTPRequestHandler):
 
     def do_GET(self):
         path, _, query = self.path.partition('?')
+        if path.startswith('/ro_icons/'):
+            return self._page('docs/proposals' + path, query)
         if path in PAGES:
             return self._page(PAGES[path], query)
         return super().do_GET()
 
     def do_HEAD(self):
         path, _, query = self.path.partition('?')
+        if path.startswith('/ro_icons/'):
+            return self._page('docs/proposals' + path, query)
         if path in PAGES:
             return self._page(PAGES[path], query)
         return super().do_HEAD()
