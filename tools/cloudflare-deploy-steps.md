@@ -135,7 +135,7 @@ Open the `*.pages.dev` address Cloudflare gives the project, and walk this list:
 | Check | Expected |
 |---|---|
 | The login card | says **“☁ Cloud accounts are on — register or sign in…”** |
-| Build tag at the bottom of the card | `2026-11-18 haven-v420 class tree icon centering, lengthened preview aligned with 4T bar, and asset cache bust` |
+| Build tag at the bottom of the card | `2026-11-18 haven-v421 Asura Strike one-hand-down pose` |
 | `<your-site>/api/me` while signed out | `{"err":"Not logged in."}` with HTTP 401 — JSON, not an HTML page |
 
 That second-browser line is the entire point of the shift: it is progress following the player
