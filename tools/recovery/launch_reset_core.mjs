@@ -26,6 +26,8 @@ export const CLEARED_TABLES = Object.freeze([
   'offline_reward_claims', 'damage_samples', 'damage_alerts', 'competition_baselines',
   // 0015: save-audit flags describe saves that no longer exist after a reset.
   'save_alerts',
+  // 0021: accumulated gains and review markers describe the same discarded gameplay saves.
+  'save_audit_windows',
   // 0017: a gift campaign belongs to a letter and pays through `grants`; both are cleared, so a
   // campaign left behind would replay its gift to every post-reset signup with no letter to open.
   'announcement_gifts',

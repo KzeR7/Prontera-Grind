@@ -12253,3 +12253,8 @@ re-recording them here would have written wrong numbers into the repository.
 * **Try it:** Clear a rate alert, accept an ordinary gain, then inspect a genuinely new excessive gain. Open Reviews → player → Damage → Evidence, and Activity at desktop/phone widths. Apply this PR's existing migration 0021 for evidence/windows; no further migration is added.
 * **Checks:** Real-SQL review/notification/API regressions, concurrent clear/save, legacy/window expiry, calibration, API (78/78), console (23/23), GM tools (20/20), and desktop/phone Edge checks passed. Browser screenshots use synthetic accounts and in-memory SQL. Live Cloudflare credentials and physical devices were not tested. Full gate comparison is recorded in the PR handoff.
 * **Delivery:** Prepared on `codex/gm-reviewed-evidence` for existing PR #266. No merge, deployment or production-data operation.
+### 2026-11-20 — `Audit window reset policy`
+* **Changed:** Classified migration 0021's save-audit windows as gameplay metadata, cleared alongside save alerts during an explicitly requested gameplay reset. Reset safety checks still reject unknown tables and preserve account/shop data.
+* **Try it:** Run `node tools/tests/launch_reset_sim.js`; its synthetic fixture includes accumulated gains and a review marker.
+* **Checks:** All 17 synthetic reset checks passed. No hosted reset was performed.
+* **Delivery:** Local companion fix for PR #266; no merge or deployment.
