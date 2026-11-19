@@ -12079,3 +12079,9 @@ re-recording them here would have written wrong numbers into the repository.
 
 ### Expanded-class FX final review choices
 - Applied the remaining keep-current selections in the standalone FX review, including Shadow Warrior and all Gunslinger and Rebellion casts. Production game FX remain unchanged.
+
+### 2026-11-19 — `2026-11-19 haven-v427 browser rendering recovery`
+* **Changed:** The game loads its existing 3D engine from its own site. Missing graphics no longer strand account recovery; the field and plaza explain failures and offer a way back. A chat failure no longer prevents solo scenery. On touch phones, Quests no longer covers Field. No account reset, save format change or new Social traffic.
+* **Try it:** Sign in, advance and close the plaza guide, then tap Field. See the [browser matrix, screenshots and fault reproductions](../reports/browser-reliability/README.md).
+* **Checks:** Eight built-site Chromium cases passed, including real field and plaza context loss/restoration. Chrome, Firefox, Brave with default Shields and Edge were unavailable and are untested. The Firefox runner is ready. All 248 gate suites passed across the sweep and reruns; build, Pages policy, generated assets and all 126 remeasured progression rows checked.
+* **Delivery:** Local branch changes only. No push, merge or deployment.

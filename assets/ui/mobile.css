@@ -676,3 +676,12 @@ html.pg-mobile #pgFocusBtn[aria-pressed="true"]{background:#3f5a45;color:#ffe9a8
   html.pg-mobile #loginOverlay .login-btn{padding:9px;font-size:11px}
   html.pg-mobile #loginOverlay .atabs{margin-bottom:10px}
 }
+
+/* In the phone plaza the toolbar wraps. Reserve a place for Quests in its
+   header row instead of floating the field chip over the Field action. Keep
+   the chip above its scrim (it also closes the sheet). */
+@media(max-width:700px){
+  html.pg-mobile body.social-open #socialHubHeader{padding-right:76px;min-height:var(--pg-chip-h)}
+  html.pg-mobile body.social-open #pgQuests{top:12px;right:calc(14px + var(--pg-safe-r))}
+  html.pg-mobile body.social-open #sideRail{top:calc(var(--socialhub-top,92px) + 8px)}
+}

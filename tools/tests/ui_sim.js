@@ -398,7 +398,7 @@ t('the phone layout is sized from the real viewport, not a guessed one', () => {
 t('the 3D view pinch-zooms on touch and still wheel-zooms on a mouse', () => {
   // A phone has no wheel, so before v74.1 the camera could only ever be zoomed at a desk. The
   // pointer block is sliced out of index.html and driven with fake two-finger gestures.
-  const code = grab('let drag=null;const dom=R.domElement;', '\n// Keep the character near the visual centre');
+  const code = grab('let drag=null;const dom=R?.domElement;', '\n// Keep the character near the visual centre');
   const handlers = {};
   const domEl = { addEventListener: (n, f) => { (handlers[n] = handlers[n] || []).push(f) }, setPointerCapture() {}, releasePointerCapture() {} };
   // The pointer block is the camera's alone again (the town's tap-to-walk went with the town), so the

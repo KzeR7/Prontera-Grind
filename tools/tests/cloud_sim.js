@@ -72,7 +72,7 @@ const cloudSrcValue = name => {
 
 // --------------------------------------------------------------- extraction ----
 const start = src.indexOf('// ---------- cloud accounts and saves (optional) ----------');
-const end = src.indexOf("addEventListener('load',()=>{setTimeout(cloudProbe,80)});", start);
+const end = src.indexOf("addEventListener('DOMContentLoaded',()=>{setTimeout(cloudProbe,80)});", start);
 assert.ok(start > 0 && end > start, 'the cloud block is not where this suite expects it');
 // v88.6: the save-owner stamp helpers (saveRefusal, sameSave, ...) sit with the save code, just above this
 // block, and the block calls them - so they are extracted with it.
@@ -81,7 +81,7 @@ assert.ok(stampStart > 0 && stampEnd > stampStart, 'the save-owner helpers are n
 // v422: cloudAdopt clears the fractional plaza-loot accumulator after it replaces a save.
 // The accumulator lives in the combat block rather than the cloud block, so provide its tiny
 // shape here just as the real page does before either block runs.
-const cloudCode = 'let plazaKillAcc={frac:0};\n' + src.slice(stampStart, stampEnd) + '\n' + src.slice(start, end + "addEventListener('load',()=>{setTimeout(cloudProbe,80)});".length);
+const cloudCode = 'let plazaKillAcc={frac:0};\n' + src.slice(stampStart, stampEnd) + '\n' + src.slice(start, end + "addEventListener('DOMContentLoaded',()=>{setTimeout(cloudProbe,80)});".length);
 
 // Every dependency the block has on the game, stubbed so the suite can drive it directly.
 function harness(opts = {}) {
@@ -263,7 +263,7 @@ await T('a live session cookie is not a door: every load stops at the login card
     'the leftover cookie session is deleted instead of being left to pile up on the server');
   assert.match(h.els.get('loginCloud').textContent, /sign in to continue|register or sign in/i);
   // the GM account has no shortcut around the card, and neither does a remembered name
-  assert.ok(src.includes("addEventListener('load',()=>{setTimeout(cloudProbe,80)});"), 'every load still runs the probe, which now only reports the API');
+  assert.ok(src.includes("addEventListener('DOMContentLoaded',()=>{setTimeout(cloudProbe,80)});"), 'every load still runs the probe, which now only reports the API');
   assert.ok(!/cloudProbe[\s\S]{0,600}initSessionFromCloud/.test(src), 'the probe must not be able to log anybody in');
   assert.ok(/function restoreRememberedUser\(\)\{[\s\S]*?field\.value=name/.test(src), 'Remember me only pre-fills the username');
 });

@@ -2283,10 +2283,40 @@ let mapTickFrame=0;
 function mapTick(){if(hub.hidden)return;syncFieldMonitor();drawPlazaMap($id('socialMiniMapCanvas'),false);if(!$id('socialMapModal').hidden)drawPlazaMap($id('socialMapCanvas'),true)}
 $id('socialMiniMap').onclick=()=>{const m=$id('socialMapModal');if(m.hidden)focusHubPanel('map');m.hidden=!m.hidden;if(!m.hidden){drawPlazaMap($id('socialMapCanvas'),true)}};
 $id('socialMapClose').onclick=()=>{$id('socialMapModal').hidden=true};
-async function enter(){ensureDigimonBag();discardLegacyActivities();digimonSelect.value=partnerLine()||'';if(app.entering)return;app.entering=true;app.wanted=true;hub.hidden=false;document.body.classList.add('social-open');measureHubToolbar();syncFieldMonitor();closeHubMore();
- // v359 (owner: "I want the BGM permanent and the toggle removed"): the music player is
- // part of the hub chrome - it shows whenever the hub is open, with no toolbar toggle.
- {$id('socialBgmMount').hidden=typeof BGM!=='undefined'&&BGM.phoneShell?BGM.phoneShell():false;if(typeof BGM!=='undefined')BGM.renderUI()}syncPokerBadges();syncPokerBounds();if(tabs.includes('map'))openTab('map');if(CLOUD.on&&!app.socket){app.nextConnect=0;connect()}try{if(!app.scene)app.scene=await PGSocialScene.create($id('socialScene'),$id('socialLabels'),{move:moveAction,menu:playerMenu,self:()=>app.room?app.id:SOLO_ID,seat:seatAction,pokerSeat:pokerSeatAction,pokerOpen:tid=>pokerOpen(tid),pond:(x,z,idx)=>FISHING()?.pondClick(x,z,idx),trainStation:startWorldTraining,sanctuaryShop:openSanctuaryShop,sanctuaryIndex:openSanctuaryIndex,trainingNearby:worldNearbyFrame,sitting});if(app.wanted){app.scene.active=true;bindFishing();mapTick();for(const p of app.players.values())app.scene.putPlayer(p);plazaBotsResync();refreshGymVisuals();app.scene.setBattleState?.(app.battle);renderBattleHUD();renderPvpDialog();join();if(!app.room){syncSoloPlayer();if(P){const snaps=syncSoloPokerSnapshots();if(snaps)for(const s of snaps)s._clientAt=Date.now();}}if(typeof BGM!=='undefined')BGM.sync(typeof S==='object'&&S?S.mp:0)}}catch(e){status('Plaza could not load. Return to the field and try again.');console.error(e)}finally{app.entering=false}}
+const graphicsNotice=document.createElement('p');graphicsNotice.id='plazaRenderNotice';graphicsNotice.hidden=true;
+graphicsNotice.setAttribute('role','status');hub.append(graphicsNotice);
+function plazaGraphics(text,reload=false){
+ graphicsNotice.textContent=text;graphicsNotice.hidden=!text;
+ if(reload){const retry=document.createElement('button');retry.type='button';retry.textContent='Retry graphics';
+  retry.onclick=()=>showUpdatePrompt(BUILD,'Reload to retry graphics after confirming your save.');graphicsNotice.append(' ',retry)}
+}
+async function enter(){
+ if(app.entering)return;
+ app.entering=true;
+ try{
+  ensureDigimonBag();discardLegacyActivities();digimonSelect.value=partnerLine()||'';
+  app.wanted=true;hub.hidden=false;document.body.classList.add('social-open');measureHubToolbar();syncFieldMonitor();closeHubMore();
+  // Music and chat are not prerequisites for building the solo view.
+  try{$id('socialBgmMount').hidden=typeof BGM!=='undefined'&&BGM.phoneShell?BGM.phoneShell():false;if(typeof BGM!=='undefined')BGM.renderUI()}catch(e){console.warn('Plaza music unavailable',e)}
+  syncPokerBadges();syncPokerBounds();if(tabs.includes('map'))openTab('map');
+  if(CLOUD.on&&!app.socket){app.nextConnect=0;connect()}
+  if(!app.scene){
+   plazaGraphics('Loading plaza scenery… Field is available.');
+   app.scene=await PGSocialScene.create($id('socialScene'),$id('socialLabels'),{
+    move:moveAction,menu:playerMenu,self:()=>app.room?app.id:SOLO_ID,seat:seatAction,pokerSeat:pokerSeatAction,
+    pokerOpen:tid=>pokerOpen(tid),pond:(x,z,idx)=>FISHING()?.pondClick(x,z,idx),trainStation:startWorldTraining,
+    sanctuaryShop:openSanctuaryShop,sanctuaryIndex:openSanctuaryIndex,trainingNearby:worldNearbyFrame,sitting,graphics:plazaGraphics
+   });
+   if(!app.scene.contextLost)plazaGraphics('');
+  }
+  if(!app.wanted)return; // Left while scenery was loading.
+  app.scene.active=true;bindFishing();mapTick();for(const p of app.players.values())app.scene.putPlayer(p);
+  plazaBotsResync();refreshGymVisuals();app.scene.setBattleState?.(app.battle);renderBattleHUD();renderPvpDialog();join();
+  if(!app.room){syncSoloPlayer();if(P){const snaps=syncSoloPokerSnapshots();if(snaps)for(const s of snaps)s._clientAt=Date.now()}}
+  try{if(typeof BGM!=='undefined')BGM.sync(typeof S==='object'&&S?S.mp:0)}catch(e){console.warn('Plaza music unavailable',e)}
+ }catch(e){plazaGraphics('Plaza graphics could not start. Choose Field, then reopen the plaza to retry.');console.error('Plaza graphics unavailable',e)}
+ finally{app.entering=false}
+}
 function leave(){worldNearbyStat='';worldNearby.hidden=true;worldTrainingHUD.hidden=true;worldBattleNearby.hidden=true;clearPveRepeat();sapDismissedArea=sapAreaNow='';closeActivityPanel();stopSoloPve('stopped',false);app.battleIntent=null;battleOffer=null;app.battleResult=null;app.battle={pve:[],pvp:null,queue:[]};battleHUD.hidden=true;pvpDialog.hidden=true;renderBattleResult();app.scene?.setBattleState?.(app.battle);if(!sanctuaryPanel.hidden)sanctuaryClose();FISHING()?.hubClosed();if(pokerLeaveAction)finishPokerLeave(false);clearPokerResult();app.wanted=false;app.resume=null;pokerUI.open=false;pokerUI.minimized=false;$id('socialPokerModal').hidden=true;$id('socialPokerMini').hidden=true;if(soloTables){for(const t of soloTables)t.stand(SOLO_ID,Date.now());app.poker=null;app.pokerTables=null;}send({type:'leave'});stashLocal(app.room);app.room=0;app.rooms=[];hub.hidden=true;syncPokerChatFit();syncPokerBounds();document.body.classList.remove('social-open');$id('socialMapModal').hidden=true;if(app.scene)app.scene.active=false;resetPlayers();app.messages=app.messages.filter(m=>m.channel!=='local');pokerTableChat.clear();select('world');// v361: a hub-first account has no field behind the hub yet - the Field button drops them
    // into their saved map (which starts the battle) instead of restoring an empty screen.
    if(typeof hubFirstPending!=='undefined'&&hubFirstPending){
@@ -2603,7 +2633,9 @@ function connect(){
  // tabs evict each other forever. Logout/account change (below) or a reload resets it.
  if(!CLOUD.on||!CLOUD.user||app.blocked||Date.now()<app.nextConnect)return;const user=typeof CLOUD.user==='string'?CLOUD.user:CLOUD.user.username;if(app.user!==user){app.user=user;localHistory.clear();app.messages=readWorldHistory();renderMessages();app.unread.clear();try{app.muted=new Set(JSON.parse(localStorage.getItem('pg_social_mute_'+user))||[])}catch{app.muted=new Set()}}
  const qs=CLOUD.previewToken?'?preview_session='+encodeURIComponent(CLOUD.previewToken):'';
- const ws=new WebSocket((location.protocol==='https:'?'wss:':'ws:')+'//'+location.host+'/api/social'+qs);app.socket=ws;app.socketAt=Date.now();app.rulesNoticed=false;status('Connecting to chat…');
+ let ws;try{ws=new WebSocket((location.protocol==='https:'?'wss:':'ws:')+'//'+location.host+'/api/social'+qs)}
+ catch{app.nextConnect=Date.now()+retryDelay();status('Chat unavailable. The plaza works in solo view.');return}
+ app.socket=ws;app.socketAt=Date.now();app.rulesNoticed=false;status('Connecting to chat…');
   // v366: the upgrade succeeding is NOT the same as the room answering. When it opens and then goes
   // quiet the client has no way to tell "accepted" from "accepted and ignored", so say both out loud
   // with timings. The next incident then has a clock on it instead of a guess.
