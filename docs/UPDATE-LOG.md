@@ -11367,3 +11367,120 @@ Test-only follow-up to the v373 batch. No player-visible change, so BUILD is unc
   both keys are asserted absent from `COUNTERS`, `RATE_LIMITS` and `LUMP_ALLOWANCE`. Full gate on the
   final tree: **1690 passed**, the same five reds as `main`.
 * **Delivery:** Branch `arena/369b4228-prontera-grind`, PR **#236**.
+
+### 2026-11-15 — `haven-v410 Rift Raid wardrobe, plaza cosmetics and bound card collection`
+
+* **Changed:** Added a timed player-character raid under Map → Rift Raid, separate from DigiPet
+  battles and field combat. Solo and 2–3 player starts reserve one of two entries per participant
+  in D1, resetting at Malaysia midnight (Asia/Kuala_Lumpur). The Social Hub has its own Rift Raid
+  create/join/invite panel; `raid_*` messages do not reuse `party_start`. Pre-start party rosters
+  and unexpired invites, as well as active run state, survive Durable Object eviction. The Social
+  Durable Object advances the fight only on actions/snapshots and adds no raid alarms or per-tick
+  broadcasts. Server actions include Strike, Heavy Strike, lane Dodge, Mend, Ward and Revive.
+* **Rewards:** D1 now settles full clears and failures idempotently. Every participant receives the
+  full-clear pool plus a repeatable Fractured Chest on a timed kill; every failed attempt pays every
+  participant a Pity Chest, with no contribution floor or once-a-day chest cap. Stackable Shards,
+  Sigils and Astral Shards receive the stochastic duo/trio bonus in both clear pools and chests; Zeny
+  and card odds are unchanged. Raid grant rows stay claimable until accepted by a cloud save; ordinary
+  five-day mail expiry is unchanged. v1 regional materials use Astral Shards only, never Primal
+  Catalysts. The Malaysia date key and the daily-entry triggers are covered by the real-SQL simulation.
+* **Progression:** Added the item-bound Mythic-only 20★ add-on: +1% general weapon ATK and +0.5% raid
+  armor penetration per star, capped at +10% penetration. Upgrade cost/odds include failed tries and
+  the third consecutive attempt is guaranteed; expected 0★→20★ spend is about 852.126 Rift Shards.
+  The Map displays the proposed chest contents and expected progression math; values remain balance
+  tuning recommendations.
+* **Wardrobe and card collection:** The Map wardrobe exposes server-unlocked raid titles and auras;
+  authenticated equip calls persist only owned IDs. Titles and aura metadata flow through Social look
+  canonicalization and render in Fountain Plaza. A worn Rift aura replaces the level milestone sigil,
+  while unequipping restores it. The field title has its own row above the Index title. A full-clear
+  Rift Sovereign Card drop increments the D1 rank count and enqueues a durable ordinary-save grant;
+  zero copies grant no penetration, with ranks at 1/2/5/10 copies for 5%/9%/12%/15% raid armor
+  penetration. The bound collection copy cannot be socketed, sold, merged or donated to Card Mastery.
+  Claim is accepted only after the matching save receipt reaches D1.
+* **Balance review:** At the current 150M/360M/540M HP and 5m/6m timers, each member needs 500k
+  post-armor damage/s. Ideal Heavy Strike cadence means about 595k saved DPS at 0% penetration,
+  490k at 15%, or 439k at the combined 25% cap; solo at zero penetration has little margin under the
+  650k cap. Expected solo shard income is 20 per full clear and 10 per failure; duo/trio average 22/24
+  per clear and 11/12 per failure after the stackable party bonus. Two solo clear entries/day take about
+  21.3 days to reach the expected 20★ spend. Ten card copies average about 157 clears with the
+  5%/30-clear pity. These are paper checks only; HP, reward and drop values remain provisional pending
+  live telemetry.
+* **Try it:** Sign in with a cloud save and open Map → Rift Raid. Equip an unlocked title or aura;
+  the look appears in Fountain Plaza and a Rift aura replaces the milestone sigil in the field.
+  For a party, enter Social Hub → Rift Raid, create/join/invite, choose **Open Map → Rift Raid**
+  from that panel, then start as leader. Sync the save after a card drop and check **Bag → Cards**;
+  open Equipment/Stats to see the equipped Mythic weapon's ATK add-on after the raid account refreshes.
+* **Review fixes:** Corrected the zero-copy Rift Sovereign Card bonus to 0% and pinned the 1/2/5/10-copy
+  rank thresholds; account loads now use latest-request and account epochs, while stale mutations and
+  overlapping action/settlement locks are isolated. Logout clears the preview token before rendering,
+  and signed-out panels no longer refetch through a prior account context. Closed the documented
+  party-reward gap by applying duo/trio stochastic bonuses to stackable Fractured/Pity Chest contents
+  too, and show the exact card penetration bonus in the Map panel.
+* **Checks:** `player_raid_sim.mjs` PASS (real SQLite + Pages handler + Social class with mocked
+  storage: Malaysia boundary, two-entry/active limits, party reservations, persisted lobby/invite
+  state and lobby reopening, action retries beyond 64 receipts, all-active-run storage retention,
+  bagged-weapon exclusion, card rank thresholds, duo/trio chest scaling, cosmetic allow-listing/equip,
+  deterministic card award, durable grant claim only after the matching save receipt, settlement retry
+  and no alarms); `raid_ui_sim.mjs` PASS (latest-load-wins refreshes, account-switch and stale-mutation
+  isolation, busy-lock ordering, initial fetch dedupe and no signed-out refetch, displayed card penetration);
+  `equipment_cards_sim.js` PASS (forged socket repair, receipt-before-claim ordering and redelivery
+  retry without duplication); `social_scene_sim.js` PASS;
+  `social_ui_sim.js` PASS (JSDOM emits expected unimplemented-canvas warnings and verifies raid look
+  propagation); `social_api_sim.mjs` PASS; `social_worker_sim.mjs` PASS (real local workerd at its
+  supported 2026-08-06 compatibility date, private raid routes, public-preview host rejection,
+  lobby/invite create/join/accept/decline/leave across DO eviction, active/settled run hydration and
+  replay); `panel_layout_smoke.js` 43/43 (including projected title CSS-pixel anchoring);
+  `eclipse_ui_sim.js` 60/60; `field_loop_smoke.js` 9/9; `save_owner_boot_smoke.js` 6/6;
+  `migration_sim.js` 9/9; `api_sim.js` 69/69; `gear_sim.js` 43/43; `combat_damage_sim.js` 10/10;
+  `update_watch_sim.js` 18/18; `publish_sim.js` 18/18. `node --check` passes on 17 changed runtime/test
+  scripts and `git diff --check` is clean. No full repository gate run.
+* **Delivery:** Local changes only on `arena/6f878512-prontera-grind`; migration `0018` has not been
+  applied remotely. No commit, push, PR or deployment performed.
+
+### 2026-11-15 — `haven-v411 Rift Raid party previews and ready checks`
+
+* **Separate Social lobby:** Kept the player-character `raid_*` party distinct from DigiPet `party_*`
+  and field combat. Added server-owned Ready / Not ready state, persisted and broadcast by the Social
+  Durable Object. A join, leave, room switch or disconnect resets readiness for the remaining roster;
+  settlement reopens the lobby with everyone unready.
+* **Authoritative start gate:** Both the authenticated Pages API and Social Durable Object install
+  require an open 2–3 member raid party, the authenticated leader and every member ready. The Map
+  button also checks local leader/roster/readiness, daily entry, active-run and request-busy state;
+  the Social lobby has its own Start Party Raid shortcut into Map. D1 still reserves all member entries
+  atomically, and the DO rechecks the roster and readiness before installing the run.
+* **Character previews:** Sanitized class/wardrobe looks now travel with party snapshots. The Social
+  lobby creates a native wardrobe preview canvas per member; `social-scene.js` loads, caches and
+  releases wardrobe previews as the roster changes. Leader styling, each member's readiness label,
+  and a ready-count summary are included.
+* **Rule check:** Rechecked `docs/PLAYER-RIFT-RAID.md` against `raidAdvance`, `raidResolveHazard` and
+  `raidActionResult`: the first tell becomes eligible at +7.5s, lasts 1.5s, and later tells are
+  eligible 9s after server resolution; group hazards have a 50% second-lane chance. A safe-lane dodge
+  during that tell avoids the 30%-max-HP lane hit and earns 10% max-HP support; active Ward halves a
+  hit. Hazard state advances on actions/snapshots only, not a raid alarm.
+* **Checks:** `player_raid_sim.mjs` PASS (Pages all-ready and leader-only start checks); `raid_ui_sim.mjs`
+  PASS (leader membership, 2–3 size, open/readiness, entry and busy gate plus party-start route);
+  `social_ui_sim.js` PASS (preview canvases, ready labels/toggle, live gate refresh and lobby start;
+  JSDOM logs its expected unimplemented-canvas warnings); `social_scene_sim.js` PASS (native wardrobe
+  preview paint path); `social_worker_sim.mjs` PASS (real local workerd, persisted readiness/reset,
+  leader identity and DO all-ready install); `update_watch_sim.js` 18/18 (v411 asset/build mirrors);
+  `node --check` passes on 12 Rift Raid runtime/test scripts; `git diff --check` plus an untracked-file
+  whitespace scan are clean. Browser-based visual QA and the full repository gate have not been run.
+* **Delivery:** Local only on `arena/6f878512-prontera-grind`; migration `0018` remains unapplied
+  remotely. No commit, push, PR or deployment.
+
+### 2026-11-15 — `v411 fixed-target staging launcher prepared`
+
+* **Changed:** Added `tools/staging/rift_raid_stage.mjs`, pinned to the v411 branch/build and the
+  known staging Pages project, Social Worker and D1 UUID. It snapshots the working tree to OS temp,
+  overwrites both Wrangler configs with staging-only resources, checks the remote D1 identity and
+  baseline schema before SQL, checks/applies only migration 0018, deploys staging Social before
+  Pages, then verifies the page build, Social DO response and Pages-to-D1 identity through a
+  random-token marker. The marker is cleaned up and verified absent; the probe returns only a
+  boolean and remains token-guarded in that staging deploy until a later Pages release.
+* **Try it:** See `docs/ISOLATED-STAGING.md` → “Rift Raid v411 staging”. The launcher refuses the
+  user's currently reported v415 Windows branch; do not bypass its source guard.
+* **Checks:** `node tools/tests/rift_raid_stage_sim.mjs` covers fixed staging configs, migration
+  object detection, baseline-schema stops, URL restrictions and deployed version/Worker/D1 probes.
+  It uses fakes only and never contacts Cloudflare. The owner has not run the launcher; no staging
+  migration or deployment has happened.
+* **Delivery:** Local, uncommitted changes on `arena/6f878512-prontera-grind`; no commit, push or PR.

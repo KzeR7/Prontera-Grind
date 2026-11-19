@@ -2390,6 +2390,35 @@ void main(){
  const water=new T.Mesh(new T.CircleGeometry(3.7,48),new T.MeshBasicMaterial({color:0x60c9dc,transparent:true,opacity:.65}));water.rotation.x=-Math.PI/2;water.position.y=.7;scene.add(freeze(water));
  const sprayGeo=new T.BufferGeometry(),spray=new Float32Array(72*3);sprayGeo.setAttribute('position',new T.BufferAttribute(spray,3));const drops=new T.Points(sprayGeo,new T.PointsMaterial({color:0xd6f8ff,size:.14,transparent:true,opacity:.8}));scene.add(drops);
  const allClasses={...PGWardrobe.CLASSES,...PGFourthJobs.CLASSES};const stores=[new PGWardrobe.Store({budget:96*1024*1024}),new PGFourthJobs.Store({budget:64*1024*1024}),new PGWardrobe.Store({base:'assets/social/sitting/',classes:allClasses,budget:48*1024*1024,stances:['sit']})];
+ const raidPreviewStates=new Map();
+ function paintRaidPreview(canvas,look){
+  if(!canvas||!look)return;
+  const source=document.createElement('canvas');source.width=320;source.height=280;
+  PGWardrobe.draw(source.getContext('2d'),look,'idle',0,0,null,0);
+  const parts=[look.base,look.hair,...(look.pieces||[])],layers=parts.flatMap(part=>part?.metadata?.actions?.idle0?.frames?.[0]||[]).filter(layer=>layer[7]!=='shadow');
+  const ctx=canvas.getContext('2d');if(!ctx)return;ctx.clearRect(0,0,canvas.width,canvas.height);ctx.imageSmoothingEnabled=false;
+  if(!layers.length){ctx.drawImage(source,0,0,320,280,0,0,canvas.width,canvas.height);return}
+  const x=Math.min(...layers.map(layer=>layer[4])),y=Math.min(...layers.map(layer=>layer[5])),w=Math.max(...layers.map(layer=>layer[4]+layer[2]))-x,h=Math.max(...layers.map(layer=>layer[5]+layer[3]))-y;
+  const scale=Math.min(canvas.width*.86/w,canvas.height*.88/h),dw=w*scale,dh=h*scale;
+  ctx.drawImage(source,x,y,w,h,(canvas.width-dw)/2,(canvas.height-dh)/2,dw,dh);
+ }
+ function renderRaidPreviews(items=[]){
+  const rows=Array.isArray(items)?items:[],live=new Set(rows.map(row=>'raid-preview-'+Number(row?.id)).filter(key=>/^raid-preview-[1-9][0-9]*$/.test(key)));
+  for(const[client,state]of raidPreviewStates){if(live.has(client))continue;state.seq++;raidPreviewStates.delete(client);stores[0].release(client);stores[1].release(client)}
+  for(const row of rows){
+   const id=Number(row?.id),canvas=row?.canvas;if(!Number.isInteger(id)||id<1||!canvas)continue;
+   const client='raid-preview-'+id,raw=row.look,cls=Object.hasOwn(allClasses,raw?.cls)?raw.cls:'Novice',appearance=PGWardrobe.normalize(raw?.appearance)||PGWardrobe.defaults('m'),key=JSON.stringify([cls,appearance]);
+   let state=raidPreviewStates.get(client);
+   if(state?.key===key){state.canvas=canvas;canvas.dataset.previewKey=key;if(state.look){paintRaidPreview(canvas,state.look);continue}if(state.loading)continue}
+   if(state)state.seq++;
+   state={key,canvas,look:null,loading:true,seq:(state?.seq||0)+1};raidPreviewStates.set(client,state);canvas.dataset.previewKey=key;
+   const store=Object.hasOwn(PGFourthJobs.CLASSES,cls)?stores[1]:stores[0],seq=state.seq;
+   store.select(client,appearance,cls).then(look=>{
+    if(raidPreviewStates.get(client)!==state||state.seq!==seq)return;
+    state.loading=false;state.look=look||null;if(look&&state.canvas?.isConnected&&state.canvas.dataset.previewKey===key)paintRaidPreview(state.canvas,look);
+   }).catch(()=>{if(raidPreviewStates.get(client)===state&&state.seq===seq)state.loading=false});
+  }
+ }
 
  // v266: Two Plaza Hold'em tables along the West Promenade, 12 cushioned stools and 2 native Dealers.
  const woodDark=new T.MeshLambertMaterial({color:0x4b2e1b}),woodRail=new T.MeshLambertMaterial({color:0x633a22}),brassMat=new T.MeshLambertMaterial({color:0xcba458}),velvetRed=new T.MeshLambertMaterial({color:0x8d2630}),velvetBlue=new T.MeshLambertMaterial({color:0x274d78}),feltBaseMat=new T.MeshLambertMaterial({color:0x17583b});
@@ -2576,7 +2605,15 @@ void main(){
  // v225 (owner): the plaza reuses the field's own Base 50/99/150 sigil, so a character's level aura
  // is the same object and animation here. Textures are private to one player and freed on leave.
  function auraTier(lv){return typeof LEVEL_AURAS==='undefined'?null:LEVEL_AURAS.filter(a=>lv>=a.at).at(-1)||null}
- function syncAura(p){const tier=auraTier(Math.max(0,Math.floor(Number(p.state.look?.lv)||0))),tierAt=tier?tier.at:0;if(p.auraTier===tierAt)return;p.auraTier=tierAt;if(p.aura){scene.remove(p.aura);disposeAura(p.aura);p.aura=null}if(!tier||typeof buildLevelAura!=='function')return;p.aura=buildLevelAura(tier);scene.add(p.aura)}
+ function syncAura(p){
+  const look=p.state.look||{},pattern=String(look.raidAuraPattern||''),color=String(look.raidAuraColor||'');
+  const raidAura=typeof look.raidAuraId==='string'&&look.raidAuraId&&/^#[0-9a-f]{6}$/i.test(color)&&['compass','arcane','sunburst'].includes(pattern)?{id:look.raidAuraId,color,pattern,at:1000}:null;
+  const tier=raidAura||auraTier(Math.max(0,Math.floor(Number(look.lv)||0))),key=raidAura?'raid:'+raidAura.id:tier?'level:'+tier.at:'none';
+  if(p.auraTier===key)return;p.auraTier=key;
+  if(p.aura){scene.remove(p.aura);disposeAura(p.aura);p.aura=null}
+  if(!tier||typeof buildLevelAura!=='function')return;
+  p.aura=buildLevelAura(tier);if(raidAura)p.aura.userData.raidAuraId=raidAura.id;scene.add(p.aura);
+ }
  function animateAura(p,now,x,z){const aura=p.aura;if(!aura)return;const seconds=now/1000;aura.position.set(x,.07+bridgeLift(x,z),z);aura.scale.setScalar(1.18*(1+Math.sin(seconds*2)*.025));aura.children.forEach((layer,i)=>{if(!layer.material)return;layer.rotation.y=(seconds*(i?-.3:.22))%(Math.PI*2);layer.material.opacity=.8+Math.sin(seconds*2+i)*.12;if(layer.children[0]?.material)layer.children[0].material.opacity=.85+Math.sin(seconds*2+i)*.1});const data=aura.userData;if(data.floor)data.floor.material.opacity=.4+Math.sin(seconds*1.7)*.07;if(data.veil)data.veil.material.opacity=.2+Math.sin(seconds*1.7)*.035;const motes=data.motes;if(motes){const positions=motes.geometry.attributes.position,colors=motes.geometry.attributes.color;for(let i=0;i<positions.count;i++){const phase=(seconds*.23+i/positions.count)%1,angle=i*2.399+seconds*.24,radius=.55+Math.sin(i*1.7)*.25,fade=Math.sin(phase*Math.PI);positions.setXYZ(i,Math.cos(angle)*radius,phase*1.6,Math.sin(angle)*radius);colors.setXYZ(i,fade,fade,fade)}positions.needsUpdate=colors.needsUpdate=true}}
  function removePlayer(id){const p=players.get(id);if(!p)return;if(p.digimon){scene.remove(p.digimon.sprite);p.digimon.sprite.material.dispose();p.digimon.texture.dispose();p.digimon=null;}try{fishingApi.api.setRig(id,{on:false})}catch{}for(const s of stores)s.release('social-'+id);if(p.aura){scene.remove(p.aura);disposeAura(p.aura)}scene.remove(p.sprite);p.sprite.material.dispose();p.texture.dispose();p.label.remove();p.bubble.remove();players.delete(id)}
  function loadLooks(p,now){
@@ -2596,10 +2633,12 @@ void main(){
  function putPlayer(state){let p=players.get(state.id);if(!p){
   const canvas=document.createElement('canvas');canvas.width=320;canvas.height=280;const ctx=canvas.getContext('2d'),texture=new T.CanvasTexture(canvas);texture.magFilter=texture.minFilter=T.NearestFilter;texture.generateMipmaps=false;
   const sprite=new T.Sprite(new T.SpriteMaterial({map:texture,transparent:true,depthTest:true,alphaTest:.05}));sprite.userData.socialId=state.id;sprite.center.set(.5,80/280);scene.add(sprite);
-  const label=document.createElement('div');label.className='social-player-label';label.dataset.loading='true';label.dataset.player=state.id;const bubble=document.createElement('div');bubble.className='social-bubble';bubble.dataset.player=state.id;const name=document.createElement('button');if(state.gm){name.textContent='🛠 '+state.name;name.title='Game Master';name.classList.add('social-gm')}else name.textContent=state.name;name.onclick=()=>{if(state.id!==callbacks.self())callbacks.menu(state.name,state.id)};const title=document.createElement('small');title.className='social-player-title';const fishTitle=document.createElement('small');fishTitle.className='social-player-fish-title';const digiTitle=document.createElement('small');digiTitle.className='social-player-digi-title';label.append(name,title,fishTitle,digiTitle);labels.append(label,bubble);
-  p={canvas,ctx,texture,sprite,label,bubble,title,fishTitle,digiTitle,state,loaded:'',paint:'',height:3.2,aura:null,auraTier:-1,lx:'',ly:'',lhid:null,bx:'',by:'',bhid:null,bubbleUntil:0,looks:{},seq:0,retryAt:0,loading:false,trail:{points:[],progress:null}};players.set(state.id,p);
+  const label=document.createElement('div');label.className='social-player-label';label.dataset.loading='true';label.dataset.player=state.id;const bubble=document.createElement('div');bubble.className='social-bubble';bubble.dataset.player=state.id;const name=document.createElement('button');if(state.gm){name.textContent='🛠 '+state.name;name.title='Game Master';name.classList.add('social-gm')}else name.textContent=state.name;name.onclick=()=>{if(state.id!==callbacks.self())callbacks.menu(state.name,state.id)};const title=document.createElement('small');title.className='social-player-title';const raidTitle=document.createElement('small');raidTitle.className='social-player-raid-title';const fishTitle=document.createElement('small');fishTitle.className='social-player-fish-title';const digiTitle=document.createElement('small');digiTitle.className='social-player-digi-title';label.append(name,title,raidTitle,fishTitle,digiTitle);labels.append(label,bubble);
+  p={canvas,ctx,texture,sprite,label,bubble,title,raidTitle,fishTitle,digiTitle,state,loaded:'',paint:'',height:3.2,aura:null,auraTier:-1,lx:'',ly:'',lhid:null,bx:'',by:'',bhid:null,bubbleUntil:0,looks:{},seq:0,retryAt:0,loading:false,trail:{points:[],progress:null}};players.set(state.id,p);
  }
  const nextTitle=state.look?.title||'';if(p.title.textContent!==nextTitle){p.title.textContent=nextTitle;p.title.hidden=!nextTitle}else if(p.title.hidden!==!nextTitle)p.title.hidden=!nextTitle;
+ const nextRaidTitle=state.look?.raidTitle||'';if(p.raidTitle.textContent!==nextRaidTitle){p.raidTitle.textContent=nextRaidTitle;p.raidTitle.hidden=!nextRaidTitle}else if(p.raidTitle.hidden!==!nextRaidTitle)p.raidTitle.hidden=!nextRaidTitle;
+ p.raidTitle.style.color=state.look?.raidTitleColor||'';
  // v296: the fishing title is a second line, so it never displaces the Hunt title.
  const nextFish=state.look?.fishTitle||'';if(p.fishTitle.textContent!==nextFish){p.fishTitle.textContent=nextFish;p.fishTitle.hidden=!nextFish}else if(p.fishTitle.hidden!==!nextFish)p.fishTitle.hidden=!nextFish;
  // v373: the fishing title takes its tier colour; the DigiPet title sits on the line under it in its own tier colour.
@@ -2843,6 +2882,6 @@ void main(){
  // especially - the v359 bleacher slabs taught us that const) is initialized. The network GLB
  // always resolves after create() anyway; this also keeps synchronous loader stubs safe.
  loadAetherwell();
- return {putPlayer,removePlayer,setGymResidents,setBattleState,battleEvent,bubble,dealerBubble,updatePoker,setCamera,resetCamera,fishing:fishingApi.api,get cameraState(){return cameraState()},clearPlayers(){focused=false;for(const id of [...players.keys()])removePlayer(id)},get active(){return active},set active(v){active=v;if(v){syncSize();last=performance.now();focused=false}},scene,camera,renderer};
+ return {putPlayer,removePlayer,setGymResidents,setBattleState,battleEvent,bubble,dealerBubble,updatePoker,renderRaidPreviews,setCamera,resetCamera,fishing:fishingApi.api,get cameraState(){return cameraState()},clearPlayers(){focused=false;for(const id of [...players.keys()])removePlayer(id)},get active(){return active},set active(v){active=v;if(v){syncSize();last=performance.now();focused=false}},scene,camera,renderer};
  }catch(error){renderer.dispose();renderer.domElement.remove();throw error}
 }};

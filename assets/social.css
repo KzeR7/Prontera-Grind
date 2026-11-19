@@ -33,7 +33,7 @@
 .social-pills{display:flex;flex-wrap:wrap;gap:6px}
 .social-pills>span{padding:4px 9px;border-radius:999px;border:1px solid rgba(72,96,122,.55);background:rgba(21,31,44,.85);font-size:10px;font-weight:600;color:#c3d3e3}
 .social-cta>button{margin:0;min-height:40px;min-width:210px;padding:9px 22px;font-size:12.5px;font-weight:800;letter-spacing:.02em;border-radius:8px;cursor:pointer}
-body.social-open #eclipseCombat,body.social-open #hudBuffs,body.social-open #hint,body.social-open #sideRail,body.social-open #heroTitle,body.social-open #tag{visibility:hidden!important}
+body.social-open #eclipseCombat,body.social-open #hudBuffs,body.social-open #hint,body.social-open #sideRail,body.social-open #heroTitle,body.social-open #heroRaidTitle,body.social-open #tag{visibility:hidden!important}
 @media(max-width:600px){#socialChat{left:6px;max-width:calc(100% - 12px);width:340px;height:185px;font-size:11px}#socialTabs button{padding:5px 6px}#socialHubHeader{left:12px;top:12px}#socialHubHeader h2{font-size:20px}#socialHubHeader p{max-width:175px}#socialHubControls{right:8px;top:12px}#socialHubHint{bottom:auto;top:100px;right:8px;font-size:10px;max-width:150px}#socialEmoji{grid-template-columns:repeat(6,1fr)}}
 
 body.social-open #hud,body.social-open #afterglowCanvas,body.social-open #mobSpriteLayer,body.social-open #weaponSpriteLayer{visibility:hidden!important}body.hide-chat:not(.social-open) #socialChat,body.clean-screen #socialChat{display:none}body.hide-feed #socialTabs button[data-channel="log"]{display:none}#socialHubHeader{z-index:2}#socialHubHeader h2{color:#fff}
@@ -90,7 +90,8 @@ body.social-open #bgmPlayer{display:none!important}
 
 /* Names and equipped titles stay below the feet; only speech uses a box. */
 .social-player-title{display:block;margin-top:2px;color:#ffe6a2;font-size:11px;text-shadow:0 1px 3px #000,0 0 5px #000}
-.social-player-title[hidden],.social-bubble[hidden],.social-player-label[hidden]{display:none}
+.social-player-raid-title{display:block;margin-top:1px;color:#d4adff;font-size:10.5px;letter-spacing:.2px;text-shadow:0 1px 3px #000,0 0 6px #000}
+.social-player-title[hidden],.social-player-raid-title[hidden],.social-bubble[hidden],.social-player-label[hidden]{display:none}
 /* v296: the fishing title is its own line under the name, so wearing one never hides the Hunt title. */
 .social-player-fish-title{display:block;margin-top:1px;color:#9fe3ff;font-size:10.5px;letter-spacing:.2px;text-shadow:0 1px 3px #000,0 0 5px #000}
 .social-player-fish-title[hidden]{display:none}
@@ -1183,3 +1184,42 @@ svg.ad-toolbar-art{width:22px;height:22px;vertical-align:middle;margin-right:5px
 .sanctuary-tree{display:grid;gap:8px;padding:10px;border:1px solid #ffffff14;border-radius:10px;background:#0d151c}.sanctuary-tree-row{display:grid;gap:5px}.sanctuary-tree-cells{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:7px}.sanctuary-node{display:flex;align-items:center;gap:7px;padding:7px;border:1px solid #ffffff14;border-radius:8px;background:#ffffff08}.sanctuary-req{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .digi-titles{grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:8px}.digi-title{position:relative;display:flex;flex-direction:column;align-items:center;text-align:center;gap:4px;padding:12px 8px 8px;border:1px solid color-mix(in srgb,var(--tier) 45%,#ffffff12);border-radius:12px;min-height:118px;background:radial-gradient(circle at 50% 0,color-mix(in srgb,var(--tier) 22%,transparent),#101820 58%)}.digi-title-medal{width:36px;height:36px;border-radius:50%;background:conic-gradient(from 210deg,var(--tier),#fff6,#0000 40%,var(--tier));box-shadow:0 0 0 3px #0b1116,0 0 10px color-mix(in srgb,var(--tier) 55%,transparent)}.digi-title .digi-title-tier{color:var(--tier);font-size:7px;letter-spacing:.14em}.digi-title>b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;color:#f4efe4!important;font-size:11px}.digi-title-progress{width:100%;height:5px;overflow:hidden;border-radius:99px;background:#ffffff10}.digi-title-progress i{display:block;height:100%;background:var(--tier)}.digi-title>em{font:normal 8px "Trebuchet MS",sans-serif;color:#aab4bd}.digi-title>button,.digi-title>.digi-title-lock{margin-top:auto;padding:3px 8px;font-size:8px;border-radius:99px}.digi-title.is-worn{box-shadow:0 0 0 2px var(--tier)}
 @media(max-width:700px){#sanctuaryPanel .sanctuary-nav{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:thin}#sanctuaryPanel .sanctuary-nav [data-sanctuary-view]{flex:0 0 auto;min-width:max-content;padding:8px 10px}#sanctuaryPanel .sanctuary-nav .sanctuary-nav-note{display:none}.sanctuary-gear-workspace{grid-template-columns:1fr}.sanctuary-gear-inventory{grid-template-columns:repeat(3,minmax(0,1fr));max-height:260px}.sanctuary-gear-detail{position:static}.sanctuary-gear-tools{align-items:flex-start;flex-direction:column}.sanctuary-gear-tools fieldset{flex-wrap:wrap}.digi-titles{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* Player-character Rift Raid party. This is intentionally separate from the DigiPet party modal. */
+#socialRaidPanel{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:64;width:min(92vw,430px);max-height:calc(100% - 100px);overflow:auto;box-sizing:border-box;padding:13px 15px;background:var(--ad-shell,#14201b);border:1px solid rgba(var(--ad-rgb,212,178,106),.48);border-radius:12px;box-shadow:var(--ad-bevel,0 18px 48px #000b);color:var(--ad-ink,#f4dfaa);font:12px/1.5 var(--e-font,"Trebuchet MS",sans-serif)}
+#socialRaidPanel[hidden]{display:none}
+#socialRaidPanel .social-party-head{display:flex;align-items:center;justify-content:space-between;margin:0 0 10px}
+#socialRaidPanel .social-party-head strong{font:600 16px Bahnschrift,system-ui;color:var(--ad-accent,#e6c884)}
+#socialRaidPanel button{cursor:pointer;border-radius:6px;padding:7px 11px;border:1px solid #ffffff24;background:linear-gradient(#32363d,#22262d 50%,#20242b);color:var(--ad-ink,#f4dfaa);font:600 11px var(--e-font,"Trebuchet MS",sans-serif)}
+#socialRaidPanel button:hover:not([disabled]){border-color:var(--ad-accent,#e6c884);color:var(--ad-accent,#e6c884)}
+#socialRaidPanel button[disabled]{opacity:.45;cursor:not-allowed}
+#socialRaidClose{min-width:30px;min-height:30px;padding:4px 9px!important}
+.social-raid-section{margin:0 0 10px;padding:10px;border:1px solid #ffffff18;border-radius:8px;background:var(--ad-well,#11171f)}
+.social-raid-section>small{display:block;margin-bottom:7px;color:var(--ad-muted,#91a0ac);font-size:9px;letter-spacing:.08em}
+.social-raid-note{margin:7px 0;color:var(--ad-muted,#91a0ac);font-size:10.5px;line-height:1.45}
+.social-raid-members,.social-raid-lobbies{list-style:none;margin:0 0 8px;padding:0}
+.social-raid-members li{display:grid;grid-template-columns:58px minmax(0,1fr);align-items:center;gap:9px;min-height:62px;padding:6px 8px;margin:4px 0;border:1px solid #ffffff12;border-radius:7px;background:#ffffff0b;color:var(--ad-ink,#dfe5e9)}
+.social-raid-members li.is-leader{border-color:rgba(var(--ad-rgb,212,178,106),.32);background:rgba(var(--ad-rgb,212,178,106),.08)}
+.social-raid-preview{display:block;width:58px;height:52px;object-fit:contain;image-rendering:pixelated;border-radius:6px;background:radial-gradient(ellipse at 50% 88%,rgba(var(--ad-rgb,212,178,106),.2),transparent 65%),#0d1319;border:1px solid rgba(var(--ad-rgb,212,178,106),.2)}
+.social-raid-member-info{display:flex;flex-direction:column;align-items:flex-start;gap:5px;min-width:0;overflow-wrap:anywhere}
+.social-raid-member-info>b{font-size:11px;color:var(--ad-ink,#dfe5e9)}
+.social-raid-members li.is-leader .social-raid-member-info>b{color:var(--ad-accent,#e6c884)}
+.social-raid-member-info em{font-style:normal;color:var(--ad-muted,#91a0ac);font-size:9px}
+.social-raid-ready-state{padding:2px 6px;border:1px solid rgba(var(--ad-rgb,212,178,106),.24);border-radius:99px;color:#9aa4ad;background:#ffffff08;font-size:8px;font-weight:700;letter-spacing:.08em}
+.social-raid-ready-state.is-ready{border-color:#73a95766;color:#b9df9f;background:#3e68252c}
+.social-raid-readiness{margin:7px 0;color:var(--ad-accent,#e6c884);font-size:10px;font-weight:700}
+#socialRaidPanel .social-raid-ready,#socialRaidPanel .social-raid-launch{margin:0 6px 6px 0;border-color:#73a95766;background:linear-gradient(180deg,#3d5c33,#1d3220);color:#dff3c9}
+#socialRaidPanel .social-raid-ready:hover:not([disabled]),#socialRaidPanel .social-raid-launch:hover:not([disabled]){border-color:#a5d18b;color:#e8ffd9}
+.social-raid-invite{display:flex;gap:6px;align-items:center;flex-wrap:wrap;padding:8px;border:1px solid rgba(var(--ad-rgb,212,178,106),.35);border-radius:7px;background:#ffffff08}
+.social-raid-invite span{flex:1 1 100%;color:var(--ad-accent,#e6c884)}
+.social-raid-invite-select{display:grid;grid-template-columns:1fr auto;gap:6px;align-items:center;font-size:10px;color:var(--ad-muted,#91a0ac)}
+.social-raid-invite-select span{grid-column:1/-1}
+.social-raid-invite-select select{min-width:0;padding:7px 8px;border:1px solid #ffffff20;border-radius:5px;background:var(--ad-well,#11171f);color:var(--ad-ink,#dfe5e9);font:inherit}
+.social-raid-lobbies li{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 4px;border-bottom:1px solid #ffffff12}
+.social-raid-lobbies li:last-child{border-bottom:0}
+.social-raid-lobbies li span{min-width:0;display:flex;flex-direction:column;overflow-wrap:anywhere}
+.social-raid-lobbies li small{color:var(--ad-muted,#91a0ac);font-size:9px}
+#socialRaidPanel .social-party-start{border-color:#7bb24f;background:linear-gradient(180deg,#3d5c33,#1d3220);color:#dff3c9}
+#socialRaidPanel .social-party-leave{margin-top:8px;border-color:#a06055;background:linear-gradient(180deg,#4a2f2a,#2a1714);color:#f3d0c9}
+#socialRaidBtn.has-invite{box-shadow:0 0 0 2px var(--ad-accent,#e6c884)}
+@media(max-width:600px){#socialRaidPanel{width:calc(100% - 16px);max-height:calc(100% - var(--socialhub-top,92px) - 108px);top:calc(var(--socialhub-top,92px) + 8px);transform:translateX(-50%);padding:10px}}

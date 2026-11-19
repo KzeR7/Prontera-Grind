@@ -87,7 +87,7 @@ handle.onpointerdown(pointer(220,400));handle.onpointermove(pointer(326,206));ha
 width=300;w.dispatchEvent(new w.Event('resize'));assert.equal(chat.style.width,'276px');width=1280;w.dispatchEvent(new w.Event('resize'));assert.equal(chat.style.width,'326px','desktop preference survives phone resizing');
 let cameraValues,reset=0;app.scene={cameraState:{angle:0,pitch:48,distance:48,panX:0,panZ:0,follow:true},setCamera:v=>{cameraValues=v},resetCamera:()=>reset++,clearPlayers(){},putPlayer(){}};
 for(const id of ['socialCamera','socialCameraReset','socialCameraPanel','socialOrbit','socialTilt','socialZoom'])assert.equal(w.document.getElementById(id),null,id+' is removed from the compact plaza UI');assert.equal(w.document.getElementById('sanctuaryOpen').textContent,'🥚 DigiPet');assert(!/Camera|Reset view/.test(w.document.getElementById('socialHubToolbar').textContent));assert.equal(w.document.getElementById('socialHubHelp'),null,'the top question-mark control is removed');assert.equal(w.document.getElementById('socialSit').parentElement.id,'socialHub','Sit is independent of the top toolbar');assert(!w.document.getElementById('socialHubToolbar').contains(w.document.getElementById('socialSit')));const unifiedCss=fs.readFileSync('assets/social.css','utf8');assert.match(unifiedCss,/#socialHubToolbar\{[^}]*linear-gradient/);assert.match(unifiedCss,/#socialHubToolbar\{[^}]*border:1px solid #c5a76b/);assert.match(unifiedCss,/#socialSit\{position:absolute;[^}]*var\(--docktop/);assert.match(unifiedCss,/#sanctuaryClose\{[^}]*display:inline-flex;align-items:center;justify-content:center/);assert.match(unifiedCss,/background-image:url\('digimon\/digidex-portraits.webp'\)/);assert.match(unifiedCss,/data-rank=mega-plus/);
-const sent=[];socket.send=s=>sent.push(JSON.parse(s));app.room=1;w.S.equippedTitle='poring';w.sessionTick();w.S.equippedTitle=null;w.sessionTick();assert(sent.some(m=>m.type==='look'&&m.look.title===''));assert(!sent.some(m=>m.type==='leave'),'appearance/title updates must preserve seat and coordinates');
+const sent=[];socket.send=s=>sent.push(JSON.parse(s));w.PGRaidUI={raidCosmeticLook:()=>({titleId:'riftbreaker',title:'Riftbreaker',titleColor:'#ffd08a',auraId:'fracture-spark',auraColor:'#ff986b',auraPattern:'compass'})};app.room=1;w.S.equippedTitle='poring';w.sessionTick();w.S.equippedTitle=null;w.sessionTick();assert(sent.some(m=>m.type==='look'&&m.look.title===''));assert(sent.some(m=>m.type==='look'&&m.look.raidTitleId==='riftbreaker'&&m.look.raidTitle==='Riftbreaker'&&m.look.raidAuraId==='fracture-spark'&&m.look.raidAuraColor==='#ff986b'&&m.look.raidAuraPattern==='compass'),'plaza look carries the equipped raid cosmetics');w.S.auraShow=false;w.sessionTick();assert(sent.some(m=>m.type==='look'&&m.look.raidAuraId===''&&m.look.raidAuraColor===''),'hidden aura is not sent to the plaza');assert(!sent.some(m=>m.type==='leave'),'appearance/title updates must preserve seat and coordinates');
 w.PGSocial.select('emoji');assert.equal(w.document.querySelectorAll('#socialEmoji button').length,32);
 // v363 (owner: "when I walk around I keep being teleported back to spawn"): a plaza socket drop
 // used to rebuild the local placeholder on the fountain ring, so every reconnect blip looked like a
@@ -764,6 +764,37 @@ w.S.lv=150;w.S.auraShow=true;w.moveSpd=()=>9.5;
   assert.equal(hubBadge.hidden,true,'losing the chat socket hides the badge instead of freezing a stale count');
   app.socket=null;app.connected=false;
  }
+ // Player-character Rift Raid coordination has its own panel and protocol; it also renders native
+ // wardrobe portraits and synchronizes each member's server-owned ready state.
+ {
+  assert.ok(w.document.getElementById('socialRaidBtn'),'Social Hub exposes a separate Rift Raid party button');
+  assert.ok(w.document.getElementById('socialRaidPanel'),'and a dedicated player-character party dialog');
+  const source=fs.readFileSync('assets/social.js','utf8'),panelCss=fs.readFileSync('assets/social.css','utf8');
+  for(const type of ['raid_party_create','raid_party_join','raid_party_leave','raid_party_ready','raid_invite','raid_accept','raid_started','raid_update','raid_finished'])assert.match(source,new RegExp(type),'Social protocol includes '+type);
+  assert.match(source,/PGRaidUI\?\.receiveRun/,'live raid actions update the Map challenge UI');
+  assert.match(source,/data-raid-party-action="map"/,'the Social party panel can open Map → Rift Raid without leaving the plaza');
+  assert.match(panelCss,/#socialRaidPanel\{[^}]*var\(--ad-shell/,'the lobby uses the game dark-shell token');
+  assert.match(panelCss,/\.social-raid-preview\{/,'the lobby has a dedicated native character-preview style');
+  const hub=w.document.getElementById('socialHub');hub.hidden=false;app.room=1;app.id=31;app.connected=true;app.socket=socket;socket.readyState=1;
+  const partyStarts=[];w.PGRaidUI.partyStartStatus=()=>({canStart:false,note:'1/2 ready — every member must ready up.'});w.PGRaidUI.startParty=()=>partyStarts.push('party');
+  let previewItems=[];app.scene={renderRaidPreviews:items=>{previewItems=items}};
+  w.document.getElementById('socialRaidBtn').click();
+  socket.onmessage({data:JSON.stringify({type:'raid_party',party:{id:'raid-party:test',room:1,leader:31,open:true,members:[
+   {id:31,name:'Leader',ready:true,look:{cls:'Novice',appearance:{version:1,sex:'m'}}},
+   {id:32,name:'Mate',ready:false,look:{cls:'Knight',appearance:{version:1,sex:'f'}}}
+  ]}})});
+  assert.equal(w.document.querySelectorAll('#socialRaidBody .social-raid-preview').length,2,'both joined members get a character-preview canvas');
+  assert.equal(previewItems.length,2);assert.ok(previewItems.every(x=>x.canvas instanceof w.HTMLCanvasElement&&x.look?.appearance),'native preview renderer receives both party looks');
+  assert.match(w.document.getElementById('socialRaidBody').textContent,/1\/2 ready/,'the lobby summarizes readiness');
+  assert.deepEqual([...w.document.querySelectorAll('.social-raid-ready-state')].map(x=>x.textContent),['READY','NOT READY'],'each member has a clear server-provided readiness label');
+  const launch=w.document.querySelector('[data-raid-party-action="start"]');assert(launch?.disabled,'the Social leader start button stays disabled until Map confirms a valid ready roster');
+  const ready=w.document.querySelector('[data-raid-party-action="ready"]');assert(ready);ready.click();
+  assert.deepEqual(socket.sent.at(-1),{type:'raid_party_ready',ready:false},'a member may change their ready state');
+  w.PGRaidUI.partyStartStatus=()=>({canStart:true,note:'All 2 members are ready. The leader may start.'});w.dispatchEvent(new w.Event('pg-raid-ui-change'));
+  const enabledLaunch=w.document.querySelector('[data-raid-party-action="start"]');assert(enabledLaunch&&!enabledLaunch.disabled,'Map account/readiness updates refresh the lobby gate');enabledLaunch.click();
+  assert.deepEqual(partyStarts,['party'],'Social lobby Start Party Raid invokes the Map API start flow');assert(w.document.getElementById('socialRaidPanel').hidden,'starting from the lobby opens the Map destination first');
+ }
+
  // v324 (owner: the Fountain Plaza card was cut off on phones with no way down): the
  // panel wrapper must be a REAL scroller - a content-fit box with overflow-y:auto
  // swallows touch pans and its overscroll-behavior:contain blocks the chain to the

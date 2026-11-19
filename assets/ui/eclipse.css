@@ -5127,3 +5127,99 @@ body.rm-atlas-fullscreen #wins>.wp[data-win="map"].rm-fullscreen-mode.rm-drawer-
   #wins .rm-birds,#wins .rm-cloud,#wins .rm-canvas{animation:none!important;transition:none!important}
 }
 
+
+/* Timed co-op player-character Rift Raid destination. Combat stays separate from DigiPet battles and field simulation. */
+#wins .rift-raid-destination{box-sizing:border-box;max-width:1100px;margin:0 auto;overflow:hidden;border:1px solid var(--edge2);border-radius:14px;background:var(--e-bg);color:var(--ink);box-shadow:0 16px 40px #0004}
+#wins .rift-raid-hero{position:relative;padding:26px 30px 24px;background:radial-gradient(ellipse at 80% 20%,#824b6870,transparent 48%),linear-gradient(110deg,#171e2c,#281b2b 60%,#151b27);border-bottom:1px solid #ba8d8150}
+#wins .rift-raid-hero>small,#wins .rift-raid-entry header>small,#wins .rift-raid-upgrades header>small,#wins .rift-raid-rewards header>small{font-size:9px;letter-spacing:.17em;color:#e4c78d;font-weight:800}
+#wins .rift-raid-hero h2{margin:5px 0 8px;font:700 clamp(24px,3vw,34px)/1.1 var(--e-display,Georgia,serif);color:#fff2db}
+#wins .rift-raid-hero p{max-width:68ch;margin:0;color:#ced7e1;font-size:12px;line-height:1.6}
+#wins .rift-raid-content{display:grid;gap:14px;padding:16px}
+#wins .rift-raid-overview{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+#wins .rift-raid-overview article{display:grid;gap:4px;min-width:0;padding:11px;border:1px solid var(--e-line);border-radius:8px;background:linear-gradient(145deg,var(--e-raised),var(--e-bg))}
+#wins .rift-raid-overview small{font-size:8px;letter-spacing:.1em;color:var(--e-muted);font-weight:800}
+#wins .rift-raid-overview b{font:700 17px/1.2 Bahnschrift,system-ui;color:var(--ink);overflow-wrap:anywhere}
+#wins .rift-raid-overview span{font-size:9px;line-height:1.4;color:var(--e-muted)}
+#wins .rift-raid-cosmetics{padding:14px;border:1px solid var(--e-line);border-radius:10px;background:linear-gradient(145deg,var(--e-raised),var(--e-bg))}
+#wins .rift-raid-cosmetics>header{margin-bottom:10px}
+#wins .rift-raid-cosmetics>header>small{font-size:8px;letter-spacing:.14em;color:#d6b982;font-weight:800}
+#wins .rift-raid-cosmetics h3{margin:3px 0 5px;font:700 17px var(--e-display,Georgia,serif)}
+#wins .rift-raid-cosmetics>header p{margin:0;color:var(--e-muted);font-size:10px;line-height:1.5}
+#wins .rift-raid-cosmetic-columns{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+#wins .rift-raid-cosmetic-columns h4{display:flex;justify-content:space-between;gap:6px;margin:0 0 6px;color:var(--ink);font-size:11px}
+#wins .rift-raid-cosmetic-columns h4 small{color:var(--e-muted);font-size:8px;font-weight:500}
+#wins .rift-raid-cosmetic-list{display:grid;gap:5px}
+#wins .rift-raid-cosmetic{display:grid;grid-template-columns:22px minmax(0,1fr) auto;align-items:center;gap:7px;padding:7px;border:1px solid color-mix(in srgb,var(--raid-cosmetic-color) 35%,var(--e-line));border-radius:6px;background:color-mix(in srgb,var(--raid-cosmetic-color) 6%,var(--e-bg))}
+#wins .rift-raid-cosmetic-mark{display:grid;place-items:center;width:20px;height:20px;border:1px solid var(--raid-cosmetic-color);border-radius:50%;color:var(--raid-cosmetic-color);font-size:12px;text-shadow:0 0 8px var(--raid-cosmetic-color)}
+#wins .rift-raid-cosmetic>div{display:grid;min-width:0;gap:2px}
+#wins .rift-raid-cosmetic>div b{overflow:hidden;color:var(--ink);font-size:10px;text-overflow:ellipsis;white-space:nowrap}
+#wins .rift-raid-cosmetic>div small{color:var(--e-muted);font-size:8px}
+#wins .rift-raid-cosmetic button{min-width:64px;padding:5px 8px;border:1px solid var(--raid-cosmetic-color);border-radius:5px;background:transparent;color:var(--raid-cosmetic-color);font-size:9px;font-weight:700;cursor:pointer}
+#wins .rift-raid-cosmetic button:hover:not([disabled]){background:color-mix(in srgb,var(--raid-cosmetic-color) 14%,transparent)}
+#wins .rift-raid-cosmetic button[disabled]{opacity:.42;cursor:not-allowed}
+#wins .rift-raid-entry,#wins .rift-raid-rewards,#wins .rift-raid-upgrades,#wins .rift-raid-result,#wins .rift-raid-run{padding:14px;border:1px solid var(--e-line);border-radius:10px;background:linear-gradient(145deg,var(--e-raised),var(--e-bg))}
+#wins .rift-raid-entry h3,#wins .rift-raid-rewards h3,#wins .rift-raid-upgrades h3{margin:3px 0 6px;font:700 17px var(--e-display,Georgia,serif)}
+#wins .rift-raid-entry p,#wins .rift-raid-rewards p,#wins .rift-raid-upgrades p{margin:6px 0;color:var(--e-muted);font-size:11px;line-height:1.55}
+#wins .rift-raid-entry-buttons{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 8px}
+#wins .rift-raid-entry button,#wins .rift-raid-social-link{min-height:38px;padding:8px 13px;border:1px solid var(--gold);border-radius:6px;background:linear-gradient(180deg,#4b3d28,#282316);color:#f4dfaa;font-weight:700;font-size:11px;cursor:pointer}
+#wins .rift-raid-entry button:hover:not([disabled]),#wins .rift-raid-social-link:hover{filter:brightness(1.15)}
+#wins .rift-raid-entry button[disabled]{opacity:.45;cursor:not-allowed}
+#wins .rift-raid-entry>small,#wins .rift-raid-rewards>small,#wins .rift-raid-upgrades>small{display:block;color:var(--e-muted);font-size:9px;line-height:1.5}
+#wins .rift-raid-social-link{background:linear-gradient(180deg,#30364a,#1d2331);border-color:#7886a5;color:#e1e8ff}
+#wins .rift-raid-error,#wins .rift-raid-notice,#wins .rift-raid-note{padding:9px 11px;margin:0;border-radius:6px;font-size:11px;line-height:1.45}
+#wins .rift-raid-error{border:1px solid #c7645a;background:#411c20;color:#ffe0d8}
+#wins .rift-raid-notice{border:1px solid #67814a;background:#1e321e;color:#e5f3d5}
+#wins .rift-raid-note{color:var(--e-muted)}
+#wins .rift-raid-run{border-color:#927256;background:linear-gradient(155deg,#242632,#171c26)}
+#wins .rift-raid-run>header{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+#wins .rift-raid-run>header small{font-size:8px;letter-spacing:.14em;color:#e0c48e;font-weight:800}
+#wins .rift-raid-run h3{margin:3px 0;font:700 18px var(--e-display,Georgia,serif);color:#fff1d7}
+#wins .rift-raid-clock{min-width:64px;text-align:center;padding:7px 9px;border:1px solid #9d815b;border-radius:6px;background:#120f13;color:#fff2d0;font:700 18px Bahnschrift,system-ui;font-variant-numeric:tabular-nums}
+#wins .rift-raid-clock.is-urgent{color:#ff8d7c;border-color:#dc6552;animation:rift-clock-pulse 1s infinite alternate}
+@keyframes rift-clock-pulse{to{box-shadow:0 0 14px #ef554b88}}
+#wins .rift-raid-bossbar>div{display:flex;justify-content:space-between;gap:8px;color:#c1cbd6;font-size:10px;margin-bottom:5px}
+#wins .rift-raid-bossbar b{color:#fff;font-variant-numeric:tabular-nums}
+#wins .rift-raid-bossbar>i{display:block;height:12px;overflow:hidden;border:1px solid #ffffff22;border-radius:999px;background:#0f1219}
+#wins .rift-raid-bossbar>i span{display:block;height:100%;background:linear-gradient(90deg,#bc4e62,#efb36b);transition:width .2s ease}
+#wins .rift-raid-hazard{margin:10px 0;padding:8px 10px;border:1px solid #e58e57;border-radius:6px;background:#40251c;color:#ffe3bc;font-size:10px}
+#wins .rift-raid-hazard time{font-weight:800;font-variant-numeric:tabular-nums}
+#wins .rift-raid-members{list-style:none;display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:7px;margin:11px 0;padding:0}
+#wins .rift-raid-members li{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px;border:1px solid #ffffff18;border-radius:6px;background:#111821;color:#e5edf3}
+#wins .rift-raid-members li.is-down{border-color:#be6357;background:#32191c}
+#wins .rift-raid-members li span{display:grid;min-width:0;gap:3px}
+#wins .rift-raid-members li small{color:#9eacb9;font-size:9px;overflow-wrap:anywhere}
+#wins .rift-raid-members li strong{font-size:9px;color:#8cdb9b}
+#wins .rift-raid-members li.is-down strong{color:#ff9888}
+#wins .rift-raid-controls{padding-top:10px;border-top:1px solid #ffffff18}
+#wins .rift-raid-action-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+#wins .rift-raid-action-grid button,#wins .rift-raid-action-grid select{min-width:0;min-height:34px;padding:6px 8px;border:1px solid #ffffff24;border-radius:5px;background:#222a34;color:#e8edf4;font:600 10px var(--e-font,system-ui)}
+#wins .rift-raid-action-grid button{cursor:pointer}
+#wins .rift-raid-action-grid button:hover:not([disabled]){border-color:#d9b978;color:#ffe5ad}
+#wins .rift-raid-action-grid button[disabled]{opacity:.4;cursor:not-allowed}
+#wins .rift-raid-action-grid label{display:grid;gap:3px;font-size:8px;color:var(--e-muted)}
+#wins .rift-raid-controls>small{display:block;margin-top:7px;font-size:9px;line-height:1.45;color:var(--e-muted)}
+#wins .rift-raid-ended{margin:10px 0 0;padding:9px;border-radius:6px;background:#111820;color:#e7d5a8;font-size:11px}
+#wins .rift-raid-weapon-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px;margin:10px 0}
+#wins .rift-raid-weapon-list article{display:grid;gap:6px;align-content:start;padding:10px;border:1px solid var(--e-line);border-radius:7px;background:var(--e-bg)}
+#wins .rift-raid-weapon-list article>div{display:grid;gap:2px}
+#wins .rift-raid-weapon-list article>div b{color:var(--ink);font-size:12px}
+#wins .rift-raid-weapon-list article small{font-size:9px;color:var(--e-muted)}
+#wins .rift-raid-weapon-list article>strong{font:700 15px Bahnschrift,system-ui;color:var(--gold)}
+#wins .rift-raid-weapon-list article button{min-height:32px;padding:6px 9px;border:1px solid var(--gold);border-radius:5px;background:var(--gold);color:var(--e-bg);font-size:10px;font-weight:800;cursor:pointer}
+#wins .rift-raid-weapon-list article button[disabled]{opacity:.45;cursor:not-allowed}
+#wins .rift-raid-max{color:#9adb9b;font-size:9px;font-weight:800;letter-spacing:.1em}
+#wins .rift-raid-result{border-color:#718451;background:linear-gradient(145deg,#1e2b20,#141c1a)}
+#wins .rift-raid-result>b{color:#e6f2d8;font-size:12px}
+#wins .rift-raid-result p{display:flex;justify-content:space-between;gap:8px;padding:5px 0;margin:0;border-bottom:1px solid #ffffff12;font-size:10px}
+#wins .rift-raid-result p:last-child{border-bottom:0}
+#wins .rift-raid-result p span{color:#b6c4b1}.rift-raid-result p strong{color:#e7d6a7;text-align:right}
+@media(max-width:650px){
+ #wins .rift-raid-hero{padding:20px 17px}#wins .rift-raid-content{padding:10px;gap:10px}
+ #wins .rift-raid-overview{grid-template-columns:repeat(2,minmax(0,1fr))}
+ #wins .rift-raid-entry,#wins .rift-raid-rewards,#wins .rift-raid-upgrades,#wins .rift-raid-result,#wins .rift-raid-run,#wins .rift-raid-cosmetics{padding:10px}
+ #wins .rift-raid-cosmetic-columns{grid-template-columns:1fr;gap:10px}
+ #wins .rift-raid-action-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ #wins .rift-raid-members{grid-template-columns:1fr}
+ #wins .rift-raid-result p{display:grid}
+}
+@media(max-width:440px){#wins .rift-raid-entry-buttons{display:grid;grid-template-columns:1fr}#wins .rift-raid-entry-buttons button{width:100%}}

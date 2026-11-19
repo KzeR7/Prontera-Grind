@@ -73,6 +73,48 @@ launcher proves deployment identity and binding presence; it is not a two-client
 combat rehearsal. If post-deploy verification fails, inspect the named staging
 project before retrying rather than assuming that nothing changed.
 
+## Rift Raid v411 staging (owner-run, Windows)
+
+`tools/staging/rift_raid_stage.mjs` is the fixed-target v411 Pages + Social Worker launcher.
+It accepts no project, branch, database, or commit arguments. Before any Cloudflare command it
+requires branch `arena/6f878512-prontera-grind` and build
+`2026-11-15 haven-v411 Rift Raid party previews and ready checks`. It snapshots the current
+working tree (including the reviewed local edits) into OS temp, excludes Git metadata, local
+packages, build output and common secret-file types, then replaces both Wrangler configs there.
+The generated Pages config names only `prontera-grind-staging`, `pg-staging` UUID
+`3a38c6fc-96a8-491d-b97b-fd536e575ca4`, and `prontera-social-staging`; the staging write gate
+is explicitly off. The Social Worker config has no public workers.dev ingress.
+
+The launcher verifies the remote D1 UUID and name before any remote SQL, checks the baseline
+account/save schema, and stops if older migrations are missing. It checks the full set of
+objects from `0018_player_character_raid.sql` and applies **only that migration** if needed.
+It then deploys the staging Social Worker before Pages. A random, temporary `rate_limits`
+marker is inserted into verified `pg-staging`; a token-guarded, read-only temporary Function
+confirms the deployed Pages binding can see that exact marker, and the marker is deleted and
+confirmed absent. `/version.txt` must report v411 and `/api/chatcheck` must confirm the Social
+Durable Object responds. The token-protected probe remains in that staging deployment until a
+later Pages deploy replaces it; it returns only a boolean and never returns database contents.
+An additive migration is not rolled back automatically if a later deploy step fails. If a deploy
+or cleanup check fails, inspect staging before retrying. Use synthetic accounts only; test with
+separate browser profiles for each party member. This does not perform multi-account combat QA.
+
+**No deployment has been run by preparing or simulating this launcher.** The source and launcher
+must both be present in the exact v411 Windows checkout before running it; the older v363/v353
+launchers are not substitutes. Do not use the root production `wrangler.toml` directly.
+
+After the complete reviewed v411 source is available in that checkout, the PowerShell command is:
+
+```powershell
+$ErrorActionPreference = 'Stop'
+Set-Location "$HOME\Desktop\Prontera-Grind"
+$branch = (git branch --show-current).Trim()
+$build = [regex]::Match((Get-Content .\index.html -Raw), "const BUILD='([^']+)'").Groups[1].Value
+if ($branch -ne 'arena/6f878512-prontera-grind') { throw 'Wrong branch; no staging operation attempted.' }
+if ($build -ne '2026-11-15 haven-v411 Rift Raid party previews and ready checks') { throw 'Wrong build; no staging operation attempted.' }
+node .\tools\staging\rift_raid_stage.mjs
+if ($LASTEXITCODE -ne 0) { throw 'Staging launcher stopped; inspect its output before retrying.' }
+```
+
 ## Safety boundaries
 
 - `tools/staging/local.mjs` creates an OS temporary directory with a freshly generated

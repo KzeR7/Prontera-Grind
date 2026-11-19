@@ -3,7 +3,8 @@
 //
 // A grant is applied by the CLIENT, which owns the save format and its repair rules — see
 // tools/gm-panel-plan.md §4. Gift, equipment and Fishing/DigiPet system grants require a matching
-// saved GM receipt before they can be claimed; a claim only ever matches the caller's own queue.
+// saved receipt before they can be claimed; a claim only ever matches the caller's own queue.
+// Ordinary mail expires after five days; server-settled Rift Raid grants remain pending until claimed.
 
 import { currentUser } from '../_lib/auth.js';
 import { json, guard, readJson, fail, unauth } from '../_lib/http.js';
@@ -12,9 +13,8 @@ import * as db from '../_lib/db.js';
 const shape = g => ({
   id: g.id, kind: g.kind, payload: JSON.parse(g.payload || '{}'), note: g.note,
   at: g.created_at, from: g.created_by,
-  // v401: gifts vanish 5 days after they are sent, so the client can say when rather than let one
-  // disappear silently. The server is still the authority - this is only for display.
-  expiresAt: db.grantExpiresAt(g.created_at),
+  // Ordinary gifts expire after five days; D1 server-settled raid rewards carry no expiry until claimed.
+  expiresAt: db.grantExpiresAt(g.created_at,g.created_by),
 });
 
 export const onRequestGet = guard(async ({ request, env }) => {

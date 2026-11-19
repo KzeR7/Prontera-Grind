@@ -56,6 +56,10 @@ const ev = code => window.eval(code);
 
 let pass=0,fail=0;
 const t=(name,fn)=>{try{fn();console.log('  ok   '+name);pass++}catch(e){console.log('  FAIL '+name+' -> '+e.stack);fail++}};
+t('field hunt and Rift Raid titles anchor to projected coordinates in CSS pixels',()=>{
+  assert.match(html,/heroTitle\.style\.left=txh\+'px';heroTitle\.style\.top=tyh\+'px'/,'hunt title uses valid pixel coordinates');
+  assert.match(html,/heroRaidTitle\.style\.left=txh\+'px';heroRaidTitle\.style\.top=\(parseFloat\(tyh\)-18\)\+'px'/,'Rift Raid title uses a separate, valid pixel row');
+});
 ev(`S=fresh();S.lv=150;S.cls='Lord Knight';S.jobs[S.cls]={jl:50,jx:0};S.zeny=5000000;S.auto=false;
 S.inv=[{id:9001,name:'Nightmare Blade',slot:'weapon',wt:'sword',tier:4,sec:5,val:300,r:7,aff:[{k:'str',v:3}],slots:2,cards:[],locked:true},{id:9002,name:'Nightmare Katar',slot:'weapon',wt:'katar',tier:4,sec:4,val:280,r:6,aff:[],slots:4,cards:[]}];
 S.eq.weapon={...S.inv[0],id:9003};S.cards=[{id:8001,n:'Poring Card',stat:'str',v:3,g:1,card:true}];
@@ -338,8 +342,8 @@ t('auto-sell filter editor saves drafts, keeps text during redraws and previews 
 t('World Atlas and Ascension Map have separate destination grids and normal travel controls',()=>{
  const doc=window.document;ev("tabs.splice(0,tabs.length,'map');mapSeason='atlas';mapM=3;mapL=4;S.mp=3;S.lvl=4;renderWin()");
  const before=ev('JSON.stringify(S)');
- assert.ok(html.includes('map-season-tabs{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))'),'v174: the season strip is four columns so Social sits beside Ascension, not below');
- assert.deepStrictEqual([...doc.querySelectorAll('.map-season-tabs [role=tab]')].map(b=>b.id),['map-tab-atlas','map-tab-ascension','map-tab-echo','map-tab-social']);
+ assert.ok(html.includes('map-season-tabs{display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr))'),'the five Map/Challenge destinations fit the compact season strip');
+ assert.deepStrictEqual([...doc.querySelectorAll('.map-season-tabs [role=tab]')].map(b=>b.id),['map-tab-atlas','map-tab-ascension','map-tab-echo','map-tab-raid','map-tab-social']);
  const social=doc.querySelector('#map-tab-social');assert.ok(!social.disabled);assert.match(social.textContent,/Social Hub/);
  social.click();assert.strictEqual(ev('mapSeason'),'social');assert.match(doc.querySelector('.social-destination').textContent,/farming keeps going/);assert.strictEqual(ev('JSON.stringify(S)'),before);ev("ACT.mapseason('atlas')");
  assert.strictEqual(doc.querySelectorAll('[data-a=selm]').length,10);

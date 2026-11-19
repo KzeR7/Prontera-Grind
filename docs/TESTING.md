@@ -47,6 +47,17 @@ must fetch them first or those suites fail with `Command failed: git show …`:
 git fetch origin d164bd0527cfe335f9c183d0e576800716b7dd26
 ```
 
+## Rift Raid v411 hosted-staging launcher (owner-run)
+
+`node tools/tests/rift_raid_stage_sim.mjs` is a local-only simulation of the fixed-target
+launcher and its version/Worker/Pages-binding probes; it does not contact Cloudflare. The
+Windows launcher is `tools/staging/rift_raid_stage.mjs`. It requires the exact v411 branch and
+build, uses a temporary snapshot of that working tree, verifies `pg-staging` before SQL, and
+applies only migration `0018` to the pinned staging database when its objects are missing.
+It deploys only `prontera-social-staging` and `prontera-grind-staging`; no production config is
+used. The PowerShell sequence and staging limitations are in [ISOLATED-STAGING.md](ISOLATED-STAGING.md#rift-raid-v411-staging-owner-run-windows).
+No hosted deployment is implied by passing the local simulation.
+
 ## Latest local gate (haven-v346)
 
 The 2026-11-06 complete local run passed **207 checks / 0 failures** on Node
@@ -563,6 +574,7 @@ the page or the server.
 | Shop | `shop_api_sim` (Pages Functions + in-memory D1), `shop_sim` (the page in jsdom), `ascension_drop_shop_sim`, `dev_server_sim` |
 | GM tools and leaderboard | `gm_console_sim`, `gm_tools_sim`, `gm_auth_sim`, `gm_presets_sim`, `gm_setup_sim`, `leaderboard_sim` |
 | Social hub | `social_sim`, `social_ui_sim`, `social_scene_sim`, `social_config_sim`, `social_api_sim.mjs`, `social_worker_sim.mjs` |
+| Player-character Rift Raid | `player_raid_sim.mjs` (real Pages API + SQLite/D1 shim + Social class, cosmetic unlock/equip, ordinary-card grant/receipt and settlement replay), `raid_ui_sim.mjs` (Map wardrobe, live controls and Mythic ATK add-on), `social_scene_sim.js` (raid title/aura presentation), `equipment_cards_sim.js` (bound collection card safeguards) |
 | Sanctuary field/ring combat | `digimon_battle_sim`, `sanctuary_battle_sim`, `sanctuary_worker_battle_sim.mjs` (real workerd, two actual WebSockets, movement, offers, countdown, combat and server-only settlement) |
 | Friends (accounts, not saves) | `friends_sim` (migration, auth, one-way request, limits, privacy, audit rows, per-viewer plaza flags), `friends_ui_sim` (the panel in jsdom: add box, accept, unfriend, dock badge, chat name menu, sign-out wipe) |
 | Publishing and build labels | `publish_sim` (builds `dist/`), `update_watch_sim` (the `BUILD` mirrors) |
@@ -601,6 +613,30 @@ For visual multiplayer QA, use two signed-in clients and the matching Social
 Worker: check each station at multiple camera angles and sizes, then leave one
 player in the field, stop/disconnect and confirm reservation release. Training
 progress is client-saved, so these tests are not PvP-authority tests.
+
+### Player-character Rift Raid
+
+Run `node tools/tests/player_raid_sim.mjs` for the authenticated API against the real D1 SQL and a
+local Social Durable Object: Malaysia-midnight day keys, transactional two-entry reservations,
+party charges, server-owned readiness resets and the all-ready/leader-only start gate, Social
+party/invite hydration across storage restarts, authoritative action validation/replay protection, Mythic-only upgrades, repeatable Pity/Fractured Chests with stochastic
+duo/trio stackable-reward bonuses, no contribution floor, idempotent settlement/grants, server-checked
+cosmetic unlock/equip, zero-copy/1-2-5-10-card rank thresholds, and durable Rift Sovereign Card
+delivery to the save-grant pipeline. Run `node tools/tests/raid_ui_sim.mjs` for the Map wardrobe,
+server-loaded cosmetic metadata, displayed card penetration, item-bound ATK add-on/live actions, and
+leader/size/readiness/entry/active-run/busy start gating, latest-load-wins account switching, forced
+refreshes, stale mutation suppression, settlement locks, and no signed-out refetch. Run
+`node tools/tests/equipment_cards_sim.js` to check that the granted card appears in the ordinary card
+collection but cannot be socketed, sold, merged or donated, repair forged socket saves, and re-deliver
+at least once without duplicating a card while the matching receipt stays in the saved blob.
+`node tools/tests/social_scene_sim.js` checks the equipped raid title/aura and paints native wardrobe
+party-member preview canvases. `node tools/tests/social_ui_sim.js` covers raid look
+propagation, readiness labels/toggle and the separate Social party dialog/start control;
+`node tools/tests/social_worker_sim.mjs` exercises the raid's private HTTP routes (including rejection of
+identity-forged public preview hosts), server kill/idempotent actions, and real workerd Durable Object
+eviction: lobby and invite hydration, roster-readiness resets and leader-only/all-ready installs, plus
+create/join/accept/decline/leave, active/settled run hydration and action replay. It also runs the shared Worker regression. The raid adds no alarm or per-tick DO
+message. These are local simulations, not a hosted D1 migration or deployed Cloudflare Worker check. See [Player Rift Raid](PLAYER-RIFT-RAID.md) for the v1 rules.
 
 ### Sanctuary field grinding and ring PvP (v344)
 

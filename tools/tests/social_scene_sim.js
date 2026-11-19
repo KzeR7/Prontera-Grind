@@ -107,11 +107,17 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
  const state={id:1,name:'Synthetic',x:0,z:12,dir:0,sit:true,path:[],look:{cls:'Novice',appearance:{version:1,sex:'m'},refine:10,title:'Poring Hunter',lv:150}};
  scene.active=true;scene.putPlayer(state);await flush();frame(now+=100);assert.equal(draws.length,0);frame(now+=3100);await flush();frame(now+=100);assert(draws.length,'failed download automatically retries without network movement');assert.equal(draws.at(-1)[2],'idle','pending sitting atlas falls back to visible standing sprite');assert.equal(typeof draws.at(-1)[7],'function','native weapon glow hook');assert.equal(typeof draws.at(-1)[8],'function','stowed weapon glow hook');
  sitReady=true;frame(now+=100);await flush();frame(now+=100);assert.equal(draws.at(-1)[2],'sit');
+ const raidPortrait=w.document.createElement('canvas');raidPortrait.width=320;raidPortrait.height=280;host.append(raidPortrait);
+ scene.renderRaidPreviews([{id:88,look:state.look,canvas:raidPortrait}]);await flush();
+ assert(canvasLogs.get(raidPortrait).some(op=>op[0]==='drawImage'),'party preview loads and paints the joined character using native wardrobe layers');
+ scene.renderRaidPreviews([]);raidPortrait.remove();
  const before=scene.camera.position.clone();scene.putPlayer({...state,sit:false,x:34,z:25});frame(now+=100);assert(scene.camera.position.x>before.x,'camera follows self');assert(scene.camera.position.z>before.z);const label=w.document.querySelector('.social-player-label');assert.equal(label.hidden,false);const sprite=scene.scene.children.find(o=>o.userData.socialId===1),feet=sprite.position.clone().project(scene.camera);assert(parseFloat(label.style.top)>(1-feet.y)*350,'name starts below feet');assert.equal(label.querySelector('small').textContent,'Poring Hunter');assert(feet.y>.03&&feet.y<.22,'player stands slightly higher than the middle of the screen by default');
 
 
  // v225: the field's own level sigil appears under the character and moves with them.
  const aura=scene.scene.children.find(o=>o.userData.tier===150);assert.ok(aura,'Base 150 character has a level aura');assert.equal(aura.position.y,.07);assert.equal(aura.position.x,34);assert.equal(aura.position.z,25);
+ const raidLook={...state.look,raidTitleId:'riftbreaker',raidTitle:'Riftbreaker',raidTitleColor:'#ffd08a',raidAuraId:'fracture-spark',raidAuraColor:'#ff986b',raidAuraPattern:'compass'};
+ scene.putPlayer({...state,look:raidLook});frame(now+=100);const raidTitle=w.document.querySelector('.social-player-raid-title');assert.equal(raidTitle.textContent,'Riftbreaker');assert.equal(raidTitle.style.color,'rgb(255, 208, 138)');assert(scene.scene.children.some(o=>o.userData.raidAuraId==='fracture-spark'),'equipped Rift aura replaces the level sigil with its own pattern/color');
  const powerLabel=[...w.document.querySelectorAll('.social-sanctuary-label')].find(e=>e.textContent==='POWER');
  scene.putPlayer({...state,sit:false,x:39,z:12});scene.setCamera({angle:-1.1,pitch:35,distance:46});for(let i=0;i<30;i++)frame(now+=100);assert(powerLabel.hidden,'station labels do not show through exterior walls');
  scene.putPlayer({...state,sit:false,x:69,z:29});scene.setCamera({angle:0,pitch:35,distance:46});frame(now+=100);assert(!powerLabel.hidden,'station labels remain visible in the open courtyard');const still=[powerLabel.style.left,powerLabel.style.top];frame(now+=100);assert.deepEqual([powerLabel.style.left,powerLabel.style.top],still,'camera settles immediately when the player stops in the gym');

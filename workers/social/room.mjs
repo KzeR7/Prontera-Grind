@@ -2,6 +2,7 @@ import '../../assets/digimon/roster.js';
 import '../../assets/digimon/base-stats.js';
 import '../../assets/social-rules.js';
 import '../../assets/social-poker.js';
+import {RAID_RULES} from '../../functions/_lib/raid-rules.js';
 import '../../assets/digimon-battle.js';
 const R=globalThis.PGSocialRules,P=globalThis.PGSocialPoker,B=globalThis.PGDigimonBattle;
 // v236: two different clocks. IDLE_MS is how long a silent connection may sit before the sweep
@@ -98,6 +99,9 @@ export class SocialRoom {
   // settlement below never accept a client-reported winner, damage total or reward amount.
   this.random=opts.random||B.randomUnit;this.battleSerial=0;this.pveRuns=new Map();
   this.pvpQueues=new Map();this.pvpMatches=new Map();this.pvpByRoom=new Map();this.parties=new Map();this.partyInvites=new Map();
+  // Player-character raid parties and encounters are separate from DigiPet parties. Raid state
+  // advances only on explicit player actions; it never registers a timer or requests an alarm.
+  this.raidParties=new Map();this.raidInvites=new Map();this.raidRuns=new Map();this.raidSerial=0;this.onRaidState=opts.onRaidState||(()=>{});this.onRaidPartyState=opts.onRaidPartyState||(()=>{});
   // MVP fishing: per-room active spawn + next spawn timer
   this.mvpActive=new Map();this.mvpNextAt=new Map();
   this.onBattleActivity=opts.onBattleActivity||null;
@@ -344,7 +348,23 @@ export class SocialRoom {
  // v225: lv drives the level aura and speed is the character's field run speed. Both are
  // presentation hints: lv is clamped to a display tier input, speed to the shared walk band, so a
  // client cannot make itself faster than the fastest legal character in the plaza.
- cleanLook(look){if(!look||typeof look.cls!=='string'||look.cls.length>40||!look.appearance||JSON.stringify(look).length>1200)return null;return {cls:look.cls,appearance:look.appearance,refine:Math.max(0,Math.min(15,Number(look.refine)||0)),title:typeof look.title==='string'?look.title.replace(/[\u0000-\u001f\u007f]/g,'').slice(0,64):'',fishTitle:typeof look.fishTitle==='string'?look.fishTitle.replace(/[\u0000-\u001f\u007f]/g,'').slice(0,64):'',fishTitleColor:typeof look.fishTitleColor==='string'&&/^#[0-9a-f]{6}$/i.test(look.fishTitleColor)?look.fishTitleColor:'',digiTitle:typeof look.digiTitle==='string'?look.digiTitle.replace(/[\u0000-\u001f\u007f]/g,'').slice(0,64):'',digiTitleColor:typeof look.digiTitleColor==='string'&&/^#[0-9a-f]{6}$/i.test(look.digiTitleColor)?look.digiTitleColor:'',lv:Math.max(0,Math.min(999,Math.floor(Number(look.lv)||0))),speed:Math.max(R.MIN_SPEED,Math.min(R.MAX_SPEED,Number(look.speed)||R.SPEED)),...(R.cleanDigimon(look.digimon)?{digimon:R.cleanDigimon(look.digimon)}:{})};}
+ cleanLook(look){
+  if(!look||typeof look.cls!=='string'||look.cls.length>40||!look.appearance||JSON.stringify(look).length>1200)return null;
+  // Raid wardrobe IDs are canonicalized here: the display name and palette come from the server
+  // allow-list, not client-provided text or colors.
+  const raidTitle=RAID_RULES.titles.find(x=>x.id===look.raidTitleId),raidAura=RAID_RULES.aura.find(x=>x.id===look.raidAuraId);
+  return {cls:look.cls,appearance:look.appearance,refine:Math.max(0,Math.min(15,Number(look.refine)||0)),
+   title:typeof look.title==='string'?look.title.replace(/[\u0000-\u001f\u007f]/g,'').slice(0,64):'',
+   fishTitle:typeof look.fishTitle==='string'?look.fishTitle.replace(/[\u0000-\u001f\u007f]/g,'').slice(0,64):'',
+   fishTitleColor:typeof look.fishTitleColor==='string'&&/^#[0-9a-f]{6}$/i.test(look.fishTitleColor)?look.fishTitleColor:'',
+   digiTitle:typeof look.digiTitle==='string'?look.digiTitle.replace(/[\u0000-\u001f\u007f]/g,'').slice(0,64):'',
+   digiTitleColor:typeof look.digiTitleColor==='string'&&/^#[0-9a-f]{6}$/i.test(look.digiTitleColor)?look.digiTitleColor:'',
+   raidTitleId:raidTitle?.id||'',raidTitle:raidTitle?.name||'',raidTitleColor:raidTitle?.color||'',
+   raidAuraId:raidAura?.id||'',raidAuraColor:raidAura?.color||'',raidAuraPattern:raidAura?.pattern||'',
+   lv:Math.max(0,Math.min(999,Math.floor(Number(look.lv)||0))),
+   speed:Math.max(R.MIN_SPEED,Math.min(R.MAX_SPEED,Number(look.speed)||R.SPEED)),
+   ...(R.cleanDigimon(look.digimon)?{digimon:R.cleanDigimon(look.digimon)}:{})};
+ }
  // Gym reservations are per room and per apparatus, with at most one per owner.
  // They are presentation only, not trusted progression or competitive stats.
  gymSnapshot(room){return [...this.clients.values()].filter(p=>p.gym&&p.gym.room===room).map(p=>({owner:p.id,...p.gym}))}
@@ -588,6 +608,228 @@ export class SocialRoom {
   const leader=this.clients.get(party.leader);
   if(leader)this.send(leader,{type:'party_notice',message:reason==='left'?(c.name+' left the party.'):('The party leader is now '+party.members[0].name+'.')});
  }
+ // ---------------- Player-character co-op Rift Raid (never DigiPet `party_*`) ----------------
+ raidPartyOf(c){for(const p of this.raidParties.values())if(p.members.some(m=>m.id===c.id))return p;return null}
+ raidPartyByMemberId(id){for(const p of this.raidParties.values())if(p.members.some(m=>m.id===id))return p;return null}
+ raidPreviewLook(look){
+  if(!look||typeof look.cls!=='string'||!look.appearance||typeof look.appearance!=='object'||Array.isArray(look.appearance))return null;
+  try{const text=JSON.stringify(look.appearance);if(!text||text.length>1200)return null;return{cls:look.cls.slice(0,40),appearance:JSON.parse(text)}}catch{return null}
+ }
+ raidPublicParty(p){return p?{id:p.id,room:p.room,leader:p.leader,open:p.open===true,members:p.members.map(m=>({id:m.id,name:m.name,ready:m.ready===true,look:this.raidPreviewLook(m.look)}))}:null}
+ raidLobbyList(room){return [...this.raidParties.values()].filter(p=>p.room===room&&p.open&&p.members.length<3).map(p=>this.raidPublicParty(p))}
+ raidSync(p){
+  if(!p)return;
+  const view=this.raidPublicParty(p);
+  for(const m of p.members){const c=this.clients.get(m.id);if(c)this.send(c,{type:'raid_party',party:view})}
+  this.broadcast({type:'raid_lobbies',parties:this.raidLobbyList(p.room)},c=>c.room===p.room);
+ }
+ raidError(c,message){this.send(c,{type:'raid_error',message:String(message||'Raid action failed.').slice(0,180)})}
+ raidPartyPersist(){
+  try{
+   const state={parties:[...this.raidParties.values()].map(p=>({id:p.id,room:p.room,leader:p.leader,open:p.open===true,createdAt:p.createdAt,members:p.members.map(m=>({id:m.id,name:m.name,ready:m.ready===true,look:this.raidPreviewLook(m.look)}))})),
+    invites:[...this.raidInvites.entries()].map(([targetId,i])=>({targetId,partyId:i.partyId,fromId:i.fromId,fromName:i.fromName,room:i.room,expiresAt:i.expiresAt}))};
+   const pending=this.onRaidPartyState(state);if(pending&&typeof pending.catch==='function')pending.catch(()=>{});
+  }catch(error){console.error('Raid party state save failed',error)}
+ }
+ raidPartyClearInvites(partyId){let changed=false;for(const[targetId,invite]of this.raidInvites)if(invite.partyId===partyId){this.raidInvites.delete(targetId);changed=true}return changed}
+ raidPartyUpdatePreview(c,p=this.raidPartyOf(c)){
+  if(!p)return false;
+  const member=p.members.find(m=>m.id===c.id);if(!member)return false;
+  const look=this.raidPreviewLook(c.look),prior=JSON.stringify(member.look||null),next=JSON.stringify(look);
+  if(prior===next)return false;
+  member.look=look;this.raidPartyPersist();this.raidSync(p);return true;
+ }
+ raidPartyCreate(c,m={}){
+  if(!c.room)return this.raidError(c,'Join a plaza before making a raid party.');
+  if(this.raidPartyOf(c))return this.raidError(c,'You are already in a Rift Raid party.');
+  const p={id:'raid-party:'+this.battleId('rparty'),room:c.room,leader:c.id,open:m.open!==false,createdAt:this.now(),members:[{id:c.id,name:c.name,ready:false,look:this.raidPreviewLook(c.look)}]};
+  this.raidParties.set(p.id,p);this.raidPartyPersist();this.raidSync(p);return this.send(c,{type:'raid_notice',message:'Rift Raid party created. Invite a friend or let nearby players join.'});
+ }
+ raidPartyJoin(c,m){
+  const p=this.raidParties.get(String(m.partyId||''));
+  if(!c.room||!p||p.room!==c.room||!p.open)return this.raidError(c,'That raid party is no longer open in this plaza.');
+  if(this.raidPartyOf(c))return this.raidError(c,'Leave your current Rift Raid party first.');
+  if(p.members.length>=3)return this.raidError(c,'That raid party is full.');
+  for(const member of p.members)member.ready=false;
+  p.members.push({id:c.id,name:c.name,ready:false,look:this.raidPreviewLook(c.look)});if(p.members.length>=3)this.raidPartyClearInvites(p.id);this.raidPartyPersist();this.raidSync(p);
+ }
+ raidPartyLeave(c,reason='left'){
+  const p=this.raidPartyOf(c);if(!p)return;
+  p.members=p.members.filter(m=>m.id!==c.id);
+  if(!p.members.length){this.raidPartyClearInvites(p.id);this.raidParties.delete(p.id);this.raidPartyPersist();this.send(c,{type:'raid_party',party:null});this.broadcast({type:'raid_lobbies',parties:this.raidLobbyList(p.room)},x=>x.room===p.room);return}
+  for(const member of p.members)member.ready=false;
+  if(p.leader===c.id){p.leader=p.members[0].id;this.raidPartyClearInvites(p.id)}
+  this.raidPartyPersist();this.raidSync(p);this.send(c,{type:'raid_party',party:null});
+  const leader=this.clients.get(p.leader);if(leader)this.send(leader,{type:'raid_notice',message:reason==='left'?c.name+' left the Rift Raid party.':'The Rift Raid party leader changed.'});
+ }
+ raidPartyReady(c,m={}){
+  const p=this.raidPartyOf(c);if(!p)return this.raidError(c,'Join a Rift Raid party before setting readiness.');
+  if(!p.open)return this.raidError(c,'Readiness is locked while the Rift Raid is running.');
+  const member=p.members.find(x=>x.id===c.id);if(!member)return this.raidError(c,'Your Rift Raid party roster changed.');
+  const ready=m.ready===true;if(member.ready===ready)return;
+  member.ready=ready;this.raidPartyPersist();this.raidSync(p);
+ }
+ raidPartyInvite(c,m,now){
+  const p=this.raidPartyOf(c),target=this.clients.get(Number(m.targetId));
+  if(!p||p.leader!==c.id)return this.raidError(c,'Only your Rift Raid party leader can invite.');
+  if(!p.open)return this.raidError(c,'Finish the active Rift Raid before inviting another member.');
+  if(p.members.length>=3)return this.raidError(c,'The Rift Raid party is full.');
+  if(p.room!==c.room)return this.raidError(c,'Return to your Rift Raid party’s plaza before inviting.');
+  if(!target||target.room!==c.room||target.id===c.id||this.raidPartyOf(target))return this.raidError(c,'Choose a free player in this plaza.');
+  const invite={partyId:p.id,fromId:c.id,fromName:c.name,room:c.room,expiresAt:now+30000};this.raidInvites.set(target.id,invite);this.raidPartyPersist();
+  this.send(target,{type:'raid_invite',partyId:p.id,from:{id:c.id,name:c.name},expiresAt:invite.expiresAt});
+ }
+ raidPartyAccept(c){
+  const i=this.raidInvites.get(c.id);if(!i)return this.raidError(c,'That Rift Raid invite expired.');
+  this.raidInvites.delete(c.id);
+  const p=this.raidParties.get(i.partyId),now=this.now();
+  if(i.expiresAt<now||!p||!p.open||p.room!==c.room||p.leader!==i.fromId||!p.members.some(m=>m.id===i.fromId)||this.raidPartyOf(c)||p.members.length>=3){this.raidPartyPersist();return this.raidError(c,'That Rift Raid party is no longer available.');}
+  for(const member of p.members)member.ready=false;
+  p.members.push({id:c.id,name:c.name,ready:false,look:this.raidPreviewLook(c.look)});if(p.members.length>=3)this.raidPartyClearInvites(p.id);this.raidPartyPersist();this.raidSync(p);
+ }
+ raidPartyDecline(c){if(this.raidInvites.delete(c.id))this.raidPartyPersist()}
+ raidPartyList(c){if(!c.room)return this.raidError(c,'Join a plaza to discover Rift Raid parties.');this.send(c,{type:'raid_lobbies',parties:this.raidLobbyList(c.room)});const p=this.raidPartyOf(c);if(p)this.raidPartyUpdatePreview(c,p);this.send(c,{type:'raid_party',party:this.raidPublicParty(p)})}
+ raidRosterFor(id){const p=this.raidPartyByMemberId(id);if(!p)return null;return this.raidPublicParty(p)}
+ raidRunPublic(run){
+  return {id:run.id,state:run.state,partySize:run.partySize,totalHp:run.totalHp,hpRemaining:run.hpRemaining,phaseIndex:run.phaseIndex,
+   phaseHp:run.phaseHp,phaseHps:run.phaseHps,phaseNames:run.phaseNames,startedAt:run.startedAt,deadlineAt:run.deadlineAt,
+   finishedAt:run.finishedAt||0,serverNow:this.now(),bossArmor:run.bossArmor,hazard:run.hazard?{...run.hazard}:null,
+   members:run.members.map(m=>({id:m.id,name:m.name,hp:m.hp,maxHp:m.maxHp,damage:m.damage,support:m.support,actions:m.actions,dodges:m.dodges,downs:m.downs,lane:m.lane,downUntil:m.downUntil||0,
+    strikeReadyAt:(m.lastStrikeAt||0)+run.strikeMs,heavyReadyAt:(m.lastHeavyAt||0)+15000,healReadyAt:(m.lastHealAt||0)+18000,wardReadyAt:(m.lastWardAt||0)+24000,reviveReadyAt:(m.lastReviveAt||0)+30000,dodgeHazardId:m.dodgeHazardId||''})),
+   meaningful:run.members.map(m=>({id:m.id,ok:m.actions>=1&&(m.damage>=run.totalHp*.025||m.support>=m.maxHp*.20)}))};
+ }
+ raidPartySend(run,event){for(const m of run.members){const c=this.clients.get(m.id);if(c)this.send(c,event)}}
+ raidPersist(){try{const p=this.onRaidState([...this.raidRuns.values()]);if(p&&typeof p.catch==='function')p.catch(()=>{})}catch(error){console.error('Raid state save failed',error)}}
+ raidInstall(raw,{recovery=false}={}){
+  if(!raw||typeof raw.id!=='string'||!Array.isArray(raw.members)||raw.members.length<1||raw.members.length>3)return{ok:false,error:'Invalid raid install'};
+  if(this.raidRuns.has(raw.id))return{ok:true,run:this.raidRunPublic(this.raidRuns.get(raw.id))};
+  const leader=Number(raw.leaderId),partySize=raw.members.length;let partyId=null,party=null;
+  if(!Number.isInteger(leader)||leader<1||!raw.members.some(m=>Number(m?.id)===leader))return{ok:false,error:'Invalid raid leader'};
+  if(partySize>1&&!recovery){party=this.raidPartyByMemberId(leader);if(!party||party.open!==true||party.leader!==leader||party.members.length!==partySize||party.members.some((m,i)=>m.id!==Number(raw.members[i]?.id)))return{ok:false,error:'Raid party changed before start'};if(party.members.some(m=>m.ready!==true))return{ok:false,error:'Every Rift Raid party member must be ready before the leader starts'};partyId=party.id}
+  if(raw.members.some(m=>this.raidRunsFor(Number(m.id)).some(r=>r.state==='active')))return{ok:false,error:'A party member is already in an active raid'};
+  const totalHp=Math.max(1,Math.floor(Number(raw.totalHp)||0)),phaseHps=Array.isArray(raw.phaseHps)?raw.phaseHps.map(v=>Math.max(1,Math.floor(Number(v)||0))):[];
+  if(phaseHps.length!==4||phaseHps.reduce((a,b)=>a+b,0)!==totalHp)return{ok:false,error:'Invalid raid phase HP'};
+  const startedAt=Number(raw.startedAt),deadlineAt=Number(raw.deadlineAt);if(!Number.isFinite(startedAt)||!Number.isFinite(deadlineAt)||deadlineAt<=startedAt)return{ok:false,error:'Invalid raid clock'};
+  const members=raw.members.map((m,i)=>({id:Number(m.id),name:String(m.name||'Adventurer').slice(0,32),profile:{
+    dps:Math.max(1000,Math.min(1_500_000,Number(m.profile?.dps)||1000)),maxHp:Math.max(1000,Math.min(1e9,Number(m.profile?.maxHp)||1000)),
+    armorPen:Math.max(0,Math.min(.8,Number(m.profile?.armorPen)||0)),weaponId:String(m.profile?.weaponId||'').slice(0,80),weaponStars:Math.max(0,Math.min(20,Math.floor(Number(m.profile?.weaponStars)||0)))},
+    hp:Math.max(1000,Math.min(1e9,Number(m.profile?.maxHp)||1000)),damage:0,support:0,actions:0,dodges:0,downs:0,lane:['left','center','right'][i],lastStrikeAt:0,lastHeavyAt:0,lastHealAt:0,lastWardAt:0,lastReviveAt:0,wardUntil:0,dodgeHazardId:'',downUntil:0,actionReceipts:[]}));
+  if(members.some(m=>!Number.isInteger(m.id)||m.id<1)||new Set(members.map(m=>m.id)).size!==partySize)return{ok:false,error:'Invalid raid members'};
+  const run={id:raw.id,leaderId:leader,partyId,partySize,totalHp,hpRemaining:totalHp,phaseHps,phaseNames:Array.isArray(raw.phaseNames)?raw.phaseNames.slice(0,4):['Fracture scouts','Rift heralds','Astral sentries','The Rift Sovereign'],phaseIndex:0,phaseHp:phaseHps[0],startedAt,deadlineAt,bossArmor:Math.max(0,Math.min(.8,Number(raw.bossArmor)||.25)),tellMs:1500,intervalMs:9000,strikeMs:5000,nextHazardAt:startedAt+7500,hazard:null,hazardSerial:0,state:'active',members,updatedAt:startedAt};
+  this.raidRuns.set(run.id,run);if(party){party.open=false;for(const[targetId,invite]of this.raidInvites)if(invite.partyId===party.id)this.raidInvites.delete(targetId);this.raidSync(party);this.raidPartyPersist()}this.raidPersist();this.raidPartySend(run,{type:'raid_started',run:this.raidRunPublic(run)});return{ok:true,run:this.raidRunPublic(run)};
+ }
+ raidRunsFor(userId){return [...this.raidRuns.values()].filter(r=>r.members.some(m=>m.id===userId))}
+ raidResolveHazard(run,now){
+  const h=run.hazard;if(!h||now<h.endsAt)return false;
+  for(const m of run.members){if(m.hp<=0)continue;
+   if(!h.dangerZones.includes(m.lane)){
+    if(m.dodgeHazardId===h.id){m.dodges++;m.support+=Math.floor(m.maxHp*.10)}
+    continue;
+   }
+   let damage=Math.floor(m.maxHp*.30);
+   if(m.wardUntil>=now){const reduced=Math.floor(damage*.5);m.support+=reduced;damage-=reduced;m.wardUntil=0}
+   m.hp=Math.max(0,m.hp-damage);if(!m.hp){m.downs++;m.downUntil=now+10000}
+  }
+  run.hazard=null;run.nextHazardAt=now+run.intervalMs;
+  return true;
+ }
+ raidNotify(run,now=this.now()){
+  run.updatedAt=now;
+  if(run.state!=='active'){
+   const settled=[...this.raidRuns.values()].filter(r=>r.state!=='active').sort((a,b)=>(a.finishedAt||0)-(b.finishedAt||0));
+   while(settled.length>100){const oldest=settled.shift();this.raidRuns.delete(oldest.id)}
+  }
+  this.raidPersist();
+  this.raidPartySend(run,{type:run.state==='active'?'raid_update':'raid_finished',run:this.raidRunPublic(run)});
+  if(run.state!=='active'){
+   const party=(run.partyId&&this.raidParties.get(run.partyId))||this.raidPartyByMemberId(run.leaderId)||run.members.map(m=>this.raidPartyByMemberId(m.id)).find(Boolean);
+   if(party&&!party.open){for(const member of party.members)member.ready=false;party.open=true;this.raidSync(party);this.raidPartyPersist()}
+  }
+ }
+ raidAdvance(run,now=this.now(),notify=true){
+  if(!run||run.state!=='active')return false;
+  let changed=false;
+  if(now>=run.deadlineAt){run.state='failed';run.finishedAt=now;changed=true}
+  else{
+   if(run.hazard&&this.raidResolveHazard(run,now))changed=true;
+   if(run.state==='active'&&!run.hazard&&now>=run.nextHazardAt){
+    const zones=['left','center','right'],first=Math.floor(this.random()*zones.length),danger=[zones[first]];
+    if(run.partySize>1&&this.random()<.5)danger.push(zones[(first+1+Math.floor(this.random()*2))%zones.length]);
+    const id='hazard:'+run.id+':'+(++run.hazardSerial);
+    run.hazard={id,kind:danger.length>1?'rift-sweep':'fracture-slam',dangerZones:danger,startsAt:now,endsAt:now+run.tellMs};changed=true;
+   }
+   if(run.members.every(m=>m.hp<=0)){run.state='failed';run.finishedAt=now;changed=true}
+  }
+  if(run.hpRemaining<=0&&run.state==='active'){run.hpRemaining=0;run.phaseHp=0;run.state='cleared';run.finishedAt=now;changed=true}
+  if(changed&&notify)this.raidNotify(run,now);
+  return changed;
+ }
+ raidActionResult(accountId,m,now=this.now()){
+  const run=typeof m.runId==='string'?this.raidRuns.get(m.runId):null,member=run?.members.find(x=>x.id===accountId);
+  if(!run||!member)return{ok:false,error:'You are not in that active raid.'};
+  const actionId=m.actionId;
+  if(actionId!==undefined&&(typeof actionId!=='string'||actionId.length<8||actionId.length>100||!/^[A-Za-z0-9:_-]+$/.test(actionId)))return{ok:false,error:'Invalid action id.'};
+  const advanced=this.raidAdvance(run,now,false),receipt=actionId&&(member.actionReceipts||[]).find(x=>x&&x.id===actionId);
+  if(run.state!=='active'){
+   if(advanced)this.raidNotify(run,now);
+   if(receipt)return{ok:true,duplicate:true,action:receipt.action,run:this.raidRunPublic(run)};
+   return{ok:false,error:'This raid has ended.',run:this.raidRunPublic(run)};
+  }
+  const reject=error=>{if(advanced)this.raidNotify(run,now);return{ok:false,error,run:this.raidRunPublic(run)}};
+  const action=String(m.action||''),zones=['left','center','right'];
+  if(receipt){if(advanced)this.raidNotify(run,now);return{ok:true,duplicate:true,action:receipt.action,run:this.raidRunPublic(run)}}
+  if(member.hp<=0&&action!=='revive')return reject('You are down. A teammate must revive you.');
+  let target=null;
+  if(action==='strike'||action==='heavy'){
+   if(now-(member.lastStrikeAt||0)<run.strikeMs)return reject('Your weapon is still recovering.');
+   if(action==='heavy'&&now-(member.lastHeavyAt||0)<15000)return reject('Heavy Strike is still recovering.');
+  }else if(action==='dodge'){
+   if(!run.hazard||now>run.hazard.endsAt)return reject('There is no active hazard to dodge.');
+   if(member.dodgeHazardId===run.hazard.id)return reject('You already dodged this hazard.');
+   if(!zones.includes(m.zone))return reject('Choose a valid lane to dodge into.');
+  }else if(action==='heal'){
+   if(now-(member.lastHealAt||0)<18000)return reject('Mend is still recovering.');
+   target=run.members.find(x=>x.id===Number(m.targetId))||member;
+   if(target.hp<=0)return reject('Use Revive for a downed adventurer.');
+   if(target.hp>=target.maxHp)return reject('That adventurer does not need healing.');
+  }else if(action==='ward'){
+   if(now-(member.lastWardAt||0)<24000)return reject('Aegis Ward is still recovering.');
+   target=run.members.find(x=>x.id===Number(m.targetId))||member;
+   if(target.hp<=0)return reject('Revive the downed adventurer first.');
+  }else if(action==='revive'){
+   if(now-(member.lastReviveAt||0)<30000)return reject('Revive is still recovering.');
+   target=run.members.find(x=>x.id===Number(m.targetId));
+   if(!target||target.id===member.id||target.hp>0)return reject('Choose a downed teammate to revive.');
+  }else return reject('Unknown raid action.');
+  member.actions++;
+  let dealt=0;
+  if(action==='strike'||action==='heavy'){
+   member.lastStrikeAt=now;if(action==='heavy')member.lastHeavyAt=now;
+   const penetration=Math.min(.8,member.profile.armorPen),mitigation=Math.max(0,run.bossArmor-penetration),mult=action==='heavy'?1.6:1;
+   let damage=Math.max(1,Math.floor(member.profile.dps*run.strikeMs*(1-mitigation)*mult/1000));
+   damage=Math.min(damage,run.hpRemaining);dealt=damage;member.damage+=damage;run.hpRemaining-=damage;
+   let phaseDamage=damage;
+   while(run.phaseIndex<3&&phaseDamage>=run.phaseHp){phaseDamage-=run.phaseHp;run.phaseIndex++;run.phaseHp=run.phaseHps[run.phaseIndex]||0}
+   run.phaseHp=Math.max(0,run.phaseHp-phaseDamage);
+   if(run.hpRemaining<=0){run.hpRemaining=0;run.phaseHp=0;run.state='cleared';run.finishedAt=now}
+  }else if(action==='dodge'){
+   member.lane=m.zone;
+   if(run.hazard&&now<=run.hazard.endsAt)member.dodgeHazardId=run.hazard.id;
+  }else if(action==='heal'){
+   member.lastHealAt=now;const before=target.hp;target.hp=Math.min(target.maxHp,target.hp+Math.floor(target.maxHp*.25));member.support+=target.hp-before;
+  }else if(action==='ward'){
+   member.lastWardAt=now;target.wardUntil=now+30000;member.support+=Math.floor(target.maxHp*.05);
+  }else if(action==='revive'){
+   member.lastReviveAt=now;target.hp=Math.max(1,Math.floor(target.maxHp*.20));target.downUntil=0;member.support+=target.hp;
+  }
+  this.raidAdvance(run,now,false);
+  if(actionId){member.actionReceipts=Array.isArray(member.actionReceipts)?member.actionReceipts:[];member.actionReceipts.push({id:actionId,action,at:now})}
+  this.raidNotify(run,now);
+  return{ok:true,action,damage:dealt,run:this.raidRunPublic(run)};
+ }
+ raidAction(c,m,now){const result=this.raidActionResult(c.id,m,now);if(!result.ok)return this.raidError(c,result.error);return result}
+ raidHttpAction(accountId,m,now=this.now()){return this.raidActionResult(accountId,m,now)}
+ raidHttpSnapshot(runId,accountId){const run=this.raidRuns.get(String(runId||''));if(!run||!run.members.some(m=>m.id===accountId))return null;this.raidAdvance(run,this.now());return this.raidRunPublic(run)}
  // Leaving a party run removes only that trainer's partner; the field stays alive for the rest.
  leavePartyRun(c,run,reason='stopped'){
   const idx=Array.isArray(run.members)?run.members.indexOf(c.id):-1;
@@ -717,14 +959,14 @@ export class SocialRoom {
  // `viewer` is who is asking: whether this person is a friend is a fact about the two accounts, so
  // the same player is flagged for one client and not for another. Omit it for a neutral snapshot.
  snapshot(c,viewer=null){R.advance(c,this.now());return {id:c.id,name:c.name,gm:c.gm,room:c.room,x:c.x,z:c.z,dir:c.dir,sit:c.sit,path:c.path,at:c.at,look:c.look,seat:c.seat,pokerSeat:c.pokerSeat,fish:c.fish||null,party:this.partyOf(c)?.id||null,friend:!!(viewer&&viewer!==c&&viewer.friends.has(c.id))};}
- leave(c){const room=c.room;this.stopBattle(c,'left');this.partyRemove(c,'left');this.partyInvites.delete(c.id);this.standPoker(c,this.now(),false);c.room=0;c.path=[];c.seat=null;c.pokerSeat=null;c.fish=null;if(room){this.broadcast({type:'left',id:c.id,room},p=>p.room===room);this.broadcastPoker(room,this.now());this.schedulePoker(room);this.syncRooms();}}
+ leave(c){const room=c.room;this.stopBattle(c,'left');this.partyRemove(c,'left');this.raidPartyLeave(c,'left');if(this.raidInvites.delete(c.id))this.raidPartyPersist();this.partyInvites.delete(c.id);this.standPoker(c,this.now(),false);c.room=0;c.path=[];c.seat=null;c.pokerSeat=null;c.fish=null;if(room){this.broadcast({type:'left',id:c.id,room},p=>p.room===room);this.broadcastPoker(room,this.now());this.schedulePoker(room);this.syncRooms();}}
  disconnect(c){
   if(this.clients.get(c.id)!==c)return;
   // Remove membership BEFORE any party, battle or gym cleanup can broadcast. A closed
   // transport otherwise receives its own cleanup, send() calls disconnect() again, and
   // the room overflows its stack before it saves the resume or removes the old client.
   c.disconnecting=true;this.clients.delete(c.id);
-  this.partyRemove(c,'disconnect');this.partyInvites.delete(c.id);
+  this.partyRemove(c,'disconnect');this.raidPartyLeave(c,'disconnect');if(this.raidInvites.delete(c.id))this.raidPartyPersist();this.partyInvites.delete(c.id);
   const now=this.now(),room=c.room;this.stopBattle(c,'disconnect',now);this.stopGym(c);
   // A lost socket is not a decision to fold. Keep the exact position and reserved poker seat
   // for 15 seconds, including planned re-authentication. The turn clock still runs; an explicit
@@ -788,6 +1030,8 @@ export class SocialRoom {
   {const m=this.mvpSnapshot(c.room);if(m)this.send(c,{type:'mvp_spawn',...m})}
   this.send(c,{type:'battle',room:c.room,at:now,...this.battleSnapshot(c.room)});
   this.send(c,this.pokerPayload(c.room,c.id,now));
+  // Rift Raid presence/run state is sent only when the player opens its panel or takes an action;
+  // reconnecting does not add unsolicited party broadcasts or advance an encounter.
   this.broadcastPlayer(c,p=>p.room===c.room,c);
   this.syncRooms(c);this.schedulePoker(c.room);
  }
@@ -829,6 +1073,15 @@ export class SocialRoom {
   if(m.type==='pve_stop'){this.stopPve(c);return}
   if(m.type==='pve_repeat'){if(m.on!==true)c.pveRepeatPermit=null;else if(c.pve&&!c.pve.party){const p=c.pve.profile;c.pve.repeat=true;c.pveRepeatPermit={room:c.room,lineId:p.lineId,form:p.form,slot:p.slot,mode:c.pve.mode||'grind',at:now}}return}
   if(m.type==='pvp_enter')return this.queuePvp(c,m,now);
+  if(m.type==='raid_party_list')return this.raidPartyList(c);
+  if(m.type==='raid_party_create')return this.raidPartyCreate(c,m);
+  if(m.type==='raid_party_join')return this.raidPartyJoin(c,m);
+  if(m.type==='raid_party_leave')return this.raidPartyLeave(c,'left');
+  if(m.type==='raid_party_ready')return this.raidPartyReady(c,m);
+  if(m.type==='raid_invite')return this.raidPartyInvite(c,m,now);
+  if(m.type==='raid_accept')return this.raidPartyAccept(c);
+  if(m.type==='raid_decline')return this.raidPartyDecline(c);
+  if(m.type==='raid_action')return this.raidAction(c,m,now);
   if(m.type==='party_invite')return this.partyInvite(c,m,now);
   if(m.type==='party_accept')return this.partyAccept(c,m,now);
   if(m.type==='party_decline')return this.partyDecline(c,now);
@@ -868,13 +1121,13 @@ export class SocialRoom {
    c.moveAt=now;
    const count=this.roomCount(target,now);
    if(count>=R.CAPACITY)return this.send(c,{type:'error',message:`Plaza ${target} is full (${R.CAPACITY} / ${R.CAPACITY}).`});
-   const prev=c.room;this.stopBattle(c,'room_switch',now);this.stopGym(c);
+   const prev=c.room;this.stopBattle(c,'room_switch',now);this.stopGym(c);this.raidPartyLeave(c,'left');if(this.raidInvites.delete(c.id))this.raidPartyPersist();
    this.standPoker(c,now,false);c.room=0;c.path=[];c.seat=null;c.pokerSeat=null;c.sit=false;
    this.broadcast({type:'left',id:c.id,room:prev},p=>p.room===prev);
    this.broadcastPoker(prev,now);this.schedulePoker(prev);
    return this.enterPlazaRoom(c,target,now);
   }
-  if(m.type==='look'&&c.room){const look=this.cleanLook(m.look);if(!look||now-c.lookAt<100)return;c.lookAt=now;c.look=look;return this.broadcastPlayer(c,p=>p.room===c.room)}
+  if(m.type==='look'&&c.room){const look=this.cleanLook(m.look);if(!look||now-c.lookAt<100)return;c.lookAt=now;c.look=look;this.raidPartyUpdatePreview(c);return this.broadcastPlayer(c,p=>p.room===c.room)}
   if(m.type==='move'&&c.room){if(!this.requirePokerLeave(c,m))return;if(now-c.moveAt<100)return;c.moveAt=now;R.advance(c,now);const route=R.path(c,{x:m.x,z:m.z});if(!route.length)return;this.standPoker(c,now,true);c.path=route;c.sit=false;c.seat=null;return this.broadcastPlayer(c,p=>p.room===c.room)}
   if(m.type==='seat'&&c.room){if(!this.requirePokerLeave(c,m))return;if(now-c.moveAt<100||!Number.isInteger(m.id)||!R.SEATS[m.id])return;c.moveAt=now;R.advance(c,now);const seat=R.SEATS[m.id];if([...this.clients.values()].some(p=>p!==c&&p.room===c.room&&p.seat===seat.id))return this.send(c,{type:'error',message:'That bench is occupied.'});const route=R.path(c,seat);if(!route.length&&Math.hypot(c.x-seat.x,c.z-seat.z)>.5)return;this.standPoker(c,now,true);c.path=route;c.sit=false;c.seat=seat.id;return this.broadcastPlayer(c,p=>p.room===c.room)}
   // v295: the line in the water is public. This is presentation only - it carries no score, no
