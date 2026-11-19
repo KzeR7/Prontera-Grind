@@ -274,6 +274,21 @@ t('published UI styles preserve every parsed CSS rule while removing standalone 
  }finally{dom.window.close()}
 });
 
+t('published JS removes only standalone comments, preserving tokens, line breaks and license notices',()=>{
+ const opt=require('../optimize_delivery.js'),acorn=require('../vendor/acorn/acorn.js');
+ const sample=['// remove this','const a = "// literal";','const re = /\\/\\/still-regex/;','const template = `hello', '// inside template', '${1 + 2}`;', 'a; // inline stays','// Copyright Example', '//# sourceURL=example.js', 'function f(){return', '// preserve ASI newline', '1;}'].join('\n');
+ const result=opt.stripStandaloneJsComments(sample);
+ assert.ok(!result.includes('remove this'));assert.ok(result.includes('// inside template'));
+ assert.ok(result.includes('// inline stays'));assert.ok(result.includes('// Copyright Example'));assert.ok(result.includes('//# sourceURL=example.js'));
+ assert.equal(result.split('\n').length,sample.split('\n').length);
+ const tokens=source=>{const t=acorn.tokenizer(source,{ecmaVersion:'latest'}),out=[];for(;;){const v=t.getToken();if(v.type.label==='eof')break;out.push(source.slice(v.start,v.end))}return out};
+ assert.deepStrictEqual(tokens(result),tokens(sample));
+ for(const file of opt.JS_FILES){const original=fs.readFileSync(path.join(root,file),'utf8'),built=fs.readFileSync(path.join(out,file),'utf8');assert.equal(built,opt.stripStandaloneJsComments(original),file);assert.deepStrictEqual(tokens(built),tokens(original));}
+ const original=fs.readFileSync(path.join(root,'index.html'),'utf8'),built=fs.readFileSync(path.join(out,'index.html'),'utf8');
+ assert.equal(built,opt.stripHtmlJsComments(original),'published HTML differs from safe comment optimization');
+ assert.ok(built.length<original.length-200000,'HTML should shed standalone JS comments');
+});
+
 t('in-game endgame exploration ships only selected runtime resources with lazy lossless materials',()=>{
  const dir=path.join(out,'assets/endgame'),files=fs.readdirSync(dir),html=fs.readFileSync(path.join(dir,'explore.html'),'utf8');
  assert.ok(fs.readFileSync(path.join(dir,'THREE-LICENSE.txt'),'utf8').includes('Permission is hereby granted'));

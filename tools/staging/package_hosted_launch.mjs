@@ -18,7 +18,7 @@ const workFiles=prefix=>execFileSync('git',['ls-files','--cached','--others','--
 // The hand-written part of the overlay: the assets and entry points this project ships that the
 // archived base predates. Everything that can be derived is derived (see launch_overlay.mjs and the
 // groups right after this array) so a new file cannot be forgotten the way the old list was.
-const files=['index.html','gm.html','tools/build_site.sh','tools/optimize_delivery.js','_routes.json',
+const files=['index.html','gm.html','tools/build_site.sh','tools/optimize_delivery.js','tools/vendor/acorn/acorn.js','tools/vendor/acorn/LICENSE','_routes.json',
  // Client-side runtime loaded by index.html.
  'assets/shop-catalog.js','assets/shop.css','assets/shop.js','assets/friends.css','assets/friends.js',
  'assets/combat-audio.js','assets/bgm.js','assets/bgm-tracks.js','assets/social.css','assets/social.js',
@@ -48,7 +48,7 @@ const files=['index.html','gm.html','tools/build_site.sh','tools/optimize_delive
  // v415: runtime files that exist in the archived base but that this branch modified. The hand list
  // never caught up with them, so staging would have received the BASE copy of each while the rest of
  // the candidate was v415 - the mixed-version deployment this guard exists to prevent.
- 'assets/wardrobe-ui.js','assets/wardrobe.js',
+ 'assets/wardrobe-ui.js','assets/wardrobe.js','assets/skill-afterglow.js','assets/adventure-guide.js','assets/adventure-guide.css',
  // v415: the Eclipse/mobile UI bundle and its scripts are modified in the base too.
  'assets/ui/eclipse.css','assets/ui/mobile.css','assets/ui/mobile.js',
  // Provenance metadata, not runtime: only tools/tests read these. They ride along so the staged
@@ -79,6 +79,8 @@ const html=()=>fs.readFileSync(path.join(root,'index.html'),'utf8');
 const basePaths=()=>new Set(execFileSync('git',['ls-tree','-r','--name-only',base],{cwd:root,maxBuffer:20*1024*1024}).toString().split('\n').filter(Boolean));
 files.push(...assetRefs(html()).filter(p=>!basePaths().has(p)&&!files.includes(p)));
 files.push(...overlayFiles(html()));
+// Expanded FX modules and image resources are loaded by the approved cast renderer.
+for(const p of workFiles('assets/expanded-fx/'))if(!files.includes(p))files.push(p);
 // A repeated path would pack twice and make the payload's own file count meaningless.
 if(new Set(files).size!==files.length)throw Error('Duplicate package entry: '+files.find((p,i)=>files.indexOf(p)!==i));
 if(process.argv.length!==3)throw Error('Usage: node tools/staging/package_hosted_launch.mjs <output.mjs>');

@@ -1,8 +1,8 @@
-// Publish-only JSON whitespace and standalone CSS comment reduction. Sources stay untouched.
+// Publish-only JSON whitespace and standalone CSS/JS comment reduction. Sources stay untouched.
 // Only these four kit documents are plain JSON fetched with response.json(); native
 // metadata has byte/hash contracts and MUST NOT be processed here.
 'use strict';
-const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
+const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict'),acorn=require('./vendor/acorn/acorn.js');
 const FILES=Object.freeze(['ro-map-payon.json','ro-map-morocc.json','ro-spritesheet.json','ro-tiles-hd.json']);
 // Include the plaza styles so the new guide fits the existing classic delivery ceiling.
 // publish_sim compares every parsed rule before/after; no stylesheet semantics change.
@@ -25,6 +25,22 @@ function stripStandaloneCssComments(css){
  }
  return out+css.slice(last);
 }
+// Remove only tokenizer-confirmed, standalone line comments. Preserve every newline
+// (including ASI-sensitive ones), and verify the exact token spellings before writing.
+function stripStandaloneJsComments(source){
+ const comments=[],options={ecmaVersion:'latest',allowHashBang:true,onComment:comments};
+ const collect=text=>{const tokens=[],tokenizer=acorn.tokenizer(text,{ecmaVersion:'latest',allowHashBang:true});for(;;){const t=tokenizer.getToken();if(t.type.label==='eof')break;tokens.push(text.slice(t.start,t.end));}return tokens};
+ const before=collect(source);for(const _ of acorn.tokenizer(source,options)){};
+ let result='',last=0;for(const comment of comments){if(comment.type!=='Line')continue;const start=comment.start,end=comment.end,lineStart=source.lastIndexOf('\n',start-1)+1;if(source.slice(lineStart,start).trim()||/copyright|@licen[cs]e|spdx|^\/\/!|^\/\/[#@]\s*source/i.test(source.slice(start,end)))continue;
+ result+=source.slice(last,start);last=end;}
+ result+=source.slice(last);assert.deepEqual(collect(result),before,'JS token stream changed during delivery optimization');return result;
+}
+function stripHtmlJsComments(html){return html.replace(/<script\b([^>]*)>([\s\S]*?)<\/script\s*>/gi,(whole,attrs,script)=>{
+ if(!script.trim()||/\bsrc\s*=/i.test(attrs)||/\btype\s*=\s*["'](?:application\/json|application\/ld\+json)["']/i.test(attrs))return whole;
+ const prefix=whole.slice(0,whole.indexOf('>')+1),suffix=whole.slice(prefix.length+script.length);
+ return prefix+stripStandaloneJsComments(script)+suffix;
+});}
+const JS_FILES=Object.freeze(['assets/social-scene.js','assets/social-fishing.js','assets/social.js']);
 function optimize(output){
  let saved=0;
  for(const file of FILES){
@@ -37,7 +53,10 @@ function optimize(output){
   const target=path.join(output,file),before=fs.readFileSync(target,'utf8'),after=stripStandaloneCssComments(before);
   if(after!==before){fs.writeFileSync(target,after);saved+=Buffer.byteLength(before)-Buffer.byteLength(after)}
  }
+ const html=path.join(output,'index.html'),beforeHtml=fs.readFileSync(html,'utf8'),afterHtml=stripHtmlJsComments(beforeHtml);
+ if(afterHtml!==beforeHtml){fs.writeFileSync(html,afterHtml);saved+=Buffer.byteLength(beforeHtml)-Buffer.byteLength(afterHtml)}
+ for(const file of JS_FILES){const target=path.join(output,file),before=fs.readFileSync(target,'utf8'),after=stripStandaloneJsComments(before);if(after!==before){fs.writeFileSync(target,after);saved+=Buffer.byteLength(before)-Buffer.byteLength(after)}}
  return saved;
 }
-if(require.main===module){if(!process.argv[2])throw Error('Pass the assembled publish directory');console.log('  JSON whitespace / CSS comments removed: '+optimize(path.resolve(process.argv[2]))+' bytes (source art/native packs unchanged)');}
-module.exports={FILES,CSS_FILES,stripStandaloneCssComments,optimize};
+if(require.main===module){if(!process.argv[2])throw Error('Pass the assembled publish directory');console.log('  JSON whitespace / standalone CSS and JS comments removed: '+optimize(path.resolve(process.argv[2]))+' bytes (source art/native packs unchanged)');}
+module.exports={FILES,CSS_FILES,JS_FILES,stripStandaloneCssComments,stripStandaloneJsComments,stripHtmlJsComments,optimize};

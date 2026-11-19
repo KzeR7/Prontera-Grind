@@ -12,7 +12,7 @@
     },
     "adapter": {
       "path": "assets/skill-afterglow.js",
-      "sha256": "aa78ca1715b22c81c7be51278c541e3972397ffaa42473e97537a44d2e5bd927"
+      "sha256": "7b8a32a2802a500d8c18b25601bb178acc12a87dd590ac3fee82749202e988a3"
     },
     "materials": {
       "path": "assets/skill-materials.js",

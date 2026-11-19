@@ -15,6 +15,7 @@ const PGSkillAfterglow=(()=>{
     create(canvas){
       const g=canvas.getContext('2d');if(!g)return null;
       const paint=PGAfterglowAnimations.create(g);
+      const triplePaint=typeof PGTripleNoSwordAnimations!=='undefined'?PGTripleNoSwordAnimations.create(g):null;
       return {draw(effects,width,height,project,dpr=1,forcedDetail=0){
         const ratio=Math.min(2,Math.max(1,dpr));
         const w=Math.max(1,Math.round(width*ratio)),h=Math.max(1,Math.round(height*ratio));
@@ -56,8 +57,12 @@ const PGSkillAfterglow=(()=>{
           if(![sx,sy,yx,yy,tx,ty].every(Number.isFinite))continue;
           g.save();
           g.setTransform(sx*ratio,sy*ratio,yx*ratio,yy*ratio,tx*ratio,ty*ratio);
-          paint(fx.id,fx.age*1.65,detail);
+          (fx.reviewId==='mo_triple'&&triplePaint?triplePaint:paint)(fx.id,fx.age*1.65,detail);
           g.restore();
+        }
+        if(typeof PGApprovedExpandedFx!=='undefined'){
+          g.setTransform(ratio,0,0,ratio,0,0);
+          for(const fx of effects)if(fx.reviewId)PGApprovedExpandedFx.draw(g,fx,project);
         }
       }};
     }

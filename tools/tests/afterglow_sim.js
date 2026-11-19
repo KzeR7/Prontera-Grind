@@ -12,7 +12,7 @@ function canvas(){
     clearRect(){},fill(){if(this.globalAlpha>0)marks++},stroke(){if(this.globalAlpha>0)marks++},
     drawImage(...args){if(this.globalAlpha>0){if(args[0]?.width===192&&args[0]?.height===320)toothDraws.push(args);if(args[0]?.width===192&&args[0]?.height===256)stoneDraws.push(args);marks++;if(args.length===9)rasterMarks++}},fillRect(){},fillText(){},
     createLinearGradient(){return {addColorStop(){}}},createRadialGradient(){return {addColorStop(){}}}};
-  for(const name of ['translate','rotate','scale','moveTo','lineTo','bezierCurveTo','quadraticCurveTo','arc','ellipse'])
+  for(const name of ['translate','rotate','scale','moveTo','lineTo','bezierCurveTo','quadraticCurveTo','arc','ellipse','rect'])
     ctx[name]=(...args)=>assert(args.every(Number.isFinite),name+' non-finite coordinates');
   for(const name of ['beginPath','closePath','clip'])ctx[name]=()=>{};
   const c={width:0,height:0,style:{},setAttribute(){},getContext:()=>ctx};return c;
@@ -118,7 +118,7 @@ ev('syncSkillFx();tickSkillFx(4);syncSkillFx()');assert.equal(box.skillFx.length
 const narrow=canvas();box.narrow=narrow;ev('PGSkillAfterglow.create(narrow).draw([],390,700,scr,3)');
 assert.equal(narrow.width,780);assert.equal(narrow.height,1400);
 box.simVisualsOff=()=>true;ev('playSkillFx("fire",target)');assert.equal(box.skillFx.length,0);
-assert(src.includes('assets/afterglow-animations.js?v=151')&&src.includes('assets/skill-materials.js?v=220')&&src.includes('assets/skill-overdrive.js?v=220')&&src.includes('assets/skill-afterglow.js?v=220'));
+assert(src.includes('assets/afterglow-animations.js?v=151')&&src.includes('assets/skill-materials.js?v=220')&&src.includes('assets/skill-overdrive.js?v=220')&&src.includes('assets/skill-afterglow.js?v=428'));
 assert(src.includes(':not(#skillAfterglowLayer)'),'clean-screen hides effects');
 console.log('Afterglow + Overdrive: 111 skills (75 ordinary, 30 fourth-job, six Ascension), loaded/pending/failed materials, full/mobile/dense detail, compressed timing, drawing/state, projection/reversal/vertical paths, expiry, cap, resize, hidden catch-up and legacy material fallback passed (Canvas operations; no GPU).');
 
@@ -150,3 +150,38 @@ for(const width of [1280,390])for(const facing of [1,-1]){
 ev(`var fieldToken={x:0,z:0,age:4,sk:{field:{duration:5}}};playSkillFx('amp',fieldToken);`);
 assert.equal(box.skillFx[0].life,1);ev('tickSkillFx(.01)');assert.equal(box.skillFx.length,0,'field effect outlived reset');
 console.log('Ground marker projection, desktop/mobile, radius and field effect cleanup passed.');
+
+// Approved expanded FX run through the actual combat lifecycle, not just the preview.
+for(const file of ['ninja-throw-fx','expanded-fx-batch','expanded-fx-redesign','researched-fx','class-identity-fx','review-polish-fx','triple-old-no-sword','approved'])
+  vm.runInContext(fs.readFileSync(path.join(root,'assets/expanded-fx/'+file+'.js'),'utf8'),box);
+// Recreate the battlefield renderer after loading the no-sword painter.
+ev('skillAfterglow=null;S.cls="Monk"');
+box.performance={now:()=>1000};box.SKIN_H=2.16;box.signatureCalls=[];box.PGSignatureFx={play:id=>box.signatureCalls.push(id),tick(){},warm(){},clear(){}};
+const oldIds=['cr_grand','cr_holyx','pa_press','mo_sphere','mo_chain','ch_asura','ch_glacier','st_plag','nj_spear','so_grave','ge_spore','su_knuckle','sc_fatal','ko_shadow','gs_desp','rb_fire'];
+for(const id of oldIds){box.id=id;box.signatureCalls=[];ev('playSkillFx(id,{x:5,z:-2},"#fff")');assert.equal(box.skillFx[0].reviewId,undefined,id+' should stay old');assert(box.signatureCalls.includes(id),id+' original signature suppressed');ev('tickSkillFx(4)')}
+const newIds=['cr_guard','cr_shboom','pa_chain','sa_dispel','sc_fog','al_flora','bi_plant','ch_fury','ch_zen','rg_prestige','so_buster','bd_bliss','bd_gloomy','su_rising','sc_tri','sc_auto','sc_spell','nj_kunai','nj_huuma','ko_kunai','ko_petal','ko_huuma','ko_izayoi','ko_soul','ko_moon','mo_triple'];
+for(const id of newIds){
+ box.id=id;box.signatureCalls=[];ev('playSkillFx(id,{x:5,z:-2},"#fff")');let fx=box.skillFx[0];assert(fx,id+' not queued');assert.equal(fx.reviewId,id,id+' not using approved effect');
+ assert.equal(box.signatureCalls.includes(id),['pa_chain','ko_petal','ko_soul','mo_triple'].includes(id),id+' signature choice');
+ assert.equal(!!fx.afterglow,['nj_kunai','mo_triple'].includes(id),id+' shared layer choice');
+ marks=0;for(const age of [.12,.3,.55,.8,1.3,2]){fx.age=age;ev('syncSkillFx()');assert.equal(depth,0,id+' leaked canvas state')};assert(marks>0,id+' drew nothing');
+ ev('tickSkillFx(4)');assert.equal(box.skillFx.length,0,id+' did not expire');
+}
+console.log('Approved expanded FX: old/new/hybrid routing, signatures, rendering, canvas state and expiry passed.');
+// The production selection table must agree with the exact final review, including current-only casts.
+const preview=fs.readFileSync(path.join(root,'tools/expanded-fx-preview.html'),'utf8');
+const oldSetSource=preview.slice(preview.indexOf('const keepOld='),preview.indexOf('\nlet conceptActive'));
+vm.runInContext(oldSetSource.replace('const keepOld=', 'globalThis.previewKeepOld='),box);
+for(const skill of ev('SKILLSX.filter(s=>s.type!=="pas")')){
+ box.id=skill.id;
+ assert.equal(ev('PGApprovedExpandedFx.has(id)'),ev('!previewKeepOld.has(id)&&(PGReviewPolishFx.has(id)||PGClassIdentityFx.has(id)||PGExpandedFxConcepts.has(id))'),skill.id+' differs from final preview');
+ if(!ev('PGApprovedExpandedFx.has(id)'))continue;
+ for(const target of [{x:5,z:-2},{x:-5,z:2},{x:0,z:0}]){
+  box.target=target;ev('playSkillFx(id,target,"#fff")');const fx=box.skillFx[0];assert(fx,skill.id+' failed to queue');
+  for(const age of [.2,.6,1.2,2]){fx.age=age;ev('syncSkillFx()');assert.equal(depth,0,skill.id+' canvas state')}
+  ev('tickSkillFx(4)');
+ }
+}
+for(const f of ['user-shuriken.png','user-kunai-horizontal.png','flora-idle.png','geographer-idle.png'])
+ assert(fs.existsSync(path.join(root,'assets/expanded-fx',f)),f+' missing from runtime');
+console.log('Every expanded cast matches final preview routing; all approved casts render with forward, reversed and self targets.');

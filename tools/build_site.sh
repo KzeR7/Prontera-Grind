@@ -106,7 +106,7 @@ rm -f "$OUT/assets/Fountainfile/Prontera_Grand_Aetherwell_Preview.png"
 mkdir -p "$OUT/Updates"
 cp -r "$ROOT/Updates/Sprite" "$OUT/Updates/Sprite"
 
-# Strip whitespace only from four ordinary map-kit JSON delivery copies.
+# Compact ordinary map-kit JSON and safely remove standalone CSS/JS comments from delivery copies.
 node "$ROOT/tools/optimize_delivery.js" "$OUT"
 node "$ROOT/tools/maps/build_game_exploration.js" "$OUT"
 # The selected vendored renderer ships with its complete MIT license.
