@@ -88,14 +88,18 @@ body.social-open #sideMenu.eclipse-more-open{visibility:visible!important}
 body.social-open #bgmPlayer{display:none!important}
 @media(max-width:600px){#socialHubToolbar{top:8px;gap:10px;width:max-content;padding:7px 9px}#socialHubHeader h2{font-size:15px}#socialHubHeader p{font-size:9px}#socialHubControls{gap:4px}#socialHubControls button,#socialHubHelp summary{padding:7px 6px;font-size:10px}}
 
-/* Names and equipped titles stay below the feet; only speech uses a box. */
-.social-player-title{display:block;margin-top:2px;color:#ffe6a2;font-size:11px;text-shadow:0 1px 3px #000,0 0 5px #000}
+/* Names and titles stay below the feet; the title lines have no solid backing. */
+.social-player-title{display:table;margin:2px auto 0;padding:0;border:0;background:transparent;color:#eee0b8;font:700 10px/1.3 Arial,sans-serif;letter-spacing:.3px;text-shadow:0 1px 3px #000,0 0 5px #000}
+/* The supplied mastery symbols have a near-black matte. Screen blending cannot
+   see the scene through the transformed name label, so remove that matte with a
+   luminance-to-alpha SVG filter and keep a small dark outline for pale floors. */
+.social-player-title .title-symbol{width:22px;height:24px;object-fit:contain;vertical-align:middle;margin-right:3px;filter:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cfilter%20id%3D%22cut%22%20color-interpolation-filters%3D%22sRGB%22%3E%3CfeColorMatrix%20type%3D%22matrix%22%20values%3D%221%200%200%200%200%20%200%201%200%200%200%20%200%200%201%200%200%20%200.85%202.86%200.29%200%20-0.08%22%2F%3E%3C%2Ffilter%3E%3C%2Fsvg%3E#cut") drop-shadow(0 0 1px #000d)}
 .social-player-title[hidden],.social-bubble[hidden],.social-player-label[hidden]{display:none}
-/* v296: the fishing title is its own line under the name, so wearing one never hides the Hunt title. */
-.social-player-fish-title{display:block;margin-top:1px;color:#9fe3ff;font-size:10.5px;letter-spacing:.2px;text-shadow:0 1px 3px #000,0 0 5px #000}
-.social-player-fish-title[hidden]{display:none}
-.social-player-digi-title{display:block;margin-top:1px;color:#f3e6c8;font-size:10.5px;letter-spacing:.2px;text-shadow:0 1px 3px #000,0 0 5px #000}
-.social-player-digi-title[hidden]{display:none}
+/* Each independent title keeps its rarity colour, with a text shadow for contrast. */
+.social-player-fish-title,.social-player-digi-title{display:table;margin:2px auto 0;padding:0;border:0;background:transparent;font:700 10px/1.3 Arial,sans-serif;letter-spacing:.2px;white-space:nowrap;text-shadow:0 1px 3px #000,0 0 5px #000}
+.social-player-fish-title{color:#9fe3ff}.social-player-digi-title{color:#f3e6c8}
+.social-player-fish-title .social-title-symbol,.social-player-digi-title .social-title-symbol{display:inline-block;width:22px;height:24px;max-width:100%;object-fit:contain;vertical-align:middle;margin-right:4px}
+.social-player-fish-title[hidden],.social-player-digi-title[hidden]{display:none}
 .social-bubble.social-emotion{background:transparent;border:0;box-shadow:none;border-radius:0;padding:0;margin:0;min-width:48px}
 
 #socialCameraPanel{position:absolute;z-index:4;right:16px;top:82px;width:220px;max-width:calc(100% - 32px);padding:12px;background:#213a3bf5;color:#f2ecdb;border:1px solid #c7ccba;border-radius:5px;font:12px/1.5 "Trebuchet MS",sans-serif}
@@ -1182,7 +1186,17 @@ svg.ad-toolbar-art{width:22px;height:22px;vertical-align:middle;margin-right:5px
 .sanctuary-unlocked-forms{margin:10px 0;padding:10px;border:1px solid #ffffff18;border-radius:10px;background:#101820}.sanctuary-unlocked-forms>div:first-child{display:flex;justify-content:space-between;gap:8px;color:#aab4bd;font-size:9px}.sanctuary-unlocked-forms>div:nth-child(2){display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:7px;margin-top:8px}.sanctuary-unlocked-forms button{display:flex;align-items:center;gap:7px;min-width:0;padding:7px;border:1px solid #ffffff16;border-radius:8px;background:#ffffff07;color:#dfe6ea;text-align:left;cursor:pointer;box-shadow:inset 0 1px #ffffff0a}.sanctuary-unlocked-forms button.is-current{border-color:var(--ad-accent);background:rgba(var(--ad-rgb),.12)}.sanctuary-unlocked-forms button:disabled{opacity:1}.sanctuary-unlocked-forms button span{display:flex;flex-direction:column;min-width:0;font-size:10px}.sanctuary-unlocked-forms button small{color:#8d97a1;font-size:8px}.sanctuary-unlocked-forms .sanctuary-node-face{width:36px;height:36px;flex:none;border-radius:7px}.sanctuary-unlocked-forms p{margin:8px 0 0;color:#8d97a1;font-size:9px}
 .sanctuary-tree{display:grid;gap:8px;padding:10px;border:1px solid #ffffff14;border-radius:10px;background:#0d151c}.sanctuary-tree-row{display:grid;gap:5px}.sanctuary-tree-cells{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:7px}.sanctuary-node{display:flex;align-items:center;gap:7px;padding:7px;border:1px solid #ffffff14;border-radius:8px;background:#ffffff08}.sanctuary-req{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .digi-titles{grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:8px}.digi-title{position:relative;display:flex;flex-direction:column;align-items:center;text-align:center;gap:4px;padding:12px 8px 8px;border:1px solid color-mix(in srgb,var(--tier) 45%,#ffffff12);border-radius:12px;min-height:118px;background:radial-gradient(circle at 50% 0,color-mix(in srgb,var(--tier) 22%,transparent),#101820 58%)}.digi-title-medal{width:36px;height:36px;border-radius:50%;background:conic-gradient(from 210deg,var(--tier),#fff6,#0000 40%,var(--tier));box-shadow:0 0 0 3px #0b1116,0 0 10px color-mix(in srgb,var(--tier) 55%,transparent)}.digi-title .digi-title-tier{color:var(--tier);font-size:7px;letter-spacing:.14em}.digi-title>b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;color:#f4efe4!important;font-size:11px}.digi-title-progress{width:100%;height:5px;overflow:hidden;border-radius:99px;background:#ffffff10}.digi-title-progress i{display:block;height:100%;background:var(--tier)}.digi-title>em{font:normal 8px "Trebuchet MS",sans-serif;color:#aab4bd}.digi-title>button,.digi-title>.digi-title-lock{margin-top:auto;padding:3px 8px;font-size:8px;border-radius:99px}.digi-title.is-worn{box-shadow:0 0 0 2px var(--tier)}
+/* Supplied DigiPet marks are transparent; keep the old medal only as fallback. */
+.digi-title-medal.has-art{display:grid;place-items:center;width:44px;height:44px;overflow:hidden;background:transparent;box-shadow:none}
+.digi-title-medal.has-art .social-title-symbol{display:block;width:100%;height:100%;min-width:0;min-height:0;max-width:100%;max-height:100%;object-fit:contain}
 @media(max-width:700px){#sanctuaryPanel .sanctuary-nav{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:thin}#sanctuaryPanel .sanctuary-nav [data-sanctuary-view]{flex:0 0 auto;min-width:max-content;padding:8px 10px}#sanctuaryPanel .sanctuary-nav .sanctuary-nav-note{display:none}.sanctuary-gear-workspace{grid-template-columns:1fr}.sanctuary-gear-inventory{grid-template-columns:repeat(3,minmax(0,1fr));max-height:260px}.sanctuary-gear-detail{position:static}.sanctuary-gear-tools{align-items:flex-start;flex-direction:column}.sanctuary-gear-tools fieldset{flex-wrap:wrap}.digi-titles{grid-template-columns:repeat(2,minmax(0,1fr))}}
+/* Keep the header and wallet inside the phone panel when the Titles tab scrolls into view. */
+@media(max-width:700px){
+ #sanctuaryPanel .sanctuary-head{display:block;padding-right:44px}
+ #sanctuaryPanel .sanctuary-head-actions{margin-top:8px}
+ #sanctuaryPanel .sanctuary-head-actions .sanctuary-wallet{width:auto;max-width:100%;box-sizing:border-box;white-space:normal;flex-wrap:wrap;margin:0}
+ #sanctuaryPanel .sanctuary-head-actions button{position:absolute;right:10px;top:10px}
+}
 
 /* Graphics messages are independent of chat status and never intercept scene or toolbar taps. */
 #plazaRenderNotice{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);max-width:85%;margin:0;padding:12px 16px;background:#172a30ed;color:white;border-radius:6px;text-align:center;z-index:2;pointer-events:none}

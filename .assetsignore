@@ -28,6 +28,14 @@ Updates/ro_atlas.js
 # --- dev-only art inside assets/ (read only by pages above) ------------------
 assets/weapons/
 assets/weapons_manifest.json
+# Source-only art audit/reference catalogs; runtime uses its JS registries and roster instead.
+assets/expanded-skill-icons/catalog.json
+assets/title-symbols/catalog.json
+assets/skill-icons/catalog.json
+assets/digimon/index.json
+assets/digimon/digidex-portraits.json
+assets/equipment-icons/manifest.json
+assets/equipment-icons/mythic-manifest.json
 assets/mob_*.png
 
 # --- legacy pages, harnesses and screenshots ----------------------------------

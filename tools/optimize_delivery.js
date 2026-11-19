@@ -40,7 +40,14 @@ function stripHtmlJsComments(html){return html.replace(/<script\b([^>]*)>([\s\S]
  const prefix=whole.slice(0,whole.indexOf('>')+1),suffix=whole.slice(prefix.length+script.length);
  return prefix+stripStandaloneJsComments(script)+suffix;
 });}
-const JS_FILES=Object.freeze(['assets/social-scene.js','assets/social-fishing.js','assets/social.js']);
+// These are ordinary client modules, not pinned sprite/atlas data. Only standalone
+// comments are removed; tokens, line breaks and license notices are checked below.
+const JS_FILES=Object.freeze([
+ 'assets/social-scene.js','assets/social-fishing.js','assets/social.js',
+ 'assets/native-fields.js','assets/boss-fx.js','assets/social-rules.js',
+ 'assets/digimon-battle.js','assets/shop.js','assets/social-gym-redesign.js',
+ 'assets/signature-fx.js','assets/plaza-bots.js','assets/shop-catalog.js','assets/friends.js'
+]);
 function optimize(output){
  let saved=0;
  // index.html's static head stylesheet is subject to the same parsed-rule contract.

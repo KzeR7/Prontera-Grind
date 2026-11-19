@@ -172,7 +172,7 @@ const addFloat=()=>{},pl={x:0,z:0};
 const questEvent=()=>{};const log=(m,c,k)=>{logs.push(m)},ui=()=>{},save=()=>{};   // the Black Market's writes (stubs here)
 this.__bm={buyOre,reforge,reforgeCost,bmOpen,refCost,refOre,qpSide,tabs,setSide:v=>{sideOpen=v}};
 `;
-const sb = { console, PGSkillIcons:require('../../assets/skill-icons.js') };
+const sb = { console, PGSkillIcons:require('../../assets/skill-icons.js'), PGTitles:require('../../assets/mastery-titles.js') };
 vm.createContext(Object.assign(sb,{simVisualsOff:()=>false})); vm.runInContext(harness, sb);
 const U = sb.__u;
 
@@ -479,7 +479,7 @@ t('the Mastery Index tracks monster titles and consumes loose cards for permanen
   U.indexMode='mobs';let h=U.V.index();
   assert.ok(h.includes('Midgard Mastery Index')&&h.includes('Monster Hunt Ledger'),'the new dock panel should render the index header and ledger');
   assert.ok(h.includes('12 kills recorded')&&h.includes('Mastering · BOSS'),'regular mobs and bosses both get species rows');
-  assert.ok(h.includes('Field Scout')&&h.includes('data-a="titleequip"'),'Index XP ranks unlock an equippable title');
+  assert.ok(h.includes('Field Scout')&&!h.includes('data-a="titleequip"')&&h.includes('equip titles in the Titles tab'),'the rank ladder shows progress only');
   assert.strictEqual((h.match(/class="mastery-title tone-/g)||[]).length,10,'the ladder has ten designed rank seals');
   assert.ok(h.includes('mastery-title-sigil')&&h.includes('mastery-title-bonus')&&h.includes('mastery-title-track'),'rank rows use the skill-FX-inspired prism, bonus and progress treatment');
   assert.ok(h.includes('class="mastery-title tone-silver locked next" data-rank="3"'),'the next unearned title is called out at the earned-rank boundary');
@@ -487,7 +487,10 @@ t('the Mastery Index tracks monster titles and consumes loose cards for permanen
   U.S.indexXp=2000;h=U.V.index();
   assert.ok(h.includes('data-rank="3" aria-label="Index title rank 3: Rune-Midgarts Vanguard"')&&h.includes('aria-valuenow="50"')&&h.includes('Rank XP 1,000 / 2,000'),'each new rank bar starts from its previous XP threshold');
   U.S.indexXp=1000;U.S.equippedTitle='field-scout';h=U.V.index();
-  assert.ok(h.includes('class="mastery-title tone-copper earned equipped" data-rank="2"')&&h.includes('aria-pressed="true"'),'the equipped rank receives a distinct active state');
+  assert.ok(h.includes('class="mastery-title tone-copper earned" data-rank="2"')&&!h.includes('data-a="titleequip"'),'equipping is not mixed into the rank progress ladder');
+  U.indexMode='titles';h=U.V.index();
+  assert.ok(h.includes('data-title-id="field-scout"')&&h.includes('data-a="titleequip"')&&h.includes('aria-label="Remove Field Scout"'),'the separate Titles tab owns the equip controls');
+  assert.ok(h.includes('Mythic Edge')&&h.includes('Thanatos&#39; End')&&h.includes('Master of Five'),'the requested challenges appear in the collection');
   U.S.equippedTitle=null;U.indexMode='cards';U.S.cardIndex={donated:1,byName:{'Poring Card':1},mastery:{'Poring Card':1},rewards:{},stats:{str:0,agi:0,dex:0,int:0,vit:0,luk:0}};
   h=U.V.index();
   assert.ok(h.includes('1/102 cards discovered')&&h.includes('<b>1/510</b> card mastery ranks'),'the album and five-rank-per-card progress are visible');
@@ -517,7 +520,7 @@ t('the Mastery Index tracks monster titles and consumes loose cards for permanen
   assert.ok(src.includes("const SIDE_TABS=['index','market','board','guide','log','wardrobe','shop','friends','set','gm']"),'the Quest Board Index button opens the panel');
   assert.ok(src.includes('id="sideMenu"')&&src.includes("index:['📚','Mastery Index','I']"),'both Quest Board and dock link to the index');
   assert.ok(src.includes('flex-wrap:wrap;justify-content:center')&&src.includes('max-width:calc(100vw - 12px)'),'the expanded dock wraps on narrow screens');
-  assert.ok(src.includes('recordMonsterKill(mob)')&&src.includes('data-a="titleequip"'),'kills are recorded and titles can be equipped from the view');
+  assert.ok(src.includes('recordMonsterKill(mob)')&&src.includes('data-v="titles"'),'kills are recorded and the Titles subtab is available');
 });
 
 t('clicking a slot highlights the fit in the REAL bag tab - no extra pop-out', () => {
@@ -1243,7 +1246,7 @@ t('pet details show Ragnarok sprites, named upgrade levels, and gacha skill odds
 
 t('the Skills panel prints the whole tree against what a maxed line earns', () => {
   assert.ok(src.includes('<div id="hud">'), 'the on-screen status row must carry its flex-bar id');
-  assert.ok(src.includes('id="heroTitle"')&&src.includes('heroTitle.style.display'), 'equipped titles must follow the player above the head');
+  assert.ok(src.includes('id="heroTitle"')&&src.includes('heroTitle.style.display'), 'equipped titles must follow the player below the feet');
   assert.ok(src.includes('data-a="skalloc"')&&src.includes('Auto-allocate all skills')&&src.includes('autoAllocateSkills'), 'the Skills panel must expose one-click lower-class-first allocation');
   for(const [action,helper] of [['gmindex','gmIndexTest'],['gmcard','gmCardTest'],['gmskill','gmSkillTest'],['gmpet','gmPetTest']])assert.ok(src.includes('data-a="'+action+'"')&&src.includes(helper),action+' GM controls must be available for testing the new systems');
   assert.ok(src.includes('data-v="all5000"')&&src.includes('data-v="all50000"')&&src.includes('data-v="xp1000000"'),'Index GM labels must expose the 5,000-rung, 50,000-rung and final-title scenarios');
@@ -1772,13 +1775,14 @@ t('the Index remembers every map ledger you opened, across re-renders', () => {
   assert.ok(src.includes("if(b.dataset.a==='idxmap'&&e.target.closest('summary'))e.preventDefault();"), 'the native details toggle is suppressed so it cannot fight the re-render');
 });
 
-t('the equipped title is a small transparent gold seal under the feet, with its rank mark', () => {
-  assert.ok(/id="heroTitleMark"/.test(src) && /heroTitleMark\.innerHTML=titleIcon\(equipped\)/.test(src), 'the title glyph rides on the left as the logo');
+t('the equipped title is a dark-backed seal under the feet with its complete logo', () => {
+  const css=fs.readFileSync(__dirname+'/../../assets/ui/mastery-titles.css','utf8');
+  assert.ok(/id="heroTitleMark"/.test(src) && /heroTitleMark\.innerHTML=titleIcon\(equipped,true\)/.test(src), 'the visible title glyph rides on the left and loads eagerly');
   assert.ok(src.includes('scr(pl.x,.16+(KIT.nativeWorld?actorFloorY()-.035:0),pl.z)'), 'the seal follows the current field floor beneath the feet');
-  assert.ok(/\.hero-title\{[^}]*background:#101f23e8/.test(src), 'dark backing keeps the title readable on every field');
-  assert.ok(/\.hero-title\{[^}]*border:1px solid #d9c68b70/.test(src), 'a thin gold frame instead');
-  assert.ok(/\.hero-title\{[^}]*transform:translate\(-50%,8px\)/.test(src), 'and it hangs below the anchor point');
-  assert.ok(!/\.hero-title\{[^}]*background:linear-gradient/.test(src), 'the old parchment fill is gone');
+  assert.ok(/\.hero-title\{[^}]*background:#101f23e8/.test(css), 'dark backing keeps the title readable on every field');
+  assert.ok(/\.hero-title\{[^}]*border:1px solid #d9c68b70/.test(css), 'a thin gold frame instead');
+  assert.ok(/\.hero-title\{[^}]*transform:translate\(-50%,8px\)/.test(css), 'and it hangs below the anchor point');
+  assert.ok(!/\.hero-title\{[^}]*background:linear-gradient/.test(css), 'the old parchment fill is gone');
 });
 
 t('the detail card opens directly under the clicked slot or bag tile, not at the window bottom', () => {

@@ -444,9 +444,6 @@ button.tick.on{background:#ffe08a;border-color:var(--gold);font-weight:bold}
    under the hero's feet in the world, never as a crowded item in the bottom status bar. */
 .hud-title-mirror{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;border:0!important;overflow:hidden!important;clip:rect(0 0 0 0)!important;clip-path:inset(50%)!important;white-space:nowrap!important}
 /* v51: a small transparent seal under the legs - gold frame, no fill, the rank mark as its logo. */
-.hero-title{position:absolute;z-index:27;display:none;transform:translate(-50%,3px);pointer-events:none;max-width:min(52vw,240px);padding:1px 7px 2px 5px;border:1px solid #e8c25a;border-radius:8px;background:transparent;color:#ffe9a8;font:800 9.5px/1.15 Georgia,serif;letter-spacing:.2px;text-align:center;text-shadow:0 1px 2px #000,0 0 6px #000;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-shadow:0 0 0 1px #1c120955,0 0 6px #e8c25a55,inset 0 0 0 1px #e8c25a44}
-.hero-title .ht-mark{display:inline-grid;place-items:center;width:13px;height:13px;margin-right:4px;border:1px solid #e8c25a;border-radius:50%;background:transparent;color:#ffe9a8;font:800 8px/1 Georgia,serif;vertical-align:-2px;text-shadow:0 1px 2px #000}
-.hero-title::after{content:'';position:absolute;left:50%;top:-4px;width:6px;height:6px;background:transparent;border-left:1px solid #e8c25a;border-top:1px solid #e8c25a;transform:translateX(-50%) rotate(45deg)}
 #qp .qp-head{display:flex;align-items:center;justify-content:space-between;gap:5px;font-weight:bold}#qp .qp-actions{display:flex;align-items:center;gap:4px}#qp .qp-actions button{font-size:10px;padding:1px 5px;white-space:nowrap}#qp .qp-side{margin-top:6px;padding-top:5px;border-top:1px solid #ffffff44;display:flex;flex-direction:column;gap:4px}#qp .qp-side-toggle{font-size:11px;padding:2px 6px;text-align:left}#qp .qp-side-tab{text-align:left;font-size:11px;padding:3px 6px}#qp .qp-side-tab.on{outline:2px solid #ffd23f}
 .mastery-head{display:flex;align-items:center;gap:8px;margin-bottom:7px;padding:7px 8px;border:2px solid var(--edge2);border-radius:9px;background:linear-gradient(115deg,#fff7df,#e6cf95);box-shadow:inset 0 1px #fff;min-width:0}
 .mastery-emblem{flex:none;width:36px;height:36px;display:grid;place-items:center;border:2px ridge #b98327;border-radius:50%;background:radial-gradient(circle at 30% 25%,#fff8cb,#d09a3a 70%,#80602a);color:#633c0b;font-size:23px;text-shadow:0 1px #fff;box-shadow:0 2px 3px #3b2a1a55}
@@ -765,8 +762,6 @@ button:focus-visible{outline:2px solid #e7d4a1;outline-offset:3px}
 .cell .rarity-label{position:absolute;bottom:2px;left:2px;right:2px;color:var(--rarity);font:600 8px/1.3 Arial,sans-serif;text-align:center;letter-spacing:.15px;pointer-events:none;white-space:nowrap}.cell.nm::after{display:none}.cell .ro-item-icon,.cell .ro-icon-svg{margin-bottom:8px;filter:drop-shadow(0 2px 2px #0008)}
 .ui-catalog .cell{min-height:57px}.cell .rf{top:3px;right:4px;background:#101c24;color:#f5eed7}.cell .lockstar{top:3px;left:4px;bottom:auto;color:#f5eed7}.ui-loadout .cell .lockstar{top:3px;bottom:auto}.ui-item-art{background:#111d21}
 .mastery-medal{color:var(--foil-hi,#e7d3a0);background:#172723!important;box-shadow:none!important;border:1px solid #829c8977!important;border-radius:10px!important;transform:none!important}.mastery-medal::before,.mastery-medal::after{display:none!important}.mastery-medal span{transform:none!important}.mastery-medal .ui-icon{width:26px;height:26px}.mastery-medal small{font:600 8px Arial,sans-serif;letter-spacing:1px}.mastery-title{box-shadow:none!important;background:#20332a!important}.mastery-title.locked{filter:none;opacity:.65}
-.hero-title{padding:4px 10px 4px 7px;border:1px solid #d9c68b70;border-radius:5px;background:#101f23e8;color:#eee0b8;font:600 10px/1.3 Arial,sans-serif;letter-spacing:.6px;text-shadow:none;box-shadow:0 3px 8px #0005;max-width:260px;transform:translate(-50%,8px)}
-.hero-title .ht-mark{width:16px;height:16px;border:0;border-radius:0;background:none;margin-right:6px;vertical-align:-4px}.hero-title .ui-icon{width:16px;height:16px}.hero-title::after{display:none}
 #wins>.wp[data-win="map"].ui-expanded{flex:1 1 1180px;width:1180px;max-width:100%}
 .ui-panel[data-layout="map"] .ui-hero{padding:10px 14px}.ui-panel[data-layout="map"] .ui-hero h2{font-size:22px;margin:3px 0}.ui-panel[data-layout="map"] .ui-content{gap:10px;padding:12px}
 .ui-field-guide .mapcols{margin:0;gap:10px}.ui-field-guide .mob-card{background:#172923;border:1px solid #42594c;padding:12px;border-radius:8px}.ui-field-guide .hd{font-size:14px;margin:0 0 8px}.ui-field-guide .sec{font-size:11px;margin:6px 0}.ui-field-guide .sec small{display:block;font-size:10px;line-height:1.5;color:#b9c8bb}.ui-field-guide .dropline{padding:6px 0;font-size:11px;gap:7px;border-bottom:1px solid #ffffff0b;align-items:center}.ui-field-guide .dropline>span:first-child{min-width:0}.ui-field-guide .dwho{display:block;margin-left:29px;color:#9eb4a6;font-size:9px}.ui-field-guide .drr{flex-shrink:0;text-align:right}.ui-field-guide .drr b{color:#f4dfab}.ui-field-guide .dnot{display:block;font-size:8px;max-width:60px;line-height:1.3;color:#d6b7a2}.ui-field-guide .cant,.ui-field-guide .worse{opacity:1;filter:none}.ui-field-guide .dropgrp{margin-top:7px;border-bottom:1px solid #64796755;padding:4px 0;color:#b4c7b9;text-transform:uppercase;letter-spacing:1px;font-size:9px}
@@ -921,14 +916,15 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="preload" href="assets/ui/fonts/font-5.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-6.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-7.ttf" as="font" type="font/ttf" crossorigin>
-<link rel="stylesheet" href="assets/ui/eclipse.css?v=436">
-<link rel="stylesheet" href="assets/ui/mobile.css?v=436">
+<link rel="stylesheet" href="assets/ui/eclipse.css?v=440">
+<link rel="stylesheet" href="assets/ui/mobile.css?v=440">
+<link rel="stylesheet" href="assets/ui/mastery-titles.css?v=440">
 <script src="assets/ui/mobile.js?v=274"></script>
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
-<link rel="stylesheet" href="assets/social.css?v=436">
+<link rel="stylesheet" href="assets/social.css?v=440">
 <link rel="stylesheet" href="assets/social-battle.css?v=393">
-  <link rel="stylesheet" href="assets/social-fishing.css?v=436"><link rel="stylesheet" href="assets/friends.css?v=273">
-<link rel="stylesheet" href="assets/adventure-guide.css?v=436">
+  <link rel="stylesheet" href="assets/social-fishing.css?v=440"><link rel="stylesheet" href="assets/friends.css?v=273">
+<link rel="stylesheet" href="assets/adventure-guide.css?v=440">
 </head>
 <body>
 <div id="loginOverlay"><div class="eclipse-login-world" aria-hidden="true"></div><header class="eclipse-login-header"><a href="./" class="eclipse-brand"><span>HH</span><b>HORIZON HAVEN<small>YOUR IDLE ADVENTURE</small></b></a><div class="eclipse-palettes" role="group" aria-label="Interface palette"><button type="button" data-palette="moonstone">Moonstone</button><button type="button" data-palette="aurora">Aurora</button><button type="button" data-palette="ember">Ember</button></div></header><main class="eclipse-login-layout"><section class="login-brand"><div class="login-eyebrow">A WORLD WORTH RETURNING TO</div><h1>Your next <br>chapter <em>awaits.</em></h1><p>Explore a world beyond the horizon.<br>Collect rare gear, master every class, and build your haven.</p><div class="eclipse-login-art"><img src="assets/ui/eclipse-knight.png" alt="Lord Knight ready for adventure"><span>01 / PRONTERA<small>THE JOURNEY BEGINS HERE</small></span><div><img src="assets/equipment-icons/1142.png" alt=""><span>YOUR NEXT UPGRADE<small>Somewhere out there.</small></span></div></div><div class="login-footnote">EXPLORE · GROW · CONQUER</div></section><div class="login-card"><div class="eclipse-access">ADVENTURER ACCESS <span>◇</span></div><h2 id="authHeading">Welcome back.</h2><p class="login-intro" id="authIntro">Your adventure is right where you left it.</p><div class="atabs" id="authTabs"><button type="button" id="tabLogin" class="on">Login</button><button type="button" id="tabReg">Register</button></div>
@@ -967,7 +963,7 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <div id="buildTag"></div></div></main><footer class="eclipse-login-footer"><span>HORIZON HAVEN / ECLIPSE</span><span>YOUR ADVENTURE. YOUR PACE.</span></footer></div>
 <div id="wrap"><div id="eclipseHeader"><span class="eclipse-wordmark">Horizon <small>HAVEN</small></span><div class="title"><span id="stageTitle">Prontera Lv 1</span><span id="grindStatus" style="font-size:12px;opacity:.85"></span></div>
 <div class="hud-zeny" id="zenyHover">&#9679; <b id="zeny">0</b> Zeny</div>
-<span class="eclipse-shards" title="Echo Shards">◇ <b id="eclipseShards">0</b><small>Shards</small></span><div style="margin-left:auto;display:flex;align-items:center;gap:8px"><span id="cloudBadge" title="Cloud save status" style="font-size:11px;opacity:.9"></span><button id="fsBtn" type="button" aria-pressed="false" aria-label="Toggle fullscreen" title="Fullscreen">⛶</button><button id="pgFocusBtn" type="button" aria-pressed="false" aria-label="Toggle field only mode" title="Hide field panels (field only)">◎</button><button id="screenBtn" type="button" aria-expanded="false" aria-controls="screenOptions" title="Screen display options">☷ Display</button><span id="userBadge" style="font-weight:bold;font-size:12px;background:#e9d39a;padding:3px 8px;border-radius:4px;border:1px solid var(--edge2)"></span><button id="gmBtn" onclick="openGmConsole()" style="display:none" title="Server-side tooling for looking after players">🛠 GM console</button><button id="logoutBtn" onclick="logout()" style="display:none">Logout</button></div></div><div id="view"><div id="ov"><div id="mobSpriteLayer" aria-hidden="true"></div><div id="fieldLoading" hidden role="status" aria-live="polite"><i></i><span>Loading field…</span></div><div id="weaponSpriteLayer" aria-hidden="true"></div><section id="eclipseCombat" class="minimized"><div><span class="eclipse-live">AUTO COMBAT</span><span id="eclipseStageLabel"></span><button id="eclipseMinimize" aria-expanded="false" aria-controls="eclipseCombatDetails" aria-label="Expand auto combat bar">+ Show</button></div><div id="eclipseCombatDetails"><div id="eclipseStagePips" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div id="prog"></div><button id="eclipseAdvance" aria-pressed="true">Auto-advance <span>●</span></button><label id="rangedMovement">Movement<select id="rangedMovementMode" aria-label="Ranged combat movement"><option value="stand">Stand still · max DPS</option><option value="kite">Kite · safer positioning</option></select></label></div></section><div id="tag"><b id="tn"></b><div class="bar"><i id="th" style="background:var(--hp)"></i></div></div><div id="heroTitle" class="hero-title" aria-live="polite"><span id="heroTitleMark" class="ht-mark" aria-hidden="true"></span><span id="heroTitleText"></span></div><button id="echoLeave" type="button" data-trial="close" hidden>Leave Endless Echo</button><section id="jobRiteHud" hidden aria-label="Job advancement trial"><small>CRUCIBLE OF THE VALKYRIE</small><b></b><span>Defeat your opponent before time runs out.</span><time aria-label="Time remaining">1:00</time><button type="button" onclick="finishJobRite(false)">Leave trial</button></section><section id="jobRiteResult" hidden role="status" aria-live="polite" aria-atomic="true"><div><strong></strong><p></p><small aria-live="off"></small></div></section><div id="hint">Drag to rotate &middot; Scroll or pinch to zoom</div><div id="feedWrap"><div id="feed"></div><div id="feedBar"><div id="feedTabs"><button id="feedTab" type="button" aria-expanded="true" aria-controls="feed" title="Minimize or show the on-screen log">📃 Logs ▾</button></div></div></div><div id="hudBuffs" role="status" aria-live="polite" aria-label="Active pet buffs and daily roulette boosts - hover an icon for what it does"></div><div id="minimapTools" aria-label="Mail, daily rewards and Social Hub"><button id="mailBtn" type="button" data-a="openmail" class="minimap-tool-btn" title="Mail &amp; Announcements" aria-label="Mail and announcements"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M3.5 6.5L12 13l8.5-6.5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/></svg><span class="minimap-tool-label">Mail</span><b id="mailBadge" class="minimap-tool-badge" hidden>0</b></button><button id="dailyBtn" type="button" data-a="opendaily" class="minimap-tool-btn" title="Daily Reward Roulette" aria-label="Daily reward roulette"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.9"/><circle cx="12" cy="12" r="2.2" fill="currentColor"/><path d="M12 3v6.8M12 14.2V21M3 12h6.8M14.2 12H21M5.6 5.6l4.8 4.8M13.6 13.6l4.8 4.8M18.4 5.6l-4.8 4.8M10.4 13.6l-4.8 4.8" stroke="currentColor" stroke-width="1.5"/></svg><span class="minimap-tool-label">Daily</span><b id="dailyBadge" class="minimap-tool-badge is-dot" hidden>!</b></button><button id="socialHubBtn" type="button" class="minimap-tool-btn social-hub-btn" title="Fountain Plaza — Social Hub" aria-label="Social Hub, Fountain Plaza. Enter plaza"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.2" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M3.6 19.2c.6-3.1 2.7-4.7 5.4-4.7s4.8 1.6 5.4 4.7" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/><circle cx="17.2" cy="9.2" r="2.5" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M15.9 14.6c2.2.3 3.9 1.7 4.4 4.3" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg><span class="minimap-tool-label">Social</span><b id="socialHubBadge" class="minimap-tool-badge social-hub-badge" hidden>0</b></button></div><div id="sideRail"><button id="eclipseMapCard" data-t="map" aria-label="Open current map"><div class="eclipse-map-art"><canvas id="eclipseMinimap" width="448" height="192" aria-label="Live terrain map and player position"></canvas></div><span><b id="eclipseMapName">World atlas</b><small id="eclipseMapStage"></small></span><span>⛶</span></button><div id="qp"></div><nav id="sideMenu" aria-label="Index and market"></nav></div><div id="dock"></div>
+<span class="eclipse-shards" title="Echo Shards">◇ <b id="eclipseShards">0</b><small>Shards</small></span><div style="margin-left:auto;display:flex;align-items:center;gap:8px"><span id="cloudBadge" title="Cloud save status" style="font-size:11px;opacity:.9"></span><button id="fsBtn" type="button" aria-pressed="false" aria-label="Toggle fullscreen" title="Fullscreen">⛶</button><button id="pgFocusBtn" type="button" aria-pressed="false" aria-label="Toggle field only mode" title="Hide field panels (field only)">◎</button><button id="screenBtn" type="button" aria-expanded="false" aria-controls="screenOptions" title="Screen display options">☷ Display</button><span id="userBadge" style="font-weight:bold;font-size:12px;background:#e9d39a;padding:3px 8px;border-radius:4px;border:1px solid var(--edge2)"></span><button id="gmBtn" onclick="openGmConsole()" style="display:none" title="Server-side tooling for looking after players">🛠 GM console</button><button id="logoutBtn" onclick="logout()" style="display:none">Logout</button></div></div><div id="view"><div id="ov"><div id="mobSpriteLayer" aria-hidden="true"></div><div id="fieldLoading" hidden role="status" aria-live="polite"><i></i><span>Loading field…</span></div><div id="weaponSpriteLayer" aria-hidden="true"></div><section id="eclipseCombat" class="minimized"><div><span class="eclipse-live">AUTO COMBAT</span><span id="eclipseStageLabel"></span><button id="eclipseMinimize" aria-expanded="false" aria-controls="eclipseCombatDetails" aria-label="Expand auto combat bar">+ Show</button></div><div id="eclipseCombatDetails"><div id="eclipseStagePips" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div id="prog"></div><button id="eclipseAdvance" aria-pressed="true">Auto-advance <span>●</span></button><label id="rangedMovement">Movement<select id="rangedMovementMode" aria-label="Ranged combat movement"><option value="stand">Stand still · max DPS</option><option value="kite">Kite · safer positioning</option></select></label></div></section><div id="tag"><b id="tn"></b><div class="bar"><i id="th" style="background:var(--hp)"></i></div></div><div id="heroTitle" class="hero-title" aria-live="polite"><span id="heroTitleMark" class="ht-mark" aria-hidden="true"></span><span id="heroTitleText"></span></div><button id="echoLeave" type="button" data-trial="close" hidden>Leave Endless Echo</button><section id="jobRiteHud" hidden aria-label="Job advancement trial"><small>CRUCIBLE OF THE VALKYRIE</small><b></b><span>Defeat your opponent before time runs out.</span><time aria-label="Time remaining">1:00</time><button type="button" onclick="finishJobRite(false)">Leave trial</button></section><section id="jobRiteResult" hidden role="status" aria-live="polite" aria-atomic="true"><div><strong></strong><p></p><small aria-live="off"></small></div></section><div id="hint">Drag to rotate &middot; Scroll or pinch to zoom</div><div id="feedWrap"><div id="feed"></div><div id="feedBar"><div id="feedTabs"><button id="feedTab" type="button" aria-expanded="true" aria-controls="feed" title="Minimize or show the on-screen log">📃 Logs ▾</button></div></div></div><div id="hudBuffs" role="status" aria-live="polite" aria-label="Active player skill buffs, pet buffs and daily boosts - focus or hover an icon for details"></div><div id="minimapTools" aria-label="Mail, daily rewards and Social Hub"><button id="mailBtn" type="button" data-a="openmail" class="minimap-tool-btn" title="Mail &amp; Announcements" aria-label="Mail and announcements"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M3.5 6.5L12 13l8.5-6.5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/></svg><span class="minimap-tool-label">Mail</span><b id="mailBadge" class="minimap-tool-badge" hidden>0</b></button><button id="dailyBtn" type="button" data-a="opendaily" class="minimap-tool-btn" title="Daily Reward Roulette" aria-label="Daily reward roulette"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.9"/><circle cx="12" cy="12" r="2.2" fill="currentColor"/><path d="M12 3v6.8M12 14.2V21M3 12h6.8M14.2 12H21M5.6 5.6l4.8 4.8M13.6 13.6l4.8 4.8M18.4 5.6l-4.8 4.8M10.4 13.6l-4.8 4.8" stroke="currentColor" stroke-width="1.5"/></svg><span class="minimap-tool-label">Daily</span><b id="dailyBadge" class="minimap-tool-badge is-dot" hidden>!</b></button><button id="socialHubBtn" type="button" class="minimap-tool-btn social-hub-btn" title="Fountain Plaza — Social Hub" aria-label="Social Hub, Fountain Plaza. Enter plaza"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.2" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M3.6 19.2c.6-3.1 2.7-4.7 5.4-4.7s4.8 1.6 5.4 4.7" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/><circle cx="17.2" cy="9.2" r="2.5" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M15.9 14.6c2.2.3 3.9 1.7 4.4 4.3" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg><span class="minimap-tool-label">Social</span><b id="socialHubBadge" class="minimap-tool-badge social-hub-badge" hidden>0</b></button></div><div id="sideRail"><button id="eclipseMapCard" data-t="map" aria-label="Open current map"><div class="eclipse-map-art"><canvas id="eclipseMinimap" width="448" height="192" aria-label="Live terrain map and player position"></canvas></div><span><b id="eclipseMapName">World atlas</b><small id="eclipseMapStage"></small></span><span>⛶</span></button><div id="qp"></div><nav id="sideMenu" aria-label="Index and market"></nav></div><div id="dock"></div>
 <div id="eclipseCompanions"><div id="eclipsePetStrip"></div><button data-t="pet">Companions ↗</button><button id="spd" hidden>Speed x1</button></div><div id="wins"></div></div><div id="pgScrim" hidden aria-hidden="true"></div><button id="pgQuests" type="button" aria-controls="sideRail" aria-expanded="false" title="Quests and destinations"><span aria-hidden="true">❖</span><b>Quests</b><span class="pg-q-dot" id="pgQuestDot" hidden aria-hidden="true"></span></button></div>
 <div id="hud"><div class="eclipse-portrait-frame"><canvas id="eclipsePortrait" width="126" height="134" aria-label="Your character"></canvas></div><div class="eclipse-vitals"><div><b id="eclipsePlayerName"></b><span id="cls2"></span></div><span id="titleLabel" class="title-hud hud-title-mirror" aria-hidden="true" style="display:none"></span><div class="eclipse-levels">BASE <b id="lv">1</b> <span>JOB <b id="jl">1</b></span></div><div class="hud-health"><span>HP</span> <div class="bar" role="meter" aria-label="HP" aria-valuemin="0" aria-valuemax="100" id="hpMeter"><i id="hpb"></i></div><small id="hpPct">100%</small></div><div class="eclipse-job-line"><span>JOB</span><div><i id="eclipseJobFill"></i></div><b id="eclipseJobLevel">1</b></div>
 </div></div>
@@ -1058,30 +1054,33 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <div id="tooltip"></div>
 <link rel="stylesheet" href="assets/wardrobe.css?v=138">
 <link rel="stylesheet" href="assets/shop.css?v=318">
-<script src="assets/wardrobe.js?v=436"></script>
+<script src="assets/wardrobe.js?v=440"></script>
 <script src="assets/shop-catalog.js?v=321"></script>
 <script src="assets/fourth-jobs.js?v=179"></script>
-<script src="assets/expanded-jobs.js?v=436"></script>
+<script src="assets/expanded-jobs.js?v=440"></script>
 <script src="assets/ascension.js?v=156"></script>
 <script src="assets/native-mob-heights.js?v=153"></script>
 <script src="assets/native-fields.js?v=197"></script>
 <script src="assets/reference-mobs.js?v=193"></script>
 <script src="assets/skill-icons.js?v=130"></script>
 <script src="assets/skill-icons-extra.js?v=207"></script>
+<script src="assets/skill-icons-expanded.js?v=440"></script>
+<script src="assets/mastery-titles.js?v=440"></script>
+<script src="assets/player-buffs.js?v=440"></script>
 <script src="assets/skill-materials.js?v=220"></script>
 <script src="assets/afterglow-animations.js?v=151"></script>
 <script src="assets/skill-overdrive.js?v=220"></script>
 <script src="assets/ro-fx/index.js?v=414"></script>
 <script src="assets/signature-fx.js?v=414"></script>
-<script src="assets/expanded-fx/ninja-throw-fx.js?v=436"></script>
-<script src="assets/expanded-fx/expanded-fx-batch.js?v=436"></script>
-<script src="assets/expanded-fx/expanded-fx-redesign.js?v=436"></script>
-<script src="assets/expanded-fx/researched-fx.js?v=436"></script>
-<script src="assets/expanded-fx/class-identity-fx.js?v=436"></script>
-<script src="assets/expanded-fx/review-polish-fx.js?v=436"></script>
-<script src="assets/expanded-fx/triple-old-no-sword.js?v=436"></script>
-<script src="assets/expanded-fx/approved.js?v=436"></script>
-<script src="assets/skill-afterglow.js?v=436"></script>
+<script src="assets/expanded-fx/ninja-throw-fx.js?v=440"></script>
+<script src="assets/expanded-fx/expanded-fx-batch.js?v=440"></script>
+<script src="assets/expanded-fx/expanded-fx-redesign.js?v=440"></script>
+<script src="assets/expanded-fx/researched-fx.js?v=440"></script>
+<script src="assets/expanded-fx/class-identity-fx.js?v=440"></script>
+<script src="assets/expanded-fx/review-polish-fx.js?v=440"></script>
+<script src="assets/expanded-fx/triple-old-no-sword.js?v=440"></script>
+<script src="assets/expanded-fx/approved.js?v=440"></script>
+<script src="assets/skill-afterglow.js?v=440"></script>
 <script src="assets/boss-fx.js?v=249"></script>
 <script src="assets/pets.js?v=130"></script>
 <script src="assets/bgm-tracks.js?v=206"></script>
@@ -1106,7 +1105,7 @@ const holdLogin=e=>e.preventDefault();document.getElementById('loginForm').addEv
 <script src="assets/endgame/three-r128.min.js" integrity="sha384-CI3ELBVUz9XQO+97x6nwMDPosPR5XvsxW2ua7N1Xeygeh1IxtgqtCkGfQY9WWdHu" crossorigin="anonymous"></script>
 <script>clearTimeout(engineWait);document.getElementById('engineError').hidden=true;document.getElementById('loginForm').removeEventListener('submit',holdLogin);</script>
    <!-- v360: vendored r128 examples/js loader so the Social Hub can mount the owner's Prontera Grand Aetherwell GLB (assets/Fountainfile/). -->
-   <script src="assets/vendor/GLTFLoader.r128.js?v=436"></script>
+   <script src="assets/vendor/GLTFLoader.r128.js?v=440"></script>
 <script>
 const $=id=>document.getElementById(id);
 // Owner request (2026-10-24): no browser menu anywhere in the game - a right-click used to offer
@@ -1224,7 +1223,7 @@ function polishIcons(root){
   const re=new RegExp(Object.keys(UI_EMOJI).join('|'),'gu');
   for(const node of nodes){const fragment=document.createDocumentFragment();let start=0;for(const match of node.data.matchAll(re)){fragment.append(document.createTextNode(node.data.slice(start,match.index)));const box=document.createElement('span');box.innerHTML=uiIcon(UI_EMOJI[match[0]]);fragment.append(box.firstChild);start=match.index+match[0].length}fragment.append(document.createTextNode(node.data.slice(start)));node.replaceWith(fragment)}
 }
-const titleIcon=t=>uiIcon(['index','compass','sword','pet','moon','shield','gem','sun','crown','wing'][Math.max(0,INDEX_TITLES.findIndex(x=>x.id===t.id))]);
+const titleIcon=(t,eager=false)=>(typeof PGTitles!=='undefined'&&PGTitles.icon(t,eager))||uiIcon(['index','compass','sword','pet','moon','shield','gem','sun','crown','wing'][Math.max(0,INDEX_TITLES.findIndex(x=>x.id===t.id))]);
 const SKILL_ICON={aid:'heart',bash:'fist',endure:'rise',hprec:'heart',provoke:'roar',bowl:'spiral',pierce:'thrustblade',quick:'bolt',spear:'swordbook',spiral:'spiral',aura:'halo',jointbeat:'parry',fire:'flame',nap:'bolt',coat:'ward',fireball:'fireball',storm:'snow',jup:'bolt',amp:'meteor',tstorm:'rock',meteor:'meteor',grav:'gravity',mystic:'orb',napalm:'flame',dstr:'arrow',iconc:'eye',owl:'eye',vult:'feather',blitz:'feather',sharp:'target',beast:'paw',falconry:'feather',falcon:'wing',focus:'target',sight:'eye',pharrow:'mine',dbl:'twincut',env:'quickcut',dodge:'feint',steal:'hand',sonic:'flurry',grim:'shadow',katm:'edge',vdust:'crosscut',mAss:'meteor',soulb:'ghost',sdestroy:'ghost',holy:'cross',heal:'cross',bless:'halo',iagi:'wing',magnus:'cross',sanct:'cross',asp:'flame',kyrie:'cross',judex:'bolt',assum:'cross',gloria:'sun',meditatio:'sun',mammo:'coin',greed:'coin',phys:'muscle',discount:'tag',hammer:'hammer',adren:'bolt',wperf:'hammer',wresearch:'gear',cart:'cart',thrust:'spear',skin:'wheel',cboost:'wheel',frenzy:'fist',dpois:'blades',ovthrust:'shock',mbrk:'shock',fdiver:'ice',fnova:'snow',ashower:'rain',sandat:'bladefan',signum:'cross',cartrev:'cart',spearboom:'blades',tblow:'fist',vermilion:'ghost',landmine:'mine',wwalk:'wind',vsplash:'wind',akatar:'rush',tundead:'skull',basilica:'temple',meltdown:'anvil'};
 const SKILL_TONE={rise:['#4b412b','#eac16c','#fff3cf'],thrustblade:['#4b412b','#eac16c','#fff3cf'],swordbook:['#4b412b','#eac16c','#fff3cf'],parry:['#4b412b','#eac16c','#fff3cf'],twincut:['#503346','#ef8b9f','#fff0da'],quickcut:['#503346','#ef8b9f','#fff0da'],feint:['#332b57','#b196fa','#f2e8ff'],bladefan:['#503346','#ef8b9f','#fff0da'],flurry:['#503346','#ef8b9f','#fff0da'],edge:['#503346','#ef8b9f','#fff0da'],crosscut:['#503346','#ef8b9f','#fff0da'],rush:['#332b57','#b196fa','#f2e8ff'],heart:['#17444c','#2bb9a9','#ecfff1'],fist:['#582b32','#f06d4c','#ffe0a0'],shield:['#294e70','#4eb1e8','#e4f8ff'],roar:['#633229','#ff9651','#fff0b4'],spiral:['#364278','#9385ff','#f1ebff'],spear:['#4c3941','#e1c276','#fff3c7'],bolt:['#3e3865','#b29bff','#f8efff'],halo:['#63501e','#e8bd4d','#fff5c4'],bone:['#52403a','#d9bc8b','#fff3da'],flame:['#71331f','#ff6a2e','#ffe987'],shadow:['#33254f','#9564d8','#f1dfff'],ward:['#1d5560','#42c7c0','#e5ffff'],fireball:['#642f27','#fa7c35','#fff2a5'],snow:['#1d4d72','#59c5ff','#effcff'],book:['#49345f','#bd91ff','#fff0ff'],storm:['#174f70','#52d6ed','#ecffff'],meteor:['#5d2e51','#fa70aa','#fff0df'],gravity:['#302354','#a76dff','#f1dfff'],orb:['#343b72','#8c9cff','#f2f3ff'],arrow:['#4c3d2b','#d6b56d','#fff1c0'],eye:['#244d67','#56d6d1','#edffff'],feather:['#285644','#56c78d','#edffdf'],target:['#64432d','#f2a356','#fff2c6'],paw:['#4a5d2a','#9bca50','#f5ffd9'],wing:['#30506f','#8dd7ff','#f5ffff'],blades:['#5a3045','#f2798c','#fff0d8'],vial:['#2b5947','#7bda7c','#f2ffdc'],ghost:['#49355d','#b38bf3','#fff0ff'],cross:['#67501f','#f2cf68','#fff8d6'],water:['#184f70','#50c8f4','#e9fbff'],sun:['#72501d','#ffc643','#fff8bd'],lotus:['#5a3b73','#d38cda','#fff0ff'],coin:['#684616','#f2b62f','#fff4ad'],muscle:['#633532','#ee8667','#ffe5c3'],tag:['#63502b','#d8af57','#fff2c2'],hammer:['#493b38','#c89e76','#fff0dc'],gear:['#3d5152','#7cc3ba','#effffc'],cart:['#525032','#c3ba54','#fbffbf'],rock:['#454654','#a4a6b4','#f5f5ff'],wheel:['#3c4c60','#65a9dc','#eff9ff'],shock:['#623151','#f36199','#ffedf7'],ice:['#20527d','#74d9ff','#f0fdff'],rain:['#294b75','#76aef4','#f5fbff'],sand:['#654b29','#d5a450','#fff2c6'],mine:['#4f3646','#d07083','#ffe7dc'],temple:['#66502d','#d3b468','#fff3c9'],anvil:['#41454f','#99a4b4','#f4f6ff'],wind:['#244d5c','#55c7b9','#eaffff'],poison:['#3d5128','#a9d946','#f6ffce'],hand:['#584052','#d595bb','#fff0fb'],skull:['#4d444c','#c2b8cb','#fffaff'],rune:['#383264','#8977e7','#f5f1ff']};
 const SKILL_PICTO={
@@ -1296,12 +1295,12 @@ const SKILL_PICTO={
 };
 // Motifs describe the action; secondary emblems distinguish skills within the same family.
 const SKILL_EMBLEM={aid:'cross',hprec:'heart',bash:'shock',frenzy:'flame',tblow:'blades',endure:'shield',pierce:'target',spear:'book',spearboom:'shield',dbl:'arrow',env:'bolt',dodge:'wind',sonic:'shock',katm:'book',vdust:'shock',dpois:'skull',sandat:'sand',akatar:'gear',bowl:'blades',spiral:'spear',quick:'blades',jup:'storm',judex:'cross',adren:'hammer',aura:'spear',bless:'cross',fire:'flame',napalm:'ghost',asp:'cross',vermilion:'storm',storm:'wind',fnova:'ice',owl:'book',iconc:'arrow',sight:'sun',vult:'arrow',blitz:'bolt',falconry:'paw',sharp:'arrow',focus:'eye',grim:'blades',soulb:'blades',sdestroy:'skull',holy:'bolt',heal:'heart',magnus:'sun',sanct:'lotus',kyrie:'shield',assum:'wing',signum:'skull',gloria:'halo',meditatio:'book',mammo:'hammer',greed:'hand',hammer:'shock',wperf:'gear',cart:'coin',cartrev:'shock',skin:'shield',cboost:'cart',ovthrust:'hammer',mbrk:'book',pharrow:'arrow',landmine:'rock',mAss:'blades',meteor:'flame',iagi:'wind',falcon:'target',wwalk:'feather',vsplash:'poison'};
-const skillIcon=id=>{const art=typeof PGSkillIcons!=='undefined'&&PGSkillIcons[id];
+const skillIcon=(id,eager=false)=>{const art=typeof PGSkillIcons!=='undefined'&&PGSkillIcons[id];
   if(!art)return '<span class="skill-art skill-icon-missing" aria-hidden="true">✦</span>';
-  return `<img class="skill-art family-${art.family}" data-skill="${id}" data-family="${art.family}" src="assets/skill-icons/${art.file}" alt="" width="46" height="46" loading="lazy" decoding="async">`};
-// Pet buff artwork uses distinct original cells from the same artist as skills.
+  return `<img class="skill-art family-${art.family}" data-skill="${id}" data-family="${art.family}" src="${art.src||'assets/skill-icons/'+art.file}" alt="" width="46" height="46" loading="${eager?'eager':'lazy'}" decoding="async">`};
+// Pet buffs use the owner's supplemental crops; older local art remains the fallback.
 const petBuffIcon=s=>{const art=typeof PGSkillIcons!=='undefined'&&(PGSkillIcons['pet_'+s.id]||PGSkillIcons[{warcry:'aura',arcane:'mystic',siphon:'vermilion',vital:'aid'}[s.id]]);
-  return art?`<img class="buff-art" data-buff="${s.id}" src="assets/skill-icons/${art.file}" alt="" width="46" height="46" decoding="async">`:''};
+  return art?`<img class="buff-art" data-buff="${s.id}" src="${art.src||'assets/skill-icons/'+art.file}" alt="" width="46" height="46" decoding="async">`:''};
 // The CDM affix stays in the roll pool, but v73 (owner: "players only target cri damage on all
 // equipments") changed who can roll it and what it pays: the affix is now a weapon/accessory roll
 // like the cdm CARD, and its gear weight is AB.cdm .7 -> .45. The final GEAR-AFFIX output is still
@@ -1353,7 +1352,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-19 haven-v436 expanded class skill effects';
+const BUILD='2026-11-19 haven-v440 transparent plaza titles';
 // v364: this write used to sit AFTER the `//` on the BUILD line, so it was part of the comment and
 // never ran - the login card showed an empty #buildTag and there was no way to confirm which file
 // the browser had loaded. It also has to survive the script running before the login card exists.
@@ -1566,9 +1565,9 @@ SKILLS4.push(
 );
 if(FOURTH_JOBS_LIVE)SKILLS.push(...SKILLS4);
 // haven-v408 expanded roster skills. Kept apart from SKILLS4 (the original six fourth jobs' 36
-// skills) so those fixtures stay exact. Icons alias existing supplied crops through `icon`, the
-// same way the fourth jobs did before their own artwork arrived; `fx` names the existing cast
-// choreography each non-passive skill plays (assets/skill-afterglow.js). `tree` only sorts the
+// skills) so those fixtures stay exact. Their dedicated supplied artwork is registered by skill ID;
+// `icon` remains the old-art fallback, and `fx` names the existing cast choreography each
+// non-passive skill plays (assets/skill-afterglow.js). `tree` only sorts the
 // Bard & Dancer line into its two display tabs; both trees are learnable by the same class.
 const SKILLSX=[
  {"id":"cr_guard","n":"Auto Guard","max":10,"type":"buff","col":"#f2d16b","cd":12,"key":"block","rate":1,"duration":12,"icon":"coat","text":"Chance to block incoming hits while attacking.","fx":"coat","from":"Crusader"},
@@ -2456,7 +2455,13 @@ const safeCount=v=>{const n=Number(v);return Number.isFinite(n)?Math.max(0,Math.
 const indexExperience=()=>S&&Number.isFinite(Number(S.indexXp))?safeCount(S.indexXp):safeCount(S.kills);
 const indexRankForXp=xp=>{let rank=0;for(const t of INDEX_TITLES)if(xp>=t.xp)rank++;return rank};
 const indexNextTitle=xp=>INDEX_TITLES.find(t=>xp<t.xp)||null;
-const titleUnlocked=t=>!!(S&&t&&indexExperience()>=t.xp);
+// Achievement titles are cosmetic; only the original ten Index ranks contribute Index Crit.
+const titleUnlocked=(t,state=S)=>!!(state&&t&&(typeof PGTitles!=='undefined'?PGTitles.unlocked(t,state,CLASSES):(Number.isFinite(Number(state.indexXp))?safeCount(state.indexXp):safeCount(state.kills))>=t.xp));
+function equippedMasteryTitle(state=S){
+  if(!state||!state.equippedTitle)return null;
+  const title=(typeof PGTitles!=='undefined'?PGTitles.find(state.equippedTitle,HUNT_TITLES):HUNT_TITLES.find(t=>t.id===state.equippedTitle));
+  return title&&titleUnlocked(title,state)?title:null;
+}
 // v73: Index Crit - the only crit source that lives OUTSIDE the 60% cap, and the owner's answer
 // to "a way to max crit rate to 100% that is not equipment and not stats". Every Hunt Title you
 // unlock adds its slice; the ladder is +1/+1/+2/+2/+3/+4/+5/+6/+7/+9 = +40, so a complete Index
@@ -2601,7 +2606,16 @@ function repairMastery(f){
   // Legacy v46 records used one global donation track. Their byName counts become the first
   // per-card ranks, and their old stat points are now preserved in the migrated reward arrays.
   ci.donated=Math.max(ci.donated,Object.values(ci.byName).reduce((a,n)=>a+safeCount(n),0));
-  if(!HUNT_TITLES.some(t=>t.id===f.equippedTitle&&safeCount(f.indexXp)>=t.xp))f.equippedTitle=null;
+  if(typeof PGTitles!=='undefined'){
+    PGTitles.sync(f,CLASSES); // recover eligible achievements from surviving old-save ledgers
+    const worn=PGTitles.find(f.equippedTitle,HUNT_TITLES);
+    if(!worn||!PGTitles.unlocked(worn,f,CLASSES))f.equippedTitle=null;
+  }else{
+    // A transient title-script load failure must not erase a saved challenge title. Validate
+    // legacy ranks here and defer unknown string IDs until the collection is available again.
+    const rank=HUNT_TITLES.find(t=>t.id===f.equippedTitle);
+    if((rank&&safeCount(f.indexXp)<rank.xp)||(f.equippedTitle!=null&&typeof f.equippedTitle!=='string'))f.equippedTitle=null;
+  }
   return f;
 }
 const REC=['Lv 1-10','Lv 10-50','Lv 10-50','Lv 10-50','Lv 10-50','Lv 60-67','Lv 67-74','Lv 74-80','Lv 80-90','Lv 90-99','Lv 150','Lv 150'];
@@ -3815,7 +3829,7 @@ function ascUpgradeText(id,rank=5){const u=ASC_UPGRADES[id]||{},labels={damage:'
  return Object.entries(u).map(([k,n])=>k==='burn'?(rank===5?'Burn: 10% of cast power over 3s':'Burn unlocks at rank 5'):k==='bounce'?(rank===5?'+1 bounce to another target':'Extra bounce unlocks at rank 5'):`+${Number((n*ascUpgradeScale(k,rank)).toFixed(2))}${['range','stun','root','duration','critical','slow','flee','barrier'].includes(k)||(k==='buff'&&id==='ab_duple')?'':'%'} ${labels[k]||k}`).join(' · ');
 }
 
-const fresh=()=>({ascension:cleanAscension(null),progressionVersion:PROGRESSION_VERSION,skillVersion:SKILL_VERSION,skillRefund:0,skillRespec:{},pets:[],bond:[],cls:'Novice',sex:'m',hair:0,appearance:null,lv:1,exp:0,hp:100,zeny:0,kills:0,indexXp:0,mobKills:{},equippedTitle:null,shards:0,refineScrolls:0,mythicScrolls:0,nmMatVersion:3,nmMat:[0],dps:0,trial:{day:trialDay(),used:0,best:0,runs:0},dailyWheel:{day:trialDay(),spun:0,bonusRolls:0,lastReward:null,totalSpins:0},poker:{day:trialDay(),chips:1000,freeClaimed:0,ledgerApplied:[]},fishing:{v:1,bag:[],dex:{},stats:{casts:0,catches:0,escapes:0,perfects:0},settings:{fish:true,sound:true},coins:0,rods:['twig'],rod:'twig',bait:{},baitSel:null,bagTier:0,title:null,mvpCaught:[]},mail:[],mailSeeded:false,cardIndex:emptyCardIndex(),dmg:0,pts:10,jobs:{Novice:{jl:1,jx:0}},sk:{aid:1},skOff:{},skillPriority:[],skillCombos:{},dmgShort:true,dmgShow:true,cameraShake:true,base:{},mp:0,lvl:1,prog:MAPS.map(()=>1),mapClears:MAPS.map(()=>false),ascensionMat:[0,0,0],ascensionStageVersion:1,kl:0,auto:true,adv:true,kite:false,feed:true,hints:true,clickSell:false,bg:true,autoSell:[false,false,false,false,false,false,false],logOff:{},q:null,cards:[],ore:{ori:0,elu:0},offlineAt:0,offlineKph:0,offlineRateAt:0,offlineRateKills:0,offlineKillRemainder:0,offlineClaimOutcomes:[],runSeq:1,runGen:1,gm:false,gmx:100,bgm:{enabled:true,volume:.05,muted:false},
+const fresh=()=>({ascension:cleanAscension(null),progressionVersion:PROGRESSION_VERSION,skillVersion:SKILL_VERSION,skillRefund:0,skillRespec:{},pets:[],bond:[],cls:'Novice',sex:'m',hair:0,appearance:null,lv:1,exp:0,hp:100,zeny:0,kills:0,indexXp:0,mobKills:{},equippedTitle:null,titleAwards:[],titleBest:{weapon:0,armor:0},shards:0,refineScrolls:0,mythicScrolls:0,nmMatVersion:3,nmMat:[0],dps:0,trial:{day:trialDay(),used:0,best:0,runs:0},dailyWheel:{day:trialDay(),spun:0,bonusRolls:0,lastReward:null,totalSpins:0},poker:{day:trialDay(),chips:1000,freeClaimed:0,ledgerApplied:[]},fishing:{v:1,bag:[],dex:{},stats:{casts:0,catches:0,escapes:0,perfects:0},settings:{fish:true,sound:true},coins:0,rods:['twig'],rod:'twig',bait:{},baitSel:null,bagTier:0,title:null,mvpCaught:[]},mail:[],mailSeeded:false,cardIndex:emptyCardIndex(),dmg:0,pts:10,jobs:{Novice:{jl:1,jx:0}},sk:{aid:1},skOff:{},skillPriority:[],skillCombos:{},dmgShort:true,dmgShow:true,cameraShake:true,base:{},mp:0,lvl:1,prog:MAPS.map(()=>1),mapClears:MAPS.map(()=>false),ascensionMat:[0,0,0],ascensionStageVersion:1,kl:0,auto:true,adv:true,kite:false,feed:true,hints:true,clickSell:false,bg:true,autoSell:[false,false,false,false,false,false,false],logOff:{},q:null,cards:[],ore:{ori:0,elu:0},offlineAt:0,offlineKph:0,offlineRateAt:0,offlineRateKills:0,offlineKillRemainder:0,offlineClaimOutcomes:[],runSeq:1,runGen:1,gm:false,gmx:100,bgm:{enabled:true,volume:.05,muted:false},
   st:{str:1,agi:1,dex:1,luk:1,int:1,vit:1},eq:{weapon:{id:1,slot:'weapon',wt:'dagger',tier:0,val:5,name:'Novice Knife',aff:[],slots:1,cards:[],sec:0},armor:null,head:null,off:null,leg:null,acc1:null,acc2:null},inv:[]});
 const saveKey=()=>'pg_save3_'+currentUser;
 // ---------- the save-owner stamp (v88.6) ----------
@@ -4540,6 +4554,7 @@ function save(forceDuringUpdate=false){if(!currentUser||!S||(typeof CLOUD!=='und
   // as everything else does. A stale *name* on our own copy is repaired here, not turned into a
   // permanent refusal to save.
   if(!saveIsOurs(S)){saveElsewhere(S.owner);return}
+  if(typeof PGTitles!=='undefined')PGTitles.sync(S,CLASSES);
   if(S.owner&&!sameAccount(S.owner,currentUser))syncLog('restamp',{was:String(S.owner),now:String(currentUser),id:Number(S.accountId)||0});
   offlineRateSample(now);S.offlineAt=now;S.owner=currentUser;S.accountId=CLOUD.id||S.accountId;S.gmStats=gmStatSnapshot();
   if(typeof cloudBumpSaveRev==='function')cloudBumpSaveRev(now);
@@ -8021,7 +8036,7 @@ function tickCombatSkills(dt){const r=skillState();r.counter=Math.max(0,(r.count
   if(mobs.some(o=>o.hp>0))for(const sk of SKILLS){if(sk.type!=='buff'||!skillOn(sk.id)||(sk.id==='ovthrust'&&skillOn('thrust'))||(skCd[sk.id]||0)>0||(r.buffs[sk.id]&&r.buffs[sk.id].left>.5))continue;
     if(sk.id==='thrust')delete r.buffs.ovthrust;
     const duration=ascSkillValue(sk.id,'duration')+(sk.id==='dpois'?5+lv(sk.id):['ovthrust','thrust'].includes(sk.id)?8+2*Math.min(5,lv(sk.id)):sk.duration);
-    if(sk.absorb)startAbsorb({...sk.absorb,pct:sk.absorb.pct+ascSkillValue(sk.id,'barrier')/100},lv(sk.id));
+    if(sk.absorb){startAbsorb({...sk.absorb,pct:sk.absorb.pct+ascSkillValue(sk.id,'barrier')/100},lv(sk.id));r.absorb.source=sk.id;}
     r.buffs[sk.id]={key:sk.key,value:sk.f(lv(sk.id))+ascSkillValue(sk.id,'buff'),left:duration};skCd[sk.id]=ascCooldown(sk);
     if(sk.fill){for(let i=0;i<sk.fill.n;i++)addSelfStack(sk.fill.key,sk.fill.max,sk.fill.life);addFloat(pl.x,3,pl.z,(STACK_LABEL[sk.fill.key]||sk.fill.key)+' '+sk.fill.max+'/'+sk.fill.max,'#9fd8ff');}
     if(sk.id==='ab_epiclesis'){r.regen={left:5,pool:maxHp()*ascSkillValue(sk.id,'regen')/100,rate:maxHp()*ascSkillValue(sk.id,'regen')/500};
@@ -8362,7 +8377,7 @@ function refine(sl){const it=S.eq[sl];const maxRef=it?.sec===6?15:10;if(!it||(it
   if(protectedAttempt&&!safeRank){if(needsMythicScroll)S.mythicScrolls--;else S.refineScrolls--;}
   const buy=refineOreShortfall(it);
   if(buy.miss>0){S.zeny-=buy.cost;S.ore[o]=safeCount(S.ore[o])+buy.miss;log(`Bought ${buy.miss} ${ORE[o]} for ${buy.cost.toLocaleString()}z to finish this refine.`,'r3','zeny')}
-  S.ore[o]-=need;S.zeny-=c;questEvent('refine');if(Math.random()*100<refCh(it)){succeeded=true;it.r=(it.r||0)+1;log(`Refine success! ${iname(it)}`,'r3','gear');addFloat(pl.x,3,pl.z,'Refine +'+it.r,'#ffd23f')}
+  S.ore[o]-=need;S.zeny-=c;questEvent('refine');if(Math.random()*100<refCh(it)){succeeded=true;it.r=(it.r||0)+1;if(typeof PGTitles!=='undefined')PGTitles.sync(S,CLASSES);log(`Refine success! ${iname(it)}`,'r3','gear');addFloat(pl.x,3,pl.z,'Refine +'+it.r,'#ffd23f')}
   else{if(protectedAttempt&&!safeRank){log(`Refine failed, but your ${needsMythicScroll?'Mythic ':''}Protection Scroll kept +${it.r}.`,'r3','gear')}
     else if(it.r>=5&&(it.sec!==6||it.r<10)){it.r--;log(`Refine failed... dropped to +${it.r}.`,'r0','gear')}
     else if(it.sec===6&&it.r>=11){it.r--;log(`Refine failed... dropped to +${it.r}.`,'r0','gear')}
@@ -8996,6 +9011,8 @@ function stowUnfit(from){
   return n}
 function changeClass(n){if(classBlock(n))return;
   if(CLASSES[n]?.tier===4&&!playedClass(n)&&JOB_RITE.passed!==n)return startJobRite(n);
+  // Capture achievements before a fresh class or Novice reset replaces its active build.
+  if(typeof PGTitles!=='undefined')PGTitles.sync(S,CLASSES);
   settlePlazaAfk();                            // pending plaza rewards belong to the class being left
   snapClass();                                 // remember the class we are stepping away from
   const from=S.cls;S.cls=n;jobOf();if(typeof resetSkillRuntime==='function'){swing=null;resetSkillRuntime();for(const id in skCd)delete skCd[id];}
@@ -9254,7 +9271,7 @@ const tnode=n=>{const c=CLASSES[n],pj=S.jobs[n],status=classStatus(n),label={cur
 // so the Index rows, reward pickers, combat bonuses and skill allocator can be exercised without
 // waiting through the normal grind. Socketed cards are never touched by these card controls.
 function gmIndexTest(mode){
-  if(mode==='clear'){S.mobKills={};S.indexXp=0;S.equippedTitle=null}
+  if(mode==='clear'){S.mobKills={};S.indexXp=0;if(HUNT_TITLES.some(t=>t.id===S.equippedTitle))S.equippedTitle=null}
   else if(mode==='one'){
     const e=MONSTER_INDEX[0];recordMonsterKill({mapIndex:e.map,n:e.name});
   }else if(mode==='xp10000')S.indexXp=10000;
@@ -10019,7 +10036,7 @@ if(sub.market==='echo')return navigation+(eclipseEchoPick?eclipseEchoPicker():tr
 const ores=Object.entries(ORE).map(([o,n])=>`<div class="slot"><b>${n}</b><label>Quantity<input class="ore-quantity" id="oreQty-${o}" type="number" min="1" max="1000000" step="1" value="${esc(marketQty[o])}" aria-label="${n} quantity"></label><small>${BM_ORE.toLocaleString()}z each · <output id="oreTotal-${o}">${Number.isSafeInteger(Number(marketQty[o]))&&Number(marketQty[o])>0?(Number(marketQty[o])*BM_ORE).toLocaleString()+'z total':'Enter a whole quantity'}</output></small><button data-a="bmore" data-v="${o}" ${S.zeny<BM_ORE?'disabled':''}>Buy quantity</button></div>`).join('');
 const mats=NM_MAT.map((n,i)=>`<div class="slot"><b>${n}</b><button data-a="bmmat" data-v="${i}" ${S.zeny<BM_MAT_PRICE?'disabled':''}>Buy 1 · ${BM_MAT_PRICE.toLocaleString()}z</button></div>`).join('');
 return guide+`<div class="hd">Black Market · ${S.zeny.toLocaleString()}z</div>`+ores+`<div class="slot"><b>Refine Protection Scroll</b><small>Enable On in Equipment → Refine. One scroll per attempt, including success; prevents rank loss on failure. Only +5 and above can lose a rank; below +5 asks for confirmation.</small><button data-a="buyscroll" ${S.zeny<BM_SCROLL?'disabled':''}>Buy 1 · 80,000,000z</button></div><div class="slot"><b>Mythic Protection Scroll</b><small>Protects +11 to +15 Mythic refinement attempts. One scroll per protected attempt, including success. Owned: ${safeCount(S.mythicScrolls)} · Valkyrie’s Sigils: ${safeCount(S.ascensionMat?.[2])}</small><button data-a="buymythicscroll" ${safeCount(S.ascensionMat?.[2])<BM_MYTHIC_SIGILS?'disabled':''}>Buy 1 · ${BM_MYTHIC_SIGILS} Valkyrie’s Sigils</button></div>`+'<div class="sec">Nightmare materials</div><small>3,000,000z each</small>'+mats+'<button data-a="openreforge" class="full">Equipment workshop → Reforge</button>'};
-V.index=()=>`<div class="mastery-head"><div class="mastery-emblem">✦</div><div><b>Midgard Mastery Index</b><small>Individual monsters, Index XP and per-card rewards</small></div><span class="mastery-counter">${indexExperience().toLocaleString()} Index XP</span></div><div class="mastery-tabs"><button data-a="indexview" data-v="mobs" class="${indexMode==='mobs'?'on':''}" aria-pressed="${indexMode==='mobs'}">⚔ Mob Index</button><button data-a="indexview" data-v="cards" class="${indexMode==='cards'?'on':''}" aria-pressed="${indexMode==='cards'}">🃏 Card Mastery</button><button data-t="guide">${uiIcon('guide')} Build &amp; farming guide</button></div>${indexMode==='mobs'?renderMobIndex():renderCardIndex()}`;
+V.index=()=>`<div class="mastery-head"><div class="mastery-emblem">✦</div><div><b>Midgard Mastery Index</b><small>Monster progress, card rewards and your title collection</small></div><span class="mastery-counter">${indexExperience().toLocaleString()} Index XP</span></div><div class="mastery-tabs"><button data-a="indexview" data-v="mobs" class="${indexMode==='mobs'?'on':''}" aria-pressed="${indexMode==='mobs'}">⚔ Mob Index</button><button data-a="indexview" data-v="cards" class="${indexMode==='cards'?'on':''}" aria-pressed="${indexMode==='cards'}">🃏 Card Mastery</button><button data-a="indexview" data-v="titles" class="${indexMode==='titles'?'on':''}" aria-pressed="${indexMode==='titles'}">✦ Titles</button><button data-t="guide">${uiIcon('guide')} Build &amp; farming guide</button></div>${indexMode==='mobs'?renderMobIndex():indexMode==='cards'?renderCardIndex():renderTitleCollection()}`;
 const EQK=[['head','Head','🎩'],['weapon','R.Hand','⚔️'],['armor','Body','🥼'],['off','L.Hand','🛡️'],['acc1','Acc 1','💍'],['leg','Legs','👖'],['acc2','Acc 2','💍']];
 const CFIT={matk:'weapon',move:'acc',hpPct:'armor',def:'armor',mdef:'head',field:'weapon',str:'weapon',dex:'weapon',atk:'weapon',crit:'weapon',cdm:'weapon',agi:'armor',aspd:'armor',flee:'armor',vit:'armor',int:'head',hp:'head',luk:'acc'},CFL={weapon:'Weapons',armor:'Armor, Shield & Legwear',head:'Headgear',acc:'Accessories'};
 const grp=it=>it.slot==='weapon'?'weapon':it.slot==='head'?'head':it.slot==='acc'?'acc':'armor';
@@ -10032,7 +10049,7 @@ function katarOnly(cls=S.cls){return cls==='Assassin'||cls==='Assassin Cross'||c
 // one blade, and the katar is not theirs either. dualWield() is what opens the left-hand slot.
 function dualWield(cls=S.cls){const c=CLASSES[cls]||CLASSES.Novice;return c.wt.includes('dagger')&&c.wt.includes('katar')}
 function ekey(it){if(it.slot==='acc')return S.eq.acc1&&!S.eq.acc2?'acc2':'acc1';return it.slot}
-const tabs=[];let selP=null,selS=null,selE='weapon',qOpen=false,sideOpen=false,eqPick=null,indexMode='mobs';const sub={status:'stats',bag:'bag',equip:'equip0',market:'supplies',pet:'party',skills:'skilllist'};let eclipseJobsBrowse=false,jobBranch=null;
+const tabs=[];let selP=null,selS=null,selE='weapon',qOpen=false,sideOpen=false,eqPick=null,indexMode='mobs',titleFilter='all';const sub={status:'stats',bag:'bag',equip:'equip0',market:'supplies',pet:'party',skills:'skilllist'};let eclipseJobsBrowse=false,jobBranch=null;
 // Which half of the shared Bard & Dancer skill list is on screen. A view choice only: both halves
 // are learned and cast either way, so it is not written to the save.
 let bdTreeView='bard';
@@ -10102,14 +10119,14 @@ V.bag=()=>subBar('bag')+V[sub.bag==='bag'?'bagItems':sub.bag]();
 function renderTitleTrack(){
   const xp=indexExperience(),earned=indexRankForXp(xp);
   return INDEX_TITLES.map((t,i)=>{
-    const done=titleUnlocked(t),equipped=S.equippedTitle===t.id,next=i===earned;
+    const done=titleUnlocked(t),next=i===earned;
     const previous=i?INDEX_TITLES[i-1].xp:0,span=Math.max(1,t.xp-previous);
     const progressXp=Math.max(0,Math.min(span,xp-previous));
     const pct=done?100:Math.min(100,Math.max(0,progressXp/span*100));
     const remaining=Math.max(0,t.xp-xp),rank=String(i+1).padStart(2,'0');
     const progress=done?`${t.xp.toLocaleString()} XP · milestone earned`:`Rank XP ${progressXp.toLocaleString()} / ${span.toLocaleString()}`;
-    const state=done?(equipped?'Active title':'Unlocked'):`${next?'Next · ':''}${remaining.toLocaleString()} XP to go`;
-    return `<article class="mastery-title tone-${t.tone}${done?' earned':' locked'}${next?' next':''}${equipped?' equipped':''}" data-rank="${i+1}" aria-label="Index title rank ${i+1}: ${t.name}">
+    const state=done?'Unlocked':`${next?'Next · ':''}${remaining.toLocaleString()} XP to go`;
+    return `<article class="mastery-title tone-${t.tone}${done?' earned':' locked'}${next?' next':''}" data-rank="${i+1}" aria-label="Index title rank ${i+1}: ${t.name}">
       <div class="mastery-title-sigil" aria-hidden="true"><span>${titleIcon(t)}</span><small>${rank}</small></div>
       <div class="mastery-title-copy">
         <div class="mastery-title-kicker"><span>Rank ${rank}${next&&!done?' · Next':''}</span><span class="mastery-title-bonus">+${INDEX_CRIT[i]}% Crit</span></div>
@@ -10117,9 +10134,12 @@ function renderTitleTrack(){
         <div class="mastery-title-progress-row"><small>${progress}</small><small class="mastery-title-state">${state}</small></div>
         <div class="mastery-track mastery-title-track" role="progressbar" aria-label="${t.name} unlock progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(pct)}" aria-valuetext="${done?'Unlocked':`Rank segment: ${progressXp.toLocaleString()} of ${span.toLocaleString()} Index XP; ${remaining.toLocaleString()} remaining`}"><i style="width:${pct.toFixed(1)}%"></i></div>
       </div>
-      <button data-a="titleequip" data-v="${equipped?'none':t.id}" ${done?'':'disabled'} aria-pressed="${equipped?'true':'false'}" aria-label="${equipped?'Remove equipped title':done?'Equip '+t.name:'Unlock '+t.name+' at '+t.xp.toLocaleString()+' Index XP'}">${equipped?'Equipped':done?'Equip':'Locked'}</button>
+      <span class="mastery-rank-pill">${done?'Earned':next?'Next':'Locked'}</span>
     </article>`;
   }).join('');
+}
+function renderTitleCollection(){
+  return typeof PGTitles!=='undefined'?PGTitles.renderCollection(S,CLASSES,INDEX_TITLES,INDEX_CRIT,titleFilter):'<p>The title collection could not be loaded. Please refresh the game.</p>';
 }
 function renderMobIndex(){
   const counts=S.mobKills||{},found=MONSTER_INDEX.filter(m=>safeCount(counts[m.id])>0).length,xp=indexExperience(),rank=indexRankForXp(xp),next=indexNextTitle(xp),prev=rank?INDEX_TITLES[rank-1].xp:0;
@@ -10130,7 +10150,7 @@ function renderMobIndex(){
     <small><b>Album:</b> ${albumDone}/${MONSTER_INDEX.length} species hunted to their last rung (50,000 kills) - ${(MONSTER_INDEX.length*50279).toLocaleString()} Index XP in total, kept separate from the title ranks so there is always one more hunt.</small></div>
     <div class="mastery-progress-card index-xp-card"><div><b>Index Mastery Lv ${Math.max(1,rank)}</b> <small>· ${next?`${(next.xp-xp).toLocaleString()} XP to ${next.name}`:'all title ranks complete'}</small></div><div class="mastery-track"><i style="width:${pct.toFixed(1)}%"></i></div><small>${xp.toLocaleString()}${next?` / ${next.xp.toLocaleString()}`:''} Index XP${next?' · next title: '+next.name:''} · <b>Index Crit +${indexCrit()}% / +40%</b></small>
     <small>Index Crit adds beyond the ordinary 60% core cap: every Hunt Title you unlock adds its slice (+1/+1/+2/+2/+3/+4/+5/+6/+7/+9), and all ten put a fully capped build on exactly 100% crit. Mythic crit affixes and set bonuses add after the normal 100% total cap.</small></div>
-    <div class="mastery-section-title">🏅 Index Title Ranks <small>Equip an earned title · up to +40% Crit</small></div><div class="mastery-title-list">${renderTitleTrack()}</div>
+    <div class="mastery-section-title">🏅 Index Title Ranks <small>Progress and up to +40% Crit · equip titles in the Titles tab</small></div><div class="mastery-title-list">${renderTitleTrack()}</div>
     <div class="mastery-section-title">📖 Monster Index <small>${MONSTER_INDEX.length} entries across ${MAPS.length} maps · 8 mastery rungs each</small></div>
     ${MAPS.map((mp,map)=>{const rows=MONSTER_INDEX.filter(m=>m.map===map),mapFound=rows.filter(m=>safeCount(counts[m.id])>0).length,mapKills=rows.reduce((n,m)=>n+safeCount(counts[m.id]),0);
       return `<details class="mastery-map" data-a="idxmap" data-v="mobs:${map}" ${indexSectionOpen('mobs',map)?'open':''}><summary><b>${mp.n}</b><small>${mapFound}/${rows.length} indexed · ${mapKills.toLocaleString()} species kills</small></summary><div class="mastery-roster">${rows.map(m=>{const n=safeCount(counts[m.id]),level=indexMasteryLevel(n),nextMob=indexNextMilestone(n),at=nextMob||INDEX_MOB_MILESTONES[INDEX_MOB_MILESTONES.length-1],before=level?INDEX_MOB_MILESTONES[level-1]:0,mpct=nextMob?Math.min(100,Math.max(0,(n-before)/(nextMob-before)*100)):100;return `<div class="mastery-mob${n?' found':''}"><span class="mastery-mob-icon">${m.boss?'👑':'✦'}</span><span><b>${m.name}${m.boss?' · BOSS':''}</b><small>Mastery Lv ${level}/${INDEX_MOB_MILESTONES.length} · ${n.toLocaleString()} kills recorded · individual species kills${nextMob?` · ${nextMob-n} to next rung`:' · fully indexed'}</small><span class="mastery-track mob-track"><i style="width:${mpct.toFixed(1)}%"></i></span></span><b class="mastery-count">${n.toLocaleString()}</b></div>`}).join('')}</div></details>`;
@@ -11590,10 +11610,13 @@ const ACT={
     S.cards=S.cards.filter(c=>!ids.has(String(c&&c.id)));
     earnZeny(value);log(`Sold ${loose.length} loose card${loose.length===1?'':'s'} for ${value.toLocaleString()} Zeny.`,'r3','card');
     ui();save()},
-  indexview:v=>{if(v==='guide'){if(!tabs.includes('guide'))openTab('guide');return}if(v==='mobs'||v==='cards'){indexMode=v;renderWin()}},
+  indexview:v=>{if(v==='guide'){if(!tabs.includes('guide'))openTab('guide');return}if(v==='mobs'||v==='cards'||v==='titles'){indexMode=v;renderWin()}},
   idxmap:v=>{const[tab,raw]=String(v).split(':'),map=+raw;if(tab==='mobs'||tab==='cards'){indexToggleSection(tab,map);renderWin()}},
-  titleequip:id=>{if(id==='none'){if(!S.equippedTitle)return;S.equippedTitle=null;log('Hunt title unequipped.','','quest');ui();save();return}
-    const title=HUNT_TITLES.find(t=>t.id===id&&titleUnlocked(t));if(!title)return;S.equippedTitle=title.id;log(`Title equipped: ${title.name}.`,'r4','quest');ui();save()},
+  titlefilter:v=>{if(typeof PGTitles!=='undefined'&&PGTitles.FILTERS.some(row=>row[0]===v)){titleFilter=v;renderWin()}},
+  titleequip:id=>{if(id==='none'){if(!S.equippedTitle)return;S.equippedTitle=null;log('Title unequipped.','','quest');ui();save();return}
+    if(typeof PGTitles!=='undefined')PGTitles.sync(S,CLASSES);
+    const title=typeof PGTitles!=='undefined'?PGTitles.find(id,HUNT_TITLES):HUNT_TITLES.find(t=>t.id===id);
+    if(!title||!titleUnlocked(title))return;S.equippedTitle=title.id;log(`Title equipped: ${title.name}.`,'r4','quest');ui();save()},
   indexcard:id=>{const c=S.cards.find(x=>String(x.id)===String(id));if(!c)return;const owner=S,before=cardMasteryLevel(cardFamily(c));
     ask(`Dedicate one ${GRADE[c.g]} ${c.n}? This consumes the loose card and advances this card from mastery ${before}/${CARD_MASTERY_PER_CARD} to ${before+1}/${CARD_MASTERY_PER_CARD}. The card is permanently gone and cannot be equipped or merged. You receive 1 Mastery token to roll a permanent stat in the Index.`,()=>{
       if(S!==owner)return;const used=donateCardToMastery(id);if(!used)return;log(`${used.n} reached Card Mastery ${cardMasteryLevel(used.n)}/${CARD_MASTERY_PER_CARD}. Spend the earned Mastery token in the Index.`,'r3','card');ui();save()})},
@@ -11870,6 +11893,54 @@ function sampleHudRate(now=performance.now()){
   hudRate=rates.state;
   return rates;
 }
+function playerBuffRemaining(sk,buff){
+  if(!sk.absorb)return buff.left;
+  // Praefatio's shield can be depleted, or expire before its upgraded buff timer.
+  const shield=skillRuntime.absorb;
+  return shield&&shield.amount>0?Math.max(0,Math.min(buff.left,shield.until-t)):0;
+}
+function playerBuffSnapshot(){
+  if(!S||typeof PGPlayerBuffs==='undefined'||typeof skillRuntime==='undefined'||!skillRuntime||skillRuntime.owner!==S.cls||skillRuntime.save!==S)return null;
+  const shield=skillRuntime.absorb,shieldId=shield&&shield.amount>0&&shield.until>t?shield.source:null;
+  let buffs=skillRuntime.buffs;
+  // Pausing a ward prevents recasting but does not remove the already-cast shield in combat.
+  // Its ordinary buff record is discarded on the next tick, so represent that live shield here.
+  if(shieldId&&!buffs[shieldId])buffs={...buffs,[shieldId]:{value:0,left:shield.until-t}};
+  return {buffs,enabled:id=>id===shieldId||skillOn(id)};
+}
+function activePlayerSkillBuffs(snapshot=playerBuffSnapshot()){
+  return snapshot?PGPlayerBuffs.active(SKILLS,snapshot.buffs,snapshot.enabled,playerBuffRemaining):[];
+}
+function playerSkillBuffTilesHTML(snapshot=playerBuffSnapshot()){
+  if(!snapshot||!activePlayerSkillBuffs(snapshot).length)return '';
+  return PGPlayerBuffs.render(SKILLS,snapshot.buffs,{enabled:snapshot.enabled,icon:id=>skillIcon(id,true),remaining:playerBuffRemaining,
+    extra:sk=>sk.absorb?Math.ceil(skillRuntime.absorb.amount).toLocaleString()+' HP shield remaining.':''});
+}
+// Chat is an independently resizable sibling of the field overlay. On narrow viewports it can
+// cover the right-hand strip, so lift buffs above it only when their horizontal ranges overlap.
+function placeHudBuffs(hb){
+  if(!hb||typeof window==='undefined'||typeof hb.getBoundingClientRect!=='function')return;
+  const chat=$('socialChat'),field=$('ov');let bottom='';
+  if(!field||typeof field.getBoundingClientRect!=='function')return;
+  const f=field.getBoundingClientRect();
+  if(hb.style.display!=='none'&&chat&&typeof chat.getBoundingClientRect==='function'){
+    const css=window.getComputedStyle(chat);
+    if(css.display!=='none'&&css.visibility!=='hidden'){
+      const c=chat.getBoundingClientRect(),b=hb.getBoundingClientRect();
+      if(c.width>0&&c.height>0&&b.width>0&&b.left<c.right&&b.right>c.left)bottom=Math.round(Math.max(0,Math.min(f.height-b.height-8,f.bottom-c.top+8)))+'px';
+    }
+  }
+  if(hb.style.bottom!==bottom)hb.style.bottom=bottom;
+  if(hb.style.display==='none'||!f.width)return;
+  // Long rows can put a tile close to the left edge of a phone. Nudge its flyout back into
+  // the field without moving the tile or reparenting a focused countdown.
+  const offsets=[...hb.querySelectorAll('.pbx-fly,.efx-fly')].map(tip=>{
+    const r=tip.parentElement.getBoundingClientRect(),width=tip.getBoundingClientRect().width;
+    const shift=Math.max(0,Math.min(Math.max(0,f.right-8-r.right),f.left+8+width-r.right));
+    return [tip,shift?`translateX(${Math.ceil(shift)}px)`: ''];
+  });
+  for(const [tip,transform] of offsets)if(tip.style.transform!==transform)tip.style.transform=transform;
+}
 function bars(){if(!S||simVisualsOff())return;applyDisplay();
   if(typeof adventureSync==='function')adventureSync();
   const rates=sampleHudRate();if(!rates)return;
@@ -11884,7 +11955,7 @@ function bars(){if(!S||simVisualsOff())return;applyDisplay();
   if($('eclipsePlayerName'))$('eclipsePlayerName').textContent=currentUser||'Adventurer';if($('eclipseAdvance'))$('eclipseAdvance').setAttribute('aria-pressed',String(S.adv!==false));
   if($('rangedMovementMode')){const el=$('rangedMovementMode');el.value=S.kite===true?'kite':'stand';el.disabled=!CLASS_BAND(C());el.title=el.disabled?'Available to ranged classes':'Kite: attack for 3s, reposition for up to 2s. Stand still: maximum attack uptime.';}
   $('lv').textContent=S.lv;$('cls2').textContent=S.cls;$('jl').textContent=j.jl;$('zeny').textContent=(+S.zeny||0).toLocaleString();
-  const title=HUNT_TITLES.find(t=>t.id===S.equippedTitle&&titleUnlocked(t)),titleLabel=$('titleLabel');if(titleLabel){titleLabel.textContent=title?'✦ '+title.name:'';titleLabel.style.display=title?'inline-block':'none';titleLabel.title=title?'Index title · '+(title.xp??title.kills).toLocaleString()+' Index XP':''}
+  const title=typeof equippedMasteryTitle==='function'?equippedMasteryTitle():HUNT_TITLES.find(t=>t.id===S.equippedTitle&&titleUnlocked(t)),titleLabel=$('titleLabel');if(titleLabel){titleLabel.textContent=title?'✦ '+title.name:'';titleLabel.style.display=title?'inline-block':'none';titleLabel.title=title?(typeof PGTitles!=='undefined'?PGTitles.requirement(title):'Index title · '+(title.xp??title.kills).toLocaleString()+' Index XP'):''}
   $('kills').textContent=rates.kills.toFixed(1);
   $('kills').title=`Kills/min (last 60s, refreshed every second): ${rates.kills.toFixed(1)} · ${rates.seconds.toFixed(2)} kills/sec`;
   const expEl=$('expmin');if(expEl){expEl.textContent=eclipseMetricNumber(rates.exp);
@@ -11899,15 +11970,15 @@ function bars(){if(!S||simVisualsOff())return;applyDisplay();
   // shuffle around between casts.
   const pbf=PET_SKILLS.filter(s=>s.kind==='buff'&&petBuff[s.stat]>0).map(s=>{const t=Math.ceil(petBuff[s.stat+'T']);
     return`<span class="pbx" id="pet-buff-${s.id}" tabindex="0" role="status" aria-label="${s.n}: ${s.desc}">${petBuffIcon(s)}<i class="s">${t}</i><span class="pbx-fly" role="tooltip"><b>${s.n}</b> <i>${esc(petBuffSrc[s.stat]||'pet')}</i><br>${s.desc}<br>${t}s left</span></span>`}).join('');
+  const playerBuffs=(typeof playerBuffSnapshot==='function')?playerBuffSnapshot():null;
+  const sbf=(typeof playerSkillBuffTilesHTML==='function')?playerSkillBuffTilesHTML(playerBuffs):'';
+  const playerIds=new Set((typeof activePlayerSkillBuffs==='function'?activePlayerSkillBuffs(playerBuffs):[]).map(s=>'player-buff-'+s.id));
   const hb=$('hudBuffs');if(hb){
-    // Remove expired siblings first so a surviving focused/hovered tile never needs reparenting.
-    // Daily roulette tiles (daily-fx-*) are exempt: they are re-supplied by dailyEffectTilesHTML
-    // in the same patch, and reparenting them would drop focus from a hovered countdown.
-    for(const node of [...hb.children])if(!(node.id&&node.id.indexOf('daily-fx-')===0)&&!PET_SKILLS.some(s=>node.id==='pet-buff-'+s.id&&petBuff[s.stat]>0))node.remove();
-    // Pet buffs keep their original artwork; the roulette EXP/Zeny timers join the same
-    // strip as symbolic icons. typeof guard keeps the stripped bars() test harness working.
+    // Remove expired siblings before patching, keeping surviving focused tiles in place.
+    // Daily tiles are supplied by dailyEffectTilesHTML in the same reconciliation.
+    for(const node of [...hb.children])if(!(node.id&&node.id.indexOf('daily-fx-')===0)&&!playerIds.has(node.id)&&!PET_SKILLS.some(s=>node.id==='pet-buff-'+s.id&&petBuff[s.stat]>0))node.remove();
     const dfx=(typeof dailyEffectTilesHTML==='function')?dailyEffectTilesHTML():'';
-    hb.style.display=(pbf||dfx)?'flex':'none';eclipseSetMarkup(hb,pbf+dfx)}
+    hb.style.display=(pbf||sbf||dfx)?'flex':'none';eclipseSetMarkup(hb,pbf+sbf+dfx);placeHudBuffs(hb)}
   $('hpb').style.width=hp+'%';$('hpb').classList.toggle('critical',hp<=30);
   $('hpPct').textContent=Math.round(hp)+'%';$('hpMeter').setAttribute('aria-valuenow',Math.round(hp));
   for(const[id,label,pct,lv]of[['job','Job Level',jp,j.jl],['base','Base Level',bp,S.lv]]){
@@ -15998,11 +16069,10 @@ function draw(){
   // bare name. The MVP FIGHT line on the HUD and the oversized health bar still say what you are up
   // against, and crit resistance stays a hidden number only the damage roll sees.
   $('tn').textContent=mob.n;$('th').style.width=(hudTrial?'100%':Math.max(0,mob.hp/mob.max*100)+'%')}else tag.style.display='none';
-  // Equipped titles belong to the character in the world, not the crowded status bar. Project
-  // one small transparent gold seal from below the hero's feet every frame so it follows
-  // movement and camera rotation just like the skill names do. The rank mark rides on the left.
-  const equipped=HUNT_TITLES.find(t=>t.id===S.equippedTitle&&titleUnlocked(t));
-  if(heroTitle&&heroTitleText){if(equipped){const [txh,tyh]=scr(pl.x,.16+(KIT.nativeWorld?actorFloorY()-.035:0),pl.z);heroTitle.style.display='block';heroTitle.style.left=txh+'px';heroTitle.style.top=tyh+'px';if(heroTitleMark&&heroTitleMark.dataset.title!==equipped.id){heroTitleMark.innerHTML=titleIcon(equipped);heroTitleMark.dataset.title=equipped.id;}heroTitleText.textContent=equipped.name;heroTitle.title='Index title · '+(equipped.xp??equipped.kills).toLocaleString()+' Index XP'}else heroTitle.style.display='none'}
+  // Project the equipped name and its full logo below the hero's feet so they follow
+  // movement and the camera. Eager-load this one visible image; collection art stays lazy.
+  const equipped=equippedMasteryTitle();
+  if(heroTitle&&heroTitleText){if(equipped){const [txh,tyh]=scr(pl.x,.16+(KIT.nativeWorld?actorFloorY()-.035:0),pl.z);heroTitle.style.display='block';heroTitle.style.left=txh+'px';heroTitle.style.top=tyh+'px';if(heroTitleMark&&heroTitleMark.dataset.title!==equipped.id){heroTitleMark.innerHTML=titleIcon(equipped,true);heroTitleMark.dataset.title=equipped.id;}heroTitleText.textContent=equipped.name;heroTitle.title=typeof PGTitles!=='undefined'?PGTitles.requirement(equipped):'Index title · '+equipped.xp.toLocaleString()+' Index XP'}else heroTitle.style.display='none'}
   const pids=new Set(S.pets.filter(p=>p.on).map(p=>p.id));petMesh.forEach((v,id)=>{if(!pids.has(id)){disposeCreatureVisual(v);petMesh.delete(id)}});
   S.pets.filter(p=>p.on).forEach(p=>{const sp=PETS[p.sp],r=petR[p.id];if(!sp||!r)return;let v=petMesh.get(p.id);
     const pet={x:r.x,z:r.z,run:r.run,a:p.id,shape:petFallbackShape(sp),c:sp.c,spriteId:sp.spriteId,pet:true,flash:0,lunge:r.lunge||0};
@@ -16417,21 +16487,22 @@ setInterval(updateWatch,60000);
 // be hours old while the player was on another tab, and the check is a 60-byte text file.
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&(pendingUpdateBuild||Date.now()-PAGE_STARTED_AT>30000))updateWatch()});
 </script>
-<script src="assets/wardrobe-ui.js?v=436"></script>
+<script src="assets/wardrobe-ui.js?v=440"></script>
 <script src="assets/shop.js?v=321"></script>
 <script src="assets/friends.js?v=273"></script>
-<script src="assets/digimon/roster.js?v=436"></script>
-<script src="assets/digimon/base-stats.js?v=436"></script>
-<script src="assets/social-rules.js?v=436"></script>
-<script src="assets/social-poker.js?v=436"></script>
-<script src="assets/digimon-sanctuary.js?v=436"></script>
+<script src="assets/digimon/roster.js?v=440"></script>
+<script src="assets/digimon/base-stats.js?v=440"></script>
+<script src="assets/social-rules.js?v=440"></script>
+<script src="assets/social-poker.js?v=440"></script>
+<script src="assets/digimon-sanctuary.js?v=440"></script>
 <script src="assets/digimon-battle.js?v=393"></script>
-<script src="assets/social-digimon.js?v=436"></script>
+<script src="assets/social-digimon.js?v=440"></script>
 <script src="assets/social-gym-redesign.js?v=393"></script>
 <script src="assets/social-pond-design.js?v=393"></script>
-<script src="assets/social-scene.js?v=436"></script>
-<script src="assets/social-fishing.js?v=436"></script>
-<script src="assets/plaza-bots.js?v=436"></script>
-<script src="assets/adventure-guide.js?v=436"></script>
-<script src="assets/social.js?v=436"></script></body>
+<script src="assets/social-title-art.js?v=440"></script>
+<script src="assets/social-scene.js?v=440"></script>
+<script src="assets/social-fishing.js?v=440"></script>
+<script src="assets/plaza-bots.js?v=440"></script>
+<script src="assets/adventure-guide.js?v=440"></script>
+<script src="assets/social.js?v=440"></script></body>
 </html>

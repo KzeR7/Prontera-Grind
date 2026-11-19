@@ -100,9 +100,18 @@ test('five ordinary skills per class, a sixth Ascension skill per fourth job, id
   for(const r of rows)if(r.tree)assert.ok(['bard','dancer'].includes(r.tree)&&/Bard|Minstrel|Maestro/.test(r.from),r.id);
 });
 
-test('every skill borrows existing art: an icon that resolves and a shipped cast effect',()=>{
+test('expanded skills use distinct supplied artwork while retaining their original fallback and cast FX metadata',()=>{
+  const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
+  assert.ok(html.indexOf('assets/skill-icons.js')<html.indexOf('assets/skill-icons-expanded.js')&&html.indexOf('assets/skill-icons-expanded.js')<html.indexOf('const SKILLSX='),'the dedicated registry loads after the original artwork and before the game');
+  const art=json('return SKILLSX.map(s=>({id:s.id,art:PGSkillIcons[s.id],html:skillIcon(s.id)}))');
+  assert.equal(art.length,130);assert.equal(new Set(art.map(row=>row.art.src)).size,130,'one distinct crop per skill');
+  for(const {id,art:a,html:markup} of art){
+    assert.equal(a.family,'expanded',id);assert.match(a.src,/^assets\/expanded-skill-icons\/[a-z0-9_]+\.webp$/,id);
+    assert.ok(markup.includes('src="'+a.src+'"')&&markup.includes('data-skill="'+id+'"'),id+' does not render its own crop');
+    const data=fs.readFileSync(path.join(root,a.src));assert.equal(data.subarray(0,4).toString()+data.subarray(8,12).toString(),'RIFFWEBP',id);assert.equal(data.subarray(12,16).toString(),'VP8L',id+' must be lossless');
+  }
   assert.deepEqual(json('return SKILLSX.filter(s=>!skillIcon(s.id)).map(s=>s.id)'),[]);
-  assert.deepEqual(json('return SKILLSX.filter(s=>!SKILLS.some(x=>x.id===s.icon&&!SKILLSX.includes(x))).map(s=>s.id)'),[],'icon must name a shipped skill');
+  assert.deepEqual(json('return SKILLSX.filter(s=>!SKILLS.some(x=>x.id===s.icon&&!SKILLSX.includes(x))).map(s=>s.id)'),[],'original icon metadata remains a valid fallback');
   assert.deepEqual(json(`return SKILLSX.filter(s=>s.type!=='pas'&&!SKILLS.some(x=>x.id===s.fx&&!SKILLSX.includes(x)&&x.type!=='pas'&&!x.ascensionOnly)).map(s=>s.id)`),[],'fx must name a shipped castable skill');
   assert.deepEqual(json(`return SKILLSX.filter(s=>s.type!=='pas'&&!SKILL_VFX[s.id]).map(s=>s.id)`),[],'missing fallback effect');
   assert.equal(fs.existsSync(path.join(root,'assets/skill-icons/new')),false,'the mis-sliced icon folder must not return');

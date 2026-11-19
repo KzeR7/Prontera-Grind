@@ -316,6 +316,44 @@ Zeny funds upgrades and several random systems. Kill speed, monster health, EXP,
 quest rewards and currency sinks affect one another. Model estimates are not
 measured player times; a cosmetic task is not authorization to retune progression.
 
+## Mastery titles and active buffs (v437)
+
+The Mastery Index has a Titles tab with the original ten Index ranks and 40
+additional cosmetic challenges. Examples are a +15 weapon, 10,000 Memory of
+Thanatos kills, and five distinct non-Novice classes at their own maximum Job
+levels. Earned titles can be equipped in that tab and appear with their complete
+symbol below the character in the field and plaza. The plaza resolves known title
+names to symbols locally from the existing look message; it sends no new room
+traffic. Challenge awards and the highest observed weapon/armor refinement are
+saved across class changes. Old saves recover progress from surviving records
+and owned gear; refinement history for items no longer owned cannot be inferred.
+
+The original Index rank thresholds and cumulative Crit rewards are unchanged:
+Index XP, not the title being worn, determines the bonus. The new challenges
+never grant combat stats. Ranked Endless Echo titles count spent attempts,
+including leaving after the grace period, because that is what the saved counter
+records.
+
+Active player skill buffs share the field HUD with pet buffs and daily boosts.
+Their icons show real remaining time and cast-time effects; the Praefatio shield
+remains visible until depleted or expired even if auto-cast is paused. Buff state
+is transient and is cleared by class/account changes. The four active pet buff
+icons use separate crops from the newer supplied sheets, with earlier local icons
+as fallbacks. Expanded-class skill art, pet buff art and title symbols are lossless
+source crops; their map and regeneration instructions live in
+`tools/native-skill-icons/README.md`.
+
+The separate DigiPet and fishing title collections retain their existing unlocks,
+rarities and saved selections. Each now has its own supplied logo, and known
+mastery, fishing and DigiPet titles appear on separate lines beneath plaza
+characters without solid label backgrounds. The DigiPet and fishing marks have
+transparent cutouts, black fishing marks use a subtle outline for contrast, and
+the mastery-symbol matte is filtered out in the plaza without changing its
+original crop. Those logos are selected locally from existing look fields;
+unknown names stay plain text and no additional room messages are sent. The
+complete source sheets, including unused artwork, and the crop map are retained in
+`tools/social-title-icons/` for future titles.
+
 ## Pets and appearance
 
 Pets join through drops. Training, Bond, deployment and battle-skill rolls are

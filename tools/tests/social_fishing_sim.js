@@ -730,14 +730,26 @@ assert.equal(F.rodSpriteURL('mythril',64),null,'rod sprite URLs degrade to null 
  // --- Part C: the real Fishing window in a DOM - tabs, titles and the bag upgrade ----------
  const dom2=new JSDOM('<div id="socialHub"></div>',{runScripts:'outside-only'}),w2=dom2.window;
  w2.eval(fs.readFileSync(path.join(__dirname,'..','..','assets','digimon','roster.js'),'utf8'));w2.eval(fs.readFileSync(path.join(__dirname,'..','..','assets','social-rules.js'),'utf8'));
- w2.eval(fs.readFileSync(path.join(__dirname,'..','..','assets','social-fishing.js'),'utf8'));
- w2.HTMLCanvasElement.prototype.getContext=()=>null; // no canvas package here: prove the emoji fallback
+ w2.eval(fs.readFileSync(path.join(__dirname,'..','..','assets','social-title-art.js'),'utf8'));w2.eval(fs.readFileSync(path.join(__dirname,'..','..','assets','social-fishing.js'),'utf8'));
+ w2.HTMLCanvasElement.prototype.getContext=()=>null; // no canvas package here: prove the legacy fallback
  const FISH=w2.PGSocialFishing,hostS={fishing:null},d2=w2.document;
  let saves=0;
  FISH.bind({host:()=>hostS,scene:()=>null,self:()=>null,moveTo:()=>{},notice:()=>{},save:()=>{saves++}});
  assert.equal(d2.getElementById('socialHub').querySelector('#fishingDock')!==null,true,'the module builds its dock into the hub');
  FISH.openBag();
- assert.equal(d2.getElementById('fishingPanel').hidden,false,'the bag window opens');
+ const fishingPanel=d2.getElementById('fishingPanel');
+ assert.equal(fishingPanel.hidden,false,'the bag window opens');
+ await Promise.resolve();
+ assert(d2.body.classList.contains('social-fishing-panel-open'),'the visible Fishing window can stand phone chat down');
+ d2.getElementById('fishingPanelClose').click();await Promise.resolve();
+ assert(!d2.body.classList.contains('social-fishing-panel-open'),'closing the window restores chat');
+ FISH.openBag();await Promise.resolve();fishingPanel.hidden=true;await Promise.resolve();
+ assert(!d2.body.classList.contains('social-fishing-panel-open'),'another hub panel hiding Fishing also restores chat');
+ FISH.openBag();await Promise.resolve();FISH.hubClosed();await Promise.resolve();
+ assert(!d2.body.classList.contains('social-fishing-panel-open'),'leaving the plaza restores chat');
+ FISH.openBag();await Promise.resolve();
+ const fishingCss=fs.readFileSync(path.join(__dirname,'..','..','assets','social-fishing.css'),'utf8');
+ assert(fishingCss.includes('body.social-open.social-fishing-panel-open #socialChat{display:none}'),'the narrow-screen style stands chat down only for the open window');
  // v295: the Pond fish toggle is gone - the ponds always hold fish.
  assert.equal(d2.getElementById('fishingShowFish'),null,'there is no Pond fish toggle any more');
  // v303 (owner): the Index is grouped by rarity. Everything added after the first art drop used to
@@ -763,6 +775,16 @@ assert.equal(F.rodSpriteURL('mythril',64),null,'rod sprite URLs degrade to null 
  assert.equal(titleRows.length,20,'which is twenty in v299');
  assert(/Dockhand/.test(d2.getElementById('fishingTitlesView').textContent),'titles are named');
  assert.equal(d2.querySelectorAll('.fishing-title-row.locked').length,20,'nothing is earned on a fresh save');
+ const art=[...d2.querySelectorAll('.fishing-title-row .social-title-symbol')];
+ assert.equal(art.length,20);assert.equal(new Set(art.map(img=>img.getAttribute('src'))).size,20,'each fishing title has its own supplied icon');
+ assert(art.some(img=>img.getAttribute('src')==='assets/social-title-icons/fishing-heavy-hook.webp?v=440'));
+ for(const [id,tone] of [['dockhand','#c08a52'],['tide-regular','#5fc9d8']]){
+  const img=d2.querySelector(`img[src="assets/social-title-icons/fishing-${id}.webp?v=440"]`);
+  assert.equal(img.parentElement.style.getPropertyValue('--tone'),tone,'the supplied mark keeps the existing title glow color');
+ }
+ const registry=w2.PGSocialTitleArt;delete w2.PGSocialTitleArt;FISH.openTitles();
+ assert.equal(d2.querySelectorAll('.fishing-title-mark').length,20,'missing registry retains the legacy fallback');
+ w2.PGSocialTitleArt=registry;FISH.openTitles();assert.equal(d2.querySelectorAll('.social-title-symbol').length,20);
  // Earning one and wearing it from the tab goes through the same save hook as the rest.
  hostS.fishing.stats.catches=25;FISH.openTitles();
  const wearBtn=d2.querySelector('button[data-title="dockhand"]');

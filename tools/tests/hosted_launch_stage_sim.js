@@ -62,6 +62,16 @@ try{
   // The three MVP fish the old hand list had missed, called out so the regression is legible.
   for(const name of ['mvp_dreadclaw','mvp_stormcoil','mvp_volthorn'])
    assert.equal(typeof payload['assets/social/fish/'+name+'.png'],'string','uncarried MVP fish '+name);
+  for(const rel of ['assets/mastery-titles.js','assets/player-buffs.js','assets/skill-icons-expanded.js','assets/social-title-art.js','assets/ui/mastery-titles.css'])
+   assert.equal(typeof payload[rel],'string','uncarried mastery/title entry point '+rel);
+  for(const dir of ['assets/expanded-skill-icons/','assets/title-symbols/']){
+   const catalog=JSON.parse(fs.readFileSync(dir+'catalog.json','utf8'));
+   assert.equal(typeof payload[dir+'catalog.json'],'string');
+   for(const name of Object.keys(catalog.assets))assert.equal(payload[dir+name],'base64:'+fs.readFileSync(dir+name).toString('base64'),'uncarried title/skill art '+name);
+  }
+  const art=JSON.parse(fs.readFileSync('assets/social-title-art.js','utf8').match(/const ART=(\{[^\n]*\});\n/)[1]);
+  for(const rel of [...Object.values(art.digi),...Object.values(art.fishing)])
+   assert.equal(payload[rel],'base64:'+fs.readFileSync(rel).toString('base64'),'uncarried Social title art '+rel);
  }
  // And every packaged file must survive the round trip byte for byte - this is what catches a new
  // binary type being decoded as text before it reaches the owner's rehearsal.

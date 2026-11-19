@@ -38,7 +38,40 @@ python tools/build_extra_skill_icons.py <source-directory> --check
 
 The check compares every crop to its original pixels, rejects duplicate artwork,
 and verifies generated registry/catalog bytes. Outputs are
-`assets/skill-icons/extra/` and `assets/skill-icons-extra.js`. The field buff bar
-uses the four PNGs while retaining its countdowns, descriptions, keyboard focus
-and expiry. `fourth_job_skills_sim.js`, `display_polish_sim.js` and `publish_sim.js`
-cover integration and delivery. No skill, pet, saved ID or combat value changes.
+`assets/skill-icons/extra/` and `assets/skill-icons-extra.js`. Since v438 the four
+pet PNGs remain a fallback for the newer supplied-sheet crops below. Countdown,
+description, keyboard focus and expiry behavior remain unchanged.
+`fourth_job_skills_sim.js`, `display_polish_sim.js` and `publish_sim.js` cover
+integration and delivery. No skill, pet, saved ID or combat value changes.
+
+## Expanded-class skills, mastery titles and pet buffs (v437–v438)
+
+The five supplied sheets are pinned in `supplied-2026-11-19/` and remain under
+`tools/`, outside the published game. `expanded-source-map.json` records their
+hashes and the exact, manually selected crop for each of the 130 expanded-class
+skills, four pet buffs and the 50-symbol title grid. Each skill or pet buff gets
+an unused, distinct crop chosen to fit its effect and colour; the existing `icon`
+and `fx` fields remain unchanged as fallback metadata and cast effects. Symbol 47
+has a wider recorded box so the source's long horizontal rays remain whole.
+
+Build or audit with Pillow (the generated files are lossless WebP and compare
+pixel-for-pixel to the source rectangles):
+
+```sh
+python tools/build_expanded_icon_assets.py
+python tools/build_expanded_icon_assets.py --check
+node tools/tests/expanded_roster_sim.js
+node tools/tests/mastery_titles_buffs_sim.js
+```
+
+The generator writes `assets/expanded-skill-icons/`, `assets/title-symbols/`
+and `assets/skill-icons-expanded.js`. Each icon is requested only when shown;
+the source-only catalogs are omitted from the publish tree. The pet HUD uses
+`pet_warcry`, `pet_arcane`, `pet_siphon` and `pet_vital` from the new registry,
+falling back first to the v204 pet PNGs and then to the original skill art if a
+registry is missing. `publish_sim.js` keeps a separate bounded budget for the new
+art without increasing the classic or combined delivery ceilings.
+
+The optional `tools/check_mastery_titles_browser.cjs` checks all 50 rendered image
+bounds, the below-player label and pet examples at desktop and phone sizes; see
+`docs/TESTING.md` for its disposable-preview command.
