@@ -478,6 +478,18 @@ export async function auditAcceptedSave(D, { userId, username, gm, prev, prevSav
     acc.kills = floor(acc.kills) + Math.max(0, rawK - credK);
     const rawZ = Math.max(0, num(nextView.zeny) - num(prevView.zeny));
     acc.zeny = num(acc.zeny) + Math.max(0, rawZ - floor(allCred && allCred.zeny));
+    const prevCls = prevView.raw && (prevView.raw.job || prevView.raw.cls || prevView.raw.classId) || null;
+    const nextCls = nextView.raw && (nextView.raw.job || nextView.raw.cls || nextView.raw.classId) || null;
+    const clsChanged = !!(prevCls && nextCls && prevCls !== nextCls);
+    if (!clsChanged) {
+      const rawL = Math.max(0, floor(nextView.lv) - floor(prevView.lv));
+      acc.levels = floor(acc.levels) + Math.max(0, rawL - floor(allCred && allCred.levels));
+    }
+    for (const [key, read] of Object.entries(COUNTERS)) {
+      const rawR = Math.max(0, read(nextView.raw) - read(prevView.raw));
+      const credR = num(allCred && allCred.resources && allCred.resources[key]);
+      acc.resources[key] = floor(acc.resources[key]) + Math.max(0, rawR - credR);
+    }
     await db.upsertAuditWindow(D, userId, winStart, savedAt, JSON.stringify(acc));
 
     const winElapsed = Math.max(60_000, savedAt - winStart);
@@ -490,6 +502,29 @@ export async function auditAcceptedSave(D, { userId, username, gm, prev, prevSav
         evidence: { start: 0, end: acc.kills, rawDelta: acc.kills, credited: 0, unexplained: acc.kills, elapsedMs: winElapsed, rolling: true },
         detail: `${acc.kills.toLocaleString('en-US')} unexplained kills accumulated over ${Math.round(winElapsed / 60000)} min`,
       });
+    }
+    if (!violations.some(v => v.kind === 'zeny-rate') && acc.zeny >= MIN_RATE_DELTA.zeny && (acc.zeny / winHours) > RATE_LIMITS.zeny) {
+      violations.push({
+        kind: 'zeny-rate', category: 'heuristic', ruleVersion: RULE_VERSION,
+        confidence: 'medium', units: 'zeny/hr',
+        value: Math.round(acc.zeny / winHours), threshold: RATE_LIMITS.zeny,
+        evidence: { start: 0, end: acc.zeny, rawDelta: acc.zeny, credited: 0, unexplained: acc.zeny, elapsedMs: winElapsed, rolling: true },
+        detail: `${acc.zeny.toLocaleString('en-US')} unexplained zeny accumulated over ${Math.round(winElapsed / 60000)} min`,
+      });
+    }
+    for (const key of Object.keys(COUNTERS)) {
+      const limit = RATE_LIMITS[key];
+      const minAbs = MIN_RATE_DELTA[key] || 0;
+      const amt = floor(acc.resources[key]);
+      if (limit && !violations.some(v => v.kind === 'rate:' + key) && amt >= minAbs && (amt / winHours) > limit) {
+        violations.push({
+          kind: 'rate:' + key, category: 'heuristic', ruleVersion: RULE_VERSION,
+          confidence: 'low', units: `${key}/hr`,
+          value: Math.round(amt / winHours), threshold: limit,
+          evidence: { start: 0, end: amt, rawDelta: amt, credited: 0, unexplained: amt, elapsedMs: winElapsed, rolling: true },
+          detail: `+${amt.toLocaleString('en-US')} ${key} accumulated over ${Math.round(winElapsed / 60000)} min`,
+        });
+      }
     }
   }
   if (!violations.length) return { flagged: false };

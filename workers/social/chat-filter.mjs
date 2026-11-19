@@ -81,10 +81,10 @@ export function isWorldChatAllowed(text) {
   if (!cleaned) return true;
 
   // Tokenize on non-alphanumeric (keeping @, $, ! for leetspeak inside words),
-  // then trim leading/trailing punctuation so "fuck!" or "shit!!" does not bypass.
+  // then trim trailing '!' punctuation so "fuck!" does not bypass while "$hit" and "@sshole" keep their leading leetspeak.
   const rawTokens = cleaned
     .split(/[^a-z0-9@$!]+/)
-    .map(t => t.replace(/^[@$!]+|[@$!]+$/g, ''))
+    .map(t => t.replace(/!+$/g, ''))
     .filter(Boolean);
   if (!rawTokens.length) return true;
 

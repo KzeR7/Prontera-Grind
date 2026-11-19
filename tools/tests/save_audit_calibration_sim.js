@@ -88,3 +88,88 @@ test('30 accepted saves each adding 4,999 kills over 120s flag kill-rate via rol
   }
   assert.strictEqual(flagged, true, '30 saves of +4,999 kills over 120s must flag kill-rate');
 });
+
+test('30 accepted saves adding 90M Zeny or 599 shards over 120s flag via rolling window', async () => {
+  const db = new DatabaseSync(':memory:');
+  for (const f of fs.readdirSync('migrations').sort()) {
+    if (f.endsWith('.sql')) {
+      try { db.exec(fs.readFileSync('migrations/' + f, 'utf8')); } catch {}
+    }
+  }
+  db.exec('PRAGMA foreign_keys = OFF;');
+  const D = {
+    prepare(sql) {
+      const stmt = db.prepare(sql);
+      return {
+        bind(...args) {
+          return {
+            run: async () => stmt.run(...args),
+            first: async () => stmt.get(...args) || null,
+            all: async () => ({ results: stmt.all(...args) }),
+          };
+        },
+        run: async () => stmt.run(),
+        first: async () => stmt.get() || null,
+        all: async () => ({ results: stmt.all() }),
+      };
+    },
+  };
+  let savedAt = 1_700_000_000_000;
+  let zeny = 0, shards = 0, flagged = false;
+  for (let i = 0; i < 30; i++) {
+    const prev = { saved_at: savedAt, kills_total: 0, level: 120, zeny, blob: JSON.stringify({ shards }) };
+    savedAt += 120_000;
+    zeny += 90_000_000;
+    shards += 599;
+    const res = await auditAcceptedSave(D, {
+      userId: 43, username: 'Farmer', gm: 0,
+      prev, prevSave: { shards: shards - 599 }, save: { lv: 120, kills: 0, zeny, shards },
+      pub: { kills: 0, lv: 120, zeny }, savedAt,
+    });
+    if (res.flagged) flagged = true;
+  }
+  assert.strictEqual(flagged, true, '30 saves of +90M Zeny / +599 shards must flag');
+});
+
+test('cleared 10,000-kill alert reopens when a new 6,000-kill incident arrives later', async () => {
+  const db = new DatabaseSync(':memory:');
+  for (const f of fs.readdirSync('migrations').sort()) {
+    if (f.endsWith('.sql')) {
+      try { db.exec(fs.readFileSync('migrations/' + f, 'utf8')); } catch {}
+    }
+  }
+  db.exec('PRAGMA foreign_keys = OFF;');
+  const D = {
+    prepare(sql) {
+      const stmt = db.prepare(sql);
+      return {
+        bind(...args) {
+          return {
+            run: async () => stmt.run(...args),
+            first: async () => stmt.get(...args) || null,
+            all: async () => ({ results: stmt.all(...args) }),
+          };
+        },
+        run: async () => stmt.run(),
+        first: async () => stmt.get() || null,
+        all: async () => ({ results: stmt.all() }),
+      };
+    },
+  };
+  const t0 = 1_700_000_000_000;
+  await auditAcceptedSave(D, {
+    userId: 44, username: 'Reopener', gm: 0,
+    prev: { saved_at: t0, kills_total: 0, level: 120, zeny: 0, blob: '{}' },
+    prevSave: {}, save: { lv: 120, kills: 10_000, zeny: 0 },
+    pub: { kills: 10_000, lv: 120, zeny: 0 }, savedAt: t0 + 120_000,
+  });
+  db.prepare('UPDATE save_alerts SET cleared_at = ?, cleared_by = ? WHERE user_id = 44').run(t0 + 180_000, 'GM');
+  await auditAcceptedSave(D, {
+    userId: 44, username: 'Reopener', gm: 0,
+    prev: { saved_at: t0 + 240_000, kills_total: 10_000, level: 120, zeny: 0, blob: '{}' },
+    prevSave: {}, save: { lv: 120, kills: 16_000, zeny: 0 },
+    pub: { kills: 16_000, lv: 120, zeny: 0 }, savedAt: t0 + 360_000,
+  });
+  const row = db.prepare('SELECT cleared_at FROM save_alerts WHERE user_id = 44 AND kind = ?').get('kill-rate');
+  assert.strictEqual(row.cleared_at, null, 'new incident after cleared_at must reopen alert');
+});

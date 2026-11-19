@@ -21,6 +21,8 @@ test('blocks direct profanity, case variations, leetspeak, zero-width, diacritic
   assert.strictEqual(isWorldChatAllowed('(fuck)'), false);
   assert.strictEqual(isWorldChatAllowed('f.u.c.k'), false);
   assert.strictEqual(isWorldChatAllowed('f-u-c-k'), false);
+  assert.strictEqual(isWorldChatAllowed('$hit'), false);
+  assert.strictEqual(isWorldChatAllowed('@sshole'), false);
   assert.strictEqual(isWorldChatAllowed('FUCK'), false);
   assert.strictEqual(isWorldChatAllowed('f\u200Bu\u200Cc\uFEFFk'), false);
   assert.strictEqual(isWorldChatAllowed('fück'), false);

@@ -737,8 +737,8 @@ export async function saveAlertWithEvidence(db, { userId, kind, at, value, thres
         last_seen=excluded.last_seen, value=MAX(save_alerts.value, excluded.value),
         threshold=excluded.threshold, detail=excluded.detail,
         rule_version=excluded.rule_version, evidence_json=excluded.evidence_json,
-        cleared_at=CASE WHEN save_alerts.cleared_at IS NOT NULL AND excluded.value <= save_alerts.value THEN save_alerts.cleared_at ELSE NULL END,
-        cleared_by=CASE WHEN save_alerts.cleared_at IS NOT NULL AND excluded.value <= save_alerts.value THEN save_alerts.cleared_by ELSE NULL END,
+        cleared_at=CASE WHEN save_alerts.cleared_at IS NOT NULL AND excluded.last_seen <= save_alerts.cleared_at THEN save_alerts.cleared_at ELSE NULL END,
+        cleared_by=CASE WHEN save_alerts.cleared_at IS NOT NULL AND excluded.last_seen <= save_alerts.cleared_at THEN save_alerts.cleared_by ELSE NULL END,
         observations=save_alerts.observations + (CASE WHEN excluded.last_seen - save_alerts.last_seen >= ? THEN 1 ELSE 0 END)`)
       .bind(
         Number(userId), String(kind), Number(at), Number(at),

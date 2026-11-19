@@ -317,27 +317,33 @@ function cpuCard(cpu, error) {
   </div>`;
 }
 
-async function loadUsage() {
+async function loadUsage(fresh = false) {
   let d = null;
-  try { d = await api('/gm/usage'); } catch (e) { $('usagebody').innerHTML = `<span class="bad">Could not read usage: ${esc(e.message)}</span>`; return; }
+  try { d = await (fresh ? api('/gm/usage?fresh=1') : api('/gm/usage')); } catch (e) { $('usagebody').innerHTML = `<span class="bad">Could not read usage: ${esc(e.message)}</span>`; return; }
   const L = d.ledger || {};
-  $('usagewhen').textContent = '· ' + d.utcDay + ' UTC';
+  const m = d.meters || {};
+  const diag = d.diagnostics || {};
+  const cfg = diag.configured || {};
+  $('usagewhen').textContent = `· ${d.utcDay} UTC · ${d.cached ? 'Cached' : 'Live'} (${when(d.fetchedAt || d.at)})`;
+  const rows = [];
+  if (m.workers?.available) rows.push(meter('Workers requests (account-wide)', d.requests?.used, d.limits?.requests, d.requests ? nfmt(d.requests.errors) + ' errors' : ''));
+  if (m.d1?.available) {
+    rows.push(meter(`D1 rows written (${d.d1?.scoped ? 'project DB' : 'account-wide'})`, d.d1?.rowsWritten, d.limits?.rowsWritten, ''));
+    rows.push(meter('D1 rows read', d.d1?.rowsRead, d.limits?.rowsRead, ''));
+  }
+  if (m.objects?.available) rows.push(meter('Durable Object requests (account-wide)', d.objects?.requests, d.limits?.durableRequests, d.objects ? bytes(d.objects.storedBytes) + ' stored' : ''));
+  const diagLines = Object.entries(m).map(([k, v]) => `<li><b>${esc(k)}</b>: ${v.available ? 'OK' : 'Unavailable'} — ${esc(v.scope || '')}${v.unavailableReason ? ' (' + esc(v.unavailableReason) + ')' : ''}</li>`).join('');
   $('usagebody').innerHTML = [
-    meter('Function requests (all Workers on the account)', d.requests?.used, d.limits.requests, d.requests ? nfmt(d.requests.errors) + ' errors' : ''),
-    meter('D1 rows written (the tight one)', d.d1?.rowsWritten, d.limits.rowsWritten, d.d1 && !d.d1.scoped ? 'all databases' : ''),
-    meter('D1 rows read', d.d1?.rowsRead, d.limits.rowsRead, ''),
-    // v403: the two Durable Objects (the write gate and the social scene). Cloudflare reports them
-    // account-wide, not per class, so the label says so rather than implying one object.
-    meter('Durable Object requests (gate + social)', d.objects?.requests, d.limits.durableRequests, d.objects ? bytes(d.objects.storedBytes) + ' stored' : ''),
+    ...rows,
     `<div class="grid2" style="margin-top:8px">
       <div class="stat">accounts<b>${nfmt(L.accounts)}</b><span class="small">${nfmt(L.saves)} with a cloud save · ${nfmt(L.liveSessions)} live sessions</span></div>
       <div class="stat">save storage<b>${bytes(L.saveBytes)}</b><span class="small">biggest ${bytes(L.biggestSave)}</span></div>
       <div class="stat">save history<b>${bytes(L.historyBytes)}</b><span class="small">${nfmt(L.historyRows)} backup rows (5 per player)</span></div>
       <div class="stat">today<b>${nfmt(L.eventsToday)}</b><span class="small">logins &amp; GM actions · ${nfmt(L.grantsWaiting)} gifts waiting</span></div>
     </div>`,
-    `<p class="small" style="margin:8px 0 0">${esc(d.note)}</p>`,
-    d.error ? `<p class="small bad" style="margin:6px 0 0">Analytics: ${esc(d.error)}</p>` : '',
-    d.objectsError ? `<p class="small" style="margin:6px 0 0">Durable Objects: ${esc(d.objectsError)} — use the dashboard for this number.</p>` : '',
+    `<div class="row" style="margin-top:8px"><button type="button" onclick="loadUsage(true)">↻ Fresh analytics</button>${diag.dashboardUrl ? `<a href="${esc(diag.dashboardUrl)}" target="_blank" rel="noopener" style="color:var(--gold);font-size:12px">Open Cloudflare Dashboard ↗</a>` : ''}</div>`,
+    `<details style="margin-top:6px"><summary class="small">Diagnostics &amp; configuration</summary><p class="small">CF_ACCOUNT_ID: ${cfg.accountIdSet ? 'set' : 'missing'} · CF_ANALYTICS_TOKEN: ${cfg.analyticsTokenSet ? 'set' : 'missing'} · CF_D1_ID: ${cfg.d1IdSet ? 'set (scoped)' : 'unset (account-wide)'}</p><ul class="small" style="margin:4px 0;padding-left:18px">${diagLines}</ul></details>`,
+    `<p class="small" style="margin:6px 0 0">${esc(d.note)}</p>`,
     d.hint ? `<p class="small" style="margin:6px 0 0">${esc(d.hint)}</p>` : '',
     cpuCard(d.cpu, d.cpuError),
   ].join('');
@@ -541,6 +547,7 @@ async function openPlayer(id) {
   const d = await api('/gm/player?id=' + id);
   if(seq!==playerRequest)return;
   SEL = d;
+  showNav('players');
   renderPlayers();
   renderDetail();
   // On a phone the detail card sits under the list, so opening a player has to
