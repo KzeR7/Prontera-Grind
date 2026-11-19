@@ -12211,3 +12211,10 @@ re-recording them here would have written wrong numbers into the repository.
 ### 2026-11-19 — `haven-v436` expanded FX reconciliation
 * **Changed:** Reconciled the approved expanded-class FX integration with current `main` (v435) and coordinated all build mirrors/cache keys at v436. The packaged build removes only tokenizer-verified standalone comments; no art pixels or delivery size budgets changed. Staging packaging includes the FX assets and build-only parser.
 * **Checks:** The full gate passed all 251 JavaScript/MJS simulation and smoke suites, with no dependency skips; the four config/generated-asset checks and Afterglow generator check passed. Actual remeasurement against current main kept all 42 gear, 21 encounter and 63 growth results identical. The packaged game loaded in Chromium and ten representative FX rendered without page or asset errors. No production deployment or data operation.
+
+### 2026-11-19 — `2026-11-19 haven-v437 readjust Ascension weapon drops`
+* **Changed:** Readjusted weapon drops on Ascension maps (Astral Citadel and Thor Volcano). Weapons dropped in Nightmare maps (the 7 classic families: sword, dagger, katar, staff, bow, axe, mace) no longer repeat on Ascension maps. Ascension maps now exclusively drop the 7 new weapon families (spear, book, knuckle, instrument, whip, shuriken, gun) that do not drop in Nightmare. Boosted regular monster drop rates on Ascension maps from 0.0179% to 0.08% per weapon (0.56% total across the 7 families). Stage 5 MVP boss weapon drop rate remains at 0.11% per weapon.
+* **Try it:** Open Field cards or fight on Astral Citadel or Thor Volcano. Verify mob drop tables list only the 7 new weapon families at 0.08% drop rate, and the Stage 5 MVPs drop them at 0.11% each.
+* **Checks:** `node tools/tests/equipment_v417_sim.js`, `ascension_evolution_sim.js`, `ascension_progression_sim.js`, `mythic_rules_sim.js`, `drop_card_sheet_sim.js`, `gm_tools_sim.js`, and `mythic_gift_base_sim.js` pass with 0 failures. `tools/build_gm_catalog.cjs --check` confirms GM catalog is current.
+* **Delivery:** Local branch changes on `arena/931305d4-prontera-grind`. No merge to main or deployment.
+

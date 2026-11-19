@@ -8,12 +8,12 @@ try{
   ev(`S.mp=${m};S.lvl=${l};S.prog[${m}]=5;spawn()`);
   assert.equal(ev(`fieldOf(${m},${l}).boss!==null`),l===5);
   assert.equal(ev('isBoss()'),l===5);
-  // Both maps drop only their new section-5 N+ weapons: all fourteen weapon families, no armor.
+  // Both maps drop only their new section-5 N+ weapons: seven new weapon families, no armor or repeated nightmare weapons.
   // N weapons and equipment remain on Nightmare maps; section-6 Mythics are Forge-only.
-  assert.equal(ev(`gearPool(${m},${l}).length`),14,`map ${m} stage ${l}: fourteen N+ weapons only`);
+  assert.equal(ev(`gearPool(${m},${l}).length`),7,`map ${m} stage ${l}: seven new N+ weapons only`);
   assert.equal(ev(`gearPool(${m},${l}).every(x=>x.sec===5&&!['armor','head','off','leg','acc'].includes(x.k))`),true,'N+ weapon-only drop shelf');
-  assert.equal(ev("mobs.every(x=>x.drops.length===14&&x.drops.every(([T])=>T.sec===5&&!['armor','head','off','leg','acc'].includes(T.k)))"),true,'regular enemies drop N+ weapons only');
-  assert.equal(ev(`mobs.filter(x=>x.boss).every(x=>x.drops.length===gearPool(${m},${l}).length)`),true,'the MVP lists the whole weapon shelf');
+  assert.equal(ev("mobs.filter(x=>!x.boss).every(x=>x.drops.length===7&&x.drops.every(([T,ch])=>T.sec===5&&ch===0.08&&!['armor','head','off','leg','acc'].includes(T.k)))"),true,'regular enemies drop N+ weapons only at 0.08%');
+  assert.equal(ev(`mobs.filter(x=>x.boss).every(x=>x.drops.length===gearPool(${m},${l}).length&&x.drops.every(([,ch])=>ch===0.11))`),true,'the MVP lists the whole weapon shelf at 0.11%');
   assert.equal(ev('mobs.filter(x=>x.boss).length'),l===5?1:0);
   assert.equal(ev(`canTravel(${m},6)`),false);
   assert.throws(()=>ev(`fieldOf(${m},6)`),/five stages/);
