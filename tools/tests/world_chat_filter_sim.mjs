@@ -68,17 +68,17 @@ test('SocialRoom rejects World profanity for both players and GMs, enforces cool
   assert.strictEqual(worldPersisted.length, 0);
   assert.ok(sent.some(m => m.type === 'error' && /3 seconds/.test(m.message)));
 
-  // GM is also subject to the same World chat policy
+  // GM is exempt from the World chat word filter
   sent.length = 0;
   now += 5000;
   room.receive(cGm, JSON.stringify({ type: 'chat', channel: 'world', body: 'sh1t happens' }));
-  assert.strictEqual(worldPersisted.length, 0);
-  assert.ok(sent.some(m => m.type === 'error' && m.message === REJECT_MESSAGE));
+  assert.strictEqual(worldPersisted.length, 1);
+  assert.strictEqual(worldPersisted[0].body, 'sh1t happens');
 
   // Clean Assassin class message succeeds
   sent.length = 0;
   now += 5000;
   room.receive(cPlayer, JSON.stringify({ type: 'chat', channel: 'world', body: 'LF party for Assassin class' }));
-  assert.strictEqual(worldPersisted.length, 1);
-  assert.strictEqual(worldPersisted[0].body, 'LF party for Assassin class');
+  assert.strictEqual(worldPersisted.length, 2);
+  assert.strictEqual(worldPersisted[1].body, 'LF party for Assassin class');
 });

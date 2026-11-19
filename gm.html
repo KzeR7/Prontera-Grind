@@ -210,6 +210,10 @@ tr:hover{background:#2a2014;cursor:pointer}
   </section>
   </div>
 
+  <section class="card gm-pane hide" id="activitycard" data-pane="activity">
+    <h2>GM Activity Log</h2>
+    <div id="activitybody" class="small">Loading…</div>
+  </section>
   <section id="detail" class="card hide gm-pane" data-pane="players"></section>
 </main>
 
@@ -1028,6 +1032,21 @@ function showNav(tab) {
       p.classList.toggle('hide', !match);
     }
   });
+  if (tab === 'activity') loadActivityLog();
+}
+async function loadActivityLog() {
+  const el = document.getElementById('activitybody');
+  if (!el) return;
+  try {
+    const d = await api('/gm/log');
+    const rows = Array.isArray(d.logs) ? d.logs : (Array.isArray(d.rows) ? d.rows : []);
+    if (!rows.length) { el.textContent = 'No recent GM activity recorded.'; return; }
+    el.innerHTML = '<table><thead><tr><th>When</th><th>Actor</th><th>Action</th><th>Target</th><th>Detail</th></tr></thead><tbody>'
+      + rows.slice(0, 100).map(r => `<tr><td>${when(r.at || r.created_at)}</td><td>${esc(r.actor || '')}</td><td>${esc(r.action || '')}</td><td>${esc(r.target || '')}</td><td>${esc(r.detail || '')}</td></tr>`).join('')
+      + '</tbody></table>';
+  } catch (e) {
+    el.textContent = 'Could not load activity log: ' + e.message;
+  }
 }
 </script>
 </body>

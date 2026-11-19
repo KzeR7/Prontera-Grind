@@ -980,7 +980,7 @@ export class SocialRoom {
   const body=emotion?'':typeof m.body==='string'?m.body.replace(/[\u0000-\u001f\u007f]/g,'').trim():'';if(!emotion&&(!body||body.length>300))return;
   let recipient;if(channel==='whisper'){recipient=[...this.clients.values()].find(p=>p.name.toLowerCase()===String(m.to).toLowerCase());if(!recipient)return this.send(c,{type:'error',message:'That player is offline.'})}
   c.nextChat=now+R.CHAT_DELAY;
-  if(channel==='world'&&!emotion&&!isWorldChatAllowed(body))return this.send(c,{type:'error',message:REJECT_MESSAGE});
+  if(channel==='world'&&!c.gm&&!emotion&&!isWorldChatAllowed(body))return this.send(c,{type:'error',message:REJECT_MESSAGE});
   const event={type:'message',id:++this.serial,at:now,from:c.id,name:c.name,gm:c.gm,channel,body,room:channel==='local'?c.room:0,...(emotion?{emotion:m.emotion}:{}),...(recipient?{to:recipient.id,toName:recipient.name}:{})};
   if(channel==='world'){this.history.push(event);if(this.history.length>100)this.history.shift();this.onWorldMessage(event);this.broadcast(event)}
   else if(channel==='local')this.broadcast(event,p=>p.room===c.room);

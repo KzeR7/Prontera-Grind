@@ -1,7 +1,7 @@
 // workers/social/chat-filter.mjs — Deterministic, local World chat word filter.
 //
 // Policy scope:
-//   - Enforced on World chat (`channel === 'world'`) for all users including GM/owner.
+//   - Enforced on World chat (`channel === 'world'`) for non-GM players (GM/owner accounts are exempt).
 //   - Local (plaza) and Whisper (direct) chat are NOT filtered by this module.
 //   - Targets English profanity, slurs, and severe harassment (does not claim universal
 //     language coverage).
