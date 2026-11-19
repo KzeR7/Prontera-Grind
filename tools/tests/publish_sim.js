@@ -204,11 +204,7 @@ t('the published tree is small enough to stay honest', () => {
   // haven-v424: 60.31, not 60.30. The immutable claim state/bounds client code takes the classic
   // bundle to 60.3021 MiB (measured by this build); optional asset groups are unchanged and retain
   // their own limits above. This is a measured source-byte allowance, not a runtime asset expansion.
-  // haven-v432: 60.42, not 60.31. Six Ragnarok Online look sets join the Forge on top of the original
-  // six Mythic sets: 108 new native inventory icons (about 74 KB), their 114 piece names, the manifest
-  // rows and the zero-base repair. Measured 60.3014 -> 60.4131 MiB; the same deliberate step as
-  // haven-v409's +0.1 for the 56 expanded-family icons. No other asset group changed.
-  assert.ok((bytes-nativeBytes-socialBytes-endgameBytes-worldMapBytes-digimonBytes-fountainBytes-expandedBytes-expandedWardrobeBytes-roFxBytes-classIconBytes)/1048576 < 60.42, 'existing classic runtime assets exceed their 60.42 MiB budget');
+  assert.ok((bytes-nativeBytes-socialBytes-endgameBytes-worldMapBytes-digimonBytes-fountainBytes-expandedBytes-expandedWardrobeBytes-roFxBytes-classIconBytes)/1048576 < 60.31, 'existing classic runtime assets exceed their 60.31 MiB budget');
   assert.ok(expandedWardrobeBytes > 0 && expandedWardrobeBytes/1048576 < 4.5, 'lazy expanded-roster Wardrobe bodies exceed their separate 4.5 MiB budget (4.31 measured 2026-11-15)');
   assert.ok(expandedBytes > 0 && expandedBytes/1048576 < 3, 'lazy expanded-roster bodies exceed their separate 3 MiB budget (2.86 measured 2026-11-15, 44 bodies)');
   assert.ok(digimonBytes/1048576 < 40, 'lazy Digimon roster exceeds its separate 40 MiB budget');
