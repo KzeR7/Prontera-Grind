@@ -78,6 +78,18 @@ export function cleanPokerLedgerQueues(value){
  }
  return queues;
 }
+export function cleanMvpState(value){
+ if(!value||typeof value!=='object'||Array.isArray(value))return {active:[],nextAt:[]};
+ const active=Array.isArray(value.active)?value.active.filter(pair=>
+  Array.isArray(pair)&&pair.length===2&&Number.isInteger(pair[0])&&pair[0]>=1&&pair[0]<=SOCIAL_MAX_ROOMS&&
+  pair[1]&&typeof pair[1]==='object'&&typeof pair[1].sp==='string'&&FISHING_MVP_IDS.includes(pair[1].sp)&&
+  typeof pair[1].id==='string'&&Number.isFinite(pair[1].spawnedAt)&&Number.isFinite(pair[1].endsAt)
+ ).map(([room,m])=>[room,{room,sp:m.sp,id:m.id,spawnedAt:m.spawnedAt,endsAt:m.endsAt}]):[];
+ const nextAt=Array.isArray(value.nextAt)?value.nextAt.filter(pair=>
+  Array.isArray(pair)&&pair.length===2&&Number.isInteger(pair[0])&&pair[0]>=1&&pair[0]<=SOCIAL_MAX_ROOMS&&Number.isFinite(pair[1])
+ ):[];
+ return {active,nextAt};
+}
 // Only positive integer account ids belong in a friend list.
 const cleanFriendId=id=>Number.isInteger(id)&&id>0;
 function routeDist(from,route){let d=0,x=from.x,z=from.z;for(const pt of route){d+=Math.hypot(pt.x-x,pt.z-z);x=pt.x;z=pt.z}return d;}
@@ -101,6 +113,7 @@ export class SocialRoom {
   // MVP fishing: per-room active spawn + next spawn timer
   this.mvpActive=new Map();this.mvpNextAt=new Map();
   this.onBattleActivity=opts.onBattleActivity||null;
+  this.onMvpChange=opts.onMvpChange||null;
  }
  // v366: `send` reports whether the bytes actually left. The handshake below is delivered from a
  // promise continuation, so a synchronous throw cannot reach the caller and used to be swallowed:
@@ -353,7 +366,7 @@ export class SocialRoom {
  // ----------------------------- MVP fishing spawn -----------------------------
  mvpSnapshot(room){const a=this.mvpActive.get(room);return a?{room,sp:a.sp,id:a.id,spawnedAt:a.spawnedAt,endsAt:a.endsAt}:null}
  broadcastMvp(room){const snap=this.mvpSnapshot(room);if(snap)this.broadcast({type:'mvp_spawn',...snap},p=>p.room===room)}
- scheduleMvp(room,now=this.now()){const delay=MVP_SPAWN_MIN+this.random()*(MVP_SPAWN_MAX-MVP_SPAWN_MIN);this.mvpNextAt.set(room,now+delay)}
+ scheduleMvp(room,now=this.now()){const delay=MVP_SPAWN_MIN+this.random()*(MVP_SPAWN_MAX-MVP_SPAWN_MIN);this.mvpNextAt.set(room,now+delay);this.onMvpChange?.()}
  spawnMvp(room,now=this.now(),requestedSp=null){
   if(!Number.isInteger(room)||room<1||room>MAX_ROOMS||this.mvpActive.has(room))return null;
   if(requestedSp!==null&&!MVP_IDS.includes(requestedSp))return null;
@@ -363,6 +376,7 @@ export class SocialRoom {
   this.mvpActive.set(room,{sp,id,spawnedAt:now,endsAt});
   this.mvpNextAt.delete(room);
   this.broadcast({type:'mvp_spawn',...spawn},p=>p.room===room);
+  this.onMvpChange?.();
   return spawn;
  }
  hasActiveMvp(){return this.mvpActive.size>0}
@@ -371,6 +385,20 @@ export class SocialRoom {
   this.mvpActive.delete(room);
   this.broadcast({type:'mvp_despawn',room,sp:cur.sp,id:cur.id},p=>p.room===room);
   this.scheduleMvp(room,now);
+ }
+ nextMvpSpawnAt(now=this.now()){
+  const occupied=new Set([...this.clients.values()].map(p=>p.room).filter(Boolean));
+  if(!occupied.size)return 0;
+  let earliest=0;
+  for(const room of occupied){
+   if(this.mvpActive.has(room))continue;
+   let next=this.mvpNextAt.get(room);
+   if(next===undefined){this.scheduleMvp(room,now);next=this.mvpNextAt.get(room)}
+   if(next!==undefined){
+    if(!earliest||next<earliest)earliest=next;
+   }
+  }
+  return earliest?Math.max(now+1000,earliest):0;
  }
  tickMvp(now=this.now()){
   // collect rooms that exist or have pending mvp state
@@ -799,6 +827,7 @@ export class SocialRoom {
   const spawn=R.fountainSpawn(members)||{x:0,z:12};
   c.room=room;c.x=spawn.x;c.z=spawn.z;c.dir=0;c.at=now;c.sit=false;c.path=[];c.seat=null;c.pokerSeat=null;c.fish=null;
   if(!this.mvpActive.has(room)&&!this.mvpNextAt.has(room))this.scheduleMvp(room,now);
+  this.tickMvp(now);
   this.sendRoom(c,now);
  }
  // The warning is a client affordance; this is the authority. An old client, a queued floor
@@ -819,7 +848,7 @@ export class SocialRoom {
   }
   if(now>c.reauthAt||(now>c.expires&&!fishingHeld(c)))return this.refresh(c);
   c.expires=now+IDLE_MS;
-  if(c.room)this.tickRoom(c.room,now);
+  if(c.room){this.tickRoom(c.room,now);this.tickMvp(now);}
   if(typeof raw!=='string'||raw.length>4096)return this.send(c,{type:'error',message:'Message is too large.'});
   let m;try{m=JSON.parse(raw)}catch{return}if(!m||typeof m!=='object')return;
   if(m.type==='ping')return this.send(c,{type:'pong'});

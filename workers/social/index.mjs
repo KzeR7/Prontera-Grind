@@ -1,7 +1,8 @@
-import {SocialRoom,cleanWorldHistory,cleanPokerLedgerQueues,FISHING_MVP_IDS,SOCIAL_MAX_ROOMS} from './room.mjs';
+import {SocialRoom,cleanWorldHistory,cleanPokerLedgerQueues,cleanMvpState,FISHING_MVP_IDS,SOCIAL_MAX_ROOMS} from './room.mjs';
 const BATTLE_ALARM_MS=1000;
 const HISTORY_KEY='world-history-v1';
 const LEDGER_PREFIX='poker-ledger-v1:';
+const MVP_KEY='mvp-state-v1';
 // v296: the plaza spot a dropped client resumes is durable, so a Durable Object eviction between
 // the drop and the reconnect no longer respawns the player at the entrance mid-fishing-session.
 const RESUME_PREFIX='resume-v1:';
@@ -9,11 +10,13 @@ export class Social {
  constructor(ctx){
   this.ctx=ctx;this.historyWrites=Promise.resolve();this.ledgerLoadFailed=false;
   this.resumeWrites=Promise.resolve();
+  this.mvpWrites=Promise.resolve();
   this.room=new SocialRoom({
    onWorldMessage:()=>this.saveHistory(),
    onPokerLedger:(accountId,events)=>ctx.storage.put(LEDGER_PREFIX+accountId,events),
    onResume:(accountId,record)=>this.saveResume(accountId,record),
    onBattleActivity:()=>this.scheduleBattleAlarm(),
+   onMvpChange:()=>{this.saveMvpState();this.scheduleKeepalive();},
   });
   this.battleAlarmAt=0;this.battleAlarmWrite=Promise.resolve();this.sockets=new WeakMap();this.restored=false;
   // SQLite Durable Object storage survives eviction/restarts. Do not admit a socket until
@@ -32,7 +35,16 @@ export class Social {
    }
   }).catch(error=>console.error('Plaza resume load failed',error));
   const ledgerReady=this.loadLedgers().catch(error=>{this.ledgerLoadFailed=true;console.error('Poker ledger load failed',error)});
-  this.ready=Promise.all([historyReady,ledgerReady,resumeReady]);
+  const mvpReady=ctx.storage.get(MVP_KEY).then(saved=>{
+   const clean=cleanMvpState(saved),now=Date.now();
+   for(const [room,data] of clean.active){
+    if(data.endsAt>now)this.room.mvpActive.set(room,data);
+   }
+   for(const [room,at] of clean.nextAt){
+    this.room.mvpNextAt.set(room,at);
+   }
+  }).catch(error=>console.error('Plaza MVP state load failed',error));
+  this.ready=Promise.all([historyReady,ledgerReady,resumeReady,mvpReady]);
  }
  // v326: one failed read used to brick this room for the whole life of the object - every socket was
  // answered 503, so the plaza read as "chat unavailable, retrying..." until the object happened to be
@@ -74,6 +86,8 @@ export class Social {
   const now=Date.now();
   if(this.room.hasActiveBattles()&&this.room.clients.size)return now+BATTLE_ALARM_MS;
   if(this.room.hasKeepaliveWork())return now+60000;
+  const mvpAt=this.room.nextMvpSpawnAt?.(now)||0;
+  if(mvpAt)return mvpAt;
   return 0;
  }
  scheduleBattleAlarm(){
@@ -95,6 +109,10 @@ export class Social {
   const snapshot=this.room.history.slice();
   const storage=this.ctx.storage;
   this.historyWrites=this.historyWrites.then(()=>storage.put(HISTORY_KEY,snapshot)).catch(error=>console.error('World history save failed',error));
+ }
+ saveMvpState(){
+  const snapshot={active:[...this.room.mvpActive.entries()],nextAt:[...this.room.mvpNextAt.entries()]};
+  this.mvpWrites=this.mvpWrites.then(()=>this.ctx.storage.put(MVP_KEY,snapshot)).catch(error=>console.error('Plaza MVP state save failed',error));
  }
  async adminFishingMvp(request){
   if(request.method!=='POST')return new Response(JSON.stringify({err:'POST required'}),{status:405,headers:{'Content-Type':'application/json'}});
@@ -118,6 +136,7 @@ export class Social {
   }
   const spawn=this.room.spawnMvp(room,Date.now(),species);
   if(!spawn)return new Response(JSON.stringify({err:'The Social room could not spawn that MVP.'}),{status:409,headers:{'Content-Type':'application/json'}});
+  if(this.mvpWrites)await this.mvpWrites;
   return new Response(JSON.stringify({ok:true,...spawn}),{status:200,headers:{'Content-Type':'application/json','Cache-Control':'no-store'}});
  }
  async fetch(request){
@@ -179,7 +198,7 @@ export class Social {
  }
  async alarm(){
   await this.ready;this.restoreSockets();this.room.retryPokerLedgers();this.room.sweep();
-  await this.room.ledgerWrites;await this.historyWrites;await this.battleAlarmWrite;
+  await this.room.ledgerWrites;await this.historyWrites;await this.battleAlarmWrite;if(this.mvpWrites)await this.mvpWrites;
   const at=this.nextAlarmAt();this.battleAlarmAt=this.room.hasActiveBattles()?at:0;
   if(at)await this.ctx.storage.setAlarm(at);
  }
