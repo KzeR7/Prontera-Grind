@@ -1,0 +1,72 @@
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const path=require('node:path');
+const {createGame}=require('./helpers/game');
+const g=createGame(),{ev}=g,doc=g.window.document;
+const click=action=>{
+ const b=doc.querySelector('#adventureGuide [data-adventure="'+action+'"]');
+ assert.ok(b,'visible companion action '+action);
+ b.dispatchEvent(new g.window.MouseEvent('click',{bubbles:true}));
+};
+try{
+ const script=doc.createElement('script');script.textContent=fs.readFileSync(path.join(__dirname,'../../assets/adventure-guide.js'),'utf8');doc.body.append(script);
+ ev("S=fresh();document.body.classList.add('social-open');tabs.length=0;maybeGuide()");
+ assert.equal(ev('adventureState().step'),'welcome');
+ assert.equal(ev('guideTour'),null,'the old modal tour does not compete');
+ assert.equal(ev('tabs.length'),0,'the initial companion leaves the town visible');
+ click('later');assert.equal(ev('adventureState().status'),'deferred');
+ assert.match(doc.querySelector('#adventureGuide').textContent,/Resume first adventure/);
+ ev('maybeGuide()');assert.equal(ev('adventureState().status'),'deferred','relogin respects exploration');
+ click('resume');click('start');assert.equal(ev('adventureState().step'),'town');
+ click('town');assert.equal(ev('adventureState().step'),'field');
+ // Seeing a counter change in town is not proof of a live field kill.
+ ev('S.kills+=20;adventureSync();adventureRecordKill()');
+ assert.equal(ev('adventureState().step'),'field');
+ ev("document.body.classList.remove('social-open');hubFirstPending=false;mobs=[];adventureSync()");
+ assert.equal(ev('adventureState().step'),'field','an empty field cannot advance the lesson');
+ ev('mobs=[{hp:1}];adventureSync()');assert.equal(ev('adventureState().step'),'kill');
+ assert.equal(ev('adventureState().killSeen'),undefined,'offline counters did not complete the kill');
+ ev('adventureRecordKill();adventureSync()');assert.equal(ev('adventureState().step'),'stats');
+ click('stats');assert.ok(ev("tabs.includes('status')"));
+ assert.equal(ev('adventureState().step'),'stats','opening a panel does not spend points');
+ ev('S.st.str=2;S.pts--;adventureSync()');assert.equal(ev('adventureState().step'),'gear');
+ // Resume closes the panel rather than making a chip that can never expand.
+ click('resume');click('gear-later');assert.equal(ev('adventureState().step'),'job');
+ ev('S.jobs.Novice.jl=10;adventureSync()');
+ assert.equal(ev('adventureState().step'),'job','reaching the requirement does not choose a class');
+ ev("S.cls='Swordman';S.st=fresh().st;S.jobs.Swordman={jl:1,jx:0};adventureSync()");
+ assert.equal(ev('adventureState().step'),'skill','Novices are not asked to learn unavailable attacks');
+ ev('S.sk.bash=1;adventureSync()');assert.equal(ev('adventureState().step'),'combo');
+ ev("S.skillCombos.Swordman={enabled:false,slots:['bash']};adventureSync()");
+ assert.equal(ev('adventureState().step'),'combo','a paused combo cannot complete the lesson');
+ ev('S.skillCombos.Swordman.enabled=true;S.skOff.bash=true;adventureSync()');
+ assert.equal(ev('adventureState().step'),'combo','a paused attack cannot complete the lesson');
+ ev('S.skOff.bash=false;adventureSync()');assert.equal(ev('adventureState().step'),'ready');
+ click('finish');assert.equal(ev('adventureState().status'),'complete');
+ assert.equal(doc.querySelector('#adventureGuide'),null);
+ ev('maybeGuide()');assert.equal(doc.querySelector('#adventureGuide'),null,'completion stays quiet');
+ assert.equal(ev('guideTour'),null);
+ const completed=ev('JSON.stringify(S.handbook)');
+ ev("localStorage.setItem(saveKey(),JSON.stringify(S));S=load();maybeGuide()");
+ assert.equal(ev('JSON.stringify(S.handbook)'),completed,'save/load preserves tutorial state');
+ // Account changes remove the former account's companion without sharing markers.
+ ev("currentUser='new-owner';S=fresh();tabs.length=0;document.body.classList.add('social-open');maybeGuide()");
+ assert.equal(ev('adventureState().step'),'welcome');
+ click('skip');assert.equal(ev('adventureState().status'),'skipped');
+ assert.equal(doc.querySelector('#adventureGuide'),null);
+ ev("adventureAction('resume')");assert.equal(ev('adventureState().status'),'active');
+ ev("currentUser='legacy-owner';S=fresh();S.handbook={beginner:true,beginnerSeen:true,beginnerHubSeen:true};maybeGuide();adventureSync()");
+ assert.equal(ev('adventureState()'),null,'completed legacy guides do not auto-start again');
+ assert.equal(doc.querySelector('#adventureGuide'),null,'the previous account card is removed');
+ ev("S.handbook={adventure:{version:2,status:'active',future:'preserve'}};maybeGuide();adventureAction('resume')");
+ assert.equal(ev('S.handbook.adventure.future'),'preserve');
+ assert.equal(ev('S.handbook.adventure.version'),2,'future saves are never overwritten');
+ ev("S=fresh();S.handbook={adventure:{version:1,status:'active',step:'broken',started:true,townSeen:true}};maybeGuide()");
+ assert.equal(ev('adventureState().step'),'field','invalid step IDs recover from real state');
+ ev("S.handbook.adventure.status='deferred';adventureSync()");
+ const markup=ev('adventureHandbook()');
+ assert.match(markup,/DigiPet combat are separate/);assert.match(markup,/first field visit/);
+ assert.match(markup,/data-adventure="resume"/);
+ ev("S=null;currentUser=null;adventureSync()");assert.equal(doc.querySelector('#adventureGuide'),null);
+ console.log('First Adventure regression passed: real actions, deferred loot, job/skill ordering, persistence, account isolation, legacy/future saves and dismissal.');
+}finally{g.close()}

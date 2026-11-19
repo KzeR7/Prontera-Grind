@@ -337,6 +337,28 @@ decoding need HTTP. A platform may provide a different entry URL; use its previe
 
 ## Before pushing
 
+### First Adventure browser acceptance (haven-v427)
+
+Run `node tools/tests/adventure_guide_sim.js` for the actual-action gates, pause/skip/
+completion, save/load, account changes, future formats and legacy completion. Run the
+existing `guide_sim.js` too: reference tours and Ascension must keep working.
+
+For the optional browser audit, include `playwright` in the single dependency-install
+command above, then run `npx playwright install chromium firefox`. Build the site and run:
+
+```sh
+node tools/check_adventure_browser.cjs chromium /tmp/adventure-review
+node tools/check_adventure_browser.cjs firefox /tmp/adventure-review
+```
+
+Use an appropriate local output path on Windows. Each audit starts a disposable local
+server on an ephemeral port, creates synthetic accounts and takes desktop/phone screenshots.
+It uses the pinned local Three.js file with real WebGL rendering (no renderer stub),
+actual registration/relogin, town/field travel, a real kill, spending a stat point,
+class selection, learning Bash, assigning a combo and finishing. Only the long Novice/
+Swordman Job EXP waits use controlled fixtures. This does not test CDN availability,
+Brave Shields, Safari or physical phones. No production accounts are touched.
+
 The gate is: the three generated-asset checks, the Pages preview config check, every `*_sim.js`, every `*_sim.mjs` and every `*_smoke.js`.
 Read the output, not just the exit code — a suite that prints a dependency skip and exits
 0 has not passed.
