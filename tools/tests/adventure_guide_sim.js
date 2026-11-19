@@ -31,7 +31,18 @@ try{
  assert.equal(ev('adventureState().step'),'stats','opening a panel does not spend points');
  ev('S.st.str=2;S.pts--;adventureSync()');assert.equal(ev('adventureState().step'),'gear');
  // Resume closes the panel rather than making a chip that can never expand.
- click('resume');click('gear-later');assert.equal(ev('adventureState().step'),'job');
+ click('resume');
+ const beforeGear=ev('JSON.stringify(S.handbook)');
+ assert(doc.querySelector('#dock [data-t="equip"].adventure-target'));
+ ev("S.inv.push({...S.eq.weapon,id:77123,val:S.eq.weapon.val+5});ui=()=>renderWin()");
+ click('gear');ev("sub.equip='refine';renderWin();adventureAction('gear')");
+ assert.equal(ev('sub.equip'),'equip0');
+ const button=s=>{const b=doc.querySelector(s);assert.ok(b,s);b.click()};
+ button('[data-a="selb"][data-v="77123"]');assert.equal(ev('S.eq.weapon.id'),1);
+ assert.equal(ev('adventureState().step'),'gear');button('[data-a="equip"][data-v="77123"]');
+ assert.equal(ev('S.eq.weapon.id'),77123);assert.equal(ev('adventureState().step'),'job');
+ ev(`S.eq=fresh().eq;S.handbook=${beforeGear};tabs.length=0;renderWin()`);
+ click('gear-later');assert.equal(ev('adventureState().step'),'job');
  ev('S.jobs.Novice.jl=10;adventureSync()');
  assert.equal(ev('adventureState().step'),'job','reaching the requirement does not choose a class');
  ev("S.cls='Swordman';S.st=fresh().st;S.jobs.Swordman={jl:1,jx:0};adventureSync()");

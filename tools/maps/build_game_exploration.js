@@ -7,7 +7,7 @@ const modules=['endgame-scenes.js','journey-state.js','journey-navigation.js','j
 function build(output){
  const out=path.join(output,'assets/endgame');fs.mkdirSync(path.join(out,'textures'),{recursive:true});
  for(const file of modules){let text=fs.readFileSync(path.join(__dirname,file),'utf8');text=text.replaceAll('/tools/maps/textures/','/assets/endgame/textures/');fs.writeFileSync(path.join(out,file),text);}
- fs.copyFileSync(path.join(__dirname,'vendor/three-r128.min.js'),path.join(out,'three-r128.min.js'));
+ fs.copyFileSync(path.join(root,'assets/endgame/three-r128.min.js'),path.join(out,'three-r128.min.js'));
  fs.copyFileSync(path.join(__dirname,'mob-catalog.json'),path.join(out,'mob-catalog.json'));
  const manifest=JSON.parse(fs.readFileSync(path.join(__dirname,'textures/runtime-manifest.json'),'utf8'));
  fs.copyFileSync(path.join(__dirname,'textures/runtime-manifest.json'),path.join(out,'textures/runtime-manifest.json'));

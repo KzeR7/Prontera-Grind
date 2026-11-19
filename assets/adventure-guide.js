@@ -50,7 +50,7 @@ const ADVENTURE_STEPS={
  field:{title:'Find your first battlefield',text:'Use Field to leave town. A new character starts at Prontera Fields, Stage 1. Your character fights automatically once the field is ready.',action:'Go to the field',run:'field',detail:'The World Map lets you choose a destination later. Travel only opens places your character can reach. This guide never resets a returning character’s saved destination.'},
  kill:{title:'Watch your first victory',text:'Watch your character attack a monster. Each victory earns Base EXP, Job EXP and Zeny, with a chance of loot. You do not need to click each attack.',action:'View the battlefield',run:'watch',detail:'Base levels grant stat points. Job levels unlock skills and promotions. Auto-advance moves to another stage after a clear; turn it off when you want to farm one place. If combat is paused, use Start combat below.'},
  stats:{title:'Make your character stronger',text:'Open Character → Stats and spend a stat point. Read each stat before choosing: STR helps physical damage, INT helps magic, and VIT helps you survive.',action:'Open Character',run:'stats',detail:'Your Novice begins with stat points. You choose how to spend them; this guide allocates nothing automatically. Later, the Your build handbook chapter compares farming, bosses and survival.'},
- gear:{title:'Turn loot into an upgrade',text:'Open Inventory, select a piece of equipment and compare it with what you wear. Equip an improvement, then lock anything you want to keep.',action:'Open Inventory',run:'gear',detail:'Drops are random. You can continue the guide now and learn this later. Your Equipment → Loadout shows worn items; Auto-sell controls future drops. Read selling rules carefully before enabling them.'},
+ gear:{title:'Turn loot into an upgrade',text:'Open Equipment → Loadout. Select an owned item, compare it with what you wear and press Equip for an improvement, then lock anything you want to keep.',action:'Open Loadout',run:'gear',detail:'Drops are random. You can continue the guide now and learn this later. Loadout shows worn and unequipped gear; Bag holds materials, consumables and loose cards; Auto-sell controls future drops. Read selling rules carefully before enabling them.'},
  job:{title:'Choose your first job',text:'Keep farming until Novice reaches Job 10, then open Class Tree and choose a path. Your Job level is separate from your Base level.',action:'Open Class Tree',run:'job',detail:'Swordman: close-range combat. Thief: agile melee. Mage: magic. Archer: ranged attacks. Merchant: a merchant-themed combat path. Acolyte: holy and support skills. Inspect each class before choosing. Previously played classes keep their own progression and equipment.'},
  skill:{title:'Learn your first attack',text:'Open Skills, select an attack and learn a rank with Job points. Then place learned attacks in the combo slots in the order you want them to fire.',action:'Open Skills',run:'skill',detail:'Attacks are marked separately from passive, buff and healing skills. Up to six attacks run in order, followed by recovery. Buffs cast independently. Check that an attack is enabled and assigned to your combo; learning it and arranging the combo are separate choices.'},
  combo:{title:'Put your attack to work',text:'In Skills, choose a learned attack for a combo slot. Enable the combo and the attack’s Auto cast control so your character can use it.',action:'Set up my combo',run:'combo',detail:'Combo slots cast from left to right, followed by recovery. Start with one attack and add more as you learn them. A learned attack that is paused or absent from the combo does not satisfy this lesson.'},
@@ -66,7 +66,7 @@ function adventureRecordKill(){
 function adventureOpen(tab){
  if(!tabs.includes(tab))openTab(tab);
  if(tab==='status')sub.status='stats';
- if(tab==='bag')sub.bag='bag';
+ if(tab==='equip')sub.equip='equip0';
  if(tab==='skills')sub.skills='skilllist';
  renderWin();
 }
@@ -99,7 +99,7 @@ function adventureAction(action){
  }else if(action==='combat'){
   if(!inPlazaNow()&&S.auto===false){S.auto=true;save();ui();}
  }else if(['stats','gear','job','skill','combo'].includes(action)){
-  adventureOpen({stats:'status',gear:'bag',job:'job',skill:'skills',combo:'skills'}[action]);return;
+  adventureOpen({stats:'status',gear:'equip',job:'job',skill:'skills',combo:'skills'}[action]);return;
  }
  adventureSync();
 }
@@ -125,7 +125,7 @@ function adventureSync(){
  // Keep confirmation, offline claims and social activity windows above the companion.
  root.hidden=!!document.querySelector('#socialHub [role="dialog"]:not([hidden]),#sanctuaryPanel:not([hidden])');
  document.querySelectorAll('.adventure-target').forEach(el=>el.classList.remove('adventure-target'));
- const target={field:'#socialLeave',stats:'#dock [data-t="status"]',gear:'#dock [data-t="bag"]',job:'#dock [data-t="job"]',skill:'#dock [data-t="skills"]',combo:'#dock [data-t="skills"]'}[state.step];
+ const target={field:'#socialLeave',stats:'#dock [data-t="status"]',gear:'#dock [data-t="equip"]',job:'#dock [data-t="job"]',skill:'#dock [data-t="skills"]',combo:'#dock [data-t="skills"]'}[state.step];
  if(state.status==='active'&&!root.hidden&&target)document.querySelector(target)?.classList.add('adventure-target');
  const html=compact?`<button class="adventure-resume" data-adventure="resume"><span aria-hidden="true">✦</span> ${state.status==='deferred'?'Resume first adventure':'First adventure · '+(n+1)+' / '+ADVENTURE_ORDER.length}</button>`:
  `<div class="adventure-heading"><span class="adventure-seal" aria-hidden="true">✦</span><div><small>ADVENTURER’S GUILD</small><b>First Adventure</b></div><span class="adventure-count">${n+1} / ${ADVENTURE_ORDER.length}</span></div>

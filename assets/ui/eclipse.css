@@ -1725,7 +1725,9 @@ body:not(.playing) #comboFieldStatus:empty{display:none}
 #wins .ascension-forge>header h2{margin:0;font-size:15px;line-height:1.2}
 #wins .ascension-forge>header p{margin:0;font-size:11px;color:var(--e-muted)}
 #wins .ascension-set-picker{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;margin:8px 0 12px}
-#wins .ascension-set-picker button{display:flex;flex-direction:column;gap:3px;min-width:0;padding:8px 5px}
+#wins .ascension-set-picker button{display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0;padding:7px 5px}
+#wins .ascension-set-preview{display:grid;place-items:center;width:34px;height:34px}
+#wins .ascension-set-preview .ro-item-icon,#wins .ascension-set-preview .ro-icon-fallback{width:30px;height:30px;max-width:30px;max-height:30px;object-fit:contain}
 #wins .ascension-set-picker [aria-pressed=true]{border-color:var(--gold);color:var(--gold);background:var(--e-soft)}
 #wins .ascension-forge-body{display:grid;grid-template-columns:minmax(180px,1fr) minmax(0,2fr);gap:18px;align-items:start}
 #wins .ascension-set-info h3{margin:0 0 6px;font-size:14px}

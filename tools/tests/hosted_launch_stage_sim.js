@@ -23,6 +23,7 @@ try{
  assert.equal(packaged.status,0,packaged.stderr);const script=fs.readFileSync(target,'utf8');
  const encoded=script.match(/const PAYLOAD_B64 = '([^']+)'/)[1],sha=script.match(/const PAYLOAD_SHA256 = '([^']+)'/)[1];
  const payload=unpackPayload(encoded,sha);assert.equal(payload['index.html'],fs.readFileSync('index.html','utf8'));
+ for(const file of ['assets/adventure-guide.css','assets/adventure-guide.js'])assert.equal(payload[file],fs.readFileSync(file,'utf8'));
  assert.equal(payload['assets/combat-audio.js'],fs.readFileSync('assets/combat-audio.js','utf8'));
  assert.equal(payload['functions/api/save.js'],fs.readFileSync('functions/api/save.js','utf8'));
  assert.equal(payload['tools/optimize_delivery.js'],fs.readFileSync('tools/optimize_delivery.js','utf8'),'staging build must run the matching delivery optimizer');

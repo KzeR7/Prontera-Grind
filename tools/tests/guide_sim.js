@@ -43,7 +43,8 @@ try{
  // haven-v417: the Ascension maps drop equipment now (Astral the Nightmare tier, Thor the Mythic
  // tier), so the guide says what they pay instead of promising no equipment at all.
  assert.doesNotMatch(ascension,/drop no equipment/);
- assert.match(ascension,/Nightmare tier/);assert.match(ascension,/Mythic\/Primal tier/);
+ // haven-v432 (PR #257 design): both maps drop new N+ weapons only and Mythic gear is crafted, never dropped.
+ assert.match(ascension,/new N\+ weapons only/);assert.match(ascension,/Mythic items are crafted only in Equipment/);
  assert.match(ascension,/Mythic set targets for survival/);assert.match(ascension,/View recipe/);
  const recipes=['farm','boss','survive'].map(mode=>ev(`guideMode='${mode}';guideMythicTargets()`));assert.equal(new Set(recipes).size,3);
 

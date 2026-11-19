@@ -136,7 +136,7 @@ t('the published tree is small enough to stay honest', () => {
   const nativeBytes=walk(path.join(out,'assets/native-fields/v1'));
   const socialBytes=walk(path.join(out,'assets/social'));
   // The map-exploration sub-app (assets/endgame) is never preloaded by the game - a separate test
-  // asserts `src="assets/endgame/` never appears in index.html - and it already carries its own
+  // allows only its shared Three.js engine in index.html - and it already carries its own
   // 4.25 MiB ceiling below, so it is measured there and not again here, exactly like the parked
   // native field pack and the social portraits above. Everything that ships is still covered by a
   // ceiling: this line for the classic game, separate optional packs, plus combined delivery.
@@ -204,7 +204,10 @@ t('the published tree is small enough to stay honest', () => {
   // haven-v424: 60.31, not 60.30. The immutable claim state/bounds client code takes the classic
   // bundle to 60.3021 MiB (measured by this build); optional asset groups are unchanged and retain
   // their own limits above. This is a measured source-byte allowance, not a runtime asset expansion.
-  assert.ok((bytes-nativeBytes-socialBytes-endgameBytes-worldMapBytes-digimonBytes-fountainBytes-expandedBytes-expandedWardrobeBytes-roFxBytes-classIconBytes)/1048576 < 60.31, 'existing classic runtime assets exceed their 60.31 MiB budget');
+  // haven-v432: 60.32, not 60.31. Main with haven-v427's guided first adventure measured 60.3085 MiB;
+  // adding the Ascension N+/Forge work (PR #257) and the zero-ATK repair measured 60.3109 MiB. The same
+  // measured source-byte step as haven-v424; no asset group grew (the RO-look icons are not shipped).
+  assert.ok((bytes-nativeBytes-socialBytes-endgameBytes-worldMapBytes-digimonBytes-fountainBytes-expandedBytes-expandedWardrobeBytes-roFxBytes-classIconBytes)/1048576 < 60.32, 'existing classic runtime assets exceed their 60.32 MiB budget');
   assert.ok(expandedWardrobeBytes > 0 && expandedWardrobeBytes/1048576 < 4.5, 'lazy expanded-roster Wardrobe bodies exceed their separate 4.5 MiB budget (4.31 measured 2026-11-15)');
   assert.ok(expandedBytes > 0 && expandedBytes/1048576 < 3, 'lazy expanded-roster bodies exceed their separate 3 MiB budget (2.86 measured 2026-11-15, 44 bodies)');
   assert.ok(digimonBytes/1048576 < 40, 'lazy Digimon roster exceeds its separate 40 MiB budget');
@@ -260,6 +263,10 @@ t('published UI styles preserve every parsed CSS rule while removing standalone 
  const {JSDOM}=require('jsdom'),optimizer=require('../optimize_delivery.js'),dom=new JSDOM('');
  try{
   const rules=css=>{const sheet=new dom.window.CSSStyleSheet();sheet.replaceSync(css);return Array.from(sheet.cssRules,rule=>rule.cssText)};
+  const style=html=>html.match(/<style>([\s\S]*?)<\/style>/)[1];
+  const inline=style(src),publishedInline=style(fs.readFileSync(path.join(out,'index.html'),'utf8'));
+  assert.ok(publishedInline.length<inline.length&&rules(inline).length>100);
+  assert.deepStrictEqual(rules(publishedInline),rules(inline),'inline style rules must remain identical');
   for(const file of optimizer.CSS_FILES){
    const source=fs.readFileSync(path.join(root,file),'utf8'),published=fs.readFileSync(path.join(out,file),'utf8');
    assert.ok(Buffer.byteLength(published)<Buffer.byteLength(source),file+' comments were removed');
@@ -285,7 +292,8 @@ t('published JS removes only standalone comments, preserving tokens, line breaks
  assert.deepStrictEqual(tokens(result),tokens(sample));
  for(const file of opt.JS_FILES){const original=fs.readFileSync(path.join(root,file),'utf8'),built=fs.readFileSync(path.join(out,file),'utf8');assert.equal(built,opt.stripStandaloneJsComments(original),file);assert.deepStrictEqual(tokens(built),tokens(original));}
  const original=fs.readFileSync(path.join(root,'index.html'),'utf8'),built=fs.readFileSync(path.join(out,'index.html'),'utf8');
- assert.equal(built,opt.stripHtmlJsComments(original),'published HTML differs from safe comment optimization');
+ const cssOptimized=original.replace(/<style>([\s\S]*?)<\/style>/,(_,css)=>'<style>'+opt.stripStandaloneCssComments(css)+'</style>');
+ assert.equal(built,opt.stripHtmlJsComments(cssOptimized),'published HTML differs from safe comment optimization');
  assert.ok(built.length<original.length-200000,'HTML should shed standalone JS comments');
 });
 
@@ -297,8 +305,10 @@ t('in-game endgame exploration ships only selected runtime resources with lazy l
  assert.deepStrictEqual(fs.readdirSync(path.join(dir,'textures')).sort(),['runtime-manifest.json',...Object.values(textures.textures).map(r=>r.file)].sort());
  for(const rec of Object.values(textures.textures))assert.ok(fs.readFileSync(path.join(dir,'textures',rec.file)).equals(fs.readFileSync(path.join(root,'tools/maps/textures',rec.file))));
  for(const file of ['endgame-scenes.js','journey-details.js','journey-state.js','journey-hero.js','journey-navigation.js'])assert.ok(fs.readFileSync(path.join(dir,file)).equals(fs.readFileSync(path.join(root,'tools/maps',file))),file+' must match reviewed source');
+ assert.ok(src.includes('src="assets/endgame/three-r128.min.js"'), 'game uses the same pinned engine as exploration');
+ assert.deepStrictEqual(fs.readFileSync(path.join(dir,'three-r128.min.js')),fs.readFileSync(path.join(root,'tools/maps/vendor/three-r128.min.js')));
  const materials=fs.readFileSync(path.join(dir,'journey-materials.js'),'utf8');assert.ok(materials.includes('/assets/endgame/textures/'));assert.ok(!materials.includes('/tools/'));
- assert.ok(!src.includes('src="assets/endgame/'),'Main game must not eagerly preload the exploration scene');
+ assert.ok(!src.replace('src="assets/endgame/three-r128.min.js"','').includes('src="assets/endgame/'),'Main game must not eagerly preload the exploration scene');
  assert.ok(fs.existsSync(path.join(out,'assets/map-exploration.js')));
  const walk=d=>fs.readdirSync(d,{withFileTypes:true}).reduce((n,e)=>n+(e.isDirectory()?walk(path.join(d,e.name)):fs.statSync(path.join(d,e.name)).size),0);assert.ok(walk(dir)<4.25*1048576);
 });

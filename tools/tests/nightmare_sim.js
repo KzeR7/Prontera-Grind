@@ -154,14 +154,15 @@ t('a Nightmare row is its own map high-tier row renamed, plus the expanded famil
 });
 
 t('the Nightmare rows are worth more than the high-tier row, and section 5 tops section 4', () => {
-  const mult = pick(/\[1,2\.2,4,7,10\.5,15\]\[sec\]/, 'the section multiplier table');
+  // haven-v432 (PR #257 design): genGear clamps the index (Math.min(5,...)) so a section-6 profile can never read past the table.
+  const mult = pick(/\[1,2\.2,4,7,10\.5,15\]\[Math\.min\(5,Math\.max\(0,sec\|0\)\)\]/, 'the section multiplier table');
   assert.ok(mult, 'the value multiplier must carry six entries');
   const M = [1, 2.2, 4, 7, 10.5, 15];
   assert.ok(M[4] > M[3] && M[5] > M[4], 'Nightmare > high tier, Abyssal Nightmare > Nightmare');
   assert.strictEqual(M[4] / M[3], 1.5, 'a Nightmare item is worth 1.5x the high-tier row');
   assert.strictEqual(M[5] / M[3], 15 / 7, 'and an Abyssal Nightmare item is worth 15/7 of it');
   // the live genGear reads that table for whatever section the field rolls
-  assert.ok(/const val=Math\.max\(1,Math\.round\(\{weapon:2,armor:4,head:10,off:3,leg:3,acc:5\}\[slot\]\*\[1,2\.2,4,7,10\.5,15\]\[sec\]/.test(src),
+  assert.ok(/const val=Math\.max\(1,Math\.round\(\{weapon:2,armor:4,head:10,off:3,leg:3,acc:5\}\[slot\]\*\[1,2\.2,4,7,10\.5,15\]\[Math\.min\(5,Math\.max\(0,sec\|0\)\)\]/.test(src),
     'genGear must price a Nightmare item from section 4 or 5');
 });
 
@@ -280,7 +281,8 @@ t('drop-table items keep N section identity separate from map field quality', ()
     // 3 and no item could contradict it. They now drop a real gear shelf: Astral Citadel is N (4) on
     // Stages 1-3 and N+ (5) on 4-5, Thor Volcano is the Mythic tier (6). The section therefore comes
     // from the map's own shelf on those fields, not from the materials placeholder.
-    const sec = m===10 ? (l<=3?4:5) : m===11 ? 6 : N.secField(m,l);
+    // haven-v432 (PR #257 design): both Ascension maps now drop only new N+ (section 5) weapons on every stage.
+    const sec = m>=10 ? 5 : N.secField(m,l);
     // haven-v417: an expanded-family piece on a Nightmare field is always section 4 (N), because that
     // is the only band those families have in Nightmare - their N+ is Ascension-only. The *field's*
     // section is unchanged; only these items differ.

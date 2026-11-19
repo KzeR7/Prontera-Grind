@@ -43,6 +43,11 @@ function stripHtmlJsComments(html){return html.replace(/<script\b([^>]*)>([\s\S]
 const JS_FILES=Object.freeze(['assets/social-scene.js','assets/social-fishing.js','assets/social.js']);
 function optimize(output){
  let saved=0;
+ // index.html's static head stylesheet is subject to the same parsed-rule contract.
+ const htmlPath=path.join(output,'index.html'),html=fs.readFileSync(htmlPath,'utf8');
+ const compact=html.replace(/<style>([\s\S]*?)<\/style>/,(_,css)=>'<style>'+stripStandaloneCssComments(css)+'</style>');
+ if(compact!==html){fs.writeFileSync(htmlPath,compact);saved+=Buffer.byteLength(html)-Buffer.byteLength(compact);}
+
  for(const file of FILES){
   const target=path.join(output,'assets/kit',file),before=fs.readFileSync(target),value=JSON.parse(before.toString('utf8')),after=Buffer.from(JSON.stringify(value));
   // Reject any number/structure change (including negative zero); don't silently rewrite content.
@@ -53,8 +58,8 @@ function optimize(output){
   const target=path.join(output,file),before=fs.readFileSync(target,'utf8'),after=stripStandaloneCssComments(before);
   if(after!==before){fs.writeFileSync(target,after);saved+=Buffer.byteLength(before)-Buffer.byteLength(after)}
  }
- const html=path.join(output,'index.html'),beforeHtml=fs.readFileSync(html,'utf8'),afterHtml=stripHtmlJsComments(beforeHtml);
- if(afterHtml!==beforeHtml){fs.writeFileSync(html,afterHtml);saved+=Buffer.byteLength(beforeHtml)-Buffer.byteLength(afterHtml)}
+ const htmlTarget=path.join(output,'index.html'),beforeHtml=fs.readFileSync(htmlTarget,'utf8'),afterHtml=stripHtmlJsComments(beforeHtml);
+ if(afterHtml!==beforeHtml){fs.writeFileSync(htmlTarget,afterHtml);saved+=Buffer.byteLength(beforeHtml)-Buffer.byteLength(afterHtml)}
  for(const file of JS_FILES){const target=path.join(output,file),before=fs.readFileSync(target,'utf8'),after=stripStandaloneJsComments(before);if(after!==before){fs.writeFileSync(target,after);saved+=Buffer.byteLength(before)-Buffer.byteLength(after)}}
  return saved;
 }

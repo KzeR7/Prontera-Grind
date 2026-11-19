@@ -18,9 +18,9 @@ const workFiles=prefix=>execFileSync('git',['ls-files','--cached','--others','--
 // The hand-written part of the overlay: the assets and entry points this project ships that the
 // archived base predates. Everything that can be derived is derived (see launch_overlay.mjs and the
 // groups right after this array) so a new file cannot be forgotten the way the old list was.
-const files=['index.html','gm.html','tools/build_site.sh','tools/optimize_delivery.js','tools/vendor/acorn/acorn.js','tools/vendor/acorn/LICENSE','_routes.json',
+const files=['index.html','gm.html','tools/build_site.sh','tools/optimize_delivery.js','tools/vendor/acorn/acorn.js','tools/vendor/acorn/LICENSE','tools/maps/build_game_exploration.js','_routes.json',
  // Client-side runtime loaded by index.html.
- 'assets/shop-catalog.js','assets/shop.css','assets/shop.js','assets/friends.css','assets/friends.js',
+ 'assets/adventure-guide.css','assets/shop-catalog.js','assets/shop.css','assets/shop.js','assets/friends.css','assets/friends.js',
  'assets/combat-audio.js','assets/bgm.js','assets/bgm-tracks.js','assets/social.css','assets/social.js',
  'assets/social-rules.js','assets/social-poker.js','assets/social-scene.js','assets/social-fishing.js',
  'assets/social-fishing.css','assets/social-gym-redesign.js','assets/social-pond-design.js',
@@ -36,7 +36,7 @@ const files=['index.html','gm.html','tools/build_site.sh','tools/optimize_delive
  'assets/digimon/sanctuary/cc0/medieval_wood.webp','assets/digimon/sanctuary/cc0/rough_pine_door.webp',
  'assets/digimon/sanctuary/cc0/roof_09.webp',
  // v360: the Aetherwell centerpiece and the vendored r128 loader that renders it.
- 'assets/vendor/GLTFLoader.r128.js','assets/Fountainfile/Prontera_Grand_Aetherwell.glb',
+ 'assets/endgame/THREE-LICENSE.txt','assets/vendor/GLTFLoader.r128.js','assets/Fountainfile/Prontera_Grand_Aetherwell.glb',
  'assets/Fountainfile/Prontera_Grand_Aetherwell_Preview.png',
  // v283: Illustrated Rune-Midgard World Atlas.
  'assets/world-map/world-map-cleaned.webp','assets/world-map/birds-flock-a.webp',
@@ -48,7 +48,7 @@ const files=['index.html','gm.html','tools/build_site.sh','tools/optimize_delive
  // v415: runtime files that exist in the archived base but that this branch modified. The hand list
  // never caught up with them, so staging would have received the BASE copy of each while the rest of
  // the candidate was v415 - the mixed-version deployment this guard exists to prevent.
- 'assets/wardrobe-ui.js','assets/wardrobe.js','assets/skill-afterglow.js','assets/adventure-guide.js','assets/adventure-guide.css',
+ 'assets/wardrobe-ui.js','assets/wardrobe.js','assets/skill-afterglow.js','assets/adventure-guide.js',
  // v415: the Eclipse/mobile UI bundle and its scripts are modified in the base too.
  'assets/ui/eclipse.css','assets/ui/mobile.css','assets/ui/mobile.js',
  // Provenance metadata, not runtime: only tools/tests read these. They ride along so the staged
@@ -81,6 +81,18 @@ files.push(...assetRefs(html()).filter(p=>!basePaths().has(p)&&!files.includes(p
 files.push(...overlayFiles(html()));
 // Expanded FX modules and image resources are loaded by the approved cast renderer.
 for(const p of workFiles('assets/expanded-fx/'))if(!files.includes(p))files.push(p);
+// haven-v434: PR #257 gave the seven expanded weapon families new Mythic icons, so 14 earlier Mythic
+// icons (spear 1433, gun 13163, ...) are no longer requested by RO_ITEM_ICON_CANDIDATES. They stay in the
+// tree on purpose: mythic-manifest.json still records their provenance and the parked RO-look sets
+// (Updates/ascension-ro-looks) reuse some of them. Ship every icon the manifest records, so a staged
+// tree matches a real build and an unreferenced but provenance-tracked icon is not reported as an
+// unpackaged runtime change.
+{const mythic=JSON.parse(fs.readFileSync(path.join(root,'assets/equipment-icons/mythic-manifest.json'),'utf8'));
+ if(!Array.isArray(mythic.assets)||!mythic.assets.length)throw Error('mythic-manifest.json lists no icons');
+ for(const a of mythic.assets){const rel='assets/equipment-icons/'+a.file;
+  if(typeof a.file!=='string'||!/^\d+\.png$/.test(a.file))throw Error('Unexpected Mythic icon entry: '+JSON.stringify(a));
+  if(!fs.existsSync(path.join(root,rel)))throw Error('Missing Mythic icon named by its manifest: '+rel);
+  if(!files.includes(rel))files.push(rel)}}
 // A repeated path would pack twice and make the payload's own file count meaningless.
 if(new Set(files).size!==files.length)throw Error('Duplicate package entry: '+files.find((p,i)=>files.indexOf(p)!==i));
 if(process.argv.length!==3)throw Error('Usage: node tools/staging/package_hosted_launch.mjs <output.mjs>');
