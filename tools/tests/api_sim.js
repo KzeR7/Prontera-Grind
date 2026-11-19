@@ -1237,19 +1237,16 @@ await T('the usage card reads Cloudflare\'s own counters when the token is set',
   const owner = (await api.register(h.env, { u: 'OWNER', p: 'owner-password-1' })).cookie;
   h.sqlite.prepare("UPDATE users SET gm=2 WHERE username='OWNER'").run();
   const realFetch = globalThis.fetch;
-  let seen = null, doSeen = null;
+  const seenQueries = [];
+  let doSeen = null;
   let cpuSeen = null;
   globalThis.fetch = async (url, init) => {
-    // v403: Durable Object usage is a SECOND query, so answer each one with its own shape.
-    // v411: CPU diagnosis is a THIRD. Keying on the dataset each one asks for keeps them apart -
-    // matching only "is it the DO query" would let the CPU query overwrite `seen` and make the
-    // assertions below read the wrong body.
     const bodyText = String(init?.body || '');
     const isDo = bodyText.includes('durableObjectsInvocationsAdaptiveGroups');
     const isCpu = bodyText.includes('pagesFunctionsInvocationsAdaptiveGroups');
     if (isDo) doSeen = { url: String(url), init };
     else if (isCpu) cpuSeen = { url: String(url), init };
-    else seen = { url: String(url), init };
+    else seenQueries.push({ url: String(url), init, body: JSON.parse(bodyText) });
     if (isCpu) return {
       ok: true, status: 200,
       json: async () => ({ data: { viewer: { accounts: [{
@@ -1280,12 +1277,13 @@ await T('the usage card reads Cloudflare\'s own counters when the token is set',
     assert.strictEqual(r.data.requests.used, 150, 'the rows are summed, not just the first one read');
     assert.strictEqual(r.data.requests.errors, 4);
     assert.strictEqual(r.data.d1.rowsWritten, 61);
-    assert.ok(seen && seen.url.includes('/client/v4/graphql'), 'it must ask Cloudflare, not guess');
-    assert.match(seen.init.headers.Authorization, /^Bearer tok-abc$/);
+    assert.ok(seenQueries.length >= 2 && seenQueries[0].url.includes('/client/v4/graphql'), 'it must ask Cloudflare, not guess');
+    assert.match(seenQueries[0].init.headers.Authorization, /^Bearer tok-abc$/);
     assert.ok(!JSON.stringify(r.data).includes('tok-abc'), 'the token must never come back in a response');
-    const body = JSON.parse(seen.init.body);
-    assert.match(body.variables.dayStart, /T00:00:00\.000Z$/, 'the free-plan day starts at midnight UTC');
-    assert.ok(body.query.includes('workersInvocationsAdaptive') && body.query.includes('d1AnalyticsAdaptiveGroups'));
+    const workersReq = seenQueries.find(s => s.body.query.includes('workersInvocationsAdaptive'));
+    const d1Req = seenQueries.find(s => s.body.query.includes('d1AnalyticsAdaptiveGroups'));
+    assert.ok(workersReq && d1Req, 'both workers and D1 datasets are queried');
+    assert.match(workersReq.body.variables.dayStart, /T00:00:00\.000Z$/, 'the free-plan day starts at midnight UTC');
     // v403: the Durable Object meter is present, summed across its rows, and never folded into the
     // request count above - a wrong field there must not corrupt the numbers that were already right.
     assert.ok(doSeen, 'a separate Durable Object query is made');
@@ -1323,7 +1321,7 @@ await T('a failed Durable Object query leaves the request and D1 numbers intact'
     }] } } }) };
   };
   try {
-    const r = await api.usage({ ...h.env, CF_ACCOUNT_ID: 'acct-123', CF_ANALYTICS_TOKEN: 'tok-abc' }, owner);
+    const r = await api.usage({ ...h.env, CF_ACCOUNT_ID: 'acct-123', CF_ANALYTICS_TOKEN: 'tok-abc-do-fail' }, owner);
     assert.strictEqual(r.status, 200, 'the card still answers');
     assert.strictEqual(r.data.requests.used, 200, 'request numbers survive a DO failure');
     assert.strictEqual(r.data.d1.rowsWritten, 22, 'D1 numbers survive a DO failure');
