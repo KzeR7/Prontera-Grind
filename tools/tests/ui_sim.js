@@ -543,16 +543,16 @@ t('clicking a slot highlights the fit in the REAL bag tab - no extra pop-out', (
   assert.ok(src.includes("if(k==='status')sub.status='stats';if(k==='skills')sub.skills='skilllist';if(k==='bag')sub.bag='bag';"), 'reopening a window resets its sub-tab');
 });
 
-t('v88: the Auto-equip switch lives on the Bag tab, not in Settings (owner: "move it, arrange it tidy")', () => {
+t('the Auto-equip switch lives in Equipment → Loadout, not in Settings (owner: "move it, arrange it tidy")', () => {
   U.S = mkS('Swordman'); U.selB = null; U.eqPick = null;
-  const bag = U.V.bag0();
-  assert.ok(bag.includes('Auto-equip higher base value'), 'the Bag tab names the switch');
+  const bag = U.V.equip0();
+  assert.ok(bag.includes('Auto-equip higher base value'), 'Loadout names the switch');
   assert.ok(/data-a="auto"/.test(bag), 'and it is wired to the same action');
   assert.ok(bag.indexOf('Auto-equip higher base value') < bag.indexOf('Automatically sell new drops'), 'it sits tidily above the selling tools, under the ore chips');
   const set = U.V.set();
   assert.ok(!/data-a="auto"/.test(set), 'Settings no longer carries the gear switch');
   assert.ok(!/data-a="adv"/.test(set), 'nor the advance switch');
-  assert.ok(set.includes('Bag</b> tab') && set.includes('World Map</b> tab'), 'Settings points to where both switches went');
+  assert.ok(set.includes('Equipment → Loadout</b>') && set.includes('World Map</b> tab'), 'Settings points to where both switches went');
 });
 
 t('Assassin equipment UI describes the two-handed Katar and the dual-wielded daggers',()=>{

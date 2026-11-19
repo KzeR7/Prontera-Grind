@@ -260,6 +260,10 @@ t('published UI styles preserve every parsed CSS rule while removing standalone 
  const {JSDOM}=require('jsdom'),optimizer=require('../optimize_delivery.js'),dom=new JSDOM('');
  try{
   const rules=css=>{const sheet=new dom.window.CSSStyleSheet();sheet.replaceSync(css);return Array.from(sheet.cssRules,rule=>rule.cssText)};
+  const style=html=>html.match(/<style>([\s\S]*?)<\/style>/)[1];
+  const inline=style(src),publishedInline=style(fs.readFileSync(path.join(out,'index.html'),'utf8'));
+  assert.ok(publishedInline.length<inline.length&&rules(inline).length>100);
+  assert.deepStrictEqual(rules(publishedInline),rules(inline),'inline style rules must remain identical');
   for(const file of optimizer.CSS_FILES){
    const source=fs.readFileSync(path.join(root,file),'utf8'),published=fs.readFileSync(path.join(out,file),'utf8');
    assert.ok(Buffer.byteLength(published)<Buffer.byteLength(source),file+' comments were removed');

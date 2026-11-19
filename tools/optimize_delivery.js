@@ -27,6 +27,11 @@ function stripStandaloneCssComments(css){
 }
 function optimize(output){
  let saved=0;
+ // index.html's static head stylesheet is subject to the same parsed-rule contract.
+ const htmlPath=path.join(output,'index.html'),html=fs.readFileSync(htmlPath,'utf8');
+ const compact=html.replace(/<style>([\s\S]*?)<\/style>/,(_,css)=>'<style>'+stripStandaloneCssComments(css)+'</style>');
+ if(compact!==html){fs.writeFileSync(htmlPath,compact);saved+=Buffer.byteLength(html)-Buffer.byteLength(compact);}
+
  for(const file of FILES){
   const target=path.join(output,'assets/kit',file),before=fs.readFileSync(target),value=JSON.parse(before.toString('utf8')),after=Buffer.from(JSON.stringify(value));
   // Reject any number/structure change (including negative zero); don't silently rewrite content.

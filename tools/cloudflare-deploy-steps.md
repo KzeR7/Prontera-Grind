@@ -55,9 +55,9 @@ The only added schema check occurs when a qualifying interval would issue a new 
 neither an unconditional D1 read nor Social Durable Object traffic.
 
 The player-visible build label is **`2026-11-19 haven-v428 first adventure loadout and plaza recovery`**.
-The release also bumps every coordinated asset query to `?v=426`: v423 changed the Social/Fishing
-runtime as well as the inline client, so retaining the old label would permit a stale cached runtime.
-Confirm `version.txt`, `index.html`, and the two equipment-reference mirrors carry the v426 build label
+The local v428 candidate uses `?v=428` for the coordinated guide, scene and UI assets.
+This build label is not authorization to deploy.
+Confirm `version.txt`, `index.html`, and the two equipment-reference mirrors carry the v428 build label
 after the site build.
 
 The click-by-click. **Nothing here costs money** and none of it needs a credit card: the whole point

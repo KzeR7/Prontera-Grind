@@ -19,9 +19,9 @@ async function launch() {
 }
 async function click(p,selector) {
   const control=p.locator(selector).first();
-  await p.evaluate(()=>{window.lastControl=null});
+  await p.evaluate(s=>{window.lastControl=null;window.hitExpected=false;window.expectedControl=s},selector);
   if(p.viewportSize().width<500)await control.tap();else await control.click(); // no force, no synthetic dispatch: includes hit-testing/scrolling
-  assert(await p.evaluate(s=>window.lastControl?.matches(s),selector),`click did not reach ${selector}`);
+  assert(await p.evaluate(()=>window.hitExpected),`click did not reach ${selector}`);
 }
 async function sceneDraws(p,plaza) {
   // Observe an actual framebuffer immediately after Three renders it, before browser compositing.
@@ -85,16 +85,22 @@ async function run(base,name,viewport) {
   try {
     // Deliberately no hosted captcha/BGM services in this disposable test. No stub for Three or either scene.
     await p.route('https://**/*',r=>r.abort('blockedbyclient'));
-    await p.addInitScript(()=>document.addEventListener('click',e=>{window.lastControl=e.target.closest('button')},true));
+    await p.addInitScript(()=>document.addEventListener('click',e=>{window.lastControl=e.target.closest('button,[role=button]');window.hitExpected=!!window.expectedControl&&window.lastControl?.matches(window.expectedControl)},true));
     let held;
     if(name==='stalled-optional')await p.route('**/turnstile/v0/api.js',r=>{held=r});
-    if(name==='stalled-town')await p.route('**/assets/social/town/catalog.json',r=>{held=r},{times:1});
+    if(['stalled-town','delayed-town'].includes(name))await p.route('**/assets/social/town/catalog.json',r=>{held=r},{times:1});
+    if(name==='stalled-engine')await p.route('**/three-r128.min.js',r=>{held=r},{times:1});
     if(name==='dependency')await p.route('**/three-r128.min.js',r=>r.abort('failed'),{times:1});
     if(name==='no-webgl')await p.addInitScript(()=>{const orig=HTMLCanvasElement.prototype.getContext;
       HTMLCanvasElement.prototype.getContext=function(t,...rest){return /webgl/.test(t)?null:orig.call(this,t,...rest)}});
     if(name==='storage')await p.addInitScript(()=>{for(const k of ['localStorage','sessionStorage'])Object.defineProperty(window,k,{get(){throw new DOMException('Storage denied','SecurityError')}})});
     if(name==='offline-chat')await p.addInitScript(()=>{window.WebSocket=class{constructor(){throw new DOMException('Socket denied','SecurityError')}}});
-    await p.goto(base,{waitUntil:'domcontentloaded'});
+    await p.goto(base,{waitUntil:name==='stalled-engine'?'commit':'domcontentloaded'});
+    if(name==='stalled-engine'){
+      const retry=p.getByRole('button',{name:'Retry startup'});await retry.waitFor();assert(held);
+      await Promise.all([p.waitForNavigation({waitUntil:'domcontentloaded'}),retry.click()]);
+      await p.waitForFunction(()=>CLOUD.api);assert.deepEqual(errors,[]);return;
+    }
     if(name==='dependency'){
       const retry=p.getByRole('button',{name:'Retry startup'});await retry.waitFor();
       await p.waitForFunction(()=>CLOUD.api);assert(await p.locator('#authBtn').isDisabled());
@@ -110,23 +116,45 @@ async function run(base,name,viewport) {
     const u='probe'+Date.now().toString(36),pw='SyntheticPreview123!';
     assert.equal((await ctx.request.post(base+'/api/register',{data:{u,p:pw,email:u+'@example.test'}})).status(),201);
     await p.fill('#username',u);await p.fill('#password',pw);await click(p,'#authBtn');
-    await p.locator('.guide-tour').waitFor();
+    await p.locator('#adventureGuide').waitFor();
+    if(name==='delayed-town'){
+      await p.waitForFunction(()=>PGSocial.app.entering);await click(p,'#socialLeave');
+      assert(await p.locator('#socialHub').isHidden());
+      await click(p,'#socialHubBtn');await click(p,'#socialLeave');await click(p,'#socialHubBtn');
+      assert(held);assert(await p.evaluate(()=>PGSocial.app.wanted&&PGSocial.app.entering&&!PGSocial.app.scene),'latest visit still waits on the held scene');
+      await held.continue();await sceneDraws(p,true);
+      assert.equal(await p.locator('#socialScene canvas').count(),1);
+    }
     if(name==='no-webgl'||name==='stalled-town'){await p.locator('#plazaRenderNotice').filter({hasText:'could not start'}).waitFor({timeout:65000});assert.equal(await p.locator('#socialScene canvas').count(),0);if(held)await held.abort()}
     else await sceneDraws(p,true);
     if(name==='offline-chat')assert.match(await p.locator('#socialConnection').textContent(),/unavailable/i);
-    const next='[data-a="guidestep"][data-v="next"]',title=p.locator('.guide-tour h2'),first=await title.textContent();
-    await click(p,next);assert.notEqual(await title.textContent(),first);await click(p,'[data-a="guidestep"][data-v="back"]');assert.equal(await title.textContent(),first);
-    await click(p,'[data-win="guide"] [data-x]');
+    await click(p,'[data-adventure="start"]');await click(p,'[data-adventure="town"]');
+    await p.waitForFunction(()=>adventureState().step==='field');
     if(name==='journey'){
       if(viewport.width<500){await click(p,'#pgQuests');assert.equal(await p.locator('#pgQuests').getAttribute('aria-expanded'),'true');await click(p,'#pgQuests')}
       await scaledPick(p,viewport);await contextCycle(p,true);
+      // Avoid random auto-equips bypassing the manual equipment lesson.
+      await p.evaluate(()=>{S.auto=false});
     }
     await click(p,'#socialLeave');await p.waitForFunction(()=>!document.body.classList.contains('social-open')&&!hubFirstPending);
     if(name==='no-webgl'){await p.locator('#renderNotice').waitFor();assert.equal(await p.evaluate(()=>R),null)}
     else{await sceneDraws(p,false);if(name==='journey')await contextCycle(p,false)}
     if(name==='stalled-town'){
-      await click(p,'[data-win="guide"] [data-x]');await click(p,'#socialHubBtn');await sceneDraws(p,true);
+      await click(p,'#socialHubBtn');await sceneDraws(p,true);
       assert.equal(await p.locator('#socialScene canvas').count(),1,'retry owns exactly one canvas');
+    }
+    if(name==='journey'){
+      await p.waitForFunction(()=>adventureState().step==='stats'&&S.kills>0,null,{timeout:90000});
+      await click(p,'[data-adventure="stats"]');await click(p,'[data-a="stat"][data-v="str"]');
+      await p.waitForFunction(()=>adventureState().step==='gear');await click(p,'#adventureGuide [data-adventure="resume"]');
+      // Seed only one owned, usable upgrade; no random loot wait or tutorial flag edits.
+      await p.evaluate(()=>{S.inv.unshift({...S.eq.weapon,id:77123,name:'Training dagger',val:S.eq.weapon.val+5})});
+      await click(p,'[data-adventure="gear"]');assert.equal(await p.evaluate(()=>sub.equip),'equip0');
+      await click(p,'[data-a="sub"][data-v="equip:refine"]');
+      await p.evaluate(()=>adventureAction('gear'));assert.equal(await p.evaluate(()=>sub.equip),'equip0');
+      assert.equal(await p.evaluate(()=>adventureState().step),'gear');
+      await click(p,'[data-a="selb"][data-v="77123"]');assert.equal(await p.evaluate(()=>S.eq.weapon.id),1);
+      await click(p,'[data-a="equip"][data-v="77123"]');await p.waitForFunction(()=>S.eq.weapon.id===77123&&adventureState().step==='job');
     }
     await p.screenshot({path:shot,quality:65});assert.deepEqual(errors,[]);
   } catch(e){await p.screenshot({path:shot,quality:65,timeout:30000}).catch(()=>{});console.error('first exception:',errors[0]||'none','requests:',[...network],'last click:',await p.evaluate(()=>window.lastControl?.id||window.lastControl?.dataset.a||null).catch(()=>null));throw e}
@@ -134,7 +162,7 @@ async function run(base,name,viewport) {
 }
 (async()=>{fs.mkdirSync(out,{recursive:true});const {start}=await import('./dev_server.js');const s=await start({port:0});
  try{
-   const cases=[['journey',desktop],['journey',small],['dependency',small],['no-webgl',small],['offline-chat',desktop],['storage',small],['stalled-optional',desktop],['stalled-town',desktop]]
+   const cases=[['journey',desktop],['journey',small],['dependency',small],['no-webgl',small],['offline-chat',desktop],['storage',small],['stalled-optional',desktop],['stalled-town',desktop],['delayed-town',desktop],['stalled-engine',small]]
      .filter(([name,vp])=>(!only||name===only)&&(!process.env.WIDTH||vp.width===Number(process.env.WIDTH)));
    assert(cases.length,'No matching browser scenario');
    for(const [name,vp] of cases)await run(`http://127.0.0.1:${s.port}`,name,vp);

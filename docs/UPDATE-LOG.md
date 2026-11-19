@@ -12092,3 +12092,9 @@ re-recording them here would have written wrong numbers into the repository.
 * **Try it:** Sign in, advance and close the plaza guide, then tap Field. See the [browser matrix, screenshots and fault reproductions](../reports/browser-reliability/README.md).
 * **Checks:** Eight built-site Chromium cases passed, including real field and plaza context loss/restoration. Chrome, Firefox, Brave with default Shields and Edge were unavailable and are untested. The Firefox runner is ready. All 248 gate suites passed across the sweep and reruns; build, Pages policy, generated assets and all 126 remeasured progression rows checked.
 * **Delivery:** Local branch changes only. No push, merge or deployment.
+
+### 2026-11-19 — `2026-11-19 haven-v428 first adventure loadout and plaza recovery`
+* **Changed:** Combined main’s First Adventure with graphics recovery. Gear guidance opens Equipment → Loadout, including from Refine. A late town load respects the latest destination and account; an abandoned visit cannot reopen poker. Slow engine startup offers Retry. The desktop companion no longer covers Social.
+* **Try it:** After the first kill and stat spend, use Open Loadout, select a usable upgrade, then Equip. Or continue without a drop. While town art is loading, go to Field and immediately return to Social. See the [combined-build report and screenshots](../reports/browser-reliability/README.md).
+* **Checks:** 10/10 Chromium browser cases, including desktop and phone touch with real software WebGL. Firefox desktop/phone and actual Brave default Shields untested. 250/250 gate suites passed across the sweep and reruns; Pages preview and generated assets passed. Actual progression benchmarks match main for 42 gear, 21 encounter and 63 skill rows. No delivery budget increase.
+* **Delivery:** Review branch for existing PR #259; no merge to main or deployment.

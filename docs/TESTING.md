@@ -70,6 +70,7 @@ Firefox WebGL unavailable, try a headed session (`HEADED=1` with a display or Xv
 and Mesa installed). Report a missing context/extension as such, not a rendering pass.
 The same runner accepts installed `chrome` and `msedge` channels. See the
 [results, failure repros and separate stock Brave checklist](../reports/browser-reliability/README.md).
+The combined-build matrix exercises the First Adventure companion, owned item selection and Equip, pending engine retry, both WebGL contexts and leaving/re-entering during a pending town load. `plaza_entry_sim.js` separately holds a scene promise across an account change (stub, not rendering evidence).
 Never infer Shields behavior from Chromium. `BROWSER_ARTIFACTS` overrides the default
 `.tmpcheck/browser-reliability/` screenshot directory; the optional second argument
 after the engine runs only one scenario (e.g. `firefox journey`).

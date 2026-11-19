@@ -20,7 +20,7 @@ const workFiles=prefix=>execFileSync('git',['ls-files','--cached','--others','--
 // groups right after this array) so a new file cannot be forgotten the way the old list was.
 const files=['index.html','gm.html','tools/build_site.sh','tools/optimize_delivery.js','tools/maps/build_game_exploration.js','_routes.json',
  // Client-side runtime loaded by index.html.
- 'assets/shop-catalog.js','assets/shop.css','assets/shop.js','assets/friends.css','assets/friends.js',
+ 'assets/adventure-guide.css','assets/shop-catalog.js','assets/shop.css','assets/shop.js','assets/friends.css','assets/friends.js',
  'assets/combat-audio.js','assets/bgm.js','assets/bgm-tracks.js','assets/social.css','assets/social.js',
  'assets/social-rules.js','assets/social-poker.js','assets/social-scene.js','assets/social-fishing.js',
  'assets/social-fishing.css','assets/social-gym-redesign.js','assets/social-pond-design.js',
