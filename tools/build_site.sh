@@ -109,8 +109,6 @@ cp -r "$ROOT/Updates/Sprite" "$OUT/Updates/Sprite"
 # Strip whitespace only from four ordinary map-kit JSON delivery copies.
 node "$ROOT/tools/optimize_delivery.js" "$OUT"
 node "$ROOT/tools/maps/build_game_exploration.js" "$OUT"
-# The selected vendored renderer ships with its complete MIT license.
-cp "$ROOT/tools/maps/vendor/THREE-LICENSE.txt" "$OUT/assets/endgame/THREE-LICENSE.txt"
 
 # Static build tag for updateWatch() so 60-second deploy checks hit the CDN instead of /api/* Functions.
 #
@@ -135,6 +133,7 @@ node -e '
   const NO_CACHE = "  Cache-Control: no-cache, must-revalidate\n";
   fs.writeFileSync(out + "/_headers",
     "/*\n  X-Content-Type-Options: nosniff\n  Referrer-Policy: strict-origin-when-cross-origin\n  Permissions-Policy: camera=(), microphone=(), geolocation=()\n"
+    + "/\n" + NO_CACHE
     + "/index.html\n" + NO_CACHE
     + "/gm.html\n" + NO_CACHE
     + "/*.html\n" + NO_CACHE

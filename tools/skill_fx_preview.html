@@ -130,7 +130,7 @@ async function boot(){
   const src=await (await fetch('/index.html')).text();
   const grab=(a,b)=>{const i=src.indexOf(a),j=src.indexOf(b,i);if(i<0||j<0)throw new Error('missing '+a);return src.slice(i,j)};
   const roster=grab('const CD=[','const pm=s=>');
-  const renderer=grab('const SKILL_FX_GEOMETRY=','let drag=null;const dom=R.domElement;');
+  const renderer=grab('const SKILL_FX_GEOMETRY=','let drag=null;const dom=R?.domElement;');
   // the game's own class-skin pieces: APNG decoder, weapon constants and weapon painter
   const skinConst=grab('const SKIN_WEAPON_DEFAULTS','// One constant scale per class and gender');
   const skinDecodeHelpers=grab('function skinBytes(','async function skinDecodeView(');

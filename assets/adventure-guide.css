@@ -35,6 +35,8 @@
 .adventure-town-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .adventure-town-grid article{padding:14px;background:#ffffff05;border:1px solid #ffffff14;border-radius:8px}
 body.clean-screen #adventureGuide{display:none}
+/* The field minimap and its Social button occupy the upper-right column. */
+@media(min-width:741px){body:not(.social-open) #adventureGuide:not(.is-compact){right:min(360px,46vw)}}
 @media(max-width:740px){
  #adventureGuide{top:auto;right:12px;bottom:calc(var(--docktop,76px) + 10px + env(safe-area-inset-bottom));width:calc(100vw - 24px);max-height:48dvh;border-radius:12px}
  #adventureGuide .adventure-heading{padding:10px 14px;gap:10px}

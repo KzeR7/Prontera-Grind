@@ -26,7 +26,7 @@ than the task needs, use its headings and stop.
 ## Current architecture
 
 Horizon Haven is a browser Ragnarok-flavoured idle/grind game. Most game logic,
-HTML and CSS are in `index.html`, with Three.js loaded from a CDN. Separate modules
+HTML and CSS are in `index.html`, with pinned Three.js r128 served from the same origin. Separate modules
 under `assets/` handle native wardrobe, pets and skill artwork. Cloud accounts,
 saves and GM tools use Cloudflare Pages Functions (`functions/`) and D1 SQL
 (`migrations/`). `bash tools/build_site.sh` assembles the static site into `dist/`.

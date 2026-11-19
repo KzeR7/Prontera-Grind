@@ -3,6 +3,8 @@
    Loaded after three.min.js; attaches THREE.GLTFLoader. */
 ( function () {
 
+	if ( typeof THREE === 'undefined' ) return; // The login card handles required-engine failure.
+
 	class GLTFLoader extends THREE.Loader {
 
 		constructor( manager ) {

@@ -1,8 +1,20 @@
 /* Native scenery and sprites in an independent scene. Farming keeps its own scene/state. */
 window.PGSocialScene={async create(host,labels,callbacks){
  const T=THREE,R=PGSocialRules,scene=new T.Scene();scene.background=new T.Color(0xb9cbbb);scene.fog=new T.Fog(0xb9cbbb,120,230);
- const renderer=new T.WebGLRenderer({antialias:true,alpha:false});renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));host.append(renderer.domElement);
+ let renderer;
+ try{renderer=new T.WebGLRenderer({antialias:true,alpha:false})}
+ catch{renderer=new T.WebGLRenderer({antialias:false,alpha:false})}
+ // A rejected/never-settling artwork request must not permanently lock enter().
+ let timer;
+ const deadline=new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('Plaza asset load timed out')),45000)});
+ const assets=jobs=>Promise.race([Promise.all(jobs),deadline]);
+ let contextLost=false;
+ const onLost=e=>{e.preventDefault();contextLost=true;callbacks.graphics?.('Plaza graphics paused. Waiting for the graphics device. You can still use Field.',true)};
+ const onRestore=()=>{contextLost=false;callbacks.graphics?.('')};
+ renderer.domElement.addEventListener('webglcontextlost',onLost);
+ renderer.domElement.addEventListener('webglcontextrestored',onRestore);
  try {
+ renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));host.append(renderer.domElement);
  const DEFAULT_PITCH=45,DEFAULT_DISTANCE=44;
  const camera=new T.PerspectiveCamera(38,1,.1,350),players=new Map();let angle=0,pitch=DEFAULT_PITCH,distance=DEFAULT_DISTANCE,active=false,last=0,clock=0,focused=false,viewW=0,viewH=0;
  const focus=new T.Vector3(0,.8,12),target=new T.Vector3(),feet=new T.Vector3(),head=new T.Vector3();
@@ -25,7 +37,7 @@ window.PGSocialScene={async create(host,labels,callbacks){
   return 0;
  };
  scene.add(new T.HemisphereLight(0xffffff,0x66775a,1));
- const [catalog,data,atlas,paving]=await Promise.all([fetch('assets/social/town/catalog.json').then(r=>{if(!r.ok)throw Error('Town metadata unavailable');return r.json()}),fetch('assets/social/town/models.bin').then(r=>{if(!r.ok)throw Error('Town models unavailable');return r.arrayBuffer()}),new T.TextureLoader().loadAsync('assets/social/town/models.webp'),new T.TextureLoader().loadAsync('assets/social/town/paving.webp')]);
+ const [catalog,data,atlas,paving]=await assets([fetch('assets/social/town/catalog.json').then(r=>{if(!r.ok)throw Error('Town metadata unavailable');return r.json()}),fetch('assets/social/town/models.bin').then(r=>{if(!r.ok)throw Error('Town models unavailable');return r.arrayBuffer()}),new T.TextureLoader().loadAsync('assets/social/town/models.webp'),new T.TextureLoader().loadAsync('assets/social/town/paving.webp')]);
  atlas.flipY=false;atlas.magFilter=T.LinearFilter;const modelMat=new T.MeshBasicMaterial({map:atlas,vertexColors:true,side:T.DoubleSide,alphaTest:.35});
  modelMat.onBeforeCompile=shader=>{shader.vertexShader='attribute vec4 sourceBounds; varying vec4 nativeBounds;\n'+shader.vertexShader;shader.vertexShader=shader.vertexShader.replace('#include <uv_vertex>','#include <uv_vertex>\nnativeBounds=sourceBounds;');shader.fragmentShader='varying vec4 nativeBounds;\n'+shader.fragmentShader;shader.fragmentShader=shader.fragmentShader.replace('#include <map_fragment>','vec4 texelColor = texture2D(map, clamp(vUv, nativeBounds.xy, nativeBounds.zw)); texelColor = mapTexelToLinear(texelColor); diffuseColor *= texelColor;')};
  const floats=new Float32Array(data),geometries={};
@@ -154,7 +166,7 @@ function model(name,x,z,size,rotation=0,source=catalog,vertices=floats,material=
  // Sanctuary: arranged south of the plaza from the owner's highlighted lawn.
  // Architecture and named NPCs share the world with the local training prototype.
  const loadTile=async(name,rx=1,ry=1)=>{try{const t=await new T.TextureLoader().loadAsync('assets/digimon/sanctuary/'+name+'.webp');t.wrapS=t.wrapT=T.RepeatWrapping;t.repeat.set(rx,ry);t.anisotropy=4;return t}catch(e){console.warn('DigiPet texture unavailable:',name);return null}};
- const [roofTexture,boardTexture,sandTexture,plasterTexture,beamTexture,doorTexture]=await Promise.all([loadTile('cc0/roof_09',2,2),loadTile('walkway-wood'),loadTile('gym-sand',6,3),loadTile('gym-plaster',4,1),loadTile('cc0/medieval_wood'),loadTile('cc0/rough_pine_door')]);
+ const [roofTexture,boardTexture,sandTexture,plasterTexture,beamTexture,doorTexture]=await assets([loadTile('cc0/roof_09',2,2),loadTile('walkway-wood'),loadTile('gym-sand',6,3),loadTile('gym-plaster',4,1),loadTile('cc0/medieval_wood'),loadTile('cc0/rough_pine_door')]);
  const wood=new T.MeshLambertMaterial({map:beamTexture,color:0xc3a27d}),darkWood=new T.MeshLambertMaterial({map:beamTexture,color:0x997954}),lightWood=new T.MeshLambertMaterial({color:0xb58a59}),metal=new T.MeshLambertMaterial({color:0x5f6860}),iron=new T.MeshLambertMaterial({color:0x303a36}),cream=new T.MeshLambertMaterial({color:0xe8d9ba}),plaster=new T.MeshLambertMaterial({map:plasterTexture,color:0xf1e7d0}),roofMat=new T.MeshLambertMaterial({map:roofTexture,color:0xe0c8a4,side:T.DoubleSide});
  function flat(geometry,material,x,z,y){const m=new T.Mesh(geometry,material);m.rotation.x=-Math.PI/2;m.position.set(x,y,z);scene.add(freeze(m));return m}
  function box(x,y,z,w,h,d,mat){const m=new T.Mesh(new T.BoxGeometry(w,h,d),mat);m.position.set(x,y,z);scene.add(freeze(m));return m}
@@ -170,7 +182,7 @@ function model(name,x,z,size,rotation=0,source=catalog,vertices=floats,material=
  // Two angled building wings with broad roofs meet at a short central bay.
  // Their footprint and wall collision come from the same shared segments.
  function gable(cx,cz,w,d,eave,rise){const half=w/2,ang=Math.atan2(rise,half);for(const side of [-1,1]){const m=box(cx+side*half/2,eave+rise/2,cz,Math.hypot(half,rise)+.45,.24,d,roofMat);m.rotation.z=-side*ang;m.updateMatrix();m.userData.sanctuaryRoof=true}for(const z of [cz-d/2,cz+d/2]){beam([cx-half,eave,z],[cx,eave+rise,z],.18);beam([cx,eave+rise,z],[cx+half,eave,z],.18)}}
- if(window.PGSocialGymRedesign){await window.PGSocialGymRedesign.build(scene)}else{
+ if(window.PGSocialGymRedesign){await assets([window.PGSocialGymRedesign.build(scene)])}else{
  const sandMat=new T.MeshBasicMaterial({map:sandTexture,color:0xe8d6b4});
  const gymShape=new T.Shape();for(const [i,[x,z]] of [[43,18.5],[65,12.5],[73,12.5],[95,18.5],[95,39],[43,39]].entries()){if(i)gymShape.lineTo(x-69,-(z-25.5));else gymShape.moveTo(x-69,-(z-25.5))}gymShape.closePath();
  flat(new T.ShapeGeometry(gymShape),sandMat,69,25.5,.018).userData.sanctuaryGym=true;
@@ -451,7 +463,7 @@ function model(name,x,z,size,rotation=0,source=catalog,vertices=floats,material=
   el.addEventListener('pointerenter',e=>{if(e.pointerType==='mouse')entry.hover=true});el.addEventListener('pointerleave',()=>{entry.hover=false});el.addEventListener('pointerdown',()=>{entry.pressed=true});
  }labels.append(el);return entry});
  const releaseStationPointer=()=>{for(const entry of sanctuaryLabels)entry.pressed=false};
- addEventListener('pointerup',releaseStationPointer);addEventListener('pointercancel',releaseStationPointer);
+
  const digimonStore=globalThis.PGSocialDigimon?.sharedStore();
  // Idle, non-interactive companions dress the future meadow. They have no combat,
  // ownership, rewards or authority; the player's own follower remains independent.
@@ -1346,7 +1358,7 @@ const ATTACK_MS=520;let fxTextures=null;
   const n=PGSocialDigimon.frameIndex(asset.record.actions[stance].length,time,stance,5),key=[species,stance,n,flip].join(':');if(u.paint!==key){PGSocialDigimon.draw(u.ctx,asset,stance,time,5,flip);u.texture.needsUpdate=true;u.paint=key}
  }}
  function updateResidents(now){for(const r of residents){if(battleState.pve.length||battleHolds.size){r.sprite.visible=false;continue}r.sprite.visible=true;const asset=digimonStore.ready(r.id);if(!asset){digimonStore.request(r.id);continue}const t=now/1000+r.phase,x=r.homeX+Math.sin(t*.34)*2.4,z=r.homeZ+Math.cos(t*.27)*1.8,walking=Math.abs(Math.cos(t*.34))>.18;r.sprite.position.set(x,.06,z);r.flip=Math.cos(t*.34)<0;const stance=walking?'walking':'idle',frame=PGSocialDigimon.frameIndex(asset.record.actions[stance].length,now,stance,5);if(frame!==r.frame||r.stance!==stance){r.frame=frame;r.stance=stance;PGSocialDigimon.draw(r.ctx,asset,stance,now,5,r.flip);r.texture.needsUpdate=true}}}
- const [gardenCatalog,gardenBuffer,gardenAtlas]=await Promise.all([fetch('assets/native-fields/v1/catalog.json').then(r=>{if(!r.ok)throw Error('Garden metadata unavailable');return r.json()}),fetch('assets/native-fields/v1/prontera/models.bin').then(r=>{if(!r.ok)throw Error('Garden models unavailable');return r.arrayBuffer()}),new T.TextureLoader().loadAsync('assets/native-fields/v1/prontera/models.webp')]);
+ const [gardenCatalog,gardenBuffer,gardenAtlas]=await assets([fetch('assets/native-fields/v1/catalog.json').then(r=>{if(!r.ok)throw Error('Garden metadata unavailable');return r.json()}),fetch('assets/native-fields/v1/prontera/models.bin').then(r=>{if(!r.ok)throw Error('Garden models unavailable');return r.arrayBuffer()}),new T.TextureLoader().loadAsync('assets/native-fields/v1/prontera/models.webp')]);
  gardenAtlas.flipY=false;const gardenMat=modelMat.clone();gardenMat.map=gardenAtlas;gardenMat.onBeforeCompile=modelMat.onBeforeCompile;
  const garden=gardenCatalog.maps.find(m=>m.name==='prontera'),gardenFloats=new Float32Array(gardenBuffer);
  // Reuse native grass pixels for the remaining bounded gardens, with path clearance.
@@ -1372,10 +1384,10 @@ const ATTACK_MS=520;let fxTextures=null;
  // izlude firs, morocc palms, payon broadleafs and amatsu cherries - each with a per-tree
  // size and rotation so a grove reads as grown, not cloned. A missing atlas degrades to the
  // prontera tree instead of failing the hub.
- const speciesSources=await Promise.all(['izlude','morocc','payon','amatsu'].map(async name=>{
+ const speciesSources=await assets(['izlude','morocc','payon','amatsu'].map(async name=>{
   try{
    const map=gardenCatalog.maps.find(m=>m.name===name);if(!map)return null;
-   const [bin,atlas]=await Promise.all([fetch('assets/native-fields/v1/'+name+'/models.bin').then(r=>{if(!r.ok)throw Error('Tree models unavailable');return r.arrayBuffer()}),new T.TextureLoader().loadAsync('assets/native-fields/v1/'+name+'/models.webp')]);
+   const [bin,atlas]=await assets([fetch('assets/native-fields/v1/'+name+'/models.bin').then(r=>{if(!r.ok)throw Error('Tree models unavailable');return r.arrayBuffer()}),new T.TextureLoader().loadAsync('assets/native-fields/v1/'+name+'/models.webp')]);
    atlas.flipY=false;const mat=modelMat.clone();mat.map=atlas;mat.onBeforeCompile=modelMat.onBeforeCompile;
    return {map,floats:new Float32Array(bin),mat};
   }catch(e){console.warn('DigiPet tree set '+name+' unavailable',e);return null}
@@ -2682,7 +2694,7 @@ void main(){
  host.onpointercancel=()=>{down=null;touches.clear()};host.addEventListener('wheel',e=>{e.preventDefault();setCamera({distance:distance*Math.exp(e.deltaY*.001)})},{passive:false});
  // Subtle +5.5% optical offset keeps the player slightly higher than vertical screen center (~44% from top).
  function syncSize(){const w=host.clientWidth,h=host.clientHeight;if(!w||!h||(w===viewW&&h===viewH))return;viewW=w;viewH=h;renderer.setSize(w,h);camera.aspect=w/h;camera.setViewOffset(w,h,0,h*.055,w,h);camera.updateProjectionMatrix()}
- syncSize();const observer=new ResizeObserver(syncSize);observer.observe(host);
+ syncSize();
   // v364: a decorative draw must never take the frame down with it. `PGWardrobe.draw` on a poker
   // Dealer threw `InvalidStateError: The image source is detached from the canvas` on every frame,
   // and because this loop had no guard the throw aborted everything BELOW it - player sprite
@@ -2691,7 +2703,7 @@ void main(){
   // fault, then snapped to the current one on the frames that happened to survive. The guard is a
   // fence around each risky stage, not a blanket catch - the camera, the walk clock and the render
   // call must still run. It reports once per fault site so a console is a report, not a flood.
-  function frame(now){requestAnimationFrame(frame);if(!active||document.hidden)return;
+  function frame(now){requestAnimationFrame(frame);if(!active||contextLost||document.hidden)return;
    let failed=0;const stage=(name,fn)=>{try{fn()}catch(error){failed++;reportFrameFault(name,error)}};
    // The render call runs in `finally`: a broken stage costs its own draw, never the whole picture.
    try{frameBody(now,stage)}finally{try{renderer.render(scene,camera)}catch(error){reportFrameFault('render',error)}}}
@@ -2843,10 +2855,19 @@ void main(){
  }
  });
  }   // end frameBody
+ // Install page-lifetime listeners only after all required assets are ready.
+ if(typeof ResizeObserver==='function')new ResizeObserver(syncSize).observe(host);
+ else addEventListener('resize',syncSize);
+ addEventListener('pointerup',releaseStationPointer);addEventListener('pointercancel',releaseStationPointer);
  requestAnimationFrame(frame); // v361: fire the Aetherwell load LAST, once every binding the mount touches (seatTargets
  // especially - the v359 bleacher slabs taught us that const) is initialized. The network GLB
  // always resolves after create() anyway; this also keeps synchronous loader stubs safe.
  loadAetherwell();
- return {putPlayer,removePlayer,setGymResidents,setBattleState,battleEvent,bubble,dealerBubble,updatePoker,setCamera,resetCamera,fishing:fishingApi.api,get cameraState(){return cameraState()},clearPlayers(){focused=false;for(const id of [...players.keys()])removePlayer(id)},get active(){return active},set active(v){active=v;if(v){syncSize();last=performance.now();focused=false}},scene,camera,renderer};
- }catch(error){renderer.dispose();renderer.domElement.remove();throw error}
+ return {putPlayer,removePlayer,setGymResidents,setBattleState,battleEvent,bubble,dealerBubble,updatePoker,setCamera,resetCamera,fishing:fishingApi.api,get contextLost(){return contextLost},get cameraState(){return cameraState()},clearPlayers(){focused=false;for(const id of [...players.keys()])removePlayer(id)},get active(){return active},set active(v){active=v;if(v){syncSize();last=performance.now();focused=false}},scene,camera,renderer};
+ }catch(error){
+  renderer.domElement.removeEventListener('webglcontextlost',onLost);
+  renderer.domElement.removeEventListener('webglcontextrestored',onRestore);
+  renderer.forceContextLoss?.();renderer.dispose();renderer.domElement.remove();labels.replaceChildren();
+  throw error;
+ }finally{clearTimeout(timer)}
 }};

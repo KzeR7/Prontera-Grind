@@ -299,7 +299,7 @@ await T('build_site.sh writes static version.txt and a revalidating _headers mat
     // v275: the HTML entry point is revalidated, never served stale. A block is "<path>" followed by
     // its indented header lines, so assert on the path+directive pair rather than loose substring hits.
     const block = (p) => { const m = new RegExp('(?:^|\\n)' + p.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\n((?:  [^\\n]*\\n?)*)').exec(hdrs); return m ? m[1] : ''; };
-    for (const entry of ['/index.html', '/gm.html', '/*.html', '/version.txt']) {
+    for (const entry of ['/', '/index.html', '/gm.html', '/*.html', '/version.txt']) {
       assert.match(block(entry), /Cache-Control: no-cache, must-revalidate/,
         'dist/_headers makes ' + entry + ' revalidate on every load');
       assert.doesNotMatch(block(entry), /immutable|max-age=[1-9]/, entry + ' must not be cached for a fixed time');

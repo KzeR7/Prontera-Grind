@@ -47,6 +47,34 @@ must fetch them first or those suites fail with `Command failed: git show …`:
 git fetch origin d164bd0527cfe335f9c183d0e576800716b7dd26
 ```
 
+## Built-site browser reliability
+
+Use a disposable local server/database, **not a hosted game**. Build once, then run the
+same `dist/` in both engines. On a Linux test machine with browser downloads available:
+
+```sh
+# Include the ordinary test dependencies in the same install (no root package.json).
+npm install --no-save --package-lock=false jsdom three@0.128.0 ws miniflare@4.20260730.0 sharp@0.35.2 playwright-core@1.65.1 @sparticuz/chromium@153.0.0
+bash tools/build_site.sh
+npx playwright-core install --with-deps firefox
+node tools/check_browser_reliability.cjs chromium
+node tools/check_browser_reliability.cjs firefox
+```
+
+The runner starts `tools/dev_server.js` on loopback, per-run synthetic accounts, real
+cookies and the local socket shim. Each case launches a new temporary browser profile.
+The desktop journey uses a mouse; the small journey uses a **touch-capable** context
+(a narrow mouse-only window does not select the same layout). Chromium uses headless
+SwiftShader on Linux; no renderer stub or CDN fulfillment. On Linux with headless
+Firefox WebGL unavailable, try a headed session (`HEADED=1` with a display or Xvfb
+and Mesa installed). Report a missing context/extension as such, not a rendering pass.
+The same runner accepts installed `chrome` and `msedge` channels. See the
+[results, failure repros and separate stock Brave checklist](../reports/browser-reliability/README.md).
+The combined-build matrix exercises the First Adventure companion, owned item selection and Equip, pending engine retry, both WebGL contexts and leaving/re-entering during a pending town load. Use `adopt-town` or `adopt-town-reject` after the engine name to run the cloud-adoption races alone: both hold the required catalog, call the real `cloudAdopt()` for the signed-in player, then release or reject the request. The rejection case returns through Field and retries. `plaza_entry_sim.js` separately holds a scene promise across an account or session change (stub, not rendering evidence).
+Never infer Shields behavior from Chromium. `BROWSER_ARTIFACTS` overrides the default
+`.tmpcheck/browser-reliability/` screenshot directory; the optional second argument
+after the engine runs only one scenario (e.g. `firefox journey`).
+
 ## Save size and codec regressions (haven-v415)
 
 ```sh

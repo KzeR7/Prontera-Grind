@@ -921,17 +921,18 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="preload" href="assets/ui/fonts/font-5.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-6.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-7.ttf" as="font" type="font/ttf" crossorigin>
-<link rel="stylesheet" href="assets/ui/eclipse.css?v=432">
-<link rel="stylesheet" href="assets/ui/mobile.css?v=432">
+<link rel="stylesheet" href="assets/ui/eclipse.css?v=434">
+<link rel="stylesheet" href="assets/ui/mobile.css?v=434">
 <script src="assets/ui/mobile.js?v=274"></script>
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
-<link rel="stylesheet" href="assets/social.css?v=432">
+<link rel="stylesheet" href="assets/social.css?v=434">
 <link rel="stylesheet" href="assets/social-battle.css?v=393">
-  <link rel="stylesheet" href="assets/social-fishing.css?v=432"><link rel="stylesheet" href="assets/friends.css?v=273">
-<link rel="stylesheet" href="assets/adventure-guide.css?v=432">
+  <link rel="stylesheet" href="assets/social-fishing.css?v=434"><link rel="stylesheet" href="assets/friends.css?v=273">
+<link rel="stylesheet" href="assets/adventure-guide.css?v=434">
 </head>
 <body>
 <div id="loginOverlay"><div class="eclipse-login-world" aria-hidden="true"></div><header class="eclipse-login-header"><a href="./" class="eclipse-brand"><span>HH</span><b>HORIZON HAVEN<small>YOUR IDLE ADVENTURE</small></b></a><div class="eclipse-palettes" role="group" aria-label="Interface palette"><button type="button" data-palette="moonstone">Moonstone</button><button type="button" data-palette="aurora">Aurora</button><button type="button" data-palette="ember">Ember</button></div></header><main class="eclipse-login-layout"><section class="login-brand"><div class="login-eyebrow">A WORLD WORTH RETURNING TO</div><h1>Your next <br>chapter <em>awaits.</em></h1><p>Explore a world beyond the horizon.<br>Collect rare gear, master every class, and build your haven.</p><div class="eclipse-login-art"><img src="assets/ui/eclipse-knight.png" alt="Lord Knight ready for adventure"><span>01 / PRONTERA<small>THE JOURNEY BEGINS HERE</small></span><div><img src="assets/equipment-icons/1142.png" alt=""><span>YOUR NEXT UPGRADE<small>Somewhere out there.</small></span></div></div><div class="login-footnote">EXPLORE · GROW · CONQUER</div></section><div class="login-card"><div class="eclipse-access">ADVENTURER ACCESS <span>◇</span></div><h2 id="authHeading">Welcome back.</h2><p class="login-intro" id="authIntro">Your adventure is right where you left it.</p><div class="atabs" id="authTabs"><button type="button" id="tabLogin" class="on">Login</button><button type="button" id="tabReg">Register</button></div>
+<div id="engineError" hidden role="alert"><p>The 3D engine could not load. Sign-in is paused; account recovery is still available.</p><button type="button" id="engineRetry" class="login-btn">Retry startup</button></div>
 <form id="loginForm" autocomplete="on">
 <div class="form-group"><label for="username">Account Name</label><input type="text" id="username" required autocomplete="username"></div>
 <div class="form-group"><label for="password">Password</label><div class="eclipse-password"><input type="password" id="password" required autocomplete="current-password"><button type="button" id="eclipseShowPassword" aria-pressed="false" aria-label="Password visibility">Show</button></div></div>
@@ -1057,10 +1058,10 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <div id="tooltip"></div>
 <link rel="stylesheet" href="assets/wardrobe.css?v=138">
 <link rel="stylesheet" href="assets/shop.css?v=318">
-<script src="assets/wardrobe.js?v=432"></script>
+<script src="assets/wardrobe.js?v=434"></script>
 <script src="assets/shop-catalog.js?v=321"></script>
 <script src="assets/fourth-jobs.js?v=179"></script>
-<script src="assets/expanded-jobs.js?v=432"></script>
+<script src="assets/expanded-jobs.js?v=434"></script>
 <script src="assets/ascension.js?v=156"></script>
 <script src="assets/native-mob-heights.js?v=153"></script>
 <script src="assets/native-fields.js?v=197"></script>
@@ -1085,9 +1086,19 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <!-- v1 Morocc atlas generator deleted (2026-10-04): retired to Updates/retired-v1-kit/ when map
      kit v2 shipped, and this tag pointed at a file that no longer exists in the tree. kit_sim
      asserts it is never loaded again. -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" integrity="sha384-CI3ELBVUz9XQO+97x6nwMDPosPR5XvsxW2ua7N1Xeygeh1IxtgqtCkGfQY9WWdHu" crossorigin="anonymous"></script>
+<!-- The engine is parser-ordered. Install its slow-load notice before the blocking request. -->
+<script>
+const engineWait=setTimeout(()=>{
+ const box=document.getElementById('engineError');box.hidden=false;
+ box.querySelector('p').textContent='Still waiting for the 3D engine. Wait a little longer or retry startup.';
+ document.getElementById('engineRetry').onclick=()=>location.reload();
+},10000);
+const holdLogin=e=>e.preventDefault();document.getElementById('loginForm').addEventListener('submit',holdLogin);
+</script>
+<script src="assets/endgame/three-r128.min.js" integrity="sha384-CI3ELBVUz9XQO+97x6nwMDPosPR5XvsxW2ua7N1Xeygeh1IxtgqtCkGfQY9WWdHu" crossorigin="anonymous"></script>
+<script>clearTimeout(engineWait);document.getElementById('engineError').hidden=true;document.getElementById('loginForm').removeEventListener('submit',holdLogin);</script>
    <!-- v360: vendored r128 examples/js loader so the Social Hub can mount the owner's Prontera Grand Aetherwell GLB (assets/Fountainfile/). -->
-   <script src="assets/vendor/GLTFLoader.r128.js?v=372"></script>
+   <script src="assets/vendor/GLTFLoader.r128.js?v=434"></script>
 <script>
 const $=id=>document.getElementById(id);
 // Owner request (2026-10-24): no browser menu anywhere in the game - a right-click used to offer
@@ -1334,7 +1345,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-19 haven-v432 Zero-ATK gear repair and Endless Echo Asura fix';
+const BUILD='2026-11-19 haven-v434 Zero-ATK gear repair and Endless Echo Asura fix';
 // v364: this write used to sit AFTER the `//` on the BUILD line, so it was part of the comment and
 // never ran - the login card showed an empty #buildTag and there was no way to confirm which file
 // the browser had loaded. It also has to survive the script running before the login card exists.
@@ -6219,11 +6230,11 @@ function restoreBackup(file){
 // v2 (2026-10-27 owner): the card's backup/restore links are gone, so there is nothing to bind here
 // any more. saveBackup()/restoreBackup() stay in the file - the GM console and the test suites still
 // use them to carry a device's characters by hand when a machine dies.
-addEventListener('load',()=>{setTimeout(cloudProbe,80)});
+addEventListener('DOMContentLoaded',()=>{setTimeout(cloudProbe,80)});
 setInterval(cloudPollTick,15000);   // announcements/gifts on the poll clock and the kicked-tab session probe on its own faster one - never the save itself
 
 
-addEventListener('load',()=>{if(typeof THREE==='undefined')showErr('3D engine failed to load. Check your internet connection and reload.')});
+
 const gx=()=>S.gm?(S.gmx||100):1;
 
 // ---------- derived stats ----------
@@ -8483,7 +8494,7 @@ const GUIDE_LESSONS={
   {id:'hub-field',title:'Head out to the field',pointer:'#socialLeave',hub:true,act:'field',body:'Press <b>Go to the field</b> and you land in <b>Prontera Fields, Stage 1</b> \u2014 the easiest fight in the game. Your character attacks on its own from there; you choose where to farm, not which swing to take. The guide continues automatically the moment you arrive.'},
   {id:'combat',title:'Start fighting at Prontera Stage 1',body:'Click the <b>\ud83d\uddfc World Map</b> button in the bottom dock. Select <b>Prontera Fields \u2192 Stage 1</b> and tap <b>Travel</b>. Your character attacks on its own \u2014 every kill pays Base EXP, Job EXP, Zeny and loot. Leave <b>Auto-advance</b> on so you move to Stage 2 automatically when ready.',target:'map',pointer:'#dock [data-t="map"]'},
   {id:'points',title:'Spend your first points',body:'You gain stat points every Base level and Job points every Job level. Click the <b>\ud83d\udcca Character</b> button in the bottom dock \u2192 <b>Stats</b> and put points into STR, AGI or VIT. Click <b>\u2728 Skills</b> and learn an attack \u2014 it joins the combo and fires by itself.',target:'skills',skip:function(){return ptsSpent()>0},pointer:'#dock [data-t="status"]'},
-  {id:'gear',title:'Equip better gear',body:'Monsters drop weapons and armor. Click the <b>\ud83c\udf92 Inventory</b> button in the bottom dock and tap a stronger item to compare, then tap <b>Equip</b>. Lock anything valuable so Auto-sell skips it. Then go back to the Map and pick the next stage you can clear quickly.',target:'bag',skip:function(){return !!(S.eq&&S.eq.weapon&&S.eq.weapon.id!==1)},pointer:'#dock [data-t="bag"]'},
+  {id:'gear',title:'Equip better gear',body:'Monsters drop weapons and armor. Open <b>Equipment → Loadout</b> from the bottom dock and tap a stronger item to compare, then tap <b>Equip</b>. Lock anything valuable so Auto-sell skips it. Then go back to the Map and pick the next stage you can clear quickly.',target:'equip',skip:function(){return !!(S.eq&&S.eq.weapon&&S.eq.weapon.id!==1)},pointer:'#dock [data-t="equip"]'},
   {id:'job',title:'Choose your first job at Job 10',body:'Once Novice reaches Job 10, click the <b>\ud83c\udf33 Class Tree</b> button in the bottom dock and pick one of six jobs: Swordman, Thief, Mage, Archer, Merchant or Acolyte. Each keeps its own level, stats and gear. Later promotions come at Job 40, Job 50 and a fourth job at Base 150.',target:'job',skip:function(){return S.cls!=='Novice'},pointer:'#dock [data-t="job"]'},
   {id:'hub2',title:'Come back to the Social Hub',body:"Return to the Plaza any time to fish at the south ponds (\ud83c\udfa3), hatch DigiPets (\ud83e\udd5a), play Hold'em (\ud83c\udccf) or just chat. Farming continues while you are here. The guide is always one <b>H</b> key away.",target:'status',pointer:null}
  ],
@@ -8629,7 +8640,7 @@ function guideTourPanel(){
  const pointer=step.pointer||null;
  requestAnimationFrame(()=>{if(guideTour)showGuidePointer(pointer)});
  const total=visible.length,tabName=step.target?TABS[step.target]?.[1]||'':'',label=guideTour==='ascension'?'ASCENSION ORIENTATION':'FIRST STEPS';
- return `<section class="guide-tour" aria-label="Getting started"><small>${label} \xb7 ${i+1} / ${total}</small><h2>${step.title}</h2><p>${step.body}</p><div class="guide-actions">${step.act==='field'?`<button data-a="guidestep" data-v="next" class="guide-go">\u21a9 Go to the field</button>`:(tabName?`<button data-t="${step.target}">Open ${tabName}</button>`:'')}<button data-a="guidestep" data-v="back" ${i?'':'disabled'}>Back</button><button data-a="guidestep" data-v="next">${i===total-1?'Finish tour':'Next'}</button><button data-a="guidestep" data-v="dismiss">Read later</button></div><small>You can replay this tour from the guide at any time.</small></section>`;
+ return `<section class="guide-tour" aria-label="Getting started"><small>${label} \xb7 ${i+1} / ${total}</small><h2>${step.title}</h2><p>${step.body}</p><div class="guide-actions">${step.act==='field'?`<button data-a="guidestep" data-v="next" class="guide-go">\u21a9 Go to the field</button>`:(tabName?`<button ${step.target==='equip'?'data-a="guideloadout"':`data-t="${step.target}"`}>Open ${tabName}</button>`:'')}<button data-a="guidestep" data-v="back" ${i?'':'disabled'}>Back</button><button data-a="guidestep" data-v="next">${i===total-1?'Finish tour':'Next'}</button><button data-a="guidestep" data-v="dismiss">Read later</button></div><small>You can replay this tour from the guide at any time.</small></section>`;
 }
 function guideStep(action){
  if(!guideTour||!['next','back','dismiss'].includes(action))return;
@@ -8693,7 +8704,7 @@ function coachOpen(tab,subKey,subTab){if(tab&&!tabs.includes(tab))openTab(tab);i
 function coachTipList(){return [
  {id:'points',eyebrow:'CHARACTER',anchor:'#dock [data-t="status"]',title:'Spend your first points',body:'Every Base level pays stat points. Character → Stats spends them; nothing is locked in.',go:'Open Character',run:()=>coachOpen('status')},
  {id:'skills',eyebrow:'SKILLS',anchor:'#dock [data-t="skills"]',title:'Learn your first attack',body:'Job points buy skill ranks. Learned attacks join the combo that already fires for you.',go:'Open Skills',run:()=>coachOpen('skills')},
- {id:'equip',eyebrow:'INVENTORY',anchor:'#dock [data-t="bag"]',title:'A stronger weapon is waiting',body:'Compare it in Inventory, then press Equip. Lock anything you want to keep safe from bulk sales.',go:'Open Inventory',run:()=>coachOpen('bag')},
+ {id:'equip',eyebrow:'EQUIPMENT',anchor:'#dock [data-t="equip"]',title:'A stronger weapon is waiting',body:'Compare it in Equipment → Loadout, then press Equip. Lock anything you want to keep safe from bulk sales.',go:'Open Loadout',run:()=>coachOpen('equip','equip','equip0')},
  {id:'card',eyebrow:'CARDS',anchor:'#dock [data-t="bag"]',title:'Socket your first card',body:'Cards drop from monsters. Inventory → Cards shows what fits; extras merge into ★ ranks or feed Card Mastery.',go:'Open Cards',run:()=>coachOpen('bag','bag','cards')},
  {id:'job',eyebrow:'CLASS TREE',anchor:'#dock [data-t="job"]',title:'Time for your first job',body:'Novice Job 10 unlocks the six first jobs. Your Novice progress is kept, so nothing is lost by choosing.',go:'Open Class Tree',run:()=>coachOpen('job')},
  {id:'daily',eyebrow:'DAILY',anchor:'#minimapTools #dailyBtn',title:'Your free spin is ready',body:'One spin a day, plus any banked rolls: ore, Zeny, EXP boosts, a card or a refine scroll.',go:'Spin the wheel',run:()=>ACT.opendaily()}
@@ -8791,7 +8802,7 @@ function beginnerChecklist(){
   {id:'field',label:'Travel to Prontera Stage 1',hint:'Open Map (M) → Prontera Fields → Stage 1 → Travel. Your character fights on its own.',done:(S.prog||[]).some(v=>v>1),button:'<button data-t="map">Open Map</button>'},
   {id:'points',label:'Spend your first stat points',hint:'Character → Stats. Every level pays points; nothing is lost while you decide.',done:ptsSpent()>0,button:'<button data-t="status">Open Character</button>'},
   {id:'skill',label:'Learn an attack skill',hint:'Skills → spend Job points on an attack. The combo casts it for you.',done:attacks>0,button:'<button data-t="skills">Open Skills</button>'},
-  {id:'equip',label:'Equip a better weapon',hint:'Inventory → pick a stronger drop → Equip. The starter knife is quickly outgrown.',done:!!(S.eq.weapon&&S.eq.weapon.id!==1),button:'<button data-t="bag">Open Inventory</button>'},
+  {id:'equip',label:'Equip a better weapon',hint:'Equipment → Loadout → pick a stronger drop → Equip. The starter knife is quickly outgrown.',done:!!(S.eq.weapon&&S.eq.weapon.id!==1),button:'<button data-a="guideloadout">Open Loadout</button>'},
   {id:'stage',label:'Clear a second stage',hint:'Auto-advance moves you on after a clear, or pick a stage in the Map.',done:(S.prog||[]).some(v=>v>1),button:'<button data-t="map">Open Map</button>'},
   {id:'job',label:'Choose your first job at Job 10',hint:'Class Tree opens the six first jobs once Novice reaches Job 10.',done:S.cls!=='Novice',button:'<button data-t="job">Open Class Tree</button>'},
   {id:'card',label:'Get a card',hint:'Monsters drop their own cards. Inventory → Cards shows what fits where.',done:(S.cards||[]).length>0||cardsInGear,button:'<button data-t="bag">Open Inventory</button>'},
@@ -8805,7 +8816,7 @@ function beginnerGuide(){const check=beginnerChecklist(),done=check.filter(x=>x.
  ['Stats and jobs','Each Base level pays stat points; <b>📊 Character → Stats</b> spends them, the cap is 99 before Base 100 and 120 after, and the first reset after a class change is free. <b>🌳 Class Tree</b> is the whole job ladder: first job at Novice Job 10, then parent Job 40 and 50 for the next two. A fourth job also needs Base 150 and a 30-second <b>Crucible</b> win. Every class you have played keeps its own level, stats, gear and skills, so switching back is free.'],
  ['Skills and the combo','<b>✨ Skills</b> spends Job points and shows what each rank does. Up to six attacks fill the combo, left to right, then a 3-second recovery while basic attacks continue. Buffs cast on their own, First Aid heals below half health, and paused skills are skipped. There is no SP resource to manage.'],
  ['Equipment and its six workspaces','<b>🛡️ Equipment</b> is one window with six tabs: <b>Loadout</b> compares gear and sockets cards, <b>Refine</b> raises an item\'s rank, <b>Affixes</b> rerolls rolls for a listed price, <b>Cards</b> is the full card workspace, <b>Auto-sell</b> decides what future drops to sell automatically, and <b>Ascension</b> is the Mythic Forge. The Forge only works for a fourth job and only on owned N+ gear; it keeps the item, its refinement, cards and affixes.'],
- ['Bag, cards and selling','<b>🎒 Inventory</b> lists what you own: inspect before you equip or sell, <b>lock</b> anything valuable so a bulk sale skips it, and use auto-equip if you want help choosing. <b>🎒 Inventory → Cards</b> sockets cards and merges copies — ★ +9%, ★★ +12%, ★★★ +15% for 1 / 3 / 5 extra unstarred copies — and its <b>Mergeable now</b> filter lists only the cards that already have their copies, so nothing has to be checked one by one. Normal and Nightmare copies merge separately.'],
+ ['Bag, cards and selling','<b>Equipment → Loadout</b> lists your gear: select an owned item to compare, then press Equip or sell, <b>lock</b> anything valuable so a bulk sale skips it, and use auto-equip if you want help choosing. Bag holds materials and consumables. <b>🎒 Inventory → Cards</b> sockets cards and merges copies — ★ +9%, ★★ +12%, ★★★ +15% for 1 / 3 / 5 extra unstarred copies — and its <b>Mergeable now</b> filter lists only the cards that already have their copies, so nothing has to be checked one by one. Normal and Nightmare copies merge separately.'],
  ['Maps, Nightmare and Ascension','The atlas has ten stages per map and Stage 10 is always an MVP. Nightmare stages (NM 1–5) open on the same maps at Base 120 and 140 and drop N and N+ gear. <b>🗼 World Map → Ascension Map</b> holds Astral Citadel and Thor Volcano: five stages, fourth job only, which drop Forge materials and new N+ weapons only; Mythic gear comes only from the Forge. <b>Endless Echo</b> is a three-minute damage trial with two ranked attempts a day, and its Echo Shards buy supplies. The <b>↩ Field</b> button opens the Fountain Plaza; farming continues while you are there.'],
  ['Pets, contracts and the Mastery Index','Pets drop from monsters, not eggs: deploy up to three for their bonuses and let duplicates raise that species\' Bond. The quest rail above the dock lists contracts with claimable rewards. <b>📚 Mastery Index</b> (in More) tracks kills per monster, unlocks hunt titles and pays permanent rewards, while Card Mastery turns spare loose cards into permanent stats — equip the useful copies first.'],
  ['Mail, daily wheel and the Cash Shop','<b>Mail</b> carries announcements and gift attachments; claim them from the same window. The <b>daily roulette</b> gives one free spin a day (plus any banked rolls) for ore, Zeny or EXP boosts, a random card or a refine scroll. <b>💎 Cash Shop</b> (in More) sells cosmetics and supply bundles for real money and never premium currency — everything it sells also exists in game.'],
@@ -9957,7 +9968,7 @@ const V={
     <div class="hd">Interface palette</div>${typeof eclipsePaletteControls==='function'?eclipsePaletteControls():''}<div class="hd" style="margin-top:10px">Gameplay</div>
     <div class="row"><button data-a="hints" data-v="on" class="${S.hints!==false?'on':''}" aria-pressed="${S.hints!==false}">New-player tips: On</button><button data-a="hints" data-v="off" class="${S.hints===false?'on':''}" aria-pressed="${S.hints===false}">Off</button></div>
     <small>Small cards that point at the control a new player needs next. Each one appears once, disappears when you have done it, and the Guide keeps the full explanation.</small><label title="Always on - the game cannot be paused by hiding the tab any more"><span class="lockmark">&#10003;</span> Keeps grinding while this tab is in the background</label>
-    <small>Background grinding keeps playing while the tab is hidden - a hidden tab is never "away". The welcome-back reward only starts after <b>three minutes</b> without a save, so an ordinary background session never opens it. Auto-equip lives on the <b>Bag</b> tab and Auto-advance on the <b>World Map</b> tab, next to what they control.</small>
+    <small>Background grinding keeps playing while the tab is hidden - a hidden tab is never "away". The welcome-back reward only starts after <b>three minutes</b> without a save, so an ordinary background session never opens it. Auto-equip lives in <b>Equipment → Loadout</b> and Auto-advance on the <b>World Map</b> tab, next to what they control.</small>
     <p><small>Drag to rotate, scroll or pinch to zoom. Hotkeys: M S J K B E Q R L P I V O, Esc to close. Cards has no hotkey - use its tab.</small></p><button class="full" data-a="reset">Erase this account's save &amp; restart</button><button class="full" data-a="logout">Logout</button>`},
   gm(){return gmToolsPanel()}};;
 // v90: the Black Market panel. Locked until Base Lv 100; ore is bought one at a time and a reforge is
@@ -11399,6 +11410,7 @@ function gmStudioReview(){
 }
 function gmStudioCancelConfirm(){gmStudioDraft.confirm=false;gmStudioDraft.status='';renderGmStudio();}
 const ACT={
+  guideloadout:()=>coachOpen('equip','equip','equip0'),
   openmail:()=>openMailDaily('mail'),
   opendaily:()=>openMailDaily('daily'),
   closemaildaily:()=>closeMailDaily(),
@@ -12030,7 +12042,57 @@ if(S.hp<=0){if(typeof JOB_RITE!=='undefined'&&JOB_RITE.on){showJobRiteResult(fal
   for(let i=drops.length-1;i>=0;i--)if(drops[i].t>.9){collect(drops[i].it);drops.splice(i,1)}
 }
 
+// Recovery never sends the password or code to an email provider. A code is rotated on use.
+function recoveryShowLogin(){
+  $('recoveryForm').hidden=true;$('recoverySuccess').hidden=true;$('recoverNewCode').textContent='';
+  $('recoveryForm').reset();$('recoverStatus').textContent='';$('loginForm').hidden=false;
+  $('authTabs').hidden=false;$('recoveryOpen').hidden=false;$('loginHint').hidden=false;$('loginCloud').hidden=false;
+  $('authHeading').textContent='Welcome back.';$('authIntro').hidden=false;
+  setMode('login');$('password').value='';$('password2').value='';$('password').focus();
+}
+$('recoveryOpen').onclick=()=>{
+  if(!CLOUD.api)return showErr('Cloud account recovery is unavailable here.');
+  $('recoverUser').value=$('username').value.trim();$('recoverStatus').textContent='';
+  $('loginForm').hidden=true;$('authTabs').hidden=true;$('recoveryOpen').hidden=true;
+  $('loginHint').hidden=true;$('loginCloud').hidden=true;$('authIntro').hidden=true;
+  $('authHeading').textContent='Recover account';$('recoverySuccess').hidden=true;$('recoveryForm').hidden=false;
+  $('recoverUser').focus();
+};
+$('recoverClose').onclick=recoveryShowLogin;
+$('recoverDone').onclick=recoveryShowLogin;
+$('recoveryForm').onsubmit=async e=>{
+  e.preventDefault();const status=$('recoverStatus'),btn=$('recoverSubmit');
+  if(btn.disabled)return;
+  if($('recoverPassword').value.trim()!==$('recoverConfirm').value.trim()){status.textContent='Passwords do not match.';return}
+  const username=$('recoverUser').value.trim();
+  btn.disabled=true;$('recoverClose').disabled=true;status.textContent='Resetting password…';
+  let outcomeUncertain=true;
+  try{
+    const r=await cloudFetch('/recover',{method:'POST',body:JSON.stringify({u:username,email:$('recoverEmail').value.trim(),code:$('recoverCode').value.trim(),p:$('recoverPassword').value.trim()})});
+    outcomeUncertain=r.status>=500;const data=await r.json().catch(()=>({}));
+    if(!r.ok)throw new Error(data.err||'Could not reset password.');
+    // The old code has been consumed. Keep the new one visible until the player explicitly
+    // acknowledges it; never redirect automatically or allow the old form to be submitted again.
+    $('username').value=username;$('recoverCode').value='';$('recoverPassword').value='';$('recoverConfirm').value='';
+    const validCode=typeof data.recovery==='string'&&/^[A-Z0-9]{4}(?:-[A-Z0-9]{4}){3}$/.test(data.recovery);
+    $('recoverNewCode').textContent=validCode?data.recovery:'';
+    $('recoverNewCode').hidden=!validCode;
+    $('recoverSuccessDetail').textContent=validCode?'Save your NEW recovery code somewhere private. The old code no longer works. You will need the new code for your next password reset.':'Your password was reset, but the new recovery code could not be displayed. Contact an owner if you need account recovery later.';
+    $('recoverDone').textContent=validCode?'I saved it — back to login':'Back to login';
+    $('authHeading').textContent='Password reset';$('recoveryForm').hidden=true;$('recoverySuccess').hidden=false;
+    $('recoverDone').focus();
+  }catch(err){status.textContent=(err.message||'Could not reach the server.')+(outcomeUncertain?' The reset may have completed. If your old code no longer works, contact an owner for help.':'')}finally{btn.disabled=false;$('recoverClose').disabled=false}
+};
 // 3D Scene setup
+// Keep account recovery independent. Do not allow a new session to start with
+// the field half-initialized, even if Enter submits the form instead of a click.
+if(typeof THREE==='undefined'){
+  $('engineError').querySelector('p').textContent='The 3D engine could not load. Sign-in is paused; account recovery is still available.';
+  $('engineError').hidden=false;$('authBtn').disabled=true;
+  $('loginForm').addEventListener('submit',e=>{e.preventDefault();e.stopImmediatePropagation()},true);
+  $('engineRetry').onclick=()=>location.reload();
+  throw new Error('Startup stopped: Three.js did not load');
+}
 const view=$('view'),ov=$('ov'),tag=$('tag'),prog=$('prog'),heroTitle=$('heroTitle'),heroTitleMark=$('heroTitleMark'),heroTitleText=$('heroTitleText');
 // v281: the renderer used to be built by this ONE top-level statement. On a phone the GPU can be
 // unavailable at boot (another app holds it, the tab was restored in the background, an old device is
@@ -12053,7 +12115,7 @@ function gpuContextLost(e){
   // Whatever the player earned before the GPU went must not depend on the next frames happening.
   try{if(typeof save==='function')save()}catch(_){}
   try{if(typeof cloudFlushNow==='function')cloudFlushNow()}catch(_){}
-  noRendererNotice('The graphics device was taken away by your phone or browser. The game is paused and your progress is saved - it comes back on its own in a moment.');
+  noRendererNotice('Field graphics paused. Waiting for the graphics device to return.');
 }
 function gpuContextRestored(){
   gpuLost=false;
@@ -12075,11 +12137,14 @@ function noRendererNotice(text){
       +'text-align:center;pointer-events:none';
     host.appendChild(box);
   }
-  box.textContent=text;
+  box.textContent=text+' ';
+  const retry=document.createElement('button');retry.type='button';retry.textContent='Retry graphics';
+  retry.style.pointerEvents='auto';retry.onclick=()=>showUpdatePrompt(BUILD,'Reload to retry graphics after confirming your save.');
+  box.append(retry);
 }
 function bootRenderer(){
   const r=buildRenderer();
-  if(!r){noRendererNotice('This device could not start the 3D view. Reloading usually fixes it - your progress is safe.');return null}
+  if(!r){noRendererNotice('This device could not start the 3D view. Menus still work. Reload to retry graphics.');return null}
   r.shadowMap.enabled=true;
   view.prepend(r.domElement);
   r.domElement.addEventListener('webglcontextlost',gpuContextLost,false);
@@ -12092,6 +12157,7 @@ let az=0,el=.95,zoom=1;
 
 function resize(){
   const w=window.innerWidth, h=view.clientHeight||(window.innerHeight - 50);
+  if(!R){eclipseMeasureDock();return}
   R.setPixelRatio(Math.min(2,devicePixelRatio||1));
   R.setSize(w,h);
   cam.aspect=w/h;
@@ -14876,7 +14942,7 @@ function drawPetPreviews(){
 }
 function disposeCreatureVisual(v){scene.remove(v.G);if(v.image)v.image.remove();if(v.official&&v.spr.material.map)v.spr.material.map.dispose();v.spr.material.dispose();if(v.nativePet)v.nativePet.cv.width=v.nativePet.cv.height=0;if(v.referenceMob)v.referenceMob.cv.width=v.referenceMob.cv.height=0}
 const mobMesh=new Map(),petMesh=new Map();let curMob=null,mobG=null,mobMats=[],lastBoss=null,dmesh=new Map(),tmp=new THREE.Vector3(),lastProg='';
-function scr(x,y,z){tmp.set(x,y,z).project(cam);return[(tmp.x+1)/2*R.domElement.clientWidth,(1-tmp.y)/2*R.domElement.clientHeight]}
+function scr(x,y,z){tmp.set(x,y,z).project(cam);const surface=R?.domElement||view;return[(tmp.x+1)/2*surface.clientWidth,(1-tmp.y)/2*surface.clientHeight]}
 // Facing-away views (NW 3, N 4, NE 5): the item icon is front-view art and reads wrong there.
 const WEAPON_HIDDEN_DIRS=[3,4,5];
 const weaponNodes=new Map(),WEAPON_ICON_ANGLE={dagger:-35,katar:22,staff:-24,bow:18,axe:-30,sword:-35,mace:-28},WEAPON_ICON_SIZE={dagger:25,katar:30,staff:29,bow:34,axe:30,sword:29,mace:28};
@@ -15819,7 +15885,7 @@ function syncSkillFx(){
   }
 }
 
-let drag=null;const dom=R.domElement;
+let drag=null;const dom=R?.domElement;
 // v74.1: a phone has no wheel, so "scroll to zoom" meant the camera could not zoom at all there.
 // One finger rotates exactly as before; two fingers pinch to zoom, the same clamp the wheel uses.
 // Pointers are tracked by id so the second finger never yanks the rotation, and when one of the
@@ -15827,11 +15893,11 @@ let drag=null;const dom=R.domElement;
 const touchPts=new Map();let pinch0=0;
 const pinchNow=()=>{const p=[...touchPts.values()];return p.length>=2?Math.hypot(p[0][0]-p[1][0],p[0][1]-p[1][1]):0};
 const zoomLo=()=>.6;                                   // the field lane's own zoom floor
-dom.addEventListener('pointerdown',e=>{
+dom?.addEventListener('pointerdown',e=>{
   if(e.pointerType==='touch')touchPts.set(e.pointerId,[e.clientX,e.clientY]);
   if(touchPts.size>=2){pinch0=pinchNow();drag=null}else drag=[e.clientX,e.clientY];
   dom.setPointerCapture(e.pointerId)});
-dom.addEventListener('pointermove',e=>{
+dom?.addEventListener('pointermove',e=>{
   if(e.pointerType==='touch'&&touchPts.has(e.pointerId))touchPts.set(e.pointerId,[e.clientX,e.clientY]);
   if(touchPts.size>=2){const d=pinchNow();if(pinch0>0&&d>0){zoom=Math.min(2,Math.max(zoomLo(),zoom*d/pinch0));pinch0=d}return}
   if(!drag)return;az-=(e.clientX-drag[0])*.006;el=Math.min(1.35,Math.max(.45,el+(e.clientY-drag[1])*.005));drag=[e.clientX,e.clientY]});
@@ -15839,8 +15905,8 @@ const endPointer=e=>{
   if(e.pointerType==='touch')touchPts.delete(e.pointerId);
   if(touchPts.size<2)pinch0=0;
   const p=[...touchPts.values()];drag=touchPts.size===1?[p[0][0],p[0][1]]:null};
-dom.addEventListener('pointerup',endPointer);dom.addEventListener('pointercancel',endPointer);
-dom.addEventListener('wheel',e=>{e.preventDefault();zoom=Math.min(2,Math.max(zoomLo(),zoom*(e.deltaY<0?1.1:.9)))},{passive:false});
+dom?.addEventListener('pointerup',endPointer);dom?.addEventListener('pointercancel',endPointer);
+dom?.addEventListener('wheel',e=>{e.preventDefault();zoom=Math.min(2,Math.max(zoomLo(),zoom*(e.deltaY<0?1.1:.9)))},{passive:false});
 
 // Keep the character near the visual centre: a very small forward lead (0.25 world units)
 // leaves the body centre about 2% above screen centre, instead of the old 5-unit lead that
@@ -15854,6 +15920,7 @@ function draw(){
     if(tabs.length){if(typeof eclipseDrawAtlas==='function'&&tabs.includes('map'))eclipseDrawAtlas();if(tabs.includes('equip'))drawSkinPreview('eclipseDoll',null,S.cls,S.sex);if(tabs.includes('set'))drawAppearancePreview();if(tabs.includes('job'))drawClassPreview();if(typeof wardrobePreview==='function'&&tabs.includes('wardrobe'))wardrobePreview();if(tabs.includes('pet'))drawPetPreviews();}
     return;
   }
+  if(!R)return;
   const bn=isBoss(),key=(JOB_RITE.on?'rite:':TRIAL.on?'trial:':'field:')+S.mp+':'+S.lvl+':'+bn,c=C(),mp=MAPS[S.mp];
   if(key!==lastKey){lastKey=key;
     // v77: the trial is a scene of its own. Entering and leaving changes the key, so the arena is
@@ -16108,47 +16175,6 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden)bgHide();el
 setInterval(bgTick,SIM_BG_MS);
 resize();respawn=.3;requestAnimationFrame(loop);setInterval(save,5000);kitFetch();
 if(typeof BGM!=='undefined')BGM.playLogin();
-// Recovery never sends the password or code to an email provider. A code is rotated on use.
-function recoveryShowLogin(){
-  $('recoveryForm').hidden=true;$('recoverySuccess').hidden=true;$('recoverNewCode').textContent='';
-  $('recoveryForm').reset();$('recoverStatus').textContent='';$('loginForm').hidden=false;
-  $('authTabs').hidden=false;$('recoveryOpen').hidden=false;$('loginHint').hidden=false;$('loginCloud').hidden=false;
-  $('authHeading').textContent='Welcome back.';$('authIntro').hidden=false;
-  setMode('login');$('password').value='';$('password2').value='';$('password').focus();
-}
-$('recoveryOpen').onclick=()=>{
-  if(!CLOUD.api)return showErr('Cloud account recovery is unavailable here.');
-  $('recoverUser').value=$('username').value.trim();$('recoverStatus').textContent='';
-  $('loginForm').hidden=true;$('authTabs').hidden=true;$('recoveryOpen').hidden=true;
-  $('loginHint').hidden=true;$('loginCloud').hidden=true;$('authIntro').hidden=true;
-  $('authHeading').textContent='Recover account';$('recoverySuccess').hidden=true;$('recoveryForm').hidden=false;
-  $('recoverUser').focus();
-};
-$('recoverClose').onclick=recoveryShowLogin;
-$('recoverDone').onclick=recoveryShowLogin;
-$('recoveryForm').onsubmit=async e=>{
-  e.preventDefault();const status=$('recoverStatus'),btn=$('recoverSubmit');
-  if(btn.disabled)return;
-  if($('recoverPassword').value.trim()!==$('recoverConfirm').value.trim()){status.textContent='Passwords do not match.';return}
-  const username=$('recoverUser').value.trim();
-  btn.disabled=true;$('recoverClose').disabled=true;status.textContent='Resetting password…';
-  let outcomeUncertain=true;
-  try{
-    const r=await cloudFetch('/recover',{method:'POST',body:JSON.stringify({u:username,email:$('recoverEmail').value.trim(),code:$('recoverCode').value.trim(),p:$('recoverPassword').value.trim()})});
-    outcomeUncertain=r.status>=500;const data=await r.json().catch(()=>({}));
-    if(!r.ok)throw new Error(data.err||'Could not reset password.');
-    // The old code has been consumed. Keep the new one visible until the player explicitly
-    // acknowledges it; never redirect automatically or allow the old form to be submitted again.
-    $('username').value=username;$('recoverCode').value='';$('recoverPassword').value='';$('recoverConfirm').value='';
-    const validCode=typeof data.recovery==='string'&&/^[A-Z0-9]{4}(?:-[A-Z0-9]{4}){3}$/.test(data.recovery);
-    $('recoverNewCode').textContent=validCode?data.recovery:'';
-    $('recoverNewCode').hidden=!validCode;
-    $('recoverSuccessDetail').textContent=validCode?'Save your NEW recovery code somewhere private. The old code no longer works. You will need the new code for your next password reset.':'Your password was reset, but the new recovery code could not be displayed. Contact an owner if you need account recovery later.';
-    $('recoverDone').textContent=validCode?'I saved it — back to login':'Back to login';
-    $('authHeading').textContent='Password reset';$('recoveryForm').hidden=true;$('recoverySuccess').hidden=false;
-    $('recoverDone').focus();
-  }catch(err){status.textContent=(err.message||'Could not reach the server.')+(outcomeUncertain?' The reset may have completed. If your old code no longer works, contact an owner for help.':'')}finally{btn.disabled=false;$('recoverClose').disabled=false}
-};
 // ---------- update watcher ---------------------------------------------------------------
 // Deployments notify players; only their button click saves and refreshes the page.
 //
@@ -16348,21 +16374,21 @@ setInterval(updateWatch,60000);
 // be hours old while the player was on another tab, and the check is a 60-byte text file.
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&(pendingUpdateBuild||Date.now()-PAGE_STARTED_AT>30000))updateWatch()});
 </script>
-<script src="assets/wardrobe-ui.js?v=432"></script>
+<script src="assets/wardrobe-ui.js?v=434"></script>
 <script src="assets/shop.js?v=321"></script>
 <script src="assets/friends.js?v=273"></script>
-<script src="assets/digimon/roster.js?v=432"></script>
-<script src="assets/digimon/base-stats.js?v=432"></script>
-<script src="assets/social-rules.js?v=432"></script>
-<script src="assets/social-poker.js?v=432"></script>
-<script src="assets/digimon-sanctuary.js?v=432"></script>
+<script src="assets/digimon/roster.js?v=434"></script>
+<script src="assets/digimon/base-stats.js?v=434"></script>
+<script src="assets/social-rules.js?v=434"></script>
+<script src="assets/social-poker.js?v=434"></script>
+<script src="assets/digimon-sanctuary.js?v=434"></script>
 <script src="assets/digimon-battle.js?v=393"></script>
-<script src="assets/social-digimon.js?v=432"></script>
+<script src="assets/social-digimon.js?v=434"></script>
 <script src="assets/social-gym-redesign.js?v=393"></script>
 <script src="assets/social-pond-design.js?v=393"></script>
-<script src="assets/social-scene.js?v=432"></script>
-<script src="assets/social-fishing.js?v=432"></script>
-<script src="assets/plaza-bots.js?v=432"></script>
-<script src="assets/adventure-guide.js?v=432"></script>
-<script src="assets/social.js?v=432"></script></body>
+<script src="assets/social-scene.js?v=434"></script>
+<script src="assets/social-fishing.js?v=434"></script>
+<script src="assets/plaza-bots.js?v=434"></script>
+<script src="assets/adventure-guide.js?v=434"></script>
+<script src="assets/social.js?v=434"></script></body>
 </html>

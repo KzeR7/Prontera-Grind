@@ -17,8 +17,6 @@ const path=require('node:path');
    const context=await browser.newContext({viewport}),page=await context.newPage(),errors=[];
    try{
    page.on('pageerror',e=>errors.push(e.message));
-   // Serve the same pinned engine from disk to make this test independent of CDN uptime.
-   await page.route('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js',r=>r.fulfill({path:path.resolve('tools/vendor/three-r128.min.js'),contentType:'application/javascript',headers:{'access-control-allow-origin':'*'}}));
    await page.route('https://challenges.cloudflare.com/**',r=>r.abort());
    await page.goto(base,{waitUntil:'load'});
    await page.waitForFunction(()=>CLOUD.api&&!CLOUD.probing);
