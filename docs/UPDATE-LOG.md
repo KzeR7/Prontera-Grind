@@ -12021,3 +12021,61 @@ re-recording them here would have written wrong numbers into the repository.
   live schema metadata only; no player-data export was performed.
 * **Delivery:** Production schema preparation completed; these ALTER scripts must not be replayed.
   PR #254 remains unmerged and its v426 compatibility code still requires final CI before activation.
+
+- Added a standalone developer preview for the expanded class roster and its current skill effects; no game FX were changed.
+
+### 2026-11-18 — Expanded FX review concepts (work in progress)
+
+* Added a review-only current/new switch and a pulled-back camera. Seventeen initial mage, ninja and performer concepts are in the tool; the remaining requested class effects are not yet redesigned. No in-game FX or combat behavior changed. Research notes are in `tools/expanded-fx-research.md`.
+
+### 2026-11-18 — Expanded FX concept detail pass
+
+* Enriched the 17 existing review-only concepts with timed impact glows, expanding pressure rings, layered sparks and skill-specific details, including weapon trails, lightning forks, petals and embers. Current FX and gameplay remain unchanged; the other requested concepts are still outstanding.
+* Checks: JavaScript syntax and a canvas-method smoke test across all 17 concepts and nine animation times.
+
+### 2026-11-18 — Ninja throwing FX review pass
+
+* Researched RO throwing skills and client throw reconstructions; rebuilt the review-only Throw Kunai, Throw Huuma Shuriken and Huuma Shuriken Storm concepts with larger detailed weapons, layered travel trails and staggered impacts. Original game FX and combat remain untouched.
+* Checks: standalone canvas smoke test for all three concepts across animation phases; JavaScript syntax and whitespace checks. The visual concepts are not frame-exact RO effects.
+
+### 2026-11-18 — Larger expanded FX review batch
+
+* Straightened and sharpened the kunai paths and strengthened their impact; replaced the drawn huuma with a credited, cropped CC BY 4.0 shuriken sprite and custom motion and impact effects. Added 45 early review concepts spanning the Crusader, Alchemist, Monk and Rogue lines. The game remains unchanged.
+* Checks: syntax checks and dependency-free canvas-phase smoke tests for the throwing effects and the 45 batch concepts; attribution and research notes in `tools/expanded-fx-research.md`.
+
+### 2026-11-18 — Expanded FX review polish
+
+* Replaced the review shuriken with a credited CC BY-SA shuriken preview, with a transparent keyed background and larger rendering. Added a stronger impact and detail pass to the 45 existing batch concepts. These remain developer-only samples, not in-game assets or gameplay changes.
+* Checks: animation-phase canvas smoke tests and JavaScript syntax checks; visual fidelity not browser-verified in this environment. Source and reuse conditions are recorded in the review research notes.
+
+### 2026-11-18 — RO-base expanded FX review
+
+* Updated all 63 available review concepts to layer on the current game effects and available class signature (including original RO flipbooks where supplied); the custom thrown projectiles deliberately replace the stock throw to avoid duplicate paths. This is still a review-only tool and does not change in-game FX. Not every skill has an original RO flipbook in the existing pack.
+* Replaced the shuriken concept with the existing native RO Huuma Wing icon and fixed the kunai to one straight line and a fixed heading. Added a straight-path geometry check; verified canvas phase and syntax checks.
+
+### Expanded-class FX research follow-up (review work in progress)
+- Investigated public RO client implementations and per-effect captures to distinguish cast, travel, hit and ground phases; documented sources and asset/timing limitations in `tools/expanded-fx-research.md`.
+- The earlier review concepts and rejected Huuma inventory icon have not yet been replaced by the requested fully researched, skill-specific redesigns.
+
+### Expanded-class review preview — first researched replacements
+- Replaced the preview concepts for Earth Grave, Varetyr Spear, Tiger Cannon, Knuckle Arrow and Severe Rainstorm with separately staged, skill-specific interpretations; these do not stack the shared in-game effect underneath.
+- The preview now defaults to New mode and retains that choice when changing classes. Current remains available through the mode toggle. Other concepts, including the rejected Huuma, remain unfinished.
+
+### Expanded FX full-pass research (incomplete)
+- Added source notes on distinct RO cast, target and field execution, including Spore Explosion, Poison Buster, Rampage Blaster and Prestige. Added preview-only staged interpretations for those four; the full requested redesign remains unfinished and the Huuma projectile remains unresolved.
+
+### Expanded FX preview — class identity corrections (review only)
+- Stopped stacking shared game FX underneath New-mode concepts, and reset the shared canvas between casts to prevent old clipped drawings leaking into the next skill. Current mode remains available for comparison.
+- Reworked Dispell, the named Kagerou/Oboro skills, Flora/Geographer summoning, and Monk/Champion martial effects to remove unrelated ninja symbols, projectiles, gears and sword silhouettes. Geographer and Flora now use sourced RO sprite frames planted at the ground; Kunai Explosion uses a straight throw and existing RO fire sprite.
+- Earlier concepts for other class skills still require a dedicated skill-by-skill review; the rejected Huuma image is not yet replaced. No production game FX were changed.
+
+### Expanded FX preview — user review selections
+- Applied the user's keep-current choices and revised the selected skills, including shield-only Chain, stronger fog/Dispell and martial impacts, bigger moon/petals, and supplied straight-flying kunai and spinning shuriken art.
+- Fixed selection of Stalker Plagiarism and Shadow Warrior (same-skill autocasts have no pool); confirmed all Stalker buttons and Shadow Warrior in a browser. “Freezing star” was interpreted as Freezing Spear. Work remains standalone preview-only.
+
+### Expanded-class FX review selection follow-up
+- Updated the standalone comparison's old/new decisions, added a sword-free legacy Triple Attack variant and original-effect/supplied-projectile Throw Kunai hybrid.
+- Enlarged Rising Dragon and Kunai Explosion's hit and made Shadow Warrior's doubles visible. No game runtime effects were changed.
+
+### Expanded-class FX final review choices
+- Applied the remaining keep-current selections in the standalone FX review, including Shadow Warrior and all Gunslinger and Rebellion casts. Production game FX remain unchanged.
