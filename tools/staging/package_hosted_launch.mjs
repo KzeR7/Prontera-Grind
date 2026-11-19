@@ -79,6 +79,18 @@ const html=()=>fs.readFileSync(path.join(root,'index.html'),'utf8');
 const basePaths=()=>new Set(execFileSync('git',['ls-tree','-r','--name-only',base],{cwd:root,maxBuffer:20*1024*1024}).toString().split('\n').filter(Boolean));
 files.push(...assetRefs(html()).filter(p=>!basePaths().has(p)&&!files.includes(p)));
 files.push(...overlayFiles(html()));
+// haven-v434: PR #257 gave the seven expanded weapon families new Mythic icons, so 14 earlier Mythic
+// icons (spear 1433, gun 13163, ...) are no longer requested by RO_ITEM_ICON_CANDIDATES. They stay in the
+// tree on purpose: mythic-manifest.json still records their provenance and the parked RO-look sets
+// (Updates/ascension-ro-looks) reuse some of them. Ship every icon the manifest records, so a staged
+// tree matches a real build and an unreferenced but provenance-tracked icon is not reported as an
+// unpackaged runtime change.
+{const mythic=JSON.parse(fs.readFileSync(path.join(root,'assets/equipment-icons/mythic-manifest.json'),'utf8'));
+ if(!Array.isArray(mythic.assets)||!mythic.assets.length)throw Error('mythic-manifest.json lists no icons');
+ for(const a of mythic.assets){const rel='assets/equipment-icons/'+a.file;
+  if(typeof a.file!=='string'||!/^\d+\.png$/.test(a.file))throw Error('Unexpected Mythic icon entry: '+JSON.stringify(a));
+  if(!fs.existsSync(path.join(root,rel)))throw Error('Missing Mythic icon named by its manifest: '+rel);
+  if(!files.includes(rel))files.push(rel)}}
 // A repeated path would pack twice and make the payload's own file count meaningless.
 if(new Set(files).size!==files.length)throw Error('Duplicate package entry: '+files.find((p,i)=>files.indexOf(p)!==i));
 if(process.argv.length!==3)throw Error('Usage: node tools/staging/package_hosted_launch.mjs <output.mjs>');

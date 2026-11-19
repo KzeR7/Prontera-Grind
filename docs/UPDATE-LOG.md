@@ -12087,6 +12087,77 @@ re-recording them here would have written wrong numbers into the repository.
 * **Checks:** Full gate plus corrected-environment/affected-suite reruns: 242/253 pass, no dependency skips, with the same 11 suites failing against unchanged main `76992caa`: class_skin_sim, cpu_profile_invoker_sim, hosted_launch_stage_sim, hosted_scrypt_prepare_sim, hosted_scrypt_reader_probe_sim, plaza_bots_sim, preview_fields_sim, publish_sim, render_lost_boot_smoke, sprite_viewer_sim and weapon_proposal_sim. No assertions or budgets loosened. First Adventure and legacy Guide regressions pass. Real WebGL Chromium/Firefox at 1366×900 and 390×844 pass registration, pause/relogin, town/field, live kill, stat click, handbook, class choice, learning, combo assignment and completion; only long Job EXP waits use fixtures. Three progression benchmarks rerun: all 42 gear, 21 encounter and 63 growth measurements and historical rows match exactly; only their source/combat hashes change. Update watcher passes 22/22. Existing CSS optimizer now strips standalone plaza/fishing comments too: parsed rules are identical, saving 12,201 bytes and preserving the existing classic delivery ceiling. The static build succeeds; publish_sim retains its two original failures. Browser checks use the pinned local Three.js asset, not a renderer stub; Brave, Safari, physical devices and CDN availability were not tested.
 * **Delivery:** Local feature branch `codex/guided-first-adventure`, prepared for pull-request review. No main push or deployment.
 
+## haven-v427 — Mythic section-six gear and Ascension Forge (2026-11-19)
+
+* **Changed:** Section-6 Thor equipment now identifies as Mythic, gets a valid top-band base roll, and uses the Mythic item-name prefix. The Forge offers owned, unascended section-5 N+ equipment even if the current class cannot equip its weapon family; section-6 Mythic drops remain outside the Forge input ladder.
+* **Try it:** Farm Thor Volcano and inspect section-6 drops; as a fourth-job Kagerou, inspect an equipped N+ shuriken in Equipment → Ascension Forge.
+* **Checks:** `ascension_evolution_sim.js` (10 groups), `gear_sim.js` (43 groups), `ascension_drop_shop_sim.js` (7 groups), and `drop_card_sheet_sim.js` (14 groups) passed.
+* **Delivery:** Local changes on the active Arena branch.
+
+## haven-v428 — Forge-only Mythic and N+ Ascension weapons (2026-11-19)
+
+* **Changed:** Corrected progression per owner direction: both Ascension maps drop only their new N+ weapon lines; Nightmare maps supply N weapons and equipment; Mythic gear is crafted only in the Ascension Forge.
+* **Try it:** Farm Astral Citadel or Thor Volcano and verify only N+ weapons appear; use Nightmare fields for N equipment; create Mythic gear through the Forge.
+* **Checks:** `ascension_evolution_sim.js` (10 groups), `ascension_drop_shop_sim.js` (7 groups), `drop_card_sheet_sim.js` (14 groups), and `gear_sim.js` (43 groups) passed.
+* **Delivery:** Local changes on the active Arena branch.
+
+## haven-v429 — repair zero-ATK legacy Ascension drops (2026-11-19)
+
+* **Changed:** On load, legacy section-6 items named N+ are migrated to section 5. Broken null/zero base values are restored from the N+ top-field formula; actual Mythic Forge items are not modified.
+* **Try it:** Reload a save containing a former N+ Cataclysm weapon; inspect its rarity and ATK.
+* **Checks:** `ascension_evolution_sim.js` (12 groups), `ascension_drop_shop_sim.js` (7 groups), `drop_card_sheet_sim.js` (14 groups), `gear_sim.js` (43 groups), and `update_watch_sim.js` (22 groups) passed.
+* **Delivery:** Local changes on the active Arena branch.
+
+## haven-v430 — Asura Strike retreat leap (2026-11-19)
+
+* **Changed:** After a successful Asura Strike, the Monk-line character visibly jumps 3.2 world units away from the target over 0.48 seconds. The combat model follows the leap and respects field bounds.
+* **Try it:** As a Monk, Champion or Sura with a Spirit Sphere, cast Asura Strike on a mob or MVP and watch the character hop backward.
+* **Checks:** `signature_skills_sim.js` (8 groups), `asura_pose_sim.js` (2 checks), `skill_sim.js` (44 groups), `update_watch_sim.js` (22 groups), and `git diff --check` passed. `skill_balance_sim.js` could not complete because its pinned comparison commit `d164bd0527cfe335f9c183d0e576800716b7dd26` is unavailable in this checkout.
+* **Delivery:** Local changes on the active Arena branch.
+
+### PR #257 pre-merge review — Ascension drop progression regression coverage
+* **Changed:** Updated the live Ascension progression simulation to assert the intended weapon-only N+ drops on both maps and Forge-only Mythic progression; corrected obsolete expectations from the prior broader shelf.
+* **Try it:** Run `node tools/tests/ascension_progression_sim.js`.
+* **Checks:** `ascension_progression_sim.js` passed, along with the PR recheck: Ascension evolution (12), drop/shop (7), gear catalogue (43), drop/card sheet (14), signature skills (8), Asura pose (2), skill system (44), fourth-job skills (16), expanded roster (13), signature FX (11), update watcher (22), and `git diff --check`. GitHub Cloudflare Pages and Workers Builds checks pass.
+* **Delivery:** Local changes on the active PR branch.
+
+
+## haven-v431 — Ascension set-specific weapon icons (2026-11-19)
+
+* **Changed:** The seven expanded weapon families now use six distinct preserved Ragnarok item icons across the six Mythic Forge sets. The Forge's set picker previews the current weapon family with each set's icon. These are inventory/Forge visuals, not character-worn sprite layers.
+* **Try it:** Select an N+ shuriken, book, instrument, whip, spear, knuckle or gun in the Forge and switch set choices to compare the six icons.
+* **Checks:** `equipment_art_sim.js` (125 source-verified PNGs), `expanded_roster_sim.js` (13 groups), `ascension_evolution_sim.js` (13 groups), `update_watch_sim.js` (22 groups), and `git diff --check` passed.
+* **Delivery:** Local changes on the active PR branch.
+
+## haven-v432 — Ascension RO-look sets, zero-base repair and Endless Echo fix (2026-11-19)
+
+* **Changed:** Six new Mythic sets join the Ascension Forge on top of the original six: **Valkyrie, Thanatos, Archangel** (Astral Citadel) and **Ifrit, Thor, Diabolus** (Thor Volcano). Each is the Ragnarok Online look of an existing set (`look:` celestial, voidwalker, ethereal, primal, molten, infernal). It shares that set's map, material, bonuses and cost, but has its own names and 19 native RO inventory icons taken from the RO item it is named after (Balmung, Thanos weapons, Longinus's Spear, Ignus Steel, Jormungand, Diabolus armour…). Pieces count toward their own set only, so you can't mix Valkyrie and Celestial for one bonus. The guide's Mythic targets name the twin ("or Valkyrie look") instead of listing it twice. 108 new PNGs (about 74 KB) are recorded with blob source and SHA-256 in `mythic-manifest.json`. Two shuriken icons are shared with a current set (Valkyrie 13300, Ifrit 13303), because RO has only four unused Huuma icons. The original sets, their icons and old saves are unchanged.
+* **Changed:** Gear whose stored base value broke (NaN saved as `null`, 0 or negative, which showed as **0 ATK**) is rebuilt on load from its own rarity, section, level and map, exactly as `genGear` rolls it at mid-roll. A broken Mythic gets the Mythic base band. Valid values, cards and objects without a base field are never touched, and item identity is kept.
+* **Fixed:** Asura Strike no longer starts its retreat leap during the Endless Echo trial, so the character stays in range of the dummy and deals damage. The Ascension field panel now says "Equipment: new N+ weapons only" instead of "the Nightmare tier". The Cloudflare guide no longer calls PR #254 held, and it states the coordinated `?v=432` asset query.
+* **Try it:** Fourth job → Forge → pick an N+ weapon and switch between the 12 set buttons. Weapons-only comparison page: `.cache/preview/index.html` (local, not shipped). Endless Echo as Sura/Champion with Asura Strike.
+* **Checks:** Full local gate **236/248**. The 12 reds are identical on the unmodified #257 merge (`3eb301a3`): `equipment_v417`, `guide`, `mythic_rules` and `nightmare` (red since #257; they pass on `0a454e31` and still assert the pre-#257 drop design), `hosted_launch_stage`, `render_lost_boot_smoke`, `skill_balance`, `social_digimon`, `social_worker`, `write_gate_binding`, plus `class_icon_delivery` and `sanctuary_worker_battle` (missing `sharp` / `miniflare`). New tests: an Endless Echo Asura check (fails without the guard), zero-base repair across every slot and rarity inside the real drop roll, RO-look set rules and the 12-button picker. Updated set counts: GM catalog 228, gift base 228, picker 12, distinct RO-look icons per family. The `publish_sim` classic budget goes from 60.31 to 60.42 MiB (measured 60.3014 → 60.4131). GM catalog regenerated.
+* **Delivery:** Committed on `arena/efe2b4f0-prontera-grind` (on top of the local #257 merge). Not pushed, no PR, not deployed.
+
+## haven-v432 (revised) — zero-ATK repair and Endless Echo fix; RO-look sets parked (2026-11-19)
+
+* **Changed:** This corrects the haven-v432 entry above, which was never published. At the owner's request, the six Ragnarok Online look sets (Valkyrie, Thanatos, Archangel, Ifrit, Thor, Diabolus) are **not in the game**. Their 108 icons, `sets.json`, the exact prototype code and a weapons-only comparison page are saved in `Updates/ascension-ro-looks/` (not published, also in `.assetsignore`) until the owner decides how to implement them. The game, Forge, icon manifest, GM catalog and tests are back to the original six sets. The build label is now **`2026-11-19 haven-v432 Zero-ATK gear repair and Endless Echo Asura fix`**. Still in the game: the zero-ATK base repair, the Endless Echo Asura fix, the Ascension field text and the Cloudflare guide fixes. Merged `origin/main` (#258, which also used the number haven-v427 for a different build); coordinated `?v=` queries, including the new adventure-guide assets, are 432.
+* **Try it:** Load a save with a 0-ATK item (it is restored from its rarity), run Endless Echo with Asura Strike, and open `Updates/ascension-ro-looks/index.html` for the parked sprite comparison.
+* **Checks:** Full gate on the merged tree: the same 7 reds as unchanged `origin/main` `446106e9` (`class_icon_delivery` and `sanctuary_worker_battle` lack `sharp`/`miniflare`; `hosted_launch_stage`, `render_lost_boot_smoke`, `social_digimon`, `social_worker`, `write_gate_binding`), plus the 4 that PR #257 turned red and that still assert the pre-#257 drop design (`equipment_v417`, `guide`, `mythic_rules`, `nightmare`; left for an owner decision, not rewritten). New `ascension_ro_looks_proposal_sim.js` byte-verifies the parked package. Progression fixtures re-measured with `tools/progression_balance.js` (default, `--skills`, `--encounters`): all measurements are byte-identical; only the source/combat hashes advanced. `publish_sim` classic budget 60.31 → 60.32 MiB (main 60.3085, this tree 60.3109).
+* **Delivery:** Committed and pushed on `arena/efe2b4f0-prontera-grind`; pull request opened against `main`. It includes PR #257's commits. Not merged, not deployed.
+
+## haven-v432 (Forge list) — only gear your class can equip, equipped pieces first (2026-11-19)
+
+* **Changed:** Owner decision on PR #260: the Ascension Forge again lists only N+ gear the current class can equip (`canUse`, as before PR #257), so Shards, Sigils and Zeny are never spent on a Mythic the class can't wear. Forging an incompatible weapon is refused even through a direct action. Equipped N+ pieces always come first, then bag items in bag order. Same build label (not yet published).
+* **Try it:** As a Rune Knight, put an N+ katar and an N+ sword in the bag and equip an N+ armour: the Forge lists the armour and equipped weapon first ("· Equipped"), then the bag sword. The katar isn't offered.
+* **Checks:** `ascension_evolution_sim.js` 15/15: new tests for the class filter (including a refused direct forge) and the equipped-first order in both the list and the dropdown. #257's every-family recipe and shuriken-preview tests now use a fourth job that wields each weapon. Full gate 237/249, with the same 11 reds as the previous PR #260 run, plus `skill_balance`, now green after re-measuring with `tools/progression_balance.js` (all measurements byte-identical; only hashes advanced). `docs/GAME-DESIGN.md` updated.
+* **Delivery:** Committed and pushed to `arena/efe2b4f0-prontera-grind` (PR #260). Not merged, not deployed.
+
+## haven-v432 (tests) — four suites updated to PR #257's Ascension drop design (2026-11-19)
+
+* **Changed:** No game code. `equipment_v417_sim`, `guide_sim`, `mythic_rules_sim` and `nightmare_sim` still asserted the pre-#257 rules (20-piece shelves, Astral Stages 1-3 dropping N, a 0.5 weapon budget, the old guide wording, an unclamped section index). They now check #257's design: both Ascension maps drop only N+ weapons (section 5) on every stage, each shelf has 14 weapons (one per family) and the MVP rolls the whole shelf, the weapon budget is 0.25 per kill, `genGear` clamps the section index, and the guide says "new N+ weapons only… Mythic items are crafted only in Equipment → Ascension". Each edit is marked `haven-v432 (PR #257 design)`.
+* **Checks:** The four suites pass (17/0, PASS, 6, 13/0). Pre-merge QA on the real engine: about 7,000 kills across Stages 1/3/5 of both Ascension maps for five fourth jobs, with zero page errors. Every drop was an N+ weapon with ATK above 0. Away rewards on Thor Stage 4 behave the same. Every fourth job finds its own weapon families on both maps. The Forge forged each of a Sura's four eligible weapons, refused a bag weapon the class can't use, and then reported nothing left to forge. The real-engine smokes pass (`field_loop`, `panel_layout` 42/42, `cloud_badge`, `cloud_only`, `save_owner_boot`). `render_lost_boot_smoke` is red on `main` too.
+* **Delivery:** Committed and pushed to `arena/efe2b4f0-prontera-grind` (PR #260). Not merged, not deployed.
+
 ### 2026-11-19 — `2026-11-19 haven-v427 browser rendering recovery`
 * **Changed:** The game loads its existing 3D engine from its own site. Missing graphics no longer strand account recovery; the field and plaza explain failures and offer a way back. A chat failure no longer prevents solo scenery. On touch phones, Quests no longer covers Field. No account reset, save format change or new Social traffic.
 * **Try it:** Sign in, advance and close the plaza guide, then tap Field. See the [browser matrix, screenshots and fault reproductions](../reports/browser-reliability/README.md).
@@ -12104,3 +12175,10 @@ re-recording them here would have written wrong numbers into the repository.
 * **Try it:** On a disposable built site, run `node tools/check_browser_reliability.cjs chromium adopt-town` and `adopt-town-reject`. Both failed on `b370f72` and pass on v433. See the [reproduction and verified results](../reports/browser-reliability/README.md).
 * **Checks:** 12/12 built-site Chromium recovery/Loadout cases and both First Adventure walkthrough sizes passed. Firefox was attempted but could not launch: no matching executable and the browser download failed. 250/250 sims/smokes, Pages preview and all three generated assets passed. Actual benchmarks match the previous PR head: 42 gear, 21 encounter and 63 skill rows.
 * **Delivery:** Existing PR #259; build number coordinated above the v432 candidate. No merge to main or deployment.
+
+## haven-v434 — PR #260 brought up to date with main (#259, haven-v433) (2026-11-19)
+
+* **Changed:** No new gameplay. `main` shipped haven-v433 (PR #259: First Adventure → Loadout, graphics recovery, plaza save adoption) while PR #260 was open. That merge is folded in here, and this PR's build moves to **`2026-11-19 haven-v434 Zero-ATK gear repair and Endless Echo Asura fix`** (`?v=434` on every coordinated asset), so it stays newer than what is live. The guide merges both sides: v433's new "Bag, cards and selling" text and this PR's Ascension wording ("new N+ weapons only; Mythic gear comes only from the Forge"). Both update-log histories are kept unchanged.
+* **Checks:** Progression fixtures re-measured in all three modes; only the code hashes moved and the measurements are unchanged. Full gate on the merged tree: **246/251**. The 5 reds (`class_icon_delivery`, `sanctuary_worker_battle`, `social_digimon`, `social_worker`, `write_gate_binding`) also fail on unchanged `main` `7a40f20e` in this sandbox. `render_lost_boot_smoke` is green now that #259 fixed it. The real-engine Ascension QA was re-run on the merged code: about 4,300 kills, every drop an N+ weapon with ATK above 0, no page errors, and the Forge behaved as described above.
+* **Fixed (staging packager):** `hosted_launch_stage_sim`, which passes on `main`, failed on this branch with "Unpackaged runtime change: assets/equipment-icons/13163.png". The cause: #257 gave the expanded weapon families new Mythic icons, which left 14 earlier icons unreferenced by `RO_ITEM_ICON_CANDIDATES`, and the packager fails closed on unreferenced runtime files. Those icons are kept on purpose (`mythic-manifest.json` records their provenance and the parked RO-look sets reuse some of them). `tools/staging/package_hosted_launch.mjs` now also ships every icon the Mythic manifest records. No game code changed.
+* **Delivery:** Committed and pushed to `arena/efe2b4f0-prontera-grind` (PR #260). Not merged, not deployed.

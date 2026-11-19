@@ -1,0 +1,1108 @@
+{
+  "description": "Proposal, not in the game: six Ragnarok Online look Mythic sets for the Ascension Forge, one per existing set. Each would reuse its `look` set's map, material, bonuses and cost and change only names and inventory icons. Icons are native RO client inventory icons (hvg249/TranslationRO-BR data/texture/유저인터페이스/item/<id>.bmp, source = git blob), BMP converted to PNG with the magenta key transparent, pixels untouched. Files under icons/ are new; ../../assets entries already ship.",
+  "prototypeCommit": "407e27b4",
+  "sets": {
+    "valkyrie": {
+      "name": "Valkyrie",
+      "look": "celestial",
+      "lookName": "Celestial",
+      "map": 10,
+      "mat": 0,
+      "pieces": {
+        "weapon": {
+          "sword": "Valkyrie Balmung",
+          "katar": "Valkyrie Loki's Nail",
+          "staff": "Valkyrie Dea Staff",
+          "dagger": "Valkyrie Ginnungagap",
+          "bow": "Valkyrie Elven Bow",
+          "axe": "Valkyrie Celestial Axe",
+          "mace": "Valkyrie Hammer",
+          "spear": "Valkyrie Gigantic Lance",
+          "book": "Valkyrie Saga",
+          "knuckle": "Valkyrie Battle Glove",
+          "instrument": "Valkyrie Lute",
+          "whip": "Valkyrie Chain Whip",
+          "shuriken": "Valkyrie Wing Huuma",
+          "gun": "Valkyrie Gold Lux"
+        },
+        "armor": "Valkyrie Brynhild",
+        "head": "Valkyrie Helm",
+        "off": "Valkyrie Hervor Alvitr",
+        "leg": "Valkyrian Shoes",
+        "acc": "Valkyrie Wing Brooch"
+      },
+      "icons": {
+        "sword": 1161,
+        "dagger": 13002,
+        "axe": 1383,
+        "mace": 16051,
+        "staff": 2005,
+        "katar": 1262,
+        "bow": 1746,
+        "armor": 2383,
+        "head": 5171,
+        "off": 2182,
+        "leg": 2421,
+        "acc": 2890,
+        "spear": 1490,
+        "book": 1585,
+        "knuckle": 1822,
+        "instrument": 1935,
+        "whip": 1973,
+        "shuriken": 13300,
+        "gun": 13106
+      }
+    },
+    "thanatos": {
+      "name": "Thanatos",
+      "look": "voidwalker",
+      "lookName": "Voidwalker",
+      "map": 10,
+      "mat": 0,
+      "pieces": {
+        "weapon": {
+          "sword": "Thanatos Sword",
+          "katar": "Thanatos Katar",
+          "staff": "Thanatos Staff",
+          "dagger": "Thanatos Dagger",
+          "bow": "Thanatos Bow",
+          "axe": "Thanatos Axe",
+          "mace": "Thanatos Hammer",
+          "spear": "Thanatos Spear",
+          "book": "Thanatos Grimoire",
+          "knuckle": "Thanatos Knuckle",
+          "instrument": "Thanatos Violin",
+          "whip": "Thanatos Whip",
+          "shuriken": "Thanatos Thunderstorm Huuma",
+          "gun": "Thanatos Dusk"
+        },
+        "armor": "Thanatos Tenebris",
+        "head": "Thanatos Despero Mask",
+        "off": "Thanatos Shadow Guard",
+        "leg": "Thanatos Shadow Walk",
+        "acc": "Thanatos Death Loop"
+      },
+      "icons": {
+        "sword": 13441,
+        "dagger": 13093,
+        "axe": 28100,
+        "mace": 16028,
+        "staff": 1669,
+        "katar": 28000,
+        "bow": 18119,
+        "armor": 15055,
+        "head": 18530,
+        "off": 2135,
+        "leg": 2426,
+        "acc": 2732,
+        "spear": 1438,
+        "book": 1562,
+        "knuckle": 1836,
+        "instrument": 1933,
+        "whip": 1988,
+        "shuriken": 13315,
+        "gun": 13153
+      }
+    },
+    "archangel": {
+      "name": "Archangel",
+      "look": "ethereal",
+      "lookName": "Ethereal",
+      "map": 10,
+      "mat": 0,
+      "pieces": {
+        "weapon": {
+          "sword": "Archangel Feather Blade",
+          "katar": "Archangel Chakram",
+          "staff": "Archangel Divine Cross",
+          "dagger": "Archangel Weihna",
+          "bow": "Archangel Ixion Wings",
+          "axe": "Archangel End Sectora",
+          "mace": "Archangel Noble Cross",
+          "spear": "Archangel Longinus",
+          "book": "Archangel Scripture",
+          "knuckle": "Archangel Claw of Flash",
+          "instrument": "Archangel Harp",
+          "whip": "Archangel Rapture Rose",
+          "shuriken": "Archangel Wave Huuma",
+          "gun": "Archangel Gate Keeper"
+        },
+        "armor": "Archangel Protection",
+        "head": "Archangel Helm",
+        "off": "Archangel Holy Guard",
+        "leg": "Archangel Reincarnation",
+        "acc": "Archangel Ring"
+      },
+      "icons": {
+        "sword": 13420,
+        "dagger": 13047,
+        "axe": 1393,
+        "mace": 16029,
+        "staff": 2001,
+        "katar": 1285,
+        "bow": 1737,
+        "armor": 2355,
+        "head": 5025,
+        "off": 2110,
+        "leg": 2420,
+        "acc": 2743,
+        "spear": 1469,
+        "book": 1572,
+        "knuckle": 1841,
+        "instrument": 1926,
+        "whip": 1963,
+        "shuriken": 13314,
+        "gun": 13167
+      }
+    },
+    "ifrit": {
+      "name": "Ifrit",
+      "look": "primal",
+      "lookName": "Primal",
+      "map": 11,
+      "mat": 1,
+      "pieces": {
+        "weapon": {
+          "sword": "Ifrit Solar Sword",
+          "katar": "Ifrit Krishna",
+          "staff": "Ifrit Wizardry Staff",
+          "dagger": "Ifrit Kindle Dagger",
+          "bow": "Ifrit Burning Bow",
+          "axe": "Ifrit Ignus Steel",
+          "mace": "Ifrit Judgement Mace",
+          "spear": "Ifrit Hellfire",
+          "book": "Ifrit Flame Codex",
+          "knuckle": "Ifrit Magma Fist",
+          "instrument": "Ifrit Burning Guitar",
+          "whip": "Ifrit Red Flame Whip",
+          "shuriken": "Ifrit Blaze Huuma",
+          "gun": "Ifrit Inferno"
+        },
+        "armor": "Ifrit Crimson Robe",
+        "head": "Ifrit Mask",
+        "off": "Ifrit Sol Shield",
+        "leg": "Ifrit Crimson Shoes",
+        "acc": "Ifrit Flame Lord Ring"
+      },
+      "icons": {
+        "sword": 1136,
+        "dagger": 1247,
+        "axe": 1392,
+        "mace": 16013,
+        "staff": 1473,
+        "katar": 1284,
+        "bow": 1730,
+        "armor": 15027,
+        "head": 5420,
+        "off": 2165,
+        "leg": 2469,
+        "acc": 2678,
+        "spear": 1471,
+        "book": 1564,
+        "knuckle": 1818,
+        "instrument": 1914,
+        "whip": 1965,
+        "shuriken": 13303,
+        "gun": 13162
+      }
+    },
+    "thor": {
+      "name": "Thor",
+      "look": "molten",
+      "lookName": "Molten",
+      "map": 11,
+      "mat": 1,
+      "pieces": {
+        "weapon": {
+          "sword": "Thor Naght Sieger",
+          "katar": "Thor Drill Katar",
+          "staff": "Thor Jormungand",
+          "dagger": "Thor Krieg",
+          "bow": "Thor Giant Crossbow",
+          "axe": "Thor Stonehammer",
+          "mace": "Thor War Hammer",
+          "spear": "Thor Ahlspiess",
+          "book": "Thor Rune Codex",
+          "knuckle": "Thor Electric Fist",
+          "instrument": "Thor Thunder Bass",
+          "whip": "Thor Electric Eel",
+          "shuriken": "Thor Storm Huuma",
+          "gun": "Thor Thunder P"
+        },
+        "armor": "Thor Egir Armor",
+        "head": "Thor Power Helm",
+        "off": "Thor Giant Shield",
+        "leg": "Thor Siege Greaves",
+        "acc": "Thor Iron Wrist"
+      },
+      "icons": {
+        "sword": 13412,
+        "dagger": 13046,
+        "axe": 1385,
+        "mace": 1548,
+        "staff": 2020,
+        "katar": 1270,
+        "bow": 18110,
+        "armor": 15061,
+        "head": 5495,
+        "off": 2160,
+        "leg": 2483,
+        "acc": 2719,
+        "spear": 1478,
+        "book": 1573,
+        "knuckle": 1820,
+        "instrument": 1919,
+        "whip": 1972,
+        "shuriken": 13316,
+        "gun": 13168
+      }
+    },
+    "diabolus": {
+      "name": "Diabolus",
+      "look": "infernal",
+      "lookName": "Infernal",
+      "map": 11,
+      "mat": 1,
+      "pieces": {
+        "weapon": {
+          "sword": "Diabolus Gladius",
+          "katar": "Diabolus Blood Tears",
+          "staff": "Diabolus Baculum",
+          "dagger": "Diabolus Cursed Dagger",
+          "bow": "Diabolus Arcus",
+          "axe": "Diabolus Doom Slayer",
+          "mace": "Diabolus Bloody Cross",
+          "spear": "Diabolus Crescent Scythe",
+          "book": "Diabolus Grimoire",
+          "knuckle": "Diabolus Iron Nail",
+          "instrument": "Diabolus Berserk Guitar",
+          "whip": "Diabolus Rosebine",
+          "shuriken": "Diabolus Blood Huuma",
+          "gun": "Diabolus Destroyer"
+        },
+        "armor": "Diabolus Armor",
+        "head": "Diabolus Bone Helm",
+        "off": "Diabolus Shield of Death",
+        "leg": "Diabolus Boots",
+        "acc": "Diabolus Bloody Ring"
+      },
+      "icons": {
+        "sword": 13449,
+        "dagger": 1241,
+        "axe": 1370,
+        "mace": 16017,
+        "staff": 1676,
+        "katar": 1271,
+        "bow": 18125,
+        "armor": 2375,
+        "head": 5529,
+        "off": 2177,
+        "leg": 2433,
+        "acc": 2760,
+        "spear": 1466,
+        "book": 1561,
+        "knuckle": 1837,
+        "instrument": 1920,
+        "whip": 1985,
+        "shuriken": 13313,
+        "gun": 13160
+      }
+    }
+  },
+  "assets": [
+    {
+      "id": 1136,
+      "name": "Solar Sword",
+      "file": "icons/1136.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/c0817b0a27038479ebf80f202c5800339d47aa4a",
+      "sha256": "8560559a4d3c3d6ee23b3c4d1f75ea0a7c3e05fba73d08aa4a9728d4ebb863d1"
+    },
+    {
+      "id": 1161,
+      "name": "Balmung",
+      "file": "icons/1161.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/fb972852b6c71bf5d4aaa4df8aeb1e185f63ee5f",
+      "sha256": "02ffda32a8edf952408a8ca6e96218d88b4aecc1c0b35abd305e65383b7a01d7"
+    },
+    {
+      "id": 1241,
+      "name": "Cursed Dagger",
+      "file": "icons/1241.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/091ea0cf4df8b553dcd91d5bba45f9ad45d8577c",
+      "sha256": "bebaebfb75b88d47f586c7cbc662b92fb46d685403f3e0f41fa4d4288f537a2c"
+    },
+    {
+      "id": 1247,
+      "name": "Kindle Dagger",
+      "file": "icons/1247.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/636b6c42eddf23041523bb23ab64f9b6a9ab69ad",
+      "sha256": "3075b8c55fdd18bb4a6a3638c5d3ab31b61a32e746e8318b47541928b9af79d3"
+    },
+    {
+      "id": 1262,
+      "name": "Loki's Nail",
+      "file": "icons/1262.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/acd4407bd493975f29e4b0d8d633ab4d2e0dcbad",
+      "sha256": "136a0167165a3c852636bcfc20b5813f7ffc4bd6259f5bf632d5c602b8c29e57"
+    },
+    {
+      "id": 1270,
+      "name": "Drill Katar",
+      "file": "icons/1270.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/72543a9c08847cc5726ea1b41b10686aa8661613",
+      "sha256": "44f78659c6a90e21dba25c512a017713ce9e021bbef54a6b9ea5ff29eb28ec0f"
+    },
+    {
+      "id": 1271,
+      "name": "Blood Tears",
+      "file": "icons/1271.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/e5e35aed90b70d834be748af113ad7e563688c3f",
+      "sha256": "360e9dacb4968c4bd8211e6b8c783731d314c665ca2399f0b1441c8aca03aa54"
+    },
+    {
+      "id": 1284,
+      "name": "Krishna",
+      "file": "icons/1284.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/3ebda4e0e935ee5b0927993e35afbd36e9ac8bcb",
+      "sha256": "8ef3c209fc7422dd667159e125d8614dad087dc6fdee8cebbe467b54238b9520"
+    },
+    {
+      "id": 1285,
+      "name": "Chakram",
+      "file": "icons/1285.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/73cc61c4e22bfa185d24ab320a0f95b30668baa9",
+      "sha256": "f05e14cf8e7ee00c367a80bcb691da1301805e233f20fe0d224f442995ea1dd7"
+    },
+    {
+      "id": 1370,
+      "name": "Doom Slayer",
+      "file": "icons/1370.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/0e5a30ee55934b58a0c49740a1050eb1a44a5b4f",
+      "sha256": "da98de64835eb8c8c26a1bea31430ee2b6fd69291c40d94be37c830024a31692"
+    },
+    {
+      "id": 1383,
+      "name": "Celestial Axe",
+      "file": "icons/1383.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/56f690609b8c448703f1ad50ca618fba9910b1bf",
+      "sha256": "c5227a761c8c5b5c5043742869099b6f402c657fed4b37dad95df7028769aacf"
+    },
+    {
+      "id": 1385,
+      "name": "Bradium Stone Hammer",
+      "file": "icons/1385.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/354daa293a3b7ac5de615dbe56b6652b5b251829",
+      "sha256": "cbd6592be7a1001a49841af6fd74ed4c99254b5a54b732e368fce12a52da6144"
+    },
+    {
+      "id": 1392,
+      "name": "Ignus Steel",
+      "file": "icons/1392.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/612055fc8811a87c2ec81881d83570c785af924a",
+      "sha256": "16d84fb35d9152c97ab02e1f0e94f671a30c0cf080eb8684c4c106423941ceae"
+    },
+    {
+      "id": 1393,
+      "name": "End Sectora",
+      "file": "icons/1393.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/ec8a88a92ba71744d79abb8a22d7a995cb5a6e47",
+      "sha256": "66b66ce9745ce3e527cd913b4694258db21a15cd94e3203ea75148176750dd83"
+    },
+    {
+      "id": 1438,
+      "name": "Thanos Spear",
+      "file": "icons/1438.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/021d9a7f7a0f31bbb4bf0bde282d39e4241cb79a",
+      "sha256": "10552fe438d79409e7dae6b89ee782914ad07b220f55256b194e4e034ca1fe8a"
+    },
+    {
+      "id": 1466,
+      "name": "Crescent Scythe",
+      "file": "icons/1466.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/48f4449edf609c86f67a2504ab15b1dda2bc42e4",
+      "sha256": "51d5f7a838e35f47edf55f81a3f8e1b5e298fd37d85d4a2395b0a0a2d4fda0fe"
+    },
+    {
+      "id": 1469,
+      "name": "Longinus's Spear",
+      "file": "icons/1469.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/7650b68ae13002151c1d222ccf963d400954f5da",
+      "sha256": "9a7fe719915a2afe31204ad292ecd370523f09941b82ee3b3fee34a849a4926e"
+    },
+    {
+      "id": 1471,
+      "name": "Hellfire",
+      "file": "icons/1471.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/6516f806bbee138f2878d46c3ca1bcf5d5a06bf0",
+      "sha256": "61042a3530a92639598e32f54f6665824ad5ed997587e3b2f4d49ee796f4fabf"
+    },
+    {
+      "id": 1473,
+      "name": "Wizardry Staff",
+      "file": "icons/1473.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/5b0856afbcdb3f57517e32bbfd61f0954abbbac8",
+      "sha256": "d34ea8e3ff2ead5bbd97344d986c51e0b9cca1529714a674f84f799447c4dfe2"
+    },
+    {
+      "id": 1478,
+      "name": "Ahlspiess",
+      "file": "icons/1478.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/3d85f61f109d0e0e7ea62ebbf4dabb560a7e1265",
+      "sha256": "199dbc1321ce36616589221f4a07ca985dc132e7d4eb3a655969d817870eafd4"
+    },
+    {
+      "id": 1490,
+      "name": "Gigantic Lance",
+      "file": "icons/1490.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/7ef919ecde42a53d2456f12257e314ac2825a919",
+      "sha256": "f49e3041f0565764118c995e4b5695818e5e3e50c9b11cec12aed25eff340fdd"
+    },
+    {
+      "id": 1548,
+      "name": "Veteran Hammer",
+      "file": "icons/1548.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/58c88fc3a8899904bf0bb92c139573f6b7abb949",
+      "sha256": "a8cb124fec09ddd7eb525166087e1743a3e5b8d2f80e85109c64078983c4ff91"
+    },
+    {
+      "id": 1561,
+      "name": "Hardcover Book",
+      "file": "icons/1561.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/9a677d9a5b42089da60b75162795eaf481929a83",
+      "sha256": "b04164c4d47d55ccc69a043ae9e7560621a59a406a26914568434774dd584218"
+    },
+    {
+      "id": 1562,
+      "name": "Battlefield Textbook",
+      "file": "icons/1562.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/dfc8d080aa371453f0dd0f836f7c0fe95897f6ab",
+      "sha256": "632beb53251c34a62f5291c03ccabb2bdcb93aed8169b785a0df18893338877e"
+    },
+    {
+      "id": 1564,
+      "name": "Encyclopedia",
+      "file": "icons/1564.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/ac37658977055f4bc03af82ebee74ab565ecc035",
+      "sha256": "5bd549527a035eeea4a436b4ab9455ada34159478c0d22cb1821892aba4b8d79"
+    },
+    {
+      "id": 1572,
+      "file": "../../assets/equipment-icons/1572.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/187054449c51c827062ca331c153b82bbd22e4fc",
+      "sha256": "84426f8147c786c84d3689e73ee727fae9bf66d67faa2c05ac06d26ffcf1fb3e"
+    },
+    {
+      "id": 1573,
+      "name": "Ancient Magic",
+      "file": "icons/1573.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/0a0143319aa62aa700ffbeae2435f7e49bfcadcc",
+      "sha256": "18cf1f6d8d0b6f0b68a03f88ef09e60521a7574f62ed26217c0b2e49211176c3"
+    },
+    {
+      "id": 1585,
+      "name": "Upgrade Book",
+      "file": "icons/1585.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/be17a10a72138e1ee2aa9e64e6f4159116f538a1",
+      "sha256": "aa00ba178cbe8a077867cbd89f5ef4bd26cbe7061bf4e1fe6e99ef29de2469e1"
+    },
+    {
+      "id": 1669,
+      "name": "Thanos Staff",
+      "file": "icons/1669.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/cc87f559ba9a804dc8e763e82e7b8f6d88fad537",
+      "sha256": "d6ffcba45fd02fcb7ad9d87d5d31bca783c62d2399c537f09be50bc8be494d01"
+    },
+    {
+      "id": 1676,
+      "name": "Baculum Daemonicum",
+      "file": "icons/1676.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/31feeb3b2cc39a696fe9d16d8017517a7afa1f65",
+      "sha256": "55b82d43554c596296ec2098fc49ec63fee7ec8dcf94a875620b7596493b19f5"
+    },
+    {
+      "id": 1730,
+      "name": "Burning Bow",
+      "file": "icons/1730.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/d1ecb43258700c4be4a46935bbede7591820574d",
+      "sha256": "4cfbad5939160e7fc5f611a2cb39fdbf5a9086fe45f0c757a7670925c6e3e556"
+    },
+    {
+      "id": 1737,
+      "name": "Ixion Wings",
+      "file": "icons/1737.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/765e3ace41d070670c73476d5cdf57bd4b635b60",
+      "sha256": "c61cf79a5de7a0e85428f360e46b32c3dc8d1ba66dbee4d667fdebc38e858a23"
+    },
+    {
+      "id": 1746,
+      "name": "Elven Bow",
+      "file": "icons/1746.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/5318f2eb8892d149ab37a94340551c012140d9bf",
+      "sha256": "a3a956bfb6e34cea3e4c60d52791d6a70d0df1c8f32f197a6bc722e9eb414227"
+    },
+    {
+      "id": 1818,
+      "name": "Magma Fist",
+      "file": "icons/1818.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/bee17da7e00b611a3c69c0fd018767b9b1b88af6",
+      "sha256": "418b3da97200119e81ff4dca5a898f5b13f380a5071dfe2061049397e5bd2de2"
+    },
+    {
+      "id": 1820,
+      "name": "Electric Fist",
+      "file": "icons/1820.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/1ca51477742e3c08614ed83080bce8241c1b2ebf",
+      "sha256": "2c55364d38cecae7cef9e186becf4611bbf4fecb40c9a0da22a9c721d5a6c376"
+    },
+    {
+      "id": 1822,
+      "file": "../../assets/equipment-icons/1822.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/d28c265bc58a55b70a9fd71a17d19a1fd01fb06d",
+      "sha256": "8094916ec7c1a6958bcfb6b47105b75a558cfaf34c31c056cb8cd65a7f7bc7b1"
+    },
+    {
+      "id": 1836,
+      "name": "Thanos Knuckle",
+      "file": "icons/1836.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/46199848ae4721caaedc4dff5ba0aed65ca864cc",
+      "sha256": "f0ef84c7ebce7c252fa081434fabf53d2480531b66d61c1d0ce1891bb233deed"
+    },
+    {
+      "id": 1837,
+      "name": "Iron Nail",
+      "file": "icons/1837.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/be7574a1c7b58f7eacb6fafc78af463a323541da",
+      "sha256": "0b8c97bb309d18fde6dc9fbfee58869f5cd22146271f8b159a0d1aaf53209313"
+    },
+    {
+      "id": 1841,
+      "name": "Claw of Flash",
+      "file": "icons/1841.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/9d19bf4292f215354daf9c16a3690a754d792ad7",
+      "sha256": "d55e8c00df3286f9b903fd54d350d6d0ab2bac3eb89762d8449179b9c939b2c0"
+    },
+    {
+      "id": 1914,
+      "name": "Burning Passion Guitar",
+      "file": "icons/1914.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/9c019d56c32cc1e5b777fc57dbfa0c22c455f0dd",
+      "sha256": "eaca29f392b5ac0109b1491a918e84836b372958ed300fea506deff5d98ed084"
+    },
+    {
+      "id": 1919,
+      "name": "Bass Guitar",
+      "file": "icons/1919.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/d45d7c68f690e7f3807063ef751c157c2808ac55",
+      "sha256": "781b2b472f23fafee04833bbbbb4eca17fc1d231e51ff0659ac688b58d1af143"
+    },
+    {
+      "id": 1920,
+      "name": "Berserk Guitar",
+      "file": "icons/1920.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/4037bf93b229e9bdbdebd62b70cb3a12e7e6f592",
+      "sha256": "67241c83a514a8e8438ec798f7c83f4fa635030673125b5e12816e9573660379"
+    },
+    {
+      "id": 1926,
+      "file": "../../assets/equipment-icons/1926.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/85db5d793d450d82bdcf70e9c82a6ca5c03f04f2",
+      "sha256": "0141854fab0b00ad15e35c345953f35b39a3f6c251fb4e1e89ed4cee2c7f4bae"
+    },
+    {
+      "id": 1933,
+      "name": "Thanos Violin",
+      "file": "icons/1933.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/44ec8aa022a4f5d912eafc64dc510a8c5e8ed4da",
+      "sha256": "5b398c089d63fe5675e078133d006d9e150841370c857a8dfe2526891f70ef00"
+    },
+    {
+      "id": 1935,
+      "name": "Oz's New Ukulele",
+      "file": "icons/1935.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/433cefbf80d7c51668aea91990880f64be3b7fd9",
+      "sha256": "4db5d1fc3a137e5c22815bc6619abed1a1ea7a6a07c28b23a46b62fe29585894"
+    },
+    {
+      "id": 1963,
+      "name": "Rapture Rose",
+      "file": "icons/1963.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/966d478e151a5181eb16ccd4c35d6b1ac655bf8c",
+      "sha256": "2b1e6a487dd88d5f389ebf91bc0bbec698e71e97dafc102c35af4711aa8e35b5"
+    },
+    {
+      "id": 1965,
+      "name": "Red Flame Whip",
+      "file": "icons/1965.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/c65dd55726c84280c25f32ceaecb5372f3198a53",
+      "sha256": "0964d09936df73499dafe5052073811e4ae7cc8c65185b3494f0657702967166"
+    },
+    {
+      "id": 1972,
+      "name": "Electric Eel",
+      "file": "icons/1972.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/04b8362f2cfb29b3a9e5027d3b5221dbcfd96c98",
+      "sha256": "09901f5a817fb50adfbdb3c42e3cd2649a6c4bd62f6745cc157d9e0e2620584e"
+    },
+    {
+      "id": 1973,
+      "name": "Sea Witch's Foot",
+      "file": "icons/1973.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/366c3308f3e57fb8a58276ff18e27b4d5d4e3447",
+      "sha256": "c641b0d26129fc89373404ff2bbf4d6ef98b3fcd9e82a9d4b211736347f753fa"
+    },
+    {
+      "id": 1985,
+      "name": "Rosebine",
+      "file": "icons/1985.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/f1fcf925608eb939c648191fbd6ed8ffa0f003f2",
+      "sha256": "7311a5d3850bab21bb5efe5339fd08a5e8d9b475b7a4ad4833debc78d7fc1306"
+    },
+    {
+      "id": 1988,
+      "name": "Thanos Whip",
+      "file": "icons/1988.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/1b0a40f88ae5c49898fefa72b645dbf94b78e3bd",
+      "sha256": "7d5c8a23b1779012f22583ed60ab9258f257deaf6841dbf6d03a535a9db07026"
+    },
+    {
+      "id": 2001,
+      "name": "Divine Cross",
+      "file": "icons/2001.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/2c52a24ae716b301b07cac81ca0ae8d27a7613e7",
+      "sha256": "1ff072b18979c4caa8bcdb19e9738ef0949f1db3f386ce8a376b3429e0b706ce"
+    },
+    {
+      "id": 2005,
+      "name": "Dea Staff",
+      "file": "icons/2005.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/040114fa32414dc006b39bcf9d3e3c1f545fecf1",
+      "sha256": "6d7987d054260752e339d08d73a0f92fb3cf10f235ea422f336a31f7a17a56c1"
+    },
+    {
+      "id": 2020,
+      "name": "Jormungand",
+      "file": "icons/2020.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/0524e488a07e02fa5ab27733dd5972d4f3b97e4d",
+      "sha256": "10e82c2904c9a450198994195472fa4227d81cc7e57a6c859987984df12a9138"
+    },
+    {
+      "id": 2110,
+      "name": "Holy Guard",
+      "file": "icons/2110.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/20f459e8041690121bd5a1e63b13e18d00c1f9da",
+      "sha256": "e8748811f345dbcb8f334ee9ba42cf12462c0a7401cbba34ba09b3765669b9d4"
+    },
+    {
+      "id": 2135,
+      "name": "Shadow Guard",
+      "file": "icons/2135.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/82ec76672d28968b6b56d298bebf158e6268b17f",
+      "sha256": "26602ba02683cbca4443f4d73bf60a2eca038a6d1e6f9eb55b140ce8d505dbcf"
+    },
+    {
+      "id": 2160,
+      "name": "Giant Shield",
+      "file": "icons/2160.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/adebcde0a3e58528c527e07aaf875b092a388e4e",
+      "sha256": "480711eb2567bf247122e649feac796a1757fe1d828148a5f9ac44481c7d9c53"
+    },
+    {
+      "id": 2165,
+      "name": "Sol Shield",
+      "file": "icons/2165.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/88d8185783796c7d0ab11c99ba20f254ede59de4",
+      "sha256": "6c83ae0442e25c41c015b6dfe64e5329e3919a9905eaa91a29e31d15c8498cbb"
+    },
+    {
+      "id": 2177,
+      "name": "Shield Of Death",
+      "file": "icons/2177.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/b1181b2480a85c358c640c02b817a8943963e9ad",
+      "sha256": "bad7cf5c58a407ff055c1b3c0b36fdeed2302b0a090667528fdacef9c602b929"
+    },
+    {
+      "id": 2182,
+      "name": "Hervor Alvitr",
+      "file": "icons/2182.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/6db67e3170eceb52fdb6e8359e8974e7be96acfb",
+      "sha256": "a6b1b33f7c13eb9173f583b2e90e09664f82162dd282c55ff21f4f0ee8f9bcb2"
+    },
+    {
+      "id": 2355,
+      "name": "Angelic Protection",
+      "file": "icons/2355.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/4aa5de37911932f099686b83f11e027ee69ccd12",
+      "sha256": "493538562ff86b2a5187e06c4a6c881df36bd0cef312f3e6a299fdcd221c1ce4"
+    },
+    {
+      "id": 2375,
+      "name": "Diabolus Armor",
+      "file": "icons/2375.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/316e0c8b13062985e1e8218a25b00e4ab89d059e",
+      "sha256": "e720fc3223820d94a9a90b79ff58ac83eb83a0da119b0f60dcb779872310b4f2"
+    },
+    {
+      "id": 2383,
+      "name": "Brynhild",
+      "file": "icons/2383.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/c3a9e4519c48c126c4f74e0581b07f1c6b21fb14",
+      "sha256": "ec1e654178cda284435cb48bfa5eb29befa6ce9617ff682cf0953ab66102394b"
+    },
+    {
+      "id": 2420,
+      "name": "Angel's Reincarnation",
+      "file": "icons/2420.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/f30849f17cd545cdf4afb543e96c025b6456241a",
+      "sha256": "2150750bdbc6fca906b39d8c730e8521f0238fb746c0db12e48e5475270e578d"
+    },
+    {
+      "id": 2421,
+      "name": "Valkyrian Shoes",
+      "file": "icons/2421.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/a8dc99a68278f9d255cf42a0b0616ce092fff3d1",
+      "sha256": "fa678708d7b344de028d120be2c305df1f4cd3585628edf7b35b0ebdd9d22b96"
+    },
+    {
+      "id": 2426,
+      "name": "Shadow Walk",
+      "file": "icons/2426.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/bec5c058b1d8c898aadc01f95b58be421f5e5233",
+      "sha256": "78ab7a4edc777a6cfaa9d0be5cd3cdd5e7f3b4073969d2df414036eb92f6cd32"
+    },
+    {
+      "id": 2433,
+      "name": "Diabolus Boots",
+      "file": "icons/2433.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/69c265ac56fe65432e03079288710073c11216de",
+      "sha256": "da06c1f1c0a9cfc5608c49b159c4c2bf4f33ecb4c0a3d9709927b3335261734a"
+    },
+    {
+      "id": 2469,
+      "name": "Crismons Shoes",
+      "file": "icons/2469.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/f8662f5757a485e393c7f4738c1e7b3103f7bfde",
+      "sha256": "92ee6ddeaec4c64fcf6dd7f16186d3b35b0f737eab5587dabd7549a45aaf32b6"
+    },
+    {
+      "id": 2483,
+      "name": "Siege Greaves",
+      "file": "icons/2483.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/1c3ee3eff52dbf0a31c8b276c8544106282fd75c",
+      "sha256": "415dd56cc29aabcfd53e86ca24e2855b8d0182f1ed4f862af7346ef15ca24211"
+    },
+    {
+      "id": 2678,
+      "name": "Ring Of Flame Lord",
+      "file": "icons/2678.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/87dd12e463561aaa893a8053542e13b6852b81bc",
+      "sha256": "0010f4ec578cb2ec31070fda5a1e670108d92f430421856bf7f1d330eb0c2926"
+    },
+    {
+      "id": 2719,
+      "name": "Iron Wrist",
+      "file": "icons/2719.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/10edcf3009227b6e1d75aa4e12fe4fe5ae7a26ad",
+      "sha256": "c8e33bd281cca5434ea7fcc23ee7fe9c549ff87292d4d48f96420937b27b3001"
+    },
+    {
+      "id": 2732,
+      "name": "Death Loop",
+      "file": "icons/2732.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/ce98e8e4dcea83c65e51a769d50b7010b4a01100",
+      "sha256": "b8558fa8a49afee29b6a96c8a2704e4bf202514e4f2c11d904e02d0f2f5e3f10"
+    },
+    {
+      "id": 2743,
+      "name": "Angelic Ring",
+      "file": "icons/2743.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/1c411a98626f07867e69801d993921361f991964",
+      "sha256": "a19ca44d53a04461009b52f80e796a5cb08b795c145e92fd0027460ec2eaa572"
+    },
+    {
+      "id": 2760,
+      "name": "Bloody Ring",
+      "file": "icons/2760.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/5a5e6680f2450a07544095c783ef7bd073f1494c",
+      "sha256": "e8770f6941826b0f042bc84347719d66b7cdf4263a2eddc2a4c95c09c2db2f4b"
+    },
+    {
+      "id": 2890,
+      "name": "White Wing Brooch",
+      "file": "icons/2890.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/80cf3ab94f94bf1d172febcbb5e2f2753c7013cd",
+      "sha256": "a973d13aa03f37745a44d97d3847bfc22e495df7613144e1777870aa4bb51e42"
+    },
+    {
+      "id": 5025,
+      "name": "Helm of Angel",
+      "file": "icons/5025.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/7407388e0f9232cf2c3a18fbd70a6c161e3f53bb",
+      "sha256": "af2b98c2ce6ff2ab423190f51b02f71496d7d21db69d23e7b9da06a2a36bd993"
+    },
+    {
+      "id": 5171,
+      "name": "Valkyrie Helm",
+      "file": "icons/5171.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/ab1568369e0440a16e7ac9869e97e797229e1d26",
+      "sha256": "449781623854e1e9c16ecdf1431e17d27e8ed19fd13df5b86938ff5822b0925e"
+    },
+    {
+      "id": 5420,
+      "name": "Mask Of Ifrit",
+      "file": "icons/5420.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/4e359e16c46f326df5f723242d9bef3247cb3c39",
+      "sha256": "9ce39ea85e549bd35e0c4fbacf846ca32c95c997af869a25c37c22afabf77f3f"
+    },
+    {
+      "id": 5495,
+      "name": "Power Of Thor",
+      "file": "icons/5495.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/766ab2a975e483dc8677869146f2a398ad9c83ce",
+      "sha256": "d7050e9bf87cf5fb0ea686d1e2e45e3d389cfd6347f922617172975e4b282d6d"
+    },
+    {
+      "id": 5529,
+      "name": "Satanic Bone Helm",
+      "file": "icons/5529.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/5c1d5613ed453fcfae53e5095f132d994bc0c988",
+      "sha256": "7ac1c7c39f3f2e665216170dd389083862abc9f5d791972e7015507fd3c85fa4"
+    },
+    {
+      "id": 13002,
+      "name": "Ginnungagap",
+      "file": "icons/13002.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/80ea14ff5615e2084ddb1823dbcaf3cee3bcf645",
+      "sha256": "075a4d92f4370382390e3890c7cc60b9291a5c1fd6658db53e34a89011d4a287"
+    },
+    {
+      "id": 13046,
+      "name": "Krierg",
+      "file": "icons/13046.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/bc5c35638dccc6773cdb91970901c911856e4624",
+      "sha256": "79a06196dc52ab6e97d7d1088dad2dd0b6b6eb595dbbf22e45e473bf42d6ff30"
+    },
+    {
+      "id": 13047,
+      "name": "Weihna",
+      "file": "icons/13047.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/2b20ee0db4f4ba8b9862f5969925e6d3e61eeedc",
+      "sha256": "a1f99472ec2d88c278206d9163d370d04044465c3b95d6d5ffdfe3326b14f108"
+    },
+    {
+      "id": 13093,
+      "name": "Thanos Dagger",
+      "file": "icons/13093.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/fbf4f5144780f6fd6b3f003c153d59600cd029f2",
+      "sha256": "73024b5cfe36dfb2d85fa046f2b314e4c1aab0664d2eeef06e6c0a0d11a2aa81"
+    },
+    {
+      "id": 13106,
+      "name": "Gold Lux",
+      "file": "icons/13106.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/def0eb8ce63d0c5f5d423d1589b686c0083981f2",
+      "sha256": "8a8da21dc340fcb888cc9ed8fccba5fdb0cf655c016654fd5f79d36529ba7f73"
+    },
+    {
+      "id": 13153,
+      "name": "Dusk",
+      "file": "icons/13153.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/a7e23383eb462aa3b6a42846dd179a53a83ae9d3",
+      "sha256": "9256bc6cf25ef9835b95ae662901128a34694c146174b4e42e2f66559d667f1b"
+    },
+    {
+      "id": 13160,
+      "name": "Destroyer",
+      "file": "icons/13160.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/5903b1b542067f4b7cab8b53f4bfecc8bda300b9",
+      "sha256": "01f37d70abd1e014897a614f44ba7c7f460baf364542c93a51b20fb5c492fefc"
+    },
+    {
+      "id": 13162,
+      "name": "Inferno",
+      "file": "icons/13162.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/9cd191384af76fcf8839ee605f4a82d85230c4e7",
+      "sha256": "78af2a6eb8f81b8582fac2e44b14578e9619be7b5863732b168c9fe21563abb0"
+    },
+    {
+      "id": 13167,
+      "name": "Gate Keeper-DD",
+      "file": "icons/13167.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/6b7e319816cb2fd12bd988bf4164da5117549fda",
+      "sha256": "254444b399b76249607c44ff55d7a0ec1318a4ec3ef51322cff49adbec98fae7"
+    },
+    {
+      "id": 13168,
+      "name": "Thunder P",
+      "file": "icons/13168.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/f19efdd20d6d71e53d2cd1d4ec46030479591a05",
+      "sha256": "bc8b5b81ea0d34cbd95957fa7454a32f0c5d8eca2c4c6ffa538407eca4088fe0"
+    },
+    {
+      "id": 13300,
+      "name": "Huuma Wing Shuriken",
+      "file": "../../assets/equipment-icons/13300.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/17070c5bbc968f40d2802c1982b060eea9f2e8ec",
+      "sha256": "1392678d7f8bc700f642df72afa574fab41a71231fad6c2e351d3b927b81e3d6"
+    },
+    {
+      "id": 13303,
+      "name": "Huuma Blaze Shuriken",
+      "file": "../../assets/equipment-icons/13303.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/7e077e5e7c3e1377ac1fdc950349341ad08f2eca",
+      "sha256": "ca4bec0e77df72e9576fe99ac219e3ebb791c79dd8e9e0bc641cb3691286fabf"
+    },
+    {
+      "id": 13313,
+      "file": "../../assets/equipment-icons/13313.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/81b3abc282d4ef4f83c7fdcd02190d4ad97caed6",
+      "sha256": "cebcc13d65035650cfaef01960544e2bb79b3fc4d8d6cd4fe8147992906dfcb9"
+    },
+    {
+      "id": 13314,
+      "name": "Wave Huuma Shuriken",
+      "file": "icons/13314.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/bcb73a0f725304d0f819dd34c990dd9530e7d491",
+      "sha256": "d3a8f5a7aa9bad46bef0eeeb6312748c8a0aa77ee628447ac0ea2384bbad3d58"
+    },
+    {
+      "id": 13315,
+      "name": "Thunderstorm Huuma Shuriken",
+      "file": "icons/13315.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/4f437cb8cabcca2b1bec154207d54b7e2beeade1",
+      "sha256": "bab9e197688332708c83858b2f00c0ba5cc9a7fb3639c17a64ffad103311f95b"
+    },
+    {
+      "id": 13316,
+      "name": "Upg Huuma Shuriken",
+      "file": "icons/13316.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/12f7363ee702e155ea811c3ae2f5d7f14c2e1288",
+      "sha256": "3de6fcbe1875fed0f67cad4deecb64da69c581870ea8cf8db88ec091321ae8a4"
+    },
+    {
+      "id": 13412,
+      "name": "Twin Edge of Naght Sieger",
+      "file": "icons/13412.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/819923c8ce149508f0a13ab55f2da49d676302cb",
+      "sha256": "75198860bd390407e2c75bc7708132e69d8bb227ac033d03bad26d79fa44e1dc"
+    },
+    {
+      "id": 13420,
+      "name": "Honglyun's Sword",
+      "file": "icons/13420.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/4afc78aa48081d14f817fa407e1687fe2fb3345c",
+      "sha256": "26f7d3a30b5490c66a6f02eea6114523cc10cd59f7d5208623e9d99dbe192432"
+    },
+    {
+      "id": 13441,
+      "name": "Thanos Sword",
+      "file": "icons/13441.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/89dc3209cd22e2c5df258321c392b56796178c24",
+      "sha256": "02ba6db8d6f5d7413def97d9279f062d698ed0365f66eb2e664a3c2d8a7298f8"
+    },
+    {
+      "id": 13449,
+      "name": "Gladius Daemonicus",
+      "file": "icons/13449.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/bce61eac7b738026f7c6f42d06bba97d779c54bb",
+      "sha256": "a53a17506ad968fe016587ff8fd5b0daf969c7944fa7033526be7c00c232ef4b"
+    },
+    {
+      "id": 15027,
+      "name": "Crimson Robe",
+      "file": "icons/15027.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/54fffea6c9056631c3c1c3805b3820ed70fa5a0c",
+      "sha256": "83ade18df542d5d0e7aa70447cd5f60f35432432f5d02890348494ad8042e9e5"
+    },
+    {
+      "id": 15055,
+      "name": "Tenebris Latitantes",
+      "file": "icons/15055.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/47d319a67129308efbf8d3d76cb3861fd9242f91",
+      "sha256": "6efd33879739bc62245c9f833a16f8f53955d14e603173c3c15b7c0abcff8a91"
+    },
+    {
+      "id": 15061,
+      "name": "Egir Armor",
+      "file": "icons/15061.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/6f3bee88b4b86675d5f720611bacd7a978ad43b7",
+      "sha256": "857b6acf4ccdacdc07c70fb3255509aeb993a7253621476baa0438be80bbcd46"
+    },
+    {
+      "id": 16013,
+      "name": "Mace Of Judgement",
+      "file": "icons/16013.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/65ab1f5fe639ce88273beddccb7b1b17c6fdb46f",
+      "sha256": "40b86ebad0744de083fe24076203dae63de3aa01385f8f7871d5e46b39112332"
+    },
+    {
+      "id": 16017,
+      "name": "Bloody Cross",
+      "file": "icons/16017.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/9e4f464e1e89f816870b1172a3e51fd963509080",
+      "sha256": "4ef6f1d5ab20cd76cca5f84fafbef6b6f7e7aad1244f580d4832434650c0b3ce"
+    },
+    {
+      "id": 16028,
+      "name": "Thanos Hammer",
+      "file": "icons/16028.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/ee1bbe9d83499da50d51d7eb272836ee23890479",
+      "sha256": "8ccd465f5a6cc60fee650f4023f51062f7742c6f9a0e9403d23a627107a3319e"
+    },
+    {
+      "id": 16029,
+      "name": "Noble Cross",
+      "file": "icons/16029.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/a3b8e2264c4c6ee4866d8734a5fe6fc9e2468bd2",
+      "sha256": "4255fe2d5ec40ea1b89f4278c3ec7d6b40167d4852bf12173e8f711ac8902922"
+    },
+    {
+      "id": 16051,
+      "name": "Valkyrie Hammer",
+      "file": "icons/16051.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/0b7532c67c168690de66beee2700dd06cf202f17",
+      "sha256": "60aa746052716550e037bca02ec98b5333e138a92f1bacbce678d47af261ae99"
+    },
+    {
+      "id": 18110,
+      "name": "Giant Crossbow",
+      "file": "icons/18110.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/88b6db4725260d2b6672bac9b4eb934e0657fceb",
+      "sha256": "d71048cea7a15b76015c384b9aad42ecfdeb9f0a071ec9075d4a0e67f8238ecb"
+    },
+    {
+      "id": 18119,
+      "name": "Thanos Bow",
+      "file": "icons/18119.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/7f6ae78170a3a6ce28afde8712d22c2ee20cb3de",
+      "sha256": "2a7ebe907c4743c3a688d4cb39db1f4f011a33b3a215af01dbbe7a220d453678"
+    },
+    {
+      "id": 18125,
+      "name": "Arcus Daemonicus",
+      "file": "icons/18125.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/dc0b9304330267bf3a26a2e29fc20db827b40848",
+      "sha256": "2fd3e547ea291e9849b5eef0796ef33866a0a2209c7cb6a9a80ae4af921c32e7"
+    },
+    {
+      "id": 18530,
+      "name": "Thanatos Despero Mask",
+      "file": "icons/18530.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/cf42617e5fccc45f59dbd83d908014dd45599802",
+      "sha256": "2556cdef7a532e6549555497074d42e998499377fb75ef0975ed38dee3620dce"
+    },
+    {
+      "id": 28000,
+      "name": "Thanos Katar",
+      "file": "icons/28000.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/180be7d71b506de7dc690eae9747f081e0e09421",
+      "sha256": "f449ed7976200ac35beb728e1c7acf4ffdf35d371ada00324838745e4ba89101"
+    },
+    {
+      "id": 28100,
+      "name": "Thanos Axe",
+      "file": "icons/28100.png",
+      "source": "https://api.github.com/repos/hvg249/TranslationRO-BR/git/blobs/69709dabac5baf2e4183b552899cf99ed39e7cc0",
+      "sha256": "70631b2ec12b89450f222acf50e97fe74d349c3331bc22ebbe1f27c4de53ca04"
+    }
+  ]
+}

@@ -1,16 +1,16 @@
-# Putting Horizon Haven on Cloudflare (historical setup + held v426 offline-claim release)
+# Putting Horizon Haven on Cloudflare (historical setup + v426 offline-claim release)
 
 **Historical setup guide:** the current account security changes remain a draft and are not
 launch-ready. For the existing live `pg`, the owner reported applying and verifying 0007
 manually on 2026-10-28; do not rerun it or blindly run Wrangler migrations. Use
 [Launch security](../docs/LAUNCH-SECURITY.md) for the current checklist.
 
-> **PR #254 is held. Do not run this release procedure, deploy, merge, or edit production player
-> data while its review remains open.** The v426 section below is the future operator checklist: it
-> records the required migration order and verification so the schema is complete *before* the new
-> Functions/client behaviour is activated.
+> **PR #254 (v426) was merged on 2026-11-18; it has not been deployed from this guide.** Deploying is
+> the owner's call. The v426 section below is the operator checklist: it records the required
+> migration order and verification so the schema is complete *before* the new Functions/client
+> behaviour is activated. Later builds (through haven-v434) added no D1 migrations.
 
-## Held v426 release: immutable offline-claim state and issued bounds
+## v426 release: immutable offline-claim state and issued bounds
 
 This follows the owner/context schema in `0018`, then `0019_offline_claim_pricing_snapshot.sql`,
 then `0020_offline_claim_pricing_state.sql` **in that order**. On an existing database, first inspect
@@ -54,11 +54,11 @@ no-double-pay coverage without using response delay or its own wall clock to reb
 The only added schema check occurs when a qualifying interval would issue a new claim; normal syncs add
 neither an unconditional D1 read nor Social Durable Object traffic.
 
-The player-visible build label is **`2026-11-19 haven-v433 plaza save adoption`**.
-The local v433 candidate uses `?v=433` for the coordinated guide, scene and UI assets.
-This build label is not authorization to deploy.
-Confirm `version.txt`, `index.html`, and the two equipment-reference mirrors carry the v433 build label
-after the site build.
+The player-visible build label is **`2026-11-19 haven-v434 Zero-ATK gear repair and Endless Echo Asura fix`**.
+Every coordinated asset query in `index.html` carries the same number (`?v=434` for this label):
+v423 changed the Social/Fishing runtime as well as the inline client, so retaining an old query
+would permit a stale cached runtime. Confirm `version.txt`, `index.html`, and the two
+equipment-reference mirrors carry the build label above after the site build.
 
 The click-by-click. **Nothing here costs money** and none of it needs a credit card: the whole point
 of choosing Cloudflare was that the free plan never expires, unlike the Render free database.
@@ -190,7 +190,7 @@ Open the `*.pages.dev` address Cloudflare gives the project, and walk this list:
 | Check | Expected |
 |---|---|
 | The login card | says **“☁ Cloud accounts are on — register or sign in…”** |
-| Build tag at the bottom of the card | `2026-11-19 haven-v433 plaza save adoption` |
+| Build tag at the bottom of the card | `2026-11-19 haven-v434 Zero-ATK gear repair and Endless Echo Asura fix` |
 | `<your-site>/api/me` while signed out | `{"err":"Not logged in."}` with HTTP 401 — JSON, not an HTML page |
 
 That second-browser line is the entire point of the shift: it is progress following the player

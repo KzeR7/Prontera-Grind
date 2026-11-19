@@ -45,8 +45,9 @@ Ordinary Ascension mobs and escorts have 45 HIT; v191 lowers boss HIT from 55 to
 50. At 80 Flee, ordinary/escort hit chance is 65% and boss hit chance is 70%,
 before blind/block. The existing 5% dodge floor still applies.
 Both Ascension maps have five stages: 1–2 share arrival scenery, 3 is the crossing,
-4 is the approach, and 5 starts immediately with the MVP and five escorts. Neither
-map adds Nightmare stages or drops equipment. Cards, ore and pets still roll.
+4 is the approach, and 5 starts immediately with the MVP and five escorts. Both maps
+can drop their new section-5 N+ weapons only; they never drop Mythic gear or armor.
+Cards, ore and pets still roll.
 Astral uses a continuous stone bridge in a deep space sky, with ruined edge arches,
 a rune observatory and a boss seal. The rear gate stands on paving and all pillars
 have solid foundations joining the bridge. Uneven chipped paving, worn border
@@ -160,7 +161,7 @@ Mythic +11–15 attempts cost 264/288/312/336/360k Zeny plus 15 ore each, at
 30/21/12/5/2% success. Protected failure preserves the Mythic rank; unprotected +11–15 failures lose one rank. Expected +10→+15
 fees total about 29.57M, or 159.21M including purchased ore at existing prices;
 actual RNG costs vary. Prior map reward changes did not rebalance these prices.
-Fourth-job skills and pet buffs use distinct crops from additional collections by the existing icon artist; see `tools/native-skill-icons/README.md`. Mythic inventory icons now use native Glacier/Dim Glacier art for Astral sets and Crimson/Lava Leather/Phoenix art for Thor sets. The custom sets share some official pieces; see `assets/equipment-icons/mythic-manifest.json` for all slot mappings and original hashes.
+Fourth-job skills and pet buffs use distinct crops from additional collections by the existing icon artist; see `tools/native-skill-icons/README.md`. Mythic inventory icons use native Glacier/Dim Glacier art for Astral sets and Crimson/Lava Leather/Phoenix art for Thor sets. The seven expanded weapon families now select distinct preserved native item icons for all six Forge sets, with per-set previews in the recipe picker; these are inventory/Forge icons, not character-worn layers. See `assets/equipment-icons/mythic-manifest.json` for slot mappings and `assets/equipment-icons/manifest.json` for the family sprite sources.
 
 ## Classes and progression
 
@@ -303,7 +304,7 @@ each additional point contributes half. Hunt Title Index Crit adds up to 40%
 after the core cap, with a 100% normal total ceiling. Mythic direct crit affixes
 and set crit bonuses then add without that cap: 100% + 20% = 120%. Socketed cards
 and LUK keep their ordinary rules. Off-hand dagger bonuses use 35% weighting.
-Boss resistance reduces the full result, for both basic attacks and skills. Astral and Thor drop no equipment; Mythic gear comes from the Forge.
+Boss resistance reduces the full result, for both basic attacks and skills. Astral and Thor drop new N+ weapons only; Mythic gear comes from the Forge.
 Cards, refining, ores and Nightmare materials interact with gear and the economy.
 Bag → Cards merges identical copies (★ +9%, ★★ +12%, ★★★ +15%, costing 1 / 3 / 5 extra
 unstarred copies) and its **Mergeable now** filter lists only the cards that already hold
@@ -374,7 +375,7 @@ Cards stay empty. Class, equipped items and wallets are preserved;
 insufficient bag capacity rejects the entire grant. Additional GM controls add 1,000
 of both ores alongside the existing +20, and set Base level to 1, 99 or 120 while
 clearing Base EXP and recalculating unspent points without resetting allocated stats.
-The Forge evolves compatible owned N+ equipment; maps do not drop gear.
+Both Ascension maps drop only new section-5 N+ weapons; Astral and Thor use their own weapon name rows. Nightmare maps drop the new N weapons and armor/accessory equipment. Mythic weapons and equipment are obtained only by crafting in the Forge from owned, unascended N+ equipment that the current class can equip (haven-v432: incompatible weapons are not listed, so materials are never spent on an unwearable Mythic). Equipped pieces are listed first, then the bag.
 The simulation speed control (x1/x2/x4) above the dock is a GM testing tool: players
 always run at 1x, never see the button, and a save that carried a higher rate is reset
 to 1x at login.

@@ -79,7 +79,8 @@ function liveData(){
       const raw=[...Object.entries(g.w).map(([weaponType,name])=>({slot:'weapon',weaponType,name})),
         {slot:'armor',name:g.a},{slot:'head',name:g.h},...(g.o?[{slot:'off',name:g.o}]:[]),
         {slot:'leg',name:g.l},{slot:'acc',name:g.ac},{slot:'acc',name:g.ac2}];
-      return raw.map((item,i)=>({id:`m${mi}-s${si}-i${i}`,...item}));
+      const eligible=mi>=10?raw.filter(item=>item.slot==='weapon'):raw;
+      return eligible.map((item,i)=>({id:`m${mi}-s${si}-i${i}`,...item}));
     };
     // haven-v417: Astral Citadel and Thor Volcano used to have no equipment at all, so their
     // sections were deliberately empty. They now ship a real shelf, built from their own tables
@@ -96,8 +97,7 @@ function liveData(){
     const stages=[];
     for(let level=1;level<=(mi>=10?5:10);level++){
       const F=X.fieldOf(mi,level),sec=F.sec;
-      // haven-v417: an Ascension field's section is its real gear gate (Astral 4/5, Thor 6), but the
-      // map only has two shelves - N (stage row 0) and N+ (stage row 1) - so index those by row.
+      // Both Ascension maps always expose their N+ (section 5) weapon-only shelf; choose names by stage row.
       const section=sections[mi>=10?(level<=3?0:1):sec];
       const itemId=d=>{
         const found=section.items.find(x=>x.slot==='weapon'?x.weaponType===d.k&&x.name===d.n:x.slot===d.k&&x.name===d.n);
@@ -137,7 +137,7 @@ t('the worksheet covers all maps, gear sections, and field stages',()=>{
   // Each map has four normal job sections plus the two separate Nightmare rows; the Abyss's
   // enhanced third-job set is listed as a variant inside section 3, not a new equip-gate section.
   // haven-v417: the two Ascension maps used to have no sections at all; each now has two shelves
-  // (N on Stages 1-3, N+ on 4-5 / the Mythic tier on Thor), so the sheet lists them like any map.
+  // (both are N+ weapon-only shelves), so the sheet lists them like any map.
   for(const [mi,m] of sheet.maps.entries()){assert.strictEqual(m.sections.length,mi>=10?2:6,m.name);assert.strictEqual(m.stages.length,mi>=10?5:10,m.name);assert.ok(m.stages.every(s=>s.mobs.length===2),m.name+' field mob count')}
   assert.ok(sheet.maps.slice(0,10).every(m=>m.sections[4].name===undefined||m.sections[4].items.length>0),'the Nightmare rows carry items');
   assert.strictEqual(sheet.sectionNames[4],'Nightmare gear');assert.strictEqual(sheet.sectionNames[5],'Abyssal Nightmare gear');
@@ -154,15 +154,15 @@ t('the worksheet covers all maps, gear sections, and field stages',()=>{
 });
 t('Ascension worksheet fields expose five stages, a real gear shelf and the stage-five boss',()=>{
   for(const m of sheet.maps.slice(10)){
-    assert.strictEqual(m.sections.length,2,'N row and N+ row');
-    assert.strictEqual(m.sections[0].items.length,20);assert.strictEqual(m.sections[1].items.length,20);
+    assert.strictEqual(m.sections.length,2,'stage-row variants of the N+ weapon shelf');
+    assert.strictEqual(m.sections[0].items.length,14);assert.strictEqual(m.sections[1].items.length,14);assert.ok(m.sections.every(s=>s.items.every(x=>x.slot==='weapon')),'Ascension shelves are N+ weapons only');
     assert.strictEqual(m.stages.length,5);
     for(const s of m.stages){
-      // every regular mob carries the full family list plus two defensive pieces
-      assert.ok(s.mobs.every(x=>x.drops.length===16),'14 families + 2 defensive rolls per mob');
+      // every regular mob carries the N+ weapon family list and no defensive equipment
+      assert.ok(s.mobs.every(x=>x.drops.length===14&&x.drops.every(d=>m.sections.flatMap(r=>r.items).find(i=>i.id===d.itemId)?.slot==='weapon')),'14 N+ weapon families only');
       assert.strictEqual(!!s.boss,s.stage===5);
       // the MVP lists the whole shelf, and it is the shelf of the stage's own row
-      if(s.boss)assert.strictEqual(s.boss.drops.length,20);
+      if(s.boss)assert.strictEqual(s.boss.drops.length,14);
     }
   }
 });
