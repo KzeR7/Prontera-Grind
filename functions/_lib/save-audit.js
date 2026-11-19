@@ -28,6 +28,8 @@
 import * as db from './db.js';
 import { CAPS } from './validate.js';
 
+export const RULE_VERSION = '2026-11-19.v2';
+
 export const AUDIT_LABELS = {
   'level-over-cap': 'Impossible base level',
   'stat-over-cap': 'Stat above the level cap',
@@ -38,9 +40,15 @@ export const AUDIT_LABELS = {
   'affix-over-cap': 'Affix value above any legitimate roll',
   'kill-rate': 'Kill rate above the server cap',
   'level-rate': 'Level speed above human limits',
-  'zeny-rate': 'Zen gain above human limits',
+  'zeny-rate': 'Zeny gain above human limits',
 };
 export const rateLabel = key => AUDIT_LABELS[key] || ('Material gain above limit: ' + key.replace(/^rate:/, ''));
+
+export const STRUCTURAL_KINDS = new Set([
+  'level-over-cap', 'stat-over-cap', 'stat-points-over',
+  'zeny-over-cap', 'negative-kills', 'refine-over-cap', 'affix-over-cap',
+]);
+export const ruleCategory = kind => (STRUCTURAL_KINDS.has(kind) ? 'structural' : 'heuristic');
 
 // ---------------------------------------------------------------- helpers ----
 const num = v => (Number.isFinite(Number(v)) ? Number(v) : 0);
@@ -293,50 +301,104 @@ export function auditStaticSave(save) {
 // offline-claim kills, grant credits) is an argument, so tests can drive any timing.
 //
 // credits: { zeny, levels, kills, resources: { counter: amount } } — gifts claimed in the window.
+// Minimum absolute delta before a short-window rate heuristic can fire, preventing
+// legitimate lump payouts (quests, roulette, mail, salvage, conversions) in a 1-5 min
+// sync window from being extrapolated into false-positive hourly rates.
+export const MIN_RATE_DELTA = {
+  kills: 5_000,
+  zeny: 100_000_000,
+  levels: 8,
+  shards: 600,
+  ori: 300,
+  elu: 300,
+  refineScrolls: 60,
+  mythicScrolls: 30,
+  ascMat0: 60,
+  ascMat1: 60,
+  ascMat2: 60,
+  nmat0: 60,
+};
+
 export function auditSaveRates({ prev, next, elapsedMs, claimKills = 0, credits = null }) {
   const out = [];
   if (!(elapsedMs >= 60_000)) return out;           // sub-minute windows are too noisy to judge
   const hours = elapsedMs / 3_600_000;
+  const mins = Math.round(elapsedMs / 60_000);
   const cred = credits || { zeny: 0, levels: 0, kills: 0, resources: {} };
   const c = key => num(cred.resources && cred.resources[key]);
 
+  const prevClass = prev.raw && (prev.raw.job || prev.raw.cls || prev.raw.classId) || null;
+  const nextClass = next.raw && (next.raw.job || next.raw.cls || next.raw.classId) || null;
+  const classChanged = !!(prevClass && nextClass && prevClass !== nextClass);
+
   // Kills: the grind backbone. Claimed offline kills are the SERVER's own payout, never a flag.
-  const killsDelta = Math.max(0, floor(next.kills) - floor(prev.kills) - Math.max(0, floor(claimKills)));
+  const rawKillsDelta = Math.max(0, floor(next.kills) - floor(prev.kills));
+  const creditedKills = Math.max(0, floor(claimKills)) + Math.max(0, floor(cred.kills));
+  const killsDelta = Math.max(0, rawKillsDelta - creditedKills);
   const killRate = killsDelta / hours;
-  if (killRate > RATE_LIMITS.kills) {
-    out.push({ kind: 'kill-rate', value: Math.round(killRate), threshold: RATE_LIMITS.kills,
-      detail: `${killsDelta.toLocaleString('en-US')} kills in ${Math.round(elapsedMs / 60000)} min` });
+  if (killsDelta >= MIN_RATE_DELTA.kills && killRate > RATE_LIMITS.kills) {
+    out.push({
+      kind: 'kill-rate', category: 'heuristic', ruleVersion: RULE_VERSION,
+      confidence: 'medium', units: 'kills/hr',
+      value: Math.round(killRate), threshold: RATE_LIMITS.kills,
+      evidence: { start: floor(prev.kills), end: floor(next.kills), rawDelta: rawKillsDelta, credited: creditedKills, unexplained: killsDelta, elapsedMs },
+      detail: `${killsDelta.toLocaleString('en-US')} unexplained kills in ${mins} min (raw +${rawKillsDelta.toLocaleString('en-US')}, credited ${creditedKills.toLocaleString('en-US')})`,
+    });
   }
 
-  // Levels: by the band you started in (early game is allowed to be fast, Lv 100+ is not).
-  const lvDelta = Math.max(0, floor(next.lv) - floor(prev.lv) - floor(cred.levels));
-  if (lvDelta >= 3) {
+  // Levels: skip level-rate when class changed (restored class progression).
+  const rawLvDelta = Math.max(0, floor(next.lv) - floor(prev.lv));
+  const creditedLv = floor(cred.levels);
+  const lvDelta = Math.max(0, rawLvDelta - creditedLv);
+  const minLvDelta = floor(prev.lv) >= 100 ? 4 : MIN_RATE_DELTA.levels;
+  if (!classChanged && lvDelta >= minLvDelta) {
     const limit = levelRateLimit(prev.lv);
     const rate = lvDelta / hours;
     if (rate > limit) {
-      out.push({ kind: 'level-rate', value: Math.round(rate * 10) / 10, threshold: limit,
-        detail: `+${lvDelta} levels in ${Math.round(elapsedMs / 60000)} min from level ${floor(prev.lv)}` });
+      out.push({
+        kind: 'level-rate', category: 'heuristic', ruleVersion: RULE_VERSION,
+        confidence: 'medium', units: 'levels/hr',
+        value: Math.round(rate * 10) / 10, threshold: limit,
+        evidence: { start: floor(prev.lv), end: floor(next.lv), rawDelta: rawLvDelta, credited: creditedLv, unexplained: lvDelta, elapsedMs, classChanged },
+        detail: `+${lvDelta} unexplained levels in ${mins} min from Lv ${floor(prev.lv)}`,
+      });
     }
   }
 
   // Zeny: only the blatant end (a real farm at the kill-rate cap stays under this).
-  const zenyDelta = Math.max(0, num(next.zeny) - num(prev.zeny) - floor(cred.zeny));
+  const rawZenyDelta = Math.max(0, num(next.zeny) - num(prev.zeny));
+  const creditedZeny = floor(cred.zeny);
+  const zenyDelta = Math.max(0, rawZenyDelta - creditedZeny);
   const zenyRate = zenyDelta / hours;
-  if (zenyRate > RATE_LIMITS.zeny) {
-    out.push({ kind: 'zeny-rate', value: Math.round(zenyRate), threshold: RATE_LIMITS.zeny,
-      detail: `${zenyDelta.toLocaleString('en-US')} zeny in ${Math.round(elapsedMs / 60000)} min` });
+  if (zenyDelta >= MIN_RATE_DELTA.zeny && zenyRate > RATE_LIMITS.zeny) {
+    out.push({
+      kind: 'zeny-rate', category: 'heuristic', ruleVersion: RULE_VERSION,
+      confidence: 'medium', units: 'zeny/hr',
+      value: Math.round(zenyRate), threshold: RATE_LIMITS.zeny,
+      evidence: { start: num(prev.zeny), end: num(next.zeny), rawDelta: rawZenyDelta, credited: creditedZeny, unexplained: zenyDelta, elapsedMs },
+      detail: `${zenyDelta.toLocaleString('en-US')} unexplained zeny in ${mins} min`,
+    });
   }
 
-  // Materials: the "made in 5 minutes" detector. One flag per counter.
+  // Materials: require minimum absolute delta so small lump rewards in short windows don't false-positive.
   for (const [key, read] of Object.entries(COUNTERS)) {
     const limit = RATE_LIMITS[key];
     if (!limit) continue;
-    // One lump action per window (a sold-out fishing bag, an ore purchase) is not a rate.
-    const delta = Math.max(0, read(next.raw) - read(prev.raw) - c(key) - num(LUMP_ALLOWANCE[key]));
+    const startVal = read(prev.raw);
+    const endVal = read(next.raw);
+    const rawDelta = Math.max(0, endVal - startVal);
+    const credited = c(key) + num(LUMP_ALLOWANCE[key]);
+    const delta = Math.max(0, rawDelta - credited);
+    const minAbs = MIN_RATE_DELTA[key] || 0;
     const rate = delta / hours;
-    if (rate > limit) {
-      out.push({ kind: 'rate:' + key, value: Math.round(rate), threshold: limit,
-        detail: `+${delta.toLocaleString('en-US')} ${key} in ${Math.round(elapsedMs / 60000)} min` });
+    if (delta >= minAbs && rate > limit) {
+      out.push({
+        kind: 'rate:' + key, category: 'heuristic', ruleVersion: RULE_VERSION,
+        confidence: 'low', units: `${key}/hr`,
+        value: Math.round(rate), threshold: limit,
+        evidence: { start: startVal, end: endVal, rawDelta, credited, unexplained: delta, elapsedMs },
+        detail: `+${delta.toLocaleString('en-US')} ${key} in ${mins} min (raw +${rawDelta.toLocaleString('en-US')})`,
+      });
     }
   }
   return out;
