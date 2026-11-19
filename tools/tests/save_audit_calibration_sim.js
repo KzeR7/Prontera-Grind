@@ -131,7 +131,42 @@ test('30 accepted saves adding 90M Zeny or 599 shards over 120s flag via rolling
   assert.strictEqual(flagged, true, '30 saves of +90M Zeny / +599 shards must flag');
 });
 
-test('cleared 10,000-kill alert reopens when a new 6,000-kill incident arrives later', async () => {
+test('legitimate +1,000 ore.ori purchase over 120s does not flag in auditAcceptedSave', async () => {
+  const db = new DatabaseSync(':memory:');
+  for (const f of fs.readdirSync('migrations').sort()) {
+    if (f.endsWith('.sql')) {
+      try { db.exec(fs.readFileSync('migrations/' + f, 'utf8')); } catch {}
+    }
+  }
+  db.exec('PRAGMA foreign_keys = OFF;');
+  const D = {
+    prepare(sql) {
+      const stmt = db.prepare(sql);
+      return {
+        bind(...args) {
+          return {
+            run: async () => stmt.run(...args),
+            first: async () => stmt.get(...args) || null,
+            all: async () => ({ results: stmt.all(...args) }),
+          };
+        },
+        run: async () => stmt.run(),
+        first: async () => stmt.get() || null,
+        all: async () => ({ results: stmt.all() }),
+      };
+    },
+  };
+  const t0 = 1_700_000_000_000;
+  const res = await auditAcceptedSave(D, {
+    userId: 45, username: 'OreBuyer', gm: 0,
+    prev: { saved_at: t0, kills_total: 0, level: 120, zeny: 0, blob: '{}' },
+    prevSave: { ore: { ori: 0 } }, save: { lv: 120, kills: 0, zeny: 0, ore: { ori: 1000 } },
+    pub: { kills: 0, lv: 120, zeny: 0 }, savedAt: t0 + 120_000,
+  });
+  assert.strictEqual(res.flagged, false, '+1,000 ore.ori within lump allowance must not flag');
+});
+
+test('cleared 10,000-kill alert stays cleared on zero-gain save, reopens on new 6,000-kill incident', async () => {
   const db = new DatabaseSync(':memory:');
   for (const f of fs.readdirSync('migrations').sort()) {
     if (f.endsWith('.sql')) {
@@ -164,6 +199,16 @@ test('cleared 10,000-kill alert reopens when a new 6,000-kill incident arrives l
     pub: { kills: 10_000, lv: 120, zeny: 0 }, savedAt: t0 + 120_000,
   });
   db.prepare('UPDATE save_alerts SET cleared_at = ?, cleared_by = ? WHERE user_id = 44').run(t0 + 180_000, 'GM');
+  // Zero-gain save 2 minutes later must NOT reopen the cleared alert.
+  await auditAcceptedSave(D, {
+    userId: 44, username: 'Reopener', gm: 0,
+    prev: { saved_at: t0 + 120_000, kills_total: 10_000, level: 120, zeny: 0, blob: '{}' },
+    prevSave: {}, save: { lv: 120, kills: 10_000, zeny: 0 },
+    pub: { kills: 10_000, lv: 120, zeny: 0 }, savedAt: t0 + 240_000,
+  });
+  const stillCleared = db.prepare('SELECT cleared_at FROM save_alerts WHERE user_id = 44 AND kind = ?').get('kill-rate');
+  assert.ok(stillCleared.cleared_at, 'zero-gain save must not reopen cleared alert');
+  // New 6,000-kill incident later MUST reopen it.
   await auditAcceptedSave(D, {
     userId: 44, username: 'Reopener', gm: 0,
     prev: { saved_at: t0 + 240_000, kills_total: 10_000, level: 120, zeny: 0, blob: '{}' },

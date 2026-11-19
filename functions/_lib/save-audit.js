@@ -475,9 +475,11 @@ export async function auditAcceptedSave(D, { userId, username, gm, prev, prevSav
     const allCred = addCredits(claimPaid, creditsFromGrants(gRows));
     const rawK = Math.max(0, floor(nextView.kills) - floor(prevView.kills));
     const credK = Math.max(0, floor(claimKills)) + Math.max(0, floor(allCred && allCred.kills));
-    acc.kills = floor(acc.kills) + Math.max(0, rawK - credK);
+    const netK = Math.max(0, rawK - credK);
+    acc.kills = floor(acc.kills) + netK;
     const rawZ = Math.max(0, num(nextView.zeny) - num(prevView.zeny));
-    acc.zeny = num(acc.zeny) + Math.max(0, rawZ - floor(allCred && allCred.zeny));
+    const netZ = Math.max(0, rawZ - floor(allCred && allCred.zeny));
+    acc.zeny = num(acc.zeny) + netZ;
     const prevCls = prevView.raw && (prevView.raw.job || prevView.raw.cls || prevView.raw.classId) || null;
     const nextCls = nextView.raw && (nextView.raw.job || nextView.raw.cls || nextView.raw.classId) || null;
     const clsChanged = !!(prevCls && nextCls && prevCls !== nextCls);
@@ -485,16 +487,18 @@ export async function auditAcceptedSave(D, { userId, username, gm, prev, prevSav
       const rawL = Math.max(0, floor(nextView.lv) - floor(prevView.lv));
       acc.levels = floor(acc.levels) + Math.max(0, rawL - floor(allCred && allCred.levels));
     }
+    const netRes = {};
     for (const [key, read] of Object.entries(COUNTERS)) {
       const rawR = Math.max(0, read(nextView.raw) - read(prevView.raw));
       const credR = num(allCred && allCred.resources && allCred.resources[key]);
-      acc.resources[key] = floor(acc.resources[key]) + Math.max(0, rawR - credR);
+      netRes[key] = Math.max(0, rawR - credR);
+      acc.resources[key] = floor(acc.resources[key]) + netRes[key];
     }
     await db.upsertAuditWindow(D, userId, winStart, savedAt, JSON.stringify(acc));
 
     const winElapsed = Math.max(60_000, savedAt - winStart);
     const winHours = winElapsed / 3_600_000;
-    if (!violations.some(v => v.kind === 'kill-rate') && acc.kills >= MIN_RATE_DELTA.kills && (acc.kills / winHours) > RATE_LIMITS.kills) {
+    if (netK > 0 && !violations.some(v => v.kind === 'kill-rate') && acc.kills >= MIN_RATE_DELTA.kills && (acc.kills / winHours) > RATE_LIMITS.kills) {
       violations.push({
         kind: 'kill-rate', category: 'heuristic', ruleVersion: RULE_VERSION,
         confidence: 'medium', units: 'kills/hr',
@@ -503,7 +507,7 @@ export async function auditAcceptedSave(D, { userId, username, gm, prev, prevSav
         detail: `${acc.kills.toLocaleString('en-US')} unexplained kills accumulated over ${Math.round(winElapsed / 60000)} min`,
       });
     }
-    if (!violations.some(v => v.kind === 'zeny-rate') && acc.zeny >= MIN_RATE_DELTA.zeny && (acc.zeny / winHours) > RATE_LIMITS.zeny) {
+    if (netZ > 0 && !violations.some(v => v.kind === 'zeny-rate') && acc.zeny >= MIN_RATE_DELTA.zeny && (acc.zeny / winHours) > RATE_LIMITS.zeny) {
       violations.push({
         kind: 'zeny-rate', category: 'heuristic', ruleVersion: RULE_VERSION,
         confidence: 'medium', units: 'zeny/hr',
@@ -515,13 +519,14 @@ export async function auditAcceptedSave(D, { userId, username, gm, prev, prevSav
     for (const key of Object.keys(COUNTERS)) {
       const limit = RATE_LIMITS[key];
       const minAbs = MIN_RATE_DELTA[key] || 0;
-      const amt = floor(acc.resources[key]);
-      if (limit && !violations.some(v => v.kind === 'rate:' + key) && amt >= minAbs && (amt / winHours) > limit) {
+      const lump = num(LUMP_ALLOWANCE[key]);
+      const amt = Math.max(0, floor(acc.resources[key]) - lump);
+      if (limit && netRes[key] > 0 && !violations.some(v => v.kind === 'rate:' + key) && amt >= minAbs && (amt / winHours) > limit) {
         violations.push({
           kind: 'rate:' + key, category: 'heuristic', ruleVersion: RULE_VERSION,
           confidence: 'low', units: `${key}/hr`,
           value: Math.round(amt / winHours), threshold: limit,
-          evidence: { start: 0, end: amt, rawDelta: amt, credited: 0, unexplained: amt, elapsedMs: winElapsed, rolling: true },
+          evidence: { start: 0, end: floor(acc.resources[key]), rawDelta: floor(acc.resources[key]), credited: lump, unexplained: amt, elapsedMs: winElapsed, rolling: true },
           detail: `+${amt.toLocaleString('en-US')} ${key} accumulated over ${Math.round(winElapsed / 60000)} min`,
         });
       }
