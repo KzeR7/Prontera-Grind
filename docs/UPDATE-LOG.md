@@ -12049,3 +12049,9 @@ re-recording them here would have written wrong numbers into the repository.
 * **Try it:** As a Monk, Champion or Sura with a Spirit Sphere, cast Asura Strike on a mob or MVP and watch the character hop backward.
 * **Checks:** `signature_skills_sim.js` (8 groups), `asura_pose_sim.js` (2 checks), `skill_sim.js` (44 groups), `update_watch_sim.js` (22 groups), and `git diff --check` passed. `skill_balance_sim.js` could not complete because its pinned comparison commit `d164bd0527cfe335f9c183d0e576800716b7dd26` is unavailable in this checkout.
 * **Delivery:** Local changes on the active Arena branch.
+
+### PR #257 pre-merge review — Ascension drop progression regression coverage
+* **Changed:** Updated the live Ascension progression simulation to assert the intended weapon-only N+ drops on both maps and Forge-only Mythic progression; corrected obsolete expectations from the prior broader shelf.
+* **Try it:** Run `node tools/tests/ascension_progression_sim.js`.
+* **Checks:** `ascension_progression_sim.js` passed, along with the PR recheck: Ascension evolution (12), drop/shop (7), gear catalogue (43), drop/card sheet (14), signature skills (8), Asura pose (2), skill system (44), fourth-job skills (16), expanded roster (13), signature FX (11), update watcher (22), and `git diff --check`. GitHub Cloudflare Pages and Workers Builds checks pass.
+* **Delivery:** Local changes on the active PR branch.
