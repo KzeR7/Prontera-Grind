@@ -204,7 +204,10 @@ t('the published tree is small enough to stay honest', () => {
   // haven-v424: 60.31, not 60.30. The immutable claim state/bounds client code takes the classic
   // bundle to 60.3021 MiB (measured by this build); optional asset groups are unchanged and retain
   // their own limits above. This is a measured source-byte allowance, not a runtime asset expansion.
-  assert.ok((bytes-nativeBytes-socialBytes-endgameBytes-worldMapBytes-digimonBytes-fountainBytes-expandedBytes-expandedWardrobeBytes-roFxBytes-classIconBytes)/1048576 < 60.31, 'existing classic runtime assets exceed their 60.31 MiB budget');
+  // haven-v432: 60.32, not 60.31. Main with haven-v427's guided first adventure measured 60.3085 MiB;
+  // adding the Ascension N+/Forge work (PR #257) and the zero-ATK repair measured 60.3109 MiB. The same
+  // measured source-byte step as haven-v424; no asset group grew (the RO-look icons are not shipped).
+  assert.ok((bytes-nativeBytes-socialBytes-endgameBytes-worldMapBytes-digimonBytes-fountainBytes-expandedBytes-expandedWardrobeBytes-roFxBytes-classIconBytes)/1048576 < 60.32, 'existing classic runtime assets exceed their 60.32 MiB budget');
   assert.ok(expandedWardrobeBytes > 0 && expandedWardrobeBytes/1048576 < 4.5, 'lazy expanded-roster Wardrobe bodies exceed their separate 4.5 MiB budget (4.31 measured 2026-11-15)');
   assert.ok(expandedBytes > 0 && expandedBytes/1048576 < 3, 'lazy expanded-roster bodies exceed their separate 3 MiB budget (2.86 measured 2026-11-15, 44 bodies)');
   assert.ok(digimonBytes/1048576 < 40, 'lazy Digimon roster exceeds its separate 40 MiB budget');
