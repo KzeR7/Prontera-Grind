@@ -507,11 +507,24 @@ there (see [MONETIZATION-SETUP.md](MONETIZATION-SETUP.md) §9).
 
 ## Onboarding and new-player tips (v255)
 
-**First session.** A save with no handbook progress opens the Guide on its first login and
-runs a five-step tour (`GUIDE_LESSONS.beginner`): let the character fight, read the dock
-once, spend points and learn an attack, take a first job at Novice Job 10, then collect and
-equip. The tour is the only place the game interrupts on its own; it can be dismissed
-("Read later"), finished, or replayed from the Beginner page.
+**First Adventure (haven-v427).** A genuinely fresh Novice account starts a compact,
+non-modal guild companion in the plaza. `assets/adventure-guide.js` reuses the Guide's
+login hook and handbook state; `assets/adventure-guide.css` styles it. The journey is:
+welcome → town orientation → field → a live kill → spend stats → equip (or defer loot)
+→ first job at Novice Job 10 → learn an attack → enable an assigned combo → finish.
+Only the orientation acknowledgements advance by button; gameplay lessons observe real
+state. Field readiness requires a renderer and live mobs, and only `kill()` can record the
+first victory (offline/AFK earnings cannot). Stats/equipment milestones latch so changing
+classes cannot erase a lesson already performed. Loot has an explicit defer action.
+
+The companion pauses to a resume chip, collapses while field panels are open, and yields
+to social activity windows. Explore first, Pause guide, Skip and Finish have distinct
+saved statuses under `S.handbook.adventure` (version 1, stable step IDs). Login preserves
+that choice; finished legacy tours are not enrolled again. Future state versions remain
+untouched. Guide → Beginner and the plaza's Guide button reopen the detailed roadmap,
+town directory and existing reference chapters. Revisit never resets character progress.
+The original `GUIDE_LESSONS` tours remain available as reference/replay, and Ascension's
+tour keeps its existing behavior. No new timers, server endpoints or Social DO traffic.
 
 **Checklist rules.** The Beginner page leads with `beginnerChecklist()`. Every row is derived
 from the save at render time — no stored flags — so it cannot congratulate a player for

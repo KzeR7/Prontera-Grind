@@ -1,0 +1,47 @@
+/* A small guild journal above the world; never a full-screen input blocker. */
+#adventureGuide{position:fixed;z-index:49;right:18px;top:130px;width:340px;max-width:calc(100vw - 24px);max-height:calc(100dvh - 230px);overflow:auto;box-sizing:border-box;border:1px solid #c5a56d;border-radius:14px;background:linear-gradient(145deg,#202c36f7,#111b26fa);color:#f6eddc;box-shadow:0 16px 44px #0007,inset 0 1px #ffffff14;font:13px/1.6 "Trebuchet MS",sans-serif;scrollbar-width:thin;pointer-events:auto}
+.adventure-target{outline:2px solid #efd39c!important;outline-offset:3px;box-shadow:0 0 14px #e6c78766!important}
+#adventureGuide .adventure-heading{display:flex;gap:12px;align-items:center;padding:16px 18px 13px;background:linear-gradient(110deg,#c7a66819,transparent)}
+#adventureGuide .adventure-seal{display:grid;place-items:center;flex:none;width:38px;height:38px;border:1px solid #bb9d64;border-radius:50%;font-size:24px;color:#efd39c}
+#adventureGuide small{display:block;color:#cdbb96;font-size:9px;letter-spacing:1.8px}
+#adventureGuide .adventure-heading b{display:block;font-size:15px;letter-spacing:.3px}
+#adventureGuide .adventure-count{margin-left:auto;color:#e4c68d;font-size:11px;white-space:nowrap}
+#adventureGuide .adventure-track{height:3px;background:#ffffff12}
+#adventureGuide .adventure-track i{display:block;height:100%;background:linear-gradient(90deg,#9f8555,#f1d69b)}
+#adventureGuide .adventure-announcement{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+#adventureGuide .adventure-copy{padding:15px 18px}
+#adventureGuide h2{font-size:20px;line-height:1.25;margin:0 0 10px;color:#fff0cf}
+#adventureGuide p{margin:0 0 13px;color:#d0d9df}
+#adventureGuide button,.adventure-handbook button{box-sizing:border-box;min-height:44px;cursor:pointer;font:inherit;white-space:normal;border:1px solid #687887;border-radius:8px;background:#243746;color:#f5eddb;padding:10px 13px;touch-action:manipulation}
+#adventureGuide button:focus-visible,#adventureGuide summary:focus-visible,.adventure-handbook button:focus-visible{outline:3px solid #f8d78e;outline-offset:3px}
+#adventureGuide .adventure-primary{display:block;width:100%;margin:13px 0 6px;background:linear-gradient(110deg,#e6c787,#c6a36b);border-color:#eed9ab;color:#202838;font-weight:bold;text-align:left}
+#adventureGuide .adventure-primary span{float:right}
+#adventureGuide details{border-top:1px solid #ffffff15;padding-top:8px;margin-top:9px}
+#adventureGuide summary{cursor:pointer;color:#e5c998;min-height:32px;align-content:center}
+#adventureGuide details p{font-size:12px;line-height:1.65;margin:8px 0}
+#adventureGuide .adventure-links{display:flex;justify-content:space-between;gap:6px}
+#adventureGuide .adventure-links button{border-color:transparent;padding:8px 2px;background:transparent;color:#c8d6e0;font-size:11px;text-decoration:underline;text-underline-offset:3px}
+#adventureGuide .adventure-dismiss summary{font-size:10px;color:#aebdcb}
+#adventureGuide .adventure-hint,.adventure-handbook .adventure-hint{padding:9px 11px;border-left:2px solid #d5b674;background:#ffffff08;color:#decda9;font-size:12px}
+#adventureGuide.is-compact{width:auto;top:auto;bottom:calc(var(--docktop,76px) + 12px);border-radius:24px;overflow:visible;max-height:none}
+#adventureGuide .adventure-resume{border:0;border-radius:24px;background:transparent;padding:10px 17px;color:#f3ddae;font-size:12px}
+#adventureGuide .adventure-resume span{padding-right:7px}
+.adventure-handbook{padding:20px;margin-bottom:22px;border:1px solid #a38b60;border-radius:12px;background:linear-gradient(135deg,#29333b,#1d2531)}
+.adventure-handbook>small{letter-spacing:1.6px;color:#ddbf86}
+.adventure-roadmap{display:grid;gap:12px;padding-left:24px;margin:22px 0}
+.adventure-roadmap li::marker{color:#e5c58d;font-weight:bold}
+.adventure-roadmap b,.adventure-roadmap span{display:block}
+.adventure-roadmap span{color:#c5ced8;font-size:12px}
+.adventure-town-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.adventure-town-grid article{padding:14px;background:#ffffff05;border:1px solid #ffffff14;border-radius:8px}
+body.clean-screen #adventureGuide{display:none}
+@media(max-width:740px){
+ #adventureGuide{top:auto;right:12px;bottom:calc(var(--docktop,76px) + 10px + env(safe-area-inset-bottom));width:calc(100vw - 24px);max-height:48dvh;border-radius:12px}
+ #adventureGuide .adventure-heading{padding:10px 14px;gap:10px}
+ #adventureGuide .adventure-copy{padding:12px 14px}
+ #adventureGuide h2{font-size:18px}
+ #adventureGuide .adventure-seal{width:30px;height:30px;font-size:20px}
+ #adventureGuide.is-compact{width:auto;max-width:calc(100vw - 24px)}
+ .adventure-handbook{padding:14px}.adventure-town-grid{grid-template-columns:1fr}
+}
+@media(prefers-reduced-motion:reduce){#adventureGuide *{animation:none!important;scroll-behavior:auto!important}}
