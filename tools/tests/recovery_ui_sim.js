@@ -6,7 +6,7 @@ import { JSDOM } from 'jsdom';
 
 const src=fs.readFileSync('index.html','utf8');
 const begin=src.indexOf('// Recovery never sends the password or code');
-const end=src.indexOf('// ---------- update watcher',begin);
+const end=src.indexOf('// 3D Scene setup',begin);
 assert.ok(begin>=0 && end>begin,'real recovery handlers must be present');
 const code=src.slice(begin,end);
 const okCode='ABCD-EFGH-JKMN-PQRS';

@@ -514,7 +514,7 @@ welcome → town orientation → field → a live kill → spend stats → equip
 Only the orientation acknowledgements advance by button; gameplay lessons observe real
 state. Field readiness requires a renderer and live mobs, and only `kill()` can record the
 first victory (offline/AFK earnings cannot). Stats/equipment milestones latch so changing
-classes cannot erase a lesson already performed. Loot has an explicit defer action.
+classes cannot erase a lesson already performed. Equipment → Loadout compares owned gear; selecting an item or opening the panel does not count as wearing it. Loot has an explicit defer action.
 
 The companion pauses to a resume chip, collapses while field panels are open, and yields
 to social activity windows. Explore first, Pause guide, Skip and Finish have distinct

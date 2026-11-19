@@ -136,7 +136,7 @@ t('the published tree is small enough to stay honest', () => {
   const nativeBytes=walk(path.join(out,'assets/native-fields/v1'));
   const socialBytes=walk(path.join(out,'assets/social'));
   // The map-exploration sub-app (assets/endgame) is never preloaded by the game - a separate test
-  // asserts `src="assets/endgame/` never appears in index.html - and it already carries its own
+  // allows only its shared Three.js engine in index.html - and it already carries its own
   // 4.25 MiB ceiling below, so it is measured there and not again here, exactly like the parked
   // native field pack and the social portraits above. Everything that ships is still covered by a
   // ceiling: this line for the classic game, separate optional packs, plus combined delivery.
@@ -260,6 +260,10 @@ t('published UI styles preserve every parsed CSS rule while removing standalone 
  const {JSDOM}=require('jsdom'),optimizer=require('../optimize_delivery.js'),dom=new JSDOM('');
  try{
   const rules=css=>{const sheet=new dom.window.CSSStyleSheet();sheet.replaceSync(css);return Array.from(sheet.cssRules,rule=>rule.cssText)};
+  const style=html=>html.match(/<style>([\s\S]*?)<\/style>/)[1];
+  const inline=style(src),publishedInline=style(fs.readFileSync(path.join(out,'index.html'),'utf8'));
+  assert.ok(publishedInline.length<inline.length&&rules(inline).length>100);
+  assert.deepStrictEqual(rules(publishedInline),rules(inline),'inline style rules must remain identical');
   for(const file of optimizer.CSS_FILES){
    const source=fs.readFileSync(path.join(root,file),'utf8'),published=fs.readFileSync(path.join(out,file),'utf8');
    assert.ok(Buffer.byteLength(published)<Buffer.byteLength(source),file+' comments were removed');
@@ -282,8 +286,10 @@ t('in-game endgame exploration ships only selected runtime resources with lazy l
  assert.deepStrictEqual(fs.readdirSync(path.join(dir,'textures')).sort(),['runtime-manifest.json',...Object.values(textures.textures).map(r=>r.file)].sort());
  for(const rec of Object.values(textures.textures))assert.ok(fs.readFileSync(path.join(dir,'textures',rec.file)).equals(fs.readFileSync(path.join(root,'tools/maps/textures',rec.file))));
  for(const file of ['endgame-scenes.js','journey-details.js','journey-state.js','journey-hero.js','journey-navigation.js'])assert.ok(fs.readFileSync(path.join(dir,file)).equals(fs.readFileSync(path.join(root,'tools/maps',file))),file+' must match reviewed source');
+ assert.ok(src.includes('src="assets/endgame/three-r128.min.js"'), 'game uses the same pinned engine as exploration');
+ assert.deepStrictEqual(fs.readFileSync(path.join(dir,'three-r128.min.js')),fs.readFileSync(path.join(root,'tools/maps/vendor/three-r128.min.js')));
  const materials=fs.readFileSync(path.join(dir,'journey-materials.js'),'utf8');assert.ok(materials.includes('/assets/endgame/textures/'));assert.ok(!materials.includes('/tools/'));
- assert.ok(!src.includes('src="assets/endgame/'),'Main game must not eagerly preload the exploration scene');
+ assert.ok(!src.replace('src="assets/endgame/three-r128.min.js"','').includes('src="assets/endgame/'),'Main game must not eagerly preload the exploration scene');
  assert.ok(fs.existsSync(path.join(out,'assets/map-exploration.js')));
  const walk=d=>fs.readdirSync(d,{withFileTypes:true}).reduce((n,e)=>n+(e.isDirectory()?walk(path.join(d,e.name)):fs.statSync(path.join(d,e.name)).size),0);assert.ok(walk(dir)<4.25*1048576);
 });

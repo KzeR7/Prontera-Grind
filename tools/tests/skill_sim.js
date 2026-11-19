@@ -75,7 +75,7 @@ const vfxBox={SKILLS:K.SKILLS,SKILLS4:K.run('SKILLS4'),SKILLSX:K.run('SKILLSX'),
   document:{createElement:t=>t==='canvas'?fakeCanvas():{}},
   skillFx:[],skillState:()=>({fields:[]}),SKILL_VFX:JSON.parse(JSON.stringify(K.SKILL_VFX))};
 vm.createContext(vfxBox);
-vm.runInContext(grab('function skillFxSpec(id,color)', '// ---------- world:')+'\n'+grab('const SKILL_FX_GEOMETRY=', 'let drag=null;const dom=R.domElement;')+
+vm.runInContext(grab('function skillFxSpec(id,color)', '// ---------- world:')+'\n'+grab('const SKILL_FX_GEOMETRY=', 'let drag=null;const dom=R?.domElement;')+
   '\nthis.__renderer={playSkillFx,tickSkillFx,syncSkillFx,get effects(){return skillFx},get sprRecipes(){return SKILL_FX_SPR},get sheets(){return SKILL_FX_SHEETS}};',vfxBox);
 
 // Pull the tradeoff activation and expiry blocks out of update() by brace matching, so the

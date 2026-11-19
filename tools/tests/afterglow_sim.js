@@ -22,7 +22,7 @@ const layers=[],box={THREE,console,Image:MaterialImage,document:{createElement:c
   scr:(x,y,z)=>[400+x*30,500+z*12-y*60],scene:new THREE.Scene(),cam:new THREE.PerspectiveCamera(),
   pl:{x:0,z:0},skillFx:[],skillState:()=>({fields:[]}),simVisualsOff:()=>false,cl:(v,a,b)=>Math.max(a,Math.min(b,v))};
 vm.createContext(box);
-vm.runInContext(grab('const MOB_REGULAR_VISUAL=','const mobSpriteUrl=')+grab('const CD=[','const pm=s=>')+grab('const SKILL_FX_GEOMETRY=','let drag=null;const dom=R.domElement;'),box);
+vm.runInContext(grab('const MOB_REGULAR_VISUAL=','const mobSpriteUrl=')+grab('const CD=[','const pm=s=>')+grab('const SKILL_FX_GEOMETRY=','let drag=null;const dom=R?.domElement;'),box);
 for(const file of ['assets/skill-materials.js','assets/afterglow-animations.js','assets/skill-overdrive.js','assets/skill-afterglow.js'])vm.runInContext(fs.readFileSync(path.join(root,file),'utf8'),box);
 const ev=code=>vm.runInContext(code,box);
 assert.equal(ev('PGAfterglowAnimations.catalog.length'),111);

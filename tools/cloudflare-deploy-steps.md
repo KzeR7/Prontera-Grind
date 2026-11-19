@@ -54,10 +54,10 @@ no-double-pay coverage without using response delay or its own wall clock to reb
 The only added schema check occurs when a qualifying interval would issue a new claim; normal syncs add
 neither an unconditional D1 read nor Social Durable Object traffic.
 
-The player-visible build label is **`2026-11-19 haven-v427 guided first adventure`**.
-The release also bumps every coordinated asset query to `?v=426`: v423 changed the Social/Fishing
-runtime as well as the inline client, so retaining the old label would permit a stale cached runtime.
-Confirm `version.txt`, `index.html`, and the two equipment-reference mirrors carry the v426 build label
+The player-visible build label is **`2026-11-19 haven-v433 plaza save adoption`**.
+The local v433 candidate uses `?v=433` for the coordinated guide, scene and UI assets.
+This build label is not authorization to deploy.
+Confirm `version.txt`, `index.html`, and the two equipment-reference mirrors carry the v433 build label
 after the site build.
 
 The click-by-click. **Nothing here costs money** and none of it needs a credit card: the whole point
@@ -190,7 +190,7 @@ Open the `*.pages.dev` address Cloudflare gives the project, and walk this list:
 | Check | Expected |
 |---|---|
 | The login card | says **“☁ Cloud accounts are on — register or sign in…”** |
-| Build tag at the bottom of the card | `2026-11-19 haven-v427 guided first adventure` |
+| Build tag at the bottom of the card | `2026-11-19 haven-v433 plaza save adoption` |
 | `<your-site>/api/me` while signed out | `{"err":"Not logged in."}` with HTTP 401 — JSON, not an HTML page |
 
 That second-browser line is the entire point of the shift: it is progress following the player

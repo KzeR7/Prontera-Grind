@@ -18,9 +18,9 @@ const workFiles=prefix=>execFileSync('git',['ls-files','--cached','--others','--
 // The hand-written part of the overlay: the assets and entry points this project ships that the
 // archived base predates. Everything that can be derived is derived (see launch_overlay.mjs and the
 // groups right after this array) so a new file cannot be forgotten the way the old list was.
-const files=['index.html','gm.html','tools/build_site.sh','tools/optimize_delivery.js','_routes.json',
+const files=['index.html','gm.html','tools/build_site.sh','tools/optimize_delivery.js','tools/maps/build_game_exploration.js','_routes.json',
  // Client-side runtime loaded by index.html.
- 'assets/shop-catalog.js','assets/shop.css','assets/shop.js','assets/friends.css','assets/friends.js',
+ 'assets/adventure-guide.css','assets/shop-catalog.js','assets/shop.css','assets/shop.js','assets/friends.css','assets/friends.js',
  'assets/combat-audio.js','assets/bgm.js','assets/bgm-tracks.js','assets/social.css','assets/social.js',
  'assets/social-rules.js','assets/social-poker.js','assets/social-scene.js','assets/social-fishing.js',
  'assets/social-fishing.css','assets/social-gym-redesign.js','assets/social-pond-design.js',
@@ -36,7 +36,7 @@ const files=['index.html','gm.html','tools/build_site.sh','tools/optimize_delive
  'assets/digimon/sanctuary/cc0/medieval_wood.webp','assets/digimon/sanctuary/cc0/rough_pine_door.webp',
  'assets/digimon/sanctuary/cc0/roof_09.webp',
  // v360: the Aetherwell centerpiece and the vendored r128 loader that renders it.
- 'assets/vendor/GLTFLoader.r128.js','assets/Fountainfile/Prontera_Grand_Aetherwell.glb',
+ 'assets/endgame/THREE-LICENSE.txt','assets/vendor/GLTFLoader.r128.js','assets/Fountainfile/Prontera_Grand_Aetherwell.glb',
  'assets/Fountainfile/Prontera_Grand_Aetherwell_Preview.png',
  // v283: Illustrated Rune-Midgard World Atlas.
  'assets/world-map/world-map-cleaned.webp','assets/world-map/birds-flock-a.webp',
