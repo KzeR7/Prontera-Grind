@@ -2145,7 +2145,10 @@ const ASC_SETS={
 // Evolve an owned N+ piece; recipe choices never mint a second item.
 let ascensionSetPick='celestial',ascensionItemPick='';
 const fourthJob=()=>CLASSES[S?.cls]?.tier===4;
-function ascensionCandidates(){return [...new Map([...items(),...S.inv].filter(it=>it?.sec===5&&!(S.reforgePending&&String(S.reforgePending.id)===String(it.id))).map(it=>[String(it.id),it])).values()]}
+// haven-v432 (owner): only N+ gear the current class can equip (canUse, as before #257), so Forge
+// materials are never spent on a Mythic the class cannot wear. Equipped pieces always lead the list,
+// then the bag in its own order.
+function ascensionCandidates(){const worn=new Set(items());return [...new Map([...items(),...S.inv].filter(it=>it?.sec===5&&canUse(it)&&!(S.reforgePending&&String(S.reforgePending.id)===String(it.id))).map(it=>[String(it.id),it])).values()].sort((a,b)=>worn.has(b)-worn.has(a))}
 function ascensionForgePanel(){
   const set=ASC_SETS[ascensionSetPick]||ASC_SETS.celestial,key=Object.keys(ASC_SETS).find(k=>ASC_SETS[k]===set),unlocked=fourthJob(),candidates=ascensionCandidates(),previewWeapon=candidates.find(x=>String(x.id)===ascensionItemPick)?.wt||'sword';
   // v254: a legacy item without a saved .slot still finds its recipe through gearSlot().
