@@ -12021,3 +12021,24 @@ re-recording them here would have written wrong numbers into the repository.
   live schema metadata only; no player-data export was performed.
 * **Delivery:** Production schema preparation completed; these ALTER scripts must not be replayed.
   PR #254 remains unmerged and its v426 compatibility code still requires final CI before activation.
+
+## haven-v427 — Mythic section-six gear and Ascension Forge (2026-11-19)
+
+* **Changed:** Section-6 Thor equipment now identifies as Mythic, gets a valid top-band base roll, and uses the Mythic item-name prefix. The Forge offers owned, unascended section-5 N+ equipment even if the current class cannot equip its weapon family; section-6 Mythic drops remain outside the Forge input ladder.
+* **Try it:** Farm Thor Volcano and inspect section-6 drops; as a fourth-job Kagerou, inspect an equipped N+ shuriken in Equipment → Ascension Forge.
+* **Checks:** `ascension_evolution_sim.js` (10 groups), `gear_sim.js` (43 groups), `ascension_drop_shop_sim.js` (7 groups), and `drop_card_sheet_sim.js` (14 groups) passed.
+* **Delivery:** Local changes on the active Arena branch.
+
+## haven-v428 — Forge-only Mythic and N+ Ascension weapons (2026-11-19)
+
+* **Changed:** Corrected progression per owner direction: both Ascension maps drop only their new N+ weapon lines; Nightmare maps supply N weapons and equipment; Mythic gear is crafted only in the Ascension Forge.
+* **Try it:** Farm Astral Citadel or Thor Volcano and verify only N+ weapons appear; use Nightmare fields for N equipment; create Mythic gear through the Forge.
+* **Checks:** `ascension_evolution_sim.js` (10 groups), `ascension_drop_shop_sim.js` (7 groups), `drop_card_sheet_sim.js` (14 groups), and `gear_sim.js` (43 groups) passed.
+* **Delivery:** Local changes on the active Arena branch.
+
+## haven-v429 — repair zero-ATK legacy Ascension drops (2026-11-19)
+
+* **Changed:** On load, legacy section-6 items named N+ are migrated to section 5. Broken null/zero base values are restored from the N+ top-field formula; actual Mythic Forge items are not modified.
+* **Try it:** Reload a save containing a former N+ Cataclysm weapon; inspect its rarity and ATK.
+* **Checks:** `ascension_evolution_sim.js` (12 groups), `ascension_drop_shop_sim.js` (7 groups), `drop_card_sheet_sim.js` (14 groups), `gear_sim.js` (43 groups), and `update_watch_sim.js` (22 groups) passed.
+* **Delivery:** Local changes on the active Arena branch.

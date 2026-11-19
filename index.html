@@ -921,13 +921,13 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="preload" href="assets/ui/fonts/font-5.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-6.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-7.ttf" as="font" type="font/ttf" crossorigin>
-<link rel="stylesheet" href="assets/ui/eclipse.css?v=426">
-<link rel="stylesheet" href="assets/ui/mobile.css?v=426">
+<link rel="stylesheet" href="assets/ui/eclipse.css?v=429">
+<link rel="stylesheet" href="assets/ui/mobile.css?v=429">
 <script src="assets/ui/mobile.js?v=274"></script>
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
-<link rel="stylesheet" href="assets/social.css?v=426">
+<link rel="stylesheet" href="assets/social.css?v=429">
 <link rel="stylesheet" href="assets/social-battle.css?v=393">
-  <link rel="stylesheet" href="assets/social-fishing.css?v=426"><link rel="stylesheet" href="assets/friends.css?v=273">
+  <link rel="stylesheet" href="assets/social-fishing.css?v=429"><link rel="stylesheet" href="assets/friends.css?v=273">
 </head>
 <body>
 <div id="loginOverlay"><div class="eclipse-login-world" aria-hidden="true"></div><header class="eclipse-login-header"><a href="./" class="eclipse-brand"><span>HH</span><b>HORIZON HAVEN<small>YOUR IDLE ADVENTURE</small></b></a><div class="eclipse-palettes" role="group" aria-label="Interface palette"><button type="button" data-palette="moonstone">Moonstone</button><button type="button" data-palette="aurora">Aurora</button><button type="button" data-palette="ember">Ember</button></div></header><main class="eclipse-login-layout"><section class="login-brand"><div class="login-eyebrow">A WORLD WORTH RETURNING TO</div><h1>Your next <br>chapter <em>awaits.</em></h1><p>Explore a world beyond the horizon.<br>Collect rare gear, master every class, and build your haven.</p><div class="eclipse-login-art"><img src="assets/ui/eclipse-knight.png" alt="Lord Knight ready for adventure"><span>01 / PRONTERA<small>THE JOURNEY BEGINS HERE</small></span><div><img src="assets/equipment-icons/1142.png" alt=""><span>YOUR NEXT UPGRADE<small>Somewhere out there.</small></span></div></div><div class="login-footnote">EXPLORE · GROW · CONQUER</div></section><div class="login-card"><div class="eclipse-access">ADVENTURER ACCESS <span>◇</span></div><h2 id="authHeading">Welcome back.</h2><p class="login-intro" id="authIntro">Your adventure is right where you left it.</p><div class="atabs" id="authTabs"><button type="button" id="tabLogin" class="on">Login</button><button type="button" id="tabReg">Register</button></div>
@@ -1056,10 +1056,10 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <div id="tooltip"></div>
 <link rel="stylesheet" href="assets/wardrobe.css?v=138">
 <link rel="stylesheet" href="assets/shop.css?v=318">
-<script src="assets/wardrobe.js?v=426"></script>
+<script src="assets/wardrobe.js?v=429"></script>
 <script src="assets/shop-catalog.js?v=321"></script>
 <script src="assets/fourth-jobs.js?v=179"></script>
-<script src="assets/expanded-jobs.js?v=426"></script>
+<script src="assets/expanded-jobs.js?v=429"></script>
 <script src="assets/ascension.js?v=156"></script>
 <script src="assets/native-mob-heights.js?v=153"></script>
 <script src="assets/native-fields.js?v=197"></script>
@@ -1123,7 +1123,7 @@ const RAR=[{n:'Common',m:1,w:60},{n:'Fine',m:1.35,w:25},{n:'Rare',m:1.9,w:10},{n
 // section 5 (Abyssal Nightmare gear, worth 15/7x the high-tier row against section 4's 1.5x) is N+,
 // painted its own colour and given its own auto-sell tick - ticking "N" used to be able to eat the
 // better row on drop without the player ever seeing which one they had sold.
-const RAR5={n:'N'},RAR6={n:'N+'},RAR7={n:'Mythic'},RARALL=RAR.concat([RAR5,RAR6,RAR7]),rarIdx=it=>((it&&it.mythic)?7:(it&&+it.sec>=5)?6:(it&&+it.sec>=4)?5:Math.max(0,Math.min(RAR.length-1,(it&&it.tier)||0))),rarOf=it=>(rarIdx(it)===7?RAR7:rarIdx(it)===6?RAR6:rarIdx(it)===5?RAR5:RAR[rarIdx(it)]),rarCls=it=>'r'+rarIdx(it);
+const RAR5={n:'N'},RAR6={n:'N+'},RAR7={n:'Mythic'},RARALL=RAR.concat([RAR5,RAR6,RAR7]),rarIdx=it=>((it&&it.mythic)||(+it?.sec>=6))?7:(it&&+it.sec>=5)?6:(it&&+it.sec>=4)?5:Math.max(0,Math.min(RAR.length-1,(it&&it.tier)||0)),rarOf=it=>(rarIdx(it)===7?RAR7:rarIdx(it)===6?RAR6:rarIdx(it)===5?RAR5:RAR[rarIdx(it)]),rarCls=it=>'r'+rarIdx(it);
 // v38 balance, three constants at once:
 //   AM x1.7 - affix magnitude, the first give-back for the weapon cut (a Legendary ATK
 //             affix goes +21% -> +36%)
@@ -1333,7 +1333,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-19 haven-v426 preserve legacy first-return offline rewards';
+const BUILD='2026-11-19 haven-v429 repair zero-ATK legacy Ascension drops';
 // v364: this write used to sit AFTER the `//` on the BUILD line, so it was part of the comment and
 // never ran - the login card showed an empty #buildTag and there was no way to confirm which file
 // the browser had loaded. It also has to survive the script running before the login card exists.
@@ -2025,13 +2025,10 @@ const ascensionGear=prefix=>GEAR[9].map((row,sec)=>{const source=sec===3?ABYSS_A
 // haven-v417 (owner): "all these new class nightmare + weapons drops at new ascension map."
 // Astral Citadel and Thor Volcano used to drop materials only - `gearPool` returned an empty array
 // for both, so no equipment ever fell there. They now carry a real gear shelf:
-//   Astral  = the Nightmare tier (N/N+), the band a fourth-job player is already hunting.
-//   Thor    = the Mythic/Primal tier (sec 6), the set the Ascension Forge upgrades into.
-// Both tables hold all seven shipped families AND the seven expanded ones, so every class in the
-// game - including the 20 expanded ones - has something of its own family waiting on each map.
-// The sheets below are ordered sword, dagger, katar, staff, bow, axe, mace, spear, book, knuckle,
-// instrument, whip, shuriken, gun, then armor, head, shield, legs and two accessories; `ASC_G`
-// turns that into the same {w, a, h, o, l, ac, ac2} shape `gearPool` already reads.
+// Astral Citadel and Thor Volcano each supply one of two N+ weapon name rows; no armor drops
+// from either map. Both weapon tables cover seven shipped and seven expanded families.
+// The sheets also retain names for the six Forge equipment slots, but gearPool intentionally
+// exposes weapons only. `ASC_G` stores the whole set in the common {w, a, h, o, l, ac, ac2} shape.
 const ASC_FAMILIES=['sword','dagger','katar','staff','bow','axe','mace','spear','book','knuckle','instrument','whip','shuriken','gun'];
 const ASC_G=(names,a,h,o,l,ac,ac2)=>({w:Object.fromEntries(ASC_FAMILIES.map((k,i)=>[k,names[i]])),a,h,o,l,ac,ac2});
 // Astral Citadel - N (Stages 1-3, sec 4) and N+ (Stages 4-5, sec 5). Two rows so the N+ shelf is a
@@ -2043,8 +2040,8 @@ const ASC_GEAR_ASTRAL=[
  ASC_G(['Zenith Saber','Zenith Dirk','Zenith Claw','Zenith Rod','Zenith Warbow','Zenith Axe','Zenith Maul',
         'Zenith Lance','Zenith Grimoire','Zenith Fist','Zenith Lute','Zenith Lash','Zenith Star','Zenith Revolver'],
    'Zenith Mail','Zenith Circlet','Zenith Aegis','Zenith Greaves','Zenith Signet','Zenith Charm')];
-// Thor Volcano - the Mythic/Primal tier. sec 6 is the fourth-job-only gate `gearTierOK` already
-// enforces, so these are the top of the ladder the Forge feeds.
+// Thor Volcano supplies the second new N+ weapon shelf. Mythic/Primal equipment (section 6)
+// is a Forge result only and never appears in a field drop table.
 const ASC_GEAR_THOR=[
  ASC_G(['Primal Saber','Primal Dirk','Primal Claw','Primal Rod','Primal Warbow','Primal Axe','Primal Maul',
         'Primal Lance','Primal Grimoire','Primal Fist','Primal Lute','Primal Lash','Primal Star','Primal Revolver'],
@@ -2147,7 +2144,7 @@ const ASC_SETS={
 // Evolve an owned N+ piece; recipe choices never mint a second item.
 let ascensionSetPick='celestial',ascensionItemPick='';
 const fourthJob=()=>CLASSES[S?.cls]?.tier===4;
-function ascensionCandidates(){return [...new Map([...items(),...S.inv].filter(it=>it?.sec===5&&canUse(it)&&!(S.reforgePending&&String(S.reforgePending.id)===String(it.id))).map(it=>[String(it.id),it])).values()]}
+function ascensionCandidates(){return [...new Map([...items(),...S.inv].filter(it=>it?.sec===5&&!(S.reforgePending&&String(S.reforgePending.id)===String(it.id))).map(it=>[String(it.id),it])).values()]}
 function ascensionForgePanel(){
   const set=ASC_SETS[ascensionSetPick]||ASC_SETS.celestial,key=Object.keys(ASC_SETS).find(k=>ASC_SETS[k]===set),unlocked=fourthJob(),candidates=ascensionCandidates();
   // v254: a legacy item without a saved .slot still finds its recipe through gearSlot().
@@ -2162,7 +2159,7 @@ function ascensionForgePanel(){
   <div class="ascension-set-picker" aria-label="Mythic sets">${Object.entries(ASC_SETS).map(([id,v])=>`<button data-a="ascset" data-v="${id}" aria-pressed="${id===key}"><b>${v.name}</b><small>${v.mat===0?'Astral':'Primal'}</small></button>`).join('')}</div>
   <div class="ascension-forge-body"><section class="ascension-set-info"><h3>${set.name} set</h3><p>Listed offense is the +15 maximum. ATK, MATK, Crit, Crit DMG and Field DMG start at 40% of that bonus through +10; +11–15 progressively unlock the rest. Defensive and speed set bonuses are unchanged.</p><p>${active?active.count+' pieces equipped':'No set bonus active'}</p><ul>${set.bonuses.map(b=>`<li class="${active&&active.count>=b.count?'active':''}"><b>${b.count} pieces</b><span>${b.desc}</span></li>`).join('')}</ul>${active?'<p>Active set stats: '+Object.entries(active.tier.stats).map(([k,v])=>esc(k)+' +'+Number(v.toFixed(2))+'%').join(' · ')+'</p>':''}</section>
   <section class="ascension-evolution"><label>Choose N+ equipment<select data-ascension-item ${unlocked?'':'disabled'}><option value="">Select an owned item…</option>${candidates.map(x=>`<option value="${x.id}" ${it===x?'selected':''}>${esc(iname(x))}${items().includes(x)?' · Equipped':' · Bag'}</option>`).join('')}</select></label>
-  ${it?`<div class="ascension-item-change"><div>${itemIconMarkup(it)}<strong>${esc(iname(it))}</strong><small>Current N+ item</small></div><span aria-hidden="true">→</span><div>${itemIconMarkup({...it,sec:6,ascSet:key})}<strong>Mythic ${esc(slot==='weapon'?set.pieces.weapon[it.wt]:set.pieces[slot])}</strong><small>${set.name} set · Fourth jobs only</small></div></div><div class="ascension-current-affixes"><b>Current affixes</b>${(it.aff||[]).map(a=>`<p>${affTxt(a)}</p>`).join('')||'<p>No affixes</p>'}</div><p>Keeps refinement, cards, existing affixes and item identity. Fills up to four affixes.</p><dl class="ascension-costs">${costs.map(([name,need,have])=>`<div class="${have>=need?'ascension-enough':'ascension-missing'}"><dt>${name}</dt><dd>${have.toLocaleString()} / ${need.toLocaleString()} <small>owned / required · ${have>=need?'Enough':'Missing '+(need-have).toLocaleString()}</small></dd></div>`).join('')}</dl><p class="ascension-forge-status ${affordable?'ascension-enough':'ascension-missing'}" role="status">${!unlocked?'Requires a fourth-job class.':affordable?'All materials and Zeny available. Ready to forge.':'Unable to forge: not enough materials or Zeny. Collect the missing amounts shown in red.'}</p><button class="full" data-a="transformasc" data-v="${key}:${it.id}" ${unlocked&&affordable?'':'disabled'} title="${esc(forgeLabel)}">${esc(forgeLabel)}</button>`:`<p class="ascension-empty">${candidates.length?'Choose equipment to preview the result and exact material cost.':'No eligible N+ equipment. Only equipment your current class can wear is listed; finish any pending reforge first.'}</p>`}
+  ${it?`<div class="ascension-item-change"><div>${itemIconMarkup(it)}<strong>${esc(iname(it))}</strong><small>Current N+ item</small></div><span aria-hidden="true">→</span><div>${itemIconMarkup({...it,sec:6,ascSet:key})}<strong>Mythic ${esc(slot==='weapon'?set.pieces.weapon[it.wt]:set.pieces[slot])}</strong><small>${set.name} set · Fourth jobs only</small></div></div><div class="ascension-current-affixes"><b>Current affixes</b>${(it.aff||[]).map(a=>`<p>${affTxt(a)}</p>`).join('')||'<p>No affixes</p>'}</div><p>Keeps refinement, cards, existing affixes and item identity. Fills up to four affixes.</p><dl class="ascension-costs">${costs.map(([name,need,have])=>`<div class="${have>=need?'ascension-enough':'ascension-missing'}"><dt>${name}</dt><dd>${have.toLocaleString()} / ${need.toLocaleString()} <small>owned / required · ${have>=need?'Enough':'Missing '+(need-have).toLocaleString()}</small></dd></div>`).join('')}</dl><p class="ascension-forge-status ${affordable?'ascension-enough':'ascension-missing'}" role="status">${!unlocked?'Requires a fourth-job class.':affordable?'All materials and Zeny available. Ready to forge.':'Unable to forge: not enough materials or Zeny. Collect the missing amounts shown in red.'}</p><button class="full" data-a="transformasc" data-v="${key}:${it.id}" ${unlocked&&affordable?'':'disabled'} title="${esc(forgeLabel)}">${esc(forgeLabel)}</button>`:`<p class="ascension-empty">${candidates.length?'Choose equipment to preview the result and exact material cost.':'No eligible N+ equipment. Unascended N+ equipment is listed regardless of current weapon compatibility; finish any pending reforge first.'}</p>`}
   </section></div></section>`;
 }
 // Detect how many pieces of each Ascension set are currently worn and return the active bonuses.
@@ -2212,6 +2209,18 @@ function repairMythicGiftBase(it){
   // The original random roll was not saved. Keep its relative position in the corrected band.
   const low=mythicGiftBaseValue(it.slot,.9),high=mythicGiftBaseValue(it.slot,1.12);
   it.val=Math.round(low+(high-low)*(it.val-lo)/(hi-lo));it.mythicGiftVersion=1;
+}
+// Earlier Thor drops were incorrectly saved as section 6; the undefined section-6 base multiplier
+// serialized their NaN value as null. Preserve those N+ items, move them to section 5, and restore a
+// representative top-field base value. This is idempotent and never touches actual Forge Mythics.
+function repairLegacyAscensionDrop(it){
+  if(!it||it.sec!==6||it.mythic===true||typeof it.name!=='string'||!it.name.startsWith('N+ '))return;
+  const base={weapon:2,armor:4,head:10,off:3,leg:3,acc:5}[it.slot];
+  if(!base)return;
+  it.sec=5;
+  if(Number.isFinite(+it.val)&&+it.val>0)return;
+  const lvl=Number.isFinite(+it.lvl)&&+it.lvl>0?+it.lvl:150;
+  it.val=Math.max(1,Math.round(base*15*(1+lvl*.15)*RAR[4].m*MAPVAL[9]*1.01));
 }
 // Build a GM Ascension item with the same base range as an evolved top-field N+ piece.
 function makeMythicEquipment(setKey,slot,weaponType){
@@ -2273,7 +2282,7 @@ function transformToMythic(item,setKey){
   if(!fourthJob())return{error:'Ascension requires a fourth-job class'};
   if(!ascensionCandidates().includes(item))return{error:'Choose eligible N+ equipment you own'};
   const set=ASC_SETS[setKey];if(!set)return{error:'Invalid set'};
-  if(!item||item.sec!==5)return{error:'Only N+ equipment can be transformed'};
+  if(!item||item.sec!==5)return{error:'Only unascended N+ equipment can be transformed'};
   if(item.mythic)return{error:'Already Mythic'};
   const slot=gearSlot(item),weaponType=item.wt;
   const cost=set.cost[slot];if(!cost)return{error:'Invalid slot for transformation'};
@@ -3237,20 +3246,13 @@ const dropTier=(m,l)=>Math.min(MAPGRADE[Math.max(0,Math.min(MAPGRADE.length-1,m|
 // section-3 variant, so its equip gate stays third-job while its base values and affixes improve.
 const secField=(m,l)=>(l|0)>10?(nmTierOf(m)?5:4):m===0?0:m<=4?(l<=5?0:l<=7?1:l<=9?2:3):m<=7?2:m===8?(l<=5?2:3):3;
 function gearPool(m,l){if(m>=10){
-    // haven-v417: the two Ascension maps used to return an empty pool and drop materials only.
-    // Astral Citadel now carries the Nightmare tier (N on Stages 1-3, N+ on 4-5) and Thor Volcano
-    // the Mythic/Primal tier, so a fourth-job player has real equipment to farm there.
+    // Astral Citadel and Thor Volcano drop only their new N+ weapon families. N equipment
+    // (including armor and accessories) is farmed on the Nightmare maps; Mythic is Forge-only.
     const mp=MAPS[m],stage=Math.max(1,Math.min(5,l|0));
     const sheet=m===10?ASC_GEAR_ASTRAL:(m===11?ASC_GEAR_THOR:null);
     if(!sheet)return [];
-    const row=sheet[stage<=3?0:1],sec=m===10?(stage<=3?4:5):6,T=[];
-    for(const k in row.w)T.push({k,n:row.w[k],sec,tier:dropTier(m,stage),quality:1,ascMap:m});
-    T.push({k:'armor',n:row.a,sec,tier:dropTier(m,stage),quality:1,ascMap:m});
-    T.push({k:'head',n:row.h,sec,tier:dropTier(m,stage),quality:1,ascMap:m});
-    if(row.o)T.push({k:'off',n:row.o,sec,tier:dropTier(m,stage),quality:1,ascMap:m});
-    T.push({k:'leg',n:row.l,sec,tier:dropTier(m,stage),quality:1,ascMap:m});
-    T.push({k:'acc',n:row.ac,sec,tier:dropTier(m,stage),quality:1,ascMap:m});
-    if(row.ac2)T.push({k:'acc',n:row.ac2,sec,tier:dropTier(m,stage),quality:1,ascMap:m});
+    const row=sheet[stage<=3?0:1],T=[];
+    for(const k in row.w)T.push({k,n:row.w[k],sec:5,tier:dropTier(m,stage),quality:1,ascMap:m});
     return T}
   const sec=secField(m,l),tier=dropTier(m,l),enhanced=m===9&&sec===3&&l>=6&&l<=10,
     sg=enhanced?MAPS[m].gearUpgrade:MAPS[m].gear[sec],quality=enhanced?ABYSS_ASCENDED_QUALITY:1,T=[];
@@ -3279,23 +3281,13 @@ function fieldOf(m,l){if(m>=10){
   // Material fields keep every native species reachable, including the boss escorts.
   const start=[0,2,3,4,0][l-1];
   const mobs=[0,1].map(j=>entry(mp.mobs[(start+j)%mp.mobs.length]));
-  // haven-v417: the fields still pay materials first, but they now carry the map's equipment shelf
-  // as well. The rates are the Nightmare band's own tables, so Ascension is a real alternative to
-  // Nightmare farming rather than a free upgrade - and the top two stages of BOTH maps are the
-  // "N+" half of that band, so they roll the halved NMPLUS_DROP exactly as Nightmare Stages 4-5 do.
-  const T=gearPool(m,l),sec=m===10?(l<=3?4:5):6,n=T.length,
-    gch=FIELD_GEAR_NM.map(x=>l>=4?x*NMPLUS_DROP:x),
-    SLOTK=['armor','head','off','leg','acc'],WP=T.filter(x=>!SLOTK.includes(x.k)),DF=T.filter(x=>SLOTK.includes(x.k));
-  // A materials field holds only two regular mobs, but the shelf carries fourteen families. One
-  // weapon each would put just two of them on the field - twelve families unreachable. So the
-  // field's whole weapon budget (gch[0], the Nightmare table) is split evenly across every family
-  // on the shelf: the total chance per kill is unchanged, and all fourteen stay reachable. The two
-  // defensive pieces stay as they are on the normal route. The roll lands on the stage's own row,
-  // so N and N+ never mix.
+  // Both Ascension maps offer only new section-5 N+ weapons; Mythic equipment is Forge-only.
+  const T=gearPool(m,l),sec=5,n=T.length,
+    gch=FIELD_GEAR_NM.map(x=>x*NMPLUS_DROP),WP=T;
+  // The N+ weapon budget is shared evenly across the new weapon families. Ascension fields
+  // never drop armor, headgear, shields, legs or accessories; those N items remain on Nightmare.
   const perFamily=gch[0]/Math.max(1,WP.length);
-  const field=mobs.map((mm,j)=>({...mm,drops:[
-    ...WP.map(x=>[x,perFamily]),
-    [DF[(2*(l-1)+j*2)%DF.length],gch[1]],[DF[(2*(l-1)+j*2+1)%DF.length],gch[2]]]}));
+  const field=mobs.map(mm=>({...mm,drops:WP.map(x=>[x,perFamily])}));
   const boss=l===5?{...entry(mp.boss,true),
     drops:T.map(x=>[x,Math.round(BOSS_POOL_TOTAL[2]*(sec===5?NMPLUS_DROP:1)/n)/100]),
     cardCh:.1,mat:{m:nmMatIndex(m),n:NM_MAT[nmMatIndex(m)]}}:null;
@@ -4227,7 +4219,7 @@ const s=unpackSave(JSON.parse(raw));if(s&&s.lv){const F=fresh(),f=Object.assign(
   if(!Array.isArray(f.pets))f.pets=[];f.pets=f.pets.filter(p=>p&&typeof p==='object');if(!Array.isArray(f.inv))f.inv=[];if(!Array.isArray(f.cards))f.cards=[];
   if(!f.eq||typeof f.eq!=='object')f.eq=F.eq;
   // Repair old GM gifts wherever owned; class loadouts reference these items by ID.
-  [...Object.values(f.eq),...f.inv].forEach(repairMythicGiftBase);
+  [...Object.values(f.eq),...f.inv].forEach(it=>{repairMythicGiftBase(it);repairLegacyAscensionDrop(it)});
   // v47 equipment locks are per-item data: legacy gear defaults unlocked, while deliberate locks persist.
   {const fixLock=it=>{if(it&&typeof it==='object')it.locked=it.locked===true};f.inv.forEach(fixLock);Object.values(f.eq).forEach(fixLock)}
   if(f.hp<=0)f.hp=F.hp;
@@ -6366,7 +6358,7 @@ const autoAllocateSkills=()=>{if(!S.sk||typeof S.sk!=='object')S.sk={};let bough
 // REF_ORE is indexed by rarIdx (Common, Fine, Rare, Epic, Legendary, N, N+); refOre() is the ore one attempt takes.
 // v90.8 (owner: Zeny sink): refine Zeny is x3 (REF_ZENY_MUL).
 const REF_ZENY_MUL=3,refCost=it=>{const r=it.r||0;if(r>=10&&it.sec===6)return Math.round(REF_ZENY_MUL*400*(r+1)*(1+(it.sec||0)*.5)*5);return Math.round(REF_ZENY_MUL*400*(r+1)*(1+(it.sec||0)*.5))},REF_ORE=[1,1,2,2,5,10,10,15],refOre=it=>REF_ORE[rarIdx(it)],refCh=it=>{const r=it.r||0;if(r>=10&&it.sec===6)return[30,21,12,5,2][r-10]||0;return[70,70,70,70,49,42,35,28,21,14][r]};
-const affTxt=a=>a.k==='hp'?`${AL[a.k]} +${a.v*2} (roll +${a.v} ×2)`:`${AL[a.k]} +${a.v}`,cardTxt=c=>`${cardName(c)}${c.legacy?' [legacy]':''} (${cardEffects(c).map(cardEffectText).join(', ')})`,dtier=it=>it.card?GI[it.g]:it.ore?3:((it&&+it.sec>=5)?6:(it&&+it.sec>=4)?5:it.tier);
+const affTxt=a=>a.k==='hp'?`${AL[a.k]} +${a.v*2} (roll +${a.v} ×2)`:`${AL[a.k]} +${a.v}`,cardTxt=c=>`${cardName(c)}${c.legacy?' [legacy]':''} (${cardEffects(c).map(cardEffectText).join(', ')})`,dtier=it=>it.card?GI[it.g]:it.ore?3:((it&&+it.sec>=6)?7:(it&&+it.sec>=5)?6:(it&&+it.sec>=4)?5:it.tier);
 const isBoss=()=>bossStage(S.mp,S.lvl),fieldName=()=>S.lvl>10?`Nightmare ${MAPS[S.mp].n} Stage ${S.lvl-10}`:`${MAPS[S.mp].n} Stage ${S.lvl}`;
 // Curated original RO equipment art: progression follows the saved job section,
 // with robe and pendant variants selected by item type. All selected PNGs ship locally.
@@ -6692,7 +6684,7 @@ function genGear(T,l,sec,boss,tier,sourceMap=S?.mp??0,sourceStage=S?.lvl??1){
   // biggest power source a character owns, and dividing the base divides it at every level.
   // Armor/head/shield/legwear/accessory keep their value: headgear (maxHp x4) and accessory
   // (maxHp x3) are the HP slots and armour/legs/shield carry DEF, which is the anti-death stat.
-  const val=Math.max(1,Math.round({weapon:2,armor:4,head:10,off:3,leg:3,acc:5}[slot]*[1,2.2,4,7,10.5,15][sec]*(1+l*.15)*RAR[t].m*quality*(sec>=4?MAPVAL[9]:MAPVAL[Math.max(0,Math.min(MAPVAL.length-1,(sourceMap|0)))])*rnd(.9,1.12)));
+  const val=Math.max(1,Math.round({weapon:2,armor:4,head:10,off:3,leg:3,acc:5}[slot]*[1,2.2,4,7,10.5,15][Math.min(5,Math.max(0,sec|0))]*(1+l*.15)*RAR[t].m*quality*(sec>=4?MAPVAL[9]:MAPVAL[Math.max(0,Math.min(MAPVAL.length-1,(sourceMap|0)))])*rnd(.9,1.12)));
   // v73 (owner): the cdm affix is a weapon/accessory roll, so "crit damage on all seven slots"
   // cannot exist any more. This follows the spirit of the cdm CARD's fit rule (CFIT['cdm'] puts
   // those cards on weapons), widened to accessories because both are the offensive slots. Every
@@ -6701,7 +6693,7 @@ function genGear(T,l,sec,boss,tier,sourceMap=S?.mp??0,sourceStage=S?.lvl??1){
   for(let i=0;i<n;i++){const k=pool.splice(ri(0,pool.length-1),1)[0];aff.push(rollAffix(k,profile))}
   // Katars and bows always have four card sockets; every other weapon keeps the existing 1-3 roll.
   const slots=slot==='weapon'&&(T.k==='katar'||T.k==='bow'||(typeof WEAPON_KIN!=='undefined'&&WEAPON_KIN[T.k]==='bow'))?4:slot==='weapon'?Math.min(3,1+ri(0,1)+(t>=3?1:0)):Math.min(1,ri(0,1)+(t>=3?1:0));
-  return{id:uid(),slot,wt:slot==='weapon'?T.k:undefined,tier:t,val,name:(sec>=5?'N+ ':sec>=4?'N ':t?RAR[t].n+' ':'')+T.n,aff,slots,cards:[],sec,lvl:l,quality,mp:(sourceMap|0)};
+  return{id:uid(),slot,wt:slot==='weapon'?T.k:undefined,tier:t,val,name:(sec>=6?'Mythic ':sec>=5?'N+ ':sec>=4?'N ':t?RAR[t].n+' ':'')+T.n,aff,slots,cards:[],sec,lvl:l,quality,mp:(sourceMap|0)};
 }
 // Away time is earned from the same map/stage and drop tables as online play. The browser records
 // a rolling real-time kill rate, credits at most four hours, and simulates half that many kills.
@@ -8459,7 +8451,7 @@ const GUIDE_LESSONS={
   {id:'welcome',title:'Welcome to your fourth job',body:'Base progression ends at 150, but combat EXP now feeds two Ascension tracks in full. Your ordinary Job levels and skill ranks still progress separately. You can earn Ascension EXP on any combat map.',target:'status',pointer:null},
   {id:'tracks',title:'Two tracks, two decisions',body:'Character \u2192 Ascension stats earns up to 50 shared points. Each fourth job saves its own allocation; eight stats each allow 10 ranks. Skills \u2192 Ascension earns up to 30 points separately for each fourth job (40 for Kagerou & Oboro and Rebellion, which have eight skills), with five ranks per skill. Resets are currently free and keep earned levels.',target:'skills',pointer:'#dock [data-t="status"]'},
   {id:'skill6',title:'Unlock your sixth skill',body:'Your five core fourth-job skills keep their normal rank 1\u201310 upgrades. Spend the first Ascension rank on the sixth skill to unlock it. Add offensive skills to Combo; buffs auto-cast separately. Read each upgrade before spending points.',target:'skills',pointer:'#dock [data-t="skills"]'},
-  {id:'mats',title:'Farm materials, evolve equipment',body:'Maps \u2192 Ascension Map opens Astral Citadel and Thor Volcano. They have five stages and now drop equipment too: Astral Citadel hands out the Nightmare tier (N on Stages 1-3, N+ on 4-5) and Thor Volcano the Mythic/Primal tier, every weapon family included. Farm Astral Shards or Primal Catalysts plus Valkyrie\u2019s Sigils alongside them. Equipment \u2192 Ascension evolves an owned compatible N+ item into a Mythic set piece.',target:'equip',pointer:'#dock [data-t="map"]'},
+  {id:'mats',title:'Farm materials, evolve equipment',body:'Maps \u2192 Ascension Map opens Astral Citadel and Thor Volcano. They have five stages and drop Forge materials too: both maps drop only new N+ weapons (with map-specific names); N weapons and armor/accessories drop on Nightmare maps, and Mythic gear is obtained only from the Forge. Farm Astral Shards or Primal Catalysts plus Valkyrie\u2019s Sigils alongside them. Equipment \u2192 Ascension evolves an owned, unascended N+ item into a Mythic set piece; current weapon compatibility is not required.',target:'equip',pointer:'#dock [data-t="map"]'},
   {id:'endgame',title:'Plan your endgame',body:'Evolution keeps item identity, refinement, cards and existing affixes, filling up to four affixes. Sets give bonuses at 2/4/6 pieces. Mythic gear is fourth-job only and refines up to +15. Build stable farming first; these maps are much tougher than Nightmare.',target:'map',pointer:'#dock [data-t="equip"]'}
  ]};
 function guideProgress(){const o=S.handbook;return o&&typeof o==='object'&&!Array.isArray(o)?o:{};}
@@ -8771,7 +8763,7 @@ function beginnerGuide(){const check=beginnerChecklist(),done=check.filter(x=>x.
  ['Skills and the combo','<b>✨ Skills</b> spends Job points and shows what each rank does. Up to six attacks fill the combo, left to right, then a 3-second recovery while basic attacks continue. Buffs cast on their own, First Aid heals below half health, and paused skills are skipped. There is no SP resource to manage.'],
  ['Equipment and its six workspaces','<b>🛡️ Equipment</b> is one window with six tabs: <b>Loadout</b> compares gear and sockets cards, <b>Refine</b> raises an item\'s rank, <b>Affixes</b> rerolls rolls for a listed price, <b>Cards</b> is the full card workspace, <b>Auto-sell</b> decides what future drops to sell automatically, and <b>Ascension</b> is the Mythic Forge. The Forge only works for a fourth job and only on owned N+ gear; it keeps the item, its refinement, cards and affixes.'],
  ['Bag, cards and selling','<b>🎒 Inventory</b> lists what you own: inspect before you equip or sell, <b>lock</b> anything valuable so a bulk sale skips it, and use auto-equip if you want help choosing. <b>🎒 Inventory → Cards</b> sockets cards and merges copies — ★ +9%, ★★ +12%, ★★★ +15% for 1 / 3 / 5 extra unstarred copies — and its <b>Mergeable now</b> filter lists only the cards that already have their copies, so nothing has to be checked one by one. Normal and Nightmare copies merge separately.'],
- ['Maps, Nightmare and Ascension','The atlas has ten stages per map and Stage 10 is always an MVP. Nightmare stages (NM 1–5) open on the same maps at Base 120 and 140 and drop N and N+ gear. <b>🗼 World Map → Ascension Map</b> holds Astral Citadel and Thor Volcano: five stages, fourth job only, which drop equipment as well as Forge materials — Astral Citadel the Nightmare tier, Thor Volcano the Mythic/Primal tier. <b>Endless Echo</b> is a three-minute damage trial with two ranked attempts a day, and its Echo Shards buy supplies. The <b>↩ Field</b> button opens the Fountain Plaza; farming continues while you are there.'],
+ ['Maps, Nightmare and Ascension','The atlas has ten stages per map and Stage 10 is always an MVP. Nightmare stages (NM 1–5) open on the same maps at Base 120 and 140 and drop N and N+ gear. <b>🗼 World Map → Ascension Map</b> holds Astral Citadel and Thor Volcano: five stages, fourth job only, which drop Forge materials and new N+ weapons only; Mythic gear comes only from the Forge. <b>Endless Echo</b> is a three-minute damage trial with two ranked attempts a day, and its Echo Shards buy supplies. The <b>↩ Field</b> button opens the Fountain Plaza; farming continues while you are there.'],
  ['Pets, contracts and the Mastery Index','Pets drop from monsters, not eggs: deploy up to three for their bonuses and let duplicates raise that species\' Bond. The quest rail above the dock lists contracts with claimable rewards. <b>📚 Mastery Index</b> (in More) tracks kills per monster, unlocks hunt titles and pays permanent rewards, while Card Mastery turns spare loose cards into permanent stats — equip the useful copies first.'],
  ['Mail, daily wheel and the Cash Shop','<b>Mail</b> carries announcements and gift attachments; claim them from the same window. The <b>daily roulette</b> gives one free spin a day (plus any banked rolls) for ore, Zeny or EXP boosts, a random card or a refine scroll. <b>💎 Cash Shop</b> (in More) sells cosmetics and supply bundles for real money and never premium currency — everything it sells also exists in game.'],
  ['Refine, reforge and protection','Refining costs Zeny plus Oridecon for weapons and Elunium for everything else, and each attempt shows its success chance and the failure result. A <b>Refine Protection Scroll</b> covers +0–10 and keeps your rank on a failed attempt (one scroll per attempt, success included); craft it from Void Cores or buy it in the Black Market, Echo or the daily wheel. A <b>Mythic Protection Scroll</b> covers +11–15 on Mythic gear and drops from Ascension bosses or costs Sigils in the Black Market or Echo Shards in Echo. Reforging always shows the paid offer before you accept it.'],
@@ -8793,7 +8785,7 @@ function guideTierPlan(){
   current:['Accessible now','Sources below use your current travel access and equipment eligibility. If the list is short, browse a future tier to plan upgrades.'],
   normal:['Normal · starter to transcendent equipment','Normal Stages 1–10 cover Prontera through Abyss. Match the listed job requirement before equipping. Start with ordinary mobs; Stage 10 is the MVP.'],
   nightmare:['Nightmare · N and N+ equipment',`N equipment: Prontera–Payon at Base ${NMLV[0]}. N+ equipment: Comodo–Abyss at Base ${NMLV[1]}. Target NM 4–5 for equipment and NM 5 MVPs for materials. ${S.lv<NMLV[0]?'Nightmare is locked at your current Base level.':S.lv<NMLV[1]?'N maps are open; N+ maps are still level-locked.':'Both Nightmare level gates are open.'} Future targets stay visible here so you can prepare.`],
-  ascension:['Ascension · evolve N+ into Mythic',`${fourthJob()?'Your fourth job can enter both maps.':'Locked until fourth-job promotion after the Base 150 / parent Job 50 Crucible trial.'} Astral Citadel drops the Nightmare tier (N, then N+ on Stages 4-5) and Thor Volcano the Mythic/Primal tier — every weapon family, the seven expanded ones included. Farm your pieces and the Forge materials together, then evolve an owned compatible N+ piece in Equipment → Ascension. The set targets below follow your selected build goal.`]
+  ascension:['Ascension · evolve N+ into Mythic',`${fourthJob()?'Your fourth job can enter both maps.':'Locked until fourth-job promotion after the Base 150 / parent Job 50 Crucible trial.'} Both Ascension maps drop new N+ weapons only, across all weapon families. Nightmare maps drop N weapons and equipment. Mythic items are crafted only in Equipment → Ascension from owned N+ gear. The set targets below follow your selected build goal.`]
  };
  const [title,text]=plans[guideTier];return `<section class="guide-note guide-tier-plan"><h3>${title}</h3><p>${text}</p></section>`;
 }
@@ -9668,7 +9660,7 @@ const V={
       <div class="mapband-t">${mp.n} <small>&middot; ${mp.t} &middot; rec. ${mp.rec} (not a limit) &middot; ${Math.min(pr,normalStages(mapM))}/${normalStages(mapM)} stages available${mapM>=10?(ascensionOpen(mapM)?' &middot; Ascension unlocked':' &middot; Requires a fourth-job class'):nmo?' &middot; <b>Nightmare open</b>':' &middot; Nightmare unlocks at Base Lv '+NMLV[nmTierOf(mapM)]}</small>
         <button class="go" data-a="go" ${mapL>cap?'disabled':''}>${S.mp===mapM&&S.lvl===mapL?'You are here':'Travel to '+mp.n+' Stage '+mapL}</button></div>
       <div class="lvgrid">${Array.from({length:mapM>=10?5:15},(_,i)=>{const l=i+1,nm=l>10,lock=l>cap;return`<button class="map-node${lock?' locked':''}${nm?' nm-node':''}${S.mp===mapM&&S.lvl===l?' active':''}${mapL===l?' picked':''}${bossStage(mapM,l)?' boss-node':''}${l===normalStages(mapM)?' normal-boss-node':''}" data-a="sell_" data-v="${l}" title="${nm?'Nightmare ':'Normal '}${nm?`Stage ${l-10}`:`Stage ${l}`}${l===normalStages(mapM)?' - normal mode MVP':''}${lock&&nm?' - locked until Base Lv '+NMLV[nmTierOf(mapM)]:''}"><b>${bossStage(mapM,l)?'💀 ':''}${nm?'NM '+((l-10)):'Stage '+l}</b></button>`}).join('')}</div>
-      <small class="map-stage-note">${mapM>=10?'Five Ascension stages · Stages 1–2 share a design; 3, 4 and 5 have distinct scenery. Stage 5 is an immediate MVP with five escorts. No equipment drops.':`<b>Stages 1-10 are Normal</b>; Stage 10 is the normal MVP field. Purple nodes are Nightmare stages 11-15. ${nmOpen()<2?`Next unlock: ${nmOpen()<1?'Nightmare Prontera to Payon (maps 1-5) at Base Lv '+NMLV[0]:'Nightmare Comodo to Abyss (maps 6-10) at Base Lv '+NMLV[1]}.`:'Both Nightmare tiers are unlocked.'}`}</small>
+      <small class="map-stage-note">${mapM>=10?'Five Ascension stages · Stages 1–2 share a design; 3, 4 and 5 have distinct scenery. Stage 5 is an immediate MVP with five escorts. New N+ weapons can drop; Mythic gear is Forge-only.':`<b>Stages 1-10 are Normal</b>; Stage 10 is the normal MVP field. Purple nodes are Nightmare stages 11-15. ${nmOpen()<2?`Next unlock: ${nmOpen()<1?'Nightmare Prontera to Payon (maps 1-5) at Base Lv '+NMLV[0]:'Nightmare Comodo to Abyss (maps 6-10) at Base Lv '+NMLV[1]}.`:'Both Nightmare tiers are unlocked.'}`}</small>
       <div class="row" style="align-items:center"><label><input type="checkbox" data-a="adv" ${S.adv!==false?'checked':''}> Auto-advance through stages and maps</label><small style="opacity:.75">turn off to farm where you stand</small></div></div>`;
     return`${navigation}<div class="mapband">
       <div class="mapband-t">Maps <small>&middot; click one to see its stages below</small></div>
@@ -9680,7 +9672,7 @@ const V={
     <div class="mapcols">
       <div class="mob-card"><div class="hd">${mapL>10?'Nightmare ':''}${mp.n} Stage ${mapL>10?mapL-10:mapL}${mapM<5&&mapL<=5?`<br><small>${mapM===0?'Novice start · Base Lv 1–10':'Early class route · Base Lv 10–20'} · gentle packs</small>`:''}</div>
         <div class="sec">Drops on this field ${mapM>=10?'<small>Equipment: the Nightmare tier · Forge materials for N+ evolution · combat EXP for Ascension</small>':`<small>&middot; every drop is <b class="${rarCls({sec:F.sec,tier:F.tier})}">${rarOf({sec:F.sec,tier:F.tier}).n}</b> &middot; <b>${SECN[F.sec]}</b>, worn by ${gearUserOf({sec:F.sec})}${gearTierOK({sec:F.sec})?'':` &middot; <span class="r0">your ${S.cls} cannot wear this yet</span>`}</small>`}</div>
-        ${mapM>=10?'<p>Equipment drops here like anywhere else, across every weapon family. Use Astral Shards or Primal Catalysts together with Valkyrie’s Sigils in Equipment → Ascension to evolve owned N+ equipment. Combat EXP levels Ascension stats and class skills in Character.</p>':(()=>{const d=F.mobs[0].drops,r4=v=>Math.round(v*1e4)/1e4,t=r4(d.reduce((a,x)=>a+x[1],0)),W=d.filter(x=>gearSlot(x[0])==='weapon'),wt=r4(W.reduce((a,x)=>a+x[1],0)),
+        ${mapM>=10?'<p>Only new N+ weapons drop here, across every weapon family. Armor and other N equipment drop on Nightmare maps. Use Astral Shards or Primal Catalysts with Valkyrie’s Sigils in Equipment → Ascension to craft Mythic gear from owned N+ equipment. Combat EXP levels Ascension stats and class skills in Character.</p>':(()=>{const d=F.mobs[0].drops,r4=v=>Math.round(v*1e4)/1e4,t=r4(d.reduce((a,x)=>a+x[1],0)),W=d.filter(x=>gearSlot(x[0])==='weapon'),wt=r4(W.reduce((a,x)=>a+x[1],0)),
           fam=W.length>1?` (${r4(W[0][1])}% each, ${W.length} families)`:'';
           return`<div class="dropline"><span>Gear chance per kill</span><b>${t}%</b></div>
           <small>Weapon <b>${wt}%</b>${fam} &middot; armour &amp; accessory <b>${r4(t-wt)}%</b> - ${d.length} independent rolls, so one kill can pay one piece, none, or several.</small>`})()}
@@ -16308,20 +16300,20 @@ setInterval(updateWatch,60000);
 // be hours old while the player was on another tab, and the check is a 60-byte text file.
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&(pendingUpdateBuild||Date.now()-PAGE_STARTED_AT>30000))updateWatch()});
 </script>
-<script src="assets/wardrobe-ui.js?v=426"></script>
+<script src="assets/wardrobe-ui.js?v=429"></script>
 <script src="assets/shop.js?v=321"></script>
 <script src="assets/friends.js?v=273"></script>
-<script src="assets/digimon/roster.js?v=426"></script>
-<script src="assets/digimon/base-stats.js?v=426"></script>
-<script src="assets/social-rules.js?v=426"></script>
-<script src="assets/social-poker.js?v=426"></script>
-<script src="assets/digimon-sanctuary.js?v=426"></script>
+<script src="assets/digimon/roster.js?v=429"></script>
+<script src="assets/digimon/base-stats.js?v=429"></script>
+<script src="assets/social-rules.js?v=429"></script>
+<script src="assets/social-poker.js?v=429"></script>
+<script src="assets/digimon-sanctuary.js?v=429"></script>
 <script src="assets/digimon-battle.js?v=393"></script>
-<script src="assets/social-digimon.js?v=426"></script>
+<script src="assets/social-digimon.js?v=429"></script>
 <script src="assets/social-gym-redesign.js?v=393"></script>
 <script src="assets/social-pond-design.js?v=393"></script>
-<script src="assets/social-scene.js?v=426"></script>
-<script src="assets/social-fishing.js?v=426"></script>
-<script src="assets/plaza-bots.js?v=426"></script>
-<script src="assets/social.js?v=426"></script></body>
+<script src="assets/social-scene.js?v=429"></script>
+<script src="assets/social-fishing.js?v=429"></script>
+<script src="assets/plaza-bots.js?v=429"></script>
+<script src="assets/social.js?v=429"></script></body>
 </html>
