@@ -88,7 +88,7 @@ async function run(base,name,viewport) {
     await p.addInitScript(()=>document.addEventListener('click',e=>{window.lastControl=e.target.closest('button,[role=button]');window.hitExpected=!!window.expectedControl&&window.lastControl?.matches(window.expectedControl)},true));
     let held;
     if(name==='stalled-optional')await p.route('**/turnstile/v0/api.js',r=>{held=r});
-    if(['stalled-town','delayed-town'].includes(name))await p.route('**/assets/social/town/catalog.json',r=>{held=r},{times:1});
+    if(['stalled-town','delayed-town','adopt-town','adopt-town-reject'].includes(name))await p.route('**/assets/social/town/catalog.json',r=>{held=r},{times:1});
     if(name==='stalled-engine')await p.route('**/three-r128.min.js',r=>{held=r},{times:1});
     if(name==='dependency')await p.route('**/three-r128.min.js',r=>r.abort('failed'),{times:1});
     if(name==='no-webgl')await p.addInitScript(()=>{const orig=HTMLCanvasElement.prototype.getContext;
@@ -117,6 +117,34 @@ async function run(base,name,viewport) {
     assert.equal((await ctx.request.post(base+'/api/register',{data:{u,p:pw,email:u+'@example.test'}})).status(),201);
     await p.fill('#username',u);await p.fill('#password',pw);await click(p,'#authBtn');
     await p.locator('#adventureGuide').waitFor();
+    if(name==='adopt-town'||name==='adopt-town-reject'){
+      await p.waitForFunction(()=>PGSocial.app.entering&&PGSocial.app.wanted&&!PGSocial.app.scene);
+      assert(held,'required town catalog is pending');
+      const canvas=await p.locator('#socialScene canvas').elementHandle();
+      const adopted=await p.evaluate(async()=>{
+        const old=S,user=currentUser,id=CLOUD.id,epoch=CLOUD.epoch,guide=JSON.stringify(S.handbook);
+        if(!CLOUD.on||!id||S.accountId!==id||!sameAccount(S.owner,user))throw Error('Expected an owned, authenticated save');
+        await cloudAdopt({blob:JSON.stringify(packSave(S)),version:CLOUD.ver});
+        return S!==old&&S.accountId===id&&currentUser===user&&CLOUD.id===id&&CLOUD.epoch===epoch&&JSON.stringify(S.handbook)===guide;
+      });
+      assert(adopted,'cloudAdopt replaced the same account’s save and kept its milestones');
+      if(name==='adopt-town-reject')await held.fulfill({status:503,body:'Test: catalog unavailable'});
+      else await held.continue();
+      await p.waitForFunction(()=>!PGSocial.app.entering,null,{timeout:60000});
+      const state=await p.evaluate(()=>({wanted:PGSocial.app.wanted,visible:!document.querySelector('#socialHub').hidden,active:!!PGSocial.app.scene?.active,notice:document.querySelector('#plazaRenderNotice').textContent}));
+      assert(state.visible&&state.wanted,JSON.stringify(state));
+      if(name==='adopt-town-reject'){
+        assert(await p.locator('#plazaRenderNotice').isVisible());assert.match(state.notice,/could not start.*Field.*retry/i);assert(!state.active);
+        assert.equal(await p.locator('#socialScene canvas').count(),0);
+        await click(p,'#socialLeave');await sceneDraws(p,false);await click(p,'#socialHubBtn');
+      }else{
+        assert(state.active,JSON.stringify(state));
+        assert(await canvas.evaluate(el=>el===PGSocial.app.scene.renderer.domElement),'same in-flight renderer activated');
+      }
+      await sceneDraws(p,true);assert.equal(await p.locator('#socialScene canvas').count(),1);
+      await p.locator('#plazaRenderNotice').waitFor({state:'hidden'});
+      assert.deepEqual(errors,[]);return;
+    }
     if(name==='delayed-town'){
       await p.waitForFunction(()=>PGSocial.app.entering);await click(p,'#socialLeave');
       assert(await p.locator('#socialHub').isHidden());
@@ -162,7 +190,7 @@ async function run(base,name,viewport) {
 }
 (async()=>{fs.mkdirSync(out,{recursive:true});const {start}=await import('./dev_server.js');const s=await start({port:0});
  try{
-   const cases=[['journey',desktop],['journey',small],['dependency',small],['no-webgl',small],['offline-chat',desktop],['storage',small],['stalled-optional',desktop],['stalled-town',desktop],['delayed-town',desktop],['stalled-engine',small]]
+   const cases=[['journey',desktop],['journey',small],['dependency',small],['no-webgl',small],['offline-chat',desktop],['storage',small],['stalled-optional',desktop],['stalled-town',desktop],['delayed-town',desktop],['stalled-engine',small],['adopt-town',desktop],['adopt-town-reject',desktop]]
      .filter(([name,vp])=>(!only||name===only)&&(!process.env.WIDTH||vp.width===Number(process.env.WIDTH)));
    assert(cases.length,'No matching browser scenario');
    for(const [name,vp] of cases)await run(`http://127.0.0.1:${s.port}`,name,vp);

@@ -2293,8 +2293,11 @@ function plazaGraphics(text,reload=false){
 // Scene construction belongs to the page, activation belongs to the latest visit/account.
 let sceneCreation=null,visit=0;
 async function enter(){
- const ticket=++visit,owner=S,user=typeof currentUser==='string'?currentUser:null,epoch=CLOUD.epoch,id=CLOUD.id;
- const current=()=>ticket===visit&&app.wanted&&S===owner&&(typeof currentUser==='string'?currentUser:null)===user&&CLOUD.id===id&&CLOUD.epoch===epoch&&!CLOUD.signingOut&&!(typeof logout==='function'&&logout.inflight);
+ // cloudAdopt replaces S, not the player or session. Activate against the live save.
+ const player=()=>typeof currentUser==='string'?currentUser:null;
+ const ticket=++visit,user=player(),id=CLOUD.id,epoch=CLOUD.epoch,online=CLOUD.on;
+ const current=()=>ticket===visit&&app.wanted&&!!S&&player()===user&&CLOUD.id===id&&
+  CLOUD.epoch===epoch&&CLOUD.on===online&&!CLOUD.signingOut&&!(typeof logout==='function'&&logout.inflight);
  app.entering=true;
  try{
   ensureDigimonBag();discardLegacyActivities();digimonSelect.value=partnerLine()||'';

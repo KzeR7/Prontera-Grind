@@ -2,6 +2,18 @@
 
 **Two different things looked like a dead button.** At startup, the recovery button received the click but its handler had never been installed. On the phone layout, the plaza's Field button was working, but the Quests chip received the tap instead. Neither finding depends on a browser name. We have not established which, if either, affected the reporting players.
 
+## v433: same-account cloud adoption during plaza initialization
+
+**Reproduced on `b370f72`** using the built v428 site, a disposable authenticated account and a held `assets/social/town/catalog.json` request. The runner called `cloudAdopt()` with the player's valid packed save and checked that `S` changed identity but the player, account ID, epoch and handbook did not. After releasing the asset, `entering` cleared with `wanted: true`, `visible: true`, `active: false` and the loading notice still visible. Returning a 503 instead left the same loading text rather than Field/retry instructions. Neither failure required a browser-specific workaround.
+
+**Fix:** validate the visit number, player, account ID, session epoch and login/logout state at completion. Read the *current* save to activate the existing renderer. The adopted object is not a new visit. No restart, additional timer, socket message or change to save ownership, Loadout or milestone rules.
+
+**Verified on v433** (`dist/index.html` SHA-256 `5063163ae4edbe31cca78ecb60a3e3abc2a5a42ab205ac5c336939485c3e20de`): 12/12 built-site Chromium 153.0.8010.0 cases passed. After adoption the successful visit rendered pixels and cleared the loading notice; after a 503, Field worked and re-entering rendered with one canvas. The full matrix includes desktop and touch Equipment → Loadout → select → Equip, both contexts' loss/restoration, delayed navigation, and engine/chat/storage failures. Scene-promise simulations separately cover ID, epoch and username changes, signing out, superseded visits and abandoned poker. These simulations are not counted as browser renders.
+
+Both adoption cases also passed in isolation, checking the successful renderer used the original canvas and the retry notice was visible. The separate Chromium First Adventure walkthrough completed at 1366×900 and 390×844, including pause/relogin, handbook, class choice, learning and combo assignment. The repository gate passed **250/250** sims/smokes in one sweep (no dependency skips), plus Pages preview and all three generated-asset checks. No assertion or delivery budget was relaxed.
+
+Firefox **not verified on v433**: the Playwright build 1572 downloads failed before TLS connection, no Firefox executable or apt candidate was available, and the Firefox runners stopped before opening a page. No inference about Firefox or Brave Shields from Chromium. The three progression benchmarks were executed against v433: all 42 gear, 21 encounter and 63 skill rows (before and after) match `b370f72`.
+
 ## Combined build: v428 (PR #259 on First Adventure)
 
 Target: `446106e` (main, First Adventure) + the browser recovery branch. Both previously used v427. Built HTML SHA-256: `24f1dc96d0c2518b4eaed08b82a863e835987ed99fce02400f2f67e291c67d49`. Same pinned engine bytes as below. Prior screenshots/results below this section describe v426/v427, **not** proof about v428.
