@@ -16,7 +16,11 @@ const test = (name, fn) => {
 console.log('world_chat_filter_sim: server-enforced World chat filter');
 
 test('blocks direct profanity, case variations, leetspeak, zero-width, diacritics, and spaced-out', () => {
-  assert.strictEqual(isWorldChatAllowed('fuck'), false);
+  assert.strictEqual(isWorldChatAllowed('fuck!'), false);
+  assert.strictEqual(isWorldChatAllowed('shit!!'), false);
+  assert.strictEqual(isWorldChatAllowed('(fuck)'), false);
+  assert.strictEqual(isWorldChatAllowed('f.u.c.k'), false);
+  assert.strictEqual(isWorldChatAllowed('f-u-c-k'), false);
   assert.strictEqual(isWorldChatAllowed('FUCK'), false);
   assert.strictEqual(isWorldChatAllowed('f\u200Bu\u200Cc\uFEFFk'), false);
   assert.strictEqual(isWorldChatAllowed('fück'), false);
@@ -68,17 +72,17 @@ test('SocialRoom rejects World profanity for both players and GMs, enforces cool
   assert.strictEqual(worldPersisted.length, 0);
   assert.ok(sent.some(m => m.type === 'error' && /3 seconds/.test(m.message)));
 
-  // GM is exempt from the World chat word filter
+  // GM is also subject to the same World chat policy
   sent.length = 0;
   now += 5000;
   room.receive(cGm, JSON.stringify({ type: 'chat', channel: 'world', body: 'sh1t happens' }));
-  assert.strictEqual(worldPersisted.length, 1);
-  assert.strictEqual(worldPersisted[0].body, 'sh1t happens');
+  assert.strictEqual(worldPersisted.length, 0);
+  assert.ok(sent.some(m => m.type === 'error' && m.message === REJECT_MESSAGE));
 
   // Clean Assassin class message succeeds
   sent.length = 0;
   now += 5000;
   room.receive(cPlayer, JSON.stringify({ type: 'chat', channel: 'world', body: 'LF party for Assassin class' }));
-  assert.strictEqual(worldPersisted.length, 2);
-  assert.strictEqual(worldPersisted[1].body, 'LF party for Assassin class');
+  assert.strictEqual(worldPersisted.length, 1);
+  assert.strictEqual(worldPersisted[0].body, 'LF party for Assassin class');
 });

@@ -1,7 +1,7 @@
 // workers/social/chat-filter.mjs — Deterministic, local World chat word filter.
 //
 // Policy scope:
-//   - Enforced on World chat (`channel === 'world'`) for non-GM players (GM/owner accounts are exempt).
+//   - Enforced on World chat (`channel === 'world'`) for all users including GM/owner.
 //   - Local (plaza) and Whisper (direct) chat are NOT filtered by this module.
 //   - Targets English profanity, slurs, and severe harassment (does not claim universal
 //     language coverage).
@@ -80,8 +80,12 @@ export function isWorldChatAllowed(text) {
   const cleaned = stripInvisibleAndDiacritics(text);
   if (!cleaned) return true;
 
-  // Tokenize on non-alphanumeric (keeping @, $, ! for leetspeak inside words).
-  const rawTokens = cleaned.split(/[^a-z0-9@$!]+/).filter(Boolean);
+  // Tokenize on non-alphanumeric (keeping @, $, ! for leetspeak inside words),
+  // then trim leading/trailing punctuation so "fuck!" or "shit!!" does not bypass.
+  const rawTokens = cleaned
+    .split(/[^a-z0-9@$!]+/)
+    .map(t => t.replace(/^[@$!]+|[@$!]+$/g, ''))
+    .filter(Boolean);
   if (!rawTokens.length) return true;
 
   const normTokens = rawTokens.map(deobfuscateToken);

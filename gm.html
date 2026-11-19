@@ -1027,7 +1027,7 @@ function showNav(tab) {
   document.querySelectorAll('.gm-pane').forEach(p => {
     const match = p.dataset.pane === tab;
     if (p.id === 'detail') {
-      p.classList.toggle('hide', !match || !window.SELECTED_PLAYER);
+      p.classList.toggle('hide', !match || !SEL);
     } else {
       p.classList.toggle('hide', !match);
     }
@@ -1039,10 +1039,10 @@ async function loadActivityLog() {
   if (!el) return;
   try {
     const d = await api('/gm/log');
-    const rows = Array.isArray(d.logs) ? d.logs : (Array.isArray(d.rows) ? d.rows : []);
+    const rows = Array.isArray(d.events) ? d.events : (Array.isArray(d.logs) ? d.logs : []);
     if (!rows.length) { el.textContent = 'No recent GM activity recorded.'; return; }
-    el.innerHTML = '<table><thead><tr><th>When</th><th>Actor</th><th>Action</th><th>Target</th><th>Detail</th></tr></thead><tbody>'
-      + rows.slice(0, 100).map(r => `<tr><td>${when(r.at || r.created_at)}</td><td>${esc(r.actor || '')}</td><td>${esc(r.action || '')}</td><td>${esc(r.target || '')}</td><td>${esc(r.detail || '')}</td></tr>`).join('')
+    el.innerHTML = '<table><thead><tr><th>When</th><th>Actor</th><th>Kind</th><th>Target</th><th>Detail</th></tr></thead><tbody>'
+      + rows.slice(0, 100).map(r => `<tr><td>${when(r.at || r.created_at)}</td><td>${esc(r.actor || '')}</td><td>${esc(r.kind || r.action || '')}</td><td>${esc(r.u || r.target || '')}</td><td>${esc(r.detail || '')}</td></tr>`).join('')
       + '</tbody></table>';
   } catch (e) {
     el.textContent = 'Could not load activity log: ' + e.message;

@@ -1,6 +1,8 @@
 // save_audit_calibration_sim.js — tests for calibrated save-audit rules, lump payouts, class changes, and evidence.
 import assert from 'node:assert/strict';
-import { auditStaticSave, auditSaveRates, RULE_VERSION, ruleCategory } from '../../functions/_lib/save-audit.js';
+import { auditStaticSave, auditSaveRates, auditAcceptedSave, RULE_VERSION, ruleCategory } from '../../functions/_lib/save-audit.js';
+import { DatabaseSync } from 'node:sqlite';
+import fs from 'node:fs';
 
 const test = (name, fn) => {
   try {
@@ -43,4 +45,46 @@ test('tampered structural & sustained rate fixtures still flag with structured e
   assert.strictEqual(kr.ruleVersion, RULE_VERSION);
   assert.strictEqual(kr.units, 'kills/hr');
   assert.strictEqual(kr.evidence.rawDelta, 49000);
+});
+
+test('30 accepted saves each adding 4,999 kills over 120s flag kill-rate via rolling window', async () => {
+  const db = new DatabaseSync(':memory:');
+  for (const f of fs.readdirSync('migrations').sort()) {
+    if (f.endsWith('.sql')) {
+      try { db.exec(fs.readFileSync('migrations/' + f, 'utf8')); } catch {}
+    }
+  }
+  const D = {
+    prepare(sql) {
+      const stmt = db.prepare(sql);
+      return {
+        bind(...args) {
+          return {
+            run: async () => stmt.run(...args),
+            first: async () => stmt.get(...args) || null,
+            all: async () => ({ results: stmt.all(...args) }),
+          };
+        },
+        run: async () => stmt.run(),
+        first: async () => stmt.get() || null,
+        all: async () => ({ results: stmt.all() }),
+      };
+    },
+  };
+  db.exec('PRAGMA foreign_keys = OFF;');
+  let savedAt = 1_700_000_000_000;
+  let kills = 1000;
+  let flagged = false;
+  for (let i = 0; i < 30; i++) {
+    const prev = { saved_at: savedAt, kills_total: kills, level: 120, zeny: 0, blob: '{}' };
+    savedAt += 120_000;
+    kills += 4999;
+    const res = await auditAcceptedSave(D, {
+      userId: 42, username: 'Botter', gm: 0,
+      prev, prevSave: {}, save: { lv: 120, kills, zeny: 0 },
+      pub: { kills, lv: 120, zeny: 0 }, savedAt,
+    });
+    if (res.flagged) flagged = true;
+  }
+  assert.strictEqual(flagged, true, '30 saves of +4,999 kills over 120s must flag kill-rate');
 });

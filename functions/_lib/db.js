@@ -729,6 +729,52 @@ export const saveAlertStatement = (db,{userId,kind,at,value,threshold,detail,buc
       observations=save_alerts.observations + (CASE WHEN excluded.last_seen - save_alerts.last_seen >= ? THEN 1 ELSE 0 END)`)
     .bind(Number(userId),String(kind),Number(at),Number(at),Number(value)||0,Number(threshold)||0,String(detail==null?'':detail).slice(0,400),Number(bucketMs)||300000);
 
+export async function saveAlertWithEvidence(db, { userId, kind, at, value, threshold, detail, ruleVersion = null, evidenceJson = null, bucketMs = 300000 }) {
+  try {
+    return await db.prepare(`INSERT INTO save_alerts(user_id, kind, first_seen, last_seen, value, threshold, detail, observations, rule_version, evidence_json)
+      VALUES(?,?,?,?,?,?,?,1,?,?)
+      ON CONFLICT(user_id, kind) DO UPDATE SET
+        last_seen=excluded.last_seen, value=MAX(save_alerts.value, excluded.value),
+        threshold=excluded.threshold, detail=excluded.detail,
+        rule_version=excluded.rule_version, evidence_json=excluded.evidence_json,
+        cleared_at=CASE WHEN save_alerts.cleared_at IS NOT NULL AND excluded.value <= save_alerts.value THEN save_alerts.cleared_at ELSE NULL END,
+        cleared_by=CASE WHEN save_alerts.cleared_at IS NOT NULL AND excluded.value <= save_alerts.value THEN save_alerts.cleared_by ELSE NULL END,
+        observations=save_alerts.observations + (CASE WHEN excluded.last_seen - save_alerts.last_seen >= ? THEN 1 ELSE 0 END)`)
+      .bind(
+        Number(userId), String(kind), Number(at), Number(at),
+        Number(value) || 0, Number(threshold) || 0,
+        String(detail == null ? '' : detail).slice(0, 400),
+        ruleVersion ? String(ruleVersion) : null,
+        evidenceJson ? String(evidenceJson).slice(0, 2000) : null,
+        Number(bucketMs) || 300000,
+      ).run();
+  } catch (e) {
+    if (String(e && e.message).includes('no such column')) {
+      return await saveAlertStatement(db, { userId, kind, at, value, threshold, detail, bucketMs }).run();
+    }
+    throw e;
+  }
+}
+
+export async function getAuditWindow(db, userId) {
+  try {
+    return await db.prepare(`SELECT window_start, last_at, acc_json FROM save_audit_windows WHERE user_id = ?`).bind(Number(userId)).first();
+  } catch {
+    return null;
+  }
+}
+
+export async function upsertAuditWindow(db, userId, windowStart, lastAt, accJson) {
+  try {
+    await db.prepare(`INSERT INTO save_audit_windows(user_id, window_start, last_at, acc_json)
+      VALUES(?,?,?,?)
+      ON CONFLICT(user_id) DO UPDATE SET window_start=excluded.window_start, last_at=excluded.last_at, acc_json=excluded.acc_json`)
+      .bind(Number(userId), Number(windowStart), Number(lastAt), String(accJson)).run();
+  } catch {
+    // Fail open if migration 0021 is not applied yet.
+  }
+}
+
 // Which rules already fired for this account (to notify the owner only the first time).
 // Cleared flags do not count: if the same rule fires again after a GM cleared it, the owner is
 // poked once more - the verdict covered the evidence that was reviewed, not the future.

@@ -458,14 +458,52 @@ export async function auditAcceptedSave(D, { userId, username, gm, prev, prevSav
       rates = auditSaveRates({ prev: prevView, next: nextView, elapsedMs, claimKills, credits });
     }
     violations.push(...rates);
+
+    // Bounded 1-hour rolling accumulation: catches repeated sub-threshold saves
+    // (e.g. 30 saves of +4,999 kills over 120s each = +149,970 kills/hr).
+    const win = await db.getAuditWindow(D, userId);
+    const ROLLING_MS = 3_600_000;
+    const prevStart = Number(prev.saved_at || savedAt);
+    let winStart = prevStart;
+    let acc = { kills: 0, zeny: 0, levels: 0, resources: {} };
+    if (win && (savedAt - Number(win.window_start)) <= ROLLING_MS) {
+      winStart = Number(win.window_start);
+      try { acc = JSON.parse(win.acc_json || '{}'); } catch {}
+      if (!acc.resources) acc.resources = {};
+    }
+    const gRows = (await db.grantsClaimedBetween(D, userId, prevStart - 120_000, savedAt + 120_000)).results;
+    const allCred = addCredits(claimPaid, creditsFromGrants(gRows));
+    const rawK = Math.max(0, floor(nextView.kills) - floor(prevView.kills));
+    const credK = Math.max(0, floor(claimKills)) + Math.max(0, floor(allCred && allCred.kills));
+    acc.kills = floor(acc.kills) + Math.max(0, rawK - credK);
+    const rawZ = Math.max(0, num(nextView.zeny) - num(prevView.zeny));
+    acc.zeny = num(acc.zeny) + Math.max(0, rawZ - floor(allCred && allCred.zeny));
+    await db.upsertAuditWindow(D, userId, winStart, savedAt, JSON.stringify(acc));
+
+    const winElapsed = Math.max(60_000, savedAt - winStart);
+    const winHours = winElapsed / 3_600_000;
+    if (!violations.some(v => v.kind === 'kill-rate') && acc.kills >= MIN_RATE_DELTA.kills && (acc.kills / winHours) > RATE_LIMITS.kills) {
+      violations.push({
+        kind: 'kill-rate', category: 'heuristic', ruleVersion: RULE_VERSION,
+        confidence: 'medium', units: 'kills/hr',
+        value: Math.round(acc.kills / winHours), threshold: RATE_LIMITS.kills,
+        evidence: { start: 0, end: acc.kills, rawDelta: acc.kills, credited: 0, unexplained: acc.kills, elapsedMs: winElapsed, rolling: true },
+        detail: `${acc.kills.toLocaleString('en-US')} unexplained kills accumulated over ${Math.round(winElapsed / 60000)} min`,
+      });
+    }
   }
   if (!violations.length) return { flagged: false };
 
   const at = savedAt;
   const known = new Set((await db.existingSaveAlertKinds(D, userId)).results.map(r => r.kind));
   for (const v of violations) {
-    await db.saveAlertStatement(D, { userId, kind: v.kind, at, value: v.value,
-      threshold: v.threshold, detail: v.detail, bucketMs: 300_000 }).run();
+    await db.saveAlertWithEvidence(D, {
+      userId, kind: v.kind, at, value: v.value,
+      threshold: v.threshold, detail: v.detail,
+      ruleVersion: v.ruleVersion || RULE_VERSION,
+      evidenceJson: v.evidence ? JSON.stringify(v.evidence) : null,
+      bucketMs: 300_000,
+    });
   }
   const fresh = violations.filter(v => !known.has(v.kind));
   if (fresh.length) {
