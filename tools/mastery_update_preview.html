@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mastery update · Horizon Haven preview</title>
+  <base href="/">
+  <link rel="stylesheet" href="assets/ui/fonts.css">
+  <link rel="stylesheet" href="assets/ui/mastery-titles.css?v=440">
+  <link rel="stylesheet" href="assets/social.css?v=440">
+  <link rel="stylesheet" href="assets/social-fishing.css?v=440">
+  <script src="assets/skill-icons-expanded.js?v=440"></script>
+  <script src="assets/mastery-titles.js?v=440"></script>
+  <script src="assets/player-buffs.js?v=440"></script>
+  <script src="assets/digimon/roster.js?v=440"></script>
+  <script src="assets/digimon-sanctuary.js?v=440"></script>
+  <script src="assets/social-fishing.js?v=440"></script>
+  <script src="assets/social-title-art.js?v=440"></script>
+  <style>
+    :root{color-scheme:dark;--bg:#0c131c;--surface:#151f2b;--edge:#31404e;--gold:#e3c390;--muted:#9aa9b9;--cream:#f4f0e8}
+    *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:radial-gradient(ellipse at 72% -13%,#303046 0,transparent 44%),radial-gradient(ellipse at 0 42%,#182b32 0,transparent 36%),var(--bg);color:var(--cream);font-family:'DM Sans',Arial,sans-serif;min-height:100vh}
+    button,input,select{font:inherit}button{cursor:pointer}button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid #f1d19a;outline-offset:3px}
+    .topbar{height:70px;display:flex;align-items:center;justify-content:space-between;gap:20px;max-width:1400px;margin:auto;padding:0 42px;border-bottom:1px solid #ffffff12}
+    .brand{display:flex;align-items:center;gap:12px;text-transform:uppercase;letter-spacing:.11em;font:800 12px Manrope,sans-serif}.brand-mark{display:grid;place-items:center;width:36px;height:36px;border:1px solid #b49464;border-radius:6px;color:var(--gold);font:18px Georgia,serif}.brand small{display:block;margin-top:3px;font:700 8px Manrope,sans-serif;letter-spacing:.24em;color:#8b9da8}
+    .top-note{display:flex;align-items:center;gap:9px;color:#aab9c4;font:700 9px Manrope,sans-serif;letter-spacing:.11em;text-transform:uppercase}.top-note i{width:6px;height:6px;border-radius:50%;background:#91d6b6;box-shadow:0 0 12px #91d6b6}
+    main{max-width:1400px;margin:auto;padding:50px 42px 90px}.hero{display:flex;align-items:end;justify-content:space-between;gap:30px;margin-bottom:31px}.eyebrow{color:#d5b584;font:800 10px Manrope,sans-serif;letter-spacing:.19em;text-transform:uppercase}.eyebrow span{color:#73979f;padding:0 8px}.hero h1{font:400 clamp(34px,4.2vw,56px)/1.02 Georgia,serif;letter-spacing:-.035em;margin:13px 0;color:#f3f0e9}.hero h1 em{font-weight:400;color:#dfbf87}.hero p{max-width:620px;margin:0;color:#adbac6;font:14px/1.65 'DM Sans',sans-serif}.hero-aside{max-width:230px;padding-left:19px;border-left:1px solid #b69b7055;color:#9cacb9;font:11px/1.55 'DM Sans',sans-serif}.hero-aside strong{display:block;margin-bottom:4px;color:#e9d3ac;font:700 10px Manrope,sans-serif;letter-spacing:.09em;text-transform:uppercase}
+    .navigation{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin-bottom:34px}.nav-card{position:relative;display:flex;align-items:center;gap:12px;text-align:left;min-height:82px;padding:15px 17px;border:1px solid #344151;border-radius:8px;background:#172331c9;color:#d9e3e7}.nav-card:hover{background:#1d2d3b}.nav-card[aria-selected=true]{border-color:#b99e71;background:linear-gradient(120deg,#41392f,#1b2934);box-shadow:inset 0 0 0 1px #a38a6233}.nav-icon{display:grid;place-items:center;width:42px;height:42px;flex:none;border:1px solid #5b6671;border-radius:6px;background:#101b26;color:#e3c38c;font:23px Georgia,serif}.nav-icon img{width:100%;height:100%;object-fit:cover;border-radius:5px}.nav-copy{min-width:0}.nav-copy small{display:block;color:#c3a67a;font:800 8px Manrope,sans-serif;letter-spacing:.12em;text-transform:uppercase}.nav-copy b{display:block;margin-top:4px;font:700 14px Manrope,sans-serif}.nav-copy span{display:block;margin-top:3px;color:#9faebb;font:11px 'DM Sans',sans-serif}.nav-arrow{margin-left:auto;color:#b4a17e;font-size:17px}
+    [hidden]{display:none!important}.panel-intro{display:flex;align-items:end;justify-content:space-between;gap:20px;margin-bottom:18px}.panel-intro h2{font:400 27px Georgia,serif;margin:8px 0;color:#f3eee4}.panel-intro p{margin:0;color:#a6b5c2;font:12px/1.6 'DM Sans',sans-serif}.pill{flex:none;padding:7px 10px;border:1px solid #58605d;border-radius:99px;color:#cfc2a6;background:#28312c;font:700 9px Manrope,sans-serif;letter-spacing:.08em;text-transform:uppercase}
+    .rank-context{display:grid;grid-template-columns:minmax(190px,.8fr) 2fr;gap:20px;align-items:center;padding:18px 20px;margin-bottom:14px;border:1px solid #364453;border-radius:8px;background:#111d28}.rank-context h3{font:400 18px Georgia,serif;margin:6px 0;color:#e9e6e0}.rank-context p{margin:0;color:#9eadb7;font-size:11px;line-height:1.5}.rank-strip{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.rank-mini{display:flex;align-items:center;gap:8px;min-width:0;padding:8px;border:1px solid #374858;border-radius:5px;background:#1b2935}.rank-mini img{width:32px;height:38px;object-fit:contain;mix-blend-mode:screen}.rank-mini div{min-width:0;flex:1}.rank-mini b,.rank-mini small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.rank-mini b{font:700 10px Manrope,sans-serif}.rank-mini small{margin-top:3px;color:#9eacb5;font-size:9px}.rank-mini .meter{height:3px;background:#0c141d;margin-top:6px;border-radius:5px}.rank-mini .meter i{display:block;height:100%;background:#d7b77e;border-radius:5px}
+    .world-preview{display:grid;grid-template-columns:minmax(0,1fr) minmax(240px,.8fr);gap:0;margin-bottom:14px;overflow:hidden;border:1px solid #566052;border-radius:8px;background:#15242a}.world-copy{align-self:center;padding:24px}.world-copy h3{margin:8px 0;color:#f0ede3;font:400 23px Georgia,serif}.world-copy p{max-width:420px;margin:0;color:#adbbb8;font:12px/1.65 'DM Sans',sans-serif}.world-copy a{display:inline-block;margin-top:12px;color:#e9d09e;font:700 10px Manrope,sans-serif;text-decoration:none}.world-copy a:hover{text-decoration:underline}
+    .world-scene{position:relative;min-height:205px;overflow:hidden;background:radial-gradient(ellipse at 50% 69%,#4d6d52 0,transparent 36%),linear-gradient(140deg,#203743,#263c31 55%,#142821)}.world-scene:before{content:'';position:absolute;left:50%;top:123px;width:114px;height:24px;transform:translateX(-50%);border:1px solid #c4d8ae44;border-radius:50%;background:#243d2b80}.world-actor{position:absolute;left:50%;top:17px;width:86px;height:120px;transform:translateX(-50%);overflow:hidden}.world-actor img{position:absolute;left:50%;top:-45px;width:200px;height:200px;max-width:none;transform:translateX(-50%);image-rendering:pixelated}.world-scene .hero-title{left:50%;top:130px}.world-empty{position:absolute;left:50%;top:150px;transform:translateX(-50%);color:#bdcabb;font:10px Manrope,sans-serif;white-space:nowrap}
+    .collection-wrap{padding:22px;border:1px solid #344150;border-radius:9px;background:#0d1721a8}.title-collection{font-family:'DM Sans',sans-serif}.title-collection .tc-copy p{font-family:'DM Sans',sans-serif}.title-collection .tc-footnote{font-family:'DM Sans',sans-serif}.preview-view-link{grid-column:2;justify-self:start;color:#e7cf9c;font:700 9px Manrope,sans-serif;text-decoration:none}.preview-view-link:hover{text-decoration:underline}
+    .catalog-tools{display:flex;align-items:end;gap:10px;flex-wrap:wrap;padding:16px;border:1px solid #344150;border-radius:8px;background:#141f2b}.catalog-tools label{display:grid;gap:6px;color:#bdc9d0;font:700 9px Manrope,sans-serif;letter-spacing:.09em;text-transform:uppercase}.catalog-tools input,.catalog-tools select{height:39px;min-width:220px;padding:0 12px;border:1px solid #465568;border-radius:5px;background:#0d1823;color:#f2eee5;font:12px 'DM Sans',sans-serif}.catalog-tools input{width:min(350px,100%)}.catalog-tools .result-count{margin-left:auto;align-self:center;color:#9aaeb9;font:11px 'DM Sans',sans-serif}
+    .art-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin-top:12px}.art-card{display:flex;align-items:center;gap:12px;min-height:87px;padding:12px;border:1px solid #334353;border-radius:7px;background:linear-gradient(125deg,#1b2937,#131e29)}.art-card img{width:54px;height:54px;flex:none;object-fit:cover;border:1px solid #657276;border-radius:6px}.art-card div{min-width:0}.art-card small{display:block;color:#d1b184;font:700 8px/1.3 Manrope,sans-serif;text-transform:uppercase;letter-spacing:.07em}.art-card b{display:block;margin:4px 0;color:#eef0ee;font:700 11px/1.3 Manrope,sans-serif}.art-card span{display:block;color:#8ea2b0;font:10px/1.3 'DM Sans',sans-serif}.no-results{grid-column:1/-1;color:#aabac4;padding:35px;text-align:center;border:1px dashed #425260;border-radius:7px}
+    .buff-layout{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(240px,.7fr);gap:12px}.field-preview{position:relative;min-height:340px;overflow:visible;border:1px solid #40505a;border-radius:9px;background:radial-gradient(ellipse at 50% 95%,#496047,transparent 49%),radial-gradient(ellipse at 34% 16%,#293e4e,transparent 40%),linear-gradient(145deg,#14222e,#1b342c 70%,#121f23)}.field-preview:before{content:'';position:absolute;inset:0;border-radius:9px;background:repeating-linear-gradient(155deg,transparent 0 65px,#ffffff08 66px 67px,transparent 68px 125px);pointer-events:none}.field-label{position:absolute;left:22px;top:20px;color:#d5d9d2;font:800 9px Manrope,sans-serif;letter-spacing:.15em;text-transform:uppercase}.field-label small{display:block;margin-top:5px;color:#91a8a1;font:10px 'DM Sans',sans-serif;letter-spacing:0;text-transform:none}.field-horizon{position:absolute;left:22px;bottom:24px;color:#c1caba;font:12px 'DM Sans',sans-serif}.field-horizon b{display:block;color:#f2eedf;font:18px Georgia,serif;margin-bottom:4px}
+    #hudBuffs.demo-strip{position:absolute;right:24px;bottom:31px;display:flex;gap:7px;justify-content:flex-end;z-index:3}.pbx{position:relative;width:42px;height:42px;display:grid;place-items:center;border:1px solid #95a078;border-radius:6px;background:#314835;box-shadow:0 2px 8px #0008;transition:transform .12s}.pbx:hover,.pbx:focus{transform:translateY(-2px)}.pbx img{width:100%;height:100%;object-fit:cover;border-radius:5px}.pbx .s{position:absolute;right:-5px;bottom:-6px;padding:1px 4px;border:1px solid #7a8665;border-radius:7px;background:#24372b;color:#f4deab;font:700 10px/1.1 'DM Sans',sans-serif;font-style:normal}.pbx-fly{position:absolute;right:0;bottom:calc(100% + 10px);z-index:9;width:215px;padding:9px 11px;border:1px solid #718467;border-radius:7px;background:#15251ff7;color:#e3e9da;box-shadow:0 7px 25px #07130d88;opacity:0;visibility:hidden;pointer-events:none;text-align:left;font:600 12px/1.4 'DM Sans',sans-serif}.pbx:hover .pbx-fly,.pbx:focus .pbx-fly{opacity:1;visibility:visible}.pbx-fly b{color:#ffe9a8}.pbx-fly i{font-style:normal;opacity:.75}
+    .buff-notes{padding:22px;border:1px solid #344150;border-radius:8px;background:#151f2b}.buff-notes h3{margin:9px 0 10px;font:400 22px Georgia,serif}.buff-notes p{color:#aab9c5;font:12px/1.65 'DM Sans',sans-serif}.buff-notes ul{padding-left:17px;color:#c8d2d7;font-size:11px;line-height:1.8}.restart{margin-top:10px;padding:10px 14px;border:1px solid #b89b70;border-radius:5px;background:#6a573a;color:#fff1d5;font:700 10px Manrope,sans-serif;letter-spacing:.05em;text-transform:uppercase}.buff-key{display:flex;gap:12px;margin-top:15px;color:#9cafb5;font-size:10px}.buff-key i{display:inline-block;width:7px;height:7px;margin-right:5px;border-radius:50%;background:#e2b680}.buff-key span+span i{background:#83c4a8}
+    .pet-showcase{margin-top:14px;padding:20px;border:1px solid #344150;border-radius:8px;background:#141f2b}.pet-showcase h3{margin:7px 0;color:#f0ede3;font:400 21px Georgia,serif}.pet-showcase p{margin:0 0 14px;color:#a6b5c2;font:11px/1.6 'DM Sans',sans-serif}.pet-showcase>a{display:inline-block;margin-top:13px;color:#e9d09e;font:700 10px Manrope,sans-serif;text-decoration:none}.pet-showcase>a:hover{text-decoration:underline}.pet-choices{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}.pet-choice{display:flex;align-items:center;gap:10px;min-width:0;padding:10px;text-align:left;border:1px solid #405064;border-radius:6px;background:#1b2937;color:#e8eef0}.pet-choice[aria-pressed=true]{border-color:#c5a77b;background:#3b3a31}.pet-choice img{width:46px;height:46px;flex:none;border-radius:4px}.pet-choice span{min-width:0}.pet-choice b,.pet-choice small{display:block}.pet-choice b{font:700 10px/1.3 Manrope,sans-serif}.pet-choice small{margin-top:4px;color:#9fb2b8;font:10px/1.3 'DM Sans',sans-serif}
+    .plaza-preview{display:grid;grid-template-columns:minmax(0,1fr) minmax(260px,.8fr);overflow:hidden;margin-bottom:18px;border:1px solid #556050;border-radius:9px;background:#15242a}.plaza-copy{padding:25px;align-self:center}.plaza-copy h3{margin:8px 0;color:#f1ede2;font:400 24px Georgia,serif}.plaza-copy p{max-width:440px;color:#adbbb8;font:12px/1.6 'DM Sans',sans-serif}.plaza-copy a,.plaza-section-head a{color:#e9d09e;font:700 10px Manrope,sans-serif;text-decoration:none}.plaza-copy a:hover,.plaza-section-head a:hover{text-decoration:underline}
+    .plaza-stage{display:flex;min-height:278px;align-items:center;justify-content:center;flex-direction:column;padding:18px;background:radial-gradient(ellipse at 50% 62%,#4d6d52 0,transparent 42%),linear-gradient(140deg,#203743,#263c31 55%,#142821)}.plaza-actor{position:relative;width:90px;height:106px;overflow:hidden}.plaza-actor img{position:absolute;left:50%;top:-55px;width:200px;height:200px;max-width:none;transform:translateX(-50%);image-rendering:pixelated}.plaza-lines{text-align:center}.plaza-name{display:inline-block;padding:2px 8px;border-radius:3px;background:#17252ddd;color:#fff;font:12px Arial,sans-serif}
+    .plaza-section-head{display:flex;align-items:end;justify-content:space-between;gap:12px;margin:26px 0 12px}.plaza-section-head small{color:#cfb07c;font:700 9px Manrope,sans-serif;letter-spacing:.14em;text-transform:uppercase}.plaza-section-head h3{margin:6px 0 3px;color:#f3f1ec;font:400 23px Georgia,serif}.plaza-section-head p{margin:0;color:#a6b6c1;font:11px/1.5 'DM Sans',sans-serif}.plaza-gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:8px}.plaza-pick{display:flex;min-width:0;min-height:96px;align-items:center;gap:10px;padding:9px;border:1px solid #344453;border-radius:7px;background:#17232e;color:#eaece9;text-align:left}.plaza-pick:hover{background:#1e303a}.plaza-pick[aria-pressed=true]{border-color:#d0b47f;box-shadow:inset 0 0 0 1px #d0b47f55;background:#33382f}.plaza-pick-art{display:grid;place-items:center;flex:none;width:48px;height:48px;overflow:visible;background:transparent}.plaza-pick-art img{display:block;min-width:0;min-height:0;max-width:100%;max-height:100%;width:100%;height:100%;object-fit:contain}.plaza-pick span:last-child{min-width:0}.plaza-pick b,.plaza-pick small{display:block;overflow-wrap:anywhere}.plaza-pick b{font:700 10px/1.35 Manrope,sans-serif}.plaza-pick small{margin-top:5px;color:#9eafb9;font:9px/1.3 'DM Sans',sans-serif;text-transform:capitalize}.plaza-reserve{margin-top:18px;padding:14px 16px;border:1px solid #40504e;border-radius:7px;background:#142329;color:#abbcb7;font:11px/1.6 'DM Sans',sans-serif}
+    @media(max-width:700px){.plaza-preview{grid-template-columns:1fr}.plaza-copy{padding:19px}.plaza-stage{min-height:250px}.plaza-gallery{grid-template-columns:repeat(2,minmax(0,1fr))}.plaza-pick{gap:7px;padding:7px}.plaza-pick-art{width:42px;height:42px}}
+    footer{max-width:1400px;margin:auto;padding:0 42px 28px;color:#708390;font:10px Manrope,sans-serif;letter-spacing:.05em}
+    @media(max-width:1000px){.art-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.rank-context{grid-template-columns:1fr}.pet-choices{grid-template-columns:repeat(2,minmax(0,1fr))}.hero-aside{display:none}}
+    @media(max-width:700px){.topbar{height:60px;padding:0 18px}.top-note{font-size:8px}.top-note .detail{display:none}main{padding:32px 18px 60px}.hero{margin-bottom:24px}.hero h1{font-size:37px}.hero p{font-size:12px}.navigation{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-bottom:26px}.nav-card{min-height:73px;display:block;padding:10px}.nav-icon{width:32px;height:32px;margin-bottom:7px;font-size:18px}.nav-copy b{font-size:11px}.nav-copy small{font-size:7px}.nav-copy span,.nav-arrow{display:none}.panel-intro{align-items:start;flex-direction:column;gap:10px}.rank-context{padding:15px}.rank-strip{grid-template-columns:1fr}.rank-mini img{width:28px;height:30px}.collection-wrap{padding:12px}.art-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.art-card{padding:9px;gap:8px}.art-card img{width:44px;height:44px}.catalog-tools label{flex:1;min-width:100%}.catalog-tools input,.catalog-tools select{width:100%;min-width:0}.catalog-tools .result-count{margin-left:0}.buff-layout{grid-template-columns:1fr}.field-preview{min-height:290px}.field-horizon{bottom:86px}footer{padding:0 18px 22px}}
+    @media(max-width:700px){.world-preview{grid-template-columns:1fr}.world-copy{padding:20px}.world-scene{min-height:195px}.pet-showcase{padding:15px}.pet-choice{gap:7px;padding:8px}.pet-choice img{width:39px;height:39px}}
+    @media(max-width:380px){.brand small{display:none}.nav-card{padding:8px}.nav-copy b{font-size:10px}.art-grid{grid-template-columns:1fr}.top-note{letter-spacing:.04em}.pet-choices{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+<header class="topbar"><div class="brand"><span class="brand-mark">✦</span><span>Horizon Haven<small>Mastery update</small></span></div><div class="top-note"><i></i> Interactive preview <span class="detail">· sample progress only</span></div></header>
+<main>
+  <div class="hero"><div><div class="eyebrow">A closer look <span>✦</span> v440</div><h1>A little more <em>legendary.</em></h1><p>Explore your new plaza title logos, full mastery symbols, and refreshed class and pet buff artwork.</p></div><div class="hero-aside"><strong>Just a preview</strong>Try the controls freely. This example uses sample progress and never touches your game save.</div></div>
+  <nav class="navigation" role="tablist" aria-label="Preview features">
+    <button class="nav-card" role="tab" id="tab-titles" aria-controls="panel-titles" aria-selected="false" data-panel="titles"><span class="nav-icon">✧</span><span class="nav-copy"><small>01 / Your legacy</small><b>Achievement titles</b><span>Progress, collect, equip</span></span><span class="nav-arrow">↗</span></button>
+    <button class="nav-card" role="tab" id="tab-art" aria-controls="panel-art" aria-selected="false" data-panel="art"><span class="nav-icon"><img src="assets/expanded-skill-icons/so_psychic.webp" alt=""></span><span class="nav-copy"><small>02 / New artwork</small><b>Skill icons</b><span>130 distinct class skills</span></span><span class="nav-arrow">↗</span></button>
+    <button class="nav-card" role="tab" id="tab-buffs" aria-controls="panel-buffs" aria-selected="false" data-panel="buffs"><span class="nav-icon">◷</span><span class="nav-copy"><small>03 / At a glance</small><b>Active buffs</b><span>Player + pet, together</span></span><span class="nav-arrow">↗</span></button>
+    <button class="nav-card" role="tab" id="tab-plaza" aria-controls="panel-plaza" aria-selected="true" data-panel="plaza"><span class="nav-icon"><img src="assets/social-title-icons/digi-first-partner.webp?v=440" alt=""></span><span class="nav-copy"><small>04 / New</small><b>Plaza titles</b><span>DigiPet + fishing logos</span></span><span class="nav-arrow">↗</span></button>
+  </nav>
+  <section id="panel-titles" role="tabpanel" aria-labelledby="tab-titles" hidden>
+    <div class="panel-intro"><div><div class="eyebrow">01 / Achievement titles</div><h2>A collection all your own.</h2><p>Earn cosmetic titles through your hunts, refinement, exploration and class mastery.</p></div><span class="pill">Interactive sample save</span></div>
+    <div class="world-preview" id="worldPreview"><div class="world-copy"><div class="eyebrow">On your character</div><h3>Wear your legacy into the field.</h3><p>Your equipped title and its complete symbol follow below your character. Equip a title below to change this example.</p><a href="#titleCollection">Choose an earned title ↓</a></div><div class="world-scene" aria-label="Illustrative field character"><div class="world-actor"><img src="assets/ui/eclipse-knight.png" alt=""></div><div id="demoHeroTitle" class="hero-title" aria-live="polite"><span class="ht-mark" id="demoHeroMark" aria-hidden="true"></span><span id="demoHeroText"></span></div><span class="world-empty" id="demoHeroEmpty" hidden>No title equipped</span></div></div>
+    <div class="rank-context"><div><div class="eyebrow">Mastery Index · Mob Index</div><h3>Progress here. Equip there.</h3><p>The existing rank ladder remains progress-only. Equip any earned title in the new Titles subtab; existing Index Crit bonuses stay unchanged.</p></div><div class="rank-strip" id="rankStrip" aria-label="Sample Index rank progress"></div></div>
+    <div class="collection-wrap" id="titleCollection"></div>
+  </section>
+  <section id="panel-art" role="tabpanel" aria-labelledby="tab-art" hidden>
+    <div class="panel-intro"><div><div class="eyebrow">02 / Expanded class skills</div><h2>Every skill gets its own look.</h2><p>Browse the 130 distinct crops selected from your supplied sheets to match each skill's subject and colour.</p></div><span class="pill">22 expanded classes</span></div>
+    <div class="catalog-tools"><label>Search skills<input id="artSearch" type="search" placeholder="Try a skill or visual subject"></label><label>Class<select id="classFilter"><option value="all">All expanded classes</option></select></label><span class="result-count" id="artCount"></span></div>
+    <div class="art-grid" id="artGrid"></div>
+  </section>
+  <section id="panel-buffs" role="tabpanel" aria-labelledby="tab-buffs" hidden>
+    <div class="panel-intro"><div><div class="eyebrow">03 / Active buffs</div><h2>The effects that are with you.</h2><p>Player skill buffs now sit beside pet buffs in the bottom-right field HUD.</p></div><span class="pill">Live example timers</span></div>
+    <div class="buff-layout"><div class="field-preview" id="buffField"><div class="field-label">Field HUD <small>Illustrative field, real buff presentation</small></div><div class="field-horizon"><b>Ready for the next encounter.</b>Hover or focus a buff to see its details.</div><div id="hudBuffs" class="demo-strip" aria-label="Example player and pet buffs"></div></div><aside class="buff-notes"><div class="eyebrow">A quieter kind of clarity</div><h3>At a glance, in the moment.</h3><p>Icons show the remaining seconds. Hover or keyboard-focus a tile for the skill, its effect and time left.</p><ul><li>Uses the active skill's own icon</li><li>Counts down from the effect's live timer</li><li>Disappears when the buff expires</li></ul><button type="button" class="restart" id="restartBuffs">Restart example buffs ↻</button><div class="buff-key"><span><i></i>Player skill</span><span><i></i>Pet skill</span></div></aside></div>
+    <div class="pet-showcase"><div class="eyebrow">Four refreshed pet buffs</div><h3>Choose a pet effect to preview.</h3><p>These four unused icons come from your supplied skill sheets. Choose one to see it in the example HUD above; normal pet stacking rules still apply.</p><div class="pet-choices" id="petChoices" role="group" aria-label="Preview a pet buff"></div><a href="#buffField">See the selected buff in the HUD ↑</a></div>
+  </section>
+  <section id="panel-plaza" role="tabpanel" aria-labelledby="tab-plaza">
+    <div class="panel-intro"><div><div class="eyebrow">04 / Social Hub titles</div><h2>Bring your story to the plaza.</h2><p>Choose a DigiPet or fishing title below to see its own new logo alongside your mastery title.</p></div><span class="pill">Interactive artwork review</span></div>
+    <div class="plaza-preview" id="plazaSample"><div class="plaza-copy"><div class="eyebrow">Together in Prontera</div><h3>Three titles, three stories.</h3><p>Mastery, fishing and DigiPet titles each keep their own line below your character. Select a design below to preview it here; select it again to remove it.</p><a href="#digiGallery">Explore DigiPet titles ↓</a></div><div class="plaza-stage" aria-label="Illustrative plaza character"><div class="plaza-actor"><img src="assets/ui/eclipse-knight.png" alt=""></div><div class="plaza-lines" aria-live="polite"><span class="plaza-name">Adventurer</span><small class="social-player-title" id="demoPlazaTitle"></small><small class="social-player-fish-title" id="demoPlazaFish"></small><small class="social-player-digi-title" id="demoPlazaDigi"></small></div></div></div>
+    <div class="plaza-section-head" id="digiGallery"><div><small>From the first supplied sheet</small><h3>DigiPet titles</h3><p>36 distinct gold-and-black icons. Select any title to try it on the sample character.</p></div><a href="#plazaSample">View character ↑</a></div><div class="plaza-gallery" id="digiChoices" role="group" aria-label="Preview DigiPet titles"></div>
+    <div class="plaza-section-head" id="fishingGallery"><div><small>From the second and third sheets</small><h3>Fishing titles</h3><p>20 distinct monochrome marks, one for each existing fishing title.</p></div><a href="#plazaSample">View character ↑</a></div><div class="plaza-gallery" id="fishingChoices" role="group" aria-label="Preview fishing titles"></div>
+    <div class="plaza-reserve">This preview makes every design selectable for review. In the game, titles still require their normal achievements. The complete source sheets, including the unused marks, are retained for future titles.</div>
+  </section>
+</main>
+<footer>HORIZON HAVEN &nbsp; / &nbsp; FOCUSED CHANGE PREVIEW &nbsp; / &nbsp; NO GAME SAVE IS MODIFIED</footer>
+<script>
+'use strict';
+const escapeHtml=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const ranks=[
+ {id:'field-initiate',name:'Field Initiate',xp:200},{id:'field-scout',name:'Field Scout',xp:1000},
+ {id:'midgard-vanguard',name:'Rune-Midgarts Vanguard',xp:3000},{id:'midgard-tracker',name:'Midgard Tracker',xp:10000},
+ {id:'dungeon-reaper',name:'Dungeon Reaper',xp:30000},{id:'rift-warden',name:'Rift Warden',xp:100000},
+ {id:'abyss-stalker',name:'Abyss Stalker',xp:250000},{id:'dark-lords-bane',name:"Dark Lord's Bane",xp:500000},
+ {id:'midgard-champion',name:'Champion of Midgard',xp:750000},{id:'valkyries-chosen',name:"Valkyrie's Chosen",xp:1000000}
+];
+const crit=[1,1,2,2,3,4,5,6,7,9];
+const classes={Swordman:{mj:50,tier:1},Knight:{mj:50,tier:2},'Lord Knight':{mj:50,tier:3},'Rune Knight':{mj:50,tier:4},Mage:{mj:50,tier:1}};
+const sample={indexXp:7500,kills:35840,mobKills:{'10:Memory of Thanatos':1470,'11:Ifrit':1,'0:Poring':1840},
+ eq:{weapon:{slot:'weapon',r:15},armor:{slot:'armor',r:7}},inv:[],jobs:{Swordman:{jl:50},Knight:{jl:50},'Lord Knight':{jl:50},'Rune Knight':{jl:18},Mage:{jl:20}},
+ mapClears:[true,true,true,false,false,false,false,false,false,false,false,false],cardIndex:{mastery:{'Poring Card':5,'Fabre Card':4}},base:{'Lord Knight':{lv:150}},lv:150,trial:{runs:5},equippedTitle:'mythic-edge'};
+PGTitles.sync(sample,classes);
+let titleFilter='all',selectedDigi='first-partner',selectedFish='dockhand';
+function renderPlaza(){
+  const title=PGTitles.find(sample.equippedTitle,ranks),valid=title&&PGTitles.unlocked(title,sample,classes);
+  const mastery=document.getElementById('demoPlazaTitle'),fish=document.getElementById('demoPlazaFish'),digi=document.getElementById('demoPlazaDigi');
+  const ft=PGSocialFishing.FISHING_TITLE_BY_ID[selectedFish],dt=PGDigimonSanctuary.DIGI_TITLE_BY_ID[selectedDigi];
+  mastery.hidden=!valid;mastery.innerHTML=valid?PGTitles.icon(title,true)+escapeHtml(title.name):'';
+  fish.hidden=!ft;fish.innerHTML=ft?PGSocialTitleArt.icon('fishing',ft.id,true)+escapeHtml(ft.name):'';fish.style.color=PGSocialFishing.titleColor(ft);
+  digi.hidden=!dt;digi.innerHTML=dt?PGSocialTitleArt.icon('digi',dt.id,true)+escapeHtml(dt.name):'';digi.style.color=PGDigimonSanctuary.digiTitleColor(dt);
+}
+function initPlazaChoices(kind,titles,host){
+  const value=()=>kind==='digi'?selectedDigi:selectedFish;
+  host.innerHTML=titles.map(t=>`<button type="button" class="plaza-pick" data-plaza-id="${escapeHtml(t.id)}" aria-pressed="${String(t.id===value())}"><span class="plaza-pick-art ${kind}">${PGSocialTitleArt.icon(kind,t.id)}</span><span><b>${escapeHtml(t.name)}</b><small>${escapeHtml(t.tier)}</small></span></button>`).join('');
+  host.addEventListener('click',event=>{const button=event.target.closest('[data-plaza-id]');if(!button)return;const next=value()===button.dataset.plazaId?null:button.dataset.plazaId;
+    if(kind==='digi')selectedDigi=next;else selectedFish=next;
+    for(const node of host.querySelectorAll('button'))node.setAttribute('aria-pressed',String(node.dataset.plazaId===next));
+    renderPlaza();
+  });
+}
+function renderTitles(){
+  const collection=document.getElementById('titleCollection');
+  collection.innerHTML=PGTitles.renderCollection(sample,classes,ranks,crit,titleFilter);
+  const title=PGTitles.find(sample.equippedTitle,ranks),valid=title&&PGTitles.unlocked(title,sample,classes);
+  const label=document.getElementById('demoHeroTitle');label.style.display=valid?'block':'none';
+  document.getElementById('demoHeroEmpty').hidden=!!valid;
+  document.getElementById('demoHeroMark').innerHTML=valid?PGTitles.icon(title,true):'';
+  document.getElementById('demoHeroText').textContent=valid?title.name:'';
+  const card=collection.querySelector('.tc-card.is-equipped');
+  if(card){const link=document.createElement('a');link.className='preview-view-link';link.href='#worldPreview';link.textContent='See below character ↑';card.append(link)}
+  renderPlaza();
+}
+function renderRanks(){document.getElementById('rankStrip').innerHTML=ranks.slice(1,4).map((rank,j)=>{
+  const i=j+1,done=sample.indexXp>=rank.xp,previous=ranks[i-1].xp,pct=done?100:Math.max(0,Math.min(100,(sample.indexXp-previous)/(rank.xp-previous)*100));
+  return `<div class="rank-mini">${PGTitles.icon(rank)}<div><b>${escapeHtml(rank.name)}</b><small>${done?'Rank earned':sample.indexXp.toLocaleString()+' / '+rank.xp.toLocaleString()+' XP'}</small><div class="meter"><i style="width:${pct}%"></i></div></div></div>`;
+}).join('');}
+document.getElementById('titleCollection').addEventListener('click',event=>{
+  const button=event.target.closest('button[data-a]');if(!button)return;
+  if(button.dataset.a==='titlefilter')titleFilter=button.dataset.v;
+  if(button.dataset.a==='titleequip'){
+    const id=button.dataset.v,title=PGTitles.find(id,ranks);
+    if(id==='none')sample.equippedTitle=null;else if(title&&PGTitles.unlocked(title,sample,classes))sample.equippedTitle=id;
+  }
+  renderTitles();
+});
+renderRanks();renderTitles();
+initPlazaChoices('digi',PGDigimonSanctuary.DIGI_TITLES,document.getElementById('digiChoices'));
+const rarityOrder=['common','uncommon','rare','legendary','mythical','secret'];
+initPlazaChoices('fishing',[...PGSocialFishing.FISHING_TITLES].sort((a,b)=>rarityOrder.indexOf(a.tier)-rarityOrder.indexOf(b.tier)||a.rank-b.rank),document.getElementById('fishingChoices'));
+
+const artwork=Object.entries(PGSkillIcons).filter(([,art])=>art.family==='expanded').map(([id,art])=>({id,...art}));
+const classFilter=document.getElementById('classFilter');
+for(const name of [...new Set(artwork.map(a=>a.from))].sort()){
+  const option=document.createElement('option');option.value=name;option.textContent=name;classFilter.append(option);
+}
+function renderArt(){
+  const term=document.getElementById('artSearch').value.trim().toLowerCase(),chosen=classFilter.value;
+  const rows=artwork.filter(a=>(chosen==='all'||a.from===chosen)&&(!term||[a.name,a.from,a.id,a.subject].some(x=>String(x).toLowerCase().includes(term))));
+  document.getElementById('artCount').textContent=rows.length+' of '+artwork.length+' skills';
+  document.getElementById('artGrid').innerHTML=rows.map(a=>`<article class="art-card"><img src="${escapeHtml(a.src)}" alt="" loading="lazy"><div><small>${escapeHtml(a.from)}</small><b>${escapeHtml(a.name)}</b><span>${escapeHtml(a.subject)}</span></div></article>`).join('')||'<div class="no-results">No matching skills. Try another search or class.</div>';
+}
+document.getElementById('artSearch').addEventListener('input',renderArt);classFilter.addEventListener('change',renderArt);renderArt();
+
+const demoSkills=[
+ {id:'cr_guard',n:'Auto Guard',type:'buff',text:'Chance to block incoming hits while attacking.'},
+ {id:'rb_platinum',n:'Platinum Alter',type:'buff',text:'Load platinum rounds: every skill hits harder for 8 seconds.'}
+];
+const demoBuffs={cr_guard:{key:'block',value:5,left:12},rb_platinum:{key:'damage',value:20,left:8}};
+const petExamples=[
+ {id:'warcry',name:'War Cry',short:'Player ATK +15%',desc:'Player ATK +15% for 30s, 60s cooldown. Never stacks with another pet, and cannot run next to MATK'},
+ {id:'arcane',name:'Arcane Blessing',short:'Player MATK +15%',desc:'Player MATK +15% for 30s, 60s cooldown. Never stacks with another pet, and cannot run next to ATK'},
+ {id:'siphon',name:'Blood Siphon',short:'Pet damage heals',desc:'For 30s, 0.5% of actual pet damage heals you; shared 2% Max HP/second ceiling. 60s cooldown; never stacks'},
+ {id:'vital',name:'Vital Aura',short:'Player Max HP +15%',desc:'Player Max HP +15% for 30s, 60s cooldown. Never stacks with another pet'}
+];
+let selectedPet=petExamples[0],demoStarted=performance.now(),buffInterval=null;
+const choices=document.getElementById('petChoices');
+choices.innerHTML=petExamples.map(p=>`<button type="button" class="pet-choice" data-pet-demo="${p.id}" aria-pressed="${p===selectedPet}"><img src="${escapeHtml(PGSkillIcons['pet_'+p.id].src)}" alt=""><span><b>${escapeHtml(p.name)}</b><small>${escapeHtml(p.short)}</small></span></button>`).join('');
+choices.addEventListener('click',event=>{const button=event.target.closest('[data-pet-demo]');if(!button)return;selectedPet=petExamples.find(p=>p.id===button.dataset.petDemo)||selectedPet;for(const node of choices.querySelectorAll('button'))node.setAttribute('aria-pressed',String(node===button));restartDemo()});
+const skillIcon=id=>`<img class="skill-art" src="${escapeHtml(PGSkillIcons[id].src)}" alt="">`;
+const petHtml=seconds=>{const p=selectedPet,detail='pet-buff-'+p.id+'-details';return `<span class="pbx" id="pet-buff-${p.id}" tabindex="0" role="status" aria-label="${escapeHtml(p.name+': '+p.desc)}" aria-describedby="${detail}"><img class="buff-art" data-buff="${p.id}" src="${escapeHtml(PGSkillIcons['pet_'+p.id].src)}" alt=""><i class="s">${seconds}</i><span class="pbx-fly" id="${detail}" role="tooltip"><b>${escapeHtml(p.name)}</b> <i>Poring · pet skill</i><br>${escapeHtml(p.desc)}<br><span class="time-left">${seconds}s left</span></span></span>`};
+function updateDemo(){
+  const host=document.getElementById('hudBuffs'),elapsed=(performance.now()-demoStarted)/1000;
+  const remain={cr_guard:Math.max(0,12-elapsed),rb_platinum:Math.max(0,8-elapsed)},pet=Math.max(0,30-elapsed);
+  for(const id of Object.keys(demoBuffs))demoBuffs[id].left=remain[id];
+  // Use the shipped player-buff renderer; patch existing tiles in place while the timers tick,
+  // so keyboard focus and the open tooltip do not flicker.
+  const box=document.createElement('div');box.innerHTML=petHtml(Math.ceil(pet))+PGPlayerBuffs.render(demoSkills,demoBuffs,{icon:skillIcon});
+  if(!pet)box.querySelector('#pet-buff-'+selectedPet.id)?.remove();
+  const desired=new Set([...box.children].map(node=>node.id));
+  for(const old of [...host.children])if(!desired.has(old.id))old.remove();
+  for(const fresh of [...box.children]){
+    const old=host.querySelector('#'+fresh.id);
+    if(!old){host.append(fresh);continue}
+    old.setAttribute('aria-label',fresh.getAttribute('aria-label'));
+    old.querySelector('.s').textContent=fresh.querySelector('.s').textContent;
+    const target=old.querySelector('.pbx-fly'),next=fresh.querySelector('.pbx-fly');
+    if(target.textContent!==next.textContent)target.innerHTML=next.innerHTML;
+  }
+}
+function restartDemo(){demoStarted=performance.now();document.getElementById('hudBuffs').replaceChildren();updateDemo();clearInterval(buffInterval);buffInterval=setInterval(updateDemo,200);}
+document.getElementById('restartBuffs').addEventListener('click',restartDemo);
+for(const button of document.querySelectorAll('[data-panel]'))button.addEventListener('click',()=>{
+  const selected=button.dataset.panel;
+  for(const tab of document.querySelectorAll('[data-panel]'))tab.setAttribute('aria-selected',String(tab===button));
+  for(const panel of document.querySelectorAll('[role=tabpanel]'))panel.hidden=panel.id!=='panel-'+selected;
+  if(selected==='buffs')restartDemo();else{clearInterval(buffInterval);buffInterval=null;}
+});
+</script>
+</body>
+</html>

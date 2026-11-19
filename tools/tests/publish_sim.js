@@ -68,6 +68,24 @@ t('native Class Tree icons ship exactly the requested encodings, byte for byte',
   for(const file of files)assert.deepStrictEqual(fs.readFileSync(path.join(out,'assets/ro_icons',file)),fs.readFileSync(path.join(root,'assets/ro_icons',file)));
 });
 
+t('expanded skills, pet buff crops and title symbols ship losslessly and are referenced by the live registries', () => {
+  const box={};require('vm').runInNewContext(fs.readFileSync(path.join(root,'assets/skill-icons-expanded.js'),'utf8'),box);
+  const art=Object.values(box.PGSkillIcons);assert.equal(art.filter(a=>a.family==='expanded').length,130);assert.equal(art.filter(a=>a.family==='pet').length,4);assert.equal(art.length,134);assert.equal(new Set(art.map(a=>a.src)).size,134);
+  for(const id of ['warcry','arcane','siphon','vital'])assert.equal(box.PGSkillIcons['pet_'+id].src,`assets/expanded-skill-icons/pet_${id}.webp`);
+  for(const a of art){const rel=a.src;assert.ok(/^assets\/expanded-skill-icons\/[a-z0-9_]+\.webp$/.test(rel));assert.deepStrictEqual(fs.readFileSync(path.join(out,rel)),fs.readFileSync(path.join(root,rel)),rel)}
+  for(let n=1;n<=50;n++){const rel='assets/title-symbols/'+String(n).padStart(2,'0')+'.webp';assert.deepStrictEqual(fs.readFileSync(path.join(out,rel)),fs.readFileSync(path.join(root,rel)),rel)}
+  for(const js of ['skill-icons-expanded.js','mastery-titles.js','player-buffs.js'])assert.ok(staticRefs.some(ref=>ref.startsWith('assets/'+js+'?')),'the real page must load '+js);
+});
+
+t('DigiPet and fishing title crops ship byte-for-byte while complete source sheets stay private to the repository', () => {
+  const art=require('../../assets/social-title-art.js');
+  const refs=[...Object.values(art.ART.digi),...Object.values(art.ART.fishing)];
+  assert.equal(refs.length,56);assert.equal(new Set(refs).size,56);
+  for(const rel of refs){assert.ok(/^assets\/social-title-icons\/(?:digi|fishing)-[a-z0-9-]+\.webp$/.test(rel));assert.deepStrictEqual(fs.readFileSync(path.join(out,rel)),fs.readFileSync(path.join(root,rel)),rel)}
+  assert.ok(staticRefs.some(ref=>ref.startsWith('assets/social-title-art.js?')),'the game loads its title art registry');
+  assert.ok(!fs.existsSync(path.join(out,'tools/social-title-icons')),'source sheets and unused art are not published');
+});
+
 t('the class skins the game points at are published (Updates/Sprite/)', () => {
   assert.ok(skinDir && skinFile, 'could not read the class-skin directory/file out of assets/class_skins_data.js');
   assert.strictEqual(path.normalize(skinDir), 'Updates/Sprite', 'class skins moved - build_site.sh must copy the new place too');
@@ -125,6 +143,13 @@ t('dev-only art does not ride along in the publish tree', () => {
     'mob preview art is dev-only');
   assert.ok(!fs.existsSync(path.join(out,'assets/Fountainfile/Prontera_Grand_Aetherwell_Preview.png')),
     'the Aetherwell preview render is dev-only reference material');
+  assert.ok(!fs.existsSync(path.join(out,'assets/expanded-skill-icons/catalog.json'))&&!fs.existsSync(path.join(out,'assets/title-symbols/catalog.json')),'art audit catalogs remain source-only');
+  // The game reads generated registries and the v3 roster, not these reference/build manifests.
+  // Keep their complete source copies for audits and future work, but don't publish redundant data.
+  for(const rel of ['assets/skill-icons/catalog.json','assets/digimon/index.json','assets/digimon/digidex-portraits.json','assets/equipment-icons/manifest.json','assets/equipment-icons/mythic-manifest.json']){
+    assert.ok(fs.existsSync(path.join(root,rel)),'source metadata retained: '+rel);
+    assert.ok(!fs.existsSync(path.join(out,rel)),'source-only metadata omitted: '+rel);
+  }
 });
 
 t('the published tree is small enough to stay honest', () => {
@@ -157,6 +182,12 @@ t('the published tree is small enough to stay honest', () => {
   // new optional group separately, while retaining the classic and combined ceilings.
   const classIconBytes=walk(path.join(out,'assets/ro_icons'));
   assert.ok(classIconBytes>0&&classIconBytes/1048576<0.3,'Class Tree icons exceed 0.3 MiB');
+  // New optional art is loaded on demand; preserve the classic and combined limits below.
+  const masteryArtBytes=walk(path.join(out,'assets/expanded-skill-icons'))+walk(path.join(out,'assets/title-symbols'));
+  assert.ok(masteryArtBytes>0&&masteryArtBytes/1048576<1.15,'expanded skill/title artwork exceeds its separate 1.15 MiB budget');
+  // The 56 new, demand-loaded plaza title crops are bounded separately; source sheets stay in tools/.
+  const socialTitleBytes=walk(path.join(out,'assets/social-title-icons'));
+  assert.ok(socialTitleBytes>0&&socialTitleBytes/1048576<0.3,'plaza title artwork exceeds its separate 0.3 MiB budget');
   // Illustrated Rune-Midgard World Atlas pack (v314): only requested when the player opens the
   // World Map window, budgeted separately at < 3.5 MiB (2.69 MiB measured) while still covered by
   // the combined runtime ceiling below.
@@ -207,7 +238,7 @@ t('the published tree is small enough to stay honest', () => {
   // haven-v432: 60.32, not 60.31. Main with haven-v427's guided first adventure measured 60.3085 MiB;
   // adding the Ascension N+/Forge work (PR #257) and the zero-ATK repair measured 60.3109 MiB. The same
   // measured source-byte step as haven-v424; no asset group grew (the RO-look icons are not shipped).
-  assert.ok((bytes-nativeBytes-socialBytes-endgameBytes-worldMapBytes-digimonBytes-fountainBytes-expandedBytes-expandedWardrobeBytes-roFxBytes-classIconBytes)/1048576 < 60.32, 'existing classic runtime assets exceed their 60.32 MiB budget');
+  assert.ok((bytes-nativeBytes-socialBytes-endgameBytes-worldMapBytes-digimonBytes-fountainBytes-expandedBytes-expandedWardrobeBytes-roFxBytes-classIconBytes-masteryArtBytes-socialTitleBytes)/1048576 < 60.32, 'existing classic runtime assets exceed their 60.32 MiB budget');
   assert.ok(expandedWardrobeBytes > 0 && expandedWardrobeBytes/1048576 < 4.5, 'lazy expanded-roster Wardrobe bodies exceed their separate 4.5 MiB budget (4.31 measured 2026-11-15)');
   assert.ok(expandedBytes > 0 && expandedBytes/1048576 < 3, 'lazy expanded-roster bodies exceed their separate 3 MiB budget (2.86 measured 2026-11-15, 44 bodies)');
   assert.ok(digimonBytes/1048576 < 40, 'lazy Digimon roster exceeds its separate 40 MiB budget');

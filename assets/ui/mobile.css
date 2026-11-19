@@ -309,9 +309,6 @@ html.pg-mobile #eclipseCompanions>#spd[hidden]{display:none!important}
 /* Floating name/label art keeps its colour but shrinks a step. */
 html.pg-mobile #tag{font-size:10px}
 html.pg-mobile #tag .bar{width:72px;height:6px}
-html.pg-mobile .hero-title{font-size:8px;padding:2px 7px;max-width:min(52vw,200px)}
-html.pg-mobile .hero-title .ht-mark,
-html.pg-mobile .hero-title .ui-icon{width:12px;height:12px}
 
 /* ── 3. Rail sheet (quest tracker + more destinations) ───────────────────── */
 

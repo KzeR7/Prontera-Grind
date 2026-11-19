@@ -99,6 +99,13 @@ rm -rf "$OUT/assets/wardrobe/v1" "$OUT/assets/wardrobe/v3" "$OUT/assets/wardrobe
 #                           base64 window.WEAPON_ART in assets/weapons_data.js
 #   weapons_manifest.json   build metadata for make_weapon_pack.py, never fetched
 rm -rf "$OUT/assets/weapons" "$OUT/assets/weapons_manifest.json"
+# Build/audit and reference metadata, not fetched by the game. The complete
+# source copies remain in the repository; runtime uses the generated JS registries
+# and the v3 Digimon roster instead. Retain the existing delivery ceilings.
+rm -f "$OUT/assets/expanded-skill-icons/catalog.json" "$OUT/assets/title-symbols/catalog.json" \
+  "$OUT/assets/skill-icons/catalog.json" "$OUT/assets/digimon/index.json" \
+  "$OUT/assets/digimon/digidex-portraits.json" "$OUT/assets/equipment-icons/manifest.json" \
+  "$OUT/assets/equipment-icons/mythic-manifest.json"
 rm -f "$OUT"/assets/mob_*.png
 # v360: the Aetherwell preview render is human reference material (2.7 MiB); the hub only ever
 # fetches assets/Fountainfile/Prontera_Grand_Aetherwell.glb itself.

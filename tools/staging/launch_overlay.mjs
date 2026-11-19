@@ -80,11 +80,11 @@ function roFxFiles() {
   return list;
 }
 
-// Every asset a packaged entry point loads by static tag. Trailing `?v=` cache-busters are
-// dropped; template-built URLs (`${...}`) are skipped because no single file answers them.
+// Every asset a packaged entry point loads by static script/image or stylesheet tag. Trailing
+// `?v=` cache-busters are dropped; template-built URLs are skipped because no single file answers them.
 export function assetRefs(html) {
   const refs = new Set();
-  for (const [, src] of html.matchAll(/\bsrc="(assets\/[^"]*)"/g)) {
+  for (const [, src] of html.matchAll(/\b(?:src|href)="(assets\/[^"]*)"/g)) {
     const rel = src.split('?')[0];
     if (!rel.includes('${') && !rel.endsWith('/')) refs.add(rel);
   }
@@ -116,6 +116,28 @@ export function overlayFiles(html) {
   });
   // The manifest rides with the pack it describes.
   need(fishRoot, [...fishFiles, 'MANIFEST.json'], 'pond fish', out);
+  // The expanded-skill/pet and mastery-title icons are dynamic URLs, not script tags.
+  // Include their checked source catalogs in the staging source tree; build_site omits
+  // those catalogs from the deployed site while keeping every named lossless crop.
+  for (const dir of ['assets/expanded-skill-icons/', 'assets/title-symbols/']) {
+    const catalog = json(dir + 'catalog.json');
+    const names = Object.keys(catalog.assets || {});
+    if (catalog.version !== 1 || names.some(name => !/^[a-z0-9_]+\.webp$/.test(name)))
+      throw Error('Invalid title/skill art catalog: ' + dir);
+    need(dir, [...names, 'catalog.json'], 'title/skill art', out);
+  }
+  // Social title paths are a generated whitelist. Derive its files from exactly
+  // what the client can select instead of relying on a second drifting hand list.
+  const socialArt = read('assets/social-title-art.js').match(/const ART=(\{[^\n]*\});\n/);
+  if (!socialArt) throw Error('Social title art registry is missing its whitelist');
+  const art = JSON.parse(socialArt[1]);
+  const socialFiles = [...Object.values(art.digi || {}), ...Object.values(art.fishing || {})];
+  const socialRoot = 'assets/social-title-icons/';
+  if (!Object.keys(art.digi || {}).length || !Object.keys(art.fishing || {}).length ||
+      new Set(socialFiles).size !== socialFiles.length ||
+      socialFiles.some(rel => typeof rel !== 'string' || !/^assets\/social-title-icons\/(?:digi|fishing)-[a-z0-9-]+\.webp$/.test(rel)))
+    throw Error('Invalid Social title art whitelist');
+  need(socialRoot, socialFiles.map(rel => rel.slice(socialRoot.length)), 'Social title art', out);
   out.push(...itemIcons(html));
   const unique = [...new Set(out)].sort();
   for (const rel of unique) if (!fs.existsSync(path.join(root, rel))) throw Error('Overlay file missing: ' + rel);
