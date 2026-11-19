@@ -8,7 +8,7 @@
 import { currentUser, isGm } from '../../_lib/auth.js';
 import { json, guard, unauth } from '../../_lib/http.js';
 import * as db from '../../_lib/db.js';
-import { AUDIT_LABELS, rateLabel } from '../../_lib/save-audit.js';
+import { AUDIT_LABELS, rateLabel, auditEvidenceFor } from '../../_lib/save-audit.js';
 
 export const onRequestGet = guard(async ({ request, env }) => {
   const user = await currentUser(request, env.DB);
@@ -27,6 +27,7 @@ export const onRequestGet = guard(async ({ request, env }) => {
     user_id: r.user_id,
     username: r.username,
     kind: r.kind,
+      ...auditEvidenceFor(r),
     label: r.kind && r.kind.startsWith('rate:') ? rateLabel(r.kind) : (AUDIT_LABELS[r.kind] || r.kind || ''),
     first_seen: r.first_seen,
     last_seen: r.last_seen,

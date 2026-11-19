@@ -29,7 +29,7 @@ import { json, guard, readJson, fail } from '../../_lib/http.js';
 import { checkGrant, checkAnnouncement, GRANT_KINDS, checkSaveBlob, publicFields, savedElsewhere } from '../../_lib/validate.js';
 import { unpackSave, packSave, isPacked } from '../../_lib/save-codec.js';
 import { inspectSave, giftPayload, equipmentPayload, systemsPayload } from '../../_lib/gm-tools.js';
-import { AUDIT_LABELS, rateLabel } from '../../_lib/save-audit.js';
+import { AUDIT_LABELS, rateLabel, auditEvidenceFor } from '../../_lib/save-audit.js';
 import { GM_CATALOG } from '../../_lib/gm-catalog.js';
 import * as db from '../../_lib/db.js';
 
@@ -69,6 +69,7 @@ async function loadAccount(D, id) {
     // show the verdict, who gave it and when - and offer to reopen it.
     alerts: (await db.saveAlertsFor(D, id)).results.map(a => ({
       kind: a.kind,
+      ...auditEvidenceFor(a),
       label: a.kind && a.kind.startsWith('rate:') ? rateLabel(a.kind) : (AUDIT_LABELS[a.kind] || a.kind),
       firstSeen: a.first_seen, lastSeen: a.last_seen, value: a.value,
       threshold: a.threshold, detail: a.detail || '', observations: a.observations,

@@ -37,6 +37,9 @@ main{display:grid;grid-template-columns:200px 1fr;gap:14px;padding:14px;align-it
 .gm-nav button:hover{background:#2a2014;color:var(--ink)}
 .gm-nav button.on{background:var(--gold);color:#221a12;border-color:var(--gold)}
 @media(max-width:820px){.gm-nav{flex-direction:row;flex-wrap:wrap;position:static;gap:6px}.gm-nav button{flex:1 1 auto;text-align:center;min-height:40px}}
+#activitybody,#auditlist,#tabbody{overflow-x:auto}
+.audit-table{min-width:680px}
+.audit-evidence{min-width:210px;white-space:normal}
 .gm-content{display:flex;flex-direction:column;gap:12px;min-width:0}
 .summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}
 .danger-zone{border:1px solid var(--bad);background:#261414;border-radius:6px;padding:10px;margin-top:12px}
@@ -208,13 +211,13 @@ tr:hover{background:#2a2014;cursor:pointer}
     <p class="small">The server audits every accepted save on its own — no one has to be watching the game. It breaks a flag into two kinds: <b>impossible</b> (a stat above the level cap, more stat points than any level can earn, an over-cap refine) and <b>too fast</b> (kills, levels, Zeny or materials gained since the previous sync faster than the game itself can pay out, with GM gifts and offline claims credited back). Flags are REVIEW-ONLY: nothing here rejects a save or bans an account, and a first-time flag also mails the owner in-game. Clearing is the verdict: it removes the ⚠ marker but keeps the evidence, and reopens by itself if the rule fires again. Cross-check Gifts and History before acting.</p>
     <div id="auditlist" class="small">Loading…</div>
   </section>
-  </div>
 
   <section class="card gm-pane hide" id="activitycard" data-pane="activity">
     <h2>GM Activity Log</h2>
     <div id="activitybody" class="small">Loading…</div>
   </section>
   <section id="detail" class="card hide gm-pane" data-pane="players"></section>
+  </div>
 </main>
 
 <div id="toast"></div>
@@ -368,9 +371,9 @@ async function loadAudit() {
     const d = await api('/gm/audit');
     $('audit-count').textContent = d.alerts.length ? '(' + d.alerts.length + ')' : '';
     box.innerHTML = d.alerts.length
-      ? `<table><thead><tr><th>Account</th><th>Flag</th><th>When</th></tr></thead><tbody>` +
+      ? `<table class="audit-table"><thead><tr><th>Account</th><th>Flag</th><th>When</th></tr></thead><tbody>` +
         d.alerts.map(a => `<tr><td><button type="button" data-audit-player="${a.user_id}">${esc(a.username)}</button></td>` +
-          `<td>${esc(a.label)}${a.threshold ? ` <span class="small">(limit ${nfmt(a.threshold)}, saw ${nfmt(Math.round(a.value))})</span>` : ''}<br><span class="small">${esc(a.detail || '')}</span></td>` +
+          `<td>${esc(a.label)}${a.threshold ? ` <span class="small">(limit ${nfmt(a.threshold)}, saw ${nfmt(Math.round(a.value))})</span>` : ''}<br><span class="small">${esc(a.detail || '')}</span>${auditEvidenceMarkup(a)}</td>` +
           `<td class="small">${esc(when(a.last_seen))}<br>${nfmt(a.observations)} observation${a.observations === 1 ? '' : 's'}</td></tr>`).join('') +
         `</tbody></table>`
       : 'No flags recorded.';
@@ -453,14 +456,23 @@ $('spawnmvp').onclick=async()=>{
 // passed in. The first cut appended that cell by patching a closing row tag into a row template that
 // never closed the row, so the match failed and the button silently vanished from every flag; a
 // test that only grepped the source for `data-act="flagclear"` could not see it.
+function auditEvidenceMarkup(a) {
+  const e = a.evidence;
+  if (!e) return '';
+  const number = key => typeof e[key] === 'number' ? nfmt(e[key]) : 'Unavailable';
+  return `<details class="small audit-evidence"><summary>Evidence${a.ruleVersion ? ' · ' + esc(a.ruleVersion) : ''}</summary>` +
+    `<div>Raw gain: ${esc(number('rawDelta'))} · Credited: ${esc(number('credited'))} · Unexplained: ${esc(number('unexplained'))}</div>` +
+    `<div>Elapsed: ${typeof e.elapsedMs === 'number' ? esc(nfmt(e.elapsedMs / 60000)) + ' min' : 'Unavailable'} · Threshold: ${esc(nfmt(a.threshold || 0))} ${esc(a.units || '')}</div>` +
+    `<div>${e.rolling ? 'Accumulated window' : 'Between accepted saves'} · ${esc(a.category || '')}</div></details>`;
+}
 function saveAuditMarkup(alerts) {
   const openFlags = alerts.filter(a => !a.cleared), clearedFlags = alerts.filter(a => a.cleared);
-  const cells = (a, whenText) => `<td>${esc(a.label)}</td><td>${esc(nfmt(a.threshold||0))} / ${esc(nfmt(Math.round(a.value||0)))}</td><td>${esc(a.detail||'')}</td><td class="small">${whenText}</td>`;
+  const cells = (a, whenText) => `<td>${esc(a.label)}</td><td>${esc(nfmt(a.threshold||0))} / ${esc(nfmt(Math.round(a.value||0)))}</td><td>${esc(a.detail||'')}${auditEvidenceMarkup(a)}</td><td class="small">${whenText}</td>`;
   const seen = a => `${esc(when(a.firstSeen))} → ${esc(when(a.lastSeen))}<br>${nfmt(a.observations)} observation${a.observations===1?'':'s'}`;
   const row = (a, whenText, verdict) => `<tr>${cells(a, whenText)}${verdict}</tr>`;
-  const openTable = `<table><thead><tr><th>Rule broken</th><th>Limit / saw</th><th>Detail</th><th>First / last seen</th><th></th></tr></thead><tbody>${openFlags.map(a=>row(a, seen(a), `<td><button type="button" data-act="flagclear" data-kind="${esc(a.kind)}">Looks fine — clear</button></td>`)).join('')}</tbody></table>`;
+  const openTable = `<table class="audit-table"><thead><tr><th>Rule broken</th><th>Limit / saw</th><th>Detail</th><th>First / last seen</th><th></th></tr></thead><tbody>${openFlags.map(a=>row(a, seen(a), `<td><button type="button" data-act="flagclear" data-kind="${esc(a.kind)}">Looks fine — clear</button></td>`)).join('')}</tbody></table>`;
   const clearedTable = clearedFlags.length
-    ? `<h3 class="small">Cleared after review — kept as history, reopenable</h3><table><thead><tr><th>Rule broken</th><th>Limit / saw</th><th>Detail</th><th>Cleared</th><th></th></tr></thead><tbody>${clearedFlags.map(a=>row(a, `${esc(when(a.clearedAt))}${a.clearedBy?' · '+esc(a.clearedBy):''}`, `<td><button type="button" data-act="flagreopen" data-kind="${esc(a.kind)}">Reopen</button></td>`)).join('')}</tbody></table>`
+    ? `<h3 class="small">Cleared after review — kept as history, reopenable</h3><table class="audit-table"><thead><tr><th>Rule broken</th><th>Limit / saw</th><th>Detail</th><th>Cleared</th><th></th></tr></thead><tbody>${clearedFlags.map(a=>row(a, `${esc(when(a.clearedAt))}${a.clearedBy?' · '+esc(a.clearedBy):''}`, `<td><button type="button" data-act="flagreopen" data-kind="${esc(a.kind)}">Reopen</button></td>`)).join('')}</tbody></table>`
     : '';
   if (!alerts.length) return `<p class="small">No save-audit flags on this account — its last accepted saves are within the game's own limits.</p>`;
   if (!openFlags.length) return `<p class="small">Every save-audit flag on this account has been reviewed and cleared. A cleared rule reopens by itself if it fires again.</p>${clearedTable}`;
