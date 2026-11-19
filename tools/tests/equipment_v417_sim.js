@@ -66,16 +66,18 @@ t('the normal route is untouched - it still carries the shipped seven only',()=>
   }
 });
 
-t('both Ascension maps drop a real shelf for all fourteen families',()=>{
-  // haven-v432 (PR #257 design): the shelf is weapons only - fourteen N+ families, no armour or accessories.
+t('both Ascension maps drop a real shelf for the seven new weapon families only',()=>{
+  // haven-v437 (owner): nightmare weapons don't need to be repeated on Ascension;
+  // Ascension drops only the new weapon families that don't drop in nightmare.
   for(const m of [10,11]){
     for(const l of [1,4]){
       const pool=ev(`gearPool(${m},${l})`);
-      assert.strictEqual(pool.length,14,'map '+m+' stage '+l+' shelf size');
+      assert.strictEqual(pool.length,7,'map '+m+' stage '+l+' shelf size');
       assert.ok(pool.every(x=>!SLOTK.includes(x.k)),'map '+m+' stage '+l+' drops weapons only');
       const fams=new Set(pool.filter(x=>!SLOTK.includes(x.k)).map(x=>x.k));
-      assert.strictEqual(fams.size,14,'map '+m+' stage '+l+' must carry all 14 families, got '+fams.size);
-      [...SHIPPED,...NEW].forEach(k=>assert.ok(fams.has(k),'map '+m+' missing '+k));
+      assert.strictEqual(fams.size,7,'map '+m+' stage '+l+' must carry 7 new families, got '+fams.size);
+      NEW.forEach(k=>assert.ok(fams.has(k),'map '+m+' missing '+k));
+      SHIPPED.forEach(k=>assert.ok(!fams.has(k),'map '+m+' must not repeat nightmare weapon '+k));
     }
   }
 });
@@ -88,32 +90,36 @@ t('both Ascension maps drop N+ on every stage; Mythic is Forge-only',()=>{
   assert.strictEqual(ev('SECN[6]'),'Mythic gear','the item card must have a name for section 6');
 });
 
-t('every class has a weapon of its own family on every Ascension field',()=>{
+t('every expanded class has a weapon of its own family on every Ascension field',()=>{
+  // haven-v437 (owner): Ascension maps drop new weapons that don't drop in Nightmare;
+  // classes using the 7 expanded families find their weapons here.
   for(const m of [10,11])for(const l of [1,4]){
-    // (JSON round-trip: the array comes from another realm, so compare by value, not identity)
     const missing=JSON.parse(ev(`JSON.stringify((()=>{const p=gearPool(${m},${l}).filter(x=>!${JSON.stringify(SLOTK)}.includes(x.k));
-      return Object.entries(CLASSES).filter(([n,c])=>c.wt&&!p.some(x=>c.wt.includes(x.k))).map(([n])=>n)})())`));
+      return Object.entries(CLASSES).filter(([n,c])=>c.wt&&c.wt.some(w=>${JSON.stringify(NEW)}.includes(w))&&!p.some(x=>c.wt.includes(x.k))).map(([n])=>n)})())`));
     assert.equal(missing.length,0,'map '+m+' stage '+l+' leaves these classes without a weapon: '+missing.join(', '));
   }
 });
 
-t('the whole weapon budget per kill is the Nightmare table, split across the families',()=>{
+t('Ascension mob weapon drop rate is 0.08% per family, 0.56% total',()=>{
+  // haven-v437 (owner): mob drops readjusted to 0.08% per weapon
   for(const m of [10,11])for(const l of [1,4]){
-    const total=ev(`fieldOf(${m},${l}).mobs[0].drops.filter(([T])=>!${JSON.stringify(SLOTK)}.includes(T.k)).reduce((a,[,c])=>a+c,0)`);
-    const want=0.25;   // haven-v432 (PR #257 design): FIELD_GEAR_NM[0] halved (NMPLUS_DROP), since every stage is N+
-    assert.ok(Math.abs(total-want)<1e-9,'map '+m+' stage '+l+' weapon budget '+total+' != '+want);
+    const drops=ev(`fieldOf(${m},${l}).mobs[0].drops.filter(([T])=>!${JSON.stringify(SLOTK)}.includes(T.k))`);
+    assert.strictEqual(drops.length,7,'7 weapon families on mob');
+    assert.ok(drops.every(([,c])=>c===0.08),'every weapon drops at 0.08%');
+    const total=drops.reduce((a,[,c])=>a+c,0);
+    assert.ok(Math.abs(total-0.56)<1e-9,'total weapon rate 0.56%');
   }
-  // and no family is unreachable: the split covers all fourteen
   const covered=ev(`(()=>{const f=fieldOf(10,1),s=new Set();
     f.mobs.forEach(mm=>mm.drops.forEach(([T])=>{if(!${JSON.stringify(SLOTK)}.includes(T.k))s.add(T.k)}));return s.size})()`);
-  assert.strictEqual(covered,14,'every family must be reachable from a regular mob');
+  assert.strictEqual(covered,7,'every new family must be reachable from a regular mob');
 });
 
 t('Ascension mobs and MVPs actually roll gear, and still pay materials',()=>{
   for(const m of [10,11])for(let l=1;l<=5;l++){
     assert.ok(ev(`fieldOf(${m},${l}).mobs.every(x=>x.drops.length>0)`),'map '+m+' stage '+l+' mobs carry gear');
     if(l===5){
-      assert.strictEqual(ev(`fieldOf(${m},5).boss.drops.length`),14,'the MVP lists its whole shelf');
+      assert.strictEqual(ev(`fieldOf(${m},5).boss.drops.length`),7,'the MVP lists its whole shelf');
+      assert.ok(ev(`fieldOf(${m},5).boss.drops.every(([,c])=>c===0.11)`),'MVP weapon drops remain at 0.11%');
       assert.equal(ev(`!!fieldOf(${m},5).boss.mat`),true,'and still pays a Forge material');
     }
   }
@@ -185,11 +191,12 @@ t('the kin rename never mints a new-family N+ on a Nightmare map',()=>{
 t('on Ascension the kin rename still produces the real N+ pieces',()=>{
   const expanded=JSON.parse(ev('JSON.stringify([...EXPANDED_LINE])'));
   let nplus=0,demoted=[];
+  const sword={k:'sword',n:'Cataclysm Saber',sec:5,tier:4};
   for(const cls of expanded){
     const sex=/Dancer|Gypsy/.test(cls)?'f':'m';
-    for(const m of [10,11])for(const it of JSON.parse(ev(`JSON.stringify(gearPool(${m},5).filter(x=>x.sec>=5))`))){
-      const out=JSON.parse(ev(`JSON.stringify(kinDrop(${JSON.stringify(it)},${JSON.stringify(cls)},${JSON.stringify(sex)},${m}))`));
-      if(!NEW.includes(out.k)||out.k===it.k)continue;
+    for(const m of [10,11]){
+      const out=JSON.parse(ev(`JSON.stringify(kinDrop(${JSON.stringify(sword)},${JSON.stringify(cls)},${JSON.stringify(sex)},${m}))`));
+      if(!NEW.includes(out.k)||out.k===sword.k)continue;
       nplus++;
       if(out.sec<5)demoted.push(cls+' -> '+out.n);
     }
