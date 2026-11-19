@@ -921,13 +921,14 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="preload" href="assets/ui/fonts/font-5.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-6.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-7.ttf" as="font" type="font/ttf" crossorigin>
-<link rel="stylesheet" href="assets/ui/eclipse.css?v=426">
-<link rel="stylesheet" href="assets/ui/mobile.css?v=426">
+<link rel="stylesheet" href="assets/ui/eclipse.css?v=427">
+<link rel="stylesheet" href="assets/ui/mobile.css?v=427">
 <script src="assets/ui/mobile.js?v=274"></script>
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
-<link rel="stylesheet" href="assets/social.css?v=426">
+<link rel="stylesheet" href="assets/social.css?v=427">
 <link rel="stylesheet" href="assets/social-battle.css?v=393">
-  <link rel="stylesheet" href="assets/social-fishing.css?v=426"><link rel="stylesheet" href="assets/friends.css?v=273">
+  <link rel="stylesheet" href="assets/social-fishing.css?v=427"><link rel="stylesheet" href="assets/friends.css?v=273">
+<link rel="stylesheet" href="assets/adventure-guide.css?v=427">
 </head>
 <body>
 <div id="loginOverlay"><div class="eclipse-login-world" aria-hidden="true"></div><header class="eclipse-login-header"><a href="./" class="eclipse-brand"><span>HH</span><b>HORIZON HAVEN<small>YOUR IDLE ADVENTURE</small></b></a><div class="eclipse-palettes" role="group" aria-label="Interface palette"><button type="button" data-palette="moonstone">Moonstone</button><button type="button" data-palette="aurora">Aurora</button><button type="button" data-palette="ember">Ember</button></div></header><main class="eclipse-login-layout"><section class="login-brand"><div class="login-eyebrow">A WORLD WORTH RETURNING TO</div><h1>Your next <br>chapter <em>awaits.</em></h1><p>Explore a world beyond the horizon.<br>Collect rare gear, master every class, and build your haven.</p><div class="eclipse-login-art"><img src="assets/ui/eclipse-knight.png" alt="Lord Knight ready for adventure"><span>01 / PRONTERA<small>THE JOURNEY BEGINS HERE</small></span><div><img src="assets/equipment-icons/1142.png" alt=""><span>YOUR NEXT UPGRADE<small>Somewhere out there.</small></span></div></div><div class="login-footnote">EXPLORE · GROW · CONQUER</div></section><div class="login-card"><div class="eclipse-access">ADVENTURER ACCESS <span>◇</span></div><h2 id="authHeading">Welcome back.</h2><p class="login-intro" id="authIntro">Your adventure is right where you left it.</p><div class="atabs" id="authTabs"><button type="button" id="tabLogin" class="on">Login</button><button type="button" id="tabReg">Register</button></div>
@@ -1056,10 +1057,10 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <div id="tooltip"></div>
 <link rel="stylesheet" href="assets/wardrobe.css?v=138">
 <link rel="stylesheet" href="assets/shop.css?v=318">
-<script src="assets/wardrobe.js?v=426"></script>
+<script src="assets/wardrobe.js?v=427"></script>
 <script src="assets/shop-catalog.js?v=321"></script>
 <script src="assets/fourth-jobs.js?v=179"></script>
-<script src="assets/expanded-jobs.js?v=426"></script>
+<script src="assets/expanded-jobs.js?v=427"></script>
 <script src="assets/ascension.js?v=156"></script>
 <script src="assets/native-mob-heights.js?v=153"></script>
 <script src="assets/native-fields.js?v=197"></script>
@@ -1333,7 +1334,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-19 haven-v426 preserve legacy first-return offline rewards';
+const BUILD='2026-11-19 haven-v427 guided first adventure';
 // v364: this write used to sit AFTER the `//` on the BUILD line, so it was part of the comment and
 // never ran - the login card showed an empty #buildTag and there was no way to confirm which file
 // the browser had loaded. It also has to survive the script running before the login card exists.
@@ -8085,7 +8086,7 @@ function ascensionDrops(mob){
 function recordMapClear(m,l){if(l===normalStages(m)){if(!S.mapClears)S.mapClears=MAPS.map(()=>false);S.mapClears[m]=true;}}
 function kill(o){const keep=mob;if(o)mob=o;if(!mob||!mobs.includes(mob)){mob=keep;return}
   if(typeof JOB_RITE!=='undefined'&&JOB_RITE.on){if(mob===JOB_RITE.enemy&&mob.hp<=0&&JOB_RITE.owner===S&&JOB_RITE.user===currentUser){if(!JOB_RITE.outcome){if(jobRiteLeft()>0)showJobRiteResult(true,'victory');else showJobRiteResult(false,'timeout');}mobs=[];mob=null;}else mob=keep;return;}
-  const g=gx();S.kills++;recordMonsterKill(mob);S.kl++;qProg('kill');if(mob.boss)qProg('boss');
+  const g=gx();S.kills++;if(typeof adventureRecordKill==='function')adventureRecordKill();recordMonsterKill(mob);S.kl++;qProg('kill');if(mob.boss)qProg('boss');
   const z=Math.round(mob.zeny*(1+pv('zeny')/100)*(1+petPassive('zeny')/100)*nmZenyRoll(mob))*g,xp=Math.round(mob.exp*expRate()*(1+petPassive('exp')/100));earnZeny(z);earnExp(xp);gainAscension(xp);addJob(Math.round(Math.round(mob.exp*.7)*expRate()*(1+petPassive('exp')/100)));recordFarmIncome(xp,z,Math.round(Math.round(mob.exp*.7)*expRate()*(1+petPassive('exp')/100)));questEvent('hunt',1,mob.n);questEvent('maps',1,S.mp);if(S.lvl>10)questEvent('nightmare');
   addFloat(mob.x,2.4,mob.z,'+'+numTxt(z)+'z','#ffd23f');if(typeof applyDailyKillBuffs==='function')applyDailyKillBuffs(z,xp,mob);log(`${mob.n} defeated! +${xp.toLocaleString()} EXP, +${z.toLocaleString()} Zeny`,'','kills,zeny',{title:mob.n+' defeated',label:'+'+xp.toLocaleString()+' EXP',zeny:z});
   // Drop odds are the field's own numbers: nothing on the character scales them, so LUK cannot
@@ -8471,6 +8472,7 @@ function guideProgress(){const o=S.handbook;return o&&typeof o==='object'&&!Arra
    never opens by itself again. Both tours remain replayable from the handbook (H) at any time. */
 function tourMarkSeen(){const kind=guideTour;if(!kind)return;const p=guideProgress();try{S.handbook={...p,[kind+'Seen']:true};save()}catch(e){}}
 function maybeGuide(){
+ if(typeof adventureMaybeGuide==='function'&&adventureMaybeGuide())return;
  guideTour=null;guideFindOwner=null;guideFindStage='';guideFinderClear();clearGuidePointer();
  const p=guideProgress();
  // v404: `beginner!==true` used to gate the whole tour, and a returning player's save already
@@ -8639,6 +8641,7 @@ function guideGoField(){
 // Called by gotoField after a player travels. A tour left open on the plaza half continues
 // with the field lessons; a finished or dismissed tour stays closed.
 function guideHubResume(){
+ if(typeof adventureState==='function'&&adventureState()){adventureSync();return}
  if(inPlazaNow())return;
  const p=guideProgress();
  if(p.beginnerSeen===true)return;
@@ -8666,6 +8669,7 @@ function coachTipList(){return [
 ];}
 function coachBlocked(){
  if(!S||S.hints===false)return true;
+ if(typeof adventureState==='function'&&adventureState()?.status==='active')return true;
  if(guideTour||guideFindStage||tabs.includes('guide'))return true;   // never cover the handbook itself
  if(typeof JOB_RITE!=='undefined'&&JOB_RITE.on)return true;
  const m=$('modal');if(m&&m.style.display&&m.style.display!=='none')return true;
@@ -8764,7 +8768,7 @@ function beginnerChecklist(){
  ];
 }
 function beginnerGuide(){const check=beginnerChecklist(),done=check.filter(x=>x.done).length;const chapters=[
- ['Your first login: the Social Hub','You land in the <b>Prontera Fountain Plaza</b> — the social hub. Other players walk around you, and you can chat, fish, play poker and train DigiPets here. Click the <b>↩ Field</b> button in the top-right toolbar to return to combat. Your farming keeps running while you are here.'],
+ ['Your first login: the Social Hub','You land in the <b>Prontera Fountain Plaza</b> — the social hub. Other players walk around you, and you can chat, fish, play poker and train DigiPets here. Click the <b>↩ Field</b> button in the top-right toolbar to return to combat. After you have farmed in the field, town income uses your last measured field rate. Before your first field visit there is no measured rate yet.'],
  ['The screen in one minute','The <b>bottom dock</b> has seven main buttons: <b>🗼 World Map</b>, <b>📊 Character</b>, <b>🛡️ Equipment</b>, <b>🌳 Class Tree</b>, <b>✨ Skills</b>, <b>🎒 Inventory</b> and <b>🐾 Pets</b>. The <b>More</b> button (⋯) holds Mastery Index, Black Market, Leaderboard, this Guide, Log, Wardrobe, Cash Shop and Settings. The bar at the top carries your Zeny, Echo Shards, the cloud badge, fullscreen, field-only view and <b>Display</b>. The two round icons by the minimap are <b>Mail</b> and the <b>daily roulette</b>.'],
  ['Combat runs itself','Your character attacks on its own, and learned attacks fire from the six-slot combo in <b>✨ Skills</b>. <b>Auto-advance</b> (in the auto-combat pill above the field) moves you to the next stage on a clear; turn it off to camp one stage for a card or material. <b>Movement</b> there switches ranged classes between standing still (max damage) and kiting. The fight keeps going while the tab is in the background.'],
  ['Stats and jobs','Each Base level pays stat points; <b>📊 Character → Stats</b> spends them, the cap is 99 before Base 100 and 120 after, and the first reset after a class change is free. <b>🌳 Class Tree</b> is the whole job ladder: first job at Novice Job 10, then parent Job 40 and 50 for the next two. A fourth job also needs Base 150 and a 30-second <b>Crucible</b> win. Every class you have played keeps its own level, stats, gear and skills, so switching back is free.'],
@@ -8777,7 +8781,7 @@ function beginnerGuide(){const check=beginnerChecklist(),done=check.filter(x=>x.
  ['Refine, reforge and protection','Refining costs Zeny plus Oridecon for weapons and Elunium for everything else, and each attempt shows its success chance and the failure result. A <b>Refine Protection Scroll</b> covers +0–10 and keeps your rank on a failed attempt (one scroll per attempt, success included); craft it from Void Cores or buy it in the Black Market, Echo or the daily wheel. A <b>Mythic Protection Scroll</b> covers +11–15 on Mythic gear and drops from Ascension bosses or costs Sigils in the Black Market or Echo Shards in Echo. Reforging always shows the paid offer before you accept it.'],
  ['Saving, time away and one login','The cloud badge in the header shows whether a save is synced; browser-only play saves to this browser. Hidden tabs keep fighting but are never "away". The welcome-back reward needs at least three minutes without a save, pays 50% of your measured farming sample and caps at four hours per claim. One account plays from one device at a time — signing in elsewhere ends the older session.'],
  ['Display, phone and hotkeys','<b>Display</b> (top right) toggles camera shake, damage numbers, the character aura, the activity log, labels and a fully hidden UI; it also holds fullscreen, <b>field only</b> view, and a <b>Layout</b> switch that cycles Auto → Phone → Desk on this device. Every dock button shows its letter: <b>🗼 M</b>, <b>📊 S</b>, <b>🌳 J</b>, <b>✨ K</b>, <b>🛡️ E</b>, <b>🎒 B</b> and <b>🐾 P</b>. In More: <b>I V X T W L O</b>. <b>H</b> opens this guide and <b>Esc</b> closes whatever is on top. Cards has no hotkey — use its tab.']
- ];return `<header class="handbook-intro"><small>01 / START HERE</small><h2>Your first session</h2><p>Fight → spend points → equip upgrades → pick a better field. You do not need to master every system on day one, and the guide is always one key away (<b>H</b>).</p><button data-a="guidereplay" data-v="beginner">Replay first-login tour</button></header><section class="guide-checklist" aria-label="Getting started checklist"><header><b>Getting started</b><span>${done} / ${check.length} done</span></header><ol>${check.map((x,i)=>`<li class="${x.done?'done':''}"><span aria-hidden="true">${x.done?'✓':String(i+1).padStart(2,'0')}</span><div><b>${x.label}</b><small>${x.hint}</small></div>${x.done?'<em>Done</em>':x.button}</li>`).join('')}</ol></section><div class="guide-chapters">${chapters.map(([title,body],i)=>`<details data-ui-disclosure="handbook-beginner-${i}" ${i===0?'open':''}><summary>${String(i+1).padStart(2,'0')} · ${title}</summary><p>${body}</p></details>`).join('')}</div>`;}
+ ];return `${typeof adventureHandbook==='function'?adventureHandbook():''}<header class="handbook-intro"><small>01 / START HERE</small><h2>Your first session</h2><p>Fight → spend points → equip upgrades → pick a better field. You do not need to master every system on day one, and the guide is always one key away (<b>H</b>).</p><button data-a="guidereplay" data-v="beginner">Replay first-login tour</button></header><section class="guide-checklist" aria-label="Getting started checklist"><header><b>Getting started</b><span>${done} / ${check.length} done</span></header><ol>${check.map((x,i)=>`<li class="${x.done?'done':''}"><span aria-hidden="true">${x.done?'✓':String(i+1).padStart(2,'0')}</span><div><b>${x.label}</b><small>${x.hint}</small></div>${x.done?'<em>Done</em>':x.button}</li>`).join('')}</ol></section><div class="guide-chapters">${chapters.map(([title,body],i)=>`<details data-ui-disclosure="handbook-beginner-${i}" ${i===0?'open':''}><summary>${String(i+1).padStart(2,'0')} · ${title}</summary><p>${body}</p></details>`).join('')}</div>`;}
 function ascensionGuide(){return `<header class="handbook-intro"><small>05 / BEYOND BASE 150</small><h2>Your Ascension checklist</h2><p>${fourthJob()?'You are a fourth job. Your new progression tracks are active.':'Reach Base 150, parent Job 50 and win the 30-second Crucible trial from Jobs to unlock these systems.'}</p><button data-a="guidereplay" data-v="ascension">Replay Ascension tour</button></header><div class="guide-chapters">${GUIDE_LESSONS.ascension.map(s=>`<article class="guide-note"><h3>${s.title}</h3><p>${s.body}</p></article>`).join('')}</div><h3>Choose stats for your bottleneck</h3><p>Might helps damage, Vitality and Guard help survival, and Slayer helps boss fights. Haste helps basic attacks, not every skill cooldown. Spend deliberately: 50 points cannot max every stat.</p><div class="guide-grid">${Object.values(ASC_STATS).map(x=>`<article class="mob-card"><b>${x.n}</b><p>${['Might','Precision','Ferocity','Slayer'].includes(x.n)?'Late-rank offensive growth; rank 5 grants 25% of the maximum':'+'+x.step+x.unit+' per rank'} · ${x.text}. Rank 10: +${10*x.step}${x.unit}.</p></article>`).join('')}</div><h3>Materials & Mythic upgrades</h3><p>Astral Shards and Primal Catalysts roll 0.5% on the lightest Stage 1 monster and more on every tankier one, so all five stages of both maps pay the same materials an hour. Valkyrie’s Sigils roll at a quarter of that rate on ordinary enemies and 1% on MVPs. Cards, ore and pets can still drop. Pick a set in the Forge to see its real bonuses, eligible N+ items and exact costs before evolving.</p><p>Mythic Protection Scrolls drop rarely from Ascension bosses, or cost 100 Valkyrie’s Sigils in the Black Market or 600 Echo Shards in Echo. Protected +11–15 attempts require them; inspect the Refine panel for current costs and odds. Unprotected failures at +5–9 lose one rank. Mythic +10 is a checkpoint; higher failures lose one rank unless protected. Selective reforges retain your unselected affixes. Stat allocation remains capped at 120.</p><p>Ascension earns combat EXP on ordinary maps too: use reliable Nightmare farming if Ascension kills are too slow. Away EXP credits the class in the saved farming sample. Quest and GM Base EXP grants do not level these tracks.</p>`;}
 function handbook(){return `<section class="handbook"><nav class="guide-nav" aria-label="Guide chapters">${[['beginner','Beginner'],['leveling','Leveling route'],['build','Your build'],['cards','Card targets'],['ascension','Ascension Forge']].map(([id,label])=>`<button data-a="guidepage" data-v="${id}" aria-pressed="${guidePage===id}">${label}</button>`).join('')}</nav>${guideTourPanel()}${guidePage==='beginner'?beginnerGuide():guidePage==='leveling'?levelingGuide():guidePage==='ascension'?ascensionGuide():buildGuide(true)}</section>`;}
 function guideBuildPlan(){
@@ -10680,6 +10684,7 @@ function eclipseDrawAtlas(){
 }
 function eclipseSetMarkup(root,html){if(root._eclipseHTML===html)return;const next=document.createElement('div');next.innerHTML=html;eclipsePatch(root,next);root._eclipseHTML=html}
 function renderWin(anchor){
+  if(typeof adventureSync==='function')adventureSync();
   syncSpeed();   // v254: the GM-only simulation speed button follows the account flag on every refresh
   if(simVisualsOff())return;
   if(!S)return;
@@ -11785,6 +11790,7 @@ function sampleHudRate(now=performance.now()){
   return rates;
 }
 function bars(){if(!S||simVisualsOff())return;applyDisplay();
+  if(typeof adventureSync==='function')adventureSync();
   const rates=sampleHudRate();if(!rates)return;
   const j=jobOf(),c=C(),hp=levelPct(S.hp,maxHp()),jp=levelPct(j.jx,jneed(j.jl),j.jl>=c.mj),bp=levelPct(S.exp,need(),S.lv>=150);
   if($('eclipseStageLabel'))$('eclipseStageLabel').textContent=(S.lvl>10?'Nightmare ':'Stage ')+(S.lvl>10?S.lvl-10:S.lvl)+' / '+(S.lvl>10?5:normalStages(S.mp));
@@ -16308,20 +16314,21 @@ setInterval(updateWatch,60000);
 // be hours old while the player was on another tab, and the check is a 60-byte text file.
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&(pendingUpdateBuild||Date.now()-PAGE_STARTED_AT>30000))updateWatch()});
 </script>
-<script src="assets/wardrobe-ui.js?v=426"></script>
+<script src="assets/wardrobe-ui.js?v=427"></script>
 <script src="assets/shop.js?v=321"></script>
 <script src="assets/friends.js?v=273"></script>
-<script src="assets/digimon/roster.js?v=426"></script>
-<script src="assets/digimon/base-stats.js?v=426"></script>
-<script src="assets/social-rules.js?v=426"></script>
-<script src="assets/social-poker.js?v=426"></script>
-<script src="assets/digimon-sanctuary.js?v=426"></script>
+<script src="assets/digimon/roster.js?v=427"></script>
+<script src="assets/digimon/base-stats.js?v=427"></script>
+<script src="assets/social-rules.js?v=427"></script>
+<script src="assets/social-poker.js?v=427"></script>
+<script src="assets/digimon-sanctuary.js?v=427"></script>
 <script src="assets/digimon-battle.js?v=393"></script>
-<script src="assets/social-digimon.js?v=426"></script>
+<script src="assets/social-digimon.js?v=427"></script>
 <script src="assets/social-gym-redesign.js?v=393"></script>
 <script src="assets/social-pond-design.js?v=393"></script>
-<script src="assets/social-scene.js?v=426"></script>
-<script src="assets/social-fishing.js?v=426"></script>
-<script src="assets/plaza-bots.js?v=426"></script>
-<script src="assets/social.js?v=426"></script></body>
+<script src="assets/social-scene.js?v=427"></script>
+<script src="assets/social-fishing.js?v=427"></script>
+<script src="assets/plaza-bots.js?v=427"></script>
+<script src="assets/adventure-guide.js?v=427"></script>
+<script src="assets/social.js?v=427"></script></body>
 </html>
