@@ -3,6 +3,7 @@ import '../../assets/digimon/base-stats.js';
 import '../../assets/social-rules.js';
 import '../../assets/social-poker.js';
 import '../../assets/digimon-battle.js';
+import { isWorldChatAllowed, REJECT_MESSAGE } from './chat-filter.mjs';
 const R=globalThis.PGSocialRules,P=globalThis.PGSocialPoker,B=globalThis.PGDigimonBattle;
 // v236: two different clocks. IDLE_MS is how long a silent connection may sit before the sweep
 // removes it - that is what kills half-open sockets. REAUTH_MS is the security bound: a connection
@@ -58,7 +59,7 @@ const ledgerIdValid=id=>typeof id==='string'&&/^[A-Za-z0-9:_-]{1,100}$/.test(id)
 // Only public World text/emotions are durable. Whispers and Local never enter this record.
 export function cleanWorldHistory(value){
  if(!Array.isArray(value))return [];
- return value.filter(m=>m&&m.type==='message'&&m.channel==='world'&&Number.isSafeInteger(m.id)&&m.id>0&&Number.isFinite(m.at)&&Number.isInteger(m.from)&&typeof m.name==='string'&&typeof m.body==='string'&&m.body.length<=300&&(!m.emotion||R.EMOTIONS.includes(m.emotion))).slice(-100).map(m=>({type:'message',id:m.id,at:m.at,from:m.from,name:m.name.slice(0,32),gm:m.gm===true,channel:'world',body:m.body,room:0,...(m.emotion?{emotion:m.emotion}:{})}));
+ return value.filter(m=>m&&m.type==='message'&&m.channel==='world'&&Number.isSafeInteger(m.id)&&m.id>0&&Number.isFinite(m.at)&&Number.isInteger(m.from)&&typeof m.name==='string'&&typeof m.body==='string'&&m.body.length<=300&&isWorldChatAllowed(m.body)&&(!m.emotion||R.EMOTIONS.includes(m.emotion))).slice(-100).map(m=>({type:'message',id:m.id,at:m.at,from:m.from,name:m.name.slice(0,32),gm:m.gm===true,channel:'world',body:m.body,room:0,...(m.emotion?{emotion:m.emotion}:{})}));
 }
 // Poker chip movements are a personal, durable outbox - never part of public World history.
 // An event keeps its id until that account acknowledges it after saving its wallet. Replay is
@@ -979,6 +980,7 @@ export class SocialRoom {
   const body=emotion?'':typeof m.body==='string'?m.body.replace(/[\u0000-\u001f\u007f]/g,'').trim():'';if(!emotion&&(!body||body.length>300))return;
   let recipient;if(channel==='whisper'){recipient=[...this.clients.values()].find(p=>p.name.toLowerCase()===String(m.to).toLowerCase());if(!recipient)return this.send(c,{type:'error',message:'That player is offline.'})}
   c.nextChat=now+R.CHAT_DELAY;
+  if(channel==='world'&&!emotion&&!isWorldChatAllowed(body))return this.send(c,{type:'error',message:REJECT_MESSAGE});
   const event={type:'message',id:++this.serial,at:now,from:c.id,name:c.name,gm:c.gm,channel,body,room:channel==='local'?c.room:0,...(emotion?{emotion:m.emotion}:{}),...(recipient?{to:recipient.id,toName:recipient.name}:{})};
   if(channel==='world'){this.history.push(event);if(this.history.length>100)this.history.shift();this.onWorldMessage(event);this.broadcast(event)}
   else if(channel==='local')this.broadcast(event,p=>p.room===c.room);
