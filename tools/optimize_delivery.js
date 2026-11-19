@@ -4,7 +4,9 @@
 'use strict';
 const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
 const FILES=Object.freeze(['ro-map-payon.json','ro-map-morocc.json','ro-spritesheet.json','ro-tiles-hd.json']);
-const CSS_FILES=Object.freeze(['assets/ui/eclipse.css','assets/ui/mobile.css']);
+// Include the plaza styles so the new guide fits the existing classic delivery ceiling.
+// publish_sim compares every parsed rule before/after; no stylesheet semantics change.
+const CSS_FILES=Object.freeze(['assets/ui/eclipse.css','assets/ui/mobile.css','assets/social.css','assets/social-fishing.css']);
 function stripStandaloneCssComments(css){
  let quote='',last=0,out='';
  for(let i=0;i<css.length;i++){

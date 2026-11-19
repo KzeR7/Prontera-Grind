@@ -274,6 +274,16 @@ Check `ascension_tracks_sim.js`, `ascension_combat_sim.js`,
 `ascension_rewards_sim.js` alongside offline, save/owner/cloud, skill/combo,
 combat/stat/economy, map and UI suites.
 
+First Adventure (v427): `assets/adventure-guide.js` owns the non-modal beginner journey,
+`S.handbook.adventure`, action-driven milestones and `adventureHandbook()`;
+`assets/adventure-guide.css` owns the companion and roadmap. `maybeGuide()` delegates
+fresh accounts to `adventureMaybeGuide()`, `kill()` reports only live victories, and
+existing `bars()`/`renderWin()`/plaza `mapTick()` refresh the presentation. No new timer
+or multiplayer messages. `adventure_guide_sim.js` covers account/legacy/future saves,
+real-action gates and class-switch milestone retention. `tools/check_adventure_browser.cjs`
+rehearses real registration, relogin, town → field, combat and UI actions at desktop/phone
+sizes in Chromium and Firefox against the built disposable preview.
+
 Handbook (v175): `handbook`, `beginnerGuide`, `levelingGuide`, `buildGuide` and
 `ascensionGuide` render the five Guide chapters. `guideSources` reads `fieldOf`
 for actual monsters, equipment and card chances; `CARD_CATALOG` supplies effects
