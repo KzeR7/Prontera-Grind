@@ -12079,3 +12079,45 @@ re-recording them here would have written wrong numbers into the repository.
 
 ### Expanded-class FX final review choices
 - Applied the remaining keep-current selections in the standalone FX review, including Shadow Warrior and all Gunslinger and Rebellion casts. Production game FX remain unchanged.
+
+## haven-v427 — Mythic section-six gear and Ascension Forge (2026-11-19)
+
+* **Changed:** Section-6 Thor equipment now identifies as Mythic, gets a valid top-band base roll, and uses the Mythic item-name prefix. The Forge offers owned, unascended section-5 N+ equipment even if the current class cannot equip its weapon family; section-6 Mythic drops remain outside the Forge input ladder.
+* **Try it:** Farm Thor Volcano and inspect section-6 drops; as a fourth-job Kagerou, inspect an equipped N+ shuriken in Equipment → Ascension Forge.
+* **Checks:** `ascension_evolution_sim.js` (10 groups), `gear_sim.js` (43 groups), `ascension_drop_shop_sim.js` (7 groups), and `drop_card_sheet_sim.js` (14 groups) passed.
+* **Delivery:** Local changes on the active Arena branch.
+
+## haven-v428 — Forge-only Mythic and N+ Ascension weapons (2026-11-19)
+
+* **Changed:** Corrected progression per owner direction: both Ascension maps drop only their new N+ weapon lines; Nightmare maps supply N weapons and equipment; Mythic gear is crafted only in the Ascension Forge.
+* **Try it:** Farm Astral Citadel or Thor Volcano and verify only N+ weapons appear; use Nightmare fields for N equipment; create Mythic gear through the Forge.
+* **Checks:** `ascension_evolution_sim.js` (10 groups), `ascension_drop_shop_sim.js` (7 groups), `drop_card_sheet_sim.js` (14 groups), and `gear_sim.js` (43 groups) passed.
+* **Delivery:** Local changes on the active Arena branch.
+
+## haven-v429 — repair zero-ATK legacy Ascension drops (2026-11-19)
+
+* **Changed:** On load, legacy section-6 items named N+ are migrated to section 5. Broken null/zero base values are restored from the N+ top-field formula; actual Mythic Forge items are not modified.
+* **Try it:** Reload a save containing a former N+ Cataclysm weapon; inspect its rarity and ATK.
+* **Checks:** `ascension_evolution_sim.js` (12 groups), `ascension_drop_shop_sim.js` (7 groups), `drop_card_sheet_sim.js` (14 groups), `gear_sim.js` (43 groups), and `update_watch_sim.js` (22 groups) passed.
+* **Delivery:** Local changes on the active Arena branch.
+
+## haven-v430 — Asura Strike retreat leap (2026-11-19)
+
+* **Changed:** After a successful Asura Strike, the Monk-line character visibly jumps 3.2 world units away from the target over 0.48 seconds. The combat model follows the leap and respects field bounds.
+* **Try it:** As a Monk, Champion or Sura with a Spirit Sphere, cast Asura Strike on a mob or MVP and watch the character hop backward.
+* **Checks:** `signature_skills_sim.js` (8 groups), `asura_pose_sim.js` (2 checks), `skill_sim.js` (44 groups), `update_watch_sim.js` (22 groups), and `git diff --check` passed. `skill_balance_sim.js` could not complete because its pinned comparison commit `d164bd0527cfe335f9c183d0e576800716b7dd26` is unavailable in this checkout.
+* **Delivery:** Local changes on the active Arena branch.
+
+### PR #257 pre-merge review — Ascension drop progression regression coverage
+* **Changed:** Updated the live Ascension progression simulation to assert the intended weapon-only N+ drops on both maps and Forge-only Mythic progression; corrected obsolete expectations from the prior broader shelf.
+* **Try it:** Run `node tools/tests/ascension_progression_sim.js`.
+* **Checks:** `ascension_progression_sim.js` passed, along with the PR recheck: Ascension evolution (12), drop/shop (7), gear catalogue (43), drop/card sheet (14), signature skills (8), Asura pose (2), skill system (44), fourth-job skills (16), expanded roster (13), signature FX (11), update watcher (22), and `git diff --check`. GitHub Cloudflare Pages and Workers Builds checks pass.
+* **Delivery:** Local changes on the active PR branch.
+
+
+## haven-v431 — Ascension set-specific weapon icons (2026-11-19)
+
+* **Changed:** The seven expanded weapon families now use six distinct preserved Ragnarok item icons across the six Mythic Forge sets. The Forge's set picker previews the current weapon family with each set's icon. These are inventory/Forge visuals, not character-worn sprite layers.
+* **Try it:** Select an N+ shuriken, book, instrument, whip, spear, knuckle or gun in the Forge and switch set choices to compare the six icons.
+* **Checks:** `equipment_art_sim.js` (125 source-verified PNGs), `expanded_roster_sim.js` (13 groups), `ascension_evolution_sim.js` (13 groups), `update_watch_sim.js` (22 groups), and `git diff --check` passed.
+* **Delivery:** Local changes on the active PR branch.

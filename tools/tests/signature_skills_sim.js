@@ -6,7 +6,7 @@ const assert=require('node:assert/strict'),{createGame}=require('./helpers/game'
 const g=createGame(),ev=g.ev;let passed=0;const ok=n=>{passed++;console.log('  ok   '+n)};
 console.log('expanded roster: signature skills, combos and autocast');
 ev(`{window.__setup=cls=>{S=fresh();S.cls=cls;S.lv=150;for(const n of lineOf(cls))S.jobs[n]={jl:CLASSES[n].mj,jx:0};for(const s of SKILLS.filter(s=>s.cls.includes(cls)))S.sk[s.id]=s.max;
-   S.eq.weapon={id:1,slot:'weapon',wt:C().wt[0],val:300,r:0,sec:0,tier:2,name:'x',aff:[],cards:[],slots:0};resetSkillRuntime();S.hp=maxHp();
+   S.eq.weapon={id:1,slot:'weapon',wt:C().wt[0],val:300,r:0,sec:0,tier:2,name:'x',aff:[],cards:[],slots:0};asuraLeap=null;resetSkillRuntime();S.hp=maxHp();
    mobs.length=0;const m={x:pl.x+1,z:pl.z,hp:1e15,max:1e15,atk:1,def:0,size:1,pack:activePack,dots:[]};mobs.push(m);mob=m;return m};
   window.__sk=id=>SKILLS.find(s=>s.id===id);window.__hit=(m,id)=>{const b=m.hp;castSkill(__sk(id),1);return b-m.hp};}`);
 const J=code=>JSON.parse(ev(`JSON.stringify((()=>{${code}})())`));
@@ -32,6 +32,11 @@ assert.ok(asura.full>asura.one*2.2,'five spheres must far exceed one');assert.eq
 const best=Math.max(...asura.others.map(o=>o[1]));assert.ok(asura.full>best*5,'Asura Strike must dwarf every other Monk-line skill: '+(asura.full/best).toFixed(1)+'x');
 assert.ok(asura.boss/asura.full>1.25&&asura.boss/asura.full<1.8,'+50% against bosses');
 ok('Asura Strike: no spheres no strike; at five spheres '+(asura.full/best).toFixed(1)+'x the next best skill, '+(asura.full/asura.triple).toFixed(0)+'x Triple Attack, +50% on bosses');
+const retreat=J(`const m=__setup('Sura');m.x=pl.x+1.2;m.z=pl.z;for(let i=0;i<5;i++)__hit(m,'mo_triple');const sx=pl.x,sz=pl.z;__hit(m,'ch_asura');const landing={x:asuraLeap?.x1,z:asuraLeap?.z1,height:asuraLeapHeight()};tickAsuraLeap(asuraLeap.duration/2);landing.midX=pl.x;landing.apex=asuraLeapHeight();tickAsuraLeap(asuraLeap.duration/2);landing.endX=pl.x;landing.endHeight=asuraLeapHeight();return {sx,sz,landing}`);
+assert.ok(retreat.landing.x<retreat.sx-2.5,'Asura leap lands away from a target on +X');
+assert.ok(Math.abs(retreat.landing.z-retreat.sz)<.1,'retreat keeps the lateral axis when aligned');
+assert.equal(retreat.landing.height,0,'jump begins at ground height');assert.ok(retreat.landing.apex>1,'character visibly jumps during the retreat');assert.ok(retreat.landing.midX<retreat.sx&&retreat.landing.midX>retreat.landing.endX,'player moves smoothly backward mid-leap');assert.equal(retreat.landing.endX,retreat.landing.x);assert.equal(retreat.landing.endHeight,0,'lands at the retreat destination');
+ok('Asura Strike consumes its spheres and jumps backward away from its target with a visible hop');
 
 const fill=J(`__setup('Sura');tickCombatSkills(.016);const r=skillState();return {n:r.stacks.sphere?r.stacks.sphere.n:0,ready:skillStackReady(__sk('ch_asura'))}`);
 assert.equal(fill.n,5,'Call Spirits / Rising Dragon fill the spheres');assert.equal(fill.ready,true);

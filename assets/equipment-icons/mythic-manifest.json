@@ -1,5 +1,5 @@
 {
-  "description": "Original Ragnarok inventory sprites for custom Mythic sets. Glacier/Dim Glacier for Astral; Crimson weapons, Lava Leather armor/boots and Phoenix accessories for Thor. Shared native pieces fill missing official slots; no pixel recoloring. Inventory icons, not equipped character layers.",
+  "description": "Original Ragnarok inventory sprites for custom Mythic sets. Glacier/Dim Glacier for Astral; Crimson weapons, Lava Leather armor/boots and Phoenix accessories for Thor. New weapon families use distinct, preserved native family artwork across all six forge sets. Inventory icons, not equipped character layers.",
   "database": "https://github.com/rathena/rathena/blob/master/db/re/item_db_equip.yml",
   "sets": {
     "celestial": {
@@ -15,13 +15,13 @@
       "off": 460040,
       "leg": 470196,
       "acc": 490327,
-      "spear": 1433,
-      "book": 1565,
-      "knuckle": 1822,
-      "instrument": 1918,
-      "whip": 1970,
-      "shuriken": 13307,
-      "gun": 13163
+      "spear": 1401,
+      "book": 1550,
+      "knuckle": 1801,
+      "instrument": 1901,
+      "whip": 1950,
+      "shuriken": 13300,
+      "gun": 13100
     },
     "voidwalker": {
       "sword": 500054,
@@ -36,13 +36,13 @@
       "off": 460040,
       "leg": 470197,
       "acc": 490328,
-      "spear": 1433,
-      "book": 1565,
-      "knuckle": 1822,
-      "instrument": 1918,
-      "whip": 1970,
-      "shuriken": 13307,
-      "gun": 13163
+      "spear": 1407,
+      "book": 1551,
+      "knuckle": 1803,
+      "instrument": 1903,
+      "whip": 1952,
+      "shuriken": 13301,
+      "gun": 13102
     },
     "ethereal": {
       "sword": 500049,
@@ -57,13 +57,13 @@
       "off": 460040,
       "leg": 450268,
       "acc": 490330,
-      "spear": 1433,
-      "book": 1565,
-      "knuckle": 1822,
-      "instrument": 1918,
-      "whip": 1970,
-      "shuriken": 13307,
-      "gun": 13163
+      "spear": 1410,
+      "book": 1552,
+      "knuckle": 1807,
+      "instrument": 1905,
+      "whip": 1954,
+      "shuriken": 13302,
+      "gun": 13104
     },
     "primal": {
       "sword": 13454,
@@ -78,13 +78,13 @@
       "off": 460023,
       "leg": 22201,
       "acc": 490104,
-      "spear": 1437,
-      "book": 1572,
-      "knuckle": 1826,
-      "instrument": 1926,
-      "whip": 1979,
-      "shuriken": 13313,
-      "gun": 13171
+      "spear": 1413,
+      "book": 1553,
+      "knuckle": 1809,
+      "instrument": 1907,
+      "whip": 1956,
+      "shuriken": 13303,
+      "gun": 13151
     },
     "molten": {
       "sword": 13454,
@@ -99,13 +99,13 @@
       "off": 460023,
       "leg": 22199,
       "acc": 490104,
-      "spear": 1437,
-      "book": 1572,
-      "knuckle": 1826,
-      "instrument": 1926,
-      "whip": 1979,
-      "shuriken": 13313,
-      "gun": 13171
+      "spear": 1415,
+      "book": 1556,
+      "knuckle": 1813,
+      "instrument": 1909,
+      "whip": 1962,
+      "shuriken": 13304,
+      "gun": 13154
     },
     "infernal": {
       "sword": 13454,
@@ -120,13 +120,13 @@
       "off": 460023,
       "leg": 22200,
       "acc": 490451,
-      "spear": 1437,
-      "book": 1572,
-      "knuckle": 1826,
-      "instrument": 1926,
-      "whip": 1979,
-      "shuriken": 13313,
-      "gun": 13171
+      "spear": 1420,
+      "book": 1557,
+      "knuckle": 1814,
+      "instrument": 1913,
+      "whip": 1964,
+      "shuriken": 13305,
+      "gun": 13157
     }
   },
   "assets": [

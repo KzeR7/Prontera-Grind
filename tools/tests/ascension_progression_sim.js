@@ -1,4 +1,4 @@
-// Live five-stage route, material-only rewards, and one-time ten-stage save migration.
+// Live five-stage route, weapon-only N+ Ascension drops, materials and one-time save migration.
 'use strict';
 const assert=require('assert/strict'),{createGame}=require('./helpers/game');
 const game=createGame(),{ev}=game;
@@ -8,15 +8,12 @@ try{
   ev(`S.mp=${m};S.lvl=${l};S.prog[${m}]=5;spawn()`);
   assert.equal(ev(`fieldOf(${m},${l}).boss!==null`),l===5);
   assert.equal(ev('isBoss()'),l===5);
-  // haven-v417 (owner: "all these new class nightmare + weapons drops at new ascension map"):
-  // the fields used to carry no equipment at all. They now carry the map's shelf - Astral Citadel
-  // the Nightmare tier, Thor Volcano the Mythic tier - across all fourteen weapon families, so
-  // every class has a weapon of its own family waiting. Materials are still paid on every kill.
-  assert.equal(ev(`gearPool(${m},${l}).length`),20,`map ${m} stage ${l}: 14 families + armour, head, shield, legs, two accessories`);
-  assert.equal(ev('mobs.every(x=>x.drops.length>0)'),true,'every mob now carries gear as well as materials');
-  // regular mobs roll exactly two defensive pieces; the Stage 5 MVP carries the whole shelf instead
-  assert.equal(ev(`mobs.filter(x=>!x.boss).every(x=>x.drops.filter(([T])=>['armor','head','off','leg','acc'].includes(T.k)).length===2)`),true,'two defensive rolls per regular mob');
-  assert.equal(ev(`mobs.filter(x=>x.boss).every(x=>x.drops.length===gearPool(${m},${l}).length)`),true,'the MVP lists the whole shelf');
+  // Both maps drop only their new section-5 N+ weapons: all fourteen weapon families, no armor.
+  // N weapons and equipment remain on Nightmare maps; section-6 Mythics are Forge-only.
+  assert.equal(ev(`gearPool(${m},${l}).length`),14,`map ${m} stage ${l}: fourteen N+ weapons only`);
+  assert.equal(ev(`gearPool(${m},${l}).every(x=>x.sec===5&&!['armor','head','off','leg','acc'].includes(x.k))`),true,'N+ weapon-only drop shelf');
+  assert.equal(ev("mobs.every(x=>x.drops.length===14&&x.drops.every(([T])=>T.sec===5&&!['armor','head','off','leg','acc'].includes(T.k)))"),true,'regular enemies drop N+ weapons only');
+  assert.equal(ev(`mobs.filter(x=>x.boss).every(x=>x.drops.length===gearPool(${m},${l}).length)`),true,'the MVP lists the whole weapon shelf');
   assert.equal(ev('mobs.filter(x=>x.boss).length'),l===5?1:0);
   assert.equal(ev(`canTravel(${m},6)`),false);
   assert.throws(()=>ev(`fieldOf(${m},6)`),/five stages/);
@@ -32,7 +29,7 @@ try{
  assert.ok(gained.length>0,'the Stage 5 MVP now pays equipment');
  const allowed=ev(`(()=>{const p=gearPool(10,5);return p.map(x=>x.k)})()`);
  gained.forEach(k=>assert.ok(allowed.includes(k),'a dropped piece must come from the Astral Citadel shelf, got '+k));
- assert.equal(ev("drops.every(x=>!x.it?.slot||x.it.sec===(S.lvl<=3?4:5))"),true,'Astral Stages 4-5 roll the N+ section');
+ assert.equal(ev("drops.every(x=>!x.it?.slot||x.it.sec===5&&x.it.slot==='weapon')"),true,'Astral equipment drops are section-5 N+ weapons only');
  ev('S.inv.length=window.beforeInv;');
  ev(`window.away={measured:true,kills:0,drops:0,cards:0,ori:0,elu:0,items:0,pets:0,petFolds:0,petRefunds:0,zeny:0,exp:0};
   S.mp=11;S.lvl=5;offlineAwardKill(offlineMobForCurrentField(11,5),window.away);`);
@@ -59,9 +56,8 @@ try{
  }
  ev("S.prog[11]=5;S.mp=11;S.lvl=5;mapM=11;mapL=5;mapSeason='ascension';");
  const html=ev('V.map()');assert.match(html,/5\/5 stages available/);assert.doesNotMatch(html,/Gear chance per kill|Every MVP drop is/);
- // haven-v417: the panel used to say "no equipment drops"; it now names the map's shelf and still
- // points at the Forge and at Ascension stats.
- assert.match(html,/Nightmare tier/,'the panel names the equipment its field now drops');
+ // The panel names the N+ weapon drops and still points at Forge materials and Ascension stats.
+ assert.ok(html.includes('N+ weapons'),'the panel identifies its weapon-only N+ drops');
  assert.match(html,/Ascension materials/,'and still names the Forge materials');
  assert.match(html,/N\+ evolution/);assert.match(html,/Ascension stats/);
  console.log('PASS: ten fields, boss5/escorts, materials plus the map shelf online/offline, stage4→5, capped final route, twenty legacy migrations/idempotence, panel UI.');
