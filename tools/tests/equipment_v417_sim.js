@@ -67,10 +67,12 @@ t('the normal route is untouched - it still carries the shipped seven only',()=>
 });
 
 t('both Ascension maps drop a real shelf for all fourteen families',()=>{
+  // haven-v432 (PR #257 design): the shelf is weapons only - fourteen N+ families, no armour or accessories.
   for(const m of [10,11]){
     for(const l of [1,4]){
       const pool=ev(`gearPool(${m},${l})`);
-      assert.strictEqual(pool.length,20,'map '+m+' stage '+l+' shelf size');
+      assert.strictEqual(pool.length,14,'map '+m+' stage '+l+' shelf size');
+      assert.ok(pool.every(x=>!SLOTK.includes(x.k)),'map '+m+' stage '+l+' drops weapons only');
       const fams=new Set(pool.filter(x=>!SLOTK.includes(x.k)).map(x=>x.k));
       assert.strictEqual(fams.size,14,'map '+m+' stage '+l+' must carry all 14 families, got '+fams.size);
       [...SHIPPED,...NEW].forEach(k=>assert.ok(fams.has(k),'map '+m+' missing '+k));
@@ -78,14 +80,12 @@ t('both Ascension maps drop a real shelf for all fourteen families',()=>{
   }
 });
 
-t('Astral is the Nightmare tier and Thor the Mythic tier',()=>{
-  assert.strictEqual(ev('gearPool(10,1)[0].sec'),4,'Astral stages 1-3 are N');
-  assert.strictEqual(ev('gearPool(10,4)[0].sec'),5,'Astral stages 4-5 are N+');
-  assert.strictEqual(ev('gearPool(11,1)[0].sec'),6,'Thor is the Mythic tier');
+t('both Ascension maps drop N+ on every stage; Mythic is Forge-only',()=>{
+  // haven-v432 (PR #257 design): Astral and Thor both drop section-5 N+ weapons on all five stages.
+  for(const m of [10,11])for(let l=1;l<=5;l++)assert.ok(ev(`gearPool(${m},${l}).every(x=>x.sec===5)`),'map '+m+' stage '+l+' is N+');
+  assert.notStrictEqual(ev('gearPool(10,4)[0].n'),ev('gearPool(11,4)[0].n'),'Astral and Thor have their own N+ names');
   assert.strictEqual(ev('rarOf({sec:6,tier:4,mythic:true}).n'),'Mythic');
   assert.strictEqual(ev('SECN[6]'),'Mythic gear','the item card must have a name for section 6');
-  // N and N+ are different items, never the same name twice
-  assert.notStrictEqual(ev('gearPool(10,1)[0].n'),ev('gearPool(10,4)[0].n'),'N and N+ must be distinct');
 });
 
 t('every class has a weapon of its own family on every Ascension field',()=>{
@@ -100,7 +100,7 @@ t('every class has a weapon of its own family on every Ascension field',()=>{
 t('the whole weapon budget per kill is the Nightmare table, split across the families',()=>{
   for(const m of [10,11])for(const l of [1,4]){
     const total=ev(`fieldOf(${m},${l}).mobs[0].drops.filter(([T])=>!${JSON.stringify(SLOTK)}.includes(T.k)).reduce((a,[,c])=>a+c,0)`);
-    const want=l<=3?0.5:0.25;   // FIELD_GEAR_NM[0], halved on the N+ stages
+    const want=0.25;   // haven-v432 (PR #257 design): FIELD_GEAR_NM[0] halved (NMPLUS_DROP), since every stage is N+
     assert.ok(Math.abs(total-want)<1e-9,'map '+m+' stage '+l+' weapon budget '+total+' != '+want);
   }
   // and no family is unreachable: the split covers all fourteen
@@ -113,7 +113,7 @@ t('Ascension mobs and MVPs actually roll gear, and still pay materials',()=>{
   for(const m of [10,11])for(let l=1;l<=5;l++){
     assert.ok(ev(`fieldOf(${m},${l}).mobs.every(x=>x.drops.length>0)`),'map '+m+' stage '+l+' mobs carry gear');
     if(l===5){
-      assert.strictEqual(ev(`fieldOf(${m},5).boss.drops.length`),20,'the MVP lists its whole shelf');
+      assert.strictEqual(ev(`fieldOf(${m},5).boss.drops.length`),14,'the MVP lists its whole shelf');
       assert.equal(ev(`!!fieldOf(${m},5).boss.mat`),true,'and still pays a Forge material');
     }
   }

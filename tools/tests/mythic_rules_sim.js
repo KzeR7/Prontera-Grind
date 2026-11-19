@@ -29,9 +29,10 @@ try{
     }
     assert.ok(mvpOk);
   }
-  assert.equal(ev('gearPool(10,1).length+gearPool(11,5).length'),40,'20 items per shelf, both maps');
+  // haven-v432 (PR #257 design): each shelf is the fourteen N+ weapon families only; no armour or accessories.
+  assert.equal(ev('gearPool(10,1).length+gearPool(11,5).length'),28,'14 N+ weapons per shelf, both maps');
   // the sections are the real gear gates, not the materials placeholder
-  assert.equal(ev('[gearPool(10,1)[0].sec,gearPool(10,4)[0].sec,gearPool(11,1)[0].sec].join()'),'4,5,6');
+  assert.equal(ev('[gearPool(10,1)[0].sec,gearPool(10,4)[0].sec,gearPool(11,1)[0].sec].join()'),'5,5,5','N+ on every stage; Mythic is Forge-only');
  });
  test('Ascension Forge crafts Mythic using the exact material and Zeny cost',()=>{
   ev("S=fresh();S.cls='Rune Knight';S.lv=150;S.ascensionMat=[1000,1000,1000];S.zeny=1e9");
