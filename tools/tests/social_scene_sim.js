@@ -39,7 +39,11 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
  let battleReady=false;const battleAsset={record:{actions:{idle:[0],walking:[0],attack:[0],faint:[0]}}};
  w.PGSocialDigimon={clean:id=>battleReady?id:null,frameIndex:()=>0,draw:()=>{},sharedStore:()=>({ready:()=>battleReady?battleAsset:null,request:()=>Promise.resolve(null)})};
  w.PGSocialFishing={ROD_TIER_COLORS:{twig:'#8b6b45',oak:'#b07a3c',brass:'#c8873a',silver:'#cfd8e0',golden:'#ffcb45',mythril:'#7fe3ff'}};
- w.eval(fs.readFileSync('assets/digimon/roster.js','utf8'));w.eval(fs.readFileSync('assets/social-rules.js','utf8'));w.eval(fs.readFileSync('assets/social-scene.js','utf8'));
+ w.eval(fs.readFileSync('assets/digimon/roster.js','utf8'));w.eval(fs.readFileSync('assets/social-rules.js','utf8'));
+ w.eval(fs.readFileSync('assets/mastery-titles.js','utf8'));w.INDEX_TITLES=[{id:'field-initiate',name:'Field Initiate',xp:200}];
+ w.eval(fs.readFileSync('assets/social-title-art.js','utf8'));w.eval(fs.readFileSync('assets/digimon-sanctuary.js','utf8'));
+ w.PGSocialFishing.FISHING_TITLES=require('../../assets/social-fishing.js').FISHING_TITLES;
+ w.eval(fs.readFileSync('assets/social-scene.js','utf8'));
  const scene=await w.PGSocialScene.create(host,w.document.getElementById('labels'),{self:()=>1,menu(...a){menuCalls.push(a)},move(x,z){moves.push({x,z})},seat(id){selectedSeat=id},sanctuaryShop(){shopOpens++},sanctuaryIndex(){indexOpens++}}),flush=async()=>{for(let i=0;i<6;i++)await Promise.resolve()};
  const groundPlane=scene.scene.children.find(o=>o.geometry?.parameters?.width===192&&o.geometry?.parameters?.height===218);
  assert(groundPlane&&groundPlane.position.z===27&&groundPlane.position.x===14,'ground extends south and east while retaining the original north and west edges');
@@ -108,6 +112,29 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
  scene.active=true;scene.putPlayer(state);await flush();frame(now+=100);assert.equal(draws.length,0);frame(now+=3100);await flush();frame(now+=100);assert(draws.length,'failed download automatically retries without network movement');assert.equal(draws.at(-1)[2],'idle','pending sitting atlas falls back to visible standing sprite');assert.equal(typeof draws.at(-1)[7],'function','native weapon glow hook');assert.equal(typeof draws.at(-1)[8],'function','stowed weapon glow hook');
  sitReady=true;frame(now+=100);await flush();frame(now+=100);assert.equal(draws.at(-1)[2],'sit');
  const before=scene.camera.position.clone();scene.putPlayer({...state,sit:false,x:34,z:25});frame(now+=100);assert(scene.camera.position.x>before.x,'camera follows self');assert(scene.camera.position.z>before.z);const label=w.document.querySelector('.social-player-label');assert.equal(label.hidden,false);const sprite=scene.scene.children.find(o=>o.userData.socialId===1),feet=sprite.position.clone().project(scene.camera);assert(parseFloat(label.style.top)>(1-feet.y)*350,'name starts below feet');assert.equal(label.querySelector('small').textContent,'Poring Hunter');assert(feet.y>.03&&feet.y<.22,'player stands slightly higher than the middle of the screen by default');
+ const title=label.querySelector('.social-player-title');assert.equal(title.querySelector('img'),null,'unknown legacy names remain plain text');
+ scene.putPlayer({...state,look:{...state.look,title:'Mythic Edge',fishTitle:'🎣 Heavy Hook',fishTitleColor:'#c792ea',digiTitle:'🐾 First Partner',digiTitleColor:'#b9c6c4'}});
+ assert.equal(title.textContent,'Mythic Edge');assert.equal(title.querySelector('img').getAttribute('src'),'assets/title-symbols/49.webp');assert.equal(title.querySelector('img').getAttribute('loading'),'eager');
+ const fish=label.querySelector('.social-player-fish-title'),digi=label.querySelector('.social-player-digi-title');
+ assert.equal(fish.textContent,'Heavy Hook');assert.equal(fish.querySelector('img').getAttribute('src'),'assets/social-title-icons/fishing-heavy-hook.webp?v=440');
+ assert.equal(digi.textContent,'First Partner');assert.equal(digi.querySelector('img').getAttribute('src'),'assets/social-title-icons/digi-first-partner.webp?v=440');
+ assert.equal(fish.querySelector('img').getAttribute('loading'),'eager');assert.equal(digi.querySelector('img').getAttribute('loading'),'eager');
+ assert.equal(fish.style.color,'rgb(199, 146, 234)');assert.equal(digi.style.color,'rgb(185, 198, 196)');
+ scene.putPlayer({...state,look:{...state.look,title:'Field Initiate',fishTitle:'🎣 Dockhand',digiTitle:'🐾 First Victory'}});
+ assert.equal(title.textContent,'Field Initiate');assert.equal(title.querySelector('img').getAttribute('src'),'assets/title-symbols/47.webp');
+ assert.equal(fish.querySelector('img').getAttribute('src'),'assets/social-title-icons/fishing-dockhand.webp?v=440');
+ assert.equal(digi.querySelector('img').getAttribute('src'),'assets/social-title-icons/digi-first-victory.webp?v=440');
+ scene.putPlayer({...state,look:{...state.look,fishTitle:'🎣 <img src=x onerror=alert(1)>',digiTitle:'🐾 <script>bad</script>'}});
+ assert.equal(fish.textContent,'🎣 <img src=x onerror=alert(1)>');assert.equal(digi.textContent,'🐾 <script>bad</script>');
+ assert.equal(fish.querySelector('img'),null);assert.equal(digi.querySelector('script'),null);
+ scene.putPlayer({...state,look:{...state.look,fishTitle:'',digiTitle:''}});assert(fish.hidden&&digi.hidden);
+ const art=w.PGSocialTitleArt;delete w.PGSocialTitleArt;
+ scene.putPlayer({...state,look:{...state.look,fishTitle:'🎣 Heavy Hook',digiTitle:'🐾 First Partner'}});
+ assert.equal(fish.textContent,'🎣 Heavy Hook');assert.equal(digi.textContent,'🐾 First Partner');assert.equal(fish.querySelector('img'),null);
+ w.PGSocialTitleArt=art;scene.putPlayer({...state,look:{...state.look,fishTitle:'🎣 Heavy Hook',digiTitle:'🐾 First Partner'}});
+ assert(fish.querySelector('img')&&digi.querySelector('img'),'late registry availability refreshes the unchanged look');
+ scene.putPlayer({...state,look:{...state.look,title:'<img src=x onerror=alert(1)>'}});assert.equal(title.textContent,'<img src=x onerror=alert(1)>');assert.equal(title.querySelector('img'),null,'unknown network text is never interpreted as HTML');
+ scene.putPlayer({...state,look:{...state.look,title:''}});assert.equal(title.hidden,true);assert.equal(title.querySelector('img'),null,'unequipping removes the logo');
 
 
  // v225: the field's own level sigil appears under the character and moves with them.

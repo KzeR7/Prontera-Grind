@@ -267,6 +267,19 @@ drill. `node tools/audits/local_d1_restore.mjs` rehearses synthetic local D1
 export/import, not Time Travel. These tests do not contact production or prove a
 hosted restore. See [Recovery](RECOVERY.md).
 
+## Mastery title and pet-buff layout
+
+Start a disposable changes-only preview with
+`PREVIEW_PAGE=tools/mastery_update_preview.html python3 tools/preview_server.py 8000`.
+With `playwright-core` and `@sparticuz/chromium` installed (see Dependencies), run
+`node tools/check_mastery_titles_browser.cjs --dist --plaza` after
+`bash tools/build_site.sh`. It checks all 50 image bounds, sample equip/switch/remove,
+four pet icons and countdowns, and the field title below the player on desktop and
+phone in both source and packaged builds. `--plaza` also exercises an offline
+synthetic plaza player and existing look updates at both viewport sizes. The default
+loopback-only URL can be changed with `MASTERY_PREVIEW_URL`; no production account or service is used.
+This is an automated Chromium check, not a physical-device or hosted-session test.
+
 ## Password-recovery UI
 
 `node tools/tests/recovery_ui_sim.js` checks recovery validation, cancellation,
@@ -847,3 +860,54 @@ merge. The six known-red suites are unchanged from the base commit and do not to
 `hosted_scrypt_prepare_sim` and `hosted_launch_stage_sim` (staging/git tooling), `panel_layout_smoke` and
 `render_lost_boot_smoke` (DOM assertions). No assertion was weakened, no budget loosened and no fixture
 re-hashed; `api_sim`'s save-sized parse count stays `assert.strictEqual(parses, 3)`.
+
+## Plaza title artwork (haven-v440)
+
+The three complete supplied sheets, including unused cells, live under
+`tools/social-title-icons/`. With Pillow installed, run:
+
+```sh
+python tools/build_social_title_art.py --check
+node tools/tests/social_title_art_sim.js
+node tools/tests/digimon_sanctuary_ui_sim.js
+node tools/tests/social_fishing_sim.js
+node tools/tests/social_scene_sim.js
+node tools/tests/publish_sim.js
+node tools/tests/hosted_launch_stage_sim.js
+```
+
+The art generator verifies deterministic transparent cutouts against the retained
+sheets; `social_title_art_sim.js` decodes all 56 WebPs and checks their alpha,
+black fishing marks and cache-busted URLs. The publish check keeps the previous
+classic and combined limits, checks the runtime files byte-for-byte and bounds the
+new art separately. Unused source sheets and build/reference metadata remain in
+the repository, not the publish folder. The staging-package test checks the
+script, stylesheet and dynamic art URLs are carried into an owner-run rehearsal;
+it does not deploy anything.
+The unchanged combat fixture gate requires the pinned historical baseline commit.
+
+For an optional desktop and emulated-touch phone Chromium check, start the
+changes-only preview, build `dist/`, and run (with the documented Playwright
+Chromium dependencies):
+
+```sh
+PREVIEW_PAGE=tools/mastery_update_preview.html python3 tools/preview_server.py 8000
+bash tools/build_site.sh
+node tools/check_social_title_art_browser.cjs
+```
+
+The checker decodes every DigiPet/fishing logo in the browser and verifies
+transparent corners and unbacked title lines. It also compares rendered pixels
+with and without each of the 50 mastery symbols on a light background inside a
+transformed label: the symbol remains visible but the source's dark matte must
+not appear. It uses emulated taps on the phone, verifies the separate player-name
+styling is unchanged, checks the DigiPet header and collection stay within the
+panel, and checks that chat stands aside for an open Fishing window and returns
+when it closes. It checks the plaza label against a real rendered frame before
+pausing continuous WebGL in the synthetic fixture.
+For a shorter focused run, set `SOCIAL_ART_PROFILE=phone` or `desktop`, and/or
+`SOCIAL_ART_TARGET=source` or `packaged` (the default runs both of each).
+
+The browser check uses an isolated localStorage save and an offline synthetic
+plaza; it is not a hosted multiplayer session or a physical-device test. The
+preview's example choices do not write to a game save.

@@ -2609,18 +2609,35 @@ void main(){
  // Dir index 0..7 in the plaza's own convention (0 = +z, 2 = -x, 4 = -z, 6 = +x), so anything
  // that knows a target can turn a character toward it.
  function faceTo(x,z,tx,tz){const dx=Number(tx)-x,dz=Number(tz)-z;if(!Number.isFinite(dx)||!Number.isFinite(dz)||Math.hypot(dx,dz)<.15)return null;return (Math.round(Math.atan2(-dx,dz)/(Math.PI/4))+8)%8}
+ // Look messages already carry title names. Resolve only a locally known name to a local icon;
+ // unknown or older names remain literal text, never a path or HTML from another player.
+ function socialTitleLine(el,raw,kind,catalog,prefix){
+  const text=typeof raw==='string'?raw:'',known=Array.isArray(catalog)?catalog.find(t=>t&&(text===prefix+t.name||text===t.name)):null;
+  const src=known?globalThis.PGSocialTitleArt?.url(kind,known.id)||'':'';
+  if(el.dataset.titleValue!==text||el.dataset.titleSrc!==src){
+   el.replaceChildren();
+   if(src){const img=document.createElement('img');img.className='social-title-symbol social-title-symbol--'+kind;img.setAttribute('src',src);img.alt='';img.setAttribute('loading','eager');img.setAttribute('decoding','async');img.draggable=false;el.append(img)}
+   el.append(document.createTextNode(src&&text===prefix+known.name?known.name:text));el.dataset.titleValue=text;el.dataset.titleSrc=src;
+  }
+  el.hidden=!text;
+ }
  function putPlayer(state){let p=players.get(state.id);if(!p){
   const canvas=document.createElement('canvas');canvas.width=320;canvas.height=280;const ctx=canvas.getContext('2d'),texture=new T.CanvasTexture(canvas);texture.magFilter=texture.minFilter=T.NearestFilter;texture.generateMipmaps=false;
   const sprite=new T.Sprite(new T.SpriteMaterial({map:texture,transparent:true,depthTest:true,alphaTest:.05}));sprite.userData.socialId=state.id;sprite.center.set(.5,80/280);scene.add(sprite);
   const label=document.createElement('div');label.className='social-player-label';label.dataset.loading='true';label.dataset.player=state.id;const bubble=document.createElement('div');bubble.className='social-bubble';bubble.dataset.player=state.id;const name=document.createElement('button');if(state.gm){name.textContent='🛠 '+state.name;name.title='Game Master';name.classList.add('social-gm')}else name.textContent=state.name;name.onclick=()=>{if(state.id!==callbacks.self())callbacks.menu(state.name,state.id)};const title=document.createElement('small');title.className='social-player-title';const fishTitle=document.createElement('small');fishTitle.className='social-player-fish-title';const digiTitle=document.createElement('small');digiTitle.className='social-player-digi-title';label.append(name,title,fishTitle,digiTitle);labels.append(label,bubble);
   p={canvas,ctx,texture,sprite,label,bubble,title,fishTitle,digiTitle,state,loaded:'',paint:'',height:3.2,aura:null,auraTier:-1,lx:'',ly:'',lhid:null,bx:'',by:'',bhid:null,bubbleUntil:0,looks:{},seq:0,retryAt:0,loading:false,trail:{points:[],progress:null}};players.set(state.id,p);
  }
- const nextTitle=state.look?.title||'';if(p.title.textContent!==nextTitle){p.title.textContent=nextTitle;p.title.hidden=!nextTitle}else if(p.title.hidden!==!nextTitle)p.title.hidden=!nextTitle;
- // v296: the fishing title is a second line, so it never displaces the Hunt title.
- const nextFish=state.look?.fishTitle||'';if(p.fishTitle.textContent!==nextFish){p.fishTitle.textContent=nextFish;p.fishTitle.hidden=!nextFish}else if(p.fishTitle.hidden!==!nextFish)p.fishTitle.hidden=!nextFish;
- // v373: the fishing title takes its tier colour; the DigiPet title sits on the line under it in its own tier colour.
+ const nextTitle=typeof state.look?.title==='string'?state.look.title:'';
+ if(p.title.textContent!==nextTitle){
+  // Reuse the existing sanitized look.title; only locally known names may select art.
+  // Unknown/legacy names stay plain text, and no extra room message is needed.
+  const title=globalThis.PGTitles?.findByName?.(nextTitle,typeof INDEX_TITLES==='undefined'?[]:INDEX_TITLES);
+  p.title.innerHTML=title?PGTitles.icon(title,true):'';p.title.append(document.createTextNode(nextTitle));p.title.hidden=!nextTitle;
+ }else if(p.title.hidden!==!nextTitle)p.title.hidden=!nextTitle;
+ // Fishing and DigiPet keep independent lines and their existing rarity colours.
+ socialTitleLine(p.fishTitle,state.look?.fishTitle,'fishing',globalThis.PGSocialFishing?.FISHING_TITLES,'🎣 ');
  p.fishTitle.style.color=state.look?.fishTitleColor||'';
- const nextDigi=state.look?.digiTitle||'';if(p.digiTitle.textContent!==nextDigi){p.digiTitle.textContent=nextDigi;p.digiTitle.hidden=!nextDigi}else if(p.digiTitle.hidden!==!nextDigi)p.digiTitle.hidden=!nextDigi;
+ socialTitleLine(p.digiTitle,state.look?.digiTitle,'digi',globalThis.PGDigimonSanctuary?.DIGI_TITLES,'🐾 ');
  p.digiTitle.style.color=state.look?.digiTitleColor||'';
  p.state={...state,path:(state.path||[]).map(v=>({...v})),at:performance.now()};
  syncAura(p);

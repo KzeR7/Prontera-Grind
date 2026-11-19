@@ -7,7 +7,7 @@
  tabs.splice(0,tabs.length,'skills');let skillCount=0;
  for(const cls of Object.keys(CLASSES)){
   S.cls=cls;ui();const images=[...document.querySelectorAll('#wins .skill-art')];assert(images.length,'no skill images for '+cls);
-  for(const img of images){img.loading='eager';await Promise.race([img.decode(),new Promise((_,reject)=>setTimeout(()=>reject(Error('Skill image timeout '+img.dataset.skill)),10000))]);assert(img.naturalWidth>=62,'skill image missing');const id=img.dataset.skill,art=PGSkillIcons[id];assert(art&&img.dataset.family===art.family,'incorrect mapped family');skillCount++;if(id!=='aid'&&SKILLS.find(s=>s.id===id).cls.includes(cls)&&['Assassin','Assassin Cross'].includes(cls))assert(art.family==='shadow','Assassin art should be purple shadow')}
+  for(const img of images){img.loading='eager';await Promise.race([img.decode(),new Promise((_,reject)=>setTimeout(()=>reject(Error('Skill image timeout '+img.dataset.skill)),10000))]);assert(img.naturalWidth>=46,'skill image missing');const id=img.dataset.skill,art=PGSkillIcons[id];assert(art&&img.dataset.family===art.family,'incorrect mapped family');skillCount++;if(id!=='aid'&&SKILLS.find(s=>s.id===id).cls.includes(cls)&&['Assassin','Assassin Cross'].includes(cls))assert(art.family==='shadow','Assassin art should be purple shadow')}
   for(const img of images){const b=img.getBoundingClientRect();assert(b.left>=0&&b.right<=innerWidth+1,'skill icon outside viewport')}
  }
  await petSpriteStore.init();let views=0,changed=0,peak=0;const cv=document.createElement('canvas');cv.width=cv.height=256;const ctx=cv.getContext('2d');

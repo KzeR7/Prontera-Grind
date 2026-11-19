@@ -1,0 +1,1933 @@
+{
+  "version": 1,
+  "sources": [
+    {
+      "file": "image-1.png",
+      "bytes": 1738898,
+      "sha256": "6698f677b7b68aed72e12705f480db514d2f2061eff7ab609b2fb2a230c289bf"
+    },
+    {
+      "file": "image-2.png",
+      "bytes": 1780556,
+      "sha256": "4c3ee422434176698ec266255a0bf1debd32d1495681f1c85728390146626628"
+    },
+    {
+      "file": "image-3.png",
+      "bytes": 1058428,
+      "sha256": "872707a7e232b8f52baf5bb7888d58a31c9d3e8b7d78b10c506ae27b278cc71b"
+    },
+    {
+      "file": "image-4.png",
+      "bytes": 644362,
+      "sha256": "4771f5ac3bf3b26fec65f0dc51ce4672b759bd27edad498c2f68fb629477f5b5"
+    },
+    {
+      "file": "image-5.png",
+      "bytes": 597589,
+      "sha256": "a2049ac57d917b58c0f313e858fd510b9486e3c61e65fe51d8a69632403336c2"
+    }
+  ],
+  "skills": {
+    "cr_guard": {
+      "sheet": 3,
+      "row": 9,
+      "column": 7,
+      "box": [
+        412,
+        825,
+        458,
+        871
+      ],
+      "family": "Crusader",
+      "name": "Auto Guard",
+      "subject": "golden shield"
+    },
+    "cr_shboom": {
+      "sheet": 3,
+      "row": 8,
+      "column": 3,
+      "box": [
+        184,
+        768,
+        230,
+        814
+      ],
+      "family": "Crusader",
+      "name": "Shield Boomerang",
+      "subject": "whirling shield"
+    },
+    "cr_grand": {
+      "sheet": 1,
+      "row": 8,
+      "column": 2,
+      "box": [
+        167,
+        1231,
+        226,
+        1290
+      ],
+      "family": "Crusader",
+      "name": "Grand Cross",
+      "subject": "radiant holy sword"
+    },
+    "cr_faith": {
+      "sheet": 2,
+      "row": 4,
+      "column": 9,
+      "box": [
+        608,
+        836,
+        667,
+        895
+      ],
+      "family": "Crusader",
+      "name": "Faith",
+      "subject": "blessing hands"
+    },
+    "cr_holyx": {
+      "sheet": 2,
+      "row": 1,
+      "column": 3,
+      "box": [
+        230,
+        602,
+        289,
+        661
+      ],
+      "family": "Crusader",
+      "name": "Holy Cross",
+      "subject": "golden cross"
+    },
+    "pa_chain": {
+      "sheet": 3,
+      "row": 9,
+      "column": 1,
+      "box": [
+        70,
+        825,
+        116,
+        871
+      ],
+      "family": "Paladin",
+      "name": "Shield Chain",
+      "subject": "fiery chains"
+    },
+    "pa_sac": {
+      "sheet": 3,
+      "row": 7,
+      "column": 6,
+      "box": [
+        355,
+        711,
+        401,
+        757
+      ],
+      "family": "Paladin",
+      "name": "Martyr's Reckoning",
+      "subject": "red sacrifice emblem"
+    },
+    "pa_press": {
+      "sheet": 2,
+      "row": 8,
+      "column": 7,
+      "box": [
+        482,
+        1231,
+        541,
+        1290
+      ],
+      "family": "Paladin",
+      "name": "Gloria Domini",
+      "subject": "divine star"
+    },
+    "pa_def": {
+      "sheet": 1,
+      "row": 3,
+      "column": 9,
+      "box": [
+        608,
+        758,
+        667,
+        817
+      ],
+      "family": "Paladin",
+      "name": "Defending Aura",
+      "subject": "defensive shield"
+    },
+    "pa_prov": {
+      "sheet": 2,
+      "row": 8,
+      "column": 8,
+      "box": [
+        545,
+        1231,
+        604,
+        1290
+      ],
+      "family": "Paladin",
+      "name": "Providence",
+      "subject": "golden wings"
+    },
+    "rg_vanish": {
+      "sheet": 2,
+      "row": 1,
+      "column": 8,
+      "box": [
+        545,
+        602,
+        604,
+        661
+      ],
+      "family": "Royal Guard",
+      "name": "Vanishing Point",
+      "subject": "golden piercing streak"
+    },
+    "rg_over": {
+      "sheet": 3,
+      "row": 8,
+      "column": 2,
+      "box": [
+        127,
+        768,
+        173,
+        814
+      ],
+      "family": "Royal Guard",
+      "name": "Overbrand",
+      "subject": "sweeping blade"
+    },
+    "rg_cannon": {
+      "sheet": 1,
+      "row": 7,
+      "column": 1,
+      "box": [
+        104,
+        1153,
+        163,
+        1212
+      ],
+      "family": "Royal Guard",
+      "name": "Cannon Spear",
+      "subject": "piercing golden strike"
+    },
+    "rg_earth": {
+      "sheet": 2,
+      "row": 2,
+      "column": 6,
+      "box": [
+        419,
+        680,
+        478,
+        739
+      ],
+      "family": "Royal Guard",
+      "name": "Earth Drive",
+      "subject": "golden impact"
+    },
+    "rg_prestige": {
+      "sheet": 4,
+      "row": 3,
+      "column": 2,
+      "box": [
+        180,
+        218,
+        226,
+        264
+      ],
+      "family": "Royal Guard",
+      "name": "Prestige",
+      "subject": "luminous shield"
+    },
+    "rg_genesis": {
+      "sheet": 2,
+      "row": 7,
+      "column": 8,
+      "box": [
+        545,
+        1153,
+        604,
+        1212
+      ],
+      "family": "Royal Guard",
+      "name": "Genesis Ray",
+      "subject": "angelic light"
+    },
+    "sa_hind": {
+      "sheet": 2,
+      "row": 1,
+      "column": 5,
+      "box": [
+        356,
+        602,
+        415,
+        661
+      ],
+      "family": "Sage",
+      "name": "Hindsight",
+      "subject": "arcane sigil"
+    },
+    "sa_earth": {
+      "sheet": 2,
+      "row": 4,
+      "column": 3,
+      "box": [
+        230,
+        836,
+        289,
+        895
+      ],
+      "family": "Sage",
+      "name": "Heaven's Drive",
+      "subject": "earth fragments"
+    },
+    "sa_bolt": {
+      "sheet": 2,
+      "row": 6,
+      "column": 1,
+      "box": [
+        104,
+        1075,
+        163,
+        1134
+      ],
+      "family": "Sage",
+      "name": "Elemental Bolt",
+      "subject": "lightning bolt"
+    },
+    "sa_book": {
+      "sheet": 2,
+      "row": 9,
+      "column": 5,
+      "box": [
+        356,
+        1309,
+        415,
+        1368
+      ],
+      "family": "Sage",
+      "name": "Advanced Book",
+      "subject": "enchanted book"
+    },
+    "sa_dispel": {
+      "sheet": 2,
+      "row": 6,
+      "column": 0,
+      "box": [
+        41,
+        1075,
+        100,
+        1134
+      ],
+      "family": "Sage",
+      "name": "Dispell",
+      "subject": "dispelled magic cards"
+    },
+    "sc_web": {
+      "sheet": 2,
+      "row": 4,
+      "column": 7,
+      "box": [
+        482,
+        836,
+        541,
+        895
+      ],
+      "family": "Scholar",
+      "name": "Spider Web",
+      "subject": "spider web"
+    },
+    "sc_double": {
+      "sheet": 2,
+      "row": 4,
+      "column": 5,
+      "box": [
+        356,
+        836,
+        415,
+        895
+      ],
+      "family": "Scholar",
+      "name": "Double Casting",
+      "subject": "twin magic"
+    },
+    "sc_fog": {
+      "sheet": 2,
+      "row": 2,
+      "column": 4,
+      "box": [
+        293,
+        680,
+        352,
+        739
+      ],
+      "family": "Scholar",
+      "name": "Wall of Fog",
+      "subject": "violet vortex"
+    },
+    "sc_soul": {
+      "sheet": 2,
+      "row": 3,
+      "column": 7,
+      "box": [
+        482,
+        758,
+        541,
+        817
+      ],
+      "family": "Scholar",
+      "name": "Soul Siphon",
+      "subject": "soul caster"
+    },
+    "sc_mind": {
+      "sheet": 1,
+      "row": 5,
+      "column": 1,
+      "box": [
+        104,
+        997,
+        163,
+        1056
+      ],
+      "family": "Scholar",
+      "name": "Mind Breaker",
+      "subject": "psychic spell"
+    },
+    "so_psychic": {
+      "sheet": 1,
+      "row": 4,
+      "column": 6,
+      "box": [
+        419,
+        836,
+        478,
+        895
+      ],
+      "family": "Sorcerer",
+      "name": "Psychic Wave",
+      "subject": "psychic vortex"
+    },
+    "so_diamond": {
+      "sheet": 1,
+      "row": 1,
+      "column": 7,
+      "box": [
+        482,
+        602,
+        541,
+        661
+      ],
+      "family": "Sorcerer",
+      "name": "Diamond Dust",
+      "subject": "ice crystals"
+    },
+    "so_varetyr": {
+      "sheet": 1,
+      "row": 8,
+      "column": 8,
+      "box": [
+        545,
+        1231,
+        604,
+        1290
+      ],
+      "family": "Sorcerer",
+      "name": "Varetyr Spear",
+      "subject": "lightning sphere"
+    },
+    "so_grave": {
+      "sheet": 3,
+      "row": 0,
+      "column": 3,
+      "box": [
+        184,
+        312,
+        230,
+        358
+      ],
+      "family": "Sorcerer",
+      "name": "Earth Grave",
+      "subject": "tangled roots"
+    },
+    "so_strike": {
+      "sheet": 2,
+      "row": 9,
+      "column": 3,
+      "box": [
+        230,
+        1309,
+        289,
+        1368
+      ],
+      "family": "Sorcerer",
+      "name": "Spell Fist",
+      "subject": "magic sphere"
+    },
+    "so_buster": {
+      "sheet": 3,
+      "row": 1,
+      "column": 1,
+      "box": [
+        70,
+        369,
+        116,
+        415
+      ],
+      "family": "Sorcerer",
+      "name": "Poison Buster",
+      "subject": "poison skull"
+    },
+    "al_pot": {
+      "sheet": 1,
+      "row": 7,
+      "column": 0,
+      "box": [
+        41,
+        1153,
+        100,
+        1212
+      ],
+      "family": "Alchemist",
+      "name": "Potion Pitcher",
+      "subject": "healing potion"
+    },
+    "al_acid": {
+      "sheet": 1,
+      "row": 1,
+      "column": 9,
+      "box": [
+        608,
+        602,
+        667,
+        661
+      ],
+      "family": "Alchemist",
+      "name": "Acid Terror",
+      "subject": "green flask"
+    },
+    "al_bomb": {
+      "sheet": 3,
+      "row": 7,
+      "column": 7,
+      "box": [
+        412,
+        711,
+        458,
+        757
+      ],
+      "family": "Alchemist",
+      "name": "Demonstration",
+      "subject": "explosive flask"
+    },
+    "al_learn": {
+      "sheet": 2,
+      "row": 4,
+      "column": 2,
+      "box": [
+        167,
+        836,
+        226,
+        895
+      ],
+      "family": "Alchemist",
+      "name": "Potion Research",
+      "subject": "potion research flask"
+    },
+    "al_flora": {
+      "sheet": 3,
+      "row": 1,
+      "column": 5,
+      "box": [
+        298,
+        369,
+        344,
+        415
+      ],
+      "family": "Alchemist",
+      "name": "Summon Flora",
+      "subject": "growing plant"
+    },
+    "bi_demo": {
+      "sheet": 2,
+      "row": 4,
+      "column": 0,
+      "box": [
+        41,
+        836,
+        100,
+        895
+      ],
+      "family": "Biochemist",
+      "name": "Acid Demonstration",
+      "subject": "explosive vials"
+    },
+    "bi_fcp": {
+      "sheet": 4,
+      "row": 1,
+      "column": 0,
+      "box": [
+        70,
+        90,
+        116,
+        136
+      ],
+      "family": "Biochemist",
+      "name": "Full Chemical Protection",
+      "subject": "green protective shield"
+    },
+    "bi_bio": {
+      "sheet": 1,
+      "row": 2,
+      "column": 7,
+      "box": [
+        482,
+        680,
+        541,
+        739
+      ],
+      "family": "Biochemist",
+      "name": "Marine Sphere",
+      "subject": "green alchemical sphere"
+    },
+    "bi_plant": {
+      "sheet": 3,
+      "row": 1,
+      "column": 8,
+      "box": [
+        469,
+        369,
+        515,
+        415
+      ],
+      "family": "Biochemist",
+      "name": "Summon Geographer",
+      "subject": "living leaf"
+    },
+    "bi_cart": {
+      "sheet": 4,
+      "row": 2,
+      "column": 8,
+      "box": [
+        510,
+        154,
+        556,
+        200
+      ],
+      "family": "Biochemist",
+      "name": "Cart Remodeling",
+      "subject": "mechanical hammer"
+    },
+    "ge_cart": {
+      "sheet": 3,
+      "row": 0,
+      "column": 0,
+      "box": [
+        13,
+        312,
+        59,
+        358
+      ],
+      "family": "Geneticist",
+      "name": "Cart Cannon",
+      "subject": "cannon shell"
+    },
+    "ge_thorn": {
+      "sheet": 1,
+      "row": 2,
+      "column": 4,
+      "box": [
+        293,
+        680,
+        352,
+        739
+      ],
+      "family": "Geneticist",
+      "name": "Thorn Trap",
+      "subject": "thorny vines"
+    },
+    "ge_spore": {
+      "sheet": 3,
+      "row": 0,
+      "column": 5,
+      "box": [
+        298,
+        312,
+        344,
+        358
+      ],
+      "family": "Geneticist",
+      "name": "Spore Explosion",
+      "subject": "exploding spores"
+    },
+    "ge_weed": {
+      "sheet": 3,
+      "row": 0,
+      "column": 8,
+      "box": [
+        469,
+        312,
+        515,
+        358
+      ],
+      "family": "Geneticist",
+      "name": "Crazy Weed",
+      "subject": "sweeping leaf blade"
+    },
+    "ge_fire": {
+      "sheet": 2,
+      "row": 7,
+      "column": 4,
+      "box": [
+        293,
+        1153,
+        352,
+        1212
+      ],
+      "family": "Geneticist",
+      "name": "Demonic Fire",
+      "subject": "fireballs"
+    },
+    "ge_hell": {
+      "sheet": 3,
+      "row": 1,
+      "column": 3,
+      "box": [
+        184,
+        369,
+        230,
+        415
+      ],
+      "family": "Geneticist",
+      "name": "Hell's Plant",
+      "subject": "hungry plant"
+    },
+    "mo_sphere": {
+      "sheet": 1,
+      "row": 4,
+      "column": 7,
+      "box": [
+        482,
+        836,
+        541,
+        895
+      ],
+      "family": "Monk",
+      "name": "Call Spirits",
+      "subject": "spirit sphere"
+    },
+    "mo_triple": {
+      "sheet": 2,
+      "row": 4,
+      "column": 6,
+      "box": [
+        419,
+        836,
+        478,
+        895
+      ],
+      "family": "Monk",
+      "name": "Triple Attack",
+      "subject": "repeated punches"
+    },
+    "mo_chain": {
+      "sheet": 1,
+      "row": 0,
+      "column": 5,
+      "box": [
+        356,
+        524,
+        415,
+        583
+      ],
+      "family": "Monk",
+      "name": "Chain Combo",
+      "subject": "blazing fist"
+    },
+    "mo_iron": {
+      "sheet": 1,
+      "row": 1,
+      "column": 0,
+      "box": [
+        41,
+        602,
+        100,
+        661
+      ],
+      "family": "Monk",
+      "name": "Iron Fists",
+      "subject": "iron gauntlet"
+    },
+    "ch_asura": {
+      "sheet": 2,
+      "row": 3,
+      "column": 6,
+      "box": [
+        419,
+        758,
+        478,
+        817
+      ],
+      "family": "Monk",
+      "name": "Asura Strike",
+      "subject": "burning spirit"
+    },
+    "ch_glacier": {
+      "sheet": 2,
+      "row": 0,
+      "column": 6,
+      "box": [
+        419,
+        524,
+        478,
+        583
+      ],
+      "family": "Champion",
+      "name": "Glacier Fist",
+      "subject": "icy fist"
+    },
+    "ch_palm": {
+      "sheet": 3,
+      "row": 9,
+      "column": 4,
+      "box": [
+        241,
+        825,
+        287,
+        871
+      ],
+      "family": "Champion",
+      "name": "Raging Palm Strike",
+      "subject": "empowered golden fist"
+    },
+    "ch_crush": {
+      "sheet": 4,
+      "row": 4,
+      "column": 3,
+      "box": [
+        235,
+        282,
+        281,
+        328
+      ],
+      "family": "Champion",
+      "name": "Chain Crush Combo",
+      "subject": "martial warrior"
+    },
+    "ch_fury": {
+      "sheet": 1,
+      "row": 5,
+      "column": 0,
+      "box": [
+        41,
+        997,
+        100,
+        1056
+      ],
+      "family": "Champion",
+      "name": "Critical Explosion",
+      "subject": "fiery fighter"
+    },
+    "ch_zen": {
+      "sheet": 2,
+      "row": 3,
+      "column": 4,
+      "box": [
+        293,
+        758,
+        352,
+        817
+      ],
+      "family": "Champion",
+      "name": "Zen",
+      "subject": "blue spirit"
+    },
+    "su_tiger": {
+      "sheet": 4,
+      "row": 2,
+      "column": 1,
+      "box": [
+        125,
+        154,
+        171,
+        200
+      ],
+      "family": "Sura",
+      "name": "Tiger Cannon",
+      "subject": "golden beast"
+    },
+    "su_rampage": {
+      "sheet": 1,
+      "row": 3,
+      "column": 5,
+      "box": [
+        356,
+        758,
+        415,
+        817
+      ],
+      "family": "Sura",
+      "name": "Rampage Blaster",
+      "subject": "golden impact"
+    },
+    "su_gate": {
+      "sheet": 3,
+      "row": 8,
+      "column": 6,
+      "box": [
+        355,
+        768,
+        401,
+        814
+      ],
+      "family": "Sura",
+      "name": "Gates of Hell",
+      "subject": "hellfire"
+    },
+    "su_sky": {
+      "sheet": 2,
+      "row": 8,
+      "column": 1,
+      "box": [
+        104,
+        1231,
+        163,
+        1290
+      ],
+      "family": "Sura",
+      "name": "Sky Net Blow",
+      "subject": "explosive strike"
+    },
+    "su_rising": {
+      "sheet": 2,
+      "row": 2,
+      "column": 9,
+      "box": [
+        608,
+        680,
+        667,
+        739
+      ],
+      "family": "Sura",
+      "name": "Rising Dragon",
+      "subject": "rising firebird"
+    },
+    "su_knuckle": {
+      "sheet": 1,
+      "row": 2,
+      "column": 1,
+      "box": [
+        104,
+        680,
+        163,
+        739
+      ],
+      "family": "Sura",
+      "name": "Knuckle Arrow",
+      "subject": "striking fists"
+    },
+    "ro_strip": {
+      "sheet": 4,
+      "row": 3,
+      "column": 10,
+      "box": [
+        620,
+        218,
+        666,
+        264
+      ],
+      "family": "Rogue",
+      "name": "Divest Armor",
+      "subject": "violet blade"
+    },
+    "ro_back": {
+      "sheet": 3,
+      "row": 6,
+      "column": 1,
+      "box": [
+        70,
+        654,
+        116,
+        700
+      ],
+      "family": "Rogue",
+      "name": "Backstab",
+      "subject": "shadow blade"
+    },
+    "ro_raid": {
+      "sheet": 1,
+      "row": 5,
+      "column": 4,
+      "box": [
+        293,
+        997,
+        352,
+        1056
+      ],
+      "family": "Rogue",
+      "name": "Sightless Mind",
+      "subject": "shadowy face"
+    },
+    "ro_sword": {
+      "sheet": 3,
+      "row": 6,
+      "column": 0,
+      "box": [
+        13,
+        654,
+        59,
+        700
+      ],
+      "family": "Rogue",
+      "name": "Sword Mastery",
+      "subject": "crossed swords"
+    },
+    "ro_snatch": {
+      "sheet": 2,
+      "row": 5,
+      "column": 6,
+      "box": [
+        419,
+        997,
+        478,
+        1056
+      ],
+      "family": "Rogue",
+      "name": "Snatcher",
+      "subject": "grasping hands"
+    },
+    "st_plag": {
+      "sheet": 2,
+      "row": 8,
+      "column": 0,
+      "box": [
+        41,
+        1231,
+        100,
+        1290
+      ],
+      "family": "Stalker",
+      "name": "Plagiarism",
+      "subject": "mirrored figure"
+    },
+    "st_full": {
+      "sheet": 1,
+      "row": 6,
+      "column": 9,
+      "box": [
+        608,
+        1075,
+        667,
+        1134
+      ],
+      "family": "Stalker",
+      "name": "Full Divestment",
+      "subject": "swirling blade"
+    },
+    "st_stalk": {
+      "sheet": 2,
+      "row": 5,
+      "column": 2,
+      "box": [
+        167,
+        997,
+        226,
+        1056
+      ],
+      "family": "Stalker",
+      "name": "Stalk",
+      "subject": "cloaked silhouette"
+    },
+    "st_counter": {
+      "sheet": 1,
+      "row": 4,
+      "column": 3,
+      "box": [
+        230,
+        836,
+        289,
+        895
+      ],
+      "family": "Stalker",
+      "name": "Counter Instinct",
+      "subject": "throwing blades"
+    },
+    "st_pres": {
+      "sheet": 1,
+      "row": 2,
+      "column": 3,
+      "box": [
+        230,
+        680,
+        289,
+        739
+      ],
+      "family": "Stalker",
+      "name": "Preserve",
+      "subject": "purple barrier"
+    },
+    "sc_tri": {
+      "sheet": 3,
+      "row": 6,
+      "column": 3,
+      "box": [
+        184,
+        654,
+        230,
+        700
+      ],
+      "family": "Shadow Chaser",
+      "name": "Triangle Shot",
+      "subject": "violet projectiles"
+    },
+    "sc_fatal": {
+      "sheet": 3,
+      "row": 5,
+      "column": 4,
+      "box": [
+        241,
+        597,
+        287,
+        643
+      ],
+      "family": "Shadow Chaser",
+      "name": "Fatal Menace",
+      "subject": "shadow assassin"
+    },
+    "sc_feint": {
+      "sheet": 1,
+      "row": 6,
+      "column": 1,
+      "box": [
+        104,
+        1075,
+        163,
+        1134
+      ],
+      "family": "Shadow Chaser",
+      "name": "Feint Bomb",
+      "subject": "violet burst"
+    },
+    "sc_masq": {
+      "sheet": 1,
+      "row": 9,
+      "column": 0,
+      "box": [
+        41,
+        1309,
+        100,
+        1368
+      ],
+      "family": "Shadow Chaser",
+      "name": "Masquerade",
+      "subject": "masked face"
+    },
+    "sc_auto": {
+      "sheet": 2,
+      "row": 2,
+      "column": 3,
+      "box": [
+        230,
+        680,
+        289,
+        739
+      ],
+      "family": "Shadow Chaser",
+      "name": "Autoshadow Spell",
+      "subject": "shadow dragon"
+    },
+    "sc_spell": {
+      "sheet": 3,
+      "row": 6,
+      "column": 4,
+      "box": [
+        241,
+        654,
+        287,
+        700
+      ],
+      "family": "Shadow Chaser",
+      "name": "Shadow Spell",
+      "subject": "purple magic flame"
+    },
+    "bd_bragi": {
+      "sheet": 1,
+      "row": 5,
+      "column": 6,
+      "box": [
+        419,
+        997,
+        478,
+        1056
+      ],
+      "family": "Bard & Dancer",
+      "name": "Poem of Bragi",
+      "subject": "sonic rings"
+    },
+    "bd_music": {
+      "sheet": 3,
+      "row": 2,
+      "column": 6,
+      "box": [
+        355,
+        426,
+        401,
+        472
+      ],
+      "family": "Bard & Dancer",
+      "name": "Musical Strike",
+      "subject": "horn"
+    },
+    "dn_service": {
+      "sheet": 2,
+      "row": 7,
+      "column": 3,
+      "box": [
+        230,
+        1153,
+        289,
+        1212
+      ],
+      "family": "Bard & Dancer",
+      "name": "Service For You",
+      "subject": "golden sound rays"
+    },
+    "dn_sling": {
+      "sheet": 3,
+      "row": 0,
+      "column": 4,
+      "box": [
+        241,
+        312,
+        287,
+        358
+      ],
+      "family": "Bard & Dancer",
+      "name": "Slinging Arrow",
+      "subject": "flying arrow"
+    },
+    "bd_lesson": {
+      "sheet": 2,
+      "row": 0,
+      "column": 9,
+      "box": [
+        608,
+        524,
+        667,
+        583
+      ],
+      "family": "Bard & Dancer",
+      "name": "Music & Dance Lessons",
+      "subject": "book of lessons"
+    },
+    "bd_vulcan": {
+      "sheet": 2,
+      "row": 6,
+      "column": 7,
+      "box": [
+        482,
+        1075,
+        541,
+        1134
+      ],
+      "family": "Minstrel & Gypsy",
+      "name": "Arrow Vulcan",
+      "subject": "golden projectile volley"
+    },
+    "bd_song": {
+      "sheet": 2,
+      "row": 6,
+      "column": 8,
+      "box": [
+        545,
+        1075,
+        604,
+        1134
+      ],
+      "family": "Minstrel & Gypsy",
+      "name": "Song of Lutie",
+      "subject": "luminous heart"
+    },
+    "dn_tarot": {
+      "sheet": 1,
+      "row": 8,
+      "column": 7,
+      "box": [
+        482,
+        1231,
+        541,
+        1290
+      ],
+      "family": "Minstrel & Gypsy",
+      "name": "Tarot Card of Fate",
+      "subject": "pink magic cards"
+    },
+    "dn_hum": {
+      "sheet": 2,
+      "row": 6,
+      "column": 3,
+      "box": [
+        230,
+        1075,
+        289,
+        1134
+      ],
+      "family": "Minstrel & Gypsy",
+      "name": "Humming",
+      "subject": "melodic rays"
+    },
+    "bd_bliss": {
+      "sheet": 2,
+      "row": 5,
+      "column": 1,
+      "box": [
+        104,
+        997,
+        163,
+        1056
+      ],
+      "family": "Minstrel & Gypsy",
+      "name": "Sheltering Bliss",
+      "subject": "protective moon"
+    },
+    "bd_metal": {
+      "sheet": 3,
+      "row": 1,
+      "column": 2,
+      "box": [
+        127,
+        369,
+        173,
+        415
+      ],
+      "family": "Maestro & Wanderer",
+      "name": "Metallic Sound",
+      "subject": "golden horn"
+    },
+    "dn_rain": {
+      "sheet": 2,
+      "row": 6,
+      "column": 9,
+      "box": [
+        608,
+        1075,
+        667,
+        1134
+      ],
+      "family": "Maestro & Wanderer",
+      "name": "Severe Rainstorm",
+      "subject": "falling blue shards"
+    },
+    "dn_swing": {
+      "sheet": 2,
+      "row": 1,
+      "column": 7,
+      "box": [
+        482,
+        602,
+        541,
+        661
+      ],
+      "family": "Maestro & Wanderer",
+      "name": "Swing Dance",
+      "subject": "crossing violet ribbons"
+    },
+    "bd_reverb": {
+      "sheet": 1,
+      "row": 5,
+      "column": 3,
+      "box": [
+        230,
+        997,
+        289,
+        1056
+      ],
+      "family": "Maestro & Wanderer",
+      "name": "Reverberation",
+      "subject": "reverberating stars"
+    },
+    "bd_gloomy": {
+      "sheet": 3,
+      "row": 6,
+      "column": 6,
+      "box": [
+        355,
+        654,
+        401,
+        700
+      ],
+      "family": "Maestro & Wanderer",
+      "name": "Gloomy Shyness",
+      "subject": "shadowy skull"
+    },
+    "mw_echo": {
+      "sheet": 3,
+      "row": 8,
+      "column": 0,
+      "box": [
+        13,
+        768,
+        59,
+        814
+      ],
+      "family": "Maestro & Wanderer",
+      "name": "Great Echo",
+      "subject": "radiant echo"
+    },
+    "nj_cicada": {
+      "sheet": 1,
+      "row": 2,
+      "column": 2,
+      "box": [
+        167,
+        680,
+        226,
+        739
+      ],
+      "family": "Ninja",
+      "name": "Cicada Skin Shed",
+      "subject": "shadow decoy"
+    },
+    "nj_kunai": {
+      "sheet": 2,
+      "row": 5,
+      "column": 7,
+      "box": [
+        482,
+        997,
+        541,
+        1056
+      ],
+      "family": "Ninja",
+      "name": "Throw Kunai",
+      "subject": "thrown dagger"
+    },
+    "nj_blaze": {
+      "sheet": 1,
+      "row": 9,
+      "column": 4,
+      "box": [
+        293,
+        1309,
+        352,
+        1368
+      ],
+      "family": "Ninja",
+      "name": "Crimson Fire Blossom",
+      "subject": "fiery dragon"
+    },
+    "nj_final": {
+      "sheet": 3,
+      "row": 5,
+      "column": 5,
+      "box": [
+        298,
+        597,
+        344,
+        643
+      ],
+      "family": "Ninja",
+      "name": "Final Strike",
+      "subject": "violet strike"
+    },
+    "nj_dagger": {
+      "sheet": 1,
+      "row": 3,
+      "column": 3,
+      "box": [
+        230,
+        758,
+        289,
+        817
+      ],
+      "family": "Ninja",
+      "name": "Dagger Throwing Practice",
+      "subject": "paired blades"
+    },
+    "nj_huuma": {
+      "sheet": 3,
+      "row": 6,
+      "column": 2,
+      "box": [
+        127,
+        654,
+        173,
+        700
+      ],
+      "family": "Ninja",
+      "name": "Throw Huuma Shuriken",
+      "subject": "spinning shuriken"
+    },
+    "nj_spear": {
+      "sheet": 1,
+      "row": 8,
+      "column": 0,
+      "box": [
+        41,
+        1231,
+        100,
+        1290
+      ],
+      "family": "Ninja",
+      "name": "Freezing Spear",
+      "subject": "icy spear"
+    },
+    "nj_slash": {
+      "sheet": 2,
+      "row": 8,
+      "column": 9,
+      "box": [
+        608,
+        1231,
+        667,
+        1290
+      ],
+      "family": "Ninja",
+      "name": "Shadow Slash",
+      "subject": "sweeping shadow blades"
+    },
+    "nj_mastery": {
+      "sheet": 4,
+      "row": 3,
+      "column": 9,
+      "box": [
+        565,
+        218,
+        611,
+        264
+      ],
+      "family": "Ninja",
+      "name": "Ninja Mastery",
+      "subject": "violet blade training"
+    },
+    "gs_coin": {
+      "sheet": 3,
+      "row": 9,
+      "column": 0,
+      "box": [
+        13,
+        825,
+        59,
+        871
+      ],
+      "family": "Gunslinger",
+      "name": "Madness Canceller",
+      "subject": "golden coins"
+    },
+    "gs_rapid": {
+      "sheet": 3,
+      "row": 7,
+      "column": 1,
+      "box": [
+        70,
+        711,
+        116,
+        757
+      ],
+      "family": "Gunslinger",
+      "name": "Rapid Shower",
+      "subject": "revolver"
+    },
+    "gs_desp": {
+      "sheet": 3,
+      "row": 7,
+      "column": 8,
+      "box": [
+        469,
+        711,
+        515,
+        757
+      ],
+      "family": "Gunslinger",
+      "name": "Desperado",
+      "subject": "explosive burst"
+    },
+    "gs_track": {
+      "sheet": 3,
+      "row": 7,
+      "column": 3,
+      "box": [
+        184,
+        711,
+        230,
+        757
+      ],
+      "family": "Gunslinger",
+      "name": "Tracking",
+      "subject": "target"
+    },
+    "gs_snake": {
+      "sheet": 2,
+      "row": 1,
+      "column": 4,
+      "box": [
+        293,
+        602,
+        352,
+        661
+      ],
+      "family": "Gunslinger",
+      "name": "Snake Eye",
+      "subject": "serpent eye"
+    },
+    "gs_triple": {
+      "sheet": 4,
+      "row": 3,
+      "column": 0,
+      "box": [
+        70,
+        218,
+        116,
+        264
+      ],
+      "family": "Gunslinger",
+      "name": "Triple Action",
+      "subject": "three projectiles"
+    },
+    "gs_bull": {
+      "sheet": 1,
+      "row": 8,
+      "column": 4,
+      "box": [
+        293,
+        1231,
+        352,
+        1290
+      ],
+      "family": "Gunslinger",
+      "name": "Bull's Eye",
+      "subject": "focused eye"
+    },
+    "gs_fling": {
+      "sheet": 3,
+      "row": 8,
+      "column": 1,
+      "box": [
+        70,
+        768,
+        116,
+        814
+      ],
+      "family": "Gunslinger",
+      "name": "Fling",
+      "subject": "golden gauntlet"
+    },
+    "gs_chain": {
+      "sheet": 4,
+      "row": 4,
+      "column": 7,
+      "box": [
+        455,
+        282,
+        501,
+        328
+      ],
+      "family": "Gunslinger",
+      "name": "Chain Action",
+      "subject": "gunslinger"
+    },
+    "ko_cross": {
+      "sheet": 1,
+      "row": 6,
+      "column": 5,
+      "box": [
+        356,
+        1075,
+        415,
+        1134
+      ],
+      "family": "Kagerou & Oboro",
+      "name": "Cross Slash",
+      "subject": "crossing blades"
+    },
+    "ko_kunai": {
+      "sheet": 3,
+      "row": 5,
+      "column": 9,
+      "box": [
+        526,
+        597,
+        572,
+        643
+      ],
+      "family": "Kagerou & Oboro",
+      "name": "Kunai Explosion",
+      "subject": "violet explosion"
+    },
+    "ko_petal": {
+      "sheet": 1,
+      "row": 6,
+      "column": 2,
+      "box": [
+        167,
+        1075,
+        226,
+        1134
+      ],
+      "family": "Kagerou & Oboro",
+      "name": "Swirling Petal",
+      "subject": "swirling pink petals"
+    },
+    "ko_huuma": {
+      "sheet": 1,
+      "row": 1,
+      "column": 3,
+      "box": [
+        230,
+        602,
+        289,
+        661
+      ],
+      "family": "Kagerou & Oboro",
+      "name": "Huuma Shuriken Storm",
+      "subject": "spinning purple blade"
+    },
+    "ko_izayoi": {
+      "sheet": 1,
+      "row": 4,
+      "column": 5,
+      "box": [
+        356,
+        836,
+        415,
+        895
+      ],
+      "family": "Kagerou & Oboro",
+      "name": "16th Night",
+      "subject": "moonlit spirits"
+    },
+    "ko_soul": {
+      "sheet": 3,
+      "row": 6,
+      "column": 5,
+      "box": [
+        298,
+        654,
+        344,
+        700
+      ],
+      "family": "Kagerou & Oboro",
+      "name": "Soul Cutter",
+      "subject": "soul magic"
+    },
+    "ko_shadow": {
+      "sheet": 1,
+      "row": 0,
+      "column": 6,
+      "box": [
+        419,
+        524,
+        478,
+        583
+      ],
+      "family": "Kagerou & Oboro",
+      "name": "Shadow Warrior",
+      "subject": "shadow warrior"
+    },
+    "ko_moon": {
+      "sheet": 2,
+      "row": 9,
+      "column": 2,
+      "box": [
+        167,
+        1309,
+        226,
+        1368
+      ],
+      "family": "Kagerou & Oboro",
+      "name": "Moonlight Fantasy",
+      "subject": "moonlit vortex"
+    },
+    "rb_fire": {
+      "sheet": 3,
+      "row": 8,
+      "column": 4,
+      "box": [
+        241,
+        768,
+        287,
+        814
+      ],
+      "family": "Rebellion",
+      "name": "Fire Dance",
+      "subject": "burning hand"
+    },
+    "rb_round": {
+      "sheet": 2,
+      "row": 7,
+      "column": 7,
+      "box": [
+        482,
+        1153,
+        541,
+        1212
+      ],
+      "family": "Rebellion",
+      "name": "Round Trip",
+      "subject": "projectile barrage"
+    },
+    "rb_dragon": {
+      "sheet": 1,
+      "row": 7,
+      "column": 8,
+      "box": [
+        545,
+        1153,
+        604,
+        1212
+      ],
+      "family": "Rebellion",
+      "name": "Dragon Tail",
+      "subject": "blazing projectiles"
+    },
+    "rb_slug": {
+      "sheet": 3,
+      "row": 8,
+      "column": 8,
+      "box": [
+        469,
+        768,
+        515,
+        814
+      ],
+      "family": "Rebellion",
+      "name": "Slug Shot",
+      "subject": "fiery shot"
+    },
+    "rb_heat": {
+      "sheet": 3,
+      "row": 8,
+      "column": 5,
+      "box": [
+        298,
+        768,
+        344,
+        814
+      ],
+      "family": "Rebellion",
+      "name": "Heat Barrel",
+      "subject": "burning inferno"
+    },
+    "rb_crimson": {
+      "sheet": 1,
+      "row": 0,
+      "column": 8,
+      "box": [
+        545,
+        524,
+        604,
+        583
+      ],
+      "family": "Rebellion",
+      "name": "Crimson Marker",
+      "subject": "crimson marks"
+    },
+    "rb_platinum": {
+      "sheet": 4,
+      "row": 2,
+      "column": 7,
+      "box": [
+        455,
+        154,
+        501,
+        200
+      ],
+      "family": "Rebellion",
+      "name": "Platinum Alter",
+      "subject": "golden burst"
+    },
+    "rb_god": {
+      "sheet": 4,
+      "row": 2,
+      "column": 6,
+      "box": [
+        400,
+        154,
+        446,
+        200
+      ],
+      "family": "Rebellion",
+      "name": "Hammer of God",
+      "subject": "descending golden rays"
+    }
+  },
+  "symbols": {
+    "sheet": 5,
+    "columns": 10,
+    "rows": 5,
+    "x": 1,
+    "y": 93,
+    "dx": 73.5,
+    "dy": 144.5,
+    "inset": [
+      5,
+      19,
+      68,
+      112
+    ],
+    "overrides": {
+      "47": [
+        1,
+        19,
+        72,
+        112
+      ]
+    }
+  },
+  "pet_buffs": {
+    "pet_warcry": {
+      "sheet": 1,
+      "row": 6,
+      "column": 8,
+      "box": [
+        545,
+        1075,
+        604,
+        1134
+      ],
+      "family": "Pet",
+      "name": "War Cry",
+      "subject": "ferocious wolf"
+    },
+    "pet_arcane": {
+      "sheet": 2,
+      "row": 8,
+      "column": 3,
+      "box": [
+        230,
+        1231,
+        289,
+        1290
+      ],
+      "family": "Pet",
+      "name": "Arcane Blessing",
+      "subject": "glowing hand and arcane sigil"
+    },
+    "pet_siphon": {
+      "sheet": 2,
+      "row": 3,
+      "column": 0,
+      "box": [
+        41,
+        758,
+        100,
+        817
+      ],
+      "family": "Pet",
+      "name": "Blood Siphon",
+      "subject": "vampire fangs"
+    },
+    "pet_vital": {
+      "sheet": 2,
+      "row": 0,
+      "column": 1,
+      "box": [
+        104,
+        524,
+        163,
+        583
+      ],
+      "family": "Pet",
+      "name": "Vital Aura",
+      "subject": "green healing aura"
+    }
+  }
+}

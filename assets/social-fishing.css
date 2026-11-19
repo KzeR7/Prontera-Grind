@@ -91,6 +91,9 @@
 /* The one Fishing Bag window */
 #fishingPanel{position:absolute;z-index:44;right:14px;top:64px;width:min(360px,calc(100% - 28px));max-height:min(500px,calc(100% - 150px));box-sizing:border-box;display:flex;flex-direction:column;background:linear-gradient(180deg,#132328f7,#0d181cf7);border:1.5px solid #6fa3b0;border-radius:10px;color:#f3eedc;box-shadow:0 14px 40px #000b;font:11.5px/1.4 "Trebuchet MS",sans-serif;overflow:hidden}
 #fishingPanel[hidden]{display:none}
+/* Chat sits outside the hub's stacking context; give the Fishing window room on phones. */
+html.pg-mobile body.social-open.social-fishing-panel-open #socialChat{display:none}
+@media(max-width:700px){body.social-open.social-fishing-panel-open #socialChat{display:none}}
 #fishingPanelHead{display:flex;align-items:center;justify-content:space-between;padding:9px 12px;border-bottom:1px solid #35535c;background:#16303780}
 #fishingPanelHead strong{font:bold 13px Georgia,serif;letter-spacing:.5px}
 #fishingPanelHead button{background:transparent;border:0;color:#b9d2d8;font-size:13px;cursor:pointer;padding:2px 6px;border-radius:4px}
@@ -210,6 +213,10 @@ img.fishing-rod-art{filter:drop-shadow(0 0 3px var(--rod-tint,#8b6b45))}
 /* v310: every row carries the same 26px painted medal, so the list lines up regardless of font */
 .fishing-title-badge{width:26px;height:26px;flex-shrink:0;object-fit:contain;filter:drop-shadow(0 0 4px rgba(0,0,0,.45))}
 .fishing-title-row.worn .fishing-title-badge{filter:drop-shadow(0 0 6px var(--tone,#c08a52))}
+/* Transparent black marks get a fine light edge, not a solid white tile. */
+.fishing-title-sigil{display:grid;place-items:center;width:36px;height:36px;padding:0;overflow:visible;border:0;background:transparent}
+.fishing-title-sigil .social-title-symbol{display:block;min-width:0;min-height:0;max-width:100%;max-height:100%;width:100%;height:100%;object-fit:contain}
+.social-title-symbol--fishing{filter:drop-shadow(0 0 1px #fffd) drop-shadow(0 0 1px #fff9)}
 .fishing-title-row .fishing-chip{margin-left:0;flex-shrink:0}
 .fishing-title-name{flex:1;display:flex;flex-direction:column;gap:2px;font:bold 11.5px "Trebuchet MS",sans-serif;color:#eef4ec}
 .fishing-title-name small{font-weight:400;font-size:10px;color:#a8c2c8}

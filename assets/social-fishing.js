@@ -833,6 +833,13 @@ function ensureDom(){
  const menu=doc.createElement('div');menu.id='fishingMenu';menu.hidden=true;menu.setAttribute('role','menu');menu.setAttribute('aria-label','Fishing menu');
  if(REDUCED()){dock.classList.add('reduced');shakes.classList.add('reduced')}
  hub.append(dock,panel,shakes,menu);
+ // The chat is outside the hub's stacking context. On narrow screens it can cover the
+ // Fishing window, so mirror the window's actual hidden state for the mobile stylesheet.
+ // Observe the attribute rather than only toggleBag(): another hub panel can close it too.
+ if(doc.body&&typeof root.MutationObserver==='function'){
+  new root.MutationObserver(()=>doc.body.classList.toggle('social-fishing-panel-open',!panel.hidden))
+   .observe(panel,{attributes:true,attributeFilter:['hidden']});
+ }
  els={hub,dock,panel,shakes,menu,stage:doc.getElementById('fishingStage'),status:doc.getElementById('fishingStatus'),grid:doc.getElementById('fishingGrid'),records:doc.getElementById('fishingRecords'),detail:doc.getElementById('fishingDetail'),bagCount:doc.getElementById('fishingBagCount'),spot:doc.getElementById('fishingSpot'),gearLine:doc.getElementById('fishingGearLine'),coins:doc.getElementById('fishingCoins'),bagView:doc.getElementById('fishingBagView'),indexView:doc.getElementById('fishingIndexView'),shopView:doc.getElementById('fishingShopView'),titlesView:doc.getElementById('fishingTitlesView'),autoBtn:doc.getElementById('fishingAutoBtn'),mvpBanner:doc.getElementById('fishingMvpBanner')};
  doc.getElementById('fishingStopBtn').onclick=()=>stopFishing();
  doc.getElementById('fishingBagBtn').onclick=()=>toggleBag();
@@ -2002,15 +2009,16 @@ function renderTitles(){
   const pct=Math.round(Math.min(1,cur/Math.max(1,t.goal))*100);
   const r=rarityById(t.tier)||rarityById('common');
   const tone=TITLE_TONE[t.tone]||r.color;
-  const badge=titleBadgeURL(t.tier,64);
+  // Each title has its own supplied mark. Keep the old painted medal if the art registry is unavailable.
+  const symbol=root.PGSocialTitleArt?.icon('fishing',t.id),badge=symbol?'':titleBadgeURL(t.tier,64);
   return `<div class="fishing-title-row${done?'':' locked'}${isWorn?' worn':''}" style="--tone:${r.color}" data-tier="${esc(t.tier)}" data-rank="${t.rank}">
-   ${badge?`<img class="fishing-title-badge" src="${badge}" alt="" draggable="false" style="--tone:${tone}">`:`<span class="fishing-title-mark">${t.mark}</span>`}
+   ${symbol?`<span class="fishing-title-badge fishing-title-sigil" aria-hidden="true" style="--tone:${tone}">${symbol}</span>`:badge?`<img class="fishing-title-badge" src="${badge}" alt="" draggable="false" style="--tone:${tone}">`:`<span class="fishing-title-mark">${t.mark}</span>`}
    <span class="fishing-title-name">${esc(t.name)}<small>${done?`✓ ${esc(t.req)}`:`${fmt(cur)}/${fmt(t.goal)} — ${esc(t.req)}`}</small><i class="fishing-title-bar"><b style="width:${done?100:pct}%"></b></i></span>
    <span class="fishing-chip" style="background:${r.color}">${r.label}</span>
    ${isWorn?'<button type="button" disabled>Worn</button>':done?`<button type="button" data-title="${t.id}">Wear</button>`:'<button type="button" disabled>🔒</button>'}
   </div>`;
  }).join('');
- els.titlesView.innerHTML=`<p class="fishing-dex-head">Worn above your head in the plaza. <b>${FISHING_TITLES.filter(t=>titleUnlocked(st,t)).length}/${FISHING_TITLES.length}</b> earned · listed by rarity.</p><div class="fishing-title-list">${rows}</div>${worn?'<div class="fishing-title-none"><button type="button" data-title="none">Wear no fishing title</button></div>':''}`;
+ els.titlesView.innerHTML=`<p class="fishing-dex-head">Worn below your character in the plaza. <b>${FISHING_TITLES.filter(t=>titleUnlocked(st,t)).length}/${FISHING_TITLES.length}</b> earned · listed by rarity.</p><div class="fishing-title-list">${rows}</div>${worn?'<div class="fishing-title-none"><button type="button" data-title="none">Wear no fishing title</button></div>':''}`;
  for(const b of els.titlesView.querySelectorAll('button[data-title]'))b.onclick=()=>{
   if(updatingPaused())return;
   const r=equipTitle(st,b.dataset.title==='none'?null:b.dataset.title);

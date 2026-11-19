@@ -39,14 +39,20 @@ test('field buffs keep distinct supplied-theme artwork, countdowns, descriptions
  for(const id of ['warcry','arcane','siphon','vital']){
   ev(`petBuff={};petBuffSrc={};{const s=PET_SKILLS.find(x=>x.id==='${id}');petBuff[s.stat]=s.power;petBuff[s.stat+'T']=12.2;petBuffSrc[s.stat]='Poring'};ui()`);
   const tile=doc.querySelector('#hudBuffs .pbx'),art=tile.querySelector('img.buff-art');
-  assert.equal(art.dataset.buff,id);assert.equal(art.getAttribute('src'),`assets/skill-icons/extra/pet_${id}.png`);
+  assert.equal(art.dataset.buff,id);assert.equal(art.getAttribute('src'),`assets/expanded-skill-icons/pet_${id}.webp`);
+  const bytes=fs.readFileSync(__dirname+'/../../'+art.getAttribute('src'));assert.equal(bytes.subarray(0,4).toString()+bytes.subarray(8,16).toString(),'RIFFWEBPVP8L');
   assert.equal(tile.querySelector('.s').textContent,'13');assert.match(tile.querySelector('[role=tooltip]').textContent,/Poring/);assert.ok(tile.getAttribute('aria-label').includes(ev(`PET_SKILLS.find(x=>x.id==='${id}').n`)));assert.equal(tile.tabIndex,0);
  }
  ev('petBuff={};petBuffSrc={};ui()');assert.equal(doc.querySelectorAll('#hudBuffs .pbx').length,0);assert.equal(doc.getElementById('hudBuffs').style.display,'none');
 });
-test('pet buff icons retain original local artwork if the supplemental registry is unavailable',()=>{
+test('pet buff icons fall back through older supplemental and original local artwork',()=>{
  const registry=g.window.PGSkillIcons;g.window.eval(fs.readFileSync(__dirname+'/../../assets/skill-icons.js','utf8'));
- try{for(const id of ['warcry','arcane','siphon','vital']){const html=ev(`petBuffIcon(PET_SKILLS.find(s=>s.id==='${id}'))`);assert.match(html,/src="assets\/skill-icons\/sheet-/);assert.match(html,new RegExp(`data-buff="${id}"`));}}finally{g.window.PGSkillIcons=registry}
+ try{
+  g.window.eval(fs.readFileSync(__dirname+'/../../assets/skill-icons-extra.js','utf8'));
+  for(const id of ['warcry','arcane','siphon','vital']){const html=ev(`petBuffIcon(PET_SKILLS.find(s=>s.id==='${id}'))`);assert.ok(html.includes(`src="assets/skill-icons/extra/pet_${id}.png"`));assert.match(html,new RegExp(`data-buff="${id}"`));}
+  g.window.eval(fs.readFileSync(__dirname+'/../../assets/skill-icons.js','utf8'));
+  for(const id of ['warcry','arcane','siphon','vital']){const html=ev(`petBuffIcon(PET_SKILLS.find(s=>s.id==='${id}'))`);assert.match(html,/src="assets\/skill-icons\/sheet-/);assert.match(html,new RegExp(`data-buff="${id}"`));}
+ }finally{g.window.PGSkillIcons=registry}
 });
 test('buff countdown updates retain the hovered and focused tile, even when another buff expires',()=>{
  ev("bars=window.realBars;petBuff={atk:15,atkT:15,hp:15,hpT:20};petBuffSrc={atk:'Poring',hp:'Drops'};ui()");
