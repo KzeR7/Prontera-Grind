@@ -12042,3 +12042,10 @@ re-recording them here would have written wrong numbers into the repository.
 * **Try it:** Reload a save containing a former N+ Cataclysm weapon; inspect its rarity and ATK.
 * **Checks:** `ascension_evolution_sim.js` (12 groups), `ascension_drop_shop_sim.js` (7 groups), `drop_card_sheet_sim.js` (14 groups), `gear_sim.js` (43 groups), and `update_watch_sim.js` (22 groups) passed.
 * **Delivery:** Local changes on the active Arena branch.
+
+## haven-v430 — Asura Strike retreat leap (2026-11-19)
+
+* **Changed:** After a successful Asura Strike, the Monk-line character visibly jumps 3.2 world units away from the target over 0.48 seconds. The combat model follows the leap and respects field bounds.
+* **Try it:** As a Monk, Champion or Sura with a Spirit Sphere, cast Asura Strike on a mob or MVP and watch the character hop backward.
+* **Checks:** `signature_skills_sim.js` (8 groups), `asura_pose_sim.js` (2 checks), `skill_sim.js` (44 groups), `update_watch_sim.js` (22 groups), and `git diff --check` passed. `skill_balance_sim.js` could not complete because its pinned comparison commit `d164bd0527cfe335f9c183d0e576800716b7dd26` is unavailable in this checkout.
+* **Delivery:** Local changes on the active Arena branch.

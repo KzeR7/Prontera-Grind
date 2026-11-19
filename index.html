@@ -921,13 +921,13 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="preload" href="assets/ui/fonts/font-5.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-6.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-7.ttf" as="font" type="font/ttf" crossorigin>
-<link rel="stylesheet" href="assets/ui/eclipse.css?v=429">
-<link rel="stylesheet" href="assets/ui/mobile.css?v=429">
+<link rel="stylesheet" href="assets/ui/eclipse.css?v=430">
+<link rel="stylesheet" href="assets/ui/mobile.css?v=430">
 <script src="assets/ui/mobile.js?v=274"></script>
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
-<link rel="stylesheet" href="assets/social.css?v=429">
+<link rel="stylesheet" href="assets/social.css?v=430">
 <link rel="stylesheet" href="assets/social-battle.css?v=393">
-  <link rel="stylesheet" href="assets/social-fishing.css?v=429"><link rel="stylesheet" href="assets/friends.css?v=273">
+  <link rel="stylesheet" href="assets/social-fishing.css?v=430"><link rel="stylesheet" href="assets/friends.css?v=273">
 </head>
 <body>
 <div id="loginOverlay"><div class="eclipse-login-world" aria-hidden="true"></div><header class="eclipse-login-header"><a href="./" class="eclipse-brand"><span>HH</span><b>HORIZON HAVEN<small>YOUR IDLE ADVENTURE</small></b></a><div class="eclipse-palettes" role="group" aria-label="Interface palette"><button type="button" data-palette="moonstone">Moonstone</button><button type="button" data-palette="aurora">Aurora</button><button type="button" data-palette="ember">Ember</button></div></header><main class="eclipse-login-layout"><section class="login-brand"><div class="login-eyebrow">A WORLD WORTH RETURNING TO</div><h1>Your next <br>chapter <em>awaits.</em></h1><p>Explore a world beyond the horizon.<br>Collect rare gear, master every class, and build your haven.</p><div class="eclipse-login-art"><img src="assets/ui/eclipse-knight.png" alt="Lord Knight ready for adventure"><span>01 / PRONTERA<small>THE JOURNEY BEGINS HERE</small></span><div><img src="assets/equipment-icons/1142.png" alt=""><span>YOUR NEXT UPGRADE<small>Somewhere out there.</small></span></div></div><div class="login-footnote">EXPLORE · GROW · CONQUER</div></section><div class="login-card"><div class="eclipse-access">ADVENTURER ACCESS <span>◇</span></div><h2 id="authHeading">Welcome back.</h2><p class="login-intro" id="authIntro">Your adventure is right where you left it.</p><div class="atabs" id="authTabs"><button type="button" id="tabLogin" class="on">Login</button><button type="button" id="tabReg">Register</button></div>
@@ -1056,10 +1056,10 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <div id="tooltip"></div>
 <link rel="stylesheet" href="assets/wardrobe.css?v=138">
 <link rel="stylesheet" href="assets/shop.css?v=318">
-<script src="assets/wardrobe.js?v=429"></script>
+<script src="assets/wardrobe.js?v=430"></script>
 <script src="assets/shop-catalog.js?v=321"></script>
 <script src="assets/fourth-jobs.js?v=179"></script>
-<script src="assets/expanded-jobs.js?v=429"></script>
+<script src="assets/expanded-jobs.js?v=430"></script>
 <script src="assets/ascension.js?v=156"></script>
 <script src="assets/native-mob-heights.js?v=153"></script>
 <script src="assets/native-fields.js?v=197"></script>
@@ -1333,7 +1333,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-19 haven-v429 repair zero-ATK legacy Ascension drops';
+const BUILD='2026-11-19 haven-v430 Asura Strike retreat leap';
 // v364: this write used to sit AFTER the `//` on the BUILD line, so it was part of the comment and
 // never ran - the login card showed an empty #buildTag and there was no way to confirm which file
 // the browser had loaded. It also has to survive the script running before the login card exists.
@@ -3438,6 +3438,21 @@ let currentUser=null,S=null,speed=1,zenyEarned=0,expEarned=0,floats=[],drops=[],
 // wt/wx/wz are the roam target: with no mobs on the field the character wanders instead of
 // trudging back to the spawn point. Only a defeat sends you home (see the death handler).
 const pl={x:0,z:Z1-1.5,ry:0,orb:0,run:0,wt:0,wx:0,wz:Z1-1.5},skCd={},petR={};
+let asuraLeap=null;
+function startAsuraLeap(target){
+  if(!target||!Number.isFinite(target.x)||!Number.isFinite(target.z))return;
+  let dx=pl.x-target.x,dz=pl.z-target.z,d=Math.hypot(dx,dz);
+  if(d<.05){const toward=Math.atan2(target.z-pl.z,target.x-pl.x);dx=-Math.cos(toward);dz=-Math.sin(toward);d=1;}
+  const distance=3.2,x=cl(pl.x+dx/d*distance,-BX_+.6,BX_-.6),z=cl(pl.z+dz/d*distance,Z0+.6,Z1-.6);
+  if(Math.hypot(x-pl.x,z-pl.z)<.25)return;
+  asuraLeap={x0:pl.x,z0:pl.z,x1:x,z1:z,elapsed:0,duration:.48};
+}
+function asuraLeapHeight(){if(!asuraLeap)return 0;const u=Math.max(0,Math.min(1,asuraLeap.elapsed/asuraLeap.duration));return Math.sin(Math.PI*u)*1.35;}
+function tickAsuraLeap(dt){if(!asuraLeap)return false;asuraLeap.elapsed=Math.min(asuraLeap.duration,asuraLeap.elapsed+dt);
+  const u=Math.max(0,Math.min(1,asuraLeap.elapsed/asuraLeap.duration)),ease=u*u*(3-2*u);
+  pl.x=asuraLeap.x0+(asuraLeap.x1-asuraLeap.x0)*ease;pl.z=asuraLeap.z0+(asuraLeap.z1-asuraLeap.z0)*ease;
+  if(u>=1){asuraLeap=null;return false}return true;
+}
 // tb holds the one tradeoff buff currently running (ATK up / DEF down and so on). It is
 // deliberately transient: it is never saved, so quitting mid-buff just drops the buff.
 let tb={},petBuff={atk:0,matk:0,hp:0,leech:0,def:0,atkT:0,matkT:0,hpT:0,leechT:0,defT:0},petBuffSrc={},petSkillCd={},petNote={};
@@ -7225,7 +7240,7 @@ const SWING_MIN_T=.14,SWING_MAX_T=.55;     // seconds: the shortest and longest 
 // the hit spread over time. chain.pow is the fraction each bounce deals, once per target.
 // v97 combat skills: transient state is never serialized into a save.
 let skillRuntime;
-function resetSkillRuntime(keepBuffs=false){if(!keepBuffs&&typeof PGSignatureFx!=='undefined')PGSignatureFx.clear();if(typeof mobs!=='undefined')for(const o of mobs){delete o.ascClaw;if(o.dots)o.dots=o.dots.filter(d=>!d.ascSource);}const previous=keepBuffs&&skillRuntime&&skillRuntime.owner===(S&&S.cls)&&skillRuntime.save===S?skillRuntime:null;
+function resetSkillRuntime(keepBuffs=false){asuraLeap=null;if(!keepBuffs&&typeof PGSignatureFx!=='undefined')PGSignatureFx.clear();if(typeof mobs!=='undefined')for(const o of mobs){delete o.ascClaw;if(o.dots)o.dots=o.dots.filter(d=>!d.ascSource);}const previous=keepBuffs&&skillRuntime&&skillRuntime.owner===(S&&S.cls)&&skillRuntime.save===S?skillRuntime:null;
   skillRuntime={owner:S&&S.cls,save:S,buffs:previous?previous.buffs:{},fields:[],events:[],casts:{},echo:0,momentum:0,lastHit:-99,follow:0,dash:0,approach:null,
     repeatCount:previous?previous.repeatCount:0,comboSlots:previous?previous.comboSlots:null,cursor:previous?previous.cursor:0,nextCastAt:previous?previous.nextCastAt:0,recoverUntil:previous?previous.recoverUntil:0};}
 function skillState(){if(!skillRuntime||skillRuntime.owner!==(S&&S.cls)||skillRuntime.save!==S)resetSkillRuntime();return skillRuntime;}
@@ -7908,6 +7923,7 @@ function castSkill(sk,k){
   if(sk.follow){r.follow=sk.follow;r.followUntil=t+3;}
   if(sk.heal&&dealt>0&&S.hp<maxHp()*.6){const h=Math.min(maxHp()-S.hp,maxHp()*sk.heal*(.5+L/sk.max));S.hp+=h;addFloat(pl.x,2.6,pl.z,'+'+Math.round(h),'#7dff7d');}
   holyCastEcho(sk,target,raw);
+  if(sk.id==='ch_asura')startAsuraLeap(target);
   r.momentum=Math.min(3,r.momentum+1);r.lastHit=t;
 }
 // haven-v412: bonus casts from buffs and passives (Auto Spell, Double Casting, Chain Action...).
@@ -11971,8 +11987,11 @@ if(S.hp<=0){if(typeof JOB_RITE!=='undefined'&&JOB_RITE.on){showJobRiteResult(fal
   const px=tx-pl.x,pz=tz-pl.z,pd=Math.hypot(px,pz),spd=moveSpd(pd>3);
   // v77: in the arena the character stands still on purpose - the dummy and the player both stay
   // put, so the three minutes measure damage and nothing else.
-  pl.run=pd>.15&&!TRIAL.on;
-  if(pd>.05&&!TRIAL.on){const s=Math.min(pd,spd*dt);pl.x+=px/pd*s;pl.z+=pz/pd*s}
+  if(asuraLeap){const stillLeaping=tickAsuraLeap(dt);pl.run=stillLeaping}
+  else{
+    pl.run=pd>.15&&!TRIAL.on;
+    if(pd>.05&&!TRIAL.on){const s=Math.min(pd,spd*dt);pl.x+=px/pd*s;pl.z+=pz/pd*s}
+  }
   pl.x=cl(pl.x,-BX_,BX_);pl.z=cl(pl.z,Z0,Z1);
   if(mob)pl.ry=-Math.atan2(mob.z-pl.z,mob.x-pl.x);else if(pl.run)pl.ry=-Math.atan2(pz,px);
   if(S.hp<maxHp()&&Math.floor(t*2)!==Math.floor((t-dt)*2))S.hp=Math.min(maxHp(),S.hp+Math.ceil(maxHp()*.008));
@@ -15814,7 +15833,7 @@ function draw(){
     else if(TRIAL.on){clearAscension();const col=new THREE.Color(0x171020);scene.background=col;scene.fog=new THREE.Fog(col,22,64);ground.material.color.setHex(0x392d42);hemi.intensity=.52;sun.intensity=.48;trialArena()}
     else{const col=new THREE.Color(bn?0x8a6bb0:mp.sky);scene.background=col;scene.fog=new THREE.Fog(col,35,80);ground.material.color.setHex(mp.ground);hemi.intensity=.8;sun.intensity=.9;buildDeco(S.mp);road.material.color.setHex(S.mp===3?0xe9d9a8:0xd8cdb4)}}
   if(ascensionWorld)ascensionWorld.update(t,S.bg!==false);
-  P.position.set(pl.x,actorFloorY(),pl.z);
+  P.position.set(pl.x,actorFloorY()+asuraLeapHeight(),pl.z);
   const w=S.eq.weapon,wt=heroWeaponType(c.n,c.wt,w&&w.wt),clothN=S.eq.armor?TC[rarIdx(S.eq.armor)]:c.col,hairN=S.eq.head?TC[rarIdx(S.eq.head)]:0xd0492c,metalN=w?TC[rarIdx(w)]:0xc0c0c0;
   ensureHero({cls:c.n,cloth:hx(clothN),clothN,cape:c.cape?hx(c.cape):'',hair:hx(hairN),hairN,hat:c.hat?hx(c.hat):'',wt,metal:hx(metalN),skin:'#ffd2a8',look:lookOf(c.n),tier:c.tier||0,sex:S.sex||'m',hair:S.hair|0,shield:!!(S.eq.off&&S.eq.off.slot==='off')});
   const pFace=mob?Math.atan2(mob.z-pl.z,mob.x-pl.x):pl.run?-pl.ry: -az+Math.PI;
@@ -16300,20 +16319,20 @@ setInterval(updateWatch,60000);
 // be hours old while the player was on another tab, and the check is a 60-byte text file.
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&(pendingUpdateBuild||Date.now()-PAGE_STARTED_AT>30000))updateWatch()});
 </script>
-<script src="assets/wardrobe-ui.js?v=429"></script>
+<script src="assets/wardrobe-ui.js?v=430"></script>
 <script src="assets/shop.js?v=321"></script>
 <script src="assets/friends.js?v=273"></script>
-<script src="assets/digimon/roster.js?v=429"></script>
-<script src="assets/digimon/base-stats.js?v=429"></script>
-<script src="assets/social-rules.js?v=429"></script>
-<script src="assets/social-poker.js?v=429"></script>
-<script src="assets/digimon-sanctuary.js?v=429"></script>
+<script src="assets/digimon/roster.js?v=430"></script>
+<script src="assets/digimon/base-stats.js?v=430"></script>
+<script src="assets/social-rules.js?v=430"></script>
+<script src="assets/social-poker.js?v=430"></script>
+<script src="assets/digimon-sanctuary.js?v=430"></script>
 <script src="assets/digimon-battle.js?v=393"></script>
-<script src="assets/social-digimon.js?v=429"></script>
+<script src="assets/social-digimon.js?v=430"></script>
 <script src="assets/social-gym-redesign.js?v=393"></script>
 <script src="assets/social-pond-design.js?v=393"></script>
-<script src="assets/social-scene.js?v=429"></script>
-<script src="assets/social-fishing.js?v=429"></script>
-<script src="assets/plaza-bots.js?v=429"></script>
-<script src="assets/social.js?v=429"></script></body>
+<script src="assets/social-scene.js?v=430"></script>
+<script src="assets/social-fishing.js?v=430"></script>
+<script src="assets/plaza-bots.js?v=430"></script>
+<script src="assets/social.js?v=430"></script></body>
 </html>
