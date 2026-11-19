@@ -161,7 +161,7 @@ Mythic +11–15 attempts cost 264/288/312/336/360k Zeny plus 15 ore each, at
 30/21/12/5/2% success. Protected failure preserves the Mythic rank; unprotected +11–15 failures lose one rank. Expected +10→+15
 fees total about 29.57M, or 159.21M including purchased ore at existing prices;
 actual RNG costs vary. Prior map reward changes did not rebalance these prices.
-Fourth-job skills and pet buffs use distinct crops from additional collections by the existing icon artist; see `tools/native-skill-icons/README.md`. Mythic inventory icons now use native Glacier/Dim Glacier art for Astral sets and Crimson/Lava Leather/Phoenix art for Thor sets. The custom sets share some official pieces; see `assets/equipment-icons/mythic-manifest.json` for all slot mappings and original hashes.
+Fourth-job skills and pet buffs use distinct crops from additional collections by the existing icon artist; see `tools/native-skill-icons/README.md`. Mythic inventory icons use native Glacier/Dim Glacier art for Astral sets and Crimson/Lava Leather/Phoenix art for Thor sets. The seven expanded weapon families now select distinct preserved native item icons for all six Forge sets, with per-set previews in the recipe picker; these are inventory/Forge icons, not character-worn layers. See `assets/equipment-icons/mythic-manifest.json` for slot mappings and `assets/equipment-icons/manifest.json` for the family sprite sources.
 
 ## Classes and progression
 

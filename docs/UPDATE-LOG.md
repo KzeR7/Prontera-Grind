@@ -12055,3 +12055,11 @@ re-recording them here would have written wrong numbers into the repository.
 * **Try it:** Run `node tools/tests/ascension_progression_sim.js`.
 * **Checks:** `ascension_progression_sim.js` passed, along with the PR recheck: Ascension evolution (12), drop/shop (7), gear catalogue (43), drop/card sheet (14), signature skills (8), Asura pose (2), skill system (44), fourth-job skills (16), expanded roster (13), signature FX (11), update watcher (22), and `git diff --check`. GitHub Cloudflare Pages and Workers Builds checks pass.
 * **Delivery:** Local changes on the active PR branch.
+
+
+## haven-v431 — Ascension set-specific weapon icons (2026-11-19)
+
+* **Changed:** The seven expanded weapon families now use six distinct preserved Ragnarok item icons across the six Mythic Forge sets. The Forge's set picker previews the current weapon family with each set's icon. These are inventory/Forge visuals, not character-worn sprite layers.
+* **Try it:** Select an N+ shuriken, book, instrument, whip, spear, knuckle or gun in the Forge and switch set choices to compare the six icons.
+* **Checks:** `equipment_art_sim.js` (125 source-verified PNGs), `expanded_roster_sim.js` (13 groups), `ascension_evolution_sim.js` (13 groups), `update_watch_sim.js` (22 groups), and `git diff --check` passed.
+* **Delivery:** Local changes on the active PR branch.

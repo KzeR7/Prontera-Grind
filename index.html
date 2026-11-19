@@ -921,13 +921,13 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="preload" href="assets/ui/fonts/font-5.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-6.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-7.ttf" as="font" type="font/ttf" crossorigin>
-<link rel="stylesheet" href="assets/ui/eclipse.css?v=430">
-<link rel="stylesheet" href="assets/ui/mobile.css?v=430">
+<link rel="stylesheet" href="assets/ui/eclipse.css?v=431">
+<link rel="stylesheet" href="assets/ui/mobile.css?v=431">
 <script src="assets/ui/mobile.js?v=274"></script>
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
-<link rel="stylesheet" href="assets/social.css?v=430">
+<link rel="stylesheet" href="assets/social.css?v=431">
 <link rel="stylesheet" href="assets/social-battle.css?v=393">
-  <link rel="stylesheet" href="assets/social-fishing.css?v=430"><link rel="stylesheet" href="assets/friends.css?v=273">
+  <link rel="stylesheet" href="assets/social-fishing.css?v=431"><link rel="stylesheet" href="assets/friends.css?v=273">
 </head>
 <body>
 <div id="loginOverlay"><div class="eclipse-login-world" aria-hidden="true"></div><header class="eclipse-login-header"><a href="./" class="eclipse-brand"><span>HH</span><b>HORIZON HAVEN<small>YOUR IDLE ADVENTURE</small></b></a><div class="eclipse-palettes" role="group" aria-label="Interface palette"><button type="button" data-palette="moonstone">Moonstone</button><button type="button" data-palette="aurora">Aurora</button><button type="button" data-palette="ember">Ember</button></div></header><main class="eclipse-login-layout"><section class="login-brand"><div class="login-eyebrow">A WORLD WORTH RETURNING TO</div><h1>Your next <br>chapter <em>awaits.</em></h1><p>Explore a world beyond the horizon.<br>Collect rare gear, master every class, and build your haven.</p><div class="eclipse-login-art"><img src="assets/ui/eclipse-knight.png" alt="Lord Knight ready for adventure"><span>01 / PRONTERA<small>THE JOURNEY BEGINS HERE</small></span><div><img src="assets/equipment-icons/1142.png" alt=""><span>YOUR NEXT UPGRADE<small>Somewhere out there.</small></span></div></div><div class="login-footnote">EXPLORE · GROW · CONQUER</div></section><div class="login-card"><div class="eclipse-access">ADVENTURER ACCESS <span>◇</span></div><h2 id="authHeading">Welcome back.</h2><p class="login-intro" id="authIntro">Your adventure is right where you left it.</p><div class="atabs" id="authTabs"><button type="button" id="tabLogin" class="on">Login</button><button type="button" id="tabReg">Register</button></div>
@@ -1056,10 +1056,10 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <div id="tooltip"></div>
 <link rel="stylesheet" href="assets/wardrobe.css?v=138">
 <link rel="stylesheet" href="assets/shop.css?v=318">
-<script src="assets/wardrobe.js?v=430"></script>
+<script src="assets/wardrobe.js?v=431"></script>
 <script src="assets/shop-catalog.js?v=321"></script>
 <script src="assets/fourth-jobs.js?v=179"></script>
-<script src="assets/expanded-jobs.js?v=430"></script>
+<script src="assets/expanded-jobs.js?v=431"></script>
 <script src="assets/ascension.js?v=156"></script>
 <script src="assets/native-mob-heights.js?v=153"></script>
 <script src="assets/native-fields.js?v=197"></script>
@@ -1333,7 +1333,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-19 haven-v430 Asura Strike retreat leap';
+const BUILD='2026-11-19 haven-v431 Ascension set-specific weapon icons';
 // v364: this write used to sit AFTER the `//` on the BUILD line, so it was part of the comment and
 // never ran - the login card showed an empty #buildTag and there was no way to confirm which file
 // the browser had loaded. It also has to survive the script running before the login card exists.
@@ -2146,7 +2146,7 @@ let ascensionSetPick='celestial',ascensionItemPick='';
 const fourthJob=()=>CLASSES[S?.cls]?.tier===4;
 function ascensionCandidates(){return [...new Map([...items(),...S.inv].filter(it=>it?.sec===5&&!(S.reforgePending&&String(S.reforgePending.id)===String(it.id))).map(it=>[String(it.id),it])).values()]}
 function ascensionForgePanel(){
-  const set=ASC_SETS[ascensionSetPick]||ASC_SETS.celestial,key=Object.keys(ASC_SETS).find(k=>ASC_SETS[k]===set),unlocked=fourthJob(),candidates=ascensionCandidates();
+  const set=ASC_SETS[ascensionSetPick]||ASC_SETS.celestial,key=Object.keys(ASC_SETS).find(k=>ASC_SETS[k]===set),unlocked=fourthJob(),candidates=ascensionCandidates(),previewWeapon=candidates.find(x=>String(x.id)===ascensionItemPick)?.wt||'sword';
   // v254: a legacy item without a saved .slot still finds its recipe through gearSlot().
   const it=candidates.find(it=>String(it.id)===ascensionItemPick),slot=it?gearSlot(it):null,cost=it?set.cost[slot]:null,mat=ASCENSION_MATERIALS[set.mat],active=ascensionSetBonuses()[key];
   const affordable=cost&&(S.ascensionMat?.[set.mat]||0)>=cost[0]&&(S.ascensionMat?.[2]||0)>=cost[1]&&S.zeny>=cost[2];
@@ -2156,7 +2156,7 @@ function ascensionForgePanel(){
   const short=cost?costs.filter(([,need,have])=>have<need).map(([name,need,have])=>name+' +'+(need-have).toLocaleString()):[];
   const forgeLabel=!it?'Select equipment above':!unlocked?'Ascend · fourth job only':affordable?'Ascend selected equipment':short.length?'Ascend · missing '+short.join(' · '):'Ascend selected equipment';
   return `<section class="ascension-forge"><header><span class="ui-eyebrow">EQUIPMENT EVOLUTION</span><h2>Ascension Forge</h2><p>${unlocked?'Evolve one N+ item into its Mythic set piece.':'Unlocks when you become a fourth-job class.'}</p></header>
-  <div class="ascension-set-picker" aria-label="Mythic sets">${Object.entries(ASC_SETS).map(([id,v])=>`<button data-a="ascset" data-v="${id}" aria-pressed="${id===key}"><b>${v.name}</b><small>${v.mat===0?'Astral':'Primal'}</small></button>`).join('')}</div>
+  <div class="ascension-set-picker" aria-label="Mythic sets">${Object.entries(ASC_SETS).map(([id,v])=>`<button data-a="ascset" data-v="${id}" aria-pressed="${id===key}"><span class="ascension-set-preview">${itemIconMarkup({slot:'weapon',wt:previewWeapon,sec:6,ascSet:id})}</span><b>${v.name}</b><small>${v.mat===0?'Astral':'Primal'}</small></button>`).join('')}</div>
   <div class="ascension-forge-body"><section class="ascension-set-info"><h3>${set.name} set</h3><p>Listed offense is the +15 maximum. ATK, MATK, Crit, Crit DMG and Field DMG start at 40% of that bonus through +10; +11–15 progressively unlock the rest. Defensive and speed set bonuses are unchanged.</p><p>${active?active.count+' pieces equipped':'No set bonus active'}</p><ul>${set.bonuses.map(b=>`<li class="${active&&active.count>=b.count?'active':''}"><b>${b.count} pieces</b><span>${b.desc}</span></li>`).join('')}</ul>${active?'<p>Active set stats: '+Object.entries(active.tier.stats).map(([k,v])=>esc(k)+' +'+Number(v.toFixed(2))+'%').join(' · ')+'</p>':''}</section>
   <section class="ascension-evolution"><label>Choose N+ equipment<select data-ascension-item ${unlocked?'':'disabled'}><option value="">Select an owned item…</option>${candidates.map(x=>`<option value="${x.id}" ${it===x?'selected':''}>${esc(iname(x))}${items().includes(x)?' · Equipped':' · Bag'}</option>`).join('')}</select></label>
   ${it?`<div class="ascension-item-change"><div>${itemIconMarkup(it)}<strong>${esc(iname(it))}</strong><small>Current N+ item</small></div><span aria-hidden="true">→</span><div>${itemIconMarkup({...it,sec:6,ascSet:key})}<strong>Mythic ${esc(slot==='weapon'?set.pieces.weapon[it.wt]:set.pieces[slot])}</strong><small>${set.name} set · Fourth jobs only</small></div></div><div class="ascension-current-affixes"><b>Current affixes</b>${(it.aff||[]).map(a=>`<p>${affTxt(a)}</p>`).join('')||'<p>No affixes</p>'}</div><p>Keeps refinement, cards, existing affixes and item identity. Fills up to four affixes.</p><dl class="ascension-costs">${costs.map(([name,need,have])=>`<div class="${have>=need?'ascension-enough':'ascension-missing'}"><dt>${name}</dt><dd>${have.toLocaleString()} / ${need.toLocaleString()} <small>owned / required · ${have>=need?'Enough':'Missing '+(need-have).toLocaleString()}</small></dd></div>`).join('')}</dl><p class="ascension-forge-status ${affordable?'ascension-enough':'ascension-missing'}" role="status">${!unlocked?'Requires a fourth-job class.':affordable?'All materials and Zeny available. Ready to forge.':'Unable to forge: not enough materials or Zeny. Collect the missing amounts shown in red.'}</p><button class="full" data-a="transformasc" data-v="${key}:${it.id}" ${unlocked&&affordable?'':'disabled'} title="${esc(forgeLabel)}">${esc(forgeLabel)}</button>`:`<p class="ascension-empty">${candidates.length?'Choose equipment to preview the result and exact material cost.':'No eligible N+ equipment. Unascended N+ equipment is listed regardless of current weapon compatibility; finish any pending reforge first.'}</p>`}
@@ -6378,7 +6378,7 @@ const isBoss=()=>bossStage(S.mp,S.lvl),fieldName=()=>S.lvl>10?`Nightmare ${MAPS[
 // Curated original RO equipment art: progression follows the saved job section,
 // with robe and pendant variants selected by item type. All selected PNGs ship locally.
 const RO_ITEM_ICON_CANDIDATES={
- mythic:{"celestial":{"sword":500049,"dagger":510061,"axe":520017,"mace":590038,"staff":550069,"katar":610037,"bow":700052,"armor":450264,"head":430002,"off":460040,"leg":470196,"acc":490327,"spear":1433,"book":1565,"knuckle":1822,"instrument":1918,"whip":1970,"shuriken":13307,"gun":13163},"voidwalker":{"sword":500054,"dagger":510075,"axe":520021,"mace":590047,"staff":550089,"katar":610041,"bow":700059,"armor":450270,"head":430002,"off":460040,"leg":470197,"acc":490328,"spear":1433,"book":1565,"knuckle":1822,"instrument":1918,"whip":1970,"shuriken":13307,"gun":13163},"ethereal":{"sword":500049,"dagger":510061,"axe":520017,"mace":590038,"staff":550069,"katar":610037,"bow":700052,"armor":450265,"head":430002,"off":460040,"leg":450268,"acc":490330,"spear":1433,"book":1565,"knuckle":1822,"instrument":1918,"whip":1970,"shuriken":13307,"gun":13163},"primal":{"sword":13454,"dagger":28705,"axe":28106,"mace":16040,"staff":1680,"katar":28007,"bow":18130,"armor":15380,"head":19343,"off":460023,"leg":22201,"acc":490104,"spear":1437,"book":1572,"knuckle":1826,"instrument":1926,"whip":1979,"shuriken":13313,"gun":13171},"molten":{"sword":13454,"dagger":28705,"axe":28106,"mace":16040,"staff":1680,"katar":28007,"bow":18130,"armor":15378,"head":19343,"off":460023,"leg":22199,"acc":490104,"spear":1437,"book":1572,"knuckle":1826,"instrument":1926,"whip":1979,"shuriken":13313,"gun":13171},"infernal":{"sword":13454,"dagger":28705,"axe":28106,"mace":16040,"staff":1680,"katar":28007,"bow":18130,"armor":15379,"head":19343,"off":460023,"leg":22200,"acc":490451,"spear":1437,"book":1572,"knuckle":1826,"instrument":1926,"whip":1979,"shuriken":13313,"gun":13171}},
+ mythic:{"celestial":{"sword":500049,"dagger":510061,"axe":520017,"mace":590038,"staff":550069,"katar":610037,"bow":700052,"armor":450264,"head":430002,"off":460040,"leg":470196,"acc":490327,"spear":1401,"book":1550,"knuckle":1801,"instrument":1901,"whip":1950,"shuriken":13300,"gun":13100},"voidwalker":{"sword":500054,"dagger":510075,"axe":520021,"mace":590047,"staff":550089,"katar":610041,"bow":700059,"armor":450270,"head":430002,"off":460040,"leg":470197,"acc":490328,"spear":1407,"book":1551,"knuckle":1803,"instrument":1903,"whip":1952,"shuriken":13301,"gun":13102},"ethereal":{"sword":500049,"dagger":510061,"axe":520017,"mace":590038,"staff":550069,"katar":610037,"bow":700052,"armor":450265,"head":430002,"off":460040,"leg":450268,"acc":490330,"spear":1410,"book":1552,"knuckle":1807,"instrument":1905,"whip":1954,"shuriken":13302,"gun":13104},"primal":{"sword":13454,"dagger":28705,"axe":28106,"mace":16040,"staff":1680,"katar":28007,"bow":18130,"armor":15380,"head":19343,"off":460023,"leg":22201,"acc":490104,"spear":1413,"book":1553,"knuckle":1809,"instrument":1907,"whip":1956,"shuriken":13303,"gun":13151},"molten":{"sword":13454,"dagger":28705,"axe":28106,"mace":16040,"staff":1680,"katar":28007,"bow":18130,"armor":15378,"head":19343,"off":460023,"leg":22199,"acc":490104,"spear":1415,"book":1556,"knuckle":1813,"instrument":1909,"whip":1962,"shuriken":13304,"gun":13154},"infernal":{"sword":13454,"dagger":28705,"axe":28106,"mace":16040,"staff":1680,"katar":28007,"bow":18130,"armor":15379,"head":19343,"off":460023,"leg":22200,"acc":490451,"spear":1420,"book":1557,"knuckle":1814,"instrument":1913,"whip":1964,"shuriken":13305,"gun":13157}},
  sword:[1101,1123,1137,1142,1133,1145],
  dagger:[1201,1207,1217,1226,1232,1240],
  katar:[1250,1252,1254,1256,1258,1260],
@@ -16319,20 +16319,20 @@ setInterval(updateWatch,60000);
 // be hours old while the player was on another tab, and the check is a 60-byte text file.
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&(pendingUpdateBuild||Date.now()-PAGE_STARTED_AT>30000))updateWatch()});
 </script>
-<script src="assets/wardrobe-ui.js?v=430"></script>
+<script src="assets/wardrobe-ui.js?v=431"></script>
 <script src="assets/shop.js?v=321"></script>
 <script src="assets/friends.js?v=273"></script>
-<script src="assets/digimon/roster.js?v=430"></script>
-<script src="assets/digimon/base-stats.js?v=430"></script>
-<script src="assets/social-rules.js?v=430"></script>
-<script src="assets/social-poker.js?v=430"></script>
-<script src="assets/digimon-sanctuary.js?v=430"></script>
+<script src="assets/digimon/roster.js?v=431"></script>
+<script src="assets/digimon/base-stats.js?v=431"></script>
+<script src="assets/social-rules.js?v=431"></script>
+<script src="assets/social-poker.js?v=431"></script>
+<script src="assets/digimon-sanctuary.js?v=431"></script>
 <script src="assets/digimon-battle.js?v=393"></script>
-<script src="assets/social-digimon.js?v=430"></script>
+<script src="assets/social-digimon.js?v=431"></script>
 <script src="assets/social-gym-redesign.js?v=393"></script>
 <script src="assets/social-pond-design.js?v=393"></script>
-<script src="assets/social-scene.js?v=430"></script>
-<script src="assets/social-fishing.js?v=430"></script>
-<script src="assets/plaza-bots.js?v=430"></script>
-<script src="assets/social.js?v=430"></script></body>
+<script src="assets/social-scene.js?v=431"></script>
+<script src="assets/social-fishing.js?v=431"></script>
+<script src="assets/plaza-bots.js?v=431"></script>
+<script src="assets/social.js?v=431"></script></body>
 </html>

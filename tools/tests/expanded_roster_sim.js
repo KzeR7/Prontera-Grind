@@ -205,7 +205,7 @@ test('the seven new weapon families are real gear',()=>{
       const id=ev(`RO_ITEM_ICON_CANDIDATES.mythic[${JSON.stringify(set)}][${JSON.stringify(w)}]`);assert.ok(id>0&&fs.existsSync(path.join(root,'assets/equipment-icons',id+'.png')),set+' Mythic '+w+' icon')}
   }
   const icons=JSON.parse(fs.readFileSync(path.join(root,'assets/equipment-icons/manifest.json'),'utf8')),mythic=JSON.parse(fs.readFileSync(path.join(root,'assets/equipment-icons/mythic-manifest.json'),'utf8'));
-  for(const w of Object.keys(KIN)){assert.deepEqual(icons.families[w],json(`return RO_ITEM_ICON_CANDIDATES[${JSON.stringify(w)}]`));for(const set in mythic.sets)assert.equal(mythic.sets[set][w],ev(`RO_ITEM_ICON_CANDIDATES.mythic[${JSON.stringify(set)}][${JSON.stringify(w)}]`))}
+  for(const w of Object.keys(KIN)){assert.deepEqual(icons.families[w],json(`return RO_ITEM_ICON_CANDIDATES[${JSON.stringify(w)}]`));const setIcons=Object.keys(mythic.sets).map(set=>{assert.equal(mythic.sets[set][w],ev(`RO_ITEM_ICON_CANDIDATES.mythic[${JSON.stringify(set)}][${JSON.stringify(w)}]`));return mythic.sets[set][w]});assert.equal(new Set(setIcons).size,6,w+' receives a distinct native sprite in every Ascension set');assert.deepEqual(setIcons,icons.families[w],w+' uses its curated six-band source sprites')}
   for(const a of [...icons.assets,...mythic.assets])assert.equal(require('node:crypto').createHash('sha256').update(fs.readFileSync(path.join(root,'assets/equipment-icons',a.file))).digest('hex'),a.sha256,a.file);
   // the Sage line fights with magic, book or staff
   for(const cls of ['Sage','Scholar','Sorcerer'])assert.ok(ev(`INT_CLASSES.includes(${JSON.stringify(cls)})`),cls);
