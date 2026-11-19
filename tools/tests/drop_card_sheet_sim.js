@@ -155,14 +155,14 @@ t('the worksheet covers all maps, gear sections, and field stages',()=>{
 t('Ascension worksheet fields expose five stages, a real gear shelf and the stage-five boss',()=>{
   for(const m of sheet.maps.slice(10)){
     assert.strictEqual(m.sections.length,2,'stage-row variants of the N+ weapon shelf');
-    assert.strictEqual(m.sections[0].items.length,14);assert.strictEqual(m.sections[1].items.length,14);assert.ok(m.sections.every(s=>s.items.every(x=>x.slot==='weapon')),'Ascension shelves are N+ weapons only');
+    assert.strictEqual(m.sections[0].items.length,7);assert.strictEqual(m.sections[1].items.length,7);assert.ok(m.sections.every(s=>s.items.every(x=>x.slot==='weapon')),'Ascension shelves are N+ weapons only');
     assert.strictEqual(m.stages.length,5);
     for(const s of m.stages){
-      // every regular mob carries the N+ weapon family list and no defensive equipment
-      assert.ok(s.mobs.every(x=>x.drops.length===14&&x.drops.every(d=>m.sections.flatMap(r=>r.items).find(i=>i.id===d.itemId)?.slot==='weapon')),'14 N+ weapon families only');
+      // every regular mob carries the 7 new N+ weapon families and no defensive equipment
+      assert.ok(s.mobs.every(x=>x.drops.length===7&&x.drops.every(d=>m.sections.flatMap(r=>r.items).find(i=>i.id===d.itemId)?.slot==='weapon')),'7 N+ weapon families only');
       assert.strictEqual(!!s.boss,s.stage===5);
       // the MVP lists the whole shelf, and it is the shelf of the stage's own row
-      if(s.boss)assert.strictEqual(s.boss.drops.length,14);
+      if(s.boss)assert.strictEqual(s.boss.drops.length,7);
     }
   }
 });
