@@ -27,6 +27,10 @@ try{
  assert.equal(payload['assets/combat-audio.js'],fs.readFileSync('assets/combat-audio.js','utf8'));
  assert.equal(payload['functions/api/save.js'],fs.readFileSync('functions/api/save.js','utf8'));
  assert.equal(payload['tools/optimize_delivery.js'],fs.readFileSync('tools/optimize_delivery.js','utf8'),'staging build must run the matching delivery optimizer');
+ for(const rel of ['tools/vendor/acorn/acorn.js','tools/vendor/acorn/LICENSE',...fs.readdirSync('assets/expanded-fx').map(n=>'assets/expanded-fx/'+n)]){
+  const raw=fs.readFileSync(rel),text=payload[rel];assert.equal(typeof text,'string','missing staging dependency '+rel);
+  assert.ok((text.startsWith('base64:')?Buffer.from(text.slice(7),'base64'):Buffer.from(text)).equals(raw),'staging dependency changed: '+rel);
+ }
  for(const name of fs.readdirSync('assets/ro_icons')){
   const rel='assets/ro_icons/'+name;
   assert.equal(payload[rel],'base64:'+fs.readFileSync(rel).toString('base64'),'Class Tree archive must preserve '+name);
