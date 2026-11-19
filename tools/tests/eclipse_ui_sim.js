@@ -399,7 +399,7 @@ test('class path shows one collection summary while browsing',()=>{
 });
 test('Ascension Forge keeps crafting and transformation controls in Eclipse',()=>{
  ev("S=fresh();S.cls='Guillotine Cross';S.lv=150;S.zeny=1e12;S.ascensionMat=[1000,1000,1000];S.inv=[{id:777,slot:'weapon',wt:'dagger',sec:5,name:'N+ Dagger',r:10,aff:[],cards:[],val:100}];sub.equip='ascension';tabs.push('equip');renderWin()");
- assert.equal(doc.querySelectorAll('[data-a=ascset]').length,6);
+ assert.equal(doc.querySelectorAll('[data-a=ascset]').length,12); // six original sets + six haven-v432 RO looks
  assert.equal(doc.querySelectorAll('[data-ascension-item]').length,1);
  const select=doc.querySelector('[data-ascension-item]');select.value='777';select.dispatchEvent(new g.window.Event('change',{bubbles:true}));doc.querySelector('[data-a=transformasc]').click();
  assert.equal(ev('S.inv.length'),1);assert.equal(ev('S.inv[0].id'),777);

@@ -182,7 +182,7 @@ try{
    const {GM_CATALOG}=await import('../../functions/_lib/gm-catalog.js');
    const {equipmentPayload,giftPayload}=await import('../../functions/_lib/gm-tools.js');
    assert.equal(Object.values(GM_CATALOG.classes).filter(c=>c.tier===4).length,14);
-   assert.equal(GM_CATALOG.entries.filter(e=>e.id.startsWith('mythic:')).length,114); // 6 sets x (7 shipped + 7 expanded-roster weapon families + 5 armour slots)
+   assert.equal(GM_CATALOG.entries.filter(e=>e.id.startsWith('mythic:')).length,228); // 12 sets (six original + six haven-v432 Ragnarok Online looks) x (7 shipped + 7 expanded-roster weapon families + 5 armour slots)
    assert.equal(giftPayload({catalogId:'ascMat2',amount:5}).resource,'ascMat2');
    assert.equal(giftPayload({catalogId:'mythicScrolls',amount:5}).resource,'mythicScrolls');
    const entry=GM_CATALOG.entries.find(e=>e.id==='mythic:celestial:off');

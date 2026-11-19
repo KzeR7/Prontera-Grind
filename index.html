@@ -921,13 +921,13 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="preload" href="assets/ui/fonts/font-5.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-6.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-7.ttf" as="font" type="font/ttf" crossorigin>
-<link rel="stylesheet" href="assets/ui/eclipse.css?v=431">
-<link rel="stylesheet" href="assets/ui/mobile.css?v=431">
+<link rel="stylesheet" href="assets/ui/eclipse.css?v=432">
+<link rel="stylesheet" href="assets/ui/mobile.css?v=432">
 <script src="assets/ui/mobile.js?v=274"></script>
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
-<link rel="stylesheet" href="assets/social.css?v=431">
+<link rel="stylesheet" href="assets/social.css?v=432">
 <link rel="stylesheet" href="assets/social-battle.css?v=393">
-  <link rel="stylesheet" href="assets/social-fishing.css?v=431"><link rel="stylesheet" href="assets/friends.css?v=273">
+  <link rel="stylesheet" href="assets/social-fishing.css?v=432"><link rel="stylesheet" href="assets/friends.css?v=273">
 </head>
 <body>
 <div id="loginOverlay"><div class="eclipse-login-world" aria-hidden="true"></div><header class="eclipse-login-header"><a href="./" class="eclipse-brand"><span>HH</span><b>HORIZON HAVEN<small>YOUR IDLE ADVENTURE</small></b></a><div class="eclipse-palettes" role="group" aria-label="Interface palette"><button type="button" data-palette="moonstone">Moonstone</button><button type="button" data-palette="aurora">Aurora</button><button type="button" data-palette="ember">Ember</button></div></header><main class="eclipse-login-layout"><section class="login-brand"><div class="login-eyebrow">A WORLD WORTH RETURNING TO</div><h1>Your next <br>chapter <em>awaits.</em></h1><p>Explore a world beyond the horizon.<br>Collect rare gear, master every class, and build your haven.</p><div class="eclipse-login-art"><img src="assets/ui/eclipse-knight.png" alt="Lord Knight ready for adventure"><span>01 / PRONTERA<small>THE JOURNEY BEGINS HERE</small></span><div><img src="assets/equipment-icons/1142.png" alt=""><span>YOUR NEXT UPGRADE<small>Somewhere out there.</small></span></div></div><div class="login-footnote">EXPLORE · GROW · CONQUER</div></section><div class="login-card"><div class="eclipse-access">ADVENTURER ACCESS <span>◇</span></div><h2 id="authHeading">Welcome back.</h2><p class="login-intro" id="authIntro">Your adventure is right where you left it.</p><div class="atabs" id="authTabs"><button type="button" id="tabLogin" class="on">Login</button><button type="button" id="tabReg">Register</button></div>
@@ -1056,10 +1056,10 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <div id="tooltip"></div>
 <link rel="stylesheet" href="assets/wardrobe.css?v=138">
 <link rel="stylesheet" href="assets/shop.css?v=318">
-<script src="assets/wardrobe.js?v=431"></script>
+<script src="assets/wardrobe.js?v=432"></script>
 <script src="assets/shop-catalog.js?v=321"></script>
 <script src="assets/fourth-jobs.js?v=179"></script>
-<script src="assets/expanded-jobs.js?v=431"></script>
+<script src="assets/expanded-jobs.js?v=432"></script>
 <script src="assets/ascension.js?v=156"></script>
 <script src="assets/native-mob-heights.js?v=153"></script>
 <script src="assets/native-fields.js?v=197"></script>
@@ -1333,7 +1333,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-19 haven-v431 Ascension set-specific weapon icons';
+const BUILD='2026-11-19 haven-v432 Ascension RO-look sets and zero-base repair';
 // v364: this write used to sit AFTER the `//` on the BUILD line, so it was part of the comment and
 // never ran - the login card showed an empty #buildTag and there was no way to confirm which file
 // the browser had loaded. It also has to survive the script running before the login card exists.
@@ -2139,8 +2139,69 @@ const ASC_SETS={
       {count:6,stats:{atk:22,cdm:22,crit:15,aspd:8},desc:'+22% ATK, +22% Crit DMG, +15% Crit, +8% ASPD'}
     ],
     cost:{weapon:[35,3,140000000],armor:[28,2,116000000],head:[23,2,96000000],off:[21,1,76000000],leg:[21,1,76000000],acc:[25,2,96000000]}
+  },
+  // haven-v432: Ragnarok Online look of celestial. Same map, material, bonuses and cost; its own pieces, so
+  // wearing it counts toward this set only.
+  valkyrie:{
+    name:'Valkyrie',map:10,mat:0,look:'celestial',
+    pieces:{
+      weapon:{sword:'Valkyrie Balmung',katar:'Valkyrie Loki\'s Nail',staff:'Valkyrie Dea Staff',dagger:'Valkyrie Ginnungagap',bow:'Valkyrie Elven Bow',axe:'Valkyrie Celestial Axe',mace:'Valkyrie Hammer',spear:'Valkyrie Gigantic Lance',book:'Valkyrie Saga',knuckle:'Valkyrie Battle Glove',instrument:'Valkyrie Lute',whip:'Valkyrie Chain Whip',shuriken:'Valkyrie Wing Huuma',gun:'Valkyrie Gold Lux'},
+      armor:'Valkyrie Brynhild',head:'Valkyrie Helm',off:'Valkyrie Hervor Alvitr',
+      leg:'Valkyrian Shoes',acc:'Valkyrie Wing Brooch'
+    }
+  },
+  // haven-v432: Ragnarok Online look of voidwalker. Same map, material, bonuses and cost; its own pieces, so
+  // wearing it counts toward this set only.
+  thanatos:{
+    name:'Thanatos',map:10,mat:0,look:'voidwalker',
+    pieces:{
+      weapon:{sword:'Thanatos Sword',katar:'Thanatos Katar',staff:'Thanatos Staff',dagger:'Thanatos Dagger',bow:'Thanatos Bow',axe:'Thanatos Axe',mace:'Thanatos Hammer',spear:'Thanatos Spear',book:'Thanatos Grimoire',knuckle:'Thanatos Knuckle',instrument:'Thanatos Violin',whip:'Thanatos Whip',shuriken:'Thanatos Thunderstorm Huuma',gun:'Thanatos Dusk'},
+      armor:'Thanatos Tenebris',head:'Thanatos Despero Mask',off:'Thanatos Shadow Guard',
+      leg:'Thanatos Shadow Walk',acc:'Thanatos Death Loop'
+    }
+  },
+  // haven-v432: Ragnarok Online look of ethereal. Same map, material, bonuses and cost; its own pieces, so
+  // wearing it counts toward this set only.
+  archangel:{
+    name:'Archangel',map:10,mat:0,look:'ethereal',
+    pieces:{
+      weapon:{sword:'Archangel Feather Blade',katar:'Archangel Chakram',staff:'Archangel Divine Cross',dagger:'Archangel Weihna',bow:'Archangel Ixion Wings',axe:'Archangel End Sectora',mace:'Archangel Noble Cross',spear:'Archangel Longinus',book:'Archangel Scripture',knuckle:'Archangel Claw of Flash',instrument:'Archangel Harp',whip:'Archangel Rapture Rose',shuriken:'Archangel Wave Huuma',gun:'Archangel Gate Keeper'},
+      armor:'Archangel Protection',head:'Archangel Helm',off:'Archangel Holy Guard',
+      leg:'Archangel Reincarnation',acc:'Archangel Ring'
+    }
+  },
+  // haven-v432: Ragnarok Online look of primal. Same map, material, bonuses and cost; its own pieces, so
+  // wearing it counts toward this set only.
+  ifrit:{
+    name:'Ifrit',map:11,mat:1,look:'primal',
+    pieces:{
+      weapon:{sword:'Ifrit Solar Sword',katar:'Ifrit Krishna',staff:'Ifrit Wizardry Staff',dagger:'Ifrit Kindle Dagger',bow:'Ifrit Burning Bow',axe:'Ifrit Ignus Steel',mace:'Ifrit Judgement Mace',spear:'Ifrit Hellfire',book:'Ifrit Flame Codex',knuckle:'Ifrit Magma Fist',instrument:'Ifrit Burning Guitar',whip:'Ifrit Red Flame Whip',shuriken:'Ifrit Blaze Huuma',gun:'Ifrit Inferno'},
+      armor:'Ifrit Crimson Robe',head:'Ifrit Mask',off:'Ifrit Sol Shield',
+      leg:'Ifrit Crimson Shoes',acc:'Ifrit Flame Lord Ring'
+    }
+  },
+  // haven-v432: Ragnarok Online look of molten. Same map, material, bonuses and cost; its own pieces, so
+  // wearing it counts toward this set only.
+  thor:{
+    name:'Thor',map:11,mat:1,look:'molten',
+    pieces:{
+      weapon:{sword:'Thor Naght Sieger',katar:'Thor Drill Katar',staff:'Thor Jormungand',dagger:'Thor Krieg',bow:'Thor Giant Crossbow',axe:'Thor Stonehammer',mace:'Thor War Hammer',spear:'Thor Ahlspiess',book:'Thor Rune Codex',knuckle:'Thor Electric Fist',instrument:'Thor Thunder Bass',whip:'Thor Electric Eel',shuriken:'Thor Storm Huuma',gun:'Thor Thunder P'},
+      armor:'Thor Egir Armor',head:'Thor Power Helm',off:'Thor Giant Shield',
+      leg:'Thor Siege Greaves',acc:'Thor Iron Wrist'
+    }
+  },
+  // haven-v432: Ragnarok Online look of infernal. Same map, material, bonuses and cost; its own pieces, so
+  // wearing it counts toward this set only.
+  diabolus:{
+    name:'Diabolus',map:11,mat:1,look:'infernal',
+    pieces:{
+      weapon:{sword:'Diabolus Gladius',katar:'Diabolus Blood Tears',staff:'Diabolus Baculum',dagger:'Diabolus Cursed Dagger',bow:'Diabolus Arcus',axe:'Diabolus Doom Slayer',mace:'Diabolus Bloody Cross',spear:'Diabolus Crescent Scythe',book:'Diabolus Grimoire',knuckle:'Diabolus Iron Nail',instrument:'Diabolus Berserk Guitar',whip:'Diabolus Rosebine',shuriken:'Diabolus Blood Huuma',gun:'Diabolus Destroyer'},
+      armor:'Diabolus Armor',head:'Diabolus Bone Helm',off:'Diabolus Shield of Death',
+      leg:'Diabolus Boots',acc:'Diabolus Bloody Ring'
+    }
   }
 };
+for(const set of Object.values(ASC_SETS))if(set.look){const base=ASC_SETS[set.look];set.bonuses=base.bonuses;set.cost=base.cost}
 // Evolve an owned N+ piece; recipe choices never mint a second item.
 let ascensionSetPick='celestial',ascensionItemPick='';
 const fourthJob=()=>CLASSES[S?.cls]?.tier===4;
@@ -2211,16 +2272,33 @@ function repairMythicGiftBase(it){
   it.val=Math.round(low+(high-low)*(it.val-lo)/(hi-lo));it.mythicGiftVersion=1;
 }
 // Earlier Thor drops were incorrectly saved as section 6; the undefined section-6 base multiplier
-// serialized their NaN value as null. Preserve those N+ items, move them to section 5, and restore a
-// representative top-field base value. This is idempotent and never touches actual Forge Mythics.
+// serialized their NaN value as null. Preserve those N+ items and move them back to section 5.
+// This is idempotent and never touches actual Forge Mythics.
+const GEAR_BASE_BY_SLOT={weapon:2,armor:4,head:10,off:3,leg:3,acc:5};
+// The base genGear would roll for this item, at the middle of its rnd(.9,1.12) roll, using the item's
+// own rarity (tier), section, level, quality and source map. Used only to restore a missing value.
+function expectedGearBase(it){
+  const slot=it.slot||(it.wt?'weapon':''),base=GEAR_BASE_BY_SLOT[slot];if(!base)return 0;
+  const int=(v,d,lo,hi)=>{v=Math.floor(+v);return Number.isFinite(v)?Math.max(lo,Math.min(hi,v)):d};
+  // Like genGear: N and N+ (sections 4-5) always roll in the top numeric band; Common..Legendary use their own tier.
+  const sec=int(it.sec,0,0,5),tier=sec>=4?4:int(it.tier,0,0,RAR.length-1),mp=int(it.mp,0,0,MAPVAL.length-1);
+  const lvl=Number.isFinite(+it.lvl)&&+it.lvl>0?+it.lvl:150,quality=Number.isFinite(+it.quality)?Math.max(1,+it.quality):1;
+  return Math.max(1,Math.round(base*[1,2.2,4,7,10.5,15][sec]*(1+lvl*.15)*RAR[tier].m*quality*(sec>=4?MAPVAL[9]:MAPVAL[mp])*1.01));
+}
+// haven-v432: any owned equipment whose base value is missing, null, NaN or zero (it shows as
+// "ATK +0") gets the value its rarity would normally roll. Valid values are never changed.
+function repairBrokenGearBase(it){
+  if(!it||typeof it!=='object'||it.card||it.ore)return;
+  const slot=it.slot||(it.wt?'weapon':'');if(!GEAR_BASE_BY_SLOT[slot])return;
+  // Only a stored base that broke (NaN saved as null, 0 or negative) is rebuilt; an object without the
+  // field is not a rolled item, and a valid base is never rewritten.
+  if(!Object.hasOwn(it,'val')||(Number.isFinite(+it.val)&&+it.val>0&&it.val!==null))return;
+  it.val=it.mythic===true?mythicGiftBaseValue(slot,1.01):expectedGearBase(it);
+}
 function repairLegacyAscensionDrop(it){
-  if(!it||it.sec!==6||it.mythic===true||typeof it.name!=='string'||!it.name.startsWith('N+ '))return;
-  const base={weapon:2,armor:4,head:10,off:3,leg:3,acc:5}[it.slot];
-  if(!base)return;
-  it.sec=5;
-  if(Number.isFinite(+it.val)&&+it.val>0)return;
-  const lvl=Number.isFinite(+it.lvl)&&+it.lvl>0?+it.lvl:150;
-  it.val=Math.max(1,Math.round(base*15*(1+lvl*.15)*RAR[4].m*MAPVAL[9]*1.01));
+  if(!it||typeof it!=='object')return;
+  if(it.sec===6&&it.mythic!==true&&typeof it.name==='string'&&it.name.startsWith('N+ ')&&GEAR_BASE_BY_SLOT[it.slot])it.sec=5;
+  repairBrokenGearBase(it);
 }
 // Build a GM Ascension item with the same base range as an evolved top-field N+ piece.
 function makeMythicEquipment(setKey,slot,weaponType){
@@ -3440,6 +3518,9 @@ let currentUser=null,S=null,speed=1,zenyEarned=0,expEarned=0,floats=[],drops=[],
 const pl={x:0,z:Z1-1.5,ry:0,orb:0,run:0,wt:0,wx:0,wz:Z1-1.5},skCd={},petR={};
 let asuraLeap=null;
 function startAsuraLeap(target){
+  // Endless Echo pins the hero 1.4 units from its fixed dummy and never walks (see update()), so a
+  // retreat there could never be undone and would end every melee hit for the rest of the run.
+  if(typeof TRIAL!=='undefined'&&TRIAL.on)return;
   if(!target||!Number.isFinite(target.x)||!Number.isFinite(target.z))return;
   let dx=pl.x-target.x,dz=pl.z-target.z,d=Math.hypot(dx,dz);
   if(d<.05){const toward=Math.atan2(target.z-pl.z,target.x-pl.x);dx=-Math.cos(toward);dz=-Math.sin(toward);d=1;}
@@ -6378,7 +6459,7 @@ const isBoss=()=>bossStage(S.mp,S.lvl),fieldName=()=>S.lvl>10?`Nightmare ${MAPS[
 // Curated original RO equipment art: progression follows the saved job section,
 // with robe and pendant variants selected by item type. All selected PNGs ship locally.
 const RO_ITEM_ICON_CANDIDATES={
- mythic:{"celestial":{"sword":500049,"dagger":510061,"axe":520017,"mace":590038,"staff":550069,"katar":610037,"bow":700052,"armor":450264,"head":430002,"off":460040,"leg":470196,"acc":490327,"spear":1401,"book":1550,"knuckle":1801,"instrument":1901,"whip":1950,"shuriken":13300,"gun":13100},"voidwalker":{"sword":500054,"dagger":510075,"axe":520021,"mace":590047,"staff":550089,"katar":610041,"bow":700059,"armor":450270,"head":430002,"off":460040,"leg":470197,"acc":490328,"spear":1407,"book":1551,"knuckle":1803,"instrument":1903,"whip":1952,"shuriken":13301,"gun":13102},"ethereal":{"sword":500049,"dagger":510061,"axe":520017,"mace":590038,"staff":550069,"katar":610037,"bow":700052,"armor":450265,"head":430002,"off":460040,"leg":450268,"acc":490330,"spear":1410,"book":1552,"knuckle":1807,"instrument":1905,"whip":1954,"shuriken":13302,"gun":13104},"primal":{"sword":13454,"dagger":28705,"axe":28106,"mace":16040,"staff":1680,"katar":28007,"bow":18130,"armor":15380,"head":19343,"off":460023,"leg":22201,"acc":490104,"spear":1413,"book":1553,"knuckle":1809,"instrument":1907,"whip":1956,"shuriken":13303,"gun":13151},"molten":{"sword":13454,"dagger":28705,"axe":28106,"mace":16040,"staff":1680,"katar":28007,"bow":18130,"armor":15378,"head":19343,"off":460023,"leg":22199,"acc":490104,"spear":1415,"book":1556,"knuckle":1813,"instrument":1909,"whip":1962,"shuriken":13304,"gun":13154},"infernal":{"sword":13454,"dagger":28705,"axe":28106,"mace":16040,"staff":1680,"katar":28007,"bow":18130,"armor":15379,"head":19343,"off":460023,"leg":22200,"acc":490451,"spear":1420,"book":1557,"knuckle":1814,"instrument":1913,"whip":1964,"shuriken":13305,"gun":13157}},
+ mythic:{"celestial":{"sword":500049,"dagger":510061,"axe":520017,"mace":590038,"staff":550069,"katar":610037,"bow":700052,"armor":450264,"head":430002,"off":460040,"leg":470196,"acc":490327,"spear":1401,"book":1550,"knuckle":1801,"instrument":1901,"whip":1950,"shuriken":13300,"gun":13100},"voidwalker":{"sword":500054,"dagger":510075,"axe":520021,"mace":590047,"staff":550089,"katar":610041,"bow":700059,"armor":450270,"head":430002,"off":460040,"leg":470197,"acc":490328,"spear":1407,"book":1551,"knuckle":1803,"instrument":1903,"whip":1952,"shuriken":13301,"gun":13102},"ethereal":{"sword":500049,"dagger":510061,"axe":520017,"mace":590038,"staff":550069,"katar":610037,"bow":700052,"armor":450265,"head":430002,"off":460040,"leg":450268,"acc":490330,"spear":1410,"book":1552,"knuckle":1807,"instrument":1905,"whip":1954,"shuriken":13302,"gun":13104},"primal":{"sword":13454,"dagger":28705,"axe":28106,"mace":16040,"staff":1680,"katar":28007,"bow":18130,"armor":15380,"head":19343,"off":460023,"leg":22201,"acc":490104,"spear":1413,"book":1553,"knuckle":1809,"instrument":1907,"whip":1956,"shuriken":13303,"gun":13151},"molten":{"sword":13454,"dagger":28705,"axe":28106,"mace":16040,"staff":1680,"katar":28007,"bow":18130,"armor":15378,"head":19343,"off":460023,"leg":22199,"acc":490104,"spear":1415,"book":1556,"knuckle":1813,"instrument":1909,"whip":1962,"shuriken":13304,"gun":13154},"infernal":{"sword":13454,"dagger":28705,"axe":28106,"mace":16040,"staff":1680,"katar":28007,"bow":18130,"armor":15379,"head":19343,"off":460023,"leg":22200,"acc":490451,"spear":1420,"book":1557,"knuckle":1814,"instrument":1913,"whip":1964,"shuriken":13305,"gun":13157},"valkyrie":{"sword":1161,"dagger":13002,"axe":1383,"mace":16051,"staff":2005,"katar":1262,"bow":1746,"armor":2383,"head":5171,"off":2182,"leg":2421,"acc":2890,"spear":1490,"book":1585,"knuckle":1822,"instrument":1935,"whip":1973,"shuriken":13300,"gun":13106},"thanatos":{"sword":13441,"dagger":13093,"axe":28100,"mace":16028,"staff":1669,"katar":28000,"bow":18119,"armor":15055,"head":18530,"off":2135,"leg":2426,"acc":2732,"spear":1438,"book":1562,"knuckle":1836,"instrument":1933,"whip":1988,"shuriken":13315,"gun":13153},"archangel":{"sword":13420,"dagger":13047,"axe":1393,"mace":16029,"staff":2001,"katar":1285,"bow":1737,"armor":2355,"head":5025,"off":2110,"leg":2420,"acc":2743,"spear":1469,"book":1572,"knuckle":1841,"instrument":1926,"whip":1963,"shuriken":13314,"gun":13167},"ifrit":{"sword":1136,"dagger":1247,"axe":1392,"mace":16013,"staff":1473,"katar":1284,"bow":1730,"armor":15027,"head":5420,"off":2165,"leg":2469,"acc":2678,"spear":1471,"book":1564,"knuckle":1818,"instrument":1914,"whip":1965,"shuriken":13303,"gun":13162},"thor":{"sword":13412,"dagger":13046,"axe":1385,"mace":1548,"staff":2020,"katar":1270,"bow":18110,"armor":15061,"head":5495,"off":2160,"leg":2483,"acc":2719,"spear":1478,"book":1573,"knuckle":1820,"instrument":1919,"whip":1972,"shuriken":13316,"gun":13168},"diabolus":{"sword":13449,"dagger":1241,"axe":1370,"mace":16017,"staff":1676,"katar":1271,"bow":18125,"armor":2375,"head":5529,"off":2177,"leg":2433,"acc":2760,"spear":1466,"book":1561,"knuckle":1837,"instrument":1920,"whip":1985,"shuriken":13313,"gun":13160}},
  sword:[1101,1123,1137,1142,1133,1145],
  dagger:[1201,1207,1217,1226,1232,1240],
  katar:[1250,1252,1254,1256,1258,1260],
@@ -8807,8 +8888,10 @@ function guideTierPlan(){
 }
 function guideMythicTargets(){
  const magic=INT_CLASSES.includes(S.cls),keys=guideMode==='survive'?['hpPct','def','mdef','flee']:guideMode==='boss'?[magic?'matk':'atk','cdm','crit']:['field',magic?'matk':'atk','aspd'];
- const sets=Object.entries(ASC_SETS).sort(([,a],[,b])=>{const score=set=>keys.reduce((sum,k,i)=>sum+(set.bonuses.at(-1).stats[k]||0)*(keys.length-i),0);return score(b)-score(a)}).slice(0,3);
- return `<h3>Mythic set targets for ${guideMode==='farm'?'farming':guideMode==='boss'?'boss damage':'survival'}</h3><p>Compare set bonuses with your actual equipment. These are crafting plans, not monster equipment drops.</p><div class="guide-grid">${sets.map(([id,set])=>`<article class="mob-card"><b>${set.name}</b><p>${set.bonuses.map(b=>`${b.count} pieces: ${b.desc}`).join('<br>')}</p><p>Farm ${ASCENSION_MATERIALS[set.mat]} in ${MAPS[set.map].n}, plus Valkyrie’s Sigils. Start at Stage 1; attempt Stage 5 only when stable.</p><button data-a="guidemap" data-v="${set.map}:1">Inspect ${MAPS[set.map].n}</button> <button data-a="guideforge" data-v="${id}">View recipe</button></article>`).join('')}</div>`;
+ // RO-look sets (haven-v432) share their parent's bonuses, so rank parents only and name the twin on the card.
+ const twin=id=>Object.values(ASC_SETS).find(set=>set.look===id);
+ const sets=Object.entries(ASC_SETS).filter(([,set])=>!set.look).sort(([,a],[,b])=>{const score=set=>keys.reduce((sum,k,i)=>sum+(set.bonuses.at(-1).stats[k]||0)*(keys.length-i),0);return score(b)-score(a)}).slice(0,3);
+ return `<h3>Mythic set targets for ${guideMode==='farm'?'farming':guideMode==='boss'?'boss damage':'survival'}</h3><p>Compare set bonuses with your actual equipment. These are crafting plans, not monster equipment drops.</p><div class="guide-grid">${sets.map(([id,set])=>`<article class="mob-card"><b>${set.name}${twin(id)?` <small>or ${twin(id).name} look</small>`:''}</b><p>${set.bonuses.map(b=>`${b.count} pieces: ${b.desc}`).join('<br>')}</p><p>Farm ${ASCENSION_MATERIALS[set.mat]} in ${MAPS[set.map].n}, plus Valkyrie’s Sigils. Start at Stage 1; attempt Stage 5 only when stable.</p><button data-a="guidemap" data-v="${set.map}:1">Inspect ${MAPS[set.map].n}</button> <button data-a="guideforge" data-v="${id}">View recipe</button></article>`).join('')}</div>`;
 }
 function buildGuide(market=false){
  const sources=guideSources(),phase=guideTier,cardsPage=guidePage==='cards',plan=guideBuildPlan();
@@ -9687,7 +9770,7 @@ const V={
     ${fieldBand}
     <div class="mapcols">
       <div class="mob-card"><div class="hd">${mapL>10?'Nightmare ':''}${mp.n} Stage ${mapL>10?mapL-10:mapL}${mapM<5&&mapL<=5?`<br><small>${mapM===0?'Novice start · Base Lv 1–10':'Early class route · Base Lv 10–20'} · gentle packs</small>`:''}</div>
-        <div class="sec">Drops on this field ${mapM>=10?'<small>Equipment: the Nightmare tier · Forge materials for N+ evolution · combat EXP for Ascension</small>':`<small>&middot; every drop is <b class="${rarCls({sec:F.sec,tier:F.tier})}">${rarOf({sec:F.sec,tier:F.tier}).n}</b> &middot; <b>${SECN[F.sec]}</b>, worn by ${gearUserOf({sec:F.sec})}${gearTierOK({sec:F.sec})?'':` &middot; <span class="r0">your ${S.cls} cannot wear this yet</span>`}</small>`}</div>
+        <div class="sec">Drops on this field ${mapM>=10?'<small>Equipment: new N+ weapons only · Forge materials for N+ evolution · combat EXP for Ascension</small>':`<small>&middot; every drop is <b class="${rarCls({sec:F.sec,tier:F.tier})}">${rarOf({sec:F.sec,tier:F.tier}).n}</b> &middot; <b>${SECN[F.sec]}</b>, worn by ${gearUserOf({sec:F.sec})}${gearTierOK({sec:F.sec})?'':` &middot; <span class="r0">your ${S.cls} cannot wear this yet</span>`}</small>`}</div>
         ${mapM>=10?'<p>Only new N+ weapons drop here, across every weapon family. Armor and other N equipment drop on Nightmare maps. Use Astral Shards or Primal Catalysts with Valkyrie’s Sigils in Equipment → Ascension to craft Mythic gear from owned N+ equipment. Combat EXP levels Ascension stats and class skills in Character.</p>':(()=>{const d=F.mobs[0].drops,r4=v=>Math.round(v*1e4)/1e4,t=r4(d.reduce((a,x)=>a+x[1],0)),W=d.filter(x=>gearSlot(x[0])==='weapon'),wt=r4(W.reduce((a,x)=>a+x[1],0)),
           fam=W.length>1?` (${r4(W[0][1])}% each, ${W.length} families)`:'';
           return`<div class="dropline"><span>Gear chance per kill</span><b>${t}%</b></div>
@@ -16319,20 +16402,20 @@ setInterval(updateWatch,60000);
 // be hours old while the player was on another tab, and the check is a 60-byte text file.
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&(pendingUpdateBuild||Date.now()-PAGE_STARTED_AT>30000))updateWatch()});
 </script>
-<script src="assets/wardrobe-ui.js?v=431"></script>
+<script src="assets/wardrobe-ui.js?v=432"></script>
 <script src="assets/shop.js?v=321"></script>
 <script src="assets/friends.js?v=273"></script>
-<script src="assets/digimon/roster.js?v=431"></script>
-<script src="assets/digimon/base-stats.js?v=431"></script>
-<script src="assets/social-rules.js?v=431"></script>
-<script src="assets/social-poker.js?v=431"></script>
-<script src="assets/digimon-sanctuary.js?v=431"></script>
+<script src="assets/digimon/roster.js?v=432"></script>
+<script src="assets/digimon/base-stats.js?v=432"></script>
+<script src="assets/social-rules.js?v=432"></script>
+<script src="assets/social-poker.js?v=432"></script>
+<script src="assets/digimon-sanctuary.js?v=432"></script>
 <script src="assets/digimon-battle.js?v=393"></script>
-<script src="assets/social-digimon.js?v=431"></script>
+<script src="assets/social-digimon.js?v=432"></script>
 <script src="assets/social-gym-redesign.js?v=393"></script>
 <script src="assets/social-pond-design.js?v=393"></script>
-<script src="assets/social-scene.js?v=431"></script>
-<script src="assets/social-fishing.js?v=431"></script>
-<script src="assets/plaza-bots.js?v=431"></script>
-<script src="assets/social.js?v=431"></script></body>
+<script src="assets/social-scene.js?v=432"></script>
+<script src="assets/social-fishing.js?v=432"></script>
+<script src="assets/plaza-bots.js?v=432"></script>
+<script src="assets/social.js?v=432"></script></body>
 </html>

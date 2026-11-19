@@ -7,7 +7,7 @@ try{
  test('all classes and crafted weapon families are available',()=>{
   assert.equal(ev('Object.values(CLASSES).filter(c=>c.tier===4).length'),14);assert.equal(ev('CD4.length'),6);
   assert.ok(ev("ascensionForgePanel().includes('data-ascension-item')"));
-  assert.equal(ev("(ascensionForgePanel().match(/data-a=.ascset/g)||[]).length"),6);
+  assert.equal(ev("(ascensionForgePanel().match(/data-a=.ascset/g)||[]).length"),12); // six original sets + six haven-v432 RO looks
  });
  test('invalid crafting and full bags never consume resources',()=>{
   ev('window.wallet=JSON.stringify([S.zeny,S.ascensionMat])');

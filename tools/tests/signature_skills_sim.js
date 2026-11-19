@@ -37,6 +37,19 @@ assert.ok(retreat.landing.x<retreat.sx-2.5,'Asura leap lands away from a target 
 assert.ok(Math.abs(retreat.landing.z-retreat.sz)<.1,'retreat keeps the lateral axis when aligned');
 assert.equal(retreat.landing.height,0,'jump begins at ground height');assert.ok(retreat.landing.apex>1,'character visibly jumps during the retreat');assert.ok(retreat.landing.midX<retreat.sx&&retreat.landing.midX>retreat.landing.endX,'player moves smoothly backward mid-leap');assert.equal(retreat.landing.endX,retreat.landing.x);assert.equal(retreat.landing.endHeight,0,'lands at the retreat destination');
 ok('Asura Strike consumes its spheres and jumps backward away from its target with a visible hop');
+// Endless Echo: the hero cannot walk in the trial, so a retreat would strand it out of melee
+// range for the rest of the run (measured before this guard: 0 damage in the next 20 seconds).
+// A separate game keeps the trial's clock, cooldowns and arena from leaking into later checks.
+const g2=createGame();
+const echo=JSON.parse(g2.ev(`JSON.stringify((()=>{Math.random=()=>.5;const cls='Sura';S=fresh();S.cls=cls;S.lv=150;for(const n of lineOf(cls))S.jobs[n]={jl:CLASSES[n].mj,jx:0};for(const s of SKILLS.filter(s=>s.cls.includes(cls)))S.sk[s.id]=s.max;
+  S.eq.weapon={id:1,slot:'weapon',wt:C().wt[0],val:300,r:0,sec:0,tier:2,name:'x',aff:[],cards:[],slots:0};S.hp=maxHp();const __sk=id=>SKILLS.find(s=>s.id===id);trialEnter('training');const d0=Math.hypot(pl.x-TRIAL.dummy.x,pl.z-TRIAL.dummy.z);
+  for(let i=0;i<5;i++)castSkill(__sk('mo_triple'),1);castSkill(__sk('ch_asura'),1);const leapt=!!asuraLeap;
+  for(let i=0;i<60;i++)update(1/60);const before=S.dmg||0;for(let i=0;i<60*10;i++)update(1/60);
+  const out={d0,leapt,d1:Math.hypot(pl.x-TRIAL.dummy.x,pl.z-TRIAL.dummy.z),dmg:(S.dmg||0)-before,on:TRIAL.on};return out})())`));g2.close();
+assert.equal(echo.on,true,'the training run is still active');assert.equal(echo.leapt,false,'Asura Strike must not start a retreat in Endless Echo');
+assert.ok(Math.abs(echo.d1-echo.d0)<.01,'the hero stays at the fixed Echo spot: '+echo.d0.toFixed(2)+' -> '+echo.d1.toFixed(2));
+assert.ok(echo.dmg>0,'the hero keeps dealing damage after Asura Strike in Endless Echo');
+ok('Asura Strike never leaps in Endless Echo, so Monk-line trial runs keep hitting the dummy');
 
 const fill=J(`__setup('Sura');tickCombatSkills(.016);const r=skillState();return {n:r.stacks.sphere?r.stacks.sphere.n:0,ready:skillStackReady(__sk('ch_asura'))}`);
 assert.equal(fill.n,5,'Call Spirits / Rising Dragon fill the spheres');assert.equal(fill.ready,true);

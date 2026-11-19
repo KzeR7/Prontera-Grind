@@ -88,7 +88,7 @@ try{
   assert.ok(ev('S.inv.length>0&&S.inv.every(it=>it.mythicGiftVersion===1&&it.val>=mythicGiftBaseValue(it.slot,.9)&&it.val<=mythicGiftBaseValue(it.slot,1.12))'));
   const catalog=JSON.parse(fs.readFileSync(__dirname+'/../../functions/_lib/gm-catalog.js','utf8').split('export const GM_CATALOG = ')[1].trim().slice(0,-1));
   const gifts=catalog.entries.filter(x=>x.id.startsWith('mythic:'));
-  assert.equal(gifts.length,114); // 6 sets x (14 weapon families + 5 armour slots), haven-v409
+  assert.equal(gifts.length,228); // 12 sets (six original + six haven-v432 RO looks) x (14 weapon families + 5 armour slots)
   for(const {item}of gifts){assert.equal(item.val,ev(`mythicGiftBaseValue(${JSON.stringify(item.slot)},1.01)`));assert.equal(item.mythicGiftVersion,1);}
  });
  console.log(passed+' Mythic gift base checks passed');
