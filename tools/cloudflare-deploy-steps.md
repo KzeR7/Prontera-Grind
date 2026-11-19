@@ -8,7 +8,7 @@ manually on 2026-10-28; do not rerun it or blindly run Wrangler migrations. Use
 > **PR #254 (v426) was merged on 2026-11-18; it has not been deployed from this guide.** Deploying is
 > the owner's call. The v426 section below is the operator checklist: it records the required
 > migration order and verification so the schema is complete *before* the new Functions/client
-> behaviour is activated. Later builds (through haven-v434) added no D1 migrations.
+> behaviour is activated. Later builds (through haven-v435) added no D1 migrations.
 
 ## v426 release: immutable offline-claim state and issued bounds
 
@@ -54,8 +54,8 @@ no-double-pay coverage without using response delay or its own wall clock to reb
 The only added schema check occurs when a qualifying interval would issue a new claim; normal syncs add
 neither an unconditional D1 read nor Social Durable Object traffic.
 
-The player-visible build label is **`2026-11-19 haven-v434 Zero-ATK gear repair and Endless Echo Asura fix`**.
-Every coordinated asset query in `index.html` carries the same number (`?v=434` for this label):
+The player-visible build label is **`2026-11-19 haven-v435 Ascension N+ matches top Nightmare N+ and Forge previews the selected slot`**.
+Every coordinated asset query in `index.html` carries the same number (`?v=435` for this label):
 v423 changed the Social/Fishing runtime as well as the inline client, so retaining an old query
 would permit a stale cached runtime. Confirm `version.txt`, `index.html`, and the two
 equipment-reference mirrors carry the build label above after the site build.
@@ -190,7 +190,7 @@ Open the `*.pages.dev` address Cloudflare gives the project, and walk this list:
 | Check | Expected |
 |---|---|
 | The login card | says **“☁ Cloud accounts are on — register or sign in…”** |
-| Build tag at the bottom of the card | `2026-11-19 haven-v434 Zero-ATK gear repair and Endless Echo Asura fix` |
+| Build tag at the bottom of the card | `2026-11-19 haven-v435 Ascension N+ matches top Nightmare N+ and Forge previews the selected slot` |
 | `<your-site>/api/me` while signed out | `{"err":"Not logged in."}` with HTTP 401 — JSON, not an HTML page |
 
 That second-browser line is the entire point of the shift: it is progress following the player

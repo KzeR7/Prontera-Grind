@@ -921,14 +921,14 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="preload" href="assets/ui/fonts/font-5.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-6.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-7.ttf" as="font" type="font/ttf" crossorigin>
-<link rel="stylesheet" href="assets/ui/eclipse.css?v=434">
-<link rel="stylesheet" href="assets/ui/mobile.css?v=434">
+<link rel="stylesheet" href="assets/ui/eclipse.css?v=435">
+<link rel="stylesheet" href="assets/ui/mobile.css?v=435">
 <script src="assets/ui/mobile.js?v=274"></script>
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
-<link rel="stylesheet" href="assets/social.css?v=434">
+<link rel="stylesheet" href="assets/social.css?v=435">
 <link rel="stylesheet" href="assets/social-battle.css?v=393">
-  <link rel="stylesheet" href="assets/social-fishing.css?v=434"><link rel="stylesheet" href="assets/friends.css?v=273">
-<link rel="stylesheet" href="assets/adventure-guide.css?v=434">
+  <link rel="stylesheet" href="assets/social-fishing.css?v=435"><link rel="stylesheet" href="assets/friends.css?v=273">
+<link rel="stylesheet" href="assets/adventure-guide.css?v=435">
 </head>
 <body>
 <div id="loginOverlay"><div class="eclipse-login-world" aria-hidden="true"></div><header class="eclipse-login-header"><a href="./" class="eclipse-brand"><span>HH</span><b>HORIZON HAVEN<small>YOUR IDLE ADVENTURE</small></b></a><div class="eclipse-palettes" role="group" aria-label="Interface palette"><button type="button" data-palette="moonstone">Moonstone</button><button type="button" data-palette="aurora">Aurora</button><button type="button" data-palette="ember">Ember</button></div></header><main class="eclipse-login-layout"><section class="login-brand"><div class="login-eyebrow">A WORLD WORTH RETURNING TO</div><h1>Your next <br>chapter <em>awaits.</em></h1><p>Explore a world beyond the horizon.<br>Collect rare gear, master every class, and build your haven.</p><div class="eclipse-login-art"><img src="assets/ui/eclipse-knight.png" alt="Lord Knight ready for adventure"><span>01 / PRONTERA<small>THE JOURNEY BEGINS HERE</small></span><div><img src="assets/equipment-icons/1142.png" alt=""><span>YOUR NEXT UPGRADE<small>Somewhere out there.</small></span></div></div><div class="login-footnote">EXPLORE · GROW · CONQUER</div></section><div class="login-card"><div class="eclipse-access">ADVENTURER ACCESS <span>◇</span></div><h2 id="authHeading">Welcome back.</h2><p class="login-intro" id="authIntro">Your adventure is right where you left it.</p><div class="atabs" id="authTabs"><button type="button" id="tabLogin" class="on">Login</button><button type="button" id="tabReg">Register</button></div>
@@ -1058,10 +1058,10 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <div id="tooltip"></div>
 <link rel="stylesheet" href="assets/wardrobe.css?v=138">
 <link rel="stylesheet" href="assets/shop.css?v=318">
-<script src="assets/wardrobe.js?v=434"></script>
+<script src="assets/wardrobe.js?v=435"></script>
 <script src="assets/shop-catalog.js?v=321"></script>
 <script src="assets/fourth-jobs.js?v=179"></script>
-<script src="assets/expanded-jobs.js?v=434"></script>
+<script src="assets/expanded-jobs.js?v=435"></script>
 <script src="assets/ascension.js?v=156"></script>
 <script src="assets/native-mob-heights.js?v=153"></script>
 <script src="assets/native-fields.js?v=197"></script>
@@ -1098,7 +1098,7 @@ const holdLogin=e=>e.preventDefault();document.getElementById('loginForm').addEv
 <script src="assets/endgame/three-r128.min.js" integrity="sha384-CI3ELBVUz9XQO+97x6nwMDPosPR5XvsxW2ua7N1Xeygeh1IxtgqtCkGfQY9WWdHu" crossorigin="anonymous"></script>
 <script>clearTimeout(engineWait);document.getElementById('engineError').hidden=true;document.getElementById('loginForm').removeEventListener('submit',holdLogin);</script>
    <!-- v360: vendored r128 examples/js loader so the Social Hub can mount the owner's Prontera Grand Aetherwell GLB (assets/Fountainfile/). -->
-   <script src="assets/vendor/GLTFLoader.r128.js?v=434"></script>
+   <script src="assets/vendor/GLTFLoader.r128.js?v=435"></script>
 <script>
 const $=id=>document.getElementById(id);
 // Owner request (2026-10-24): no browser menu anywhere in the game - a right-click used to offer
@@ -1345,7 +1345,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-19 haven-v434 Zero-ATK gear repair and Endless Echo Asura fix';
+const BUILD='2026-11-19 haven-v435 Ascension N+ matches top Nightmare N+ and Forge previews the selected slot';
 // v364: this write used to sit AFTER the `//` on the BUILD line, so it was part of the comment and
 // never ran - the login card showed an empty #buildTag and there was no way to confirm which file
 // the browser had loaded. It also has to survive the script running before the login card exists.
@@ -2161,9 +2161,14 @@ const fourthJob=()=>CLASSES[S?.cls]?.tier===4;
 // then the bag in its own order.
 function ascensionCandidates(){const worn=new Set(items());return [...new Map([...items(),...S.inv].filter(it=>it?.sec===5&&canUse(it)&&!(S.reforgePending&&String(S.reforgePending.id)===String(it.id))).map(it=>[String(it.id),it])).values()].sort((a,b)=>worn.has(b)-worn.has(a))}
 function ascensionForgePanel(){
-  const set=ASC_SETS[ascensionSetPick]||ASC_SETS.celestial,key=Object.keys(ASC_SETS).find(k=>ASC_SETS[k]===set),unlocked=fourthJob(),candidates=ascensionCandidates(),previewWeapon=candidates.find(x=>String(x.id)===ascensionItemPick)?.wt||'sword';
+  const set=ASC_SETS[ascensionSetPick]||ASC_SETS.celestial,key=Object.keys(ASC_SETS).find(k=>ASC_SETS[k]===set),unlocked=fourthJob(),candidates=ascensionCandidates();
   // v254: a legacy item without a saved .slot still finds its recipe through gearSlot().
   const it=candidates.find(it=>String(it.id)===ascensionItemPick),slot=it?gearSlot(it):null,cost=it?set.cost[slot]:null,mat=ASCENSION_MATERIALS[set.mat],active=ascensionSetBonuses()[key];
+  // haven-v435 (owner: "the forge keeps showing a weapon icon at the top even if I switch to armor"):
+  // the six set buttons preview the piece you would actually get - the selected item's own slot (and
+  // weapon family), else the first item the list offers, else the class's own weapon.
+  const previewSrc=it||candidates[0]||null,previewSlot=previewSrc?gearSlot(previewSrc):'weapon',
+    previewWeapon=previewSlot==='weapon'?(previewSrc?.wt||(CLASSES[S.cls]?.wt||[])[0]||'sword'):undefined;
   const affordable=cost&&(S.ascensionMat?.[set.mat]||0)>=cost[0]&&(S.ascensionMat?.[2]||0)>=cost[1]&&S.zeny>=cost[2];
   const costs=cost?[[mat,cost[0],S.ascensionMat?.[set.mat]||0],["Valkyrie's Sigil",cost[1],S.ascensionMat?.[2]||0],['Zeny',cost[2],S.zeny]]:[];
   // v254 (owner: "the proceed button is not selectable"): the disabled action now says why it is
@@ -2171,7 +2176,7 @@ function ascensionForgePanel(){
   const short=cost?costs.filter(([,need,have])=>have<need).map(([name,need,have])=>name+' +'+(need-have).toLocaleString()):[];
   const forgeLabel=!it?'Select equipment above':!unlocked?'Ascend · fourth job only':affordable?'Ascend selected equipment':short.length?'Ascend · missing '+short.join(' · '):'Ascend selected equipment';
   return `<section class="ascension-forge"><header><span class="ui-eyebrow">EQUIPMENT EVOLUTION</span><h2>Ascension Forge</h2><p>${unlocked?'Evolve one N+ item into its Mythic set piece.':'Unlocks when you become a fourth-job class.'}</p></header>
-  <div class="ascension-set-picker" aria-label="Mythic sets">${Object.entries(ASC_SETS).map(([id,v])=>`<button data-a="ascset" data-v="${id}" aria-pressed="${id===key}"><span class="ascension-set-preview">${itemIconMarkup({slot:'weapon',wt:previewWeapon,sec:6,ascSet:id})}</span><b>${v.name}</b><small>${v.mat===0?'Astral':'Primal'}</small></button>`).join('')}</div>
+  <div class="ascension-set-picker" aria-label="Mythic sets">${Object.entries(ASC_SETS).map(([id,v])=>`<button data-a="ascset" data-v="${id}" aria-pressed="${id===key}"><span class="ascension-set-preview">${itemIconMarkup({slot:previewSlot,wt:previewWeapon,sec:6,ascSet:id})}</span><b>${v.name}</b><small>${v.mat===0?'Astral':'Primal'}</small></button>`).join('')}</div>
   <div class="ascension-forge-body"><section class="ascension-set-info"><h3>${set.name} set</h3><p>Listed offense is the +15 maximum. ATK, MATK, Crit, Crit DMG and Field DMG start at 40% of that bonus through +10; +11–15 progressively unlock the rest. Defensive and speed set bonuses are unchanged.</p><p>${active?active.count+' pieces equipped':'No set bonus active'}</p><ul>${set.bonuses.map(b=>`<li class="${active&&active.count>=b.count?'active':''}"><b>${b.count} pieces</b><span>${b.desc}</span></li>`).join('')}</ul>${active?'<p>Active set stats: '+Object.entries(active.tier.stats).map(([k,v])=>esc(k)+' +'+Number(v.toFixed(2))+'%').join(' · ')+'</p>':''}</section>
   <section class="ascension-evolution"><label>Choose N+ equipment<select data-ascension-item ${unlocked?'':'disabled'}><option value="">Select an owned item…</option>${candidates.map(x=>`<option value="${x.id}" ${it===x?'selected':''}>${esc(iname(x))}${items().includes(x)?' · Equipped':' · Bag'}</option>`).join('')}</select></label>
   ${it?`<div class="ascension-item-change"><div>${itemIconMarkup(it)}<strong>${esc(iname(it))}</strong><small>Current N+ item</small></div><span aria-hidden="true">→</span><div>${itemIconMarkup({...it,sec:6,ascSet:key})}<strong>Mythic ${esc(slot==='weapon'?set.pieces.weapon[it.wt]:set.pieces[slot])}</strong><small>${set.name} set · Fourth jobs only</small></div></div><div class="ascension-current-affixes"><b>Current affixes</b>${(it.aff||[]).map(a=>`<p>${affTxt(a)}</p>`).join('')||'<p>No affixes</p>'}</div><p>Keeps refinement, cards, existing affixes and item identity. Fills up to four affixes.</p><dl class="ascension-costs">${costs.map(([name,need,have])=>`<div class="${have>=need?'ascension-enough':'ascension-missing'}"><dt>${name}</dt><dd>${have.toLocaleString()} / ${need.toLocaleString()} <small>owned / required · ${have>=need?'Enough':'Missing '+(need-have).toLocaleString()}</small></dd></div>`).join('')}</dl><p class="ascension-forge-status ${affordable?'ascension-enough':'ascension-missing'}" role="status">${!unlocked?'Requires a fourth-job class.':affordable?'All materials and Zeny available. Ready to forge.':'Unable to forge: not enough materials or Zeny. Collect the missing amounts shown in red.'}</p><button class="full" data-a="transformasc" data-v="${key}:${it.id}" ${unlocked&&affordable?'':'disabled'} title="${esc(forgeLabel)}">${esc(forgeLabel)}</button>`:`<p class="ascension-empty">${candidates.length?'Choose equipment to preview the result and exact material cost.':'No eligible N+ equipment. Unascended N+ equipment is listed regardless of current weapon compatibility; finish any pending reforge first.'}</p>`}
@@ -2208,6 +2213,25 @@ function ascensionSetBonuses(){
 }
 // GM gifts stand in for evolving a top-field N+ drop. Evolution itself preserves its source base.
 // Match genGear's N+ formula, including the field-power factor; Mythic quality is not a base multiplier.
+// haven-v435: the level every N/N+ piece from an Ascension map rolls at - the top Nightmare N+ level.
+function ascNplusLvl(){return fieldPower(9,15)}
+// The seven families whose N+ only ever dropped on the Ascension maps (on Nightmare maps kinDrop turns
+// them into their N piece), so a forged Mythic of one of them certainly came from an Ascension N+.
+const ASC_ONLY_NPLUS_FAMILIES=['spear','book','knuckle','instrument','whip','shuriken','gun'];
+// haven-v435: lift N/N+ gear that dropped on an Ascension map before the level fix. The saved roll is
+// kept exactly; only the level term (1+lvl*.15) moves to the top N+ level. Idempotent (lvl becomes it).
+// A Mythic forged from such a drop no longer remembers its source level (the Forge stamps Lv 150), so
+// only the certain case is lifted - an Ascension-only family - from that stamped Lv 150, capped at the
+// top of the top-N+ band. GM gifts (already in that band) and every other item are left alone.
+function repairAscensionNplusLevel(it){
+  if(!it||typeof it!=='object'||it.card||it.ore||!GEAR_BASE_BY_SLOT[it.slot]||!(Number.isFinite(+it.val)&&+it.val>0))return;
+  const top=ascNplusLvl(),f=l=>1+l*.15;
+  if(!it.mythic&&(it.sec===4||it.sec===5)&&(+it.mp|0)>=10&&Number.isFinite(+it.lvl)&&+it.lvl>0&&+it.lvl<top){
+    it.val=Math.max(1,Math.round(it.val*f(top)/f(+it.lvl)));it.lvl=top;return}
+  if(it.mythic===true&&it.sec===6&&it.slot==='weapon'&&ASC_ONLY_NPLUS_FAMILIES.includes(it.wt)&&!it.mythicGiftVersion&&!it.ascLvlFix){
+    it.ascLvlFix=1;const cap=mythicGiftBaseValue('weapon',1.12);
+    if(it.val<cap)it.val=Math.min(cap,Math.max(it.val,Math.round(it.val*f(top)/f(150))))}
+}
 function mythicGiftBaseValue(slot,roll){
   return Math.max(1,Math.round({weapon:2,armor:4,head:10,off:3,leg:3,acc:5}[slot]*15*(1+fieldPower(9,15)*.15)*RAR[4].m*MAPVAL[9]*roll));
 }
@@ -2253,6 +2277,7 @@ function repairLegacyAscensionDrop(it){
   if(!it||typeof it!=='object')return;
   if(it.sec===6&&it.mythic!==true&&typeof it.name==='string'&&it.name.startsWith('N+ ')&&GEAR_BASE_BY_SLOT[it.slot])it.sec=5;
   repairBrokenGearBase(it);
+  repairAscensionNplusLevel(it);
 }
 // Build a GM Ascension item with the same base range as an evolved top-field N+ piece.
 function makeMythicEquipment(setKey,slot,weaponType){
@@ -5803,7 +5828,7 @@ function gmApplyGift(p){
     if(amount>100)throw Error('Too many items');
     if(!p.item.card&&S.inv.length+amount>BAGMAX)throw Error('Bag full; gift will wait for space');
     const dest=p.item.card?S.cards:S.inv;
-    for(let i=0;i<amount;i++){const item={...JSON.parse(JSON.stringify(p.item)),id:uid()};if(!p.item.card)repairMythicGiftBase(item);dest.push(item);}
+    for(let i=0;i<amount;i++){const item={...JSON.parse(JSON.stringify(p.item)),id:uid()};if(!p.item.card){repairMythicGiftBase(item);repairLegacyAscensionDrop(item)}dest.push(item);}
   }else throw Error('Unknown gift');
 }
 function gmApplyGear(p){
@@ -6729,6 +6754,11 @@ function genGear(T,l,sec,boss,tier,sourceMap=S?.mp??0,sourceStage=S?.lvl??1){
   // 4/5 are N. Nightmare items are not forced into the Legendary numeric band.
   // v90.8 (owner: flatten N+ power): Nightmare gear (sections 4-5) has one power on every map - tier 4
   // and the top map value - so the lower maps' N and N+ pieces are as strong as Abyss's.
+  // haven-v435 (owner: "ascension map N+ should drop same stats as the old N+, the only difference is the
+  // drop area"): an N or N+ piece from an Ascension map (10-11) rolls at the top Nightmare N+ level
+  // (Abyss NM 15, the same reference the GM Mythic uses), not at the Ascension mob's Lv 140-159, which
+  // made those weapons - and every Mythic forged from them - about 12% weaker than a late-Nightmare N+.
+  if(sec>=4&&(sourceMap|0)>=10)l=Math.max(+l||0,ascNplusLvl());
   const t=sec>=4?4:(Number.isFinite(tier)?tier:dropTier(sourceMap,sourceStage)),quality=Number.isFinite(+T.quality)?Math.max(1,+T.quality):1;
   // v38 balance: the weapon's flat value is divided by 3 (6 -> 2). Weapons are the single
   // biggest power source a character owns, and dividing the base divides it at every level.
@@ -16374,21 +16404,21 @@ setInterval(updateWatch,60000);
 // be hours old while the player was on another tab, and the check is a 60-byte text file.
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&(pendingUpdateBuild||Date.now()-PAGE_STARTED_AT>30000))updateWatch()});
 </script>
-<script src="assets/wardrobe-ui.js?v=434"></script>
+<script src="assets/wardrobe-ui.js?v=435"></script>
 <script src="assets/shop.js?v=321"></script>
 <script src="assets/friends.js?v=273"></script>
-<script src="assets/digimon/roster.js?v=434"></script>
-<script src="assets/digimon/base-stats.js?v=434"></script>
-<script src="assets/social-rules.js?v=434"></script>
-<script src="assets/social-poker.js?v=434"></script>
-<script src="assets/digimon-sanctuary.js?v=434"></script>
+<script src="assets/digimon/roster.js?v=435"></script>
+<script src="assets/digimon/base-stats.js?v=435"></script>
+<script src="assets/social-rules.js?v=435"></script>
+<script src="assets/social-poker.js?v=435"></script>
+<script src="assets/digimon-sanctuary.js?v=435"></script>
 <script src="assets/digimon-battle.js?v=393"></script>
-<script src="assets/social-digimon.js?v=434"></script>
+<script src="assets/social-digimon.js?v=435"></script>
 <script src="assets/social-gym-redesign.js?v=393"></script>
 <script src="assets/social-pond-design.js?v=393"></script>
-<script src="assets/social-scene.js?v=434"></script>
-<script src="assets/social-fishing.js?v=434"></script>
-<script src="assets/plaza-bots.js?v=434"></script>
-<script src="assets/adventure-guide.js?v=434"></script>
-<script src="assets/social.js?v=434"></script></body>
+<script src="assets/social-scene.js?v=435"></script>
+<script src="assets/social-fishing.js?v=435"></script>
+<script src="assets/plaza-bots.js?v=435"></script>
+<script src="assets/adventure-guide.js?v=435"></script>
+<script src="assets/social.js?v=435"></script></body>
 </html>

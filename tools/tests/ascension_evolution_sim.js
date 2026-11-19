@@ -52,5 +52,49 @@ try{
    assert.ok(kept.a>0&&kept.b>0,'zero and null (saved NaN) values are restored');assert.equal(kept.stub,false,'an object with no base field is left alone');assert.equal(kept.c,4321,'valid base untouched');assert.equal(kept.d,0,'cards are not equipment');
    assert.ok(kept.m>=kept.band[0]&&kept.m<=kept.band[1],'a broken Mythic gets the Mythic base band');
  });
+ test('set picker previews the slot you are forging: armour shows armour, a mask shows masks',()=>{
+   // haven-v435 (owner): the six set buttons used to show a weapon whatever item was selected.
+   const r=JSON.parse(ev(`JSON.stringify((()=>{S.cls=Object.keys(CLASSES).find(c=>{S.cls=c;return fourthJob()&&C().wt.includes('shuriken')});S.eq={};
+     const head={id:301,slot:'head',sec:5,val:900,tier:4,lvl:150,aff:[],cards:[],name:'N+ Mask'},arm={id:302,slot:'armor',sec:5,val:500,tier:4,lvl:150,aff:[],cards:[],name:'N+ Coat'},wep={id:303,slot:'weapon',wt:'shuriken',sec:5,val:100,tier:4,lvl:150,aff:[],cards:[],name:'N+ Star'};
+     S.eq.head=head;S.inv=[arm,wep];
+     const pics=()=>[...ascensionForgePanel().matchAll(/ascension-set-preview">([\\s\\S]*?)<\\/span>/g)].map(m=>(m[1].match(/equipment-icons\\/(\\d+)/)||[])[1]);
+     const want=x=>Object.keys(ASC_SETS).map(k=>String(gearItemIconId({slot:gearSlot(x),wt:x.wt,sec:6,ascSet:k})));
+     const out={};for(const [k,x] of [['head',head],['armor',arm],['weapon',wep]]){ascensionItemPick=String(x.id);out[k]={got:pics(),want:want(x)}}
+     ascensionItemPick='';out.none={got:pics(),want:want(head)};
+     S.eq={};S.inv=[];out.empty={got:pics(),want:want(wep)};return out})())`));
+   for(const [k,v] of Object.entries(r)){assert.equal(v.got.length,6,k+': six set buttons');assert.deepEqual(v.got,v.want,k+': previews match the slot being forged')}
+   assert.notDeepEqual(r.armor.got,r.weapon.got,'armour and weapon previews differ');
+ });
+ test('Ascension N+ drops roll the same stats as the top Nightmare N+; only the drop area differs',()=>{
+   // haven-v435 (owner): same formula, same level - every weapon family, both maps, every stage, live and offline.
+   const r=JSON.parse(ev(`JSON.stringify((()=>{const rng=Math.random,out={};const roll=(fn)=>{Math.random=()=>0;const lo=fn().val;Math.random=()=>.999999;const hi=fn().val;Math.random=rng;return [lo,hi]};
+     out.nm=roll(()=>genGear({k:'katar',n:'x'},fieldPower(9,15),5,false,4,9,15));
+     out.asc=[];for(const m of [10,11])for(let st=1;st<=5;st++)for(const k of ASC_FAMILIES){S.mp=m;S.lvl=st;
+       out.asc.push({m,st,k,live:roll(()=>genGear({k,n:'x'},fieldPower(m,st),5,false,4)),off:roll(()=>genGear({k,n:'x'},fieldPower(m,st),5,false,4,m)),lvl:genGear({k,n:'x'},fieldPower(m,st),5,false,4,m).lvl})}
+     S.mp=0;S.lvl=14;out.nm0=genGear({k:'katar',n:'x'},fieldPower(0,14),5,false,4,0,14).lvl;out.top=fieldPower(9,15);return out})())`));
+   for(const a of r.asc){assert.deepEqual(a.live,r.nm,`${a.m}:${a.st} ${a.k} live roll`);assert.deepEqual(a.off,r.nm,`${a.m}:${a.st} ${a.k} away roll`);assert.equal(a.lvl,r.top)}
+   assert.equal(r.nm0,ev('fieldPower(0,14)'),'Nightmare drops keep their own level');
+ });
+ test('save load lifts earlier Ascension N/N+ and Ascension-only-family Mythics once; others untouched',()=>{
+   const r=JSON.parse(ev(`JSON.stringify((()=>{const top=fieldPower(9,15),f=l=>1+l*.15;
+     const ascN={id:31,slot:'weapon',wt:'gun',sec:5,tier:4,lvl:152,mp:11,val:3700,name:'N+ Zenith Revolver',aff:[],cards:[]};
+     const ascArmor={id:32,slot:'armor',sec:4,tier:4,lvl:140,mp:10,val:6000,name:'N Astral Coat',aff:[],cards:[]};
+     const star={id:33,slot:'weapon',wt:'shuriken',sec:6,mythic:true,ascSet:'infernal',tier:4,lvl:150,quality:1.5,mp:11,val:3897,name:'Mythic Infernal Star',aff:[],cards:[]};
+     const high={id:34,slot:'weapon',wt:'gun',sec:6,mythic:true,ascSet:'primal',tier:4,lvl:150,quality:1.5,mp:11,val:4800,name:'Mythic Primal Revolver',aff:[],cards:[]};
+     const katar={id:35,slot:'weapon',wt:'katar',sec:6,mythic:true,ascSet:'infernal',tier:4,lvl:150,quality:1.5,mp:11,val:4590,name:'Mythic Infernal Fang',aff:[],cards:[]};
+     const nm={id:36,slot:'weapon',wt:'sword',sec:5,tier:4,lvl:139,mp:0,val:3400,name:'N+ Dread Sword',aff:[],cards:[]};
+     const gift=makeMythicEquipment('infernal','weapon','gun').item,gv=gift.val;
+     const all=[ascN,ascArmor,star,high,katar,nm,gift];
+     S.eq.weapon=star;S.inv=all.filter(x=>x!==star);localStorage.setItem(saveKey(),JSON.stringify(S));S=load();const once=JSON.stringify([S.eq,S.inv]);localStorage.setItem(saveKey(),JSON.stringify(S));S=load();
+     const by=id=>[...Object.values(S.eq),...S.inv].find(x=>x&&x.id===id);
+     return {ascN:by(31),ascArmor:by(32),star:by(33),high:by(34),katar:by(35),nm:by(36),gift:by(gift.id).val===gv,stable:once===JSON.stringify([S.eq,S.inv]),
+       expN:Math.round(3700*f(top)/f(152)),expA:Math.round(6000*f(top)/f(140)),expStar:Math.round(3897*f(top)/f(150)),cap:mythicGiftBaseValue('weapon',1.12),top}})())`));
+   assert.equal(r.ascN.val,r.expN);assert.equal(r.ascN.lvl,r.top);assert.equal(r.ascN.id,31,'same item');
+   assert.equal(r.ascArmor.val,r.expA,'an earlier Ascension N armour is lifted too');
+   assert.equal(r.star.val,r.expStar,'an Ascension-only family Mythic is lifted from its stamped Lv 150');
+   assert.ok(r.high.val<=r.cap&&r.high.val>=4800,'never above the top-N+ band, never lowered');
+   assert.equal(r.katar.val,4590,'a Mythic whose source cannot be known is left alone');
+   assert.equal(r.nm.val,3400,'Nightmare gear is untouched');assert.ok(r.gift,'GM gifts are untouched');assert.ok(r.stable,'a second load changes nothing');
+ });
  console.log(passed+' evolution checks passed');
 }finally{g.close()}
