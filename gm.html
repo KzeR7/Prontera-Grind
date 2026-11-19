@@ -30,8 +30,17 @@ button.primary{background:var(--gold);color:#221a12;font-weight:700}
 button.danger{border-color:var(--bad);color:#ffb3b5}
 input,select,textarea{max-width:100%;background:#160f0a;color:var(--ink);border:1px solid var(--edge2);border-radius:4px;padding:5px 7px;font:12px inherit}
 textarea{width:100%;min-height:60px;resize:vertical}
-main{display:grid;grid-template-columns:minmax(260px,340px) 1fr;gap:12px;padding:12px;align-items:start}
-@media(max-width:820px){main{grid-template-columns:1fr}}
+main{display:grid;grid-template-columns:200px 1fr;gap:14px;padding:14px;align-items:start;max-width:1440px;margin:0 auto}
+@media(max-width:820px){main{grid-template-columns:1fr;padding:8px;gap:8px}}
+.gm-nav{display:flex;flex-direction:column;gap:4px;position:sticky;top:12px}
+.gm-nav button{text-align:left;padding:9px 12px;border-radius:6px;font-size:13px;font-weight:600;background:transparent;border:1px solid transparent;color:var(--dim)}
+.gm-nav button:hover{background:#2a2014;color:var(--ink)}
+.gm-nav button.on{background:var(--gold);color:#221a12;border-color:var(--gold)}
+@media(max-width:820px){.gm-nav{flex-direction:row;flex-wrap:wrap;position:static;gap:6px}.gm-nav button{flex:1 1 auto;text-align:center;min-height:40px}}
+.gm-content{display:flex;flex-direction:column;gap:12px;min-width:0}
+.summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}
+.danger-zone{border:1px solid var(--bad);background:#261414;border-radius:6px;padding:10px;margin-top:12px}
+.danger-zone h3{margin:0 0 6px;font-size:12px;color:#ff9d9f;text-transform:uppercase;letter-spacing:.04em}
 .card{background:var(--card);border:1px solid var(--edge);border-radius:8px;padding:10px}
 .card h2{font-size:13px;margin:0 0 8px;color:var(--gold);text-transform:uppercase;letter-spacing:.04em}
 table{width:100%;border-collapse:collapse;font-size:12px}
@@ -145,19 +154,26 @@ tr:hover{background:#2a2014;cursor:pointer}
 </header>
 
 <main>
-  <div class="col">
-  <section class="card">
-    <h2>Cloudflare usage today <span id="usagewhen" class="small"></span></h2>
+  <nav class="gm-nav" aria-label="GM sections">
+    <button type="button" class="on" data-nav="overview" onclick="showNav('overview')">📊 Overview</button>
+    <button type="button" data-nav="players" onclick="showNav('players')">👥 Players</button>
+    <button type="button" data-nav="reviews" onclick="showNav('reviews')">🚩 Reviews</button>
+    <button type="button" data-nav="operations" onclick="showNav('operations')">⚙️ Operations</button>
+    <button type="button" data-nav="activity" onclick="showNav('activity')">📜 Activity</button>
+  </nav>
+  <div class="gm-content">
+  <section class="card gm-pane" data-pane="overview">
+    <h2>Cloudflare usage &amp; diagnostics <span id="usagewhen" class="small"></span></h2>
     <div id="usagebody" class="small">Loading…</div>
   </section>
 
-  <section class="card">
+  <section class="card gm-pane hide" data-pane="reviews">
     <h2>Damage review</h2>
     <p class="small">Client-reported values may be wrong or edited. Flags cover invalid cumulative damage or reported Echo best DPS over a provisional 100M threshold; no flag does not mean a player is clean. Flags take no action.</p>
     <div id="damagealerts" class="small">Loading…</div>
   </section>
 
-  <section id="fishingops" class="card">
+  <section id="fishingops" class="card gm-pane hide" data-pane="operations">
     <h2>Fishing operations</h2>
     <p class="small">Spawn a Fishing MVP in a plaza room for 10 minutes. Choose a species or let the Social room pick randomly. Requests and outcomes appear in the GM audit log.</p>
     <div class="row" style="align-items:flex-end;flex-wrap:wrap">
@@ -168,7 +184,7 @@ tr:hover{background:#2a2014;cursor:pointer}
     <div id="mvpresult" class="small" role="status" aria-live="polite">Loading Fishing controls…</div>
   </section>
 
-  <section class="card">
+  <section class="card gm-pane hide" data-pane="players">
     <h2>Players <span id="count" class="small"></span></h2>
     <div class="row"><input id="search" placeholder="filter by name" style="flex:1"></div>
     <div class="players-scroll"><table id="players"><thead>
@@ -177,7 +193,7 @@ tr:hover{background:#2a2014;cursor:pointer}
     <p class="small">Click a player to open them. “never” means they have not synced a save yet. 🚫 marks a player whose current network is suspended. ⚠ marks an account carrying a suspicious-save flag.</p>
   </section>
 
-  <section class="card" id="ipbanscard">
+  <section class="card gm-pane hide" id="ipbanscard" data-pane="operations">
     <h2>Network bans <span id="ipban-count" class="small"></span></h2>
     <p class="small">A suspended network cannot sign in, register a new account or recover a password — the usual way a player who was banned twice comes back on a third name. Only fingerprints are stored, never raw IPs. The owner can always still sign in from anywhere to remove a ban here.</p>
     <div id="ipbanlist" class="small">Loading…</div>
@@ -187,14 +203,14 @@ tr:hover{background:#2a2014;cursor:pointer}
     </div>
   </section>
 
-  <section class="card" id="saveauditcard">
+  <section class="card gm-pane hide" id="saveauditcard" data-pane="reviews">
     <h2>Suspicious saves <span id="audit-count" class="small"></span></h2>
     <p class="small">The server audits every accepted save on its own — no one has to be watching the game. It breaks a flag into two kinds: <b>impossible</b> (a stat above the level cap, more stat points than any level can earn, an over-cap refine) and <b>too fast</b> (kills, levels, Zeny or materials gained since the previous sync faster than the game itself can pay out, with GM gifts and offline claims credited back). Flags are REVIEW-ONLY: nothing here rejects a save or bans an account, and a first-time flag also mails the owner in-game. Clearing is the verdict: it removes the ⚠ marker but keeps the evidence, and reopens by itself if the rule fires again. Cross-check Gifts and History before acting.</p>
     <div id="auditlist" class="small">Loading…</div>
   </section>
   </div>
 
-  <section id="detail" class="card hide"></section>
+  <section id="detail" class="card hide gm-pane" data-pane="players"></section>
 </main>
 
 <div id="toast"></div>
@@ -1001,6 +1017,17 @@ function renderSignInCard() {
   document.getElementById('gmSignUser').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('gmSignPass').focus(); });
   document.getElementById('gmSignPass').addEventListener('keydown', e => { if (e.key === 'Enter') consoleSignIn(); });
   document.getElementById('gmSignUser').focus();
+}
+function showNav(tab) {
+  document.querySelectorAll('.gm-nav button').forEach(b => b.classList.toggle('on', b.dataset.nav === tab));
+  document.querySelectorAll('.gm-pane').forEach(p => {
+    const match = p.dataset.pane === tab;
+    if (p.id === 'detail') {
+      p.classList.toggle('hide', !match || !window.SELECTED_PLAYER);
+    } else {
+      p.classList.toggle('hide', !match);
+    }
+  });
 }
 </script>
 </body>
