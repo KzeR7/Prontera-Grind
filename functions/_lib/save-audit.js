@@ -28,6 +28,8 @@
 import * as db from './db.js';
 import { CAPS } from './validate.js';
 
+export const RULE_VERSION = '2026-11-20.v3';
+
 export const AUDIT_LABELS = {
   'level-over-cap': 'Impossible base level',
   'stat-over-cap': 'Stat above the level cap',
@@ -38,9 +40,15 @@ export const AUDIT_LABELS = {
   'affix-over-cap': 'Affix value above any legitimate roll',
   'kill-rate': 'Kill rate above the server cap',
   'level-rate': 'Level speed above human limits',
-  'zeny-rate': 'Zen gain above human limits',
+  'zeny-rate': 'Zeny gain above human limits',
 };
 export const rateLabel = key => AUDIT_LABELS[key] || ('Material gain above limit: ' + key.replace(/^rate:/, ''));
+
+export const STRUCTURAL_KINDS = new Set([
+  'level-over-cap', 'stat-over-cap', 'stat-points-over',
+  'zeny-over-cap', 'negative-kills', 'refine-over-cap', 'affix-over-cap',
+]);
+export const ruleCategory = kind => (STRUCTURAL_KINDS.has(kind) ? 'structural' : 'heuristic');
 
 // ---------------------------------------------------------------- helpers ----
 const num = v => (Number.isFinite(Number(v)) ? Number(v) : 0);
@@ -293,50 +301,104 @@ export function auditStaticSave(save) {
 // offline-claim kills, grant credits) is an argument, so tests can drive any timing.
 //
 // credits: { zeny, levels, kills, resources: { counter: amount } } — gifts claimed in the window.
+// Minimum absolute delta before a short-window rate heuristic can fire, preventing
+// legitimate lump payouts (quests, roulette, mail, salvage, conversions) in a 1-5 min
+// sync window from being extrapolated into false-positive hourly rates.
+export const MIN_RATE_DELTA = {
+  kills: 5_000,
+  zeny: 100_000_000,
+  levels: 8,
+  shards: 600,
+  ori: 300,
+  elu: 300,
+  refineScrolls: 60,
+  mythicScrolls: 30,
+  ascMat0: 60,
+  ascMat1: 60,
+  ascMat2: 60,
+  nmat0: 60,
+};
+
 export function auditSaveRates({ prev, next, elapsedMs, claimKills = 0, credits = null }) {
   const out = [];
   if (!(elapsedMs >= 60_000)) return out;           // sub-minute windows are too noisy to judge
   const hours = elapsedMs / 3_600_000;
+  const mins = Math.round(elapsedMs / 60_000);
   const cred = credits || { zeny: 0, levels: 0, kills: 0, resources: {} };
   const c = key => num(cred.resources && cred.resources[key]);
 
+  const prevClass = prev.raw && (prev.raw.job || prev.raw.cls || prev.raw.classId) || null;
+  const nextClass = next.raw && (next.raw.job || next.raw.cls || next.raw.classId) || null;
+  const classChanged = !!(prevClass && nextClass && prevClass !== nextClass);
+
   // Kills: the grind backbone. Claimed offline kills are the SERVER's own payout, never a flag.
-  const killsDelta = Math.max(0, floor(next.kills) - floor(prev.kills) - Math.max(0, floor(claimKills)));
+  const rawKillsDelta = Math.max(0, floor(next.kills) - floor(prev.kills));
+  const creditedKills = Math.max(0, floor(claimKills)) + Math.max(0, floor(cred.kills));
+  const killsDelta = Math.max(0, rawKillsDelta - creditedKills);
   const killRate = killsDelta / hours;
-  if (killRate > RATE_LIMITS.kills) {
-    out.push({ kind: 'kill-rate', value: Math.round(killRate), threshold: RATE_LIMITS.kills,
-      detail: `${killsDelta.toLocaleString('en-US')} kills in ${Math.round(elapsedMs / 60000)} min` });
+  if (killsDelta >= MIN_RATE_DELTA.kills && killRate > RATE_LIMITS.kills) {
+    out.push({
+      kind: 'kill-rate', category: 'heuristic', ruleVersion: RULE_VERSION,
+      confidence: 'medium', units: 'kills/hr',
+      value: Math.round(killRate), threshold: RATE_LIMITS.kills,
+      evidence: { start: floor(prev.kills), end: floor(next.kills), rawDelta: rawKillsDelta, credited: creditedKills, unexplained: killsDelta, elapsedMs },
+      detail: `${killsDelta.toLocaleString('en-US')} unexplained kills in ${mins} min (raw +${rawKillsDelta.toLocaleString('en-US')}, credited ${creditedKills.toLocaleString('en-US')})`,
+    });
   }
 
-  // Levels: by the band you started in (early game is allowed to be fast, Lv 100+ is not).
-  const lvDelta = Math.max(0, floor(next.lv) - floor(prev.lv) - floor(cred.levels));
-  if (lvDelta >= 3) {
+  // Levels: skip level-rate when class changed (restored class progression).
+  const rawLvDelta = Math.max(0, floor(next.lv) - floor(prev.lv));
+  const creditedLv = floor(cred.levels);
+  const lvDelta = Math.max(0, rawLvDelta - creditedLv);
+  const minLvDelta = floor(prev.lv) >= 100 ? 4 : MIN_RATE_DELTA.levels;
+  if (!classChanged && lvDelta >= minLvDelta) {
     const limit = levelRateLimit(prev.lv);
     const rate = lvDelta / hours;
     if (rate > limit) {
-      out.push({ kind: 'level-rate', value: Math.round(rate * 10) / 10, threshold: limit,
-        detail: `+${lvDelta} levels in ${Math.round(elapsedMs / 60000)} min from level ${floor(prev.lv)}` });
+      out.push({
+        kind: 'level-rate', category: 'heuristic', ruleVersion: RULE_VERSION,
+        confidence: 'medium', units: 'levels/hr',
+        value: Math.round(rate * 10) / 10, threshold: limit,
+        evidence: { start: floor(prev.lv), end: floor(next.lv), rawDelta: rawLvDelta, credited: creditedLv, unexplained: lvDelta, elapsedMs, classChanged },
+        detail: `+${lvDelta} unexplained levels in ${mins} min from Lv ${floor(prev.lv)}`,
+      });
     }
   }
 
   // Zeny: only the blatant end (a real farm at the kill-rate cap stays under this).
-  const zenyDelta = Math.max(0, num(next.zeny) - num(prev.zeny) - floor(cred.zeny));
+  const rawZenyDelta = Math.max(0, num(next.zeny) - num(prev.zeny));
+  const creditedZeny = floor(cred.zeny);
+  const zenyDelta = Math.max(0, rawZenyDelta - creditedZeny);
   const zenyRate = zenyDelta / hours;
-  if (zenyRate > RATE_LIMITS.zeny) {
-    out.push({ kind: 'zeny-rate', value: Math.round(zenyRate), threshold: RATE_LIMITS.zeny,
-      detail: `${zenyDelta.toLocaleString('en-US')} zeny in ${Math.round(elapsedMs / 60000)} min` });
+  if (zenyDelta >= MIN_RATE_DELTA.zeny && zenyRate > RATE_LIMITS.zeny) {
+    out.push({
+      kind: 'zeny-rate', category: 'heuristic', ruleVersion: RULE_VERSION,
+      confidence: 'medium', units: 'zeny/hr',
+      value: Math.round(zenyRate), threshold: RATE_LIMITS.zeny,
+      evidence: { start: num(prev.zeny), end: num(next.zeny), rawDelta: rawZenyDelta, credited: creditedZeny, unexplained: zenyDelta, elapsedMs },
+      detail: `${zenyDelta.toLocaleString('en-US')} unexplained zeny in ${mins} min`,
+    });
   }
 
-  // Materials: the "made in 5 minutes" detector. One flag per counter.
+  // Materials: require minimum absolute delta so small lump rewards in short windows don't false-positive.
   for (const [key, read] of Object.entries(COUNTERS)) {
     const limit = RATE_LIMITS[key];
     if (!limit) continue;
-    // One lump action per window (a sold-out fishing bag, an ore purchase) is not a rate.
-    const delta = Math.max(0, read(next.raw) - read(prev.raw) - c(key) - num(LUMP_ALLOWANCE[key]));
+    const startVal = read(prev.raw);
+    const endVal = read(next.raw);
+    const rawDelta = Math.max(0, endVal - startVal);
+    const credited = c(key) + num(LUMP_ALLOWANCE[key]);
+    const delta = Math.max(0, rawDelta - credited);
+    const minAbs = MIN_RATE_DELTA[key] || 0;
     const rate = delta / hours;
-    if (rate > limit) {
-      out.push({ kind: 'rate:' + key, value: Math.round(rate), threshold: limit,
-        detail: `+${delta.toLocaleString('en-US')} ${key} in ${Math.round(elapsedMs / 60000)} min` });
+    if (delta >= minAbs && rate > limit) {
+      out.push({
+        kind: 'rate:' + key, category: 'heuristic', ruleVersion: RULE_VERSION,
+        confidence: 'low', units: `${key}/hr`,
+        value: Math.round(rate), threshold: limit,
+        evidence: { start: startVal, end: endVal, rawDelta, credited, unexplained: delta, elapsedMs },
+        detail: `+${delta.toLocaleString('en-US')} ${key} in ${mins} min (raw +${rawDelta.toLocaleString('en-US')})`,
+      });
     }
   }
   return out;
@@ -396,14 +458,94 @@ export async function auditAcceptedSave(D, { userId, username, gm, prev, prevSav
       rates = auditSaveRates({ prev: prevView, next: nextView, elapsedMs, claimKills, credits });
     }
     violations.push(...rates);
+
+    // Bounded 1-hour rolling accumulation: catches repeated sub-threshold saves
+    // (e.g. 30 saves of +4,999 kills over 120s each = +149,970 kills/hr).
+    const win = await db.getAuditWindow(D, userId);
+    const ROLLING_MS = 3_600_000;
+    const prevStart = Number(prev.saved_at || savedAt);
+    let winStart = prevStart;
+    let acc = { kills: 0, zeny: 0, levels: 0, resources: {} };
+    if (win && (savedAt - Number(win.window_start)) <= ROLLING_MS) {
+      winStart = Number(win.window_start);
+      try { acc = JSON.parse(win.acc_json || '{}'); } catch {}
+      if (!acc.resources) acc.resources = {};
+    }
+    const gRows = (await db.grantsClaimedBetween(D, userId, prevStart - 120_000, savedAt + 120_000)).results;
+    const allCred = addCredits(claimPaid, creditsFromGrants(gRows));
+    // Keep raw and credited totals together so the evidence describes the same window.
+    const record = (kind, raw, credited, previous) => {
+      acc.raw ||= {}; acc.credits ||= {};
+      acc.raw[kind] = num(acc.raw[kind] ?? previous) + raw;
+      acc.credits[kind] = num(acc.credits[kind]) + Math.min(raw, credited);
+    };
+    const rawK = Math.max(0, floor(nextView.kills) - floor(prevView.kills));
+    const credK = Math.max(0, floor(claimKills)) + Math.max(0, floor(allCred && allCred.kills));
+    const netK = Math.max(0, rawK - credK);
+    record('kill-rate', rawK, credK, acc.kills);
+    acc.kills = floor(acc.kills) + netK;
+    const rawZ = Math.max(0, num(nextView.zeny) - num(prevView.zeny));
+    const netZ = Math.max(0, rawZ - floor(allCred && allCred.zeny));
+    record('zeny-rate', rawZ, floor(allCred && allCred.zeny), acc.zeny);
+    acc.zeny = num(acc.zeny) + netZ;
+    const prevCls = prevView.raw && (prevView.raw.job || prevView.raw.cls || prevView.raw.classId) || null;
+    const nextCls = nextView.raw && (nextView.raw.job || nextView.raw.cls || nextView.raw.classId) || null;
+    const clsChanged = !!(prevCls && nextCls && prevCls !== nextCls);
+    if (!clsChanged) {
+      const rawL = Math.max(0, floor(nextView.lv) - floor(prevView.lv));
+      acc.levels = floor(acc.levels) + Math.max(0, rawL - floor(allCred && allCred.levels));
+    }
+    const netRes = {};
+    for (const [key, read] of Object.entries(COUNTERS)) {
+      const rawR = Math.max(0, read(nextView.raw) - read(prevView.raw));
+      const credR = num(allCred && allCred.resources && allCred.resources[key]);
+      record('rate:' + key, rawR, credR, acc.resources[key]);
+      netRes[key] = Math.max(0, rawR - credR);
+      acc.resources[key] = floor(acc.resources[key]) + netRes[key];
+    }
+    const persisted = await db.upsertAuditWindow(D, userId, winStart, savedAt, JSON.stringify(acc));
+    // A GM may clear the alert between the window read and write. Preserve and use that
+    // transaction's review marker instead of overwriting it with our earlier snapshot.
+    if (persisted) acc.reviewed = JSON.parse(persisted.acc_json).reviewed;
+
+    const checkRolling = (kind, total, newGain, limit, minimum, units, lump = 0) => {
+      if (!newGain || violations.some(v => v.kind === kind)) return;
+      const reviewed = acc.reviewed && acc.reviewed[kind];
+      const reviewedAmount = floor(reviewed && reviewed.amount);
+      const unexplained = Math.max(0, total - reviewedAmount - lump);
+      const startAt = Math.max(winStart, num(reviewed && reviewed.at));
+      const elapsedMs = Math.max(60_000, savedAt - startAt);
+      const rate = unexplained / (elapsedMs / 3_600_000);
+      if (!limit || unexplained < minimum || rate <= limit) return;
+      const rawDelta = Math.max(0, num(acc.raw[kind]) - num(reviewed && reviewed.raw));
+      const credited = Math.max(0, num(acc.credits[kind]) - num(reviewed && reviewed.credited)) + lump;
+      violations.push({
+        kind, category: 'heuristic', ruleVersion: RULE_VERSION,
+        confidence: kind.startsWith('rate:') ? 'low' : 'medium', units,
+        value: Math.round(rate), threshold: limit,
+        evidence: { start: 0, end: rawDelta, rawDelta, credited, unexplained, elapsedMs, rolling: true },
+        detail: `${unexplained.toLocaleString('en-US')} unexplained ${units.replace('/hr', '')} accumulated over ${Math.round(elapsedMs / 60000)} min`,
+      });
+    };
+    checkRolling('kill-rate', acc.kills, netK, RATE_LIMITS.kills, MIN_RATE_DELTA.kills, 'kills/hr');
+    checkRolling('zeny-rate', acc.zeny, netZ, RATE_LIMITS.zeny, MIN_RATE_DELTA.zeny, 'zeny/hr');
+    for (const key of Object.keys(COUNTERS)) {
+      checkRolling('rate:' + key, floor(acc.resources[key]), netRes[key], RATE_LIMITS[key],
+        MIN_RATE_DELTA[key] || 0, `${key}/hr`, num(LUMP_ALLOWANCE[key]));
+    }
   }
   if (!violations.length) return { flagged: false };
 
   const at = savedAt;
   const known = new Set((await db.existingSaveAlertKinds(D, userId)).results.map(r => r.kind));
   for (const v of violations) {
-    await db.saveAlertStatement(D, { userId, kind: v.kind, at, value: v.value,
-      threshold: v.threshold, detail: v.detail, bucketMs: 300_000 }).run();
+    await db.saveAlertWithEvidence(D, {
+      userId, kind: v.kind, at, value: v.value,
+      threshold: v.threshold, detail: v.detail,
+      ruleVersion: v.ruleVersion || RULE_VERSION,
+      evidenceJson: v.evidence ? JSON.stringify(v.evidence) : null,
+      bucketMs: 300_000,
+    });
   }
   const fresh = violations.filter(v => !known.has(v.kind));
   if (fresh.length) {
@@ -429,3 +571,22 @@ const safeParse = blob => {
 export const labelFor = v => (v.kind.startsWith('rate:') ? rateLabel(v.kind)
   : AUDIT_LABELS[v.kind] || v.kind) + (v.threshold ? ` (limit ${fmt(v.threshold)}, saw ${fmt(v.value)})` : '');
 const fmt = n => (Math.abs(n) >= 1000 ? Math.round(n).toLocaleString('en-US') : String(n));
+
+// Only expose the known numeric evidence fields; legacy and malformed records remain readable.
+export function auditEvidenceFor(row) {
+  let evidence = null;
+  try {
+    const value = JSON.parse(row.evidence_json || 'null');
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
+      evidence = {};
+      for (const key of ['start', 'end', 'rawDelta', 'credited', 'unexplained', 'elapsedMs']) {
+        if (typeof value[key] === 'number' && Number.isFinite(value[key])) evidence[key] = value[key];
+      }
+      evidence.rolling = value.rolling === true;
+    }
+  } catch {}
+  const kind = row.kind || '';
+  const units = kind === 'kill-rate' ? 'kills/hr' : kind === 'zeny-rate' ? 'zeny/hr'
+    : kind === 'level-rate' ? 'levels/hr' : kind.startsWith('rate:') ? kind.slice(5) + '/hr' : null;
+  return { ruleVersion: row.rule_version || null, category: ruleCategory(kind), units, evidence };
+}

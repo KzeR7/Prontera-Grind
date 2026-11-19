@@ -911,3 +911,24 @@ For a shorter focused run, set `SOCIAL_ART_PROFILE=phone` or `desktop`, and/or
 The browser check uses an isolated localStorage save and an offline synthetic
 plaza; it is not a hosted multiplayer session or a physical-device test. The
 preview's example choices do not write to a game save.
+
+## GM audit review and console evidence (PR 266)
+
+Run `node tools/tests/gm_audit_review_sim.js` for real-SQL review boundaries,
+ordinary activity after clearing, genuinely new incidents, concurrent clear/save,
+window expiry, legacy review and both authorised API evidence contracts. Run
+`gm_console_sim.js`, `save_audit_calibration_sim.js`, `api_sim.js`,
+`usage_analytics_sim.js` and `world_chat_filter_sim.mjs` alongside it.
+
+With Playwright and Chromium installed, run
+`node tools/check_gm_audit_browser.cjs /absolute/output/directory`.
+An existing Chromium-based browser can be selected with
+`PLAYWRIGHT_CHROMIUM_EXECUTABLE`. This uses synthetic sessions and in-memory
+SQLite, real API handlers, desktop and phone viewports; it writes screenshots
+outside the source tree. It checks evidence in Reviews/player detail, navigation,
+Activity width, horizontal containment and browser exceptions. It does not test
+production data, physical phones or live Cloudflare analytics credentials.
+
+Migration `0021_save_audit_evidence.sql` from this PR is required for structured
+storage and accumulated windows. Review markers use that existing window JSON;
+no additional migration or Social Durable Object traffic is introduced.
