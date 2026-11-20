@@ -154,8 +154,11 @@ def crop_union(frames):
     return [f.crop(box) for f in frames]
 
 
-def build(frames, delays):
+def build(frames, delays, loop=0):
     """Write an APNG carrying the real per-frame delays, the way pack-emotions.py does.
+
+    `loop` is APNG's play count: 0 (the default, and every shipped emote) repeats forever. The dice
+    passes 1 - see the note at its call site for why a rolling die has to stop.
 
     pack-emotions.py puts one integer `delay` per emotion in the lock and encodes a longer hold as
     the same frame repeated; APNG's own per-frame duration can carry the hold directly, but the
@@ -189,7 +192,7 @@ def build(frames, delays):
 
     data = BytesIO()
     timeline[0].save(data, format='PNG', save_all=True, append_images=timeline[1:],
-                     duration=base, loop=0, disposal=0, blend=0)
+                     duration=base, loop=loop, disposal=0, blend=0)
     return data.getvalue(), base, len(timeline)
 
 
@@ -204,31 +207,57 @@ def measure(frames):
 
 
 def settle_dice(frames):
-    """Drop the die's loose "wobble" so the face it landed on reads clearly.
+    """End the roll on the face it landed on, instead of letting the die fade away.
 
-    dice1..dice6 spend their first 15 frames tumbling (identical in all six files) and then land.
-    Frames 16-19 are a settle wobble in which the bubble's own outline breaks up and the face sits
-    askew; frame 20 snaps back to a crisp, square bubble. That snap is the ending the owner called
-    "not clear" - the wobble reads as damage, not as a die coming to rest.
+    dice1..dice6 spend frames 0-15 tumbling (identical in all six files), land on frame 15, hold a
+    beat, then fade out: frames 25-27 are progressively fainter copies of the landed face and the
+    loop restarts on a blank frame. The owner's complaint - "the ending of the dice cant be seen
+    clearly" - is this fade. The roll's payoff is the number, and the shipped file spent its last
+    300 ms erasing that number before snapping back to an empty bubble.
 
-    The landed face is identical in the wobble and in the settled frames (same pips, same place), so
-    dropping the wobble loses no information: the die lands on frame 15 and holds. Measured on all
-    six faces: frames 15-19 differ only in that outline, and 20-27 are a stable hold + fade.
+    Three cuts, all of them removing motion that is not the outcome:
+
+    * frames 16-19 are a settle wobble where the bubble's own outline breaks up and the face sits
+      askew. Frame 20 is the same landed face in a crisp, square bubble. The wobble reads as damage,
+      not as a die coming to rest, so the crisp frame replaces it.
+    * frame 15 is the tumble's last motion-blurred pose: the die is drawn off-axis with smeared pips.
+      It is followed directly by frame 20's sharp face, so keeping it puts a blur immediately before
+      the landing and the eye reads the blur as the result. It goes too; the roll now cuts from
+      blur (f14) straight to a crisp die.
+    * frames 25-27 are the fade to blank. Dropping them leaves the loop ending on the crisp landed
+      face, so the animation finishes on the number instead of erasing it.
+
+    The landed face itself is never touched: same pips, same place, same pixels. Only the loose
+    outline, the last blur and the exit fade go, and the caller stretches the final hold so the face
+    stays up long enough to read. Measured on all six faces: 20-24 are pixel-identical to each other.
     """
-    if len(frames) < 22:
-        return frames, 0
+    if len(frames) < 26:
+        return frames, None
     # Confirm this really is the wobble before touching anything: the frame after it must be the
     # same picture in a clean outline, and the pips must not move. If a rip ever differs, leave it.
     before, after = frames[15], frames[20]
     if before.size != after.size:
-        return frames, 0
-    keep = frames[:16] + frames[20:]
-    return keep, 4
+        return frames, None
+    # ...and the tail must really be a fade, i.e. the last frame must differ from the landed face.
+    # If a rip already ends on a genuine hold, that tail is a readable ending and is left alone.
+    if frames[24] == frames[27]:
+        return frames, None
+    # Keep exactly ONE landed frame. 20-24 are pixel-identical, and leaving the duplicates in makes
+    # the written hold depend on how the encoder merges them (measured: it drifted 1400 -> 1800 ms).
+    # One frame plus the caller's hold is deterministic: the face goes up once and stays up.
+    idx = list(range(15)) + [20]
+    return [frames[i] for i in idx], idx
 
 
 # How much larger than its own art a frame's assigned ground may be before the emote is treated as
 # "drifting" and tightened. Hlp is 9x; omg is 1.04x and must be left alone.
 DRIFT_LIMIT = 1.15  # the owner chose size over travel: motion is bounded, not removed (1.0 froze the animation)
+
+# How long the die's landed face stays up at the end of a roll. The source GIF holds a landed die for
+# one 100 ms tick before fading out, so the number - the only thing /dice actually tells you - was on
+# screen for a tenth of a second. This makes the landing the reading beat: the last source frame is
+# already one 100 ms tick, so the written APNG holds the face for 1400 ms in total.
+DICE_HOLD_MS = 1400
 
 
 def tighten_drift(frames):
@@ -314,19 +343,28 @@ def main():
         for n, p in enumerate(dice_paths, 1):
             fr, dl = load_frames(p)
             fr, keyed = clean_frames(fr)
-            fr, cut = settle_dice(fr)
-            if cut:
-                # The dropped frames' delays must go with them, or the die would hold a beat late.
-                dl = dl[:16] + dl[20:]
-                dropped = cut
+            fr, kept = settle_dice(fr)
+            if kept is not None:
+                # Keep the delays attached to the frames that survive, or the hold lands a beat off.
+                dl = [dl[i] for i in kept]
+                # Hold the landed face. build() turns one long delay into repeats of that frame, so
+                # setting the last delay is the hold - the source's own is 100 ms, far too short to
+                # read a number, and reading the number is the whole point of the emote. Setting the
+                # delay (rather than appending copies here) keeps the APNG sequence PIL writes valid.
+                dl[-1] = DICE_HOLD_MS
+                dropped = 28 - len(kept)
             dice_sets.append((n, fr, dl, keyed))
         if dropped:
-            print(f'  dice: dropped {dropped} settle-wobble frames so the landed face reads crisply')
+            print(f'  dice: dropped {dropped} wobble/fade frames; the roll now ends on the landed face')
         box = measure([f for _, fr, _, _ in dice_sets for f in fr])
         if box[2] - box[0] > CANVAS or box[3] - box[1] > CANVAS:
             raise SystemExit(f'dice painted area is {box[2]-box[0]}x{box[3]-box[1]}, larger than {CANVAS}px')
         for n, fr, dl, keyed in dice_sets:
-            data, base, _ = build([f.crop(box) for f in fr], dl)
+            # loop=1: a roll has an outcome, so the dice plays through once and stops on the
+            # landed face. Every other emote loops forever (loop=0) because an emote is a mood that
+            # keeps going until the bubble expires; a die that re-tumbles forever never comes to
+            # rest, which is exactly what made the ending unreadable.
+            data, base, _ = build([f.crop(box) for f in fr], dl, loop=1)
             name = 'dice' if n == 1 else f'dice{n}'
             (OUT / f'{name}.png').write_bytes(data)
             dice_faces.append((name, len(fr), len(dl), base, data, keyed, f'dice{n}.gif'))

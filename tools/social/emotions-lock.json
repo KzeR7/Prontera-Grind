@@ -289,8 +289,8 @@
     "dice": {
       "action": 58,
       "delay": 100,
-      "frames": 20,
-      "sha256": "70c8fd34b77cdc85db830d1302a700868cbfb170313980ea9ddbc0d5366bb95f",
+      "frames": 16,
+      "sha256": "5f9d80f927b2d2698c135dcc53e7ebde4c0ef0f19bd6f36f747068002db1ac66",
       "source": "dice1.gif (iRO Wiki)",
       "faces": 6
     },

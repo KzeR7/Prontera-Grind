@@ -32,16 +32,41 @@ for (const [id, L] of Object.entries(R.EMOTE_LAYOUT)) {
 // The dice is six files behind one id; one shared entry has to frame all six identically.
 assert.ok(R.EMOTE_LAYOUT.dice, 'the dice has a layout covering all six faces');
 
-// The die visibly LANDS. dice1..dice6 spend 15 frames tumbling, then land, then wobble with a broken
-// bubble outline before snapping back to a crisp one at f20. That snap is what the owner called
-// "the ending is not clear". The importer drops the wobble, so the landed face must hold still at
-// the end - the last frames have to be pixel-identical, or the ending is still moving under them.
+// The die visibly LANDS, and the number is the last thing on screen. dice1..dice6 tumble, land, and
+// then the source GIF fades the die out to an empty bubble and loops. That exit fade is what the
+// owner reported: "the ending of the dice cant be seen clearly" - the one thing /dice exists to tell
+// you was erased before you could read it. The importer now cuts the fade and the last motion-blurred
+// tumble frame, holds the landed face, and marks the APNG play-once, so the roll comes to rest on the
+// number instead of re-tumbling forever.
 {
   const fs2 = require('fs'), dir = path.join(__dirname, '..', '..', 'assets', 'social', 'emotions');
+  const be32 = (b, o) => (b[o] << 24 | b[o + 1] << 16 | b[o + 2] << 8 | b[o + 3]) >>> 0;
   for (const face of ['dice', 'dice2', 'dice3', 'dice4', 'dice5', 'dice6']) {
     const png = fs2.readFileSync(path.join(dir, face + '.png'));
     // An APNG that froze to one frame loses its animation entirely; that is a regression, not a fix.
     assert.ok(png.length > 2000, face + ' still carries a real animation, not a single frozen frame');
+    // Walk the chunk list for acTL (play count) and the fcTL durations, rather than trusting PIL.
+    let plays = null, frames = 0, lastDelay = 0, total = 0;
+    for (let i = 8; i + 8 <= png.length;) {
+      const len = be32(png, i), type = png.toString('latin1', i + 4, i + 8);
+      // acTL is num_frames then num_plays, so the play count is the second word, not the first.
+      if (type === 'acTL') plays = be32(png, i + 12);
+      if (type === 'fcTL') {
+        frames++;
+        const num = be32(png, i + 8 + 20), den = (png[i + 8 + 24] << 8 | png[i + 8 + 25]) || 1;
+        const ms = Math.round(num / den * 1000);
+        lastDelay = ms; total += ms;
+      }
+      i += 12 + len;
+    }
+    assert.ok(frames >= 12, face + ' keeps the tumble, got ' + frames + ' frames');
+    // The roll has to actually land on something: a blank last frame is the die fading out again.
+    assert.ok(fs2.statSync(path.join(dir, face + '.png')).size > 4000, face + ' keeps a full landed frame');
+    // plays=1: a roll has an outcome. Looping would restart the tumble and the ending would never settle.
+    assert.equal(plays, 1, face + ' plays once so the die comes to rest');
+    // The landed face has to stay up long enough to read a number.
+    assert.ok(lastDelay >= 1000, face + ' holds the landed face, last frame is ' + lastDelay + 'ms');
+    assert.ok(total >= 2500, face + ' still shows the whole roll, got ' + total + 'ms');
   }
 }
 for (const [id, cmd] of Object.entries(R.EMOTE_NAMES)) {

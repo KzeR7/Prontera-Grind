@@ -126,10 +126,16 @@ Two things are done to the pixels beyond timing, and both were owner-reported de
   the word came out at 12 px beside a 34 px smile. `tighten_drift` squeezes the sweep into 1.15x the
   art so the word stays legible and still moves. The owner chose size over travel. 1.0 was tried and
   rejected: it removed the motion entirely and collapsed oh/x/hlp to a single frozen frame.
-- **The die's settle-wobble is dropped.** After landing, dice1..dice6 wobble for four frames with the
-  bubble outline broken up, then snap back to a crisp bubble. That snap read as damage rather than a
-  die coming to rest. The landed face is identical in the wobble and the settled frame, so dropping
-  the wobble loses nothing: the die lands and holds for 500 ms.
+- **The roll ends on the number.** The source GIFs fade the die out to an empty bubble after landing
+  and then loop, so `/dice` spent its final beat erasing the only thing it tells you. `settle_dice`
+  drops three stretches of the tail: the settle wobble (f16-19, bubble outline broken up, reads as
+  damage), the last motion-blurred tumble frame (f15), and the exit fade (f25-27). What is left is
+  the tumble followed by the crisp landed face. Two further changes make that face the ending:
+  `DICE_HOLD_MS` holds the last frame for 1400 ms, and the dice alone is written with `loop=1` so
+  the animation **stops** on the landed face. Every other emote still loops forever, because an
+  emote is a mood and a die is an outcome. Exactly one landed frame is kept: f20-24 are
+  pixel-identical, and keeping the duplicates made the hold depend on how the encoder merged them
+  (measured drift 1400 -> 1800 ms). One frame plus one explicit hold is deterministic.
 
 The dice is six files behind one id. `dice1.gif`..`dice6.gif` share one tumble and differ only in
 the landed face, so all six are converted from a single shared crop box into `dice.png` (face 1) and
@@ -140,8 +146,9 @@ the tray scales and centres whichever face lands.
 
 `pack-emotions.py` skips and reports ids whose action is not in the sprite instead of crashing, and it
 merges into the lock file so the 32 verified entries keep their hashes. Paste the layout line into
-`assets/social-rules.js`. An id with no file and no layout draws as a dashed box naming its command
-(`/x` is the one such id today: `Ecks.gif` has never been supplied).
+`assets/social-rules.js`. An id with no file and no layout draws as a dashed box naming its command;
+there are none today, because every one of the 46 ids has art (`x` was the last gap and `Ecks.gif`
+closed it).
 
 ## Town
 
