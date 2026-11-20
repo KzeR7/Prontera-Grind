@@ -40,7 +40,7 @@ for(let n=-30;n<=30;n++)if(Math.abs(n)>7){assert(R.walkable(0,n),'promenade clea
  w.eval(fs.readFileSync(path.join(__dirname,'..','..','assets','digimon','roster.js'),'utf8'));w.eval(fs.readFileSync(path.join(__dirname,'..','..','assets','social-rules.js'),'utf8'));
  w.eval(fs.readFileSync(path.join(__dirname,'..','..','assets','social-fishing.js'),'utf8'));
  const FB=w.PGSocialFishing;
- assert.equal(FB.BAITS.length,4,'four baits in the shop');
+ assert.equal(FB.BAITS.length,5,'five baits in the shop');
  for(const b of FB.BAITS){
   const url=FB.baitSpriteURL(b.id,64);
   assert(typeof url==='string'&&url.startsWith('data:image/png'),b.name+' paints a real icon instead of an emoji glyph');
@@ -276,6 +276,33 @@ assert(F.DIFF.mythical.fill<F.DIFF.common.fill);
  for(let i=1;i<landed.length;i++)assert(landed[i]>=landed[i-1],'each rod keeps or improves the Auto MVP landing chance');
 }
 
+// Leviathan Chum (10k Fishcoin bait): +10% MVP hook rate, bar bonus giving ~11.8% auto reel on Twig,
+// ~25% auto reel on Mythril, keeping flat 30% landing roll for all rods.
+{
+ const seeded=seed=>{let x=seed|0;return()=>{x^=x<<13;x^=x>>>17;x^=x<<5;return(x>>>0)/4294967296}};
+ const boss=F.speciesById('mvp_stormcoil'),N=1500,landedChum=[];
+ const chumBait=F.BAITS.find(b=>b.id==='chum');
+ assert.ok(chumBait,'Leviathan Chum is present in BAITS');
+ assert.equal(chumBait.cost,10000,'Leviathan Chum costs 10k Fishcoins');
+ for(let ri=0;ri<F.RODS.length;ri++){
+  const random=seeded((ri+1)*0x12345),rod=F.RODS[ri];let reels=0;
+  for(let n=0;n<N;n++){
+   const fish={sp:boss.id,rarity:'mvp',w:boss.min+(boss.max-boss.min)*random()};
+   const reel=F.makeReel(fish,random,rod.control,chumBait.mvpBarBonus);let target=.5,result=null,sampleAt=0,t=0;
+   for(let step=0;step<10000&&!result;step++){
+    t+=16;if(t>=sampleAt){sampleAt=t+F.AUTO_REEL_SAMPLE_MS;target=F.autoReelTarget(reel)}
+    result=F.reelStep(reel,.016,reel.bar<target);
+   }
+   if(result==='catch')reels++;
+  }
+  landedChum.push(reels/N*F.MVP_REEL_CATCH_CHANCE);
+ }
+ const twigReelWin=landedChum[0]/F.MVP_REEL_CATCH_CHANCE;
+ const mythrilReelWin=landedChum.at(-1)/F.MVP_REEL_CATCH_CHANCE;
+ assert(twigReelWin>=.10&&twigReelWin<=.14,'Twig Rod with Leviathan Chum has ~11.8% auto reel win rate ('+(twigReelWin*100).toFixed(1)+'%)');
+ assert(mythrilReelWin>=.22&&mythrilReelWin<=.28,'Mythril Rod with Leviathan Chum has ~25% auto reel win rate ('+(mythrilReelWin*100).toFixed(1)+'%)');
+}
+
 // --- persistence bounds -------------------------------------------------------------------
 let st=F.normalize(null);
 assert.deepEqual(st.bag,[]);
@@ -336,8 +363,11 @@ assert.equal(F.buyRod(st,'oak').reason,'owned','rods cannot be bought twice');
 assert(F.equipRod(st,'twig').ok&&st.rod==='twig');
 assert.equal(F.equipRod(st,'mythril').reason,'unknown','cannot equip an unowned rod');
 assert(F.buyBait(st,'worm',10).ok&&st.bait.worm===10&&st.coins===100-10*F.BAITS.find(b=>b.id==='worm').cost,'bait buys in stacks');
+st.coins=20000;
+assert(F.buyBait(st,'chum',2).ok&&st.bait.chum===2&&st.coins===0,'Leviathan Chum buys in stacks for 10k coins each');
 st.coins=2;assert.equal(F.buyBait(st,'worm',1).reason,'coins');st.coins=60;
 assert(F.selectBait(st,'worm').ok&&st.baitSel==='worm');
+assert(F.selectBait(st,'chum').ok&&st.baitSel==='chum');
 assert.equal(F.selectBait(st,'jelly').reason,'unknown','cannot select bait you do not own');
 assert(F.selectBait(st,null).ok&&st.baitSel===null,'fishing without bait is allowed');
 // Bulk sell keeps the heaviest of each species plus every mutated fish.

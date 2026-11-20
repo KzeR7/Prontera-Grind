@@ -272,6 +272,7 @@ const BAITS=[
  {id:'shrimp',name:'Shrimp Tail',icon:'🦐',cost:12,luck:.25,weight:0,mutation:1},
  {id:'grub',name:'Glow Grub',icon:'🪰',cost:30,luck:.35,weight:0,mutation:2},
  {id:'jelly',name:'Royal Jelly',icon:'🍯',cost:55,luck:1.5,weight:.6,mutation:1.5},
+ {id:'chum',name:'Leviathan Chum',icon:'🥩',cost:10000,luck:2,weight:1.2,mutation:2.5,mvpHookBonus:.10,mvpBarBonus:.071},
 ];
 const BAITS_BY_ID=Object.fromEntries(BAITS.map(b=>[b.id,b]));
 // v295: ten fishing titles, worn above the head in the plaza. Every requirement is computed
@@ -478,14 +479,17 @@ function castRating(p){
  const label=perfect?'PERFECT':p>=CAST_GREEN[0]&&p<=CAST_GREEN[1]?'Amazing':p>=.6?'Great':p>=.35?'Good':'Meh';
  return {label,perfect,power:p,dist:.25+.75*p};
 }
-function makeReel(fish,rng,control){
+function makeReel(fish,rng,control,barBonus=0){
  const d=DIFF[fish.rarity]||DIFF.common,sp=speciesById(fish.sp);
  const heft=sp?Math.max(0,Math.min(1,(fish.w-sp.min)/Math.max(.01,sp.max-sp.min))):.5;
  // MVP needed a much larger base window for a starter rod without making Mythril automatic.
  // Compressing only its rod-control multiplier keeps the measured Auto landing ladder near 1%→5%;
  // every ordinary rarity retains the old control formula byte-for-byte.
- const controlScale=fish.rarity==='mvp'?.22:1;
- const barW=Math.min(.5,d.bar*(1+Math.max(0,Math.min(.8,control||0))*controlScale));
+ const isMvp=fish.rarity==='mvp';
+ const controlScale=isMvp?(barBonus?0.125:0.22):1;
+ const randomBoost=isMvp?((rng?rng():Math.random())*.008):0;
+ const baseBar=isMvp?(d.bar*(1+barBonus)+randomBoost):d.bar;
+ const barW=Math.min(.5,baseBar*(1+Math.max(0,Math.min(.8,control||0))*controlScale));
  return {bar:.5,vel:0,barW,fish:.5,fishVel:0,target:.5,swapIn:.5,speed:d.speed*(1+heft*.25),dash:d.dash,fill:d.fill,drain:d.drain,progress:.33,lock:1.1,t:0,on:true,perfect:true,rng:rng||Math.random};
 }
 // One physics step. Hold pushes the control bar right, release lets it fall left; progress only
@@ -1486,6 +1490,18 @@ function baitSprite(baitId,px=64){
   dot(28,64,11,'rgba(226,255,150,.85)');  // the glow sac
   dot(28,64,6,'#f6ffc9');
   dot(72,46,4,'#22301a');
+ }else if(baitId==='chum'){
+  // Leviathan Chum: a rich chunk of deep-sea meat tied with sinew and glistening with bioluminescent brine
+  dot(50,52,24,'rgba(210,30,60,.22)');
+  g.fillStyle='#5a101f';g.beginPath();g.ellipse(U(50),U(54),U(26),U(18),-.2,0,Math.PI*2);g.fill();
+  g.fillStyle='#a82038';g.beginPath();g.ellipse(U(48),U(52),U(23),U(15),-.2,0,Math.PI*2);g.fill();
+  g.fillStyle='#e03e5c';g.beginPath();g.ellipse(U(46),U(49),U(18),U(11),-.2,0,Math.PI*2);g.fill();
+  g.fillStyle='#f5e4c8';g.beginPath();g.ellipse(U(54),U(48),U(7),U(5),.3,0,Math.PI*2);g.fill();
+  dot(54,48,3,'#8a5a40');
+  dot(32,44,3.5,'#4ff2e6');dot(38,62,2.5,'#4ff2e6');dot(62,58,3,'#4ff2e6');
+  dot(26,52,2,'rgba(255,255,255,.7)');dot(68,44,2,'rgba(255,255,255,.7)');
+  g.strokeStyle='#f5e4c8';g.lineWidth=U(2.5);g.beginPath();
+  g.moveTo(U(36),U(40));g.quadraticCurveTo(U(48),U(55),U(58),U(68));g.stroke();
  }else{
   // Royal Jelly: an amber jar with a wax lid and a crown band
   g.fillStyle='#7a4a06';g.beginPath();g.roundRect?g.roundRect(U(28),U(30),U(44),U(52),U(12)):g.rect(U(28),U(30),U(44),U(52));g.fill();
@@ -1612,7 +1628,7 @@ function releaseCast(){
  const st=state(),rod=equippedRod(),bait=selectedBait();
  // Bait is consumed by the cast; the rod is permanent.
  if(bait){st.bait[bait.id]--;if(st.bait[bait.id]<=0){delete st.bait[bait.id];st.baitSel=null}}
- ui.mods={rod:rod.id,luck:rod.luck+(bait?bait.luck:0),weight:rod.strength+(bait?bait.weight:0),mutation:bait?bait.mutation:1,control:rod.control,lure:rod.lure};
+ ui.mods={rod:rod.id,luck:rod.luck+(bait?bait.luck:0),weight:rod.strength+(bait?bait.weight:0),mutation:bait?bait.mutation:1,control:rod.control,lure:rod.lure,mvpHookBonus:bait?bait.mvpHookBonus||0:0,mvpBarBonus:bait?bait.mvpBarBonus||0:0};
  st.stats.casts++;persist();renderDockGear();
  // v355 (owner: "the cast must follow the direction you face, and the line must never cross
  // the bridge"): march a ray along the fisher's facing and land the bobber in the FIRST run of
@@ -1659,8 +1675,9 @@ function hook(){
  clearShake();
  const f=sceneFishing();f&&f.bite(false);
  let rng=Math.random;
- // MVP: when a 10-min spawn is active and we have not yet caught it, 10% of hooks become the MVP.
- if(mvpActive&&!mvpClaimed().has(mvpActive.id)&&rng()<MVP_HOOK_CHANCE){
+ const hookRate=Math.min(.50,MVP_HOOK_CHANCE+((ui.mods&&ui.mods.mvpHookBonus)||0));
+ // MVP: when a 10-min spawn is active and we have not yet caught it, 10% (or up to 20% with Chum) become the MVP.
+ if(mvpActive&&!mvpClaimed().has(mvpActive.id)&&rng()<hookRate){
   const sp=speciesById(mvpActive.sp);
   if(sp){
    const wb=Math.max(0,Math.min(3,(ui.mods&&ui.mods.weight)||0));
@@ -1674,7 +1691,7 @@ function hook(){
    ui.roll={sp:sp.id,rarity:'mvp',w,mut,mvpSpawnId:mvpActive.id};
   } else ui.roll=rollCatch(rng,!!(ui.castR&&ui.castR.perfect),ui.mods);
  } else ui.roll=rollCatch(rng,!!(ui.castR&&ui.castR.perfect),ui.mods);
- ui.reel=makeReel(ui.roll,Math.random,(ui.mods&&ui.mods.control)||0);
+ ui.reel=makeReel(ui.roll,Math.random,(ui.mods&&ui.mods.control)||0,(ui.mods&&ui.mods.mvpBarBonus)||0);
  ui.last=now();
  ui.autoSampleAt=0;
  setPhase('reel');
@@ -2038,7 +2055,7 @@ function renderShop(){
  }).join('');
  const baitRows=BAITS.map(b=>{
   const ownedN=st.bait[b.id]||0,selected=st.baitSel===b.id;
-  const stats=`🍀 +${Math.round(b.luck*100)}%${b.weight?` · 🏋️ +${Math.round(b.weight*100)}%`:''}${b.mutation>1?` · 🧬 ×${b.mutation}`:''}`;
+  const stats=`🍀 +${Math.round(b.luck*100)}%${b.weight?` · 🏋️ +${Math.round(b.weight*100)}%`:''}${b.mutation>1?` · 🧬 ×${b.mutation}`:''}${b.mvpHookBonus?` · 🦈 +${Math.round(b.mvpHookBonus*100)}% MVP hook`:''}`;
   return `<div class="fishing-shop-row${selected?' equipped':''}"><span class="fishing-shop-icon">${baitHTML(b)}</span><span class="fishing-shop-name">${esc(b.name)}<small>${stats} · owned ×${ownedN}</small></span><span class="fishing-shop-btns"><button type="button" data-bait="${b.id}" data-n="1" ${st.coins<b.cost?'disabled':''}>${COIN_HTML} ${fmt(b.cost)}</button><button type="button" data-bait="${b.id}" data-n="10" ${st.coins<b.cost*10?'disabled':''}>×10</button><button type="button" data-use="${b.id}" ${ownedN?'':'disabled'}>${selected?'Using':'Use'}</button></span></div>`;
  }).join('');
  const tier=bagTierOf(st),next=nextBagTier(st),cap=bagMax(st);

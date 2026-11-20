@@ -15,6 +15,7 @@ export const FISHING_BAIT = Object.freeze([
   { id: 'shrimp', label: 'Shrimp Tail' },
   { id: 'grub', label: 'Glow Grub' },
   { id: 'jelly', label: 'Royal Jelly' },
+  { id: 'chum', label: 'Leviathan Chum' },
 ]);
 
 export const FISHING_MVP = Object.freeze([
