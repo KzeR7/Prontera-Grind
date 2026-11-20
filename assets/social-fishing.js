@@ -486,11 +486,16 @@ function makeReel(fish,rng,control,barBonus=0){
  // Compressing only its rod-control multiplier keeps the measured Auto landing ladder near 1%→5%;
  // every ordinary rarity retains the old control formula byte-for-byte.
  const isMvp=fish.rarity==='mvp';
- const controlScale=isMvp?(barBonus?0.125:0.22):1;
- const randomBoost=isMvp?((rng?rng():Math.random())*.008):0;
- const baseBar=isMvp?(d.bar*(1+barBonus)+randomBoost):d.bar;
+ const rGen=rng||Math.random;
+ // Normal Mythril rod (control >= 0.5): ~22% proc chance for "Lucky Focus" widening the bar,
+ // subtly improving bare Mythril auto reel win rate to ~20% (~6% landed).
+ const luckyFocus=isMvp&&(control>=.5)&&(rGen()<0.22);
+ const effectiveBarBonus=barBonus>0?(barBonus+(luckyFocus?0.025:0)):(luckyFocus?0.04:0);
+ const controlScale=isMvp?(barBonus>0?0.125:0.22):1;
+ const randomBoost=isMvp?(rGen()*0.008):0;
+ const baseBar=isMvp?(d.bar*(1+effectiveBarBonus)+randomBoost):d.bar;
  const barW=Math.min(.5,baseBar*(1+Math.max(0,Math.min(.8,control||0))*controlScale));
- return {bar:.5,vel:0,barW,fish:.5,fishVel:0,target:.5,swapIn:.5,speed:d.speed*(1+heft*.25),dash:d.dash,fill:d.fill,drain:d.drain,progress:.33,lock:1.1,t:0,on:true,perfect:true,rng:rng||Math.random};
+ return {bar:.5,vel:0,barW,fish:.5,fishVel:0,target:.5,swapIn:.5,speed:d.speed*(1+heft*.25),dash:d.dash,fill:d.fill,drain:d.drain,progress:.33,lock:1.1,t:0,on:true,perfect:true,luckyFocus:!!luckyFocus,rng:rGen};
 }
 // One physics step. Hold pushes the control bar right, release lets it fall left; progress only
 // moves after the opening lock. Returns 'catch', 'escape' or null.
@@ -1567,8 +1572,9 @@ function renderStage(){
  if(ui.phase==='wait'){stage.innerHTML='<div class="fishing-wait"><span class="fishing-bob">🎈</span> Waiting for a bite<span class="fishing-dots"><i>.</i><i>.</i><i>.</i></span></div>';if(!ui.auto)status('Click the SHAKE! bubbles to attract fish faster.');return}
  if(ui.phase==='bite'){stage.innerHTML='<div class="fishing-bite"><span>❗</span> BITE — CLICK!</div>';status('');return}
  if(ui.phase==='reel'){
-  stage.innerHTML='<div class="fishing-reel"><div class="fishing-track"><div id="fishingBarEl" class="fishing-bar"></div><span id="fishingFishEl" class="fishing-fish">'+((u=>u?'<img src="'+u+'" alt="" draggable="false">':'🐟')(fishSpriteURL('minnow',null,64)))+'</span></div><div class="fishing-progress"><i id="fishingProgressEl"></i></div><div class="fishing-reel-row"><span id="fishingCrank" class="fishing-crank">🎣</span><span id="fishingReelHint">HOLD to pull ▶ · release to drift ◀</span><span id="fishingPerfectStar" title="Perfect so far">⭐</span></div></div>';
-  status(ui.auto?'Auto reeling…':'Keep the fish inside your bar to fill the line!');
+  const isFocus=ui.reel&&ui.reel.luckyFocus;
+  stage.innerHTML='<div class="fishing-reel"><div class="fishing-track"><div id="fishingBarEl" class="fishing-bar'+(isFocus?' lucky-focus':'')+'"></div><span id="fishingFishEl" class="fishing-fish">'+((u=>u?'<img src="'+u+'" alt="" draggable="false">':'🐟')(fishSpriteURL('minnow',null,64)))+'</span></div><div class="fishing-progress"><i id="fishingProgressEl"></i></div><div class="fishing-reel-row"><span id="fishingCrank" class="fishing-crank">🎣</span><span id="fishingReelHint">'+(isFocus?'✨ Lucky Focus! Widen bar active · HOLD to pull ▶':'HOLD to pull ▶ · release to drift ◀')+'</span><span id="fishingPerfectStar" title="Perfect so far">⭐</span></div></div>';
+  status(isFocus?(ui.auto?'✨ Lucky Focus! Auto reeling with widened bar…':'✨ Lucky Focus! Keep the fish inside your widened bar!'):(ui.auto?'Auto reeling…':'Keep the fish inside your bar to fill the line!'));
   return;
  }
  if(ui.phase==='result'){
@@ -1818,7 +1824,7 @@ function tick(t){
   }
   const out=reelStep(ui.reel,dt,ui.holding);
   const bar=doc.getElementById('fishingBarEl'),fish=doc.getElementById('fishingFishEl'),prog=doc.getElementById('fishingProgressEl'),star=doc.getElementById('fishingPerfectStar'),crank=doc.getElementById('fishingCrank');
-  if(bar){bar.style.width=(ui.reel.barW*100)+'%';bar.style.left=((ui.reel.bar-ui.reel.barW/2)*100)+'%';bar.classList.toggle('on',ui.reel.on);bar.classList.toggle('held',ui.holding)}
+  if(bar){bar.style.width=(ui.reel.barW*100)+'%';bar.style.left=((ui.reel.bar-ui.reel.barW/2)*100)+'%';bar.classList.toggle('on',ui.reel.on);bar.classList.toggle('held',ui.holding);bar.classList.toggle('lucky-focus',!!ui.reel.luckyFocus)}
   if(fish)fish.style.left=(ui.reel.fish*100)+'%';
   if(prog){prog.style.width=(ui.reel.progress*100).toFixed(1)+'%';prog.classList.toggle('danger',ui.reel.progress<.22)}
   if(star)star.hidden=!ui.reel.perfect;

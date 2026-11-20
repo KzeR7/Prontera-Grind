@@ -301,6 +301,23 @@ assert(F.DIFF.mythical.fill<F.DIFF.common.fill);
  const mythrilReelWin=landedChum.at(-1)/F.MVP_REEL_CATCH_CHANCE;
  assert(twigReelWin>=.10&&twigReelWin<=.14,'Twig Rod with Leviathan Chum has ~11.8% auto reel win rate ('+(twigReelWin*100).toFixed(1)+'%)');
  assert(mythrilReelWin>=.22&&mythrilReelWin<=.28,'Mythril Rod with Leviathan Chum has ~25% auto reel win rate ('+(mythrilReelWin*100).toFixed(1)+'%)');
+
+ // Mythril Rod Lucky Focus proc check: ~20-25% proc chance on MVP hooks widening the bar,
+ // while starter rods never proc.
+ {
+  const mythril=F.RODS.find(r=>r.id==='mythril'),twig=F.RODS.find(r=>r.id==='twig');
+  let mythFocus=0,twigFocus=0;
+  const rng=seeded(12345);
+  for(let i=0;i<1000;i++){
+   const fish={sp:boss.id,rarity:'mvp',w:boss.min};
+   const rM=F.makeReel(fish,rng,mythril.control);
+   if(rM.luckyFocus)mythFocus++;
+   const rT=F.makeReel(fish,rng,twig.control);
+   if(rT.luckyFocus)twigFocus++;
+  }
+  assert.equal(twigFocus,0,'Training rod never triggers Lucky Focus');
+  assert(mythFocus>=180&&mythFocus<=260,'Mythril rod triggers Lucky Focus ~20-25% of the time ('+mythFocus+'/1000)');
+ }
 }
 
 // --- persistence bounds -------------------------------------------------------------------
