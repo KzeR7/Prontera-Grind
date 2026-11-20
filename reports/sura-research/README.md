@@ -31,3 +31,7 @@ All adjustments were simultaneous; isolate individual factors before attributing
 ### Follow-up audit
 
 A second full test pass ran all 259 `*_sim.js`, `*_sim.mjs`, and `*_smoke.js` suites successfully after fixing a skill-description initialization guard and two stale test-harness dependencies (the afterglow build version and the Sanctuary worker's chat-filter module). Progression fixtures were remeasured against the same historical baseline after the final game change; `skill_balance_sim.js` passed. A headless Chromium/SwiftShader check on desktop and phone-sized viewports confirmed five visible hub spheres and five field spheres when the live stack is set to five, their removal after consumption, and healthy WebGL contexts. This is a simulated browser/GPU check, not a physical-device test.
+
+### Final audit
+
+Repaired malformed `configure` source extraction in both rotation scripts. Rerunning both scripts produced byte-for-byte identical results to their respective checked-in JSONL files. The skill combo editor now displays the actual cooldown, with tests covering both Sura and Champion.

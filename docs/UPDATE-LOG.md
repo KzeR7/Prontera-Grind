@@ -12283,3 +12283,8 @@ re-recording them here would have written wrong numbers into the repository.
 * **Sphere check:** Five decorative Monk-line spheres remain on both local and remote players, including seated players; the Social Hub does not depend on field sphere stacks. These features are still part of PR #268 and are not live until release.
 * **Checks:** All 260 simulation/smoke suites and four asset/preview configuration checks passed. Remeasured balance fixtures and refreshed the equipment reference for the build. On the built site, `tools/check_sura_fishing_integration.cjs` used disposable accounts in headless Chromium/SwiftShader at desktop and touch-capable phone widths, checking seated remote spheres, title row alignment and spacing (including a legacy title with no icon), field sphere consumption and fishing controls. No physical-device or hosted-game testing.
 * **Delivery:** Update to PR #268; no deployment.
+
+### 2026-11-20 — `haven-v445 Sura cooldown display and plaza titles`
+* **Changed:** Combo slot text and hover now show the actual class/Ascension-adjusted cooldown, including Sura's 5-second Asura while Monk and Champion remain at 6 seconds. Ascension skill details use the same cooldown. No combat values changed.
+* **Checks:** All 260 simulation/smoke suites and four generated-asset/preview checks passed. The Sura regression checks slot text and tooltip for Sura and Champion. Fixed two Sura research runners' syntax and reran them; both exactly reproduce their recorded JSONL results. Balance fixtures were remeasured against the baseline. The built site passed the desktop/mobile Chromium/SwiftShader sphere, title and fishing integration rehearsal (synthetic state, not a physical device).
+* **Delivery:** PR #268; no manual deployment.

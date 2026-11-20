@@ -2,8 +2,7 @@
 // npm install --no-save --package-lock=false jsdom three@0.128.0
 const fs=require('fs');const {createGame}=require('../../tools/tests/helpers/game');const {stationary}=require('../../tools/skill_balance');
 const source=fs.readFileSync('tools/fit_expanded_budget.js','utf8');
-eval(source.slice(source.indexOf('function configure'),source.indexOf('const baseline=require('node:child_process').execFileSync('git',['show','33fcf48a13cd7e1f32c3c75570ad56ab1faa3390:index.html'],{encoding:'utf8',maxBuffer:20e6});
-const g=createGame(baseline)')).replace('solo?150:[10,49,99,150,175][tier]','150'));
+eval(source.slice(source.indexOf('function configure'),source.indexOf('const g=createGame();')).replace('solo?150:[10,49,99,150,175][tier]','150'));
 const baseline=require('node:child_process').execFileSync('git',['show','33fcf48a13cd7e1f32c3c75570ad56ab1faa3390:index.html'],{encoding:'utf8',maxBuffer:20e6});
 const g=createGame(baseline),combo=['su_sky','su_tiger','su_rampage','su_gate','su_knuckle','ch_asura'];
 g.ev(`{

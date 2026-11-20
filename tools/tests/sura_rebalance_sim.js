@@ -16,6 +16,13 @@ try{
  const hit=(id,hp,boss=false)=>{m.boss=boss;m.hp=hp;const before=m.hp;castSkill(sk(id),1);return before-m.hp};const full=hit('su_gate',1e15),wounded=hit('su_gate',2e14);const q=ascState().skills.Sura;q.level=30;q.ranks.su_knuckle=5;const boss=hit('su_knuckle',1e15,true);ASC_UPGRADES.su_knuckle.boss=0;const regular=hit('su_knuckle',1e15,true);ASC_UPGRADES.su_knuckle.boss=20;return {full,wounded,regular,boss}`);
  assert.ok(Math.abs(r.wounded/r.full-1.3)<.01,'Gates execute hits wounded targets 30% harder');assert.ok(Math.abs(r.boss/r.regular-1.2)<.01,'max Knuckle rank improves actual boss damage');
  assert.match(ev(`SKILLS.find(s=>s.id==='ch_asura').d(10)`),/5s cooldown/,'Sura cooldown displayed in skill details');
+ // The slot's visible label and hover tooltip must both reflect the actual class-specific cooldown.
+ ev(`S.skillCombos.Sura={enabled:true,slots:['ch_asura',null,null,null,null,null]}`);
+ let slot=ev(`(()=>{const el=document.createElement('div');el.innerHTML=rotationBar();const slot=el.querySelector('[data-combo-index="0"]');return JSON.stringify({text:slot.querySelector('small').textContent,title:slot.title})})()`);slot=JSON.parse(slot);
+ assert.match(slot.text,/5s cooldown/);assert.match(slot.title,/5s cooldown/);
+ ev(`S.cls='Champion';S.skillCombos.Champion={enabled:true,slots:['ch_asura',null,null,null,null,null]}`);
+ slot=JSON.parse(ev(`(()=>{const el=document.createElement('div');el.innerHTML=rotationBar();const slot=el.querySelector('[data-combo-index="0"]');return JSON.stringify({text:slot.querySelector('small').textContent,title:slot.title})})()`));
+ assert.match(slot.text,/6s cooldown/);assert.match(slot.title,/6s cooldown/);
 
  // Test rotation through the real update loop, including its normal cooldown skips.
  fourthSetup(g,'Sura','knuckle');ev(`{let seed=123;Math.random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296};const q=ascState().skills.Sura;q.level=30;q.ranks=Object.fromEntries(ASC_SKILLS.filter(s=>s.from==='Sura').map(s=>[s.id,5]));S.skillCombos.Sura={enabled:true,slots:suggestedCombo()};window.__casts={};const prev=castSkill;castSkill=(sk,k)=>{window.__casts[sk.id]=(window.__casts[sk.id]||0)+1;prev(sk,k)}}`);
