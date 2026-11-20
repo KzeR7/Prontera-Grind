@@ -12,6 +12,12 @@
 // any request arrives, so there is no alarm, no tick table and no per-frame traffic. See
 // docs/RIFT-RAID-VALIDATION.md for the measured per-run request/write estimates.
 
+// The rules version is part of a run's identity, not a display string. A solo checkpoint is scoped by
+// it (a browser that saved under different numbers must not resume under these), and settlement
+// records which rules paid a run. Bump it whenever a number below changes in a way that alters a
+// fight; do not bump it for a comment or a rename.
+export const RAID_RULES_VERSION = 'v449-r1';
+
 export const RAID_RULES = Object.freeze({
   // Owner gate. The Pages handler also requires env.RAID_ENABLED === 'true'. Staging may enable the
   // server flag without changing this default; production stays closed until acceptance.

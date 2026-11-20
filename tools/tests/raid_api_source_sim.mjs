@@ -12,8 +12,8 @@ import { onRequestGet, onRequestPost, _raidTest } from '../../functions/api/raid
 import { tokenHash } from '../../functions/_lib/auth.js';
 import { packSave } from '../../functions/_lib/save-codec.js';
 import { raidProfileFromSave } from '../../functions/_lib/raid-profile.js';
-import { RAID_STAGES, RAID_RULES } from '../../functions/_lib/raid-rules.js';
-import { SIM_TICK_MS } from '../../functions/_lib/raid-engine.js';
+import { RAID_STAGES, RAID_RULES, RAID_RULES_VERSION } from '../../functions/_lib/raid-rules.js';
+import { SIM_TICK_MS, createRaidRun, advanceRaidRun } from '../../functions/_lib/raid-engine.js';
 import { SocialRoom } from '../../workers/social/room.mjs';
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -75,6 +75,19 @@ for (const [name, cls, magic] of [['Alpha', 'Lord Knight', false], ['Beta', 'War
   users.push({ id, name, token, profile: raidProfileFromSave(save) });
 }
 
+// A fresh, fully-eligible account for the solo tests, created the same way the two-player roster is:
+// a user row, a cloud save the raid can read a profile from, and a session token.
+async function soloUser(name) {
+  const id = sql.prepare('INSERT INTO users(username,pass_hash,created_at) VALUES(?,?,?)').run(name, 'h', 1).lastInsertRowid;
+  const save = saveFor(id, 'Lord Knight', false);
+  sql.prepare(`INSERT INTO saves(user_id,version,blob,saved_at,updated_at,last_seen,rate_kph,kills_total,level,cls)
+    VALUES(?,1,?,1,1,1,0,0,150,?)`).run(id, JSON.stringify(save), 'Lord Knight');
+  const token = 'S'.repeat(40) + name;
+  const hash = await tokenHash(token);
+  sql.prepare('INSERT INTO sessions(token_hash,user_id,created_at,expires_at) VALUES(?,?,?,?)').run(hash, id, 1, Date.now() + 86400000);
+  return { id, name, token, username: name, profile: raidProfileFromSave(save) };
+}
+
 let clock = 2_000_000;
 const room = new SocialRoom({ now: () => clock, autoTimers: false });
 const roomSaveRun = room.raidSaveRun.bind(room);
@@ -108,6 +121,12 @@ const request = (url, user, method = 'GET', body = null) => new Request('https:/
   ...(body ? { body: JSON.stringify(body) } : {}),
 });
 const jsonBody = async response => response.json();
+// POST an /api/raid action through the real handler and return {ok, status, data}.
+async function postRaid(u, body) {
+  const response = await onRequestPost({ request: request('/api/raid', u, 'POST', body), env });
+  const data = await jsonBody(response);
+  return { ok: response.status === 200, status: response.status, data };
+}
 const safeJson = value => { try { return typeof value === 'string' ? JSON.parse(value) : value; } catch { return null; } };
 
 let pass = 0, fail = 0;
@@ -277,19 +296,34 @@ await t('a card drop is account-wide, duplicate-safe and one card can be equippe
 });
 
 await t('a room restart restores the D1 checkpoint instead of an empty encounter', async () => {
-  // A fresh solo run, then drop the room's in-memory copy exactly as an eviction would.
+  // A CO-OP concern, and only a co-op concern: a solo run is not in the room, so there is nothing for
+  // a restart to lose. Drop the room's in-memory copy of a PARTY run exactly as an eviction would and
+  // prove the D1 checkpoint rebuilds it with its real numbers.
+  const p1 = await soloUser('RestartA');
+  const p2 = await soloUser('RestartB');
   room.raidParty = null;
-  const start = await onRequestPost({ request: request('/api/raid', users[1], 'POST', { action: 'start', mode: 'solo' }), env });
+  room.raidPartyJoin({ id: p1.id, name: p1.name });
+  room.raidPartyJoin({ id: p2.id, name: p2.name });
+  for (const u of [p1, p2]) {
+    const r = await onRequestPost({ request: request('/api/raid', u, 'POST', { action: 'ready', ready: true }), env });
+    assert.equal(r.status, 200, await r.clone().text());
+  }
+  const start = await onRequestPost({ request: request('/api/raid', p1, 'POST', { action: 'start', mode: 'party' }), env });
   const data = await jsonBody(start);
   assert.equal(start.status, 200, JSON.stringify(data));
-  const soloId = data.runId;
-  const before = JSON.parse(JSON.stringify(room.raidRuns.get(soloId)));
-  room.raidRuns.delete(soloId);
-  const recovered = await _raidTest.recoverRun(env, users[1], sql.prepare('SELECT * FROM raid_runs WHERE id=?').get(soloId));
+  const partyRunId = data.runId;
+  const before = JSON.parse(JSON.stringify(room.raidRuns.get(partyRunId)));
+  room.raidRuns.delete(partyRunId);
+  const recovered = await _raidTest.recoverRun(env, p1, sql.prepare('SELECT * FROM raid_runs WHERE id=?').get(partyRunId));
   assert.equal(recovered.ok, true, recovered.err || '');
-  const after = room.raidRuns.get(soloId);
+  const after = room.raidRuns.get(partyRunId);
   assert.equal(after.members[0].hp, before.members[0].hp);
   assert.equal(after.members[0].maxHp, before.members[0].maxHp);
+  // Leave the party and clear the run so later tests are not blocked by an active co-op run.
+  room.raidRuns.delete(partyRunId);
+  sql.prepare("UPDATE raid_runs SET state='failed' WHERE id=?").run(partyRunId);
+  room.raidPartyLeave({ id: p1.id });
+  room.raidPartyLeave({ id: p2.id });
 });
 
 await t('simultaneous starts reserve exactly one entry and one run', async () => {
@@ -307,14 +341,17 @@ await t('simultaneous starts reserve exactly one entry and one run', async () =>
 });
 
 await t('a rejected room install refunds the reservation instead of charging an entry', async () => {
-  const id = sql.prepare('INSERT INTO users(username,pass_hash,created_at) VALUES(?,?,?)').run('Refund', 'h', 1).lastInsertRowid;
-  const save = packSave({ accountId: id, lv: 150, cls: 'Novice', sex: 'm', st: { str: 1, agi: 1, dex: 1, int: 1, vit: 1, luk: 1 }, eq: {}, inv: [] });
-  sql.prepare(`INSERT INTO saves(user_id,version,blob,saved_at,updated_at,last_seen,rate_kph,kills_total,level,cls)
-    VALUES(?,1,?,1,1,1,0,0,150,'Novice')`).run(id, JSON.stringify(save));
-  const token = 'R'.repeat(40) + 'efund';
-  const hash = await tokenHash(token);
-  sql.prepare('INSERT INTO sessions(token_hash,user_id,created_at,expires_at) VALUES(?,?,?,?)').run(hash, id, 1, Date.now() + 86400000);
-  const player = { id, name: 'Refund', token, profile: raidProfileFromSave(save) };
+  // A CO-OP concern: only a party start installs a run in the room, so only a party start can be
+  // rejected by it. (Solo does not install anything -- see the solo tests below -- so a "solo refund"
+  // test would now be asserting a path that does not exist.)
+  const p1 = await soloUser('RefundA');
+  const p2 = await soloUser('RefundB');
+  room.raidPartyJoin({ id: p1.id, name: p1.name });
+  room.raidPartyJoin({ id: p2.id, name: p2.name });
+  for (const u of [p1, p2]) {
+    const r = await onRequestPost({ request: request('/api/raid', u, 'POST', { action: 'ready', ready: true }), env });
+    assert.equal(r.status, 200, await r.clone().text());
+  }
   const savedSocial = env.SOCIAL;
   const real = savedSocial.get();
   env.SOCIAL = {
@@ -323,23 +360,55 @@ await t('a rejected room install refunds the reservation instead of charging an 
       ? new Response(JSON.stringify({ ok: false, err: 'The roster changed.' }), { status: 409, headers: { 'Content-Type': 'application/json' } })
       : real.fetch(req) }),
   };
-  const response = await onRequestPost({ request: request('/api/raid', player, 'POST', { action: 'start', mode: 'solo' }), env });
+  const response = await onRequestPost({ request: request('/api/raid', p1, 'POST', { action: 'start', mode: 'party' }), env });
   env.SOCIAL = savedSocial;
   assert.equal(response.status, 409, await response.clone().text());
-  assert.equal(sql.prepare('SELECT COUNT(*) AS n FROM raid_entries WHERE user_id=?').get(id).n, 0);
-  assert.equal(sql.prepare('SELECT COUNT(*) AS n FROM raid_run_members WHERE user_id=?').get(id).n, 0);
-  assert.equal(sql.prepare('SELECT COUNT(*) AS n FROM raid_runs WHERE leader_id=?').get(id).n, 0, 'no ghost run was left behind');
+  assert.equal(sql.prepare('SELECT COUNT(*) AS n FROM raid_entries WHERE user_id=?').get(p1.id).n, 0);
+  assert.equal(sql.prepare('SELECT COUNT(*) AS n FROM raid_run_members WHERE user_id=?').get(p1.id).n, 0);
+  assert.equal(sql.prepare('SELECT COUNT(*) AS n FROM raid_runs WHERE leader_id=?').get(p1.id).n, 0, 'no ghost run was left behind');
+  // The party must be reopened or the two test accounts would block every later party test.
+  room.raidPartyLeave({ id: p1.id });
+  room.raidPartyLeave({ id: p2.id });
 });
 
 await t('a failed storage read is reported, not treated as an empty encounter', async () => {
+  // A CO-OP concern: only a room-owned run can fail a room read. A solo run is never in the room, so
+  // "the room is down" must not be reported for one -- that is the point of the split, and the second
+  // half of this test pins it.
+  const a = await soloUser('StorageA');
+  const b = await soloUser('StorageB');
+  room.raidParty = null;
+  room.raidPartyJoin({ id: a.id, name: a.name });
+  room.raidPartyJoin({ id: b.id, name: b.name });
+  for (const u of [a, b]) {
+    const r = await onRequestPost({ request: request('/api/raid', u, 'POST', { action: 'ready', ready: true }), env });
+    assert.equal(r.status, 200, await r.clone().text());
+  }
+  const start = await postRaid(a, { action: 'start', mode: 'party' });
+  assert.equal(start.ok, true, JSON.stringify(start.data));
+
   const saved = env.SOCIAL;
   const unavailable = { fetch: async () => new Response('{"err":"storage unavailable"}', { status: 503 }) };
   env.SOCIAL = { idFromName: () => unavailable, get: () => unavailable };
-  const r = await onRequestGet({ request: request('/api/raid', users[1]), env });
+  const r = await onRequestGet({ request: request('/api/raid', b), env });
   const data = await jsonBody(r);
   assert.equal(data.activeRun, null);
   assert.ok(data.activeRunError, 'the client is told the active run could not be read');
   env.SOCIAL = saved;
+
+  // Now the same outage for a SOLO run: the read must succeed, because it never touches the room.
+  const soloUserRec = await soloUser('StorageSolo');
+  env.SOCIAL = { idFromName: () => unavailable, get: () => unavailable };
+  const soloStart = await postRaid(soloUserRec, { action: 'start', mode: 'solo' });
+  assert.equal(soloStart.ok, true, JSON.stringify(soloStart.data));
+  const soloState = await jsonBody(await onRequestGet({ request: request('/api/raid', soloUserRec), env }));
+  assert.equal(soloState.activeRunError || '', '', 'a solo run reports no room error');
+  env.SOCIAL = saved;
+
+  room.raidRuns.clear();
+  sql.prepare("UPDATE raid_runs SET state='failed' WHERE state='active'").run();
+  room.raidPartyLeave({ id: a.id });
+  room.raidPartyLeave({ id: b.id });
 });
 
 await t('a late snapshot does not move the fixed timeline', async () => {
@@ -367,6 +436,92 @@ await t('a late snapshot does not move the fixed timeline', async () => {
   assert.equal(after.run.serverNow, Math.max(clock, solo.updatedAt), 'the snapshot reports the clock it used');
 });
 
+// ---- solo: server-owned entry and rewards, ZERO Durable Object traffic -------------------------
+// This is the acceptance rule for the split, measured rather than argued: a complete solo run --
+// reserve, play, settle -- must make no raid-related DO request at all. `metrics.doRequests` counts
+// every fetch the Pages handler makes to the SOCIAL binding.
+await t('a complete solo run reserves and settles without one Social request', async () => {
+  const me = await soloUser('SoloOne');
+  const before = metrics.doRequests;
+  const start = await postRaid(me, { action: 'start', mode: 'solo' });
+  assert.equal(start.ok, true, JSON.stringify(start.data));
+  assert.equal(start.data.local, true, 'the response is flagged as a local run');
+  assert.equal(metrics.doRequests, before, 'reserving a solo entry made no Social request');
+  assert.equal(start.data.run.members.length, 1);
+  assert.equal(start.data.run.seed, start.data.run.seed >>> 0);
+  assert.equal(start.data.rulesVersion, RAID_RULES_VERSION, 'the rules version comes from the reservation');
+
+  // The deadline is the reservation's own, and the run is not in the room at all.
+  const runId = start.data.runId;
+  assert.ok(!room.raidRuns.get(runId), 'the run was NOT installed in the Social room');
+
+  // A sync (what a reloading tab does) must also stay local.
+  const sync = await postRaid(me, { action: 'sync', runId });
+  assert.equal(sync.data.local, true);
+  assert.equal(metrics.doRequests, before, 'a solo sync made no Social request');
+
+  // Play it locally: the test drives the shared engine exactly as the browser does.
+  const local = createRaidRun({
+    id: runId, seed: start.data.run.seed, now: start.data.run.startedAt,
+    leaderId: me.id, partySize: 1, members: [{ id: me.id, name: me.username, profile: start.data.run.members[0].profile }],
+  });
+  local.deadlineAt = start.data.run.deadlineAt;
+  for (let at = local.startedAt + 1000; at <= local.startedAt + 120000 && local.state === 'active'; at += 1000) {
+    advanceRaidRun(local, at);
+  }
+  const claim = {
+    outcome: local.state === 'cleared' ? 'clear' : 'failed',
+    finishedAt: local.finishedAt || local.updatedAt,
+    damage: Math.round(local.members[0].damage),
+    support: Math.round(local.members[0].support),
+    actions: Math.round(local.members[0].actions),
+  };
+
+  const settled = await postRaid(me, { action: 'settle', runId, result: claim });
+  assert.equal(settled.data.ok, true, JSON.stringify(settled.data));
+  assert.equal(settled.data.outcome, claim.outcome, 'the server recorded the reported outcome');
+  assert.equal(metrics.doRequests, before, 'settling a solo run made no Social request');
+
+  // Exactly once: a second settle reads the same ledger back.
+  const again = await postRaid(me, { action: 'settle', runId, result: claim });
+  assert.equal(again.data.ok, true);
+  assert.equal(again.data.settledAt, settled.data.settledAt, 'the settlement is single-valued');
+  assert.deepEqual(again.data.rewards, settled.data.rewards, 'and paying it twice is impossible');
+  assert.equal(metrics.doRequests, before, 'and still no Social request');
+});
+
+await t('a solo claim cannot buy rewards the run could not have produced', async () => {
+  const u = await soloUser('SoloTwo');
+  const start = await postRaid(u, { action: 'start', mode: 'solo' });
+  assert.equal(start.ok, true, JSON.stringify(start.data));
+  const runId = start.data.runId;
+  const startedAt = Number(start.data.run.startedAt);
+  const deadline = Number(start.data.run.deadlineAt);
+
+  const bad = [
+    [{ outcome: 'victory', finishedAt: startedAt + 1000 }, 'a made-up outcome word'],
+    [{ outcome: 'clear', finishedAt: startedAt - 5000 }, 'a finish before the start'],
+    [{ outcome: 'clear', finishedAt: deadline + 5000 }, 'a finish after the deadline'],
+    [{ outcome: 'clear', finishedAt: startedAt + 1000, rewards: { riftShards: 9999 } }, 'a client-supplied reward'],
+  ];
+  for (const [result, why] of bad) {
+    const r = await postRaid(u, { action: 'settle', runId, result });
+    assert.notEqual(r.ok, true, 'refused: ' + why + ' -> ' + JSON.stringify(r.data));
+  }
+
+  // In-bounds damage is clamped to a physical ceiling rather than believed.
+  process.env.PG_DEBUG_RAID && console.log('DEBUG start', JSON.stringify(start.data.run && {id:start.data.run.id, dl:start.data.run.deadlineAt}));
+  const absurd = await postRaid(u, {
+    action: 'settle', runId,
+    result: { outcome: 'failed', finishedAt: startedAt + 60_000, damage: 9e12, actions: 9e9 },
+  });
+  assert.equal(absurd.data.ok, true, JSON.stringify(absurd.data));
+  const contribution = sql.prepare('SELECT damage, actions FROM raid_run_members WHERE run_id=? AND user_id=?')
+    .get(runId, u.id);
+  assert.ok(Number(contribution.damage) < 9e12, 'the damage was clamped, not believed: ' + contribution.damage);
+  assert.ok(Number(contribution.actions) <= 60 * 4 + 8, 'the actions were clamped: ' + contribution.actions);
+});
+
 const raidSource = fs.readFileSync(path.join(root, 'functions/api/raid.js'), 'utf8');
 const roomSource = fs.readFileSync(path.join(root, 'workers/social/room.mjs'), 'utf8');
 const indexSource = fs.readFileSync(path.join(root, 'workers/social/index.mjs'), 'utf8');
@@ -375,6 +530,34 @@ const indexRaid = indexSource.split('// --- Rift Raid persistence')[1]?.split(' 
 const alarmCalls = (raidSource.match(/setAlarm\s*\(/g) || []).length
   + (roomRaid.match(/setAlarm\s*\(/g) || []).length
   + (indexRaid.match(/setAlarm\s*\(/g) || []).length;
+// The split's headline number, measured on its own: one complete solo run, start to settled.
+{
+  const soloCost = { do: metrics.doRequests, d1: metrics.d1Statements, batches: metrics.d1Batches, rows: metrics.d1Rows };
+  const u = await soloUser('SoloCost');
+  const start = await postRaid(u, { action: 'start', mode: 'solo' });
+  const runId = start.data.runId;
+  const local = createRaidRun({
+    id: runId, seed: start.data.run.seed, now: start.data.run.startedAt,
+    leaderId: u.id, partySize: 1, members: [{ id: u.id, name: u.username, profile: start.data.run.members[0].profile }],
+  });
+  local.deadlineAt = start.data.run.deadlineAt;
+  for (let at = local.startedAt + 1000; at <= local.startedAt + 180000 && local.state === 'active'; at += 1000) {
+    advanceRaidRun(local, at);
+  }
+  await postRaid(u, { action: 'settle', runId, result: {
+    outcome: local.state === 'cleared' ? 'clear' : 'failed',
+    finishedAt: local.finishedAt || local.updatedAt,
+    damage: Math.round(local.members[0].damage), support: Math.round(local.members[0].support),
+    actions: Math.round(local.members[0].actions),
+  } });
+  console.log('\nmeasured: ONE complete solo run (reserve -> play -> settle), ' + local.state + ' at '
+    + Math.round(((local.finishedAt || local.updatedAt) - local.startedAt) / 1000) + ' s');
+  console.log('  Social DO requests: ' + (metrics.doRequests - soloCost.do) + '   <- the acceptance rule: zero');
+  console.log('  D1 statements: ' + (metrics.d1Statements - soloCost.d1)
+    + ' · batches: ' + (metrics.d1Batches - soloCost.batches) + ' · batched rows: ' + (metrics.d1Rows - soloCost.rows));
+  console.log('  Pages requests: 2 (start, settle) · completion-validation CPU: 1 bounded claim check (no replay)');
+}
+
 console.log('\nmeasured (this scripted two-player start + strike + settlement + restart):');
 console.log('  D1 prepared statements: ' + metrics.d1Statements + ' · batches: ' + metrics.d1Batches
   + ' · batched rows: ' + metrics.d1Rows);

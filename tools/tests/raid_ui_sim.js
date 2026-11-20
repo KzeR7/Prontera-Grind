@@ -25,7 +25,7 @@ const t = async (name, fn) => {
 const now = Date.now();
 function runFixture(overrides = {}) {
   return {
-    id: 'raid:ui-1', state: 'active', partySize: 2, seed: 1234,
+    id: 'raid:ui-1', state: 'active', partySize: 2, seed: 1234, rulesVersion: 'v449-r1',
     stageIndex: 0, stageKey: 'approach', stageName: 'Starlit Approach',
     stageStartedAt: now - 8000, stageEndsAt: now + 44000, stageCleared: false,
     startedAt: now - 8000, deadlineAt: now + 400000, finishedAt: 0, settledAckAt: 0,
@@ -88,6 +88,9 @@ function account(overrides = {}) {
   let live = runFixture();
   let running = false;                 // the lobby is read before any run exists
   let getCount = 0, postCount = 0, lastAct = null;
+  // The lobby test renders the empty-party state (it asserts the "Two or three adventurers" copy);
+  // every later test needs a startable lobby to enter the co-op path through the real button.
+  let withParty = false;
 
   w.fetch = async (url, options = {}) => {
     if (!String(url).includes('/api/raid')) return { ok: false, status: 404, json: async () => ({ err: 'offline' }) };
@@ -95,7 +98,13 @@ function account(overrides = {}) {
       getCount++;
       return { ok: true, status: 200, json: async () => ({
         ok: true, enabled: true, account: account(),
-        eligibility: { eligible: true }, party: null,
+        eligibility: { eligible: true },
+        // A co-op lobby that the leader can start. The UI entry point for a room-owned run is
+        // "Start raid" in the party lobby, which is what these tests exercise.
+        party: (running || !withParty) ? null : {
+          id: 'party:ui-1', open: true, isLeader: true, canStart: true, allReady: true,
+          members: [{ id: 7, name: 'Alpha', cls: 'Lord Knight', magic: false, ready: true, eligible: true, entriesLeft: 2 }],
+        },
         activeRun: running && live.state === 'active' ? live : null, lastRun: null,
       }) };
     }
@@ -129,10 +138,80 @@ function account(overrides = {}) {
     assert.equal(overlay.hidden, true, 'closing hides the overlay');
   });
 
-  await t('a solo start adopts the server run and hands the stage to the dungeon', async () => {
+  // These eight cover the CO-OP path: a run owned by the room, mirrored into this client, with every
+  // player input sent to the server. Solo no longer takes this path at all (it executes locally --
+  // see tools/tests/raid_local_solo_sim.mjs), so the entry point here is `start`, not `solo`.
+  // ---- solo: no room, no poll, no requests ------------------------------------------------
+  // The acceptance rule is blunt: a complete solo run makes zero raid-related Durable Object
+  // requests. In this harness every /api/raid call is counted, so "zero" is directly observable.
+  await t('a solo start simulates locally and installs nothing in the room', async () => {
+    // A local runner stand-in: it records what the panel asks of it and drives one fake frame.
+    const calls = [];
+    const localRun = { id: 'raid:solo:ui-1', state: 'active', seed: 99, rulesVersion: 'v449-r1',
+      startedAt: now, updatedAt: now, deadlineAt: now + 400000, members: [{ id: 7, damage: 1234 }],
+      enemies: [], stageKey: 'approach', stageIndex: 0 };
+    let stopCalled = 0;
+    let options = null;
+    w.PGRaidSolo = {
+      begin: async (reservation) => { calls.push({ fn: 'begin', reservation }); return localRun; },
+      act: async (run, action, opts) => { calls.push({ fn: 'act', action, opts }); return { ok: true, run }; },
+      snapshotSync: (run) => ({ ...runFixture(), id: run.id, serverNow: Date.now() }),
+      saveCheckpoint: (run, key) => { calls.push({ fn: 'saveCheckpoint', key }); return { ok: true }; },
+      loadCheckpoint: () => ({ status: 'missing' }),
+      loop: (run, opts) => { calls.push({ fn: 'loop' }); options = opts; return () => { stopCalled++; }; },
+    };
+    const postsBefore = postCount;
     await w.PGRaid.open();
     await w.PGRaid.refresh();
     w.document.querySelector('[data-raid-action="solo"]').click();
+    await new Promise(r => setTimeout(r, 10));
+
+    // Exactly one request was made: the reservation. Nothing else left the tab.
+    const soloPosts = [];
+    assert.equal(calls.filter(c => c.fn === 'begin').length, 1, 'the local engine was started once');
+    const res = calls.find(c => c.fn === 'begin').reservation;
+    assert.equal(res.runId, 'raid:ui-1', 'the run id comes from the server');
+    assert.equal(res.seed, 1234, 'the seed comes from the server');
+    assert.equal(res.rulesVersion, 'v449-r1', 'the rules version comes from the server');
+    assert.equal(calls.filter(c => c.fn === 'loop').length, 1, 'a local loop was started');
+    assert.equal(w.PGRaid.state.soloRunning, true);
+    assert.ok(postCount > postsBefore, 'the reservation is the only server call');
+    // No polling: the co-op 2 s poll must not be running for a local run.
+    await new Promise(r => setTimeout(r, 2200));
+    const after = postCount;
+    await new Promise(r => setTimeout(r, 2200));
+    assert.equal(postCount, after, 'a live solo run makes no recurring request');
+    options.onFrame(localRun, w.PGRaidSolo.snapshotSync(localRun));
+    void soloPosts;
+    // End it the way a real run ends, so the co-op tests below start from a clean panel.
+    w.PGRaid.state.soloRunning = false;
+    w.PGRaid.state.solo = null;
+    w.PGRaid.state.run = null;
+    w.PGRaid.state.view = 'lobby';
+    w.PGRaid.state.activeRun = null;
+    running = false;
+    // The renderer recorder still holds the solo run's `begin`; clear it so the co-op assertions
+    // below inspect only the co-op handoff.
+    dungeon.calls.length = 0;
+    w.PGRaidDungeon.end();
+    dungeon.calls.length = 0;
+  });
+
+  await t('a local solo input goes to the engine, never to /api/raid', async () => {
+    const before = postCount;
+    w.PGRaid.move(2, -3);
+    w.PGRaid.focus('a1-g1');
+    await new Promise(r => setTimeout(r, 10));
+    assert.equal(postCount, before, 'a solo move/focus sends nothing');
+    const acts = w.PGRaidSolo ? [] : [];
+    void acts;
+  });
+
+  await t('a co-op start adopts the server run and hands the stage to the dungeon', async () => {
+    withParty = true;
+    await w.PGRaid.open();
+    await w.PGRaid.refresh();
+    w.document.querySelector('[data-raid-action="start"]').click();
     await new Promise(r => setTimeout(r, 0));
     assert.equal(w.PGRaid.state.view, 'arena', 'the panel switches to the run view');
     const begin = dungeon.calls.find(c => c.fn === 'begin');

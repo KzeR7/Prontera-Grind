@@ -79,6 +79,24 @@ cp "$ROOT/index.html" "$OUT/index.html"
 cp "$ROOT/gm.html" "$OUT/gm.html"
 cp "$ROOT/_routes.json" "$OUT/_routes.json"
 cp -r "$ROOT/assets" "$OUT/assets"
+# The raid simulation engine is published VERBATIM so a solo run executes in the browser. It is the
+# same file the co-op Durable Object imports -- there is no second rule set to drift. The chain is
+# pure ESM with no Node or Workers built-ins (checked by tools/tests/raid_local_solo_sim.mjs, which
+# imports it exactly as the browser does), so it needs no bundler or rewrite.
+#
+# This must come AFTER the `cp -r assets` above: copying assets into a directory that already exists
+# nests it (`$OUT/assets/assets`), which would publish the whole sprite pack twice.
+mkdir -p "$OUT/assets/raid-engine"
+require functions/_lib/raid-engine.js
+require functions/_lib/raid-rules.js
+require functions/_lib/raid-profile.js
+require functions/_lib/save-codec.js
+require functions/_lib/card-catalog.js
+cp "$ROOT/functions/_lib/raid-engine.js"   "$OUT/assets/raid-engine/raid-engine.js"
+cp "$ROOT/functions/_lib/raid-rules.js"    "$OUT/assets/raid-engine/raid-rules.js"
+cp "$ROOT/functions/_lib/raid-profile.js"  "$OUT/assets/raid-engine/raid-profile.js"
+cp "$ROOT/functions/_lib/save-codec.js"    "$OUT/assets/raid-engine/save-codec.js"
+cp "$ROOT/functions/_lib/card-catalog.js"  "$OUT/assets/raid-engine/card-catalog.js"
 # Class Tree source PNGs and alternate encodings stay in the repo. Publish only the exact
 # files the runtime map requests; its WebPs are verified against the source PNG pixels.
 node - "$ROOT" "$OUT" <<'NODE'

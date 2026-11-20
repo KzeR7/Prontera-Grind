@@ -63,6 +63,11 @@ These were found by writing the acceptance sims against the real engine, not by 
 | Settle validator compared `startedAt`/`deadlineAt` to the current wall clock | every settlement failed with "the raid clock changed unexpectedly" | room installs the run from `payload.startedAt`; the snapshot echoes the fixed identity |
 | `rollRaidCard()` can return `null` | a card-roll miss crashed the whole settlement (no shards, no zeny) | the API skips a miss instead of dereferencing it |
 | Chest ledger rows nest amounts under `rewards` | the results panel printed "Recorded" for every chest | `flattenRewardRow()` in the API; the client reads both shapes |
+| `advanceRaidRun` jumped from event to event | the state at a given instant depended on **how often the run was read**: a 1 s and a 100 ms client settled 8.8 s apart with 147k damage between them | whole `SIM_TICK_MS` cells resolved chronologically, with `run.cursorAt` (last resolved cell) kept separate from `updatedAt` (furthest instant observed) so a partial cell is never counted as simulated time |
+| A swing was judged at the end of its cell | a member that finished walking into range mid-cell was billed as out of range and lost a whole cadence | range is evaluated per cell against the position the cell resolved to, and the cadence rolls to its own next boundary |
+| A stale `focus`/`move` replay overwrote a newer intent | a retried packet undid the player's most recent choice; a replayed `move` reset the manual hold and dragged them back | free intents are ordered by the client's own timestamp (kept before the server clamp); an older one is acknowledged as `stale` and changes nothing |
+| The `move` floor was measured against the server's clock | the server's own catch-up satisfied the 220 ms floor, so two moves sent 0 ms apart were both accepted | the floor compares the client's timestamps |
+| `nextMechanicAt` stayed armed after a stage clear | a spawn timer could keep coming due for a stage that was already won | cleared on clear (`= Infinity`) |
 | `referenceDps: 120_000` | dead config, and ~7× the real ceiling (the game's own `genGear` formula tops out near 18k DPS at Lv150 N+ with +20 stars) | `referenceDps: 18_000`, with the measurement recorded in the rule comment |
 
 ## 3. Acceptance results
@@ -80,7 +85,8 @@ node tools/tests/combat_field_contract_sim.js
 
 | Test | Result |
 | --- | --- |
-| `player_raid_engine_sim.mjs` | **19 passed, 0 failed** |
+| `player_raid_engine_sim.mjs` | **20 passed, 0 failed** |
+| `raid_time_model_sim.mjs` | **15 passed, 0 failed** |
 | `raid_api_source_sim.mjs` | **12 passed, 0 failed** |
 | `raid_ui_sim.js` | **20 passed, 0 failed** |
 | `raid_profile_source_sim.mjs` | **9 passed, 0 failed** |
@@ -91,6 +97,35 @@ node tools/tests/combat_field_contract_sim.js
 
 `social_worker_sim.mjs` needs `miniflare`, which is not installed in this sandbox; it is unrelated to
 the raid and was not run here.
+
+### Cadence invariance — measured, not asserted
+
+The property the fixed-cell scheduler exists to provide: **the same seed, profiles and intents produce the
+same state at the same simulation instant, no matter how often the run was read.** Measured on a full run
+(seed 12345, Lv150 reference Lord Knight, 17,729 DPS, focus re-issued on the 5 s wall clock). "fin" is the
+second the run reached its terminal state.
+
+| Read cadence | before (`90b3882`) | after |
+| --- | --- | --- |
+| 100 ms | dmg 4,511,017 · fin 271.8 s | dmg 4,511,017 · fin 272.4 s |
+| 1 s | dmg 4,363,704 · fin 263.0 s | dmg 4,511,017 · fin 272.4 s |
+| 2 s | dmg 4,441,321 · fin 265.0 s | dmg 4,511,017 · fin 272.4 s |
+| 5 s | dmg 4,363,704 · fin 265.0 s | dmg 4,511,017 · fin 272.4 s |
+| 30 s | dmg 4,363,704 · fin 265.0 s | dmg 4,511,017 · fin 272.4 s |
+
+The reviewed build reported **four different runs from one run**. It was only self-consistent at 100 ms,
+which no real client polls at. The current build is identical at all five cadences, including the two
+coarse ones that matter in production (the 2 s co-op poll and a backgrounded solo tab that resumes after
+30 s).
+
+Note the direction of the change: the 100 ms column is the trustworthy one (it is the finest sampling, and
+it is the one both builds agree on). Fixing the scheduler makes every coarse reader converge **onto** it,
+which is why the post-fix numbers sit at 272.4 s rather than at the old coarse 263–265 s. The reviewed
+build's faster-looking clears were under-simulation, not speed.
+
+`solo` and co-op share this scheduler, so the same guarantee covers a solo player whose tab was
+backgrounded (the engine catches up cell by cell on resume) and a co-op party whose members poll at
+different cadences or disconnect and reconnect.
 
 ### What the engine sim actually plays
 

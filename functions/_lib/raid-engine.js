@@ -17,9 +17,10 @@
 // The client never reports damage, a kill, a stage clear or a movement outcome. A walk is validated
 // against the stage bounds; a target is validated against the live enemy list.
 import {
-  RAID_RULES, RAID_STAGES, raidPartySize, raidStage, stageEnemyHp, rollRaidClear, rollPityChest,
-  rollFracturedChest, raidMeaningful, raidRunSeconds, raidStageSeconds,
+  RAID_RULES, RAID_RULES_VERSION, RAID_STAGES, raidPartySize, raidStage, stageEnemyHp, rollRaidClear,
+  rollPityChest, rollFracturedChest, raidMeaningful, raidRunSeconds, raidStageSeconds,
 } from './raid-rules.js';
+export { RAID_RULES_VERSION };
 import { sanitizeRaidProfile } from './raid-profile.js';
 
 const finite = (n, fallback = 0) => (Number.isFinite(Number(n)) ? Number(n) : fallback);

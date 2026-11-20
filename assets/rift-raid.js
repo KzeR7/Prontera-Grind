@@ -26,6 +26,10 @@
   const R = {
     open: false, busy: '', error: '', view: 'lobby', account: null, party: null, eligibility: null,
     activeRun: null, run: null, result: null, rewardRows: [], targetId: '',
+    // A solo run is executed locally and is NOT the same thing as `run` (which is a public snapshot
+    // the renderer reads). `solo` is the live engine object; `soloRunning` keeps a lobby refresh from
+    // tearing it down; `resumeRunId` is the run this tab already holds a checkpoint for.
+    solo: null, soloRunning: false, soloStop: null, resumeRunId: '', resumeRulesVersion: '', soloResumed: false,
     pending: new Map(), lastSync: 0, stageSeen: -1,
     timer: null, partyAction: false, codeOpen: false, notice: '', lastResultId: '', settling: false,
     deadlineSettledFor: '', forgeExtra: 0, inRun: false, lastPollAt: 0,
@@ -322,6 +326,10 @@
       R.activeRun = data.activeRun || null;
       R.lastSync = Date.now();
       if (data.activeRunError) R.error = data.activeRunError;
+      // A solo run lives only in this tab, so the server has nothing to say about it: `activeRun` is
+      // null while one is in progress. Without this guard a lobby refresh (login, an account sync)
+      // would tear down a local run that is still being played.
+      if (R.soloRunning) { render(); return; }
       if (R.activeRun) {
         adoptRun(R.activeRun);
         if (['cleared', 'failed'].includes(R.activeRun.state)) await settle(R.activeRun.id);
@@ -481,6 +489,116 @@
     if (R.open) render();
   }
 
+  // ---- solo: executed here, in this tab ----------------------------------------------------------
+  // A solo run is NOT installed in the Social room. `start` is the only call that reserves anything:
+  // an authenticated Pages Function that writes the daily entry and returns the run identity, seed,
+  // rules version and profile snapshot. From there the run is simulated locally by the same engine
+  // module the co-op room imports (assets/raid-engine/raid-engine.js), so a complete solo run makes
+  // zero raid-related Durable Object requests -- no install, no socket, no snapshot poll, no alarm.
+  //
+  // Recovery, in the order it can happen:
+  //   * a checkpoint exists for this account + run id + rules version -> resume it, never re-reserve;
+  //   * the checkpoint is missing -> the server decides whether an entry is left (it may answer with
+  //     the run this account already owns, which is what makes a lost response safe);
+  //   * the checkpoint is BROKEN (unreadable, wrong rules, storage refused) -> stop and say so. This
+  //     is the one case that must not fall through to a fresh paid entry.
+  async function startSoloRun() {
+    const solo = globalThis.PGRaidSolo;
+    if (!solo || typeof solo.begin !== 'function') {
+      R.error = 'The local raid runner did not load. Reload the page and try again.';
+      R.busy = ''; render(); return;
+    }
+    const accountKey = String(R.account?.userId || myId() || 'anon');
+    // Resume before reserving. A tab that was closed mid-run must continue the run it already paid
+    // for rather than buying a second entry.
+    if (R.resumeRunId) {
+      const saved = solo.loadCheckpoint(accountKey, R.resumeRunId, R.resumeRulesVersion || '');
+      if (saved.status === 'ok') {
+        R.busy = '';
+        R.soloResumed = true;
+        startSoloLoop(saved.run, accountKey);
+        return;
+      }
+      if (saved.status === 'broken') {
+        R.error = 'Your saved solo run could not be restored (' + (saved.why || 'unreadable') + '). '
+          + 'It was not restarted, so today\'s entry is not spent. Reload to try again.';
+        R.busy = ''; render(); return;
+      }
+    }
+    let data;
+    try {
+      data = await api('', { action: 'start', mode: 'solo' });
+    } catch (error) {
+      R.error = error.message || 'The raid lobby could not be reached.';
+      R.busy = ''; render(); return;
+    }
+    if (!data || !data.run) {
+      R.error = data?.err || 'The raid could not start.';
+      R.busy = ''; render(); return;
+    }
+    // The server may hand back a run that already exists for this account (a lost response, a
+    // reopened tab). Its id is the identity the checkpoint is scoped by.
+    const reservation = {
+      runId: data.run.id,
+      seed: data.run.seed,
+      startedAt: data.run.startedAt,
+      deadlineAt: data.run.deadlineAt,
+      rulesVersion: data.run.rulesVersion || data.rulesVersion || '',
+      member: { id: myId(), name: R.account?.name || 'Adventurer', profile: data.run.members?.[0]?.profile },
+    };
+    if (['cleared', 'failed'].includes(data.run.state)) {
+      // The server already considers this run over: adopt and settle it, do not simulate it again.
+      R.activeRun = data.run; adoptRun(data.run); R.view = 'results';
+      R.busy = ''; await settle(data.run.id); return;
+    }
+    const run = await solo.begin(reservation);
+    R.resumeRunId = run.id;
+    R.resumeRulesVersion = reservation.rulesVersion;
+    R.busy = '';
+    R.soloResumed = false;
+    startSoloLoop(run, accountKey);
+  }
+
+  // The local loop. It reads the clock, lets the engine resolve the elapsed cells, mirrors the
+  // result into the same renderer co-op uses, and settles once at the end. `every` is 100 ms only
+  // because that is a comfortable animation cadence: correctness does not depend on it, which is
+  // what lets a backgrounded tab resume identically.
+  function startSoloLoop(run, accountKey) {
+    const solo = globalThis.PGRaidSolo;
+    R.soloRunning = true;
+    stopPolling(); // there is no room to poll for a local run
+    R.activeRun = null;
+    R.view = 'arena';
+    R.result = null;
+    R.lastResultId = '';
+    adoptRun(solo.snapshotSync(run));
+    R.solo = run;
+    if (typeof R.soloStop === 'function') { try { R.soloStop(); } catch {} }
+    R.soloStop = solo.loop(run, {
+      every: 100,
+      accountKey,
+      serverOffset: num(R.serverOffset, 0),
+      onFrame: (local, snap) => {
+        // `R.solo` is the live engine run (what input mutates); `R.run` is the snapshot the renderer
+        // and the HUD read. Keeping both in one place is what stops a frame from drawing a stale run.
+        R.solo = local;
+        try { adoptRun(snap || local); } catch (error) { console.error('Solo frame failed', error); }
+      },
+      onEnd: async (local) => {
+        R.soloStop = null;
+        R.soloRunning = false;
+        R.solo = null;
+        // Persist the terminal state once so a reload that races the settle still shows the result
+        // instead of starting a new run.
+        solo.saveCheckpoint(local, accountKey);
+        const snapshot = solo.snapshotSync(local, local.finishedAt || local.updatedAt);
+        try { adoptRun(snapshot); } catch (error) { console.error('Solo end failed', error); }
+        await settle(local.id);
+      },
+      onError: (error) => { R.error = error.message || 'The solo run hit an error.'; },
+    });
+  }
+
   async function settle(runId) {
     if (!runId || R.settling || (R.result && R.result.acknowledged !== false)) return;
     R.settling = true;
@@ -543,9 +661,7 @@
     try {
       if (action === 'solo') {
         R.busy = 'start';
-        const data = await api('', { action: 'start', mode: 'solo' });
-        R.activeRun = data.run; adoptRun(data.run); R.view = 'arena'; R.result = null; R.lastResultId = '';
-        if (data.run && ['cleared', 'failed'].includes(data.run.state)) await settle(data.run.id);
+        await startSoloRun();
       } else if (action === 'start') {
         R.busy = 'start';
         const data = await api('', { action: 'start', mode: 'party' });
@@ -618,6 +734,21 @@
     if (!run || run.state !== 'active') return null;
     const key = kind + ':' + (extra.targetId || '');
     const actionId = actionIdFor(key);
+    // Solo: the paid action is applied to the LOCAL run by the shared engine. It still goes through
+    // `applyRaidAction`, so the receipt/cooldown/range rules are the same ones the room applies; what
+    // changes is only where the call is made. No request leaves the tab.
+    if (R.solo) {
+      try {
+        const result = await globalThis.PGRaidSolo.act(R.solo, kind, { ...extra, actionId, at: R.solo.updatedAt });
+        R.pending.delete(key);
+        if (result && result.run) adoptRun(globalThis.PGRaidSolo.snapshotSync(result.run, result.run.updatedAt));
+        return result;
+      } catch (error) {
+        R.error = error.message || 'That action could not be applied.';
+        render();
+        return null;
+      }
+    }
     try {
       const data = await api('', { action: 'act', runId: run.id, combatAction: kind, actionId, ...extra });
       if (data.run) adoptRun(data.run);
@@ -643,6 +774,12 @@
     const at = globalThis.PGRaidDungeon ? globalThis.PGRaidDungeon.serverNow() : Date.now();
     if (at - num(R.lastMoveSentAt) < 200) return;
     R.lastMoveSentAt = at;
+    if (R.solo) {
+      // A local destination intent. The engine's own floor and stale-ordering rules still apply.
+      globalThis.PGRaidSolo.act(R.solo, 'move', { x, z, actionId: newActionId(), at: R.solo.updatedAt })
+        .catch(error => { R.error = error.message || 'That move could not be applied.'; });
+      return;
+    }
     api('', { action: 'act', runId: run.id, combatAction: 'move', actionId: newActionId(), x, z })
       .then(data => { if (data && data.run) adoptRun(data.run); })
       .catch(() => {});
@@ -650,6 +787,11 @@
   function sendFocus(targetId) {
     const run = R.run;
     if (!run || run.state !== 'active' || !targetId) return;
+    if (R.solo) {
+      globalThis.PGRaidSolo.act(R.solo, 'focus', { targetId, actionId: newActionId(), at: R.solo.updatedAt })
+        .catch(error => { R.error = error.message || 'That target could not be selected.'; });
+      return;
+    }
     api('', { action: 'act', runId: run.id, combatAction: 'focus', actionId: newActionId(), targetId })
       .then(data => { if (data && data.run) adoptRun(data.run); })
       .catch(() => {});

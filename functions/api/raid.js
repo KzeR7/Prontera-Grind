@@ -16,7 +16,7 @@ import {
 import {
   decodeRaidSave, raidProfileFromSave, raidProfileFingerprint, sanitizeRaidProfile, applyRaidCard,
 } from '../_lib/raid-profile.js';
-import { RAID_ACTION_ID_RE } from '../_lib/raid-engine.js';
+import { RAID_ACTION_ID_RE, createRaidRun, raidPublicRun, RAID_RULES_VERSION } from '../_lib/raid-engine.js';
 
 const now = () => Date.now();
 const int = (n, lo = 0, hi = Number.MAX_SAFE_INTEGER) => Math.max(lo, Math.min(hi, Math.floor(Number(n) || 0)));
@@ -226,6 +226,11 @@ async function partyView(env, user) {
 async function loadActiveRun(env, user) {
   const row = await db.raidActiveForUser(env.DB, user.id);
   if (!row) return { ok: true, run: null, error: '' };
+  // A solo run is not in the room, so asking the room about it would (a) be a pointless request on
+  // every login and (b) report "the room is down" for a fight the room has nothing to do with. The
+  // reservation is the answer: the client uses it to resume its own local simulation.
+  const local = safeJson(row.checkpoint_json);
+  if (local && local.local) return { ok: true, run: local, error: '', local: true };
   const snapshot = await socialRequest(env, '/raid/snapshot', user, 'POST', { runId: row.id });
   if (snapshot.ok) return { ok: true, run: snapshot.data?.run || null, error: '' };
   if (snapshot.status === 404) {
@@ -381,6 +386,26 @@ async function startRaid(env, user, body) {
     return { ok: false, status: 503, data: { err: 'The raid could not reserve every entry. Nothing was charged.' } };
   }
 
+  // Solo never touches the Social Durable Object. The reservation above is the whole server side of
+  // a solo entry: an authenticated D1 write that spends one daily entry and records the run identity,
+  // seed, rules version and profile snapshot. The browser then simulates the run with the shared
+  // engine and calls `settle` exactly once. Installing a solo run in the room would make the run
+  // depend on a Social connection it does not need, and would schedule room alarms for a fight the
+  // room is not simulating.
+  if (mode === 'solo') {
+    const run = buildSoloRun(payload);
+    await writeCheckpoint(env, runId, checkpointFromPayload(payload));
+    // The seed IS returned here, and only here. A solo client has to reconstruct the run locally, and
+    // the seed is what makes its copy the same fight. It is not added to the public snapshot, because
+    // for co-op the room owns the simulation and the clients never need it.
+    run.seed = seed;
+    return { ok: true, status: 200, data: {
+      ok: true, local: true, runId, run, partySize, totalHp, stageEnemyHp: totalHp, deadlineAt,
+      rulesVersion: RAID_RULES_VERSION,
+      entriesLeft: Math.max(0, RAID_RULES.dailyEntries - int((await db.raidDailyEntries(env.DB, user.id, raidDayKey(at)))?.n)),
+    } };
+  }
+
   const install = await socialRequest(env, '/raid/install', user, 'POST', payload);
   if (!install.ok) {
     if (install.status >= 400 && install.status < 500) {
@@ -406,6 +431,41 @@ async function startRaid(env, user, body) {
     ok: true, runId, run: returnedRun, partySize, totalHp, stageEnemyHp: totalHp, deadlineAt,
     entriesLeft: Math.max(0, RAID_RULES.dailyEntries - int((await db.raidDailyEntries(env.DB, user.id, raidDayKey(at)))?.n)),
   } };
+}
+
+// A solo run is built by the SAME engine the co-op room runs, from the same payload shape the room
+// would have been given. It is returned to the browser as a public snapshot, which is exactly what
+// `raidPublicRun` produces for the room's snapshot endpoint -- so the client renders one shape in
+// both modes, and the numbers are the engine's, not the client's.
+function buildSoloRun(payload) {
+  const run = createRaidRun({
+    id: payload.id, seed: payload.seed, now: payload.startedAt, leaderId: payload.leaderId,
+    partySize: payload.partySize, members: payload.members,
+  });
+  // The reservation's own clock is the run's identity; settlement compares them, so they must not be
+  // recomputed from a later `now()`.
+  run.deadlineAt = payload.deadlineAt;
+  return raidPublicRun(run, payload.startedAt);
+}
+
+// The D1 checkpoint for a solo run. It records the reservation (identity, seed, roster, profiles) and
+// deliberately NOT any simulated state: the simulation lives in the browser, and the server is not
+// going to pretend it watched the fight. `settle` is what turns a reported outcome into reward rows.
+function checkpointFromPayload(payload) {
+  return {
+    id: payload.id,
+    leaderId: payload.leaderId,
+    partyId: null,
+    partySize: payload.partySize,
+    totalHp: payload.totalHp,
+    startedAt: payload.startedAt,
+    deadlineAt: payload.deadlineAt,
+    bossArmor: payload.bossArmor,
+    seed: payload.seed,
+    rulesVersion: RAID_RULES_VERSION,
+    local: true,
+    members: payload.members,
+  };
 }
 
 // A small adapter so the initial checkpoint has the D1 row's field names without re-reading it.
@@ -482,11 +542,59 @@ function validateTerminalSnapshot(run, snapshot, roster) {
 }
 
 async function ackRun(env, user, runId, settledAt) {
+  // Only a room-owned run has a room to acknowledge to. A solo run was never installed, so there is
+  // nothing to acknowledge and no request to make.
+  const row = await db.raidRun(env.DB, runId);
+  const local = row && safeJson(row.checkpoint_json);
+  if (local && local.local) return true;
   const ack = await socialRequest(env, '/raid/ack', user, 'POST', { runId, settledAt });
   return ack.ok;
 }
 
-async function settleRun(env, user, runId) {
+// ---- solo result validation ---------------------------------------------------------------------
+// A solo run is simulated in the browser. There is no room to interrogate, so the server validates
+// the SHAPE and BOUNDS of the claim and then pays its own reward tables. It never reads a reward
+// amount from the client.
+//
+// Stated plainly, because it is the part a reader should not have to infer: a signed start token
+// authenticates the reservation, not the clear. A determined client can claim a victory it did not
+// earn. What the bounds below achieve is that lying is not PROFITABLE beyond an honest clear: the
+// outcome is one of two words, the contribution numbers are clamped to what the run's own clock and
+// party DPS could physically produce, and the rewards come from the server's tables either way. The
+// replacement for this is bounded replay of timestamped intents against the deterministic engine,
+// proposed in docs/RIFT-RAID-RECONCILIATION.md.
+const SOLO_CLAIM_KEYS = new Set(['outcome', 'finishedAt', 'damage', 'support', 'actions']);
+function validateSoloClaim(run, checkpoint, claim, memberProfile) {
+  if (!claim || typeof claim !== 'object') return { error: 'The run result was not reported.' };
+  for (const key of Object.keys(claim)) {
+    if (!SOLO_CLAIM_KEYS.has(key)) return { error: 'The run result carried an unexpected field.' };
+  }
+  const outcome = claim.outcome === 'clear' ? 'cleared' : claim.outcome === 'failed' ? 'failed' : '';
+  if (!outcome) return { error: 'The run result must be a clear or a loss.' };
+  // The clock is the reservation's. A finished time before the start or after the deadline is not a
+  // longer run; it is a report the run's own schedule cannot have produced.
+  // Validated BEFORE any clamping: `int` clamps, so testing the clamped value would let a finish
+  // reported after the deadline be quietly pulled back inside it and accepted.
+  const reportedFinish = Number(claim.finishedAt);
+  if (!Number.isFinite(reportedFinish)
+      || reportedFinish < Number(run.started_at) || reportedFinish > Number(run.deadline_at)) {
+    return { error: 'The reported finish time is outside the run.' };
+  }
+  const finishedAt = Math.floor(reportedFinish);
+  const elapsed = Math.max(1, (finishedAt - Number(run.started_at)) / 1000);
+  // Physical ceilings. A solo run cannot deal more than its own DPS for its own elapsed seconds, and
+  // cannot take more actions than the combat cadences allow in that time. These are generous (the
+  // auto-attack plus skill plus pet cadence, rounded up) but they are finite, which is the point.
+  const dps = Math.min(RAID_RULES.dpsMax, Math.max(0, Number(sanitizeRaidProfile(memberProfile).dps) || 0));
+  const damageCeiling = Math.ceil(dps * elapsed * 1.5) + Math.ceil(Number(run.total_hp) * 0.2) + 1;
+  const actionCeiling = Math.ceil(elapsed * 4) + 8;
+  const damage = int(claim.damage, 0, damageCeiling);
+  const support = int(claim.support, 0, Math.ceil(dps * elapsed));
+  const actions = int(claim.actions, 0, actionCeiling);
+  return { state: outcome, finishedAt, damage, support, actions, elapsed };
+}
+
+async function settleRun(env, user, runId, body = null) {
   const run = await db.raidRun(env.DB, runId);
   if (!run) return { ok: false, status: 404, data: { err: 'Raid run not found.' } };
   const member = await db.raidRunMember(env.DB, runId, user.id);
@@ -507,17 +615,41 @@ async function settleRun(env, user, runId) {
     } };
   }
 
-  const snapshotResponse = await socialRequest(env, '/raid/snapshot', user, 'POST', { runId });
-  if (!snapshotResponse.ok) {
-    // A failed read is NOT an empty/failed encounter. Keep the reservation and the terminal result;
-    // the caller retries settlement.
-    return { ok: false, status: 503, data: { err: snapshotResponse.data?.err || 'The raid room could not confirm this result. Retry settlement.' } };
-  }
-  const snapshot = snapshotResponse.data?.run;
   const roster = await db.raidRunMembers(env.DB, runId);
-  const invalid = validateTerminalSnapshot(run, snapshot, roster);
-  if (invalid) return { ok: false, status: 409, data: { err: invalid, run: snapshot } };
-  if (snapshot.state === 'active') return { ok: false, status: 409, data: { ok: false, active: true, run: snapshot } };
+  const checkpoint = safeJson(run.checkpoint_json);
+  let snapshot;
+  if (checkpoint && checkpoint.local) {
+    // Solo: the run is local, so the "snapshot" is the validated claim. It is shaped exactly like the
+    // room's snapshot below so the reward and ledger code is shared -- one settlement path, one set of
+    // reward tables, exactly-once enforced by the same `raid_settlements` row.
+    const mine = (roster.results || []).find(x => Number(x.user_id) === user.id);
+    const claim = body && typeof body.result === 'object' ? body.result : null;
+    const checked = validateSoloClaim(run, checkpoint, claim, mine ? safeJson(mine.profile_json) : {});
+    if (checked.error) return { ok: false, status: 409, data: { err: checked.error } };
+    snapshot = {
+      id: run.id,
+      state: checked.state,
+      partySize: Number(run.party_size),
+      startedAt: Number(run.started_at),
+      deadlineAt: Number(run.deadline_at),
+      finishedAt: checked.finishedAt,
+      members: (roster.results || []).map(x => Number(x.user_id) === user.id
+        ? { id: user.id, damage: checked.damage, support: checked.support, actions: checked.actions, dodges: 0, downs: 0 }
+        // A solo run has one member. Anything else in the roster is a data error, not a teammate.
+        : { id: Number(x.user_id), damage: 0, support: 0, actions: 0, dodges: 0, downs: 0 }),
+    };
+  } else {
+    const snapshotResponse = await socialRequest(env, '/raid/snapshot', user, 'POST', { runId });
+    if (!snapshotResponse.ok) {
+      // A failed read is NOT an empty/failed encounter. Keep the reservation and the terminal result;
+      // the caller retries settlement.
+      return { ok: false, status: 503, data: { err: snapshotResponse.data?.err || 'The raid room could not confirm this result. Retry settlement.' } };
+    }
+    snapshot = snapshotResponse.data?.run;
+    const invalid = validateTerminalSnapshot(run, snapshot, roster);
+    if (invalid) return { ok: false, status: 409, data: { err: invalid, run: snapshot } };
+    if (snapshot.state === 'active') return { ok: false, status: 409, data: { ok: false, active: true, run: snapshot } };
+  }
 
   const settledAt = now();
   const isClear = snapshot.state === 'cleared';
@@ -737,7 +869,7 @@ export const onRequestPost = guard(async ({ request, env }) => {
   if (action === 'settle') {
     if (!runIdString(body.runId)) return fail('Invalid raid run id.', 400);
     if (!(await installed(env))) return fail('Rift Raid D1 migration is not installed.', 503, { installed: false });
-    const r = await settleRun(env, user, body.runId);
+    const r = await settleRun(env, user, body.runId, body);
     return json(r.data, r.status);
   }
   if (action === 'sync') {
@@ -750,6 +882,18 @@ export const onRequestPost = guard(async ({ request, env }) => {
     try { run = await db.raidRun(env.DB, body.runId); }
     catch (error) { console.error('Raid sync read failed', error); return json({ ok: false, retry: true, err: 'The raid record is temporarily unreadable. Retry.' }, 503); }
     if (!run) return json({ ok: false, missing: true, err: 'That raid no longer exists.' }, 404);
+    // A solo run is not in the room, so syncing it never asks the room. The browser owns that
+    // simulation; the server only needs to say whether the reservation is still live (which is what
+    // tells a reloading tab to resume rather than reserve again).
+    const localCheckpoint = safeJson(run.checkpoint_json);
+    if (localCheckpoint && localCheckpoint.local) {
+      if (run.state === 'active' && Number(run.deadline_at) <= now()) {
+        // The reported result never arrived and the deadline has passed. The run is over; the client
+        // reports the outcome it simulated and settles. Nothing is granted here.
+        return json({ ok: true, run: null, local: true, expired: true, runId: body.runId, deadlineAt: Number(run.deadline_at) });
+      }
+      return json({ ok: true, local: true, run: localCheckpoint, runId: body.runId });
+    }
     const snapshot = await socialRequest(env, '/raid/snapshot', user, 'POST', { runId: body.runId });
     if (!snapshot.ok) {
       // The room lost the run (a restart, an eviction): rebuild it from the D1 checkpoint instead of
@@ -760,7 +904,7 @@ export const onRequestPost = guard(async ({ request, env }) => {
     }
     const live = snapshot.data?.run || null;
     if (live && ['cleared', 'failed'].includes(live.state)) {
-      const settled = await settleRun(env, user, body.runId);
+      const settled = await settleRun(env, user, body.runId, body);
       if (settled.ok) return json({ ok: true, run: live, settlement: settled.data });
     }
     return json({ ok: true, run: live });
