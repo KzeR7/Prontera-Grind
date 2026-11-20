@@ -219,8 +219,20 @@ new_sqlite_classes = ["Social"]
 
   Push-Location $worktree
   try {
-    $deployOutput = & npx @Wrangler pages deploy dist --project-name $PagesProject --branch main 2>&1
-    if ($LASTEXITCODE -ne 0) { Fail "Pages deploy failed: $($deployOutput -join ' ')" }
+    # PowerShell 5.1 turns native stderr into ErrorRecords. Wrangler writes its harmless
+    # "working directory ... has uncommitted changes" notice to stderr, and with
+    # $ErrorActionPreference='Stop' a plain `2>&1` aborts the script before $LASTEXITCODE is read.
+    # Keep stderr for the error message, but do not let the notice terminate the deploy.
+    $previousPreference = $ErrorActionPreference
+    $deployCode = 0
+    try {
+      $ErrorActionPreference = 'Continue'
+      $deployOutput = & npx @Wrangler pages deploy dist --project-name $PagesProject --branch main --commit-dirty=true 2>&1
+      $deployCode = $LASTEXITCODE
+    } finally {
+      $ErrorActionPreference = $previousPreference
+    }
+    if ($deployCode -ne 0) { Fail "Pages deploy failed: $($deployOutput -join ' ')" }
   } finally { Pop-Location }
   $url = (($deployOutput -join "`n") | Select-String -Pattern 'https://[0-9a-f]{8}\.prontera-grind-staging\.pages\.dev' -AllMatches).Matches.Value | Select-Object -First 1
   if (-not $url) { $url = "https://main.$PagesProject.pages.dev" }
