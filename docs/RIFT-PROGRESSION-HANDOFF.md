@@ -108,6 +108,23 @@ The script refuses to continue if a production name or ID (`horizonhaven`, `pg`,
 `prontera-social`, `prontera-gate`, the production D1 UUID) reaches a generated config. It leaves
 the worktree in `%TEMP%` on failure for diagnosis.
 
+### If the script reports local changes
+
+It will not discard or stash your files. Local Wrangler state and scratch archives (for example
+`.wrangler/`, `prontera-ui-redesign-v2.zip`, `workshop-source.zip`) can be hidden from Git without
+deleting or moving them:
+
+```powershell
+$repo = Join-Path $env:USERPROFILE 'Desktop\Prontera-Grind'
+Set-Location $repo
+@('.wrangler/', 'prontera-ui-redesign-v2.zip', 'workshop-source.zip') |
+  Add-Content -Path (Join-Path $repo '.git\info\exclude') -Encoding ascii
+git status --short
+```
+
+`.git/info/exclude` is local-only and is not committed. If `git status` still shows tracked edits,
+commit or stash them deliberately; the handoff correctly refuses to run over them.
+
 ### If you prefer to do step 1 separately
 
 ```powershell
