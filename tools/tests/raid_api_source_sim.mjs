@@ -490,6 +490,29 @@ await t('a complete solo run reserves and settles without one Social request', a
   assert.equal(metrics.doRequests, before, 'and still no Social request');
 });
 
+// "Missing local state must not silently create another paid run" -- enforced by the database, not by
+// the client remembering. A client that lost its checkpoint (cleared storage, a different device, a
+// reload before the checkpoint was written) still cannot buy a second entry while the first run is
+// active, because the reservation itself is the lock.
+await t('a client with no local state cannot buy a second solo entry', async () => {
+  const me = await soloUser('SoloAmnesia');
+  const first = await postRaid(me, { action: 'start', mode: 'solo' });
+  assert.equal(first.ok, true, JSON.stringify(first.data));
+  const entriesAfterFirst = sql.prepare('SELECT COUNT(*) AS n FROM raid_entries WHERE user_id=?').get(me.id).n;
+  assert.equal(entriesAfterFirst, 1);
+
+  // The client "forgets everything" and starts again. The server must hand back the run it already
+  // owns (or refuse), and must never spend a second entry.
+  const second = await postRaid(me, { action: 'start', mode: 'solo' });
+  assert.equal(second.ok, true, 'the start is answered, not crashed: ' + JSON.stringify(second.data));
+  assert.equal(second.data.resumed, true, 'the existing run is resumed');
+  assert.equal(second.data.runId, first.data.runId, 'it is the SAME run, not a new one');
+  assert.equal(sql.prepare('SELECT COUNT(*) AS n FROM raid_entries WHERE user_id=?').get(me.id).n, 1,
+    'still exactly one entry spent');
+  assert.equal(sql.prepare('SELECT COUNT(*) AS n FROM raid_runs WHERE leader_id=?').get(me.id).n, 1,
+    'and exactly one run reserved');
+});
+
 await t('a solo claim cannot buy rewards the run could not have produced', async () => {
   const u = await soloUser('SoloTwo');
   const start = await postRaid(u, { action: 'start', mode: 'solo' });
