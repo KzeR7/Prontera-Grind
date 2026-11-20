@@ -15,9 +15,9 @@
 // queue between `run.updatedAt` and `now`. So frequency should be provably irrelevant.
 import assert from 'node:assert/strict';
 import {
-  createRaidRun, advanceRaidRun, applyRaidAction, raidPublicRun,
+  createRaidRun, advanceRaidRun, applyRaidAction, raidPublicRun, sanitizeRaidRun,
 } from '../../functions/_lib/raid-engine.js';
-import { RAID_RULES, RAID_STAGES } from '../../functions/_lib/raid-rules.js';
+import { RAID_RULES, RAID_STAGES, raidRunSeconds } from '../../functions/_lib/raid-rules.js';
 
 let pass = 0, fail = 0;
 const t = (name, fn) => {
@@ -342,6 +342,61 @@ t('a stage transitions once, however many readers race it', () => {
   // Reading on does advance combat, but it must never advance the *stage* again without a portal.
   assert.ok(run.stageIndex >= idx + 1, 'stage index never goes backwards');
   assert.ok(run.stageIndex <= idx + 2, 'and it does not skip a stage');
+});
+
+// A disconnect is a gap in reads, and it must behave like one: the party that reconnects is in the
+// state the same party would have reached had it never left. This is the co-op form of the cadence
+// guarantee, and it is what `raidRestore` relies on when it rebuilds a room from a checkpoint.
+t('a party that disconnects and returns is where it would have been without leaving', () => {
+  const roster = () => [member(1), member(2)];
+  const straight = newRun(roster(), 5);
+  for (let s = 1; s <= 120; s++) advanceRaidRun(straight, T0 + s * 1000);
+
+  const left = newRun(roster(), 5);
+  for (let s = 1; s <= 60; s++) advanceRaidRun(left, T0 + s * 1000);
+  // Everyone closes the tab: the only thing that survives is the sanitised checkpoint.
+  const resumed = sanitizeRaidRun(JSON.parse(JSON.stringify(left)));
+  advanceRaidRun(resumed, T0 + 120_000);
+
+  assert.equal(resumed.state, straight.state);
+  assert.equal(resumed.stageIndex, straight.stageIndex);
+  assert.equal(Math.round(resumed.members[0].damage), Math.round(straight.members[0].damage),
+    'the restored party dealt what the connected party dealt');
+  assert.equal(Math.round(resumed.members[0].hp), Math.round(straight.members[0].hp));
+});
+
+t('a party that returns after the deadline resolves then, on the first successful read', () => {
+  const run = newRun([member(1), member(2)], 5);
+  for (let s = 1; s <= 30; s++) advanceRaidRun(run, T0 + s * 1000);
+  const away = sanitizeRaidRun(JSON.parse(JSON.stringify(run)));
+  advanceRaidRun(away, T0 + raidRunSeconds() * 1000 + 60_000);
+  assert.notEqual(away.state, 'active', 'the run did not stay alive past its deadline');
+  assert.ok(away.finishedAt > 0 && away.finishedAt <= away.deadlineAt,
+    'it ends at or before the deadline, never after: ' + ((away.finishedAt - away.startedAt) / 1000) + 's');
+  assert.ok(away.updatedAt <= away.deadlineAt, 'the clock never runs past the deadline either');
+});
+
+t('one player leaving does not reset or strand the party', () => {
+  const run = newRun([member(1), member(2), member(3)], 5);
+  for (let s = 1; s <= 50; s++) advanceRaidRun(run, T0 + s * 1000);
+  const dealt = run.members[0].damage;
+  const stage = run.stageIndex;
+  // Member 3 disconnects for good: the run keeps the members it has and keeps going.
+  run.members = run.members.filter(m => m.id !== 3);
+  for (let s = 51; s <= 100; s++) advanceRaidRun(run, T0 + s * 1000);
+  assert.equal(run.members.length, 2);
+  assert.equal(run.stageIndex >= stage, true, 'the party did not fall back a stage');
+  assert.ok(run.members[0].damage > dealt, 'and it kept fighting');
+});
+
+t('hp stays finite and bounded through damage, healing and a revive', () => {
+  const run = newRun([member(1), member(2)], 5);
+  for (let s = 1; s <= 400 && run.state === 'active'; s++) advanceRaidRun(run, T0 + s * 1000);
+  for (const m of run.members) {
+    assert.ok(Number.isFinite(m.hp), 'hp is finite');
+    assert.ok(Number.isFinite(m.maxHp), 'maxHp is finite');
+    assert.ok(m.hp >= 0 && m.hp <= m.maxHp, 'hp is inside its own bound: ' + m.hp + '/' + m.maxHp);
+  }
 });
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
