@@ -70,6 +70,15 @@ export const RAID_RULES = Object.freeze({
     reachMelee: 1.55,
     reachRanged: 3.6,
     playerReachBonus: 0.35,
+    // The party always enters at the stage entrance, out of range of the pack. The first swing is seeded
+    // this far after spawn, so it is owed from a position the member can actually attack from. Paying it
+    // from spawn made the opening damage depend on how far a single read had already walked.
+    spawnReachMs: 2_000,
+    // The party always enters a stage at the entrance, out of range of its objective. The first swing is
+    // owed this far after the stage starts, which is the same instant for every read cadence and late
+    // enough that the member has walked into reach. Arming off the walk instead (or off the clock at
+    // spawn) made the number of opening swings depend on the polling rate.
+    openArmMs: 2_600,
   }),
 
   // ---- objective scaling -----------------------------------------------------------------------
@@ -110,7 +119,7 @@ export const RAID_RULES = Object.freeze({
   dpsMax: 800_000,
   maxParty: 3,
   maxActionReceipts: 512,
-  maxCatchupEvents: 4096,
+  maxCatchupEvents: 60_000,
 
   // ---- movement ---------------------------------------------------------------------------------
   // Movement is a destination, not a stream of positions: the client sends an intent when the player
