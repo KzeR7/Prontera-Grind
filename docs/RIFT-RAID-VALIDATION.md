@@ -151,7 +151,7 @@ Current results:
 | `raid_profile_source_sim.mjs` | **9 passed, 0 failed** (47 class rows, packed-save stars, star ATK/penetration, card rank effects) |
 | `player_raid_engine_sim.mjs` | **15 passed, 0 failed** (includes solo/trio clear pacing, the 30% armour penetration step and walking out of a lane before a hazard resolves) |
 | `raid_api_source_sim.mjs` | **12 passed, 0 failed** (card drops, the one-equipped-card API and a `move` reaching the room) |
-| `raid_ui_sim.js` | **13 passed, 0 failed** (walkable arena mount, danger lane, `move` request, a held key walking across a lane boundary, target persistence, forge success/failure, booster cost, aura/titles, card equip, field star ATK, reconnect) |
+| `raid_ui_sim.js` | **14 passed, 0 failed** (walkable arena mount, danger lane, `move` request, a held key walking across a lane boundary, a refused lane backing off, target persistence, forge success/failure, booster cost, aura/titles, card equip, field star ATK, reconnect) |
 | `ui_sim.js` | **64 passed, 0 failed** |
 | `api_sim.js` | **78 passed, 0 failed** |
 | `chatcheck_sim.mjs` | **9 passed, 0 failed** |

@@ -122,6 +122,25 @@ function runFixture(overrides = {}) {
     assert.equal(lastCombat.zone, 'left', 'crossing into the left lane is sent to the server');
   });
 
+  await t('a refused lane backs off instead of flooding the room', async () => {
+    const realFetch = w.fetch;
+    let moves = 0;
+    w.fetch = async (url, options = {}) => {
+      const body = options.body ? JSON.parse(options.body) : {};
+      if (body.action === 'act' && body.combatAction === 'move') {
+        moves++;
+        return { ok: false, status: 409, json: async () => ({ err: 'You are already moving.' }) };
+      }
+      return realFetch(url, options);
+    };
+    w.PGRaid._moveTo(80, 74);
+    await new Promise(r => setTimeout(r, 10));
+    for (let frame = 1; frame <= 20 && w.__raf; frame++) { const step = w.__raf; w.__raf = null; step(frame * 48); }
+    assert.equal(moves, 1, 'one refused move per back-off window');
+    assert.equal(w.PGRaid.state.arena.lane, 'center', 'the refused lane is not adopted');
+    w.fetch = realFetch;
+  });
+
   await t('the target and arena DOM survive an incoming party update', async () => {
     const target = w.document.querySelector('[data-raid-target="8"]');
     target.click();

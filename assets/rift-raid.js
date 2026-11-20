@@ -697,7 +697,7 @@
     const lane = mine?.lane || 'center';
     R.arena = {
       runId: run.id, owner: myId(), x: LANE_X[lane] || 50, y: 73, targetX: null, targetY: null,
-      lane, confirmed: lane, keys: new Set(), pending: false, lastSent: 0, raf: 0, lastFrame: 0,
+      lane, confirmed: lane, refused: '', retryAt: 0, keys: new Set(), pending: false, lastSent: 0, raf: 0, lastFrame: 0,
       lastMyHp: num(mine?.hp), lastAutoAt: 0, attackTimer: 0, field: null, pointerId: null,
       face: 1, mounted: false,
     };
@@ -855,18 +855,30 @@
   }
 
   function sendMove(zone) {
-    const run = R.run, a = R.arena;
-    if (!run || !a || run.state !== 'active' || a.pending || !myMember()) return;
+    const run = R.run, a = R.arena, mine = myMember();
+    // A downed member cannot act, and a refused lane (the room owns the truth) must not be
+    // re-sent every frame: the arena would otherwise bill a request per 320 ms while the sprite
+    // stands still behind a wall of refusals.
+    if (!run || !a || run.state !== 'active' || a.pending || !mine || mine.hp <= 0) return;
+    // A refused lane backs off instead of hammering the room, but it is retried: if the player keeps
+    // standing in the lane they walked into, the client and the room must eventually agree.
+    if (a.refused === zone && Date.now() < a.retryAt) return;
     a.pending = true; a.lastSent = Date.now(); a.lane = zone;
-    const sentLane = zone;
     api('', { action: 'act', runId: run.id, combatAction: 'move', actionId: arenaActionId(), zone })
       .then(data => {
+        a.refused = '';
         if (data.run) adoptRun(data.run);
         if (R.arena === a) syncArena();
       })
       .catch(() => {
         const live = myMember();
-        if (live && R.arena === a) { a.lane = live.lane; a.confirmed = live.lane; }
+        if (R.arena === a) {
+          // The room refused this lane: snap the bookkeeping back to what it reported and let the
+          // player walk out of the refused lane before the client tries again.
+          a.refused = zone;
+          a.retryAt = Date.now() + 500;
+          if (live) { a.lane = live.lane; a.confirmed = live.lane; }
+        }
       })
       .finally(() => {
         if (R.arena !== a) return;
