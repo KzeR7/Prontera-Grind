@@ -148,8 +148,24 @@ def main():
     for eid, fname, g, n, d, size in found:
         print(f'  {eid:10} <- {fname:16} {g:2} gif frames -> {n:2} apng, {d} ms, {size[0]}x{size[1]}')
     print(f'\n{len(found)} emotions written to {OUT.relative_to(ROOT)}')
+
+    if not found:
+        have = sorted(p.name for p in src.iterdir() if p.is_file())
+        print(f'\nNothing matched in {src}')
+        print(f'That folder holds {len(have)} file(s). First 20:')
+        for name in have[:20]:
+            print(f'  {name}')
+        if any(n.lower().endswith(('.act', '.spr')) for n in have):
+            print('\nThose look like the game sprite files (emotion.act / emotion.spr), not GIFs.')
+            print('This script converts the emote GIFs from https://irowiki.org/wiki/Emotes .')
+            print('The .act/.spr route needs the Go renderer instead - see tools/social/README.md.')
+        else:
+            print('\nThis script wants the GIFs saved from https://irowiki.org/wiki/Emotes,')
+            print('named exactly as the wiki names them: ' + ', '.join(sorted(FILENAMES.values())[:6]) + ', ...')
+        raise SystemExit(1)
+
     if missing:
-        print(f'{len(missing)} not in {src}:')
+        print(f'{len(missing)} id(s) had no file in that folder:')
         for eid, fname in missing:
             print(f'  {eid:10} needs {fname}')
     print('\nnext: python3 tools/social/emote-layout.py  -> paste the EMOTE_LAYOUT line into assets/social-rules.js')

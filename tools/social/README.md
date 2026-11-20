@@ -81,10 +81,21 @@ The second needs no renderer and no Go, only Pillow. Save the emote GIFs from
 <https://irowiki.org/wiki/Emotes> into a folder, using their own file names (`Omg.gif`, `Sob.gif`,
 `Emote_bawi.png`, ...), and run:
 
-```sh
-python3 tools/social/import-emote-gifs.py <folder-with-gifs>
-python3 tools/social/emote-layout.py                       # prints the new EMOTE_LAYOUT
+```powershell
+# Windows PowerShell: use the path itself. The angle brackets are not part of the command,
+# and a path with spaces needs quotes - PowerShell treats < and > as redirection operators.
+py tools/social/import-emote-gifs.py "C:\Users\You\Desktop\Horizon Haven\emotion"
+py tools/social/emote-layout.py
 ```
+
+```sh
+# macOS / Linux
+python3 tools/social/import-emote-gifs.py "/path/to/emotion"
+python3 tools/social/emote-layout.py
+```
+
+If the folder holds `emotion.act` / `emotion.spr` instead of GIFs, the script says so: that is the
+sprite route above and needs the Go renderer, not this importer.
 
 `import-emote-gifs.py` converts whichever files it finds into the same APNG shape the game already
 loads: frames cropped to the union of the painted pixels across the animation (exactly what
