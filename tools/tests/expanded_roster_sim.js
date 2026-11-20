@@ -227,7 +227,10 @@ test('every expanded class has a fitted damage budget',()=>{
   assert.deepEqual(Object.keys(budget).sort(),[...CLASS_IDS].sort());
   for(const [cls,b] of Object.entries(budget)){
     const t=json(`return SKILL_TUNING[${JSON.stringify(cls)}]`);assert.ok(t,cls+' has no budget');
-    assert.equal(t.single.length,3);assert.equal(t.area.length,3);assert.ok(Math.abs(t.single[2]-b.K)<.001&&Math.abs(t.area[2]-b.A)<.001,cls+' drifted from its recorded fit');
+    assert.equal(t.single.length,3);assert.equal(t.area.length,3);assert.ok(Math.abs(t.single[2]-b.K)<.001,cls+' single-target fit');
+    // Sura's owner-approved area retune supersedes its historical 0.2 fit; keep the historical fixture intact.
+    assert.ok(Math.abs(t.area[2]-(cls==='Sura'?.5:b.A))<.001,cls+' area tuning');
+    if(cls==='Sura')assert.equal(b.A,.2,'the baseline fixture remains unchanged');
     assert.equal(ev(`CLASSES[${JSON.stringify(cls)}].atk`),b.atk,cls+' attack multiplier');assert.ok(ev(`!!CLASSES[${JSON.stringify(b.sibling)}]`),cls);
   }
 });

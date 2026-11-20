@@ -43,6 +43,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
  w.eval(fs.readFileSync('assets/mastery-titles.js','utf8'));w.INDEX_TITLES=[{id:'field-initiate',name:'Field Initiate',xp:200}];
  w.eval(fs.readFileSync('assets/social-title-art.js','utf8'));w.eval(fs.readFileSync('assets/digimon-sanctuary.js','utf8'));
  w.PGSocialFishing.FISHING_TITLES=require('../../assets/social-fishing.js').FISHING_TITLES;
+ w.eval(fs.readFileSync('assets/signature-fx.js','utf8'));w.eval(fs.readFileSync('assets/spirit-spheres.js','utf8'));
  w.eval(fs.readFileSync('assets/social-scene.js','utf8'));
  const scene=await w.PGSocialScene.create(host,w.document.getElementById('labels'),{self:()=>1,menu(...a){menuCalls.push(a)},move(x,z){moves.push({x,z})},seat(id){selectedSeat=id},sanctuaryShop(){shopOpens++},sanctuaryIndex(){indexOpens++}}),flush=async()=>{for(let i=0;i<6;i++)await Promise.resolve()};
  const groundPlane=scene.scene.children.find(o=>o.geometry?.parameters?.width===192&&o.geometry?.parameters?.height===218);
@@ -111,6 +112,16 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
  const state={id:1,name:'Synthetic',x:0,z:12,dir:0,sit:true,path:[],look:{cls:'Novice',appearance:{version:1,sex:'m'},refine:10,title:'Poring Hunter',lv:150}};
  scene.active=true;scene.putPlayer(state);await flush();frame(now+=100);assert.equal(draws.length,0);frame(now+=3100);await flush();frame(now+=100);assert(draws.length,'failed download automatically retries without network movement');assert.equal(draws.at(-1)[2],'idle','pending sitting atlas falls back to visible standing sprite');assert.equal(typeof draws.at(-1)[7],'function','native weapon glow hook');assert.equal(typeof draws.at(-1)[8],'function','stowed weapon glow hook');
  sitReady=true;frame(now+=100);await flush();frame(now+=100);assert.equal(draws.at(-1)[2],'sit');
+ // A remote Monk-line player always has five cosmetic spheres, including when seated.
+ const spiritPlayer={id:77,name:'Spirit',x:2,z:13,dir:0,sit:true,path:[],look:{cls:'Sura',appearance:{version:1,sex:'m'}}};
+ scene.putPlayer(spiritPlayer);await flush();frame(now+=100);
+ let spheres=scene.scene.children.find(o=>o.userData.spiritSpheres);assert(spheres,'remote Sura gets sphere visuals');
+ assert.equal(spheres.children.filter(o=>o.visible).length,5,'hub always draws all five');
+ const orbX=spheres.children[0].position.x;frame(now+=500);assert.notEqual(spheres.children[0].position.x,orbX,'hub spheres orbit');
+ scene.putPlayer({...spiritPlayer,look:{...spiritPlayer.look,cls:'Knight'}});frame(now+=100);assert.equal(spheres.visible,false,'class switch hides them');
+ scene.putPlayer({...spiritPlayer,look:{...spiritPlayer.look,cls:'Monk'}});frame(now+=100);assert.equal(spheres.visible,true,'Monk gets them too');
+ scene.removePlayer(77);assert(!scene.scene.children.includes(spheres),'leaving disposes the sphere group');
+
  const before=scene.camera.position.clone();scene.putPlayer({...state,sit:false,x:34,z:25});frame(now+=100);assert(scene.camera.position.x>before.x,'camera follows self');assert(scene.camera.position.z>before.z);const label=w.document.querySelector('.social-player-label');assert.equal(label.hidden,false);const sprite=scene.scene.children.find(o=>o.userData.socialId===1),feet=sprite.position.clone().project(scene.camera);assert(parseFloat(label.style.top)>(1-feet.y)*350,'name starts below feet');assert.equal(label.querySelector('small').textContent,'Poring Hunter');assert(feet.y>.03&&feet.y<.22,'player stands slightly higher than the middle of the screen by default');
  const title=label.querySelector('.social-player-title');assert.equal(title.querySelector('img'),null,'unknown legacy names remain plain text');
  scene.putPlayer({...state,look:{...state.look,title:'Mythic Edge',fishTitle:'🎣 Heavy Hook',fishTitleColor:'#c792ea',digiTitle:'🐾 First Partner',digiTitleColor:'#b9c6c4'}});

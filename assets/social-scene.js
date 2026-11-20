@@ -2594,7 +2594,7 @@ void main(){
  function auraTier(lv){return typeof LEVEL_AURAS==='undefined'?null:LEVEL_AURAS.filter(a=>lv>=a.at).at(-1)||null}
  function syncAura(p){const tier=auraTier(Math.max(0,Math.floor(Number(p.state.look?.lv)||0))),tierAt=tier?tier.at:0;if(p.auraTier===tierAt)return;p.auraTier=tierAt;if(p.aura){scene.remove(p.aura);disposeAura(p.aura);p.aura=null}if(!tier||typeof buildLevelAura!=='function')return;p.aura=buildLevelAura(tier);scene.add(p.aura)}
  function animateAura(p,now,x,z){const aura=p.aura;if(!aura)return;const seconds=now/1000;aura.position.set(x,.07+bridgeLift(x,z),z);aura.scale.setScalar(1.18*(1+Math.sin(seconds*2)*.025));aura.children.forEach((layer,i)=>{if(!layer.material)return;layer.rotation.y=(seconds*(i?-.3:.22))%(Math.PI*2);layer.material.opacity=.8+Math.sin(seconds*2+i)*.12;if(layer.children[0]?.material)layer.children[0].material.opacity=.85+Math.sin(seconds*2+i)*.1});const data=aura.userData;if(data.floor)data.floor.material.opacity=.4+Math.sin(seconds*1.7)*.07;if(data.veil)data.veil.material.opacity=.2+Math.sin(seconds*1.7)*.035;const motes=data.motes;if(motes){const positions=motes.geometry.attributes.position,colors=motes.geometry.attributes.color;for(let i=0;i<positions.count;i++){const phase=(seconds*.23+i/positions.count)%1,angle=i*2.399+seconds*.24,radius=.55+Math.sin(i*1.7)*.25,fade=Math.sin(phase*Math.PI);positions.setXYZ(i,Math.cos(angle)*radius,phase*1.6,Math.sin(angle)*radius);colors.setXYZ(i,fade,fade,fade)}positions.needsUpdate=colors.needsUpdate=true}}
- function removePlayer(id){const p=players.get(id);if(!p)return;if(p.digimon){scene.remove(p.digimon.sprite);p.digimon.sprite.material.dispose();p.digimon.texture.dispose();p.digimon=null;}try{fishingApi.api.setRig(id,{on:false})}catch{}for(const s of stores)s.release('social-'+id);if(p.aura){scene.remove(p.aura);disposeAura(p.aura)}scene.remove(p.sprite);p.sprite.material.dispose();p.texture.dispose();p.label.remove();p.bubble.remove();players.delete(id)}
+ function removePlayer(id){const p=players.get(id);if(!p)return;if(p.digimon){scene.remove(p.digimon.sprite);p.digimon.sprite.material.dispose();p.digimon.texture.dispose();p.digimon=null;}try{fishingApi.api.setRig(id,{on:false})}catch{}for(const s of stores)s.release('social-'+id);if(p.aura){scene.remove(p.aura);disposeAura(p.aura)}if(p.spheres){scene.remove(p.spheres.group);p.spheres.dispose()}scene.remove(p.sprite);p.sprite.material.dispose();p.texture.dispose();p.label.remove();p.bubble.remove();players.delete(id)}
  function loadLooks(p,now){
   if(p.loading||now<p.retryAt)return;
   const appearance=PGWardrobe.normalize(p.state.look?.appearance)||PGWardrobe.defaults('m'),cls=Object.hasOwn(allClasses,p.state.look?.cls)?p.state.look.cls:'Novice';
@@ -2826,6 +2826,10 @@ void main(){
   const baseX=chair&&!pokerChair&&Number.isFinite(chair.sitX)?chair.sitX:state.x;
   const seatOffset=pokerChair?0:chair?.35:0;
   p.sprite.position.set(baseX+(chair?Math.sin(chair.rotation)*seatOffset:0),floor,state.z+(chair?Math.cos(chair.rotation)*seatOffset:0));
+  // Plaza orbs are decorative: infer from the already-shared class, never combat stacks.
+  const sphereClass=globalThis.PGSpiritSpheres?.isClass(state.look?.cls);
+  if(sphereClass&&!p.spheres){p.spheres=globalThis.PGSpiritSpheres.create(T);if(p.spheres)scene.add(p.spheres.group);}
+  if(p.spheres){p.spheres.group.visible=!!sphereClass;if(sphereClass){p.spheres.group.position.copy(p.sprite.position);p.spheres.update(5,now/1000);}}
   // Fixed-view sprites track the same movement path/speed as the avatar, without touching RO pets.
   const digimon=globalThis.PGSocialDigimon,id=digimon?.clean(state.look?.digimon);
   // v386: a trainer in PvE/PvP still walks a third partner. The look already omits a pet that
