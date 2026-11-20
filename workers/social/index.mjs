@@ -20,6 +20,7 @@ export class Social {
   this.raidLoaded=false;
   this.raidLoadFailed=false;
   this.raidLoadPromise=null;
+  this.raidRetryAt=0;
   this.mvpLoaded=false;
   this.mvpLoadFailed=false;
   this.mvpSaveFailed=false;
@@ -281,12 +282,14 @@ export class Social {
    this.room.raidLoadFailed=false;
    this.raidLoaded=true;
    this.raidLoadFailed=false;
+   this.raidRetryAt=0;
    return true;
   }catch(error){
    this.room.raidLoaded=false;
    this.room.raidLoadFailed=true;
    this.raidLoaded=false;
    this.raidLoadFailed=true;
+   this.raidRetryAt=this.now()+2000;
    console.error('Raid state load failed',error);
    return false;
   }
@@ -321,7 +324,15 @@ export class Social {
   return this.raidPartyWrite;
  }
  async raidReady(){
-  if(this.raidLoadFailed&&this.raidLoadPromise)await this.raidLoadPromise;
+  // v447: a single failed read must not poison this Durable Object for its whole lifetime.
+  // The first attempt runs from the constructor; if it failed, retry after a short backoff when
+  // a request arrives (the lobby's Retry button) instead of returning 503 until eviction.
+  if(this.raidLoadPromise&&!this.raidLoaded)await this.raidLoadPromise;
+  if(this.raidLoadFailed&&this.now()>=this.raidRetryAt){
+   this.raidRetryAt=this.now()+2000;
+   this.raidLoadPromise=this.loadRaidState();
+   await this.raidLoadPromise;
+  }
   if(this.raidLoadFailed)throw new Error('Raid storage is unavailable.');
  }
  raidJson(data,status=200){
