@@ -5,7 +5,20 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{createHash}=re
  const join=id=>{const events=[];const c=room.connect({id,username:'Player'+id},s=>events.push(JSON.parse(s)),()=>{});c.events=events;room.receive(c,JSON.stringify({type:'join',look:{cls:'Novice',appearance:{version:1,sex:'m'}}}));return c};
  const emotionMap=JSON.parse(fs.readFileSync('tools/social/emotion-map.json')),emotionLock=JSON.parse(fs.readFileSync('tools/social/emotions-lock.json'));
  assert.deepEqual([...R.EMOTIONS].sort(),Object.keys(emotionMap).sort());assert.deepEqual([...R.EMOTIONS].sort(),Object.keys(emotionLock.outputs).sort());
- for(const id of R.EMOTIONS)assert.equal(createHash('sha256').update(fs.readFileSync('assets/social/emotions/'+id+'.png')).digest('hex'),emotionLock.outputs[id].sha256);
+ // PR #269: an id either has verified art, or it is registered and its art is still to be generated.
+ // The lock file records which: a null sha256 means "no file yet", never "any file will do".
+ const artPending=Object.entries(emotionLock.outputs).filter(([,o])=>!o.sha256).map(([id])=>id);
+ for(const id of R.EMOTIONS){
+  const out=emotionLock.outputs[id];
+  if(!out.sha256){assert.ok(artPending.includes(id),id+' has no art hash and is not declared pending');continue}
+  assert.equal(createHash('sha256').update(fs.readFileSync('assets/social/emotions/'+id+'.png')).digest('hex'),out.sha256,id+' art matches the lock');
+ }
+ // exactly the 14 ids PR #269 adds are pending, and a pending id must not have a file on disk
+ // (otherwise a missing hash would silently hide real art)
+ assert.deepEqual(artPending.sort(),['awsm','bzz','dice','fsh','go','grat','hlp','oh','omg','oops','pat','slur','spin','x'],'only the 14 new ids await art');
+ for(const id of artPending)assert.ok(!fs.existsSync('assets/social/emotions/'+id+'.png'),id+' has no file, as declared');
+ for(const id of R.EMOTIONS)assert.ok(fs.existsSync('assets/social/emotions/'+id+'.png')||artPending.includes(id),id+' has art or is pending');
+ console.log('  '+artPending.length+' registered ids still need art: '+artPending.join(', '));
  const clients=Array.from({length:21},(_,i)=>join(i+1));assert.equal(clients[19].room,1);assert.equal(clients[20].room,2);assert.equal(clients[0].events.find(x=>x.type==='room').players.length,1);
  // v362: every room snapshot carries the plaza fingerprint so the page can refuse to trust a
  // Social Worker that runs a different rules build (the post-merge staging round: a stale Worker

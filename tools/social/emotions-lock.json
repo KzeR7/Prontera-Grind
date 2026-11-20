@@ -201,6 +201,90 @@
       "delay": 100,
       "frames": 14,
       "sha256": "4e4457c6c999c9ca5bb6c5d34d448489fc117909de5cf928ee188d51d9c5e3b7"
+    },
+    "omg": {
+      "action": 23,
+      "delay": null,
+      "frames": null,
+      "sha256": null
+    },
+    "oh": {
+      "action": 24,
+      "delay": null,
+      "frames": null,
+      "sha256": null
+    },
+    "x": {
+      "action": 25,
+      "delay": null,
+      "frames": null,
+      "sha256": null
+    },
+    "hlp": {
+      "action": 26,
+      "delay": null,
+      "frames": null,
+      "sha256": null
+    },
+    "go": {
+      "action": 27,
+      "delay": null,
+      "frames": null,
+      "sha256": null
+    },
+    "bzz": {
+      "action": 36,
+      "delay": null,
+      "frames": null,
+      "sha256": null
+    },
+    "awsm": {
+      "action": 38,
+      "delay": null,
+      "frames": null,
+      "sha256": null
+    },
+    "pat": {
+      "action": 41,
+      "delay": null,
+      "frames": null,
+      "sha256": null
+    },
+    "slur": {
+      "action": 43,
+      "delay": null,
+      "frames": null,
+      "sha256": null
+    },
+    "grat": {
+      "action": 46,
+      "delay": null,
+      "frames": null,
+      "sha256": null
+    },
+    "fsh": {
+      "action": 52,
+      "delay": null,
+      "frames": null,
+      "sha256": null
+    },
+    "spin": {
+      "action": 53,
+      "delay": null,
+      "frames": null,
+      "sha256": null
+    },
+    "dice": {
+      "action": 58,
+      "delay": null,
+      "frames": null,
+      "sha256": null
+    },
+    "oops": {
+      "action": 76,
+      "delay": null,
+      "frames": null,
+      "sha256": null
     }
   }
 }

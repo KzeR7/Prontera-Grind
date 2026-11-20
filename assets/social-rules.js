@@ -9,10 +9,10 @@ if(!DATA)throw Error('Digimon roster data must load before social rules');
 // agree; an old Worker echoes no speed, so the client falls back to the same 5 u/s it advances at.
 // LIMIT is retained for legacy callers; east and west are now intentionally asymmetric.
 const LIMIT=74,MIN_X=-74,MAX_X=102,MIN_Z=-74,MAX_Z=126,SPEED=5,MIN_SPEED=2,MAX_SPEED=13,CAPACITY=20,CHAT_DELAY=3000;
-const EMOTIONS=['surprise','question','music','heart','love','sweat','idea','anger','cloud','money','dots','rock','scissors','paper','kiss','ok','dead','sorry','laugh','smile','cry','shy','kissheart','think','hmm','blush','drool','meh','panic','sleep','mail','gg'];
+const EMOTIONS=['surprise','question','music','heart','love','sweat','idea','anger','cloud','money','dots','rock','scissors','paper','kiss','ok','dead','sorry','laugh','smile','cry','shy','kissheart','think','hmm','blush','drool','meh','panic','sleep','mail','gg','omg','oh','x','hlp','go','bzz','awsm','pat','slur','grat','fsh','spin','dice','oops'];
 // v374: RO command name for every emote id. The art was matched to the RO description by eye (best guesses are
 // listed in UPDATE-LOG). Ids are stable: saved chat backlog refers to them, so a label change never renames an id.
-const EMOTE_NAMES={surprise:'!',gg:'gg',ok:'thx',sorry:'sry',cry:'sob',cloud:'ag',idea:'ic',laugh:'heh',mail:'mail',anger:'an',blush:'shy',dead:'desp',dots:'...',drool:'rice',heart:'lv',hmm:'swt2',kiss:'kis2',kissheart:'kis',love:'lv2',meh:'meh',money:'$',music:'ho',panic:'panic',paper:'bo',question:'?',rock:'bawi',scissors:'gawi',shy:'hum',sleep:'yawn',smile:'ok',sweat:'swt',think:'hmm'};
+const EMOTE_NAMES={surprise:'!',question:'?',music:'ho',heart:'lv',love:'lv2',sweat:'swt',idea:'ic',anger:'an',cloud:'ag',money:'$',dots:'...',rock:'1',scissors:'2',paper:'3',kiss:'kf',ok:'thx',dead:'desp',sorry:'sry',laugh:'heh',smile:'no',cry:'sob',shy:'hum',kissheart:'kis',think:'kis2',hmm:'hf',blush:'ok',drool:'blek',meh:'sk',panic:'yw',sleep:'zz',mail:'mail',gg:'gg',omg:'omg',oh:'oh',x:'x',hlp:'hlp',go:'go',bzz:'bzz',awsm:'awsm',pat:'pat',slur:'slur',grat:'grat',fsh:'fsh',spin:'spin',dice:'dice',oops:'oops'};
 const EMOTE_BY_CMD=Object.fromEntries(Object.entries(EMOTE_NAMES).map(([id,c])=>[c,id]));
 // v374: painted size of each emote (tools/social/emote-layout.py). Each one is drawn at the same visual size in the
 // tray and in chat, so a small emote is not dwarfed by a big one. Presentation only.

@@ -52,6 +52,34 @@ is retained when decoded pixels and timing already agree, preserving the origina
 12 files byte-for-byte. The 32 shipped IDs in `emotion-map.json` are mapped
 by inspecting the original animations, not substituting Unicode glyphs.
 
+### PR #269: the 14 added emotions (art pending)
+
+`emotion-map.json` now lists 46 ids: the original 32, then 14 more (`omg, oh, x, hlp, go, bzz, awsm,
+pat, slur, grat, fsh, spin, dice, oops`) appended so no saved id moves index. Each new id maps to the
+action that really holds it in `emotion.act/spr`; `tools/tests/emotion_map_sim.js` pins every number
+against the `ET_*` enum and fails if one drifts.
+
+That PR first proposed 45 ids at actions 86-130. The sprite has 93 actions (0-92), so 38 of those
+numbers were past the end of the file, and the 7 that landed inside it were the wrong animations
+(`omg` at 86 is `YUT6`; the real `/omg` is `HUK` at action 23). The other 13 (`clap, bye, happy,
+amazed, best, best2, chaos, absurd, joy, kiskis, funny, martialarts, salute`) are Ragnarok Online II
+emotes, not RO 1 - they have no frames in `emotion.spr` and were dropped.
+
+**These 14 have no PNGs yet.** `emotions-lock.json` records them with a `null` sha256, which means
+"registered, art not generated", and `social_sim.js` refuses any id that is neither hashed nor
+declared pending. To finish, recover the sprite as above and run:
+
+```sh
+# /tmp/social-emotions from emotions.go, then:
+python3 tools/social/pack-emotions.py /tmp/social-emotions   # packs only the actions that exist
+python3 tools/social/emote-layout.py                         # prints the new EMOTE_LAYOUT
+```
+
+`pack-emotions.py` skips and reports ids whose action is not in the sprite instead of crashing, and it
+merges into the lock file so the 32 verified entries keep their hashes. Paste the layout line into
+`assets/social-rules.js`. Until then the tray shows those 14 with a blank slot: the ids exist and are
+sendable, but nothing is drawn.
+
 ## Town
 
 `town-lock.json` pins the public Prontera manifest/model/paving bytes from RagnaGO.
