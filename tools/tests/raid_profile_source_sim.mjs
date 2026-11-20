@@ -9,8 +9,9 @@ import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
 import {
   RAID_CLASS_PROFILES, raidProfileFromSave, raidProfileFingerprintSource,
-  raidProfileFingerprint, sanitizeRaidProfile, applyRaidCard,
+  raidProfileFingerprint, sanitizeRaidProfile, applyRaidCard, decodeRaidSave,
 } from '../../functions/_lib/raid-profile.js';
+import { packSave } from '../../functions/_lib/save-codec.js';
 import { RAID_RULES } from '../../functions/_lib/raid-rules.js';
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -65,6 +66,18 @@ t('every class builds a finite, bounded profile from a minimal save', () => {
     assert.ok(Number.isFinite(p.power) && p.power >= 0, row[0] + ' power');
     assert.equal(p.armorPen, 0, 'no weapon means no star penetration');
   }
+});
+
+t('weapon stars survive the canonical packed save codec', () => {
+  const save = {
+    cls: 'Lord Knight', lv: 150, st: { str: 120, agi: 120, dex: 120, luk: 90, int: 1, vit: 120 },
+    eq: { weapon: { id: 'k', slot: 'weapon', wt: 'katar', val: 120000, r: 15, stars: 20, aff: [], cards: [] } },
+    inv: [],
+  };
+  const packed = packSave(save);
+  const decoded = decodeRaidSave(JSON.stringify(packed));
+  assert.equal(decoded.eq.weapon.stars, 20, 'the item extra survives pack/unpack');
+  assert.equal(raidProfileFromSave(decoded).armorPen, RAID_RULES.bossArmor);
 });
 
 t('weapon stars add all-content ATK and capped boss defence penetration', () => {

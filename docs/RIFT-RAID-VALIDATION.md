@@ -133,7 +133,7 @@ Current results:
 | Test | Result |
 | --- | --- |
 | `migration_sim.js` | **14 passed, 0 failed** (0022 additive install, triggers, exactly-once ledger/grants, 0023 duplicate-safe card copies) |
-| `raid_profile_source_sim.mjs` | **8 passed, 0 failed** (47 class rows, star ATK/penetration, card rank effects) |
+| `raid_profile_source_sim.mjs` | **9 passed, 0 failed** (47 class rows, packed-save stars, star ATK/penetration, card rank effects) |
 | `player_raid_engine_sim.mjs` | **14 passed, 0 failed** (includes solo/trio clear pacing and the 30% armour penetration step) |
 | `raid_api_source_sim.mjs` | **11 passed, 0 failed** (card drops and the one-equipped-card API) |
 | `raid_ui_sim.js` | **11 passed, 0 failed** (forge success/failure, booster cost, aura/titles, card equip, field star ATK, reconnect) |
