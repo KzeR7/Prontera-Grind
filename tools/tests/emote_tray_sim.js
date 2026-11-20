@@ -10,19 +10,26 @@ const ADDED = ['omg','oh','x','hlp','go','bzz','awsm','pat','slur','grat','fsh',
 assert.deepEqual(R.EMOTIONS.slice(0, 32), SHIPPED, 'the original 32 keep their exact order');
 assert.deepEqual(R.EMOTIONS.slice(32), ADDED, 'the 14 new ids follow them');
 assert.equal(R.EMOTIONS.length, 46, '46 emotions');
-// Every id needs a layout, but PR #269 has not produced art for the 14 yet (grf.robrowser.com is
-// unreachable from CI), so a measured layout is required for the 32 that have art. The 14 get one
-// from tools/social/emote-layout.py the moment their PNGs exist - that is the gap this test keeps open.
+// Every id needs a layout. The 14 PR #269 ids used to be exempt because no art could be produced in
+// CI; they now carry art converted from the authentic iRO Wiki GIFs by
+// tools/social/import-emote-gifs.py, measured by tools/social/emote-layout.py - so the exemption is
+// gone and a guessed or missing layout fails here.
+// `x` is the one id whose source GIF was never supplied, so it has no file and no layout: it draws
+// as the dashed /x fallback. Every other id has real art and must have a measured layout.
+const NO_ART = ['x'];
 for (const id of R.EMOTIONS) {
   const L = R.EMOTE_LAYOUT[id];
-  if (ADDED.includes(id)) {
-    assert.ok(!L || (L.w > 0 && L.h > 0 && L.s > 0 && L.s < 10), id + ' layout, when present, is sane');
+  if (NO_ART.includes(id)) {
+    assert.equal(L, undefined, id + ' has no art, so it must not carry a guessed layout');
     continue;
   }
-  assert.ok(L, id + ' has a layout');
+  assert.ok(L, id + ' has a measured layout');
   assert.ok(L.w > 0 && L.h > 0 && L.s > 0 && L.s < 10, id + ' layout is sane');
+  assert.ok(L.cx > 0 && L.cy > 0, id + ' is centred on its art');
 }
-assert.ok(ADDED.every(id => !R.EMOTE_LAYOUT[id]), 'the 14 wait for real art, they are not guessed');
+for (const id of ADDED) assert.equal(!R.EMOTE_LAYOUT[id], id === 'x', id + ' art is measured, except /x which has no source');
+// The dice is six files behind one id; one shared entry has to frame all six identically.
+assert.ok(R.EMOTE_LAYOUT.dice, 'the dice has a layout covering all six faces');
 for (const [id, cmd] of Object.entries(R.EMOTE_NAMES)) {
   assert.ok(R.EMOTIONS.includes(id), 'named id ' + id + ' exists');
   assert.equal(R.EMOTE_BY_CMD[cmd], id, '/' + cmd + ' resolves to ' + id);

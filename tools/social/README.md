@@ -99,15 +99,36 @@ sprite route above and needs the Go renderer, not this importer.
 
 `import-emote-gifs.py` converts whichever files it finds into the same APNG shape the game already
 loads: frames cropped to the union of the painted pixels across the animation (exactly what
-`pack-emotions.py` does, so the tray maths is identical), original frame order, original delay,
+`pack-emotions.py` does, so the tray maths is identical), original frame order, per-frame timing,
 loop forever, transparent. It writes `assets/social/emotions/<id>.png`, records the sha256 in
 `emotions-lock.json` and leaves every id it did not find untouched - so the 32 cut from the sprite
 sheet stay byte-for-byte as shipped. It never repaints, rescales or invents art.
 
+Timing is preserved per frame, not flattened. An RO emotion is not a uniform loop: `Omg.gif` holds
+its 13th frame for 1500 ms so the shout is readable, and `Pat.gif`/`Spin.gif` hold their last frame
+for about a second. Those holds are kept, reduced to a base tick plus repeats the way
+`pack-emotions.py` encodes them. The one deliberate edit: when a rip ends on a BLANK frame held a
+full second (pat 990 ms, spin 1000 ms), that tail is trimmed to a single tick. Played as drawn, the
+emote vanishes and leaves an empty speech bubble hanging over the character; the sprite-cut art this
+game already ships ends on a blank too, but for one 50 ms tick. A blank in the middle of an
+animation is a deliberate beat and is left alone.
+
+Already-verified art is never overwritten. `FILENAMES` lists the 32 shipped ids too, so a full
+refresh is possible, but a matching wiki GIF (`panic` is `Come.gif` on the wiki) would otherwise
+silently replace a verified sprite render - so an id whose lock entry already has a sha256 is
+skipped. `--refresh` opts in to replacing them.
+
+The dice is six files behind one id. `dice1.gif`..`dice6.gif` share one tumble and differ only in
+the landed face, so all six are converted from a single shared crop box into `dice.png` (face 1) and
+`dice2.png`..`dice6.png`, with `faces: 6` recorded in the lock. `/dice` is a roll: the room picks
+1-6 with `this.random` and stamps `face` on the message, so the sender cannot reroll by editing the
+message and every viewer sees the same number. `emote-layout.py` measures the six as one entry so
+the tray scales and centres whichever face lands.
+
 `pack-emotions.py` skips and reports ids whose action is not in the sprite instead of crashing, and it
 merges into the lock file so the 32 verified entries keep their hashes. Paste the layout line into
-`assets/social-rules.js`. Until then the tray shows those 14 with a blank slot: the ids exist and are
-sendable, but nothing is drawn.
+`assets/social-rules.js`. An id with no file and no layout draws as a dashed box naming its command
+(`/x` is the one such id today: `Ecks.gif` has never been supplied).
 
 ## Town
 

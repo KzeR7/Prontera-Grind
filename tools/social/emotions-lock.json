@@ -204,15 +204,17 @@
     },
     "omg": {
       "action": 23,
-      "delay": null,
-      "frames": null,
-      "sha256": null
+      "delay": 50,
+      "frames": 16,
+      "sha256": "b28db759308153bfdbf7bf117e827603eeb832fc54555a64f3a3c59c62c4e45e",
+      "source": "Omg.gif (iRO Wiki)"
     },
     "oh": {
       "action": 24,
-      "delay": null,
-      "frames": null,
-      "sha256": null
+      "delay": 50,
+      "frames": 17,
+      "sha256": "659bfb7eca992f9a6bc923ce1265fe4e54f74b35542e41b8dc063d13fffdec6e",
+      "source": "Ohh.gif (iRO Wiki)"
     },
     "x": {
       "action": 25,
@@ -222,69 +224,81 @@
     },
     "hlp": {
       "action": 26,
-      "delay": null,
-      "frames": null,
-      "sha256": null
+      "delay": 50,
+      "frames": 28,
+      "sha256": "a24142c493a47f7305b4e8acc332524abd460e31f0233bc59ec7720bfe98f3d6",
+      "source": "Hlp.gif (iRO Wiki)"
     },
     "go": {
       "action": 27,
-      "delay": null,
-      "frames": null,
-      "sha256": null
+      "delay": 30,
+      "frames": 10,
+      "sha256": "f8e4c5c50e447ada1f1748fc72c6d88767e49616e0226a574fd239ce17febd71",
+      "source": "Goo.gif (iRO Wiki)"
     },
     "bzz": {
       "action": 36,
-      "delay": null,
-      "frames": null,
-      "sha256": null
+      "delay": 100,
+      "frames": 7,
+      "sha256": "ebc6e86c38fc3fc89d4d5ae70a21ac36831fc6fad97ed6f10800f08ed3ad4001",
+      "source": "Bzz.gif (iRO Wiki)"
     },
     "awsm": {
       "action": 38,
-      "delay": null,
-      "frames": null,
-      "sha256": null
+      "delay": 50,
+      "frames": 5,
+      "sha256": "b527f3834e18232050ada369046498f86610f012b17f1b4a9cfb953817310d5f",
+      "source": "Awsm.gif (iRO Wiki)"
     },
     "pat": {
       "action": 41,
-      "delay": null,
-      "frames": null,
-      "sha256": null
+      "delay": 90,
+      "frames": 27,
+      "sha256": "4229aa5f8b9f2244fee2c7aa8c9e24760003f0f407021f4d9ba9ae2ed67783b7",
+      "source": "Pat.gif (iRO Wiki)"
     },
     "slur": {
       "action": 43,
-      "delay": null,
-      "frames": null,
-      "sha256": null
+      "delay": 50,
+      "frames": 5,
+      "sha256": "a301b4a27bf183e51e8c5d85c13c44d037420d67bcdb5c7e10e90aa2fb0919ea",
+      "source": "Slur.gif (iRO Wiki)"
     },
     "grat": {
       "action": 46,
-      "delay": null,
-      "frames": null,
-      "sha256": null
+      "delay": 200,
+      "frames": 4,
+      "sha256": "20a4259fe7509bcec5021fb553e0edf54d9967fd790be75e1a998a0df0085143",
+      "source": "Grat.gif (iRO Wiki)"
     },
     "fsh": {
       "action": 52,
-      "delay": null,
-      "frames": null,
-      "sha256": null
+      "delay": 100,
+      "frames": 16,
+      "sha256": "7b9ebbadd065b5342c13078c3a864cfdd2a424a7c93adefc6c2f88e3cdabc926",
+      "source": "Fsh.gif (iRO Wiki)"
     },
     "spin": {
       "action": 53,
-      "delay": null,
-      "frames": null,
-      "sha256": null
+      "delay": 20,
+      "frames": 19,
+      "sha256": "b318ec8ae47c3fc922158383b2b27e458eae7798b61d16b8f63eec003ea9fead",
+      "source": "Spin.gif (iRO Wiki)"
     },
     "dice": {
       "action": 58,
-      "delay": null,
-      "frames": null,
-      "sha256": null
+      "delay": 100,
+      "frames": 24,
+      "sha256": "07bb48ed556687b2d3a8479b4b0b96717675fb5596fd3954b3d97976e445f966",
+      "source": "dice1.gif (iRO Wiki)",
+      "faces": 6
     },
     "oops": {
       "action": 76,
-      "delay": null,
-      "frames": null,
-      "sha256": null
+      "delay": 100,
+      "frames": 16,
+      "sha256": "42a75fcf96d3b5b7c00563f329e21c90380c55ab442c8a6438d415719137fbd4",
+      "source": "Oops.gif (iRO Wiki)"
     }
   }
 }

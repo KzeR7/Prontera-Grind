@@ -1,7 +1,7 @@
 /* Real room core: privacy, capacity, collision, reconnect and bounded traffic. */
 const assert=require('node:assert/strict'),fs=require('node:fs'),{createHash}=require('node:crypto');
 (async()=>{
- const {SocialRoom}=await import('../../workers/social/room.mjs');const R=globalThis.PGSocialRules;let now=1000;const room=new SocialRoom({now:()=>now});
+ const {SocialRoom,cleanWorldHistory}=await import('../../workers/social/room.mjs');const R=globalThis.PGSocialRules;let now=1000;const room=new SocialRoom({now:()=>now});
  const join=id=>{const events=[];const c=room.connect({id,username:'Player'+id},s=>events.push(JSON.parse(s)),()=>{});c.events=events;room.receive(c,JSON.stringify({type:'join',look:{cls:'Novice',appearance:{version:1,sex:'m'}}}));return c};
  const emotionMap=JSON.parse(fs.readFileSync('tools/social/emotion-map.json')),emotionLock=JSON.parse(fs.readFileSync('tools/social/emotions-lock.json'));
  assert.deepEqual([...R.EMOTIONS].sort(),Object.keys(emotionMap).sort());assert.deepEqual([...R.EMOTIONS].sort(),Object.keys(emotionLock.outputs).sort());
@@ -13,10 +13,19 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{createHash}=re
   if(!out.sha256){assert.ok(artPending.includes(id),id+' has no art hash and is not declared pending');continue}
   assert.equal(createHash('sha256').update(fs.readFileSync('assets/social/emotions/'+id+'.png')).digest('hex'),out.sha256,id+' art matches the lock');
  }
- // exactly the 14 ids PR #269 adds are pending, and a pending id must not have a file on disk
- // (otherwise a missing hash would silently hide real art)
- assert.deepEqual(artPending.sort(),['awsm','bzz','dice','fsh','go','grat','hlp','oh','omg','oops','pat','slur','spin','x'],'only the 14 new ids await art');
+ // The 14 PR #269 ids now carry real art converted from the authentic iRO Wiki GIFs
+ // (tools/social/import-emote-gifs.py), so only `x` is still pending: Ecks.gif was never
+ // supplied. A pending id must not have a file on disk - a missing hash may never hide real art.
+ assert.deepEqual(artPending.sort(),['x'],'/x is the only id still awaiting art (Ecks.gif)');
  for(const id of artPending)assert.ok(!fs.existsSync('assets/social/emotions/'+id+'.png'),id+' has no file, as declared');
+ // The dice is six files behind one id: dice.png is face 1, dice2..dice6 the rest. A roll names
+ // a face, so every one of them must exist or a roll of 4 draws a broken image.
+ assert.equal(emotionLock.outputs.dice.faces,6,'the dice declares its six faces');
+ for(const face of [2,3,4,5,6])assert.ok(fs.existsSync('assets/social/emotions/dice'+face+'.png'),'dice face '+face+' has art');
+ // Six files that were the same picture would pass the existence check above and still be wrong:
+ // a roll of 6 has to LOOK like a 6. Distinct bytes prove six distinct animations.
+ const faceBytes=[1,2,3,4,5,6].map(face=>createHash('sha256').update(fs.readFileSync('assets/social/emotions/'+(face===1?'dice':'dice'+face)+'.png')).digest('hex'));
+ assert.equal(new Set(faceBytes).size,6,'all six dice faces are different art');
  for(const id of R.EMOTIONS)assert.ok(fs.existsSync('assets/social/emotions/'+id+'.png')||artPending.includes(id),id+' has art or is pending');
  console.log('  '+artPending.length+' registered ids still need art: '+artPending.join(', '));
  const clients=Array.from({length:21},(_,i)=>join(i+1));assert.equal(clients[19].room,1);assert.equal(clients[20].room,2);assert.equal(clients[0].events.find(x=>x.type==='room').players.length,1);
@@ -38,6 +47,48 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{createHash}=re
  // that one player and no further.
  now+=3000;send(a,{type:'emotion',emotion:'heart',channel:'local'});assert(b.events.some(e=>e.emotion==='heart'));assert(!outsider.events.some(e=>e.emotion==='heart'));
  now+=3000;assert.equal(a.room,1);send(a,{type:'emotion',emotion:'heart',channel:'world'});assert.equal(b.events.find(e=>e.emotion==='heart'&&e.channel==='world').channel,'world');assert(outsider.events.some(e=>e.emotion==='heart'&&e.channel==='world'),'a world emotion crosses plazas');
+ // /dice is a ROLL, not a picture choice: the server picks the face, so the sender cannot reroll
+ // by editing the message and every viewer sees the same number land. The client's own `face` is
+ // ignored outright - otherwise anyone could post whichever die they liked.
+ {
+  const diceRoom=new SocialRoom({now:()=>now,random:()=>0});   // pins the roll to face 1
+  const diceJoin=id=>{const events=[];const c=diceRoom.connect({id,username:'Dice'+id},s=>events.push(JSON.parse(s)),()=>{});c.events=events;diceRoom.receive(c,JSON.stringify({type:'join',look:{cls:'Novice',appearance:{version:1,sex:'m'}}}));return c};
+  const d1=diceJoin(401),d2=diceJoin(402),say=(c,m)=>diceRoom.receive(c,JSON.stringify(m));
+  now+=3000;say(d1,{type:'emotion',emotion:'dice',channel:'local'});
+  const rolled=d2.events.find(e=>e.emotion==='dice');
+  assert.equal(rolled.face,1,'the room stamps the face it rolled');
+  assert.equal(d1.events.find(e=>e.emotion==='dice').face,rolled.face,'the sender sees the same face as everyone else');
+  // A client that tries to declare its own face is ignored, not obeyed.
+  now+=3000;say(d1,{type:'emotion',emotion:'dice',channel:'local',face:6});
+  assert.equal(d2.events.filter(e=>e.emotion==='dice').at(-1).face,1,'a client-sent face is ignored');
+  // The roll covers the whole die, and never falls outside it. A free room is used because the
+  // pinned one above is deliberately frozen at face 1. It runs on its own clock: 600 rolls is
+  // 1800 s of `now`, which would sweep the shared rooms' connections away as idle.
+  let freeNow=now;
+  const freeRoom=new SocialRoom({now:()=>freeNow});
+  const freeEvents=[];
+  const free=freeRoom.connect({id:403,username:'Roller'},s=>freeEvents.push(JSON.parse(s)),()=>{});
+  freeRoom.receive(free,JSON.stringify({type:'join',look:{cls:'Novice',appearance:{version:1,sex:'m'}}}));
+  for(let n=0;n<600;n++){freeNow+=3000;freeRoom.receive(free,JSON.stringify({type:'emotion',emotion:'dice',channel:'local'}))}
+  const faces=new Set(freeEvents.filter(e=>e.emotion==='dice').map(e=>e.face));
+  assert.equal(faces.size,6,'a free roll lands on all six faces');
+  for(const f of faces)assert.ok(Number.isInteger(f)&&f>=1&&f<=6,'a face is always an integer 1..6, got '+f);
+  freeRoom.disconnect(free);
+  diceRoom.disconnect(d1);diceRoom.disconnect(d2);
+  // A world dice survives the durable history with its face - otherwise a reload rerolls it into
+  // a different number. Its own room, so the 600-roll loop above cannot sweep it away as idle.
+  {
+   let histNow=now;
+   const histRoom=new SocialRoom({now:()=>histNow,random:()=>0.99});   // face 6
+   const hist=histRoom.connect({id:404,username:'Historian'},()=>{},()=>{});
+   histRoom.receive(hist,JSON.stringify({type:'join',look:{cls:'Novice',appearance:{version:1,sex:'m'}}}));
+   histNow+=3000;histRoom.receive(hist,JSON.stringify({type:'emotion',emotion:'dice',channel:'world',face:3}));
+   const stored=cleanWorldHistory(histRoom.history).filter(m=>m.emotion==='dice');
+   assert.equal(stored.length,1,'the world roll is durable');
+   assert.equal(stored[0].face,6,'the stored roll keeps the face the SERVER rolled, not the one the client sent');
+   histRoom.disconnect(hist);
+  }
+ }
  const before=b.events.filter(e=>e.emotion==='laugh').length;now+=3000;send(a,{type:'emotion',emotion:'laugh',channel:'whisper',to:b.name});const whispered=b.events.filter(e=>e.emotion==='laugh');assert.equal(whispered.length,before+1);assert.equal(whispered.at(-1).channel,'whisper');assert.equal(whispered.at(-1).toName,b.name);assert.equal(b.events.filter(e=>e.emotion==='laugh').length>0&&outsider.events.filter(e=>e.emotion==='laugh').length,0,'a whispered emotion stays between the two');
  const delivered=room.serial;send(a,{type:'chat',channel:'world',body:'too soon'});assert.equal(room.serial,delivered);now+=2999;send(a,{type:'emotion',emotion:'heart'});assert.equal(room.serial,delivered);now++;send(a,{type:'chat',channel:'world',body:'after 3 seconds'});assert.equal(room.serial,delivered+1);
  for(const point of [{x:0,z:65},{x:0,z:120},{x:70,z:30},{x:-70,z:-30},{x:0,z:-34}]){const route=R.path({x:0,z:12},point);assert(route.length,'new avenues reachable');assert(route.every(p=>R.walkable(p.x,p.z)))}
