@@ -55,6 +55,7 @@ INSERT INTO leaderboard_echo_settlements VALUES('day:2020-01-01',3000);
 INSERT INTO damage_samples VALUES(10,0,1,3000,0,1,100,200);
 INSERT INTO damage_alerts VALUES(10,'review',3000,3000,100,1);
 INSERT INTO save_alerts(user_id,kind,first_seen,last_seen,value,threshold,detail,observations) VALUES(10,'kill-rate',3000,3000,99999,50000,'synthetic flag',3);
+INSERT INTO save_audit_windows VALUES(10,1000,3000,'{"kills":10000,"reviewed":{"kill-rate":{"at":2000,"amount":9000}}}');
 INSERT INTO competition_periods(period_key,kind,ruleset,starts_at,ends_at,state)
   VALUES('day:2020-01-02','daily','unverified-save-v1',1000,9999999999000,'open');
 INSERT INTO competition_scores VALUES('day:2020-01-02',10,'old-run',999999,1500);
@@ -291,7 +292,9 @@ try {
   // (0017), which this suite forces every new table to justify: bump only together with an
   // explicit PRESERVED/CLEARED/UPDATED decision. `announcement_gifts` is cleared with the letters
   // and grants it pays through.
-  assert.equal(REQUIRED_TABLES.length, 30);
+  // 0021 adds one gameplay-only accumulator, cleared together with save_alerts.
+  assert(CLEARED_TABLES.includes('save_audit_windows'));
+  assert.equal(REQUIRED_TABLES.length, 31);
   assert(PRESERVED_TABLES.includes('users') && PRESERVED_TABLES.includes('entitlements') && PRESERVED_TABLES.includes('friends'));
   console.log('PASS: ' + checks + ' launch-reset checks; synthetic data only, no hosted operation');
 } finally { fs.rmSync(temp, { recursive: true, force: true }); }

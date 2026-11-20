@@ -729,6 +729,57 @@ export const saveAlertStatement = (db,{userId,kind,at,value,threshold,detail,buc
       observations=save_alerts.observations + (CASE WHEN excluded.last_seen - save_alerts.last_seen >= ? THEN 1 ELSE 0 END)`)
     .bind(Number(userId),String(kind),Number(at),Number(at),Number(value)||0,Number(threshold)||0,String(detail==null?'':detail).slice(0,400),Number(bucketMs)||300000);
 
+export async function saveAlertWithEvidence(db, { userId, kind, at, value, threshold, detail, ruleVersion = null, evidenceJson = null, bucketMs = 300000 }) {
+  try {
+    return await db.prepare(`INSERT INTO save_alerts(user_id, kind, first_seen, last_seen, value, threshold, detail, observations, rule_version, evidence_json)
+      VALUES(?,?,?,?,?,?,?,1,?,?)
+      ON CONFLICT(user_id, kind) DO UPDATE SET
+        last_seen=excluded.last_seen, value=excluded.value,
+        threshold=excluded.threshold, detail=excluded.detail,
+        rule_version=excluded.rule_version, evidence_json=excluded.evidence_json,
+        cleared_at=CASE WHEN save_alerts.cleared_at IS NOT NULL AND excluded.last_seen <= save_alerts.cleared_at THEN save_alerts.cleared_at ELSE NULL END,
+        cleared_by=CASE WHEN save_alerts.cleared_at IS NOT NULL AND excluded.last_seen <= save_alerts.cleared_at THEN save_alerts.cleared_by ELSE NULL END,
+        observations=save_alerts.observations + (CASE WHEN excluded.last_seen - save_alerts.last_seen >= ? THEN 1 ELSE 0 END)`)
+      .bind(
+        Number(userId), String(kind), Number(at), Number(at),
+        Number(value) || 0, Number(threshold) || 0,
+        String(detail == null ? '' : detail).slice(0, 400),
+        ruleVersion ? String(ruleVersion) : null,
+        evidenceJson ? String(evidenceJson).slice(0, 2000) : null,
+        Number(bucketMs) || 300000,
+      ).run();
+  } catch (e) {
+    if (String(e && e.message).includes('no such column')) {
+      return await saveAlertStatement(db, { userId, kind, at, value, threshold, detail, bucketMs }).run();
+    }
+    throw e;
+  }
+}
+
+export async function getAuditWindow(db, userId) {
+  try {
+    return await db.prepare(`SELECT window_start, last_at, acc_json FROM save_audit_windows WHERE user_id = ?`).bind(Number(userId)).first();
+  } catch {
+    return null;
+  }
+}
+
+export async function upsertAuditWindow(db, userId, windowStart, lastAt, accJson) {
+  try {
+    return await db.prepare(`INSERT INTO save_audit_windows(user_id, window_start, last_at, acc_json)
+      VALUES(?,?,?,?)
+      ON CONFLICT(user_id) DO UPDATE SET window_start=excluded.window_start, last_at=excluded.last_at,
+        acc_json=CASE WHEN save_audit_windows.window_start=excluded.window_start
+          THEN json_set(excluded.acc_json, '$.reviewed',
+            json(COALESCE(json_extract(save_audit_windows.acc_json, '$.reviewed'), '{}')))
+          ELSE excluded.acc_json END
+      RETURNING acc_json`)
+      .bind(Number(userId), Number(windowStart), Number(lastAt), String(accJson)).first();
+  } catch {
+    // Fail open if migration 0021 is not applied yet.
+  }
+}
+
 // Which rules already fired for this account (to notify the owner only the first time).
 // Cleared flags do not count: if the same rule fires again after a GM cleared it, the owner is
 // poked once more - the verdict covered the evidence that was reviewed, not the future.
@@ -774,9 +825,32 @@ export const recentSaveAlerts = (db, limit=100) =>
 // Fails soft when migration 0016 has not been applied yet: no verdict is better than a broken card.
 export async function clearSaveAlert(db, userId, kind, actor) {
   try {
-    const res = await db.prepare(`UPDATE save_alerts SET cleared_at = ?, cleared_by = ?
+    const at = now();
+    const clear = db.prepare(`UPDATE save_alerts SET cleared_at = ?, cleared_by = ?
       WHERE user_id = ? AND kind = ? AND cleared_at IS NULL`)
-      .bind(now(), actor ?? null, Number(userId), String(kind)).run();
+      .bind(at, actor ?? null, Number(userId), String(kind));
+    const counter = kind === 'kill-rate' ? 'kills' : kind === 'zeny-rate' ? 'zeny'
+      : kind.startsWith('rate:') ? 'resources.' + kind.slice(5) : null;
+    let res;
+    if (counter) {
+      // Snapshot the reviewed prefix atomically with the verdict. A later ordinary gain must
+      // not turn that same prefix into new evidence. JSON lives in the existing bounded window.
+      try {
+        const mark = db.prepare(`UPDATE save_audit_windows SET acc_json = json_set(acc_json, ?,
+          json_object('at', ?, 'amount', COALESCE(json_extract(acc_json, ?), 0),
+            'raw', COALESCE(json_extract(acc_json, ?), json_extract(acc_json, ?), 0),
+            'credited', COALESCE(json_extract(acc_json, ?), 0)))
+          WHERE user_id = ? AND EXISTS (SELECT 1 FROM save_alerts
+            WHERE user_id = ? AND kind = ? AND cleared_at IS NULL)`)
+          .bind('$.reviewed.' + JSON.stringify(kind), at, '$.' + counter,
+            '$.raw.' + JSON.stringify(kind), '$.' + counter, '$.credits.' + JSON.stringify(kind),
+            Number(userId), Number(userId), String(kind));
+        [, res] = await db.batch([mark, clear]);
+      } catch (e) {
+        if (!/no such table: save_audit_windows/i.test(String(e?.message))) throw e;
+        res = await clear.run(); // Pre-0021 installations still support legacy flag review.
+      }
+    } else res = await clear.run();
     return { changed: Number(res?.meta?.changes ?? res?.meta?.changes_count ?? 0) || 0 };
   } catch (e) {
     console.warn('save_alerts clear failed (migration 0016 missing?):', e && e.message);

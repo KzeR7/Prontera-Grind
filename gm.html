@@ -30,8 +30,20 @@ button.primary{background:var(--gold);color:#221a12;font-weight:700}
 button.danger{border-color:var(--bad);color:#ffb3b5}
 input,select,textarea{max-width:100%;background:#160f0a;color:var(--ink);border:1px solid var(--edge2);border-radius:4px;padding:5px 7px;font:12px inherit}
 textarea{width:100%;min-height:60px;resize:vertical}
-main{display:grid;grid-template-columns:minmax(260px,340px) 1fr;gap:12px;padding:12px;align-items:start}
-@media(max-width:820px){main{grid-template-columns:1fr}}
+main{display:grid;grid-template-columns:200px 1fr;gap:14px;padding:14px;align-items:start;max-width:1440px;margin:0 auto}
+@media(max-width:820px){main{grid-template-columns:1fr;padding:8px;gap:8px}}
+.gm-nav{display:flex;flex-direction:column;gap:4px;position:sticky;top:12px}
+.gm-nav button{text-align:left;padding:9px 12px;border-radius:6px;font-size:13px;font-weight:600;background:transparent;border:1px solid transparent;color:var(--dim)}
+.gm-nav button:hover{background:#2a2014;color:var(--ink)}
+.gm-nav button.on{background:var(--gold);color:#221a12;border-color:var(--gold)}
+@media(max-width:820px){.gm-nav{flex-direction:row;flex-wrap:wrap;position:static;gap:6px}.gm-nav button{flex:1 1 auto;text-align:center;min-height:40px}}
+#activitybody,#auditlist,#tabbody{overflow-x:auto}
+.audit-table{min-width:680px}
+.audit-evidence{min-width:210px;white-space:normal}
+.gm-content{display:flex;flex-direction:column;gap:12px;min-width:0}
+.summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}
+.danger-zone{border:1px solid var(--bad);background:#261414;border-radius:6px;padding:10px;margin-top:12px}
+.danger-zone h3{margin:0 0 6px;font-size:12px;color:#ff9d9f;text-transform:uppercase;letter-spacing:.04em}
 .card{background:var(--card);border:1px solid var(--edge);border-radius:8px;padding:10px}
 .card h2{font-size:13px;margin:0 0 8px;color:var(--gold);text-transform:uppercase;letter-spacing:.04em}
 table{width:100%;border-collapse:collapse;font-size:12px}
@@ -145,19 +157,26 @@ tr:hover{background:#2a2014;cursor:pointer}
 </header>
 
 <main>
-  <div class="col">
-  <section class="card">
-    <h2>Cloudflare usage today <span id="usagewhen" class="small"></span></h2>
+  <nav class="gm-nav" aria-label="GM sections">
+    <button type="button" class="on" data-nav="overview" onclick="showNav('overview')">📊 Overview</button>
+    <button type="button" data-nav="players" onclick="showNav('players')">👥 Players</button>
+    <button type="button" data-nav="reviews" onclick="showNav('reviews')">🚩 Reviews</button>
+    <button type="button" data-nav="operations" onclick="showNav('operations')">⚙️ Operations</button>
+    <button type="button" data-nav="activity" onclick="showNav('activity')">📜 Activity</button>
+  </nav>
+  <div class="gm-content">
+  <section class="card gm-pane" data-pane="overview">
+    <h2>Cloudflare usage &amp; diagnostics <span id="usagewhen" class="small"></span></h2>
     <div id="usagebody" class="small">Loading…</div>
   </section>
 
-  <section class="card">
+  <section class="card gm-pane hide" data-pane="reviews">
     <h2>Damage review</h2>
     <p class="small">Client-reported values may be wrong or edited. Flags cover invalid cumulative damage or reported Echo best DPS over a provisional 100M threshold; no flag does not mean a player is clean. Flags take no action.</p>
     <div id="damagealerts" class="small">Loading…</div>
   </section>
 
-  <section id="fishingops" class="card">
+  <section id="fishingops" class="card gm-pane hide" data-pane="operations">
     <h2>Fishing operations</h2>
     <p class="small">Spawn a Fishing MVP in a plaza room for 10 minutes. Choose a species or let the Social room pick randomly. Requests and outcomes appear in the GM audit log.</p>
     <div class="row" style="align-items:flex-end;flex-wrap:wrap">
@@ -168,7 +187,7 @@ tr:hover{background:#2a2014;cursor:pointer}
     <div id="mvpresult" class="small" role="status" aria-live="polite">Loading Fishing controls…</div>
   </section>
 
-  <section class="card">
+  <section class="card gm-pane hide" data-pane="players">
     <h2>Players <span id="count" class="small"></span></h2>
     <div class="row"><input id="search" placeholder="filter by name" style="flex:1"></div>
     <div class="players-scroll"><table id="players"><thead>
@@ -177,7 +196,7 @@ tr:hover{background:#2a2014;cursor:pointer}
     <p class="small">Click a player to open them. “never” means they have not synced a save yet. 🚫 marks a player whose current network is suspended. ⚠ marks an account carrying a suspicious-save flag.</p>
   </section>
 
-  <section class="card" id="ipbanscard">
+  <section class="card gm-pane hide" id="ipbanscard" data-pane="operations">
     <h2>Network bans <span id="ipban-count" class="small"></span></h2>
     <p class="small">A suspended network cannot sign in, register a new account or recover a password — the usual way a player who was banned twice comes back on a third name. Only fingerprints are stored, never raw IPs. The owner can always still sign in from anywhere to remove a ban here.</p>
     <div id="ipbanlist" class="small">Loading…</div>
@@ -187,14 +206,18 @@ tr:hover{background:#2a2014;cursor:pointer}
     </div>
   </section>
 
-  <section class="card" id="saveauditcard">
+  <section class="card gm-pane hide" id="saveauditcard" data-pane="reviews">
     <h2>Suspicious saves <span id="audit-count" class="small"></span></h2>
     <p class="small">The server audits every accepted save on its own — no one has to be watching the game. It breaks a flag into two kinds: <b>impossible</b> (a stat above the level cap, more stat points than any level can earn, an over-cap refine) and <b>too fast</b> (kills, levels, Zeny or materials gained since the previous sync faster than the game itself can pay out, with GM gifts and offline claims credited back). Flags are REVIEW-ONLY: nothing here rejects a save or bans an account, and a first-time flag also mails the owner in-game. Clearing is the verdict: it removes the ⚠ marker but keeps the evidence, and reopens by itself if the rule fires again. Cross-check Gifts and History before acting.</p>
     <div id="auditlist" class="small">Loading…</div>
   </section>
-  </div>
 
-  <section id="detail" class="card hide"></section>
+  <section class="card gm-pane hide" id="activitycard" data-pane="activity">
+    <h2>GM Activity Log</h2>
+    <div id="activitybody" class="small">Loading…</div>
+  </section>
+  <section id="detail" class="card hide gm-pane" data-pane="players"></section>
+  </div>
 </main>
 
 <div id="toast"></div>
@@ -297,27 +320,33 @@ function cpuCard(cpu, error) {
   </div>`;
 }
 
-async function loadUsage() {
+async function loadUsage(fresh = false) {
   let d = null;
-  try { d = await api('/gm/usage'); } catch (e) { $('usagebody').innerHTML = `<span class="bad">Could not read usage: ${esc(e.message)}</span>`; return; }
+  try { d = await (fresh ? api('/gm/usage?fresh=1') : api('/gm/usage')); } catch (e) { $('usagebody').innerHTML = `<span class="bad">Could not read usage: ${esc(e.message)}</span>`; return; }
   const L = d.ledger || {};
-  $('usagewhen').textContent = '· ' + d.utcDay + ' UTC';
+  const m = d.meters || {};
+  const diag = d.diagnostics || {};
+  const cfg = diag.configured || {};
+  $('usagewhen').textContent = `· ${d.utcDay} UTC · ${d.cached ? 'Cached' : 'Live'} (${when(d.fetchedAt || d.at)})`;
+  const rows = [];
+  if (m.workers?.available) rows.push(meter('Workers requests (account-wide)', d.requests?.used, d.limits?.requests, d.requests ? nfmt(d.requests.errors) + ' errors' : ''));
+  if (m.d1?.available) {
+    rows.push(meter(`D1 rows written (${d.d1?.scoped ? 'project DB' : 'account-wide'})`, d.d1?.rowsWritten, d.limits?.rowsWritten, ''));
+    rows.push(meter('D1 rows read', d.d1?.rowsRead, d.limits?.rowsRead, ''));
+  }
+  if (m.objects?.available) rows.push(meter('Durable Object requests (account-wide)', d.objects?.requests, d.limits?.durableRequests, d.objects ? bytes(d.objects.storedBytes) + ' stored' : ''));
+  const diagLines = Object.entries(m).map(([k, v]) => `<li><b>${esc(k)}</b>: ${v.available ? 'OK' : 'Unavailable'} — ${esc(v.scope || '')}${v.unavailableReason ? ' (' + esc(v.unavailableReason) + ')' : ''}</li>`).join('');
   $('usagebody').innerHTML = [
-    meter('Function requests (all Workers on the account)', d.requests?.used, d.limits.requests, d.requests ? nfmt(d.requests.errors) + ' errors' : ''),
-    meter('D1 rows written (the tight one)', d.d1?.rowsWritten, d.limits.rowsWritten, d.d1 && !d.d1.scoped ? 'all databases' : ''),
-    meter('D1 rows read', d.d1?.rowsRead, d.limits.rowsRead, ''),
-    // v403: the two Durable Objects (the write gate and the social scene). Cloudflare reports them
-    // account-wide, not per class, so the label says so rather than implying one object.
-    meter('Durable Object requests (gate + social)', d.objects?.requests, d.limits.durableRequests, d.objects ? bytes(d.objects.storedBytes) + ' stored' : ''),
+    ...rows,
     `<div class="grid2" style="margin-top:8px">
       <div class="stat">accounts<b>${nfmt(L.accounts)}</b><span class="small">${nfmt(L.saves)} with a cloud save · ${nfmt(L.liveSessions)} live sessions</span></div>
       <div class="stat">save storage<b>${bytes(L.saveBytes)}</b><span class="small">biggest ${bytes(L.biggestSave)}</span></div>
       <div class="stat">save history<b>${bytes(L.historyBytes)}</b><span class="small">${nfmt(L.historyRows)} backup rows (5 per player)</span></div>
       <div class="stat">today<b>${nfmt(L.eventsToday)}</b><span class="small">logins &amp; GM actions · ${nfmt(L.grantsWaiting)} gifts waiting</span></div>
     </div>`,
-    `<p class="small" style="margin:8px 0 0">${esc(d.note)}</p>`,
-    d.error ? `<p class="small bad" style="margin:6px 0 0">Analytics: ${esc(d.error)}</p>` : '',
-    d.objectsError ? `<p class="small" style="margin:6px 0 0">Durable Objects: ${esc(d.objectsError)} — use the dashboard for this number.</p>` : '',
+    `<div class="row" style="margin-top:8px"><button type="button" onclick="loadUsage(true)">↻ Fresh analytics</button>${diag.dashboardUrl ? `<a href="${esc(diag.dashboardUrl)}" target="_blank" rel="noopener" style="color:var(--gold);font-size:12px">Open Cloudflare Dashboard ↗</a>` : ''}</div>`,
+    `<details style="margin-top:6px"><summary class="small">Diagnostics &amp; configuration</summary><p class="small">CF_ACCOUNT_ID: ${cfg.accountIdSet ? 'set' : 'missing'} · CF_ANALYTICS_TOKEN: ${cfg.analyticsTokenSet ? 'set' : 'missing'} · CF_D1_ID: ${cfg.d1IdSet ? 'set (scoped)' : 'unset (account-wide)'}</p><ul class="small" style="margin:4px 0;padding-left:18px">${diagLines}</ul></details>`,
+    `<p class="small" style="margin:6px 0 0">${esc(d.note)}</p>`,
     d.hint ? `<p class="small" style="margin:6px 0 0">${esc(d.hint)}</p>` : '',
     cpuCard(d.cpu, d.cpuError),
   ].join('');
@@ -342,9 +371,9 @@ async function loadAudit() {
     const d = await api('/gm/audit');
     $('audit-count').textContent = d.alerts.length ? '(' + d.alerts.length + ')' : '';
     box.innerHTML = d.alerts.length
-      ? `<table><thead><tr><th>Account</th><th>Flag</th><th>When</th></tr></thead><tbody>` +
+      ? `<table class="audit-table"><thead><tr><th>Account</th><th>Flag</th><th>When</th></tr></thead><tbody>` +
         d.alerts.map(a => `<tr><td><button type="button" data-audit-player="${a.user_id}">${esc(a.username)}</button></td>` +
-          `<td>${esc(a.label)}${a.threshold ? ` <span class="small">(limit ${nfmt(a.threshold)}, saw ${nfmt(Math.round(a.value))})</span>` : ''}<br><span class="small">${esc(a.detail || '')}</span></td>` +
+          `<td>${esc(a.label)}${a.threshold ? ` <span class="small">(limit ${nfmt(a.threshold)}, saw ${nfmt(Math.round(a.value))})</span>` : ''}<br><span class="small">${esc(a.detail || '')}</span>${auditEvidenceMarkup(a)}</td>` +
           `<td class="small">${esc(when(a.last_seen))}<br>${nfmt(a.observations)} observation${a.observations === 1 ? '' : 's'}</td></tr>`).join('') +
         `</tbody></table>`
       : 'No flags recorded.';
@@ -427,14 +456,23 @@ $('spawnmvp').onclick=async()=>{
 // passed in. The first cut appended that cell by patching a closing row tag into a row template that
 // never closed the row, so the match failed and the button silently vanished from every flag; a
 // test that only grepped the source for `data-act="flagclear"` could not see it.
+function auditEvidenceMarkup(a) {
+  const e = a.evidence;
+  if (!e) return '';
+  const number = key => typeof e[key] === 'number' ? nfmt(e[key]) : 'Unavailable';
+  return `<details class="small audit-evidence"><summary>Evidence${a.ruleVersion ? ' · ' + esc(a.ruleVersion) : ''}</summary>` +
+    `<div>Raw gain: ${esc(number('rawDelta'))} · Credited: ${esc(number('credited'))} · Unexplained: ${esc(number('unexplained'))}</div>` +
+    `<div>Elapsed: ${typeof e.elapsedMs === 'number' ? esc(nfmt(e.elapsedMs / 60000)) + ' min' : 'Unavailable'} · Threshold: ${esc(nfmt(a.threshold || 0))} ${esc(a.units || '')}</div>` +
+    `<div>${e.rolling ? 'Accumulated window' : 'Between accepted saves'} · ${esc(a.category || '')}</div></details>`;
+}
 function saveAuditMarkup(alerts) {
   const openFlags = alerts.filter(a => !a.cleared), clearedFlags = alerts.filter(a => a.cleared);
-  const cells = (a, whenText) => `<td>${esc(a.label)}</td><td>${esc(nfmt(a.threshold||0))} / ${esc(nfmt(Math.round(a.value||0)))}</td><td>${esc(a.detail||'')}</td><td class="small">${whenText}</td>`;
+  const cells = (a, whenText) => `<td>${esc(a.label)}</td><td>${esc(nfmt(a.threshold||0))} / ${esc(nfmt(Math.round(a.value||0)))}</td><td>${esc(a.detail||'')}${auditEvidenceMarkup(a)}</td><td class="small">${whenText}</td>`;
   const seen = a => `${esc(when(a.firstSeen))} → ${esc(when(a.lastSeen))}<br>${nfmt(a.observations)} observation${a.observations===1?'':'s'}`;
   const row = (a, whenText, verdict) => `<tr>${cells(a, whenText)}${verdict}</tr>`;
-  const openTable = `<table><thead><tr><th>Rule broken</th><th>Limit / saw</th><th>Detail</th><th>First / last seen</th><th></th></tr></thead><tbody>${openFlags.map(a=>row(a, seen(a), `<td><button type="button" data-act="flagclear" data-kind="${esc(a.kind)}">Looks fine — clear</button></td>`)).join('')}</tbody></table>`;
+  const openTable = `<table class="audit-table"><thead><tr><th>Rule broken</th><th>Limit / saw</th><th>Detail</th><th>First / last seen</th><th></th></tr></thead><tbody>${openFlags.map(a=>row(a, seen(a), `<td><button type="button" data-act="flagclear" data-kind="${esc(a.kind)}">Looks fine — clear</button></td>`)).join('')}</tbody></table>`;
   const clearedTable = clearedFlags.length
-    ? `<h3 class="small">Cleared after review — kept as history, reopenable</h3><table><thead><tr><th>Rule broken</th><th>Limit / saw</th><th>Detail</th><th>Cleared</th><th></th></tr></thead><tbody>${clearedFlags.map(a=>row(a, `${esc(when(a.clearedAt))}${a.clearedBy?' · '+esc(a.clearedBy):''}`, `<td><button type="button" data-act="flagreopen" data-kind="${esc(a.kind)}">Reopen</button></td>`)).join('')}</tbody></table>`
+    ? `<h3 class="small">Cleared after review — kept as history, reopenable</h3><table class="audit-table"><thead><tr><th>Rule broken</th><th>Limit / saw</th><th>Detail</th><th>Cleared</th><th></th></tr></thead><tbody>${clearedFlags.map(a=>row(a, `${esc(when(a.clearedAt))}${a.clearedBy?' · '+esc(a.clearedBy):''}`, `<td><button type="button" data-act="flagreopen" data-kind="${esc(a.kind)}">Reopen</button></td>`)).join('')}</tbody></table>`
     : '';
   if (!alerts.length) return `<p class="small">No save-audit flags on this account — its last accepted saves are within the game's own limits.</p>`;
   if (!openFlags.length) return `<p class="small">Every save-audit flag on this account has been reviewed and cleared. A cleared rule reopens by itself if it fires again.</p>${clearedTable}`;
@@ -521,6 +559,7 @@ async function openPlayer(id) {
   const d = await api('/gm/player?id=' + id);
   if(seq!==playerRequest)return;
   SEL = d;
+  showNav('players');
   renderPlayers();
   renderDetail();
   // On a phone the detail card sits under the list, so opening a player has to
@@ -1001,6 +1040,32 @@ function renderSignInCard() {
   document.getElementById('gmSignUser').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('gmSignPass').focus(); });
   document.getElementById('gmSignPass').addEventListener('keydown', e => { if (e.key === 'Enter') consoleSignIn(); });
   document.getElementById('gmSignUser').focus();
+}
+function showNav(tab) {
+  document.querySelectorAll('.gm-nav button').forEach(b => b.classList.toggle('on', b.dataset.nav === tab));
+  document.querySelectorAll('.gm-pane').forEach(p => {
+    const match = p.dataset.pane === tab;
+    if (p.id === 'detail') {
+      p.classList.toggle('hide', !match || !SEL);
+    } else {
+      p.classList.toggle('hide', !match);
+    }
+  });
+  if (tab === 'activity') loadActivityLog();
+}
+async function loadActivityLog() {
+  const el = document.getElementById('activitybody');
+  if (!el) return;
+  try {
+    const d = await api('/gm/log');
+    const rows = Array.isArray(d.events) ? d.events : (Array.isArray(d.logs) ? d.logs : []);
+    if (!rows.length) { el.textContent = 'No recent GM activity recorded.'; return; }
+    el.innerHTML = '<table><thead><tr><th>When</th><th>Actor</th><th>Kind</th><th>Target</th><th>Detail</th></tr></thead><tbody>'
+      + rows.slice(0, 100).map(r => `<tr><td>${when(r.at || r.created_at)}</td><td>${esc(r.actor || '')}</td><td>${esc(r.kind || r.action || '')}</td><td>${esc(r.u || r.target || '')}</td><td>${esc(r.detail || '')}</td></tr>`).join('')
+      + '</tbody></table>';
+  } catch (e) {
+    el.textContent = 'Could not load activity log: ' + e.message;
+  }
 }
 </script>
 </body>

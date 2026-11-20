@@ -178,7 +178,7 @@ function renderFlags(alerts) {
   // The formatters are `const`s in the same script scope as the builder, so they go in the body too
   // (new Function's own arguments are parameter names, not statements).
   const factory = new Function([grab(/const when = .*;/), grab(/const nfmt = .*;/), grab(/const esc = .*;/),
-    src.slice(start, end), 'return saveAuditMarkup;'].join('\n'));
+    src.slice(src.indexOf('function auditEvidenceMarkup('), start), src.slice(start, end), 'return saveAuditMarkup;'].join('\n'));
   return factory()(alerts);   // factory() returns saveAuditMarkup; call it with the alerts
 }
 const openFlag = {
@@ -351,6 +351,15 @@ t('v274: the console is usable on a phone - stacked layout, reachable players, b
   assert.match(page, /data-act="closedetail"/);
   assert.match(page, /function closeDetail\(\)/);
   assert.match(page, /if \(btn\.dataset\.act === 'closedetail'\) \{ closeDetail\(\); return; \}/);
+});
+
+t('structured audit evidence renders values, units and safely escaped rule versions', () => {
+  const html = renderFlags([{...openFlag, ruleVersion:'<script>bad</script>', units:'levels/hr',
+    category:'heuristic', evidence:{rawDelta:10,credited:6,unexplained:4,elapsedMs:120000,rolling:true}}]);
+  assert.match(html,/Raw gain: 10/); assert.match(html,/Credited: 6/);
+  assert.match(html,/Unexplained: 4/); assert.match(html,/Elapsed: 2 min/);
+  assert.match(html,/90 levels\/hr/); assert.ok(!html.includes('<script>'));
+  assert.match(html,/&lt;script&gt;/);
 });
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
