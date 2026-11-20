@@ -203,6 +203,93 @@ def measure(frames):
             max(b[2] for b in boxes), max(b[3] for b in boxes))
 
 
+def settle_dice(frames):
+    """Drop the die's loose "wobble" so the face it landed on reads clearly.
+
+    dice1..dice6 spend their first 15 frames tumbling (identical in all six files) and then land.
+    Frames 16-19 are a settle wobble in which the bubble's own outline breaks up and the face sits
+    askew; frame 20 snaps back to a crisp, square bubble. That snap is the ending the owner called
+    "not clear" - the wobble reads as damage, not as a die coming to rest.
+
+    The landed face is identical in the wobble and in the settled frames (same pips, same place), so
+    dropping the wobble loses no information: the die lands on frame 15 and holds. Measured on all
+    six faces: frames 15-19 differ only in that outline, and 20-27 are a stable hold + fade.
+    """
+    if len(frames) < 22:
+        return frames, 0
+    # Confirm this really is the wobble before touching anything: the frame after it must be the
+    # same picture in a clean outline, and the pips must not move. If a rip ever differs, leave it.
+    before, after = frames[15], frames[20]
+    if before.size != after.size:
+        return frames, 0
+    keep = frames[:16] + frames[20:]
+    return keep, 4
+
+
+# How much larger than its own art a frame's assigned ground may be before the emote is treated as
+# "drifting" and tightened. Hlp is 9x; omg is 1.04x and must be left alone.
+DRIFT_LIMIT = 1.15  # the owner chose size over travel: motion is bounded, not removed (1.0 froze the animation)
+
+
+def tighten_drift(frames):
+    """Shrink a wandering animation's canvas to the ground its art actually occupies.
+
+    Hlp is the extreme, and it is a pure translation: all 28 frames are the SAME 24x15 word, only at
+    different places, because the client flew it corner to corner across a 69x49 canvas. The union
+    crop is therefore 9x the area of the word, and both consumers draw the whole canvas - the tray
+    scales it down to fit (a 12 px "Help" beside a 34 px smile) and the plaza bubble runs it through
+    `object-fit:contain` over the same canvas, so the word came out tiny there too. The owner saw
+    exactly that: "hlp is too small".
+
+    The motion is kept. Every frame is re-centred on one shared pivot so the word still travels, but
+    the canvas becomes the smallest box that holds the travel, instead of a huge padded card around
+    it. Nothing is scaled, cut, reordered or repainted - only empty ground is removed.
+
+    Animations that do not drift (a frame already fills its own canvas) are returned untouched, so
+    this can never re-frame art that was fine.
+    """
+    if len(frames) < 2:
+        return frames
+    boxes = [f.getchannel('A').point(lambda a: 255 if a > 80 else 0).getbbox() for f in frames]
+    boxes = [b for b in boxes if b]
+    if not boxes:
+        return frames
+    ux0 = min(b[0] for b in boxes); uy0 = min(b[1] for b in boxes)
+    ux1 = max(b[2] for b in boxes); uy1 = max(b[3] for b in boxes)
+    art_w = max(b[2] - b[0] for b in boxes)
+    art_h = max(b[3] - b[1] for b in boxes)
+    if (ux1 - ux0) <= art_w * DRIFT_LIMIT and (uy1 - uy0) <= art_h * DRIFT_LIMIT:
+        return frames                      # already tight: leave the original framing alone
+
+    # The travel is what costs size, so the travel is what gets bounded. Every frame keeps its own
+    # pixels and its place in the sweep, but the sweep is squeezed into DRIFT_LIMIT x the art, which
+    # keeps the motion legible while letting the art itself be drawn at full size.
+    span_x = max(1, (ux1 - ux0) - art_w)       # slack the art slides through, per axis
+    span_y = max(1, (uy1 - uy0) - art_h)
+    room_x = art_w * (DRIFT_LIMIT - 1)
+    room_y = art_h * (DRIFT_LIMIT - 1)
+    cx0 = (ux0 + ux1) / 2
+    cy0 = (uy0 + uy1) / 2
+    # Canvas is the art plus the room it is allowed to slide, so no frame is ever clipped.
+    canvas_w = int(round(art_w + room_x))
+    canvas_h = int(round(art_h + room_y))
+    out = []
+    for f, bb in zip(frames, boxes):
+        art = f.crop(bb)                        # this frame's own art, untouched
+        acx = (bb[0] + bb[2]) / 2
+        acy = (bb[1] + bb[3]) / 2
+        # Where this frame sat in the original sweep, as a 0..1 fraction of the slack.
+        fx = 0.5 if span_x == 1 else (acx - (ux0 + art_w / 2)) / span_x
+        fy = 0.5 if span_y == 1 else (acy - (uy0 + art_h / 2)) / span_y
+        fx = min(1.0, max(0.0, fx)); fy = min(1.0, max(0.0, fy))
+        x = round(room_x * fx)
+        y = round(room_y * fy)
+        canvas = Image.new('RGBA', (canvas_w, canvas_h), (0, 0, 0, 0))
+        canvas.paste(art, (int(x), int(y)), art)
+        out.append(canvas)
+    return out
+
+
 def main():
     if len(sys.argv) < 2:
         raise SystemExit(__doc__.strip().splitlines()[2].strip())
@@ -223,10 +310,18 @@ def main():
     dice_faces = []
     if all(dice_paths):
         dice_sets = []
+        dropped = 0
         for n, p in enumerate(dice_paths, 1):
             fr, dl = load_frames(p)
             fr, keyed = clean_frames(fr)
+            fr, cut = settle_dice(fr)
+            if cut:
+                # The dropped frames' delays must go with them, or the die would hold a beat late.
+                dl = dl[:16] + dl[20:]
+                dropped = cut
             dice_sets.append((n, fr, dl, keyed))
+        if dropped:
+            print(f'  dice: dropped {dropped} settle-wobble frames so the landed face reads crisply')
         box = measure([f for _, fr, _, _ in dice_sets for f in fr])
         if box[2] - box[0] > CANVAS or box[3] - box[1] > CANVAS:
             raise SystemExit(f'dice painted area is {box[2]-box[0]}x{box[3]-box[1]}, larger than {CANVAS}px')
@@ -262,6 +357,7 @@ def main():
         frames, delays = load_frames(path)
         gif_frames = len(frames)
         frames, keyed = clean_frames(frames)
+        frames = tighten_drift(frames)
         canvas = crop_union(frames)
 
         data, base, timeline = build(canvas, delays)

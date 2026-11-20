@@ -212,28 +212,29 @@
     "oh": {
       "action": 24,
       "delay": 50,
-      "frames": 17,
-      "sha256": "659bfb7eca992f9a6bc923ce1265fe4e54f74b35542e41b8dc063d13fffdec6e",
+      "frames": 7,
+      "sha256": "fd215917073c1af3df4c8a0c38135f071931f77e8c0da9e69bed28377d4d7e48",
       "source": "Ohh.gif (iRO Wiki)"
     },
     "x": {
       "action": 25,
-      "delay": null,
-      "frames": null,
-      "sha256": null
+      "delay": 50,
+      "frames": 7,
+      "sha256": "a29143bf4da0e2873af68a1c165683d55e265944c20ab6945005cde00173f03e",
+      "source": "Ecks.gif (iRO Wiki)"
     },
     "hlp": {
       "action": 26,
       "delay": 50,
-      "frames": 28,
-      "sha256": "a24142c493a47f7305b4e8acc332524abd460e31f0233bc59ec7720bfe98f3d6",
+      "frames": 18,
+      "sha256": "96ad2a1f0e7221933700f4cb26f639fd4461446a5498600f658b1b8293da1164",
       "source": "Hlp.gif (iRO Wiki)"
     },
     "go": {
       "action": 27,
       "delay": 30,
       "frames": 10,
-      "sha256": "f8e4c5c50e447ada1f1748fc72c6d88767e49616e0226a574fd239ce17febd71",
+      "sha256": "45e3083a326b2b83d86faf7ab6aa93ef692910d0f50c7445c7d6715052bb1c86",
       "source": "Goo.gif (iRO Wiki)"
     },
     "bzz": {
@@ -288,8 +289,8 @@
     "dice": {
       "action": 58,
       "delay": 100,
-      "frames": 24,
-      "sha256": "07bb48ed556687b2d3a8479b4b0b96717675fb5596fd3954b3d97976e445f966",
+      "frames": 20,
+      "sha256": "70c8fd34b77cdc85db830d1302a700868cbfb170313980ea9ddbc0d5366bb95f",
       "source": "dice1.gif (iRO Wiki)",
       "faces": 6
     },

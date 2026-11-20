@@ -118,6 +118,19 @@ refresh is possible, but a matching wiki GIF (`panic` is `Come.gif` on the wiki)
 silently replace a verified sprite render - so an id whose lock entry already has a sha256 is
 skipped. `--refresh` opts in to replacing them.
 
+Two things are done to the pixels beyond timing, and both were owner-reported defects:
+
+- **Drift is bounded.** Hlp is a pure translation - all 28 frames are the same 24x15 "Help" word,
+  only at different places, flown corner to corner across a 69x49 canvas. Because both consumers
+  draw the whole canvas (the tray scales it, the plaza bubble runs it through `object-fit:contain`),
+  the word came out at 12 px beside a 34 px smile. `tighten_drift` squeezes the sweep into 1.15x the
+  art so the word stays legible and still moves. The owner chose size over travel. 1.0 was tried and
+  rejected: it removed the motion entirely and collapsed oh/x/hlp to a single frozen frame.
+- **The die's settle-wobble is dropped.** After landing, dice1..dice6 wobble for four frames with the
+  bubble outline broken up, then snap back to a crisp bubble. That snap read as damage rather than a
+  die coming to rest. The landed face is identical in the wobble and the settled frame, so dropping
+  the wobble loses nothing: the die lands and holds for 500 ms.
+
 The dice is six files behind one id. `dice1.gif`..`dice6.gif` share one tumble and differ only in
 the landed face, so all six are converted from a single shared crop box into `dice.png` (face 1) and
 `dice2.png`..`dice6.png`, with `faces: 6` recorded in the lock. `/dice` is a roll: the room picks

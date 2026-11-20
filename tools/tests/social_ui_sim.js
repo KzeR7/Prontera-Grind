@@ -67,11 +67,16 @@ w.PGSocial.select('world');socket.onmessage({data:JSON.stringify({type:'message'
   assert.equal(menu.hidden,true,'and closes again');
  }
 
- // v374 (owner): typing /gg and pressing Enter sends the evil-grin emote on the current channel and the
+ // v374 (owner): typing an emotion command and pressing Enter sends it on the current channel and the
  // room echoes it back, so the sender sees it too. /thx is the Thanks art (id ok), not the id 'ok'.
- app.nextChat=0;w.PGSocial.select('local');app.room=1;w.document.getElementById('socialInput').value='/gg';
+ // The evil grin answers to /hz now: /gg means "good game" and clashed with the old plaza grin.
+ app.nextChat=0;w.PGSocial.select('local');app.room=1;w.document.getElementById('socialInput').value='/hz';
  w.document.getElementById('socialCompose').dispatchEvent(new w.Event('submit',{cancelable:true}));
- assert.equal(socket.sent.at(-1).type,'emotion','typed /gg is sent as an emotion');assert.equal(socket.sent.at(-1).emotion,'gg','/gg is the gg art');assert.equal(socket.sent.at(-1).channel,'local');
+ assert.equal(socket.sent.at(-1).type,'emotion','typed /hz is sent as an emotion');assert.equal(socket.sent.at(-1).emotion,'gg','/hz is the gg art');assert.equal(socket.sent.at(-1).channel,'local');
+ // /gg must NOT become an emote any more - it falls through to ordinary chat text.
+ app.nextChat=0;w.document.getElementById('socialInput').value='/gg';
+ w.document.getElementById('socialCompose').dispatchEvent(new w.Event('submit',{cancelable:true}));
+ assert.equal(socket.sent.at(-1).type,'chat','/gg is plain chat now, not the grin');assert.equal(socket.sent.at(-1).body,'/gg');
  w.document.getElementById('socialInput').value='';
 app.nextChat=0;w.PGSocial.select('local');app.room=1;w.document.getElementById('socialInput').value='first';w.document.getElementById('socialCompose').dispatchEvent(new w.Event('submit',{cancelable:true}));assert.equal(socket.sent.at(-1).body,'first');const count=socket.sent.length;w.document.getElementById('socialInput').value='second';w.document.getElementById('socialCompose').dispatchEvent(new w.Event('submit',{cancelable:true}));assert.equal(socket.sent.length,count);assert.equal(w.document.getElementById('socialInput').value,'second');assert(w.document.getElementById('socialSend').disabled);w.PGSocial.select('world');w.document.getElementById('socialCompose').dispatchEvent(new w.Event('submit',{cancelable:true}));assert.equal(socket.sent.length,count,'changing channel cannot evade cooldown');app.nextChat=0;w.document.getElementById('socialCompose').dispatchEvent(new w.Event('submit',{cancelable:true}));assert.equal(socket.sent.at(-1).body,'second');
 // Pointer and keyboard resizing uses the actual view bounds and restores a preferred size.

@@ -16,7 +16,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{createHash}=re
  // The 14 PR #269 ids now carry real art converted from the authentic iRO Wiki GIFs
  // (tools/social/import-emote-gifs.py), so only `x` is still pending: Ecks.gif was never
  // supplied. A pending id must not have a file on disk - a missing hash may never hide real art.
- assert.deepEqual(artPending.sort(),['x'],'/x is the only id still awaiting art (Ecks.gif)');
+ assert.deepEqual(artPending.sort(),[],'no id is awaiting art any more: Ecks.gif arrived last');
  for(const id of artPending)assert.ok(!fs.existsSync('assets/social/emotions/'+id+'.png'),id+' has no file, as declared');
  // The dice is six files behind one id: dice.png is face 1, dice2..dice6 the rest. A roll names
  // a face, so every one of them must exist or a roll of 4 draws a broken image.

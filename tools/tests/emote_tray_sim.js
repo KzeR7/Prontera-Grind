@@ -14,28 +14,46 @@ assert.equal(R.EMOTIONS.length, 46, '46 emotions');
 // CI; they now carry art converted from the authentic iRO Wiki GIFs by
 // tools/social/import-emote-gifs.py, measured by tools/social/emote-layout.py - so the exemption is
 // gone and a guessed or missing layout fails here.
-// `x` is the one id whose source GIF was never supplied, so it has no file and no layout: it draws
-// as the dashed /x fallback. Every other id has real art and must have a measured layout.
-const NO_ART = ['x'];
+// Every id now has real art, including /x (Ecks.gif arrived later), so there is no exemption left
+// and a missing or guessed layout fails here.
 for (const id of R.EMOTIONS) {
   const L = R.EMOTE_LAYOUT[id];
-  if (NO_ART.includes(id)) {
-    assert.equal(L, undefined, id + ' has no art, so it must not carry a guessed layout');
-    continue;
-  }
   assert.ok(L, id + ' has a measured layout');
   assert.ok(L.w > 0 && L.h > 0 && L.s > 0 && L.s < 10, id + ' layout is sane');
   assert.ok(L.cx > 0 && L.cy > 0, id + ' is centred on its art');
 }
-for (const id of ADDED) assert.equal(!R.EMOTE_LAYOUT[id], id === 'x', id + ' art is measured, except /x which has no source');
+for (const id of ADDED) assert.ok(R.EMOTE_LAYOUT[id], id + ' art is measured');
+// v2 sizing: the drawn canvas must FIT the tray slot. Before this, kissheart scaled to 76 px and
+// love to 51 px inside a 40 px box, so oversized art bled into the next cell and clipped.
+for (const [id, L] of Object.entries(R.EMOTE_LAYOUT)) {
+  assert.ok(Math.max(L.w, L.h) * L.s <= 40.01, id + ' fits the 40px tray slot, got ' + (Math.max(L.w, L.h) * L.s).toFixed(1));
+  assert.ok(Math.max(L.w, L.h) * L.s >= 31, id + ' is not shrunk to a speck, got ' + (Math.max(L.w, L.h) * L.s).toFixed(1));
+}
 // The dice is six files behind one id; one shared entry has to frame all six identically.
 assert.ok(R.EMOTE_LAYOUT.dice, 'the dice has a layout covering all six faces');
+
+// The die visibly LANDS. dice1..dice6 spend 15 frames tumbling, then land, then wobble with a broken
+// bubble outline before snapping back to a crisp one at f20. That snap is what the owner called
+// "the ending is not clear". The importer drops the wobble, so the landed face must hold still at
+// the end - the last frames have to be pixel-identical, or the ending is still moving under them.
+{
+  const fs2 = require('fs'), dir = path.join(__dirname, '..', '..', 'assets', 'social', 'emotions');
+  for (const face of ['dice', 'dice2', 'dice3', 'dice4', 'dice5', 'dice6']) {
+    const png = fs2.readFileSync(path.join(dir, face + '.png'));
+    // An APNG that froze to one frame loses its animation entirely; that is a regression, not a fix.
+    assert.ok(png.length > 2000, face + ' still carries a real animation, not a single frozen frame');
+  }
+}
 for (const [id, cmd] of Object.entries(R.EMOTE_NAMES)) {
   assert.ok(R.EMOTIONS.includes(id), 'named id ' + id + ' exists');
   assert.equal(R.EMOTE_BY_CMD[cmd], id, '/' + cmd + ' resolves to ' + id);
 }
 assert.equal(R.EMOTE_BY_CMD.thx, 'ok', '/thx is the Thanks art (id ok)');
-assert.equal(R.EMOTE_BY_CMD.gg, 'gg', '/gg is the evil grin');
+// The `gg` id's own art (the evil grin) cannot answer to /gg: that command means "good game" and
+// the old plaza grin clashes with it. Owner: rename the id's command to /hz, keep /gg free.
+assert.equal(R.EMOTE_BY_CMD.hz, 'gg', '/hz is the evil grin (renamed off /gg)');
+assert.equal(R.EMOTE_BY_CMD.gg, undefined, '/gg is not bound to the grin any more');
+assert.equal(R.EMOTE_NAMES.gg, 'hz', 'the gg id answers to hz');
 // PR #269 introduced duplicate commands at first (/sob with cry, /kis with kissheart, /hum with
 // shy). The merge keeps the id that already owns the command, and the new ids use their own names.
 assert.equal(R.EMOTE_BY_CMD.sob, 'cry', '/sob stays the shipped cry art');
