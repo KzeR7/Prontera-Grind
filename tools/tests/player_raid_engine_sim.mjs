@@ -8,7 +8,7 @@
 // run that a solo or a trio can actually finish.
 import assert from 'node:assert/strict';
 import {
-  createRaidRun, sanitizeRaidRun, advanceRaidRun, applyRaidAction, raidPublicRun, STAGE_BOUNDS,
+  createRaidRun, sanitizeRaidRun, advanceRaidRun, applyRaidAction, raidPublicRun, STAGE_BOUNDS, SIM_TICK_MS,
 } from '../../functions/_lib/raid-engine.js';
 import {
   RAID_RULES, RAID_STAGES, RAID_STAGE_KEYS, stageWorkload, raidPartySize, raidRunSeconds, raidStageSeconds,
@@ -81,6 +81,29 @@ function play(run, seconds, { focus = true, every = 5_000, onTick = null } = {})
       }
     }
     if (onTick) onTick(run, at, second);
+  }
+  return run;
+}
+
+// Walk the run at a fixed cadence until `done(run)` holds, or the second budget runs out. The tests
+// below care about an *event* -- a stage clearing, a portal opening -- not about an arbitrary wall-clock
+// offset. A party that clears stage 1 at ~42 s and is auto-carried into stage 2 at ~62 s has no open
+// portal left to inspect at a fixed 120 s read, so "read at 120 s and expect stage 1's portal" was never
+// a property of the game; it only passed while the scheduler under-simulated the run and left the party
+// stranded in stage 1. Stopping on the event asserts the behaviour that is actually specified.
+function playUntil(run, done, seconds = 1_200, { focus = true, every = 5_000 } = {}) {
+  let at = run.startedAt;
+  for (let second = 1; second <= seconds && run.state === 'active'; second++) {
+    at = run.startedAt + second * 1000;
+    advanceRaidRun(run, at);
+    if (run.state !== 'active') break;
+    if (focus && second * 1000 % every === 0) {
+      const target = run.enemies.find(e => e.hp > 0);
+      for (const m of living(run)) {
+        applyRaidAction(run, m.id, 'focus', { actionId: 'focus:' + m.id + ':' + second, at, targetId: target ? target.id : '' });
+      }
+    }
+    if (done(run)) break;
   }
   return run;
 }
@@ -285,8 +308,9 @@ t('auto-combat kills the pack and opens the exit portal, then the party walks th
   const p = profile('Lord Knight', false);
   const run = baseRun([member(1, 'A', p)]);
   run.hazardPlan = [];
-  play(run, 120);
+  playUntil(run, r => r.stageCleared);
   assert.equal(run.stageCleared, true, 'stage 1 cleared by standing and fighting');
+  assert.equal(run.stageIndex, 0, 'stage 1 was still the current stage when it cleared');
   assert.ok(run.portalOpenAt > 0, 'the portal has an open time');
   assert.ok(run.members[0].damage > 0, 'damage came from the server model');
   // The portal is refused before a stage is cleared and accepted after it.
@@ -299,7 +323,8 @@ t('auto-combat kills the pack and opens the exit portal, then the party walks th
     assert.ok(run.portalRequestedAt > 0);
     assert.equal(run.stageIndex, 0, 'the interact only asks to walk through; the transition is the next tick');
   }
-  advanceRaidRun(run, run.updatedAt + 50);
+  // Crossing a whole cell is what resolves the walk-through; 50 ms can land inside the current cell.
+  advanceRaidRun(run, run.updatedAt + SIM_TICK_MS * 2);
   assert.ok(run.stageIndex >= 1, 'the party advanced past the approach: stage ' + run.stageIndex);
   assert.equal(run.stageKey, 'arcade');
   // `play()` is still walking the run, so by now stage 2 may itself be clear. What must hold is that
@@ -308,15 +333,62 @@ t('auto-combat kills the pack and opens the exit portal, then the party walks th
   if (!run.stageCleared) assert.ok(run.enemies.some(e => e.hp > 0));
 });
 
+// The scheduler's defining property: the run is a function of the clock, not of how often it is read.
+// This is the assertion that the fixed-cell rewrite exists to satisfy, and the one the older suite
+// lacked -- its `play()` helper hard-coded a 1 s read, so a scheduler whose damage depended on the read
+// cadence could still pass every test. A 100 ms client, a 1 s client and a 5 s client that send the same
+// intents must be in the same state at the same instant.
+t('the same intents at the same instant give the same state at any read cadence', () => {
+  const p = profile('Lord Knight', false);
+  const focusEvery = 5_000;
+  const end = 120_000;
+  const runAt = (stepMs) => {
+    const run = baseRun([member(1, 'A', p)]);
+    run.hazardPlan = [];
+    // Reads and intents are separate schedules. The player's focus taps happen on the 5 s wall clock no
+    // matter how often the loop wakes, so the intent list is identical for every reader; only the read
+    // instants differ. Both are merged into one ascending timeline, read-then-intent when they coincide.
+    const events = [];
+    for (let t = stepMs; t <= end; t += stepMs) events.push({ t, read: true });
+    for (let t = focusEvery; t <= end; t += focusEvery) events.push({ t, read: false });
+    events.sort((a, b) => a.t - b.t || (a.read === b.read ? 0 : a.read ? -1 : 1));
+    for (const ev of events) {
+      const at = run.startedAt + ev.t;
+      advanceRaidRun(run, at);
+      if (run.state !== 'active') break;
+      if (ev.read) continue;
+      const target = run.enemies.find(e => e.hp > 0);
+      for (const m of living(run)) {
+        applyRaidAction(run, m.id, 'focus', { actionId: 'focus:' + m.id + ':' + at, at, targetId: target ? target.id : '' });
+      }
+    }
+    return {
+      stageIndex: run.stageIndex,
+      stageKey: run.stageKey,
+      damage: Math.round(run.members[0].damage),
+      hp: Math.round(run.members[0].hp),
+      alive: run.enemies.filter(e => e.hp > 0).length,
+      enemyHp: run.enemies.filter(e => e.hp > 0).map(e => e.id + ':' + Math.round(e.hp)).sort().join(','),
+      cursor: run.cursorAt - run.startedAt,
+    };
+  };
+  const fine = runAt(100);
+  for (const stepMs of [1_000, 5_000, 30_000]) {
+    assert.deepEqual(runAt(stepMs), fine, 'a ' + stepMs + ' ms reader sees the same run as a 100 ms reader');
+  }
+});
+
 t('an untouched stage carries the party through the portal so nobody is stranded', () => {
   const p = profile('Lord Knight', false);
   const run = baseRun([member(1, 'A', p)]);
   run.hazardPlan = [];
-  play(run, 120);
+  playUntil(run, r => r.stageCleared);
   assert.equal(run.stageCleared, true);
   const openedAt = run.portalOpenAt;
+  const stageBefore = run.stageIndex;
+  assert.equal(stageBefore, 0);
   advanceRaidRun(run, openedAt + 25_000);
-  assert.ok(run.stageIndex >= 1, 'the party moved on without an interact');
+  assert.ok(run.stageIndex > stageBefore, 'the party moved on without an interact');
 });
 
 t('a telegraphed mechanic damages only who stayed inside it, on its own clock', () => {
@@ -425,8 +497,9 @@ t('action ids are idempotent: a replayed interact never pays twice', () => {
   const p = profile('Lord Knight', false);
   const run = baseRun([member(1, 'A', p)]);
   run.hazardPlan = [];
-  play(run, 120);
+  playUntil(run, r => r.stageCleared);
   assert.equal(run.stageCleared, true);
+  assert.equal(run.stageIndex, 0, 'the portal under test is stage 1\'s own portal');
   const first = applyRaidAction(run, 1, 'interact', { actionId: 'portal:once:1', targetId: 'portal', at: run.updatedAt });
   assert.equal(first.ok, true, first.error || '');
   const stamp = run.portalRequestedAt;
@@ -501,8 +574,13 @@ t('the boss stage carries Thanatos, and the ritual sources are real enemies', ()
     assert.equal(run.stageCleared, true, 'stage ' + stage + ' clears when its objective is dead');
     const skip = applyRaidAction(run, 1, 'interact', { actionId: 'portal:skip:' + stage, targetId: 'portal', at: run.updatedAt });
     assert.equal(skip.ok, true, skip.error || '');
-    advanceRaidRun(run, run.updatedAt + 50);
-    assert.equal(run.stageIndex, stage + 1, 'the party walked through to stage ' + (stage + 2));
+    // The scheduler only ever resolves whole simulation cells, so a read has to cross the cell that
+    // contains the request for the transition to be applied. 50 ms used to be enough because the old
+    // scheduler resolved whatever instant it was handed; under a fixed grid it can land inside the
+    // current cell and legitimately resolve nothing.
+    const before = run.stageIndex;
+    advanceRaidRun(run, run.updatedAt + SIM_TICK_MS * 2);
+    assert.equal(run.stageIndex, before + 1, 'the party walked through to stage ' + (stage + 2));
   }
   assert.equal(run.stageIndex, 3, 'reached the sanctuary');
   const boss = run.enemies.find(e => e.kind === 'boss');

@@ -13,6 +13,7 @@ import { tokenHash } from '../../functions/_lib/auth.js';
 import { packSave } from '../../functions/_lib/save-codec.js';
 import { raidProfileFromSave } from '../../functions/_lib/raid-profile.js';
 import { RAID_STAGES, RAID_RULES } from '../../functions/_lib/raid-rules.js';
+import { SIM_TICK_MS } from '../../functions/_lib/raid-engine.js';
 import { SocialRoom } from '../../workers/social/room.mjs';
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -194,7 +195,7 @@ await t('a party that clears all four stages settles once, paying each member on
     // Kill the objective, then let the room's own clock notice: `raidSnapshot` is what calls
     // `advanceRaidRun`, exactly as the 2 s client poll does.
     for (const e of run.enemies) e.hp = 0;
-    clock = run.updatedAt + 60;
+    clock = run.updatedAt + SIM_TICK_MS * 2;
     const tick = room.raidSnapshot(runId, { id: users[0].id });
     assert.equal(tick.ok, true, JSON.stringify({ err: tick.err }));
     if (stage < stages - 1) {
@@ -203,7 +204,7 @@ await t('a party that clears all four stages settles once, paying each member on
         runId, combatAction: 'interact', actionId: 'api:portal:' + stage, targetId: 'portal',
       });
       assert.equal(action.data.ok, true, JSON.stringify({ err: action.data.err }));
-      clock = run.updatedAt + 60;
+      clock = run.updatedAt + SIM_TICK_MS * 2;
       room.raidSnapshot(runId, { id: users[0].id });
       assert.equal(run.stageIndex, stage + 1, 'the party walked through to stage ' + (stage + 2));
     }

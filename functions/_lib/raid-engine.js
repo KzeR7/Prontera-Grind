@@ -82,7 +82,11 @@ const WALK_CHUNK_MS = 100;
 // two identical parties. `advanceRaidRun` therefore slices the requested window at grid boundaries and
 // only ever integrates whole grid cells, so a 250 ms poll, a 2 s poll and one 30 s catch-up read all
 // produce the identical timeline.
-const SIM_TICK_MS = 100;
+// The simulation cell. Every read resolves whole cells of this size, never a partial one, which is what
+// makes the run a function of the clock rather than of how often a client happened to poll. Exported
+// because the callers that own recovery (the browser's solo loop, the co-op sweep) have to reason about
+// cell boundaries themselves: a read that does not cross a cell boundary is allowed to resolve nothing.
+export const SIM_TICK_MS = 100;
 
 function sanitizeReceipt(raw) {
   if (!isObj(raw) || typeof raw.id !== 'string' || !RAID_ACTION_ID_RE.test(raw.id)) return null;
@@ -540,6 +544,7 @@ function livingMembers(run) {
 function focusOf(run, member) {
   const focused = member.targetId ? run.enemies.find(e => e.id === member.targetId && e.hp > 0) : null;
   if (focused) return focused;
+
   const boss = bossTarget(run);
   if (boss) return boss;
   // Nearest living enemy, with a deterministic tie-break. Without the id comparison two members could
@@ -589,8 +594,11 @@ function tickEnemyAttacks(run, at) {
     if (enemy.hp <= 0) continue;
     const reach = enemy.ranged ? RAID_RULES.combat.reachRanged + 1.4 : RAID_RULES.combat.reachMelee;
     if (!enemy.aggroAt) {
+      // Aggro is a range-entry event with the party, so it is stamped at the cell the enemy first sees
+      // someone. Anchoring it to the read instead made the first enemy swing land on a different member
+      // depending on how often the room was polled.
       const near = livingMembers(run).some(m => Math.hypot(m.x - enemy.x, m.z - enemy.z) < 9);
-      if (near) enemy.aggroAt = at;
+      if (near) { enemy.aggroAt = at; enemy.nextAttackAt = gridAlign(at + 1_200); }
     }
     if (!enemy.aggroAt || at < enemy.nextAttackAt) continue;
     const targets = livingMembers(run)
@@ -608,7 +616,10 @@ function tickEnemyAttacks(run, at) {
     const target = targets[0];
     attackers.set(target.id, (attackers.get(target.id) || 0) + 1);
     applyEnemyDamage(run, enemy, target, at);
-    enemy.nextAttackAt = at + RAID_RULES.combat.enemyAttackMs + (enemy.kind === 'boss' ? 0 : 400);
+    // The next swing is one whole interval after the one that just landed, on the grid. `at + interval`
+    // re-based the enemy to whatever instant the read arrived on, which is the same defect as the
+    // player cadences had: the enemy's clock must be a property of the timeline.
+    enemy.nextAttackAt = gridAlign(enemy.nextAttackAt + RAID_RULES.combat.enemyAttackMs + (enemy.kind === 'boss' ? 0 : 400));
   }
 }
 
@@ -652,65 +663,62 @@ function memberInCombatRange(run, member) {
   return distance <= memberReach(member) * 0.86 + (target.kind === 'boss' ? 4.5 : 1.6);
 }
 
-// The automatic attack, skill swing and pet hit. They resolve from the member's own cadence, which
-// the server owns, so a client that stops talking still fights at the same rate when it next syncs.
+// The automatic attack, skill swing and pet hit.
+//
+// This runs once per simulation cell and resolves at most the swings that fall due in that cell. Every
+// cadence is anchored to the grid and advanced by whole intervals, so "how many swings by time T" is a
+// function of T alone. A member whose first swing is still owed (cadence 0) is armed the first cell it
+// stands within reach, which depends on where it walked - and the walk is itself a function of the cell
+// sequence, never of the read.
 function tickMemberCombat(run, at) {
-  const windowed = at < run.damageWindowUntil;
   for (const member of run.members) {
     if (member.downed || member.hp <= 0) continue;
     const target = focusOf(run, member);
     if (!target) continue;
     if (!memberInCombatRange(run, member)) {
-      // Out of reach: the member must walk, and no damage is invented from a distance. The cadences are
-      // still rolled forward past this instant, one whole interval at a time, so they keep their own
-      // phase: resetting them to "now + interval" would cost the party a swing every time it closes on a
-      // new target. Leaving any of them due here turns them into a permanent event at "now": the advance
-      // loop steps to it, cannot pay it, and never moves again.
-      // A cadence that is already behind the clock is skipped forward to its next own boundary, never to
-      // "now + interval": the latter moved the whole phase of the stage and made a fine read drop a swing
-      // the coarse read kept. Only timers that are genuinely armed take part; 0 means "not yet in range".
+      // Out of reach: the member must walk, and no damage is invented from a distance. A cadence that
+      // passed while walking is rolled to its own next boundary (never to "now + interval", which would
+      // move the phase and cost a swing the moment the member closed on a new target).
       if (member.nextAutoAt > 0) while (member.nextAutoAt <= at) member.nextAutoAt += RAID_RULES.combat.playerAutoAttackMs;
       if (member.nextSkillAt > 0) while (member.nextSkillAt <= at) member.nextSkillAt += RAID_RULES.combat.skillEveryMs;
       if (member.nextPetAt > 0) while (member.nextPetAt <= at) member.nextPetAt += RAID_RULES.combat.petEveryMs;
       continue;
     }
-    // Reaching combat range is what arms the cadence, and it is the only read-independent place to do
-    // it: the member's own position decides, not the length of the read that carried it there.
-    // Every due attack fires, on the member's own cadence, until the clock catches up. Resolving only
-    // one per tick and then re-arming from `at` made the party's damage depend on the read frequency:
-    // a 30 s read lost eleven auto-attacks that a 2 s read had already paid out.
-    const swing = (amount, strikeAt) => damageEnemy(run, member, target, amount, strikeAt);
-    while (at >= member.nextAutoAt) {
+    // Reaching combat range is what arms the cadence. It is decided here rather than on the clock
+    // because the member's own position is the only thing that decides whether it can swing at all.
+    if (member.nextAutoAt <= 0) {
+      member.nextAutoAt = at;
+      member.nextSkillAt = gridAlign(at + RAID_RULES.combat.skillEveryMs);
+      member.nextPetAt = gridAlign(at + SIM_TICK_MS);
+    }
+    const paidWindow = at < run.damageWindowUntil;
+    // At most one swing of each kind per cell. The cadence interval is many cells long, so this is the
+    // common case; the `while` exists only so a cadence that is (by construction) never due twice in a
+    // cell still cannot be paid twice.
+    if (member.nextAutoAt <= at && target.hp > 0) {
       const critAt = member.nextAutoAt;
       const crit = (member.profile.power * 7 + member.id * 13 + Math.floor(critAt / 1000)) % 100 < RAID_RULES.combat.playerCritChance * 100;
       const base = member.profile.dps * (RAID_RULES.combat.playerAutoAttackMs / 1000);
       const penetration = clamp(finite(member.profile.armorPen, 0), 0, 0.8);
       const mitigation = target.kind === 'boss' || target.kind === 'anchor' ? Math.max(0, run.bossArmor - penetration) : 0;
       let amount = base * (1 - mitigation) * (crit ? RAID_RULES.combat.playerCritMultiplier : 1);
-      if (at < run.damageWindowUntil) amount *= RAID_RULES.ritual.damageWindowMultiplier;
-      swing(amount, critAt);
-      member.nextAutoAt += RAID_RULES.combat.playerAutoAttackMs;
-      if (target.hp <= 0) break;
+      if (paidWindow) amount *= RAID_RULES.ritual.damageWindowMultiplier;
+      damageEnemy(run, member, target, amount, critAt);
+      member.nextAutoAt = gridAlign(member.nextAutoAt + RAID_RULES.combat.playerAutoAttackMs);
     }
-    while (at >= member.nextSkillAt && target.hp > 0) {
-      const base = member.profile.dps * RAID_RULES.combat.skillMultiplier;
+    if (member.nextSkillAt <= at && target.hp > 0) {
       const penetration = clamp(finite(member.profile.armorPen, 0), 0, 0.8);
       const mitigation = target.kind === 'boss' || target.kind === 'anchor' ? Math.max(0, run.bossArmor - penetration) : 0;
-      let amount = base * (1 - mitigation);
-      if (at < run.damageWindowUntil) amount *= RAID_RULES.ritual.damageWindowMultiplier;
+      let amount = member.profile.dps * RAID_RULES.combat.skillMultiplier * (1 - mitigation);
+      if (paidWindow) amount *= RAID_RULES.ritual.damageWindowMultiplier;
       damageEnemy(run, member, target, amount, member.nextSkillAt);
-      member.nextSkillAt += RAID_RULES.combat.skillEveryMs;
+      member.nextSkillAt = gridAlign(member.nextSkillAt + RAID_RULES.combat.skillEveryMs);
       member.actions++;
     }
-    // The pet is advanced to the clock even when there is nothing left to hit, exactly like the other
-    // two cadences. A due-but-unpayable timer is otherwise a permanent event pinned to "now": the loop
-    // steps to it, cannot pay it, and never moves again.
-    while (at >= member.nextPetAt) {
-      if (target.hp <= 0) { member.nextPetAt += RAID_RULES.combat.petEveryMs; continue; }
+    if (member.nextPetAt <= at && target.hp > 0) {
       damageEnemy(run, member, target, member.profile.dps * RAID_RULES.combat.petMultiplier, member.nextPetAt);
-      member.nextPetAt += RAID_RULES.combat.petEveryMs;
+      member.nextPetAt = gridAlign(member.nextPetAt + RAID_RULES.combat.petEveryMs);
     }
-
   }
 }
 
@@ -1009,6 +1017,29 @@ function pointIsDangerous(run, x, z) {
   return dangerDepth(run, x, z) > 0;
 }
 
+// One legitimate movement step for one member over one cell. A manual destination wins until it is
+// reached or its hold expires; after that the member returns to the automatic chase. Moving through
+// `gridAlign` and taking exactly one step per cell is what makes a member's path a function of the
+// timeline: the number of steps taken by time T is the number of whole cells before T.
+function stepMember(run, member, cellStart, cellEnd) {
+  void cellEnd;
+  if (!member.auto && cellStart < member.manualUntil) {
+    const dx = member.intentX - member.x;
+    const dz = member.intentZ - member.z;
+    const dist = Math.hypot(dx, dz);
+    if (dist > 0.02) {
+      const step = Math.min(dist, RAID_RULES.walkSpeed * (SIM_TICK_MS / 1000));
+      member.x = clamp(member.x + (dx / dist) * step, -60, 60);
+      member.z = clamp(member.z + (dz / dist) * step, -60, 60);
+      member.face = Math.atan2(dz, dx);
+      if (step >= dist) member.auto = true;
+    } else member.auto = true;
+  } else {
+    member.auto = true;
+    autoApproach(run, member, SIM_TICK_MS);
+  }
+}
+
 // The automatic chase: one step toward the focus target for a member with no manual destination.
 // It stops at the member's own reach, refuses a step that would enter a live telegraph, and never
 // runs for a downed member.
@@ -1072,186 +1103,125 @@ function terminalCheck(run, at) {
 }
 
 // ---------------------------------------------------------------- advance -----
-// Walk every member to their intent, run the automatic combat, resolve due mechanics and advance a
-// cleared stage. `advanceRaidRun` is the only place time moves forward, and it never moves a
-// scheduled timestamp.
-export function advanceRaidRun(run, now = run.updatedAt) {
-  if (!run || run.state !== 'active') return false;
-  const target = clamp(int(now, run.updatedAt), run.updatedAt, run.deadlineAt);
-  let at = run.updatedAt;
-  let changed = false;
-  let steps = 0;
-  // Movement and regen are settled on the simulation grid, so both are properties of the timeline and
-  // not of the read that drove them. `walkTotal` starts at the boundary of the *current, unfinished*
-  // cell, so `walk` only ever crosses boundaries wholly behind the clock. Anchoring it to the raw read
-  // time instead let a 250 ms cadence shift every step by 50 ms relative to a 2 s cadence, which put the
-  // same party in a different place and made one client eat a telegraph the other dodged.
-  let walkTotal = gridAlign(at);
-  let regenCell = Math.floor(at / SIM_TICK_MS);
-
-  // One legitimate movement step for one member over `span`, starting at `from`.
-  const stepMember = (member, span, from) => {
-    // A manual destination wins until it is reached or its hold expires; after that the member
-    // returns to the automatic chase.
-    if (!member.auto && from < member.manualUntil) {
-      const dx = member.intentX - member.x;
-      const dz = member.intentZ - member.z;
-      const dist = Math.hypot(dx, dz);
-      if (dist > 0.02) {
-        const step = Math.min(dist, RAID_RULES.walkSpeed * (span / 1000));
-        member.x = clamp(member.x + (dx / dist) * step, -60, 60);
-        member.z = clamp(member.z + (dz / dist) * step, -60, 60);
-        member.face = Math.atan2(dz, dx);
-        if (step >= dist) member.auto = true;
-      } else member.auto = true;
-    } else {
-      member.auto = true;
-      autoApproach(run, member, span);
-    }
-  };
-
-  // Move every living member through the whole grid cells between `walkTotal` and `to`. Only cells that
-  // have fully elapsed are integrated: the unfinished fragment of the current cell is walked once, when
-  // a later read crosses the boundary that completes it. Walking the fragment on arrival made the
-  // distance travelled depend on where reads landed -- a 250 ms read paid its own 50 ms fragment every
-  // call and walked measurably further than a 2 s read of the same run. With this rule the distance
-  // walked by time T is exactly `floor(T / SIM_TICK_MS)` cells for every read cadence.
-  const walk = (to) => {
-    while (walkTotal + SIM_TICK_MS <= to) {
-      for (const member of run.members) if (!member.downed) stepMember(member, SIM_TICK_MS, walkTotal);
-      walkTotal += SIM_TICK_MS;
-    }
-    // Regen settles after movement and after whatever resolved at `to`, so a heal can never shrink a
-    // hit that landed at the same instant. One settlement per whole cell crossed, with the fractional
-    // remainder carried on the member, so the total healed is also cadence independent.
-    const cell = Math.floor(to / SIM_TICK_MS);
-    if (cell > regenCell) {
-      tickRegen(run, ((cell - regenCell) * SIM_TICK_MS) / 1000);
-      regenCell = cell;
-    }
-  };
-
-  // No read may pin the clock. A step that resolves nothing and moves `at` nowhere would spin forever,
-  // so the loop tracks the instant it last left and retires due member cadences by whole intervals
-  // (which preserves their phase) if it ever comes back to the same instant twice.
-  let pinnedAt = -1;
-  while (at < target && steps++ < RAID_RULES.maxCatchupEvents) {
-    if (at === pinnedAt) {
-      for (const m of run.members) {
-        while (m.nextAutoAt > 0 && m.nextAutoAt <= at) m.nextAutoAt += RAID_RULES.combat.playerAutoAttackMs;
-        while (m.nextSkillAt > 0 && m.nextSkillAt <= at) m.nextSkillAt += RAID_RULES.combat.skillEveryMs;
-        while (m.nextPetAt > 0 && m.nextPetAt <= at) m.nextPetAt += RAID_RULES.combat.petEveryMs;
-      }
-    }
-    pinnedAt = at;
-
-    const pending = mechanicActive(run);
-    // A member timer is a step boundary, but only while that member can actually be paid: a due swing
-    // from a member out of reach cannot resolve, and treating it as an event at this instant would stop
-    // the clock dead. Out-of-reach members are served by the chase instead.
-    const nextMemberEvent = run.members.reduce((best, m) => {
-      if (m.downed || m.hp <= 0) return best;
-      if (!memberInCombatRange(run, m)) return best;
-      const timers = [];
-      if (m.nextAutoAt > 0) timers.push(m.nextAutoAt);
-      if (m.nextSkillAt > 0) timers.push(m.nextSkillAt);
-      if (m.nextPetAt > 0) timers.push(m.nextPetAt);
-      if (!timers.length) return best;
-      // A due timer is a grid instant; a read can land anywhere. Clamping to `at` turned "this swing is
-      // already owed" into an event at whatever millisecond the read arrived on, so a 100 ms read visited
-      // every cell while a 2 s read visited only its own endpoints -- and the two paid different numbers
-      // of swings. Clamping to the next grid boundary keeps the event on the timeline the cadences live
-      // on, so both cadences resolve the same cells.
-      const earliest = Math.max(Math.min(...timers), gridAlign(at));
-      return Math.min(best, Math.max(earliest, at));
-    }, Infinity);
-
-    const portalDue = run.stageCleared && run.portalRequestedAt === 0
-      ? run.portalOpenAt + PORTAL_AUTO_SECONDS * 1000
-      : Infinity;
-    const event = Math.min(
-      pending ? pending.endsAt : Infinity,
-      run.nextMechanicAt,
-      nextMemberEvent,
-      portalDue,
-      run.stageEndsAt,
-      run.deadlineAt,
-      target,
-    );
-    // A live mechanic resolves at its own end even if that is inside the window we are about to walk.
-    const live = mechanicActive(run);
-    const stepTo = live && live.endsAt > at && live.endsAt < event ? live.endsAt : event;
-    if (stepTo > at) walk(stepTo);
-    at = Math.max(at, stepTo);
-    changed = true;
-    if (terminalCheck(run, at)) break;
-
-    // A step that stopped *on* the window target still owes that instant one final resolution pass
-    // (stage completion, portal, wipe). Only break once the window is genuinely behind the clock.
-    if (at > target) break;
-
-    // A mechanic that was already due when the step began resolves first and the loop restarts, so the
-    // remainder of the window is walked from the instant the hazard landed.
-    if (pending && pending.endsAt <= at && !pending.resolvedAt) {
-      resolveMechanic(run, pending, pending.endsAt);
+// Advance the run to `now` and return nothing but the run itself.
+//
+// THE SCHEDULER
+// Time is divided into fixed cells of SIM_TICK_MS. Advancing a run means resolving every whole cell
+// between `run.updatedAt` and `now`, in order, exactly once. A cell is resolved as a fixed sequence:
+//
+//   1. movement      -- every living member takes one step of the cell
+//   2. combat        -- player auto/skill/pet swings, then enemy swings, at the cell end
+//   3. mechanics     -- due telegraphs resolve, due spawns are created
+//   4. stage         -- completion, portal, transition
+//   5. termination   -- wipe / stage timer / deadline
+//
+// The order is part of the rules: a step taken inside a cell is what a telegraph in that cell sees,
+// and a swing in that cell lands after the step. Nothing in this function depends on where a read
+// begins or ends, which is the property the client's polling rate must never be able to change.
+//
+// Inputs are never applied retroactively. An intent that arrives during a read is applied at
+// `run.updatedAt` (see `applyRaidAction`), i.e. after every cell this function already resolved, so a
+// late player cannot rewrite time that has already passed.
+function runCell(run, cellStart, cellEnd) {
+  // 1. movement
+  for (const member of run.members) {
+    if (member.downed || member.hp <= 0) continue;
+    stepMember(run, member, cellStart, cellEnd);
+  }
+  // 2. combat. Every cadence is rolled forward to this cell, so a member pays each swing it is owed in
+  // the cell the swing fell due -- never a whole stretch of them from the position it ended on.
+  // Slow out-of-mechanic recovery, settled once per cell with the fractional remainder carried on the
+  // member, so the total healed is a function of the cells elapsed and not of how they were read.
+  tickRegen(run, SIM_TICK_MS / 1000);
+  tickMemberCombat(run, cellEnd);
+  tickEnemyAttacks(run, cellEnd);
+  // 3. mechanics: a telegraph that ends in this cell resolves here, before the stage is judged.
+  for (const mechanic of [...run.mechanics]) {
+    if (mechanic.resolvedAt || mechanic.startsAt <= 0) continue;
+    if (mechanic.kind === 'ritual') {
+      const alive = mechanic.sourceIds.filter(id => run.enemies.some(e => e.id === id && e.hp > 0));
+      if (!alive.length) resolveMechanic(run, mechanic, cellEnd);
       continue;
     }
-    // An interrupted ritual resolves immediately: an early success must not be followed by waiting.
-    for (const mechanic of [...run.mechanics]) {
-      if (mechanic.resolvedAt || mechanic.kind !== 'ritual') continue;
-      const alive = mechanic.sourceIds.filter(id => run.enemies.some(e => e.id === id && e.hp > 0));
-      if (!alive.length) resolveMechanic(run, mechanic, at);
-    }
-    // Combat resolves against the grid instant, never the raw read time. A due 2.6 s swing is paid at
-    // the grid boundary that carries it, so the same party pays the same swings no matter which client
-    // happened to trigger the read. Every member cadence is itself seeded and advanced on that grid, so
-    // a swing is never stranded between two boundaries.
-    // Combat resolves on the grid, never at the raw read instant, so the same party pays the same swings
-    // whichever client drove the read. Every cadence is seeded and advanced on that same grid (see
-    // `stepMember`), so a swing is never stranded between two boundaries.
-    const tick = gridAlign(at);
-    tickMemberCombat(run, tick);
-    tickEnemyAttacks(run, tick);
-    checkRitualTriggers(run, tick);
-
-    if (run.stageIndex === RAID_STAGES.length - 1) {
-      const boss = bossTarget(run);
-      if (boss && !run.enrage && boss.hp / Math.max(1, boss.maxHp) <= RAID_RULES.enrageHpFraction) {
-        run.enrage = true;
-        run.log.push('Thanatos is enraged.');
-      }
-      if (at >= run.nextMechanicAt && !run.stageCleared) spawnMechanic(run, at);
-    } else if (at >= run.nextMechanicAt && livingMembers(run).length && !run.stageCleared) {
-      spawnMechanic(run, at);
-    }
-    // Stage completion, the portal, wipes and the timers. Clearing a stage opens its portal; the party
-    // walks through it (an `interact`) so the transition is visible count, and an idle party is carried
-    // through after PORTAL_AUTO_SECONDS so nobody is stranded by a disconnected leader.
-    if (!run.stageCleared && stageComplete(run)) {
-      run.stageCleared = true;
-      run.portalOpenAt = at;
-      run.log.push(`${run.stageName} cleared. The exit portal is open.`);
-      changed = true;
-      if (run.stageIndex >= RAID_STAGES.length - 1) {
-        run.state = 'cleared';
-        run.finishedAt = at;
-        break;
-      }
-    }
-    // A terminal run is never carried through a portal: a stage timer that expired at this exact
-    // instant ends the run, and `advanceStage` must not open a fresh stage over the top of it.
-    if (run.state === 'active' && run.stageCleared
-        && (run.portalRequestedAt > 0 || at >= run.portalOpenAt + PORTAL_AUTO_SECONDS * 1000)) {
-      advanceStage(run, at);
-      changed = true;
-    }
-    if (terminalCheck(run, at)) break;
+    if (mechanic.endsAt <= cellEnd) resolveMechanic(run, mechanic, mechanic.endsAt);
   }
-  // A read that lands exactly on the deadline still resolves it: the loop only runs while `at < target`,
-  // so a caller whose final read was the deadline itself would otherwise leave a dead run looking alive.
-  if (run.state === 'active' && at >= run.deadlineAt) terminalCheck(run, at);
+  checkRitualTriggers(run, cellEnd);
+  if (!run.stageCleared && run.nextMechanicAt <= cellEnd && livingMembers(run).length) {
+    spawnMechanic(run, cellEnd);
+  }
+  if (run.stageIndex === RAID_STAGES.length - 1) {
+    const boss = bossTarget(run);
+    if (boss && !run.enrage && boss.hp / Math.max(1, boss.maxHp) <= RAID_RULES.enrageHpFraction) {
+      run.enrage = true;
+      run.log.push('Thanatos is enraged.');
+    }
+  }
+  // 4. stage completion and the portal
+  if (!run.stageCleared && stageComplete(run)) {
+    run.stageCleared = true;
+    // The portal opens on the cell boundary that witnessed the clear. Stamping it with the instant the
+    // last enemy died (which can be mid-cell) put the auto-carry a fraction past a boundary, so it fired
+    // one cell late -- a whole extra swing of idle time per stage transition.
+    run.portalOpenAt = cellEnd;
+    run.log.push(`${run.stageName} cleared. The exit portal is open.`);
+    // Nothing is scheduled to spawn into a stage that is already won. Leaving the timer armed let it
+    // keep coming due for the rest of the run, which is how a cleared stage could still be held open
+    // by an event that could no longer do anything.
+    run.nextMechanicAt = Infinity;
+    if (run.stageIndex >= RAID_STAGES.length - 1) {
+      run.state = 'cleared';
+      run.finishedAt = cellEnd;
+      return;
+    }
+  }
+  // A portal the player asked for is taken in the cell the request is processed in; an untouched one
+  // auto-carries the party exactly `PORTAL_AUTO_SECONDS` after it opened, so a disconnected or AFK
+  // party is never stranded. Both are checked per cell, so the transition lands on a cell boundary and
+  // not on whichever instant a read happened to arrive at.
+  if (run.state === 'active' && run.stageCleared
+      && (run.portalRequestedAt > 0 || cellEnd >= run.portalOpenAt + PORTAL_AUTO_SECONDS * 1000)) {
+    advanceStage(run, cellEnd);
+  }
+  // 5. termination
+  terminalCheck(run, cellEnd);
+}
+
+export function advanceRaidRun(run, now = run.updatedAt) {
+  if (!run || run.state !== 'active') return false;
+  // The clock never runs past the deadline, and a read is never allowed to rewind it.
+  const target = clamp(int(now, run.updatedAt), run.updatedAt, run.deadlineAt);
+  const from = run.updatedAt;
+  if (target <= from) return false;
+  let resolved = 0;
+  // Only whole cells are ever resolved. A read that ends inside a cell resolves the cells that have
+  // fully elapsed and leaves the partial cell for the read that completes it, so a 100 ms reader and a
+  // 30 s reader resolve exactly the same sequence of cells. This is the whole of the cadence
+  // independence argument: the cell list is a function of the clock, not of the reads.
+  while (true) {
+    const cellStart = gridAlign(run.cursorAt || from);
+    const cellEnd = cellStart + SIM_TICK_MS;
+    if (cellEnd > target) break;
+    runCell(run, cellStart, cellEnd);
+    run.cursorAt = cellEnd;
+    resolved++;
+    if (run.state !== 'active') break;
+    if (resolved >= RAID_RULES.maxCatchupEvents) {
+      // Bounded work: stop honestly rather than pretending the rest of the window happened. `updatedAt`
+      // records only the cells actually resolved, so the next read continues from the real cursor and
+      // nothing is skipped, double-paid, or silently counted as simulated.
+      run.updatedAt = Math.max(from, run.cursorAt);
+      return true;
+    }
+  }
+  // The cursor is the last fully resolved cell boundary. `updatedAt` is the furthest instant the run
+  // has been *observed* at, which may be inside the next cell; the two are deliberately separate so a
+  // partial cell is never mistaken for simulated time.
+  run.cursorAt = Math.max(gridAlign(run.cursorAt || from), gridAlign(from));
   run.updatedAt = Math.max(run.updatedAt, target);
-  return changed;
+  // A read that lands exactly on the deadline still resolves it: the loop only resolves whole cells, so
+  // a run whose final read is the deadline itself would otherwise be left looking alive.
+  if (run.state === 'active' && run.updatedAt >= run.deadlineAt) terminalCheck(run, run.deadlineAt);
+  return true;
 }
 
 // ---------------------------------------------------------------- actions -----
@@ -1274,7 +1244,11 @@ export function applyRaidAction(run, userId, action, opts = {}) {
   if (!RAID_ACTION_ID_RE.test(actionId)) return reject('A valid action id is required.', run, 400);
   const member = run.members.find(m => m.id === int(userId, 0));
   if (!member) return reject('You are not in that raid.', run, 403);
-  const at = clamp(int(opts.at, run.updatedAt), run.updatedAt, run.deadlineAt);
+  // `rawAt` is the client's own ordering, kept before the clamp. A request made while the sender was
+  // offline, or a retried packet, can arrive with a timestamp older than intents already applied; the
+  // clamp below would otherwise rewrite that old timestamp to "now" and make a stale intent look new.
+  const rawAt = int(opts.at, run.updatedAt);
+  const at = clamp(rawAt, run.updatedAt, run.deadlineAt);
   const advanced = advanceRaidRun(run, at);
   const receipt = receiptFor(member, actionId);
   if (receipt) {
@@ -1284,7 +1258,20 @@ export function applyRaidAction(run, userId, action, opts = {}) {
   if (run.state !== 'active') return reject('This raid has ended.', run, 409);
 
   if (action === 'move') {
-    if (at - member.lastIntentAt < RAID_RULES.moveMinIntervalMs) return reject('You are already moving.', run, 429);
+    // Same ordering rule as `focus`: an intent older than the newest one applied is stale. Without this
+    // the clamp above let a replayed old move reset the manual hold and drag the player back to a
+    // destination they had already abandoned.
+    if (rawAt < member.lastIntentAt) {
+      return {
+        ok: true, duplicate: false, stale: true, action,
+        result: { id: actionId, action, at, x: member.intentX, z: member.intentZ },
+        advanced, run,
+      };
+    }
+    // Rate-limited on the client's own clock. Using the advanced `at` here let the server's own
+    // catch-up satisfy the floor, so a second move that was genuinely sent 0 ms after the first was
+    // accepted as soon as a read had moved the run's clock past 220 ms.
+    if (rawAt - member.lastIntentAt < RAID_RULES.moveMinIntervalMs) return reject('You are already moving.', run, 429);
     // A destination, not a teleport: the member keeps standing where they are and the run's own clock
     // walks them to `x/z` at `walkSpeed`. This is what makes a telegraph dodgeable and a long walk
     // cost real seconds.
@@ -1293,17 +1280,31 @@ export function applyRaidAction(run, userId, action, opts = {}) {
     member.intentZ = p.z;
     member.auto = false;
     member.manualUntil = at + RAID_RULES.manualHoldMs;
-    member.lastIntentAt = at;
+    member.lastIntentAt = rawAt;
     return { ok: true, duplicate: false, action, result: { id: actionId, action, at, x: p.x, z: p.z }, advanced, run };
   }
 
   if (action === 'focus') {
-    // A focus is a target choice. It is free and never moves the player.
-    const targetId = typeof opts.targetId === 'string' ? opts.targetId.slice(0, 40) : '';
-    const enemy = run.enemies.find(e => e.id === targetId);
-    if (targetId && !enemy) return reject('That enemy is not in this stage.', run, 404);
-    member.targetId = targetId;
-    return { ok: true, duplicate: false, action, result: { id: actionId, action, at, targetId }, advanced, run };
+    // A focus is a target choice. It is free and never moves the player, so it carries no paid receipt:
+    // re-sending one costs nothing and cannot pay anything. What it must NOT do is let a late-arriving
+    // duplicate of an old request undo a newer choice -- a retried packet, or a queued intent that was
+    // offline when it was made, arrives after the player has already re-targeted. The rule is the same
+    // one `move` uses: an intent older than the newest one already applied is stale and is acknowledged
+    // without being applied. `at` has already been clamped forward to `updatedAt`, so this compares the
+    // client's own ordering, not the server's.
+    const stale = rawAt < member.lastIntentAt;
+    if (!stale) {
+      const targetId = typeof opts.targetId === 'string' ? opts.targetId.slice(0, 40) : '';
+      const enemy = run.enemies.find(e => e.id === targetId);
+      if (targetId && !enemy) return reject('That enemy is not in this stage.', run, 404);
+      member.targetId = targetId;
+      member.lastIntentAt = rawAt;
+    }
+    return {
+      ok: true, duplicate: false, stale, action,
+      result: { id: actionId, action, at, targetId: member.targetId },
+      advanced, run,
+    };
   }
 
   if (member.downed || member.hp <= 0) return reject('You are down. A living teammate must revive you.', run, 409);

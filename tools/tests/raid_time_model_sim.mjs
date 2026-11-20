@@ -250,19 +250,47 @@ t('movement intent is floored, so spamming move cannot outrun the walk', () => {
     'and the member still only walks at ' + RAID_RULES.walkSpeed + ' u/s: moved ' + travelled.toFixed(2));
 });
 
-t('a duplicated action id is not paid twice, however often it is re-sent', () => {
+// The retry contract, stated the way the engine actually implements it: exactly-once is a property of
+// the actions that PAY for something (an interact, a revive, a dash). Free intents -- movement and
+// target selection -- carry no receipt, because re-sending one can neither pay twice nor heal twice;
+// what they must guarantee instead is that a replayed one is inert. `focus` used to be tested as if it
+// had a receipt, which asserted a mechanism the contract never required. The property that matters is
+// now asserted directly, and the genuine stale-replay hazard (an old intent undoing a newer one) is
+// covered next to it.
+t('a replicated paid action is answered from its receipt and never paid twice', () => {
   const run = newRun([member(1)]);
   advanceRaidRun(run, T0 + 1_000);
   const target = run.enemies.find(e => e.hp > 0);
-  const first = applyRaidAction(run, 1, 'focus', { actionId: 'focus:dup:1', targetId: target.id, at: T0 + 2_000 });
-  assert.equal(first.ok, true);
-  const damageAfterFirst = run.members[0].damage;
+  const first = applyRaidAction(run, 1, 'interact', { actionId: 'interact:dup:1', targetId: target.id, at: T0 + 2_000 });
+  assert.equal(first.ok, true, first.error || '');
+  const paidAfterFirst = run.members[0].actions;
   for (let i = 0; i < 25; i++) {
-    const again = applyRaidAction(run, 1, 'focus', { actionId: 'focus:dup:1', targetId: target.id, at: T0 + 2_000 + i });
+    const again = applyRaidAction(run, 1, 'interact', { actionId: 'interact:dup:1', targetId: target.id, at: T0 + 2_000 + i });
     assert.equal(again.duplicate, true, 'every replay is answered from the receipt');
   }
-  assert.equal(run.members[0].damage, damageAfterFirst,
-    'replayed ids never add damage, healing or actions');
+  assert.equal(run.members[0].actions, paidAfterFirst, 'a replayed id never pays a second time');
+});
+
+t('a replayed free intent is inert, and a stale one cannot undo a newer choice', () => {
+  const run = newRun([member(1)]);
+  advanceRaidRun(run, T0 + 1_000);
+  const [a, b] = run.enemies.filter(e => e.hp > 0);
+  // A newer choice, then a duplicate of an intent the player made before it.
+  const newer = applyRaidAction(run, 1, 'focus', { actionId: 'focus:new:1', targetId: a.id, at: T0 + 5_000 });
+  assert.equal(newer.ok, true, newer.error || '');
+  const damageAfter = run.members[0].damage;
+  const stale = applyRaidAction(run, 1, 'focus', { actionId: 'focus:old:1', targetId: b.id, at: T0 + 3_000 });
+  assert.equal(stale.ok, true, 'a stale intent is acknowledged, not an error');
+  assert.equal(stale.stale, true, 'and it is reported as stale');
+  assert.equal(run.members[0].targetId, a.id, 'the newer choice stands');
+  assert.equal(run.members[0].damage, damageAfter, 'and it never pays damage');
+  // A movement replay must not reset the manual hold or drag the player back.
+  applyRaidAction(run, 1, 'move', { actionId: 'move:new:1', x: 8, z: 8, at: T0 + 9_000 });
+  const hold = run.members[0].manualUntil;
+  const spot = run.members[0].intentX;
+  applyRaidAction(run, 1, 'move', { actionId: 'move:old:1', x: -8, z: -8, at: T0 + 4_000 });
+  assert.equal(run.members[0].manualUntil, hold, 'a replayed move cannot extend the hold');
+  assert.equal(run.members[0].intentX, spot, 'nor overwrite the destination');
 });
 
 t('a raid can only be settled from a terminal state, and the state is the only input', () => {
