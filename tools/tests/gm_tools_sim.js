@@ -114,7 +114,7 @@ try{
   sqlite.prepare('INSERT INTO saves(user_id,version,blob,saved_at,updated_at,last_seen) VALUES(2,1,?,?,?,?)').run(blob,Date.now(),Date.now(),Date.now());
   await test('inspection returns a safe Fishing and DigiPet summary and excludes credentials',async()=>{
    const r=await call(inspect,owner,null,'/api/gm/player?id=2');assert.equal(r.res.status,200);assert.equal(r.data.save.character.equipment.weapon.name,'Novice Knife');assert.ok(!JSON.stringify(r.data).includes('password_hash'));
-   assert.deepEqual(r.data.save.character.fishing,{coins:37,rod:'silver',rods:['twig','silver'],bait:{worm:4,shrimp:0,grub:0,jelly:0}});
+   assert.deepEqual(r.data.save.character.fishing,{coins:37,rod:'silver',rods:['twig','silver'],bait:{worm:4,shrimp:0,grub:0,jelly:0,chum:0}});
    assert.equal(r.data.save.character.digimonBag.coins,33);assert.equal(r.data.save.character.digimonBag.eggs,2);assert.equal(r.data.save.character.digimonBag.ownedCount,1);
    assert.ok(!JSON.stringify(r.data.save.character.fishing).includes('notARealBait'),'the inspection whitelist excludes arbitrary save keys');
    assert.equal((await call(inspect,normal,null,'/api/gm/player?id=2')).res.status,403);

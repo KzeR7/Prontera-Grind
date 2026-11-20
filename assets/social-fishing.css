@@ -48,6 +48,8 @@
 .fishing-bar{position:absolute;top:2px;bottom:2px;border-radius:7px;background:#e9f3f566;border:1.5px solid #ffffffb8;box-shadow:inset 0 0 8px #ffffff40;transition:background .1s}
 .fishing-bar.on{background:#7df0a955;border-color:#7df0a9;box-shadow:0 0 10px #7df0a966,inset 0 0 8px #7df0a955}
 .fishing-bar.held{border-width:2.5px}
+.fishing-bar.lucky-focus{border-color:#ffd979;box-shadow:0 0 12px #ffd97988,inset 0 0 8px #ffd97955}
+.fishing-bar.lucky-focus.on{background:#7df0a977;border-color:#ffe28a;box-shadow:0 0 14px #ffe28a99,inset 0 0 10px #7df0a977}
 /* v294: the reel fish used to be dimmed to a pale silhouette (brightness(0) invert) - now it
    shows the painted sprite at full brightness with a dark halo for contrast. */
 .fishing-fish{position:absolute;top:50%;transform:translate(-50%,-50%);font-size:22px;filter:drop-shadow(0 0 3px #000d);transition:none;pointer-events:none}
