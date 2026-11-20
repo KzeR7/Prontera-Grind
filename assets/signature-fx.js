@@ -267,5 +267,5 @@ function play(id,ctx){const steps=MAP[id];if(!steps||!ctx||!ctx.THREE||!ctx.scen
  T=ctx.THREE;scene=ctx.scene;warm([id]);const c={from:ctx.from,to:ctx.to||ctx.from,floor:ctx.floor||0,unit:ctx.unit||2.16,life:ctx.life||0};
  try{for(const [name,opt] of steps)FX[name](c,opt)}catch(e){return false}
  return true}
-root.PGSignatureFx={play,tick,clear,warm:ctx=>{if(ctx&&ctx.THREE){T=ctx.THREE;warm(ctx.ids)}},books:()=>[...new Set(Object.values(MAP).flat().map(s=>s[1]&&s[1].book).filter(Boolean).concat('coin'))],has:id=>Object.hasOwn(MAP,id),ids:()=>Object.keys(MAP),get count(){return live.length}};
+root.PGSignatureFx={orbCanvas:()=>PAINT.orb('#7fc4ff'),play,tick,clear,warm:ctx=>{if(ctx&&ctx.THREE){T=ctx.THREE;warm(ctx.ids)}},books:()=>[...new Set(Object.values(MAP).flat().map(s=>s[1]&&s[1].book).filter(Boolean).concat('coin'))],has:id=>Object.hasOwn(MAP,id),ids:()=>Object.keys(MAP),get count(){return live.length}};
 })(globalThis);

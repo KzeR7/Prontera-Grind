@@ -118,7 +118,8 @@ ev('syncSkillFx();tickSkillFx(4);syncSkillFx()');assert.equal(box.skillFx.length
 const narrow=canvas();box.narrow=narrow;ev('PGSkillAfterglow.create(narrow).draw([],390,700,scr,3)');
 assert.equal(narrow.width,780);assert.equal(narrow.height,1400);
 box.simVisualsOff=()=>true;ev('playSkillFx("fire",target)');assert.equal(box.skillFx.length,0);
-assert(src.includes('assets/afterglow-animations.js?v=151')&&src.includes('assets/skill-materials.js?v=220')&&src.includes('assets/skill-overdrive.js?v=220')&&src.includes('assets/skill-afterglow.js?v=440'));
+const build=src.match(/const BUILD='[^']*haven-v(\d+)/)?.[1];assert(build,'numbered build');
+assert(src.includes('assets/afterglow-animations.js?v=151')&&src.includes('assets/skill-materials.js?v=220')&&src.includes('assets/skill-overdrive.js?v=220')&&src.includes('assets/skill-afterglow.js?v='+build),'afterglow assets are versioned with the running build');
 assert(src.includes(':not(#skillAfterglowLayer)'),'clean-screen hides effects');
 console.log('Afterglow + Overdrive: 111 skills (75 ordinary, 30 fourth-job, six Ascension), loaded/pending/failed materials, full/mobile/dense detail, compressed timing, drawing/state, projection/reversal/vertical paths, expiry, cap, resize, hidden catch-up and legacy material fallback passed (Canvas operations; no GPU).');
 

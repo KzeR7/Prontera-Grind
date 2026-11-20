@@ -247,7 +247,7 @@ mutating saves. Check `progression_refresh_sim.js`, `eclipse_ui_sim.js` and
 on top of the shared effect. `playSkillFx` calls `play(id, ctx)`, `tickSkillFx` calls `tick(dt)`;
 the skill-to-effect table is `MAP` at the bottom of the file. Test: `tools/tests/signature_fx_sim.js`.
 haven-v412: effects that exist in the Ragnarok Online client are flipbooks in `assets/ro-fx/` (`index.js` = `window.RO_FX`), baked by `tools/make_ro_fx.py` from the sources pinned in `tools/native-expanded/fx-source-manifest.json`; a `MAP` step `['book',{book:key,...}]` plays one.
-Signature skills (`core`), `autocast` rows (`AUTOCAST_SOURCES`, `autocastProc`), the Auto-fill table `COMBO_PLAN`, `bossPower` and `shock` are documented where they are declared, just above `GROUND_SKILLS` in `index.html`. Test: `tools/tests/signature_skills_sim.js`.
+Signature skills (`core`), `autocast` rows (`AUTOCAST_SOURCES`, `autocastProc`), the Auto-fill table `COMBO_PLAN`, `bossPower` and `shock` are documented where they are declared, just above `GROUND_SKILLS` in `index.html`. Test: `tools/tests/signature_skills_sim.js`. Sura's tested cooldown/stack retune is covered by `sura_rebalance_sim.js`; `assets/spirit-spheres.js` reuses the signature orb painter for live field stacks and cosmetic Social Hub orbits (`spirit_spheres_sim.js`, `social_scene_sim.js`). Research: `reports/sura-research/`.
 
 `assets/expanded-jobs.js` (`PGExpandedJobs`) is the Wardrobe store for the 22 expanded classes:
 bodies from `assets/wardrobe/expanded/v1/` (built by `tools/make_expanded_wardrobe.py`), hair and
