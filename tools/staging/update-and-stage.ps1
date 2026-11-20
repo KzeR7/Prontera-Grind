@@ -26,6 +26,8 @@ $SocialProject = 'prontera-social-staging'
 $DbName = 'pg-staging'
 $DbId = '3a38c6fc-96a8-491d-b97b-fd536e575ca4'
 $Wrangler = @('--yes', 'wrangler@4.154.0')
+# npx.cmd avoids the PowerShell execution-policy block on npx.ps1 when run interactively.
+$Npx = 'npx.cmd'
 
 function Fail([string]$Message) { throw $Message }
 
@@ -60,7 +62,7 @@ function Find-Bash {
 function D1Json([string]$Sql, [string]$Cwd) {
   Push-Location $Cwd
   try {
-    $raw = & npx @Wrangler d1 execute DB --remote --json --command $Sql 2>$null
+    $raw = & $Npx @Wrangler d1 execute DB --remote --json --command $Sql 2>$null
     if ($LASTEXITCODE -ne 0) { Fail "D1 query failed; check Wrangler login, the DB binding and the SQL.`nSQL: $Sql" }
     $text = ($raw -join "`n")
     $parsed = $text | ConvertFrom-Json
@@ -158,7 +160,7 @@ new_sqlite_classes = ["Social"]
   Write-Host "6/7 Verifying $DbName and applying only the missing raid migrations"
   Push-Location $worktree
   try {
-    $dbRaw = & npx @Wrangler d1 info DB --json 2>$null
+    $dbRaw = & $Npx @Wrangler d1 info DB --json 2>$null
     if ($LASTEXITCODE -ne 0) { Fail 'wrangler d1 info failed; check Wrangler login and that the DB binding resolves.' }
     $dbInfo = (($dbRaw -join "`n") | ConvertFrom-Json)
     if ($dbInfo.name -ne $DbName -or $dbInfo.uuid -ne $DbId) {
@@ -178,7 +180,7 @@ new_sqlite_classes = ["Social"]
   if (-not $hasRaid) {
     if ($hasRef) { Fail 'pg-staging has grants.ref but no raid_runs. Inspect it before retrying; nothing was applied.' }
     Write-Host '    applying 0022_player_character_raid.sql'
-    Invoke-Checked 'npx' ($Wrangler + @('d1', 'execute', 'DB', '--remote', '--file=migrations/0022_player_character_raid.sql')) $worktree
+    Invoke-Checked $Npx ($Wrangler + @('d1', 'execute', 'DB', '--remote', '--file=migrations/0022_player_character_raid.sql')) $worktree
   } elseif (-not $hasRef -or $runCols -notcontains 'seed' -or $runCols -notcontains 'checkpoint_json' -or $runCols -notcontains 'checkpoint_at') {
     # pg-staging still has the isolated v411 raid experiment (migration 0018): raid_runs exists,
     # grants.ref does not, and the table predates seed/checkpoint_json/checkpoint_at. Upgrade it
@@ -186,26 +188,26 @@ new_sqlite_classes = ["Social"]
     # Only the missing columns are added, so a genuinely partial 0022 also repairs cleanly.
     Write-Host '    existing raid schema is pre-v447; upgrading it in place'
     if ($runCols -notcontains 'seed') {
-      Invoke-Checked 'npx' ($Wrangler + @('d1', 'execute', 'DB', '--remote', '--command', 'ALTER TABLE raid_runs ADD COLUMN seed INTEGER NOT NULL DEFAULT 1;')) $worktree
+      Invoke-Checked $Npx ($Wrangler + @('d1', 'execute', 'DB', '--remote', '--command', 'ALTER TABLE raid_runs ADD COLUMN seed INTEGER NOT NULL DEFAULT 1;')) $worktree
     }
     if ($runCols -notcontains 'checkpoint_json') {
-      Invoke-Checked 'npx' ($Wrangler + @('d1', 'execute', 'DB', '--remote', '--command', "ALTER TABLE raid_runs ADD COLUMN checkpoint_json TEXT NOT NULL DEFAULT '{}';")) $worktree
+      Invoke-Checked $Npx ($Wrangler + @('d1', 'execute', 'DB', '--remote', '--command', "ALTER TABLE raid_runs ADD COLUMN checkpoint_json TEXT NOT NULL DEFAULT '{}';")) $worktree
     }
     if ($runCols -notcontains 'checkpoint_at') {
-      Invoke-Checked 'npx' ($Wrangler + @('d1', 'execute', 'DB', '--remote', '--command', 'ALTER TABLE raid_runs ADD COLUMN checkpoint_at INTEGER NOT NULL DEFAULT 0;')) $worktree
+      Invoke-Checked $Npx ($Wrangler + @('d1', 'execute', 'DB', '--remote', '--command', 'ALTER TABLE raid_runs ADD COLUMN checkpoint_at INTEGER NOT NULL DEFAULT 0;')) $worktree
     }
     if (-not $hasRef) {
-      Invoke-Checked 'npx' ($Wrangler + @('d1', 'execute', 'DB', '--remote', '--command', 'ALTER TABLE grants ADD COLUMN ref TEXT;')) $worktree
-      Invoke-Checked 'npx' ($Wrangler + @('d1', 'execute', 'DB', '--remote', '--command', 'CREATE UNIQUE INDEX IF NOT EXISTS idx_grants_ref ON grants(ref) WHERE ref IS NOT NULL;')) $worktree
+      Invoke-Checked $Npx ($Wrangler + @('d1', 'execute', 'DB', '--remote', '--command', 'ALTER TABLE grants ADD COLUMN ref TEXT;')) $worktree
+      Invoke-Checked $Npx ($Wrangler + @('d1', 'execute', 'DB', '--remote', '--command', 'CREATE UNIQUE INDEX IF NOT EXISTS idx_grants_ref ON grants(ref) WHERE ref IS NOT NULL;')) $worktree
     }
     Write-Host '    replacing the settlement triggers with the exactly-once v447 versions'
-    Invoke-Checked 'npx' ($Wrangler + @('d1', 'execute', 'DB', '--remote', '--file=tools/staging/legacy_raid_upgrade.sql')) $worktree
+    Invoke-Checked $Npx ($Wrangler + @('d1', 'execute', 'DB', '--remote', '--file=tools/staging/legacy_raid_upgrade.sql')) $worktree
   } else {
     Write-Host '    0022 already present'
   }
   if (-not $hasCards -or -not $hasCardTrigger) {
     Write-Host '    applying 0023_raid_cards.sql'
-    Invoke-Checked 'npx' ($Wrangler + @('d1', 'execute', 'DB', '--remote', '--file=migrations/0023_raid_cards.sql')) $worktree
+    Invoke-Checked $Npx ($Wrangler + @('d1', 'execute', 'DB', '--remote', '--file=migrations/0023_raid_cards.sql')) $worktree
   } else {
     Write-Host '    0023 already present'
   }
@@ -213,7 +215,7 @@ new_sqlite_classes = ["Social"]
   Write-Host "7/7 Deploying $SocialProject first, then $PagesProject"
   Push-Location (Join-Path $worktree 'workers\social')
   try {
-    & npx @Wrangler deploy
+    & $Npx @Wrangler deploy
     if ($LASTEXITCODE -ne 0) { Fail 'Social Worker deploy failed; Pages was not deployed.' }
   } finally { Pop-Location }
 
@@ -227,7 +229,7 @@ new_sqlite_classes = ["Social"]
     $deployCode = 0
     try {
       $ErrorActionPreference = 'Continue'
-      $deployOutput = & npx @Wrangler pages deploy dist --project-name $PagesProject --branch main --commit-dirty=true 2>&1
+      $deployOutput = & $Npx @Wrangler pages deploy dist --project-name $PagesProject --branch main --commit-dirty=true 2>&1
       $deployCode = $LASTEXITCODE
     } finally {
       $ErrorActionPreference = $previousPreference
