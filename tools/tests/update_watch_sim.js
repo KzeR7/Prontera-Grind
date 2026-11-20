@@ -4,6 +4,7 @@
 // A deployment prompts once and leaves the session running. Refresh is player initiated,
 // saves locally, and waits for the cloud flush before reloading.
 import fs from 'node:fs';
+import crypto from 'node:crypto';
 import { JSDOM } from 'jsdom';
 import vm from 'node:vm';
 import assert from 'node:assert';
@@ -18,6 +19,9 @@ const T = async (n, f) => { try { await f(); console.log('  ok   ' + n); pass++;
 console.log('update watcher: a player chooses when to refresh after a deploy\n');
 
 const BUILD = src.match(/const BUILD='([^']+)'/)[1];
+const LOCK_COMMENT = 'Pins each versioned social asset to the ?v= it was last shipped under. An asset '
+  + 'whose bytes change while its ?v= stays put FAILS update_watch_sim, because browsers keep serving '
+  + 'the cached copy - the v445 emoji miss. Regenerate with: UPDATE=1 node tools/tests/update_watch_sim.js';
 
 // ---- the watcher, pulled out of the real page and driven with stubs --------
 // v275: slice from the tuning constants, not from showUpdatePrompt - the snooze and escalation
@@ -344,6 +348,35 @@ t('every asset versioned in index.html points at a build, never at a stale cache
     assert.ok(found, f + ' is loaded by index.html');
     assert.strictEqual(found[2], build, f + ' must be busted to the build that changed it');
   }
+});
+
+// The check above proves the tags AGREE with the build; it cannot prove they MOVED. Leaving both at
+// the old number - which is exactly what happened to the emoji release - passes it green while every
+// returning browser keeps serving the cached copy of the changed file. So pin the bytes: the lock
+// records, per asset, the ?v= it was last shipped under and the sha256 of those bytes. If an asset's
+// content changes while its ?v= stays put, that is the stale-cache bug, and it fails here.
+// Regenerate after a deliberate bump:  UPDATE=1 node tools/tests/update_watch_sim.js
+t('an asset whose bytes changed must ship under a new ?v=, or browsers keep the cached copy', () => {
+  const lockPath = path.join(__dirname, '..', 'assets-version-lock.json');
+  const tags = new Map([...src.matchAll(/(?:src|href)="(assets\/[^"?]+\.(?:js|css))\?v=(\d+)"/g)]
+    .map(([, file, v]) => [file, Number(v)]));
+  const sha = f => crypto.createHash('sha256').update(fs.readFileSync(path.join(__dirname, '..', '..', f))).digest('hex');
+  if (process.env.UPDATE === '1') {
+    const out = { _comment: LOCK_COMMENT, build: Number(build), assets: {} };
+    for (const [f, v] of tags) out.assets[f] = { v, sha256: sha(f) };
+    fs.writeFileSync(lockPath, JSON.stringify(out, null, 1) + '\n');
+    return;
+  }
+  assert.ok(fs.existsSync(lockPath), 'tools/assets-version-lock.json exists (run UPDATE=1 once to create it)');
+  const lock = JSON.parse(fs.readFileSync(lockPath, 'utf8'));
+  const stale = [];
+  for (const [f, rec] of Object.entries(lock.assets)) {
+    if (!tags.has(f)) continue;                       // asset no longer loaded by index.html
+    const now = sha(f);
+    if (now !== rec.sha256 && tags.get(f) === rec.v) stale.push(`${f} (changed, still ?v=${rec.v})`);
+  }
+  assert.deepEqual(stale, [],
+    'these assets changed without a new ?v=, so returning browsers keep the OLD file: ' + stale.join(', '));
 });
 
 // v326 + v418: the automatic update reset must land the cloud save before navigating, and NEVER race
