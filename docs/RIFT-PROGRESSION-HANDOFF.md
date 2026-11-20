@@ -67,12 +67,22 @@ Prerequisites on the Windows machine used for staging:
 Copy the launcher out of the branch first (it is not on `main`), then run it:
 
 ```powershell
-cd C:\path\to\Prontera-Grind
+# Works even when PowerShell opens in C:\WINDOWS\system32.
+$repo = Join-Path $env:USERPROFILE 'Desktop\Prontera-Grind'
+if (-not (Test-Path $repo)) { throw "Cannot find $repo. Change the path to your checkout." }
+Set-Location $repo
+
 git fetch origin arena/bfc7d4d1-prontera-grind
+$stageScript = Join-Path $env:TEMP 'pg-update-and-stage.ps1'
 git show FETCH_HEAD:tools/staging/update-and-stage.ps1 |
-  Set-Content -Encoding ascii "$env:TEMP\pg-update-and-stage.ps1"
-powershell -ExecutionPolicy Bypass -File "$env:TEMP\pg-update-and-stage.ps1" -Repo (Get-Location).Path
+  Set-Content -Encoding ascii $stageScript
+powershell -ExecutionPolicy Bypass -File $stageScript -Repo $repo
 ```
+
+`C:\path\to\Prontera-Grind` in earlier examples was a placeholder; the actual folder on this PC is
+`C:\Users\<you>\Desktop\Prontera-Grind`. There is also a `Prontera-Grind-staging` folder; use the
+main checkout (`Prontera-Grind`), because the script creates its own temporary worktree and leaves
+your checkout on `main`.
 
 What the script does, in order:
 
