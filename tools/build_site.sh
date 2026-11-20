@@ -118,6 +118,10 @@ cp -r "$ROOT/Updates/Sprite" "$OUT/Updates/Sprite"
 # Compact ordinary map-kit JSON and safely remove standalone CSS/JS comments from delivery copies.
 node "$ROOT/tools/optimize_delivery.js" "$OUT"
 node "$ROOT/tools/maps/build_game_exploration.js" "$OUT"
+# Keep the engine's SRI pinned to the bytes actually delivered. Windows checkouts with
+# core.autocrlf=true otherwise produce a CRLF copy whose hash cannot match the LF hash in
+# index.html, and the browser refuses to start Three.js.
+node "$ROOT/tools/stamp_engine_sri.js" "$OUT"
 
 # Static build tag for updateWatch() so 60-second deploy checks hit the CDN instead of /api/* Functions.
 #

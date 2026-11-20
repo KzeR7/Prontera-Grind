@@ -124,6 +124,19 @@ upgrades it in place:
 It does not drop the old raid tables, does not delete completed history, and does not touch
 production. A fresh database still receives `0022` followed by `0023`.
 
+### Engine blocked by an SRI digest mismatch
+
+If the page says **“The 3D engine could not load”** and the browser console reports
+`Failed to find a valid digest in the 'integrity' attribute` for `three-r128.min.js`, the checkout
+was made with Windows CRLF line endings. The committed engine is LF; Git for Windows converted its
+six newlines, so the deployed 603451-byte copy hashes differently from the 603445-byte file in
+`index.html`.
+
+`tools/build_site.sh` now re-stamps the integrity value from the bytes in `dist/`, and
+`.gitattributes` keeps that one file byte-identical on every platform. A build made before this fix
+can be repaired without a rebuild by replacing the `integrity="sha384-..."` value in
+`dist/index.html` with the SHA-384 of `dist/assets/endgame/three-r128.min.js`, then redeploying Pages.
+
 ### If the script reports local changes
 
 It will not discard or stash your files. Local Wrangler state and scratch archives (for example

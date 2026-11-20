@@ -1,0 +1,3 @@
+# Three.js is pinned by SHA-384 in index.html. Git for Windows autocrlf would turn its six LFs
+# into CRLF and change the digest, so keep this one checkout byte-identical on every platform.
+assets/endgame/three-r128.min.js -text
