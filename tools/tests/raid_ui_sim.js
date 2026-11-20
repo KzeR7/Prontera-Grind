@@ -91,6 +91,9 @@ function account(overrides = {}) {
   // The lobby test renders the empty-party state (it asserts the "Two or three adventurers" copy);
   // every later test needs a startable lobby to enter the co-op path through the real button.
   let withParty = false;
+  // When set, the lobby read reports an owned LOCAL run -- exactly what `loadActiveRun` returns for a
+  // solo reservation. That is the reload path: the server says the entry is still spent.
+  let localActive = null;
 
   w.fetch = async (url, options = {}) => {
     if (!String(url).includes('/api/raid')) return { ok: false, status: 404, json: async () => ({ err: 'offline' }) };
@@ -105,7 +108,7 @@ function account(overrides = {}) {
           id: 'party:ui-1', open: true, isLeader: true, canStart: true, allReady: true,
           members: [{ id: 7, name: 'Alpha', cls: 'Lord Knight', magic: false, ready: true, eligible: true, entriesLeft: 2 }],
         },
-        activeRun: running && live.state === 'active' ? live : null, lastRun: null,
+        activeRun: localActive || (running && live.state === 'active' ? live : null), lastRun: null,
       }) };
     }
     postCount++;
@@ -207,8 +210,80 @@ function account(overrides = {}) {
     void acts;
   });
 
+  // The recovery rule with teeth: a reload during a live solo run must resume the run it already
+  // paid for, and a BROKEN checkpoint must refuse rather than silently buy a second entry.
+  await t('a reload resumes the local run and does not reserve a second entry', async () => {
+    const calls = [];
+    const savedRun = { id: 'raid:solo:reload-1', state: 'active', seed: 5, rulesVersion: 'v449-r1',
+      startedAt: now, updatedAt: now, deadlineAt: now + 400000, members: [{ id: 7, damage: 5000 }],
+      enemies: [], stageKey: 'approach', stageIndex: 1 };
+    let looped = 0;
+    w.PGRaidSolo = {
+      begin: async () => { calls.push('begin'); throw new Error('a resume must not reserve'); },
+      act: async (r, a, o) => ({ ok: true, run: r }),
+      snapshotSync: (r) => ({ ...runFixture(), id: r.id, stageKey: r.stageKey || 'approach' }),
+      saveCheckpoint: () => ({ ok: true }),
+      loadCheckpoint: () => ({ status: 'ok', run: JSON.parse(JSON.stringify(savedRun)) }),
+      loop: () => { looped++; return () => {}; },
+      storageStatus: () => ({ ok: true }),
+    };
+    // The server says this account still owns a local run -- exactly what `loadActiveRun` returns.
+    localActive = { ...savedRun, local: true };
+    w.PGRaid.state.resumeAttempted = false;
+    w.PGRaid.state.soloRunning = false;
+    await w.PGRaid.open();
+    await new Promise(r => setTimeout(r, 20));
+    assert.equal(calls.includes('begin'), false, 'no new reservation was made');
+    assert.equal(looped, 1, 'the saved run was resumed into a local loop');
+    assert.equal(w.PGRaid.state.soloResumed, true);
+    // Clean up for the co-op tests that follow.
+    w.PGRaid.state.soloRunning = false;
+    w.PGRaid.state.solo = null;
+    localActive = null;
+    w.PGRaid.state.activeRunLocal = null;
+    w.PGRaid.state.run = null;
+    w.PGRaid.state.view = 'lobby';
+    w.PGRaid.state.resumeAttempted = true;
+    dungeon.calls.length = 0;
+  });
+
+  await t('a broken checkpoint is refused instead of quietly starting a paid run', async () => {
+    const calls = [];
+    w.PGRaidSolo = {
+      begin: async () => { calls.push('begin'); throw new Error('must not reserve'); },
+      act: async (r) => ({ ok: true, run: r }),
+      snapshotSync: () => runFixture(),
+      saveCheckpoint: () => ({ ok: true }),
+      loadCheckpoint: () => ({ status: 'broken', why: 'rules' }),
+      loop: () => () => {},
+      storageStatus: () => ({ ok: true }),
+    };
+    localActive = { id: 'raid:solo:broken-1', local: true, rulesVersion: 'v449-r1', members: [] };
+    w.PGRaid.state.soloRunning = false;
+    w.PGRaid.state.resumeAttempted = false;
+    await w.PGRaid.open();
+    await new Promise(r => setTimeout(r, 20));
+    assert.equal(calls.includes('begin'), false, 'a broken checkpoint did not buy another entry');
+    assert.match(String(w.PGRaid.state.error), /could not be restored/i, 'the player is told, not silently re-charged');
+    localActive = null;
+    w.PGRaid.state.activeRunLocal = null;
+    w.PGRaid.state.error = '';
+    w.PGRaid.state.resumeAttempted = true;
+    w.PGRaid.state.view = 'lobby';
+  });
+
   await t('a co-op start adopts the server run and hands the stage to the dungeon', async () => {
     withParty = true;
+    // Leave the solo-recovery state behind: no local run, no leftover error banner, and ready to
+    // adopt a room-owned one.
+    localActive = null;
+    w.PGRaid.state.activeRunLocal = null;
+    w.PGRaid.state.resumeAttempted = false;
+    w.PGRaid.state.error = '';
+    w.PGRaid.state.soloResumed = false;
+    // The renderer must be idle for `begin` to be called: a previous solo test left it mounted.
+    if (w.PGRaidDungeon.active) w.PGRaidDungeon.end();
+    dungeon.calls.length = 0;
     await w.PGRaid.open();
     await w.PGRaid.refresh();
     w.document.querySelector('[data-raid-action="start"]').click();

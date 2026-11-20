@@ -29,7 +29,8 @@
     // A solo run is executed locally and is NOT the same thing as `run` (which is a public snapshot
     // the renderer reads). `solo` is the live engine object; `soloRunning` keeps a lobby refresh from
     // tearing it down; `resumeRunId` is the run this tab already holds a checkpoint for.
-    solo: null, soloRunning: false, soloStop: null, resumeRunId: '', resumeRulesVersion: '', soloResumed: false,
+    solo: null, soloRunning: false, soloStop: null, resumeRunId: '', resumeRulesVersion: '',
+    soloResumed: false, activeRunLocal: null, resumeAttempted: false,
     pending: new Map(), lastSync: 0, stageSeen: -1,
     timer: null, partyAction: false, codeOpen: false, notice: '', lastResultId: '', settling: false,
     deadlineSettledFor: '', forgeExtra: 0, inRun: false, lastPollAt: 0,
@@ -280,9 +281,17 @@
       try { PGSocial.enter(); } catch {}
     }
     await refresh();
+    // A reload while a solo run is in flight lands here: the server still holds the reservation, so
+    // the tab resumes that run instead of offering a second entry. `startSoloRun` looks for the local
+    // checkpoint first and never reserves while one is readable.
+    if (R.activeRunLocal && !R.soloRunning && !R.resumeAttempted) {
+      R.resumeAttempted = true;
+      await startSoloRun();
+      return;
+    }
     // The overlay itself has no ticker: the run panel is repainted from adoptRun/syncArena, and the
-    // in-run HUD is driven by the renderer. The only interval is the 2 s run poll, started when a
-    // run is actually adopted and stopped when it ends.
+    // in-run HUD is driven by the renderer. The only interval is the run poll, started when a run is
+    // actually adopted and stopped when it ends.
   }
   function close() {
     R.open = false;
@@ -324,12 +333,23 @@
       R.eligibility = data.eligibility || null;
       R.party = data.party || R.party;
       R.activeRun = data.activeRun || null;
+      // A solo reservation comes back from `loadActiveRun` as the reservation record itself (it has
+      // `local: true` and a `members` roster, but no simulated state). It is not a renderable run.
+      R.activeRunLocal = (R.activeRun && R.activeRun.local) ? R.activeRun : null;
+      if (R.activeRunLocal) R.activeRun = null;
       R.lastSync = Date.now();
       if (data.activeRunError) R.error = data.activeRunError;
       // A solo run lives only in this tab, so the server has nothing to say about it: `activeRun` is
       // null while one is in progress. Without this guard a lobby refresh (login, an account sync)
       // would tear down a local run that is still being played.
       if (R.soloRunning) { render(); return; }
+      // A local run the server still considers active is THIS tab's run (or one this account left
+      // behind). Adopting its identity is what lets a reloaded tab find its checkpoint instead of
+      // reserving a second entry. The server marks these `local: true`; a co-op run never is.
+      if (R.activeRunLocal) {
+        R.resumeRunId = R.activeRunLocal.id;
+        R.resumeRulesVersion = R.activeRunLocal.rulesVersion || '';
+      }
       if (R.activeRun) {
         adoptRun(R.activeRun);
         if (['cleared', 'failed'].includes(R.activeRun.state)) await settle(R.activeRun.id);
@@ -516,6 +536,17 @@
       if (saved.status === 'ok') {
         R.busy = '';
         R.soloResumed = true;
+        // A checkpoint that was already terminal when the tab closed: the fight is over and only the
+        // settlement is outstanding. Settling it with its own claim is what makes a reload that races
+        // the settle recover the rewards instead of showing an empty lobby.
+        if (saved.run.state !== 'active') {
+          R.solo = null; R.soloRunning = false;
+          R.result = null; R.lastResultId = '';
+          R.view = 'results';
+          try { adoptRun(solo.snapshotSync(saved.run, saved.run.finishedAt || saved.run.updatedAt)); } catch (error) { console.error('Solo restore failed', error); }
+          await settle(saved.run.id, saved.run);
+          return;
+        }
         startSoloLoop(saved.run, accountKey);
         return;
       }
@@ -593,17 +624,33 @@
         solo.saveCheckpoint(local, accountKey);
         const snapshot = solo.snapshotSync(local, local.finishedAt || local.updatedAt);
         try { adoptRun(snapshot); } catch (error) { console.error('Solo end failed', error); }
-        await settle(local.id);
+        await settle(local.id, local);
       },
       onError: (error) => { R.error = error.message || 'The solo run hit an error.'; },
     });
   }
 
-  async function settle(runId) {
+  // The solo claim: what the LOCAL run reached, in the only shape the server accepts. It carries no
+  // reward amount -- the server pays its own tables and clamps the contribution to what this run could
+  // physically have produced. `result` is only attached for a run the server reserved with
+  // `local: true`; a co-op settle sends nothing extra and the room's snapshot speaks for it.
+  function soloClaim(run) {
+    if (!run) return null;
+    return {
+      outcome: run.state === 'cleared' ? 'clear' : 'failed',
+      finishedAt: Math.round(run.finishedAt || run.updatedAt),
+      damage: Math.round(num(run.members?.[0]?.damage)),
+      support: Math.round(num(run.members?.[0]?.support)),
+      actions: Math.round(num(run.members?.[0]?.actions)),
+    };
+  }
+
+  async function settle(runId, localRun = null) {
     if (!runId || R.settling || (R.result && R.result.acknowledged !== false)) return;
     R.settling = true;
     try {
-      const data = await api('', { action: 'settle', runId });
+      const claim = localRun ? soloClaim(localRun) : null;
+      const data = await api('', claim ? { action: 'settle', runId, result: claim } : { action: 'settle', runId });
       if (data.ok || data.outcome) {
         R.result = data;
         R.lastResultId = runId;
