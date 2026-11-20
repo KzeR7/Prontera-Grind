@@ -1,9 +1,13 @@
-# Rift progression + walkable raid handoff (haven-v448)
+# Rift progression + Astral dungeon handoff (haven-v449)
 
 This is the owner-run step for the layer that was deferred from v446 — **weapon stars, raid cards,
-the Rift Aura and four earned titles** — plus the v448 **walkable Rift arena** the raid now plays
-in. It updates the local checkout to the latest GitHub `main`,
-then deploys this feature branch to the isolated staging targets. It does **not** deploy production.
+the Rift Aura and four earned titles** — plus the v449 **four-stage Astral dungeon** (Thanatos) that
+replaces the v448 single-boss arena. It updates the local checkout to the latest GitHub `main`, then
+deploys this feature branch to the isolated staging targets. It does **not** deploy production.
+
+> v449 adds **no migration**: `0022_player_character_raid.sql` and `0023_raid_cards.sql` are the only
+> raid migrations, and both are already applied on `pg-staging` by the v447/v448 run of this script.
+> The script detects them and skips them.
 
 ## What was added
 
@@ -57,6 +61,28 @@ the weapon's star line, and `iname` prefixes the weapon with `★n`.
 - The account's `qualifyingClears` is mirrored into the save (`S.raidClears`) when the lobby opens;
   `PGTitles.sync` awards the milestones. There is no Cash Shop item or purchase path.
 
+### The v449 dungeon itself
+
+The single-boss arena is gone. A run is four stages, in order, joined by an exit portal:
+
+| Stage | Name | Target | What it asks for |
+| --- | --- | --- | --- |
+| 1 | Starlit Approach | 52 s | three mob packs on a floating bridge |
+| 2 | Fallen Arcade | 67 s | guards, shielded by two rift anchors |
+| 3 | Runic Observatory | 67 s | elite waves plus two ritual sources |
+| 4 | Thanatos's Sanctuary | 240 s | Thanatos, his mechanics and the Ritual of Ruin |
+
+- The party **walks** the dungeon: a tap/WASD sets a destination, the server walks the character at
+  9.6 units/s, and only the server decides what a telegraph hits.
+- Three boss mechanics: **Soul Cleave** (4 s cone telegraph), **Astral Cataclysm** (5 s, walk into the
+  ward), **Ritual of Ruin** at 70% and 35% boss HP (kill both sources within the 16 s channel to
+  interrupt and open a damage window). Thanatos enrages at 25%.
+- A downed member is out, not dead: a living teammate walks over and holds revive. A solo down ends
+  the run.
+- The objective is a **duration**: enemy HP is `partyDps × seconds`, so a fresh character and a
+  fully geared one both take about six minutes, while gear decides how safe and how fast the fight
+  inside each stage feels.
+
 ## The one PowerShell handoff
 
 Prerequisites on the Windows machine used for staging:
@@ -92,7 +118,7 @@ What the script does, in order:
 2. Fetches `arena/bfc7d4d1-prontera-grind`, creates a temporary detached git worktree, and merges
    the latest `origin/main` into it. If that merge conflicts, it stops and changes nothing remote.
 3. Builds `dist` from that worktree with `tools/build_site.sh` and requires `version.txt` to equal
-   the `index.html` BUILD label (`haven-v448`).
+   the `index.html` BUILD label (`haven-v449`).
 4. Generates throw-away Wrangler configs for **only**:
    - Pages `prontera-grind-staging`
    - Worker `prontera-social-staging`

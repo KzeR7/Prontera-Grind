@@ -637,7 +637,13 @@ t('skill art is local, movement slowdown is moderated, and the unchanged camera 
   const lead=Number((src.match(/CAMERA_LEAD_Z=([\d.]+)/)||[])[1]);
   assert.strictEqual(focus,.28, 'vertical focus remains close to the hero ground line');
   assert.strictEqual(lead,.25, 'the old five-unit camera lead is reduced to a quarter unit');
-  assert.ok(src.includes('ct.z+=(pl.z-CAMERA_LEAD_Z-ct.z)*.05'), 'the render loop actually follows the near-centred camera target');
+  // The follow camera now takes its framing as parameters (the raid passes its own), so assert the
+  // behaviour rather than one exact formatting of the expression: the render loop still damps toward
+  // the hero with the near-centred lead and the same .05 smoothing.
+  const follow=src.slice(src.indexOf('function cameraFollow('), src.indexOf('function cameraFollow(')+1200);
+  assert.ok(/leadZ===undefined\?CAMERA_LEAD_Z:leadZ/.test(follow), 'the field default is still CAMERA_LEAD_Z');
+  assert.ok(/ct\.z\+=\(pl\.z-lz-ct\.z\)\*\.05/.test(follow), 'the render loop actually follows the near-centred camera target');
+  assert.ok(/ct\.x\+=\(pl\.x\*\.6-ct\.x\)\*\.05/.test(follow), 'and keeps the half-weight lateral follow');
   const bodyUp=(1.08-focus)*Math.cos(.95)-lead*Math.sin(.95),screenY=.5-bodyUp/(2*18*Math.tan(38*Math.PI/360));
   assert.ok(screenY>.45&&screenY<.50, 'a normal desktop view projects the avatar centre just above screen centre (at '+(screenY*100).toFixed(1)+'%)');
 });

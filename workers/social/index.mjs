@@ -385,7 +385,7 @@ export class Social {
    const runId=typeof body?.runId==='string'?body.runId:'';
    const action=typeof body?.action==='string'?body.action:'';
    if(!runId||!action)return this.raidJson({ok:false,err:'Invalid raid action.'},400);
-   const result=this.room.raidAction(runId,user,{action,actionId:body.actionId,zone:body.zone,targetId:body.targetId});
+   const result=this.room.raidAction(runId,user,{action,actionId:body.actionId,x:body.x,z:body.z,targetId:body.targetId,kind:body.kind});
    await this.raidWrites;
    return this.raidResult(result);
   }

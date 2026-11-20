@@ -9,9 +9,9 @@ import { json, guard, readJson, fail, unauth } from '../_lib/http.js';
 import { saveBelongsTo } from '../_lib/validate.js';
 import * as db from '../_lib/db.js';
 import {
-  RAID_RULES, RAID_CARDS, RAID_CARD_KEYS, raidDayKey, raidPartySize, raidTotalHp, raidPhaseHp,
-  raidRuleSummary, raidCardRank, raidCardByKey, rollRaidCard,
-  rollRaidClear, rollPityChest, rollFracturedChest, raidMeaningful,
+  RAID_RULES, RAID_STAGES, RAID_CARDS, RAID_CARD_KEYS, raidDayKey, raidPartySize, raidRuleSummary,
+  raidCardRank, rollRaidCard, rollRaidClear, rollPityChest, rollFracturedChest, raidMeaningful,
+  raidRunSeconds, raidStageSeconds,
 } from '../_lib/raid-rules.js';
 import {
   decodeRaidSave, raidProfileFromSave, raidProfileFingerprint, sanitizeRaidProfile, applyRaidCard,
@@ -25,6 +25,10 @@ const safeJson = value => {
 };
 const actionIdString = v => typeof v === 'string' && RAID_ACTION_ID_RE.test(v);
 const runIdString = v => typeof v === 'string' && /^[A-Za-z0-9:_-]{8,120}$/.test(v);
+// Movement and focus are intents (cheap, frequent, not checkpointed); interact/revive/dash are paid
+// actions (receipted, idempotent, checkpointed).
+const RAID_INTENT_ACTIONS = Object.freeze(['move', 'focus']);
+const RAID_COMBAT_ACTIONS = Object.freeze(['move', 'focus', 'interact', 'revive', 'dash']);
 
 function enabled(env) {
   return RAID_RULES.enabled || env?.RAID_ENABLED === 'true' || env?.RAID_ENABLED === true;
@@ -78,6 +82,17 @@ async function memberSaveProfile(user, env) {
   if (!profile) return { ok: false, reason: 'bad-save' };
   const fingerprint = await raidProfileFingerprint(state);
   return { ok: true, saved, state, profile, fingerprint };
+}
+
+// A ledger payload is either a clear roll (amounts inline) or a chest row (amounts under `rewards`).
+// The results panel and the grant mirror both expect one shape: amounts at the top level, with the
+// chest's own `rewards` object kept for anything that wants the raw roll.
+function flattenRewardRow(payload) {
+  const row = payload && typeof payload === 'object' ? payload : {};
+  if (row.rewards && typeof row.rewards === 'object') {
+    return { ...row.rewards, ...row, rewards: row.rewards };
+  }
+  return row;
 }
 
 function publicCards(rows) {
@@ -229,8 +244,6 @@ function installPayload(run, members, checkpoint = null) {
     partyId: null,
     partySize: Number(run.party_size),
     totalHp: Number(run.total_hp),
-    phaseHps: raidPhaseHp(Number(run.total_hp)),
-    phaseNames: RAID_RULES.phaseNames,
     startedAt: Number(run.started_at),
     deadlineAt: Number(run.deadline_at),
     bossArmor: RAID_RULES.bossArmor,
@@ -321,21 +334,22 @@ async function startRaid(env, user, body) {
   const at = now();
   const partySize = raidPartySize(roster.length);
   if (!partySize) return { ok: false, status: 400, data: { err: 'Invalid raid party size.' } };
-  const totalHp = raidTotalHp(partySize);
-  const phaseHps = raidPhaseHp(totalHp);
-  const seconds = partySize === 1 ? RAID_RULES.clearTargetSeconds.solo : RAID_RULES.clearTargetSeconds.group;
+  const partyDps = profiles.reduce((sum, p) => sum + int(p.dps), 0);
+  const stage1 = RAID_STAGES[0];
+  const totalHp = Math.round(partyDps * stage1.targetSeconds);
+  const seconds = raidRunSeconds();
   const runId = 'raid:' + crypto.randomUUID();
   const seed = crypto.getRandomValues(new Uint32Array(1))[0] || 1;
   const startedAt = at;
   const deadlineAt = at + seconds * 1000;
+  // The Social room builds the authoritative encounter from these members and this seed. D1 keeps the
+  // same seed and roster so a rebuilt room reconstructs the identical run.
   const payload = {
     id: runId,
     leaderId: user.id,
     partyId: party?.id || null,
     partySize,
     totalHp,
-    phaseHps,
-    phaseNames: RAID_RULES.phaseNames,
     startedAt,
     deadlineAt,
     bossArmor: RAID_RULES.bossArmor,
@@ -389,7 +403,7 @@ async function startRaid(env, user, body) {
     await writeCheckpoint(env, runId, full);
   }
   return { ok: true, status: 200, data: {
-    ok: true, runId, run: returnedRun, partySize, totalHp, phaseHps, deadlineAt,
+    ok: true, runId, run: returnedRun, partySize, totalHp, stageEnemyHp: totalHp, deadlineAt,
     entriesLeft: Math.max(0, RAID_RULES.dailyEntries - int((await db.raidDailyEntries(env.DB, user.id, raidDayKey(at)))?.n)),
   } };
 }
@@ -407,7 +421,7 @@ async function actionRun(env, user, body) {
   const runId = body.runId;
   const combatAction = String(body.combatAction || '');
   const actionId = body.actionId;
-  if (!runIdString(runId) || !['strike', 'dodge', 'ward', 'heal', 'revive', 'move'].includes(combatAction) || !actionIdString(actionId)) {
+  if (!runIdString(runId) || !RAID_COMBAT_ACTIONS.includes(combatAction) || !actionIdString(actionId)) {
     return { ok: false, status: 400, data: { err: 'Invalid raid action.' } };
   }
   const run = await db.raidRun(env.DB, runId);
@@ -418,19 +432,26 @@ async function actionRun(env, user, body) {
     return settled.ok ? { ok: true, status: 200, data: settled.data } : settled;
   }
   const request = { runId, action: combatAction, actionId };
-  if (body.zone !== undefined) request.zone = String(body.zone);
-  if (body.targetId !== undefined) request.targetId = int(body.targetId, 0);
+  if (Number.isFinite(Number(body.x))) request.x = Number(body.x);
+  if (Number.isFinite(Number(body.z))) request.z = Number(body.z);
+  if (body.targetId !== undefined) request.targetId = String(body.targetId).slice(0, 40);
+  if (body.kind !== undefined) request.kind = String(body.kind).slice(0, 24);
   let result = await socialRequest(env, '/raid/action', user, 'POST', request);
   if (!result.ok && result.status === 404) {
     const recovered = await recoverRun(env, user, run);
     if (recovered.ok) result = await socialRequest(env, '/raid/action', user, 'POST', request);
   }
   if (!result.ok) return { ok: false, status: result.status, data: result.data };
-  // A lane step can happen several times a second; the D1 checkpoint is a recovery aid, not the
-  // movement log. The DO still persists the authoritative position on every accepted action.
-  if (result.data?.checkpoint && combatAction !== 'move') await writeCheckpoint(env, runId, result.data.checkpoint);
+  // Movement/focus intents are frequent and reversible: the D1 checkpoint is a recovery aid, not a
+  // movement log. The DO still owns and persists the authoritative position. Paid actions and every
+  // stage transition are checkpointed so a rebuilt room restores the run mid-dungeon.
+  if (result.data?.checkpoint && !RAID_INTENT_ACTIONS.includes(combatAction)) {
+    await writeCheckpoint(env, runId, result.data.checkpoint);
+  }
   const live = result.data?.run;
   if (live && ['cleared', 'failed'].includes(live.state)) {
+    // Settlement is idempotent: a duplicate or racing call reads the existing ledger back instead of
+    // paying twice.
     const settled = await settleRun(env, user, runId);
     if (settled.ok) return { ok: true, status: 200, data: { ...result.data, settlement: settled.data } };
   }
@@ -438,7 +459,9 @@ async function actionRun(env, user, body) {
 }
 
 function validateTerminalSnapshot(run, snapshot, roster) {
-  if (!snapshot || snapshot.id !== run.id || Number(snapshot.partySize) !== Number(run.party_size) || Number(snapshot.totalHp) !== Number(run.total_hp)) {
+  // The D1 record and the room must describe the same run: same id, same roster size, same seeded
+  // clock. Stage-by-stage HP is the room's own authoritative number, so it is not compared here.
+  if (!snapshot || snapshot.id !== run.id || Number(snapshot.partySize) !== Number(run.party_size)) {
     return 'Raid state did not match its D1 record.';
   }
   if (Number(snapshot.startedAt) !== Number(run.started_at) || Number(snapshot.deadlineAt) !== Number(run.deadline_at)) {
@@ -454,7 +477,7 @@ function validateTerminalSnapshot(run, snapshot, roster) {
   if (!Number.isFinite(finishedAt) || finishedAt < Number(run.started_at) || finishedAt > Number(run.deadline_at)) {
     return 'This result did not finish inside the raid time limit.';
   }
-  if (snapshot.state === 'cleared' && Number(snapshot.hpRemaining) !== 0) return 'Invalid cleared-run state.';
+  if (snapshot.state === 'cleared' && Number(snapshot.stageIndex) !== RAID_STAGES.length - 1) return 'Invalid cleared-run state.';
   return '';
 }
 
@@ -478,7 +501,7 @@ async function settleRun(env, user, runId) {
     const acknowledged = await ackRun(env, user, runId, Number(previous.settled_at));
     return { ok: true, status: 200, data: {
       ok: true, outcome: previous.outcome, settledAt: Number(previous.settled_at),
-      rewards: rows.results.map(r => ({ kind: r.kind, ...safeJson(r.payload) })),
+      rewards: rows.results.map(r => ({ kind: r.kind, ...flattenRewardRow(safeJson(r.payload)) })),
       cards: (Array.isArray(cardRows) ? cardRows : (cardRows?.results || [])).map(r => ({ kind: r.kind, cardKey: r.card_key })),
       acknowledged,
     } };
@@ -529,7 +552,10 @@ async function settleRun(env, user, runId) {
         payload: { ...fractured, ...base }, createdAt: settledAt,
       }));
       for (const kind of ['clear', 'fractured']) {
+        // A chest contributes only when the roll hits: a miss must not write a null card key, and it
+        // must never abort the settlement of the shards and zeny that were already earned.
         const card = rollRaidCard({ kind, rng: Math.random });
+        if (!card) continue;
         statements.push(db.raidCardDropInsertStatement(env.DB, {
           runId, userId: id, kind, cardKey: card.key, createdAt: settledAt,
         }));
@@ -543,7 +569,7 @@ async function settleRun(env, user, runId) {
         payload: { ...pity, ...base }, createdAt: settledAt,
       }));
       const card = rollRaidCard({ kind: 'pity', rng: Math.random });
-      statements.push(db.raidCardDropInsertStatement(env.DB, {
+      if (card) statements.push(db.raidCardDropInsertStatement(env.DB, {
         runId, userId: id, kind: 'pity', cardKey: card.key, createdAt: settledAt,
       }));
       if (id === user.id) {
@@ -554,7 +580,8 @@ async function settleRun(env, user, runId) {
   }
   const result = {
     state: snapshot.state,
-    hpRemaining: snapshot.hpRemaining,
+    stageIndex: int(snapshot.stageIndex),
+    stagesCleared: int(snapshot.stageIndex),
     finishedAt: snapshot.finishedAt,
     settledAt,
   };
@@ -579,7 +606,7 @@ async function settleRun(env, user, runId) {
       db.raidRewardsForUser(env.DB, runId, user.id),
       db.raidCardDropsForUser(env.DB, runId, user.id),
     ]);
-    if (rows?.results?.length) paid = rows.results.map(r => ({ kind: r.kind, ...safeJson(r.payload) }));
+    if (rows?.results?.length) paid = rows.results.map(r => ({ kind: r.kind, ...flattenRewardRow(safeJson(r.payload)) }));
     const cardList = Array.isArray(cardRows) ? cardRows : (cardRows?.results || []);
     if (cardList.length) paidCards = cardList.map(r => ({ kind: r.kind, cardKey: r.card_key }));
   } catch (error) {
@@ -717,9 +744,26 @@ export const onRequestPost = guard(async ({ request, env }) => {
     if (!runIdString(body.runId)) return fail('Invalid raid run id.', 400);
     const member = await db.raidRunMember(env.DB, body.runId, user.id);
     if (!member) return fail('You were not part of this raid.', 403);
+    // A missing D1 row and a failing read are different facts, and the client needs to tell them
+    // apart: 'not-found' means the run is gone, anything else means retry.
+    let run = null;
+    try { run = await db.raidRun(env.DB, body.runId); }
+    catch (error) { console.error('Raid sync read failed', error); return json({ ok: false, retry: true, err: 'The raid record is temporarily unreadable. Retry.' }, 503); }
+    if (!run) return json({ ok: false, missing: true, err: 'That raid no longer exists.' }, 404);
     const snapshot = await socialRequest(env, '/raid/snapshot', user, 'POST', { runId: body.runId });
-    if (!snapshot.ok) return json({ ok: false, err: snapshot.data?.err || 'Raid state is unavailable.' }, snapshot.status || 503);
-    return json({ ok: true, run: snapshot.data?.run || null });
+    if (!snapshot.ok) {
+      // The room lost the run (a restart, an eviction): rebuild it from the D1 checkpoint instead of
+      // failing the player's reconnect.
+      const recovered = await recoverRun(env, user, run);
+      if (recovered.ok) return json({ ok: true, run: recovered.run, recovered: true });
+      return json({ ok: false, retry: true, err: snapshot.data?.err || 'Raid state is unavailable. Retry.' }, snapshot.status || 503);
+    }
+    const live = snapshot.data?.run || null;
+    if (live && ['cleared', 'failed'].includes(live.state)) {
+      const settled = await settleRun(env, user, body.runId);
+      if (settled.ok) return json({ ok: true, run: live, settlement: settled.data });
+    }
+    return json({ ok: true, run: live });
   }
   if (action === 'card') {
     const r = await cardAction(env, user, body);

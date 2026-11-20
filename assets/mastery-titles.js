@@ -49,10 +49,10 @@ const CHALLENGES=[
   {id:'eclipsed-limit',name:'Eclipsed Limit',category:'journey',metric:'baseLevel',goal:150,symbol:2,description:'Reach Base Level 150 on any class.'},
   {id:'echo-beginner',name:'Echo Beginner',category:'journey',metric:'echoRuns',goal:1,symbol:37,description:'Use one ranked Endless Echo attempt (finishing or leaving after the grace period).'},
   {id:'echo-veteran',name:'Echo Veteran',category:'journey',metric:'echoRuns',goal:100,symbol:23,description:'Use 100 ranked Endless Echo attempts (finishing or leaving after the grace period).'},
-  {id:'rift-clearer',name:'Rift Clearer',category:'raid',metric:'raidClears',goal:1,symbol:50,description:'Clear the Rift Sovereign once.'},
-  {id:'sovereign-breaker',name:'Sovereign Breaker',category:'raid',metric:'raidClears',goal:3,symbol:49,description:'Clear the Rift Sovereign three times.'},
-  {id:'fracture-veteran',name:'Fracture Veteran',category:'raid',metric:'raidClears',goal:6,symbol:43,description:'Clear the Rift Sovereign six times.'},
-  {id:'eternal-warden',name:'Eternal Warden',category:'raid',metric:'raidClears',goal:10,symbol:32,description:'Clear the Rift Sovereign ten times.'}
+  {id:'rift-clearer',name:'Rift Clearer',category:'raid',metric:'raidClears',goal:1,symbol:50,description:'Clear the Astral dungeon — Thanatos, all four stages — once.'},
+  {id:'sovereign-breaker',name:'Sovereign Breaker',category:'raid',metric:'raidClears',goal:3,symbol:49,description:'Clear the Astral dungeon three times.'},
+  {id:'fracture-veteran',name:'Fracture Veteran',category:'raid',metric:'raidClears',goal:6,symbol:43,description:'Clear the Astral dungeon six times.'},
+  {id:'eternal-warden',name:'Eternal Warden',category:'raid',metric:'raidClears',goal:10,symbol:32,description:'Clear the Astral dungeon ten times.'}
 ];
 const BY_ID=Object.assign(Object.create(null),Object.fromEntries(CHALLENGES.map(t=>[t.id,t])));
 const FILTERS=[['all','All titles'],['earned','Earned'],['rank','Hunt ranks'],['hunt','Boss & hunts'],['raid','Rift Raid'],['forge','Forge'],['class','Classes'],['explore','Exploration'],['mastery','Mastery'],['journey','Journey']];

@@ -1,7 +1,7 @@
 param(
   [string]$Repo = (Get-Location).Path,
   [string]$Branch = 'arena/bfc7d4d1-prontera-grind',
-  [string]$BuildTag = 'haven-v448'
+  [string]$BuildTag = 'haven-v449'
 )
 
 # Owner-run Windows handoff for the Rift stars/cards/cosmetics build.

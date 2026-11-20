@@ -1209,7 +1209,12 @@ export class SocialRoom {
    const partyIds=p.members.map(m=>m.id).sort((a,b)=>a-b);
    if(ids.length!==partyIds.length||ids.some((id,i)=>id!==partyIds[i]))return {ok:false,status:409,err:'The raid roster changed. Ready up again.'};
   }
-  const run=createRaidRun(payload);
+  let run=null;
+  // The publishing API owns the run's clock: it wrote `startedAt`/`deadlineAt` to D1 before asking the
+  // room to build the encounter, and settlement compares the two. Clocking the run here instead made
+  // every run's timeline drift from its own reservation by the request round-trip.
+  const publishedAt=Number.isFinite(Number(payload.startedAt))&&Number(payload.startedAt)>0?Math.floor(Number(payload.startedAt)):this.now();
+  try{run=createRaidRun({...payload,now:publishedAt})}catch(error){console.error('Raid install failed',error)}
   if(!run)return {ok:false,status:400,err:'The raid room could not build that encounter.'};
   this.raidRuns.set(run.id,run);
   if(partySize>1&&this.raidParty){this.raidParty.open=false;this.raidParty.runId=run.id;this.raidSaveParty()}
@@ -1224,8 +1229,10 @@ export class SocialRoom {
    if(!this.raidMember(existing,user?.id))return {ok:false,status:403,err:'You are not part of this raid.'};
    return {ok:true,status:200,run:this.raidPublic(existing),checkpoint:existing,duplicate:true};
   }
-  const install=payload.state?null:this.raidInstall(payload,user,{recovery:true});
-  if(install)return install;
+  const isCheckpoint=payload&&typeof payload=== 'object'&&Array.isArray(payload.enemies)&&Array.isArray(payload.members);
+  const install=isCheckpoint?null:this.raidInstall(payload,user,{recovery:true});
+  if(install&&install.ok)return install;
+  if(!isCheckpoint)return install||{ok:false,status:400,err:'The raid checkpoint could not be read.'};
   const run=sanitizeRaidRun(payload);
   if(!run)return {ok:false,status:400,err:'The raid checkpoint could not be read.'};
   if(!this.raidMember(run,user.id))return {ok:false,status:403,err:'You are not part of this raid.'};
@@ -1251,7 +1258,7 @@ export class SocialRoom {
    return {ok:true,status:200,run:this.raidPublic(run),checkpoint:run,terminal:true};
   }
   const result=applyRaidAction(run,user.id,body.action,{
-   actionId:body.actionId,zone:body.zone,targetId:body.targetId,at:this.now(),
+   actionId:body.actionId,x:body.x,z:body.z,targetId:body.targetId,kind:body.kind,at:this.now(),
   });
   this.raidSaveRun(run);
   this.raidBroadcast(run);

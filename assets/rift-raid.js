@@ -1,25 +1,34 @@
-/* Player-character Rift Raid client.
+/* Player-character Rift Raid client (v449: the four-stage Astral dungeon).
  *
- * Lobby -> ready -> walkable arena -> results. The arena is a DOM map (existing volcanic atlas,
- * animated class skins and Ascension boss art), not a second WebGL renderer. The player walks with
- * WASD/arrows or by dragging; the lane under their feet is sent as a server move action, so the
- * room remains the only authority for damage, hazards, downing, victory and rewards.
+ * This file is the *interface* around the dungeon: the lobby (solo/party setup, entries, rules), the
+ * in-viewport HUD's data, reconnect/resume, and the results screen. The dungeon itself is drawn by
+ * assets/raid-dungeon.js inside the game's own WebGL scene, and every rule is the server's.
+ *
+ * The client sends three things to the room, and nothing else:
+ *   - a destination (`move`) when the player taps the ground or holds a direction key
+ *   - a focus target (`focus`) when the player taps an enemy
+ *   - a paid interaction (`interact` at a portal, `revive`) which the server validates
+ * Automatic combat, hazard timing, damage, downing and the wipe all resolve on the server from the
+ * class snapshot the room built at activation.
+ *
+ * There is no lane arena, no Strike/Heavy button and no second renderer here. The overlay is only
+ * shown when the player is not inside the run; during combat it steps out of the way of the viewport.
  */
 (function () {
   'use strict';
   const esc = value => (typeof globalThis.esc === 'function' ? globalThis.esc(value) : String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])));
   const num = (n, fallback = 0) => (Number.isFinite(Number(n)) ? Number(n) : fallback);
   const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
-  const BOSS_ART = 'assets/mobs/v1/thumb-1639.png';
-  const LANES = ['left', 'center', 'right'];
-  const LANE_LABEL = { left: 'Left', center: 'Center', right: 'Right' };
+  // The boss portrait in the lobby is the native sheet's own idle frame - the same art the raid
+  // spawns in the arena, not a separate commission.
+  const BOSS_ART = 'assets/mobs/v1/1708-0.png';
 
   const R = {
     open: false, busy: '', error: '', view: 'lobby', account: null, party: null, eligibility: null,
-    activeRun: null, run: null, result: null, rewardRows: [], lane: 'center', targetId: 0,
-    pending: new Map(), lastBossHp: 0, lastAutoAt: 0, serverOffset: 0, lastSync: 0,
+    activeRun: null, run: null, result: null, rewardRows: [], targetId: '',
+    pending: new Map(), lastSync: 0, stageSeen: -1,
     timer: null, partyAction: false, codeOpen: false, notice: '', lastResultId: '', settling: false,
-    deadlineSettledFor: '', forgeExtra: 0, arena: null,
+    deadlineSettledFor: '', forgeExtra: 0, inRun: false, lastPollAt: 0,
   };
 
   // These mirror assets/rift-progression.js. The fallback keeps the overlay usable in isolation
@@ -59,7 +68,13 @@
     const s = Math.max(0, Math.ceil(num(ms) / 1000));
     return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
   };
-  const serverNow = () => Date.now() + R.serverOffset;
+  // Every countdown in this panel is stage time on the server's clock, so it must read the same
+  // clock the renderer's HUD does: the median of the snapshot offsets, not the device's wall clock.
+  const serverNow = () => {
+    const rd = globalThis.PGRaidDungeon;
+    if (rd && rd.active && typeof rd.serverNow === 'function') { try { return rd.serverNow(); } catch {} }
+    return Date.now() + R.serverOffset;
+  };
   const pct = (a, b) => clamp((num(a) / Math.max(1, num(b))) * 100, 0, 100);
 
   async function api(path = '', body = null) {
@@ -122,7 +137,6 @@
     .raid-bar i{display:block;height:100%;background:linear-gradient(90deg,#b4413e,#e59a4a);transition:width .25s ease}
     .raid-bar.hp i{background:linear-gradient(90deg,#3c9a68,#8de0a8)}
     .raid-bar.ward i{background:linear-gradient(90deg,#3d6fb4,#87c3ff)}
-    .raid-phase{display:flex;gap:4px;margin-top:6px}.raid-phase span{height:4px;flex:1;background:#31413b;border-radius:2px}.raid-phase span.on{background:#d1a35f}
     .raid-timer{font:700 30px/1 ui-monospace,monospace;color:#f6e6bc;letter-spacing:.06em}
     .raid-timer.low{color:#ff9c86}
     @keyframes raidDanger{50%{box-shadow:inset 0 0 26px #e45b3a55}}
@@ -150,65 +164,69 @@
     .raid-note{font-size:11px;color:#9ab2ab;line-height:1.45}
     .raid-floater{position:absolute;right:12px;top:10px;font:700 14px ui-monospace,monospace;color:#ffd28d;text-shadow:0 1px 2px #000;animation:raidFloat .8s ease-out forwards;pointer-events:none}
     @keyframes raidFloat{to{transform:translateY(-20px);opacity:0}}
-    /* Walkable Rift arena: the boss and party are drawn on the volcanic map, and the player
-       moves freely between the three hazard lanes instead of clicking a lane card. */
-    .raid-arena{position:relative;height:clamp(320px,52vh,520px);min-height:320px;border:1px solid #5a4a37;border-radius:14px;overflow:hidden;background:#080605;isolation:isolate;touch-action:none;cursor:crosshair;outline:none;box-shadow:inset 0 0 80px #000b}
-    .raid-arena:focus-visible{outline:2px solid #e3c07d;outline-offset:2px}
-    .raid-arena-art{position:absolute;inset:-3%;background:url("assets/atlas/thor-volcano.png") center/cover no-repeat;filter:brightness(.72) saturate(1.12);transform:scale(1.05)}
-    .raid-arena-art:after{content:"";position:absolute;inset:0;background:radial-gradient(circle at 50% 12%,#ff6a2a26 0,transparent 35%),linear-gradient(180deg,#0000 40%,#050303cc 100%)}
-    .raid-arena-vignette{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 48%,transparent 36%,#0503039e 76%,#030202e8 100%);pointer-events:none}
-    .raid-ember-layer{position:absolute;inset:0;overflow:hidden;pointer-events:none;opacity:.65}
-    .raid-ember-layer i{position:absolute;bottom:-12px;width:3px;height:3px;border-radius:50%;background:#ffb15c;box-shadow:0 0 8px #ff7a2f;animation:raidEmber 5.5s linear infinite}
-    @keyframes raidEmber{0%{transform:translateY(0) translateX(0);opacity:0}12%{opacity:.9}100%{transform:translateY(-58vh) translateX(26px);opacity:0}}
-    .raid-zones{position:absolute;inset:0;display:grid;grid-template-columns:repeat(3,1fr);pointer-events:none;z-index:2}
-    .raid-zone{position:relative;border-left:1px dashed #ffffff12;border-right:1px dashed #ffffff0a;transition:background .2s ease,box-shadow .2s ease}
-    .raid-zone:first-child{border-left:0}.raid-zone:last-child{border-right:0}
-    .raid-zone.danger{background:linear-gradient(180deg,#ff3b1f00 0,#ff3b1f1f 38%,#ff3b1f4d 100%);box-shadow:inset 0 0 70px #ff3b1f55;animation:raidDanger 1.05s ease-in-out infinite}
-    .raid-zone span{position:absolute;bottom:9px;left:50%;transform:translateX(-50%);font:700 9px/1 system-ui,sans-serif;letter-spacing:.18em;text-transform:uppercase;color:#c9b79b;text-shadow:0 1px 3px #000;opacity:.8}
-    .raid-zone.danger span{color:#ffc0a8}
-    .raid-field-top{position:absolute;left:0;right:0;top:0;z-index:6;padding:10px 12px 6px;background:linear-gradient(#040606e8,#04060600);pointer-events:none}
-    .raid-boss-line{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
-    .raid-boss-line b{font:700 15px/1.1 Georgia,serif;color:#f6dfb2}
-    .raid-boss-line .raid-boss-hp{margin-left:auto;font:700 11px/1 ui-monospace,monospace;color:#ffd7ad}
-    .raid-bar.big{height:12px;margin-top:4px;border-color:#7d4c38;background:#1d0d09}
-    .raid-phase{margin-top:3px;max-width:50%}
-    .raid-boss-wrap{position:absolute;left:50%;top:11%;width:154px;height:166px;transform:translateX(-50%);z-index:4;pointer-events:none;display:flex;align-items:flex-end;justify-content:center}
-    .raid-boss-wrap:before{content:"";position:absolute;bottom:2px;width:110px;height:26px;border-radius:50%;background:#000a;filter:blur(6px)}
-    .raid-boss-img{position:relative;width:100%;height:100%;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 0 18px #ff5a2f88) drop-shadow(0 6px 6px #000c);animation:raidBossFloat 3.2s ease-in-out infinite}
-    .raid-boss-wrap.hit .raid-boss-img{animation:raidBossHit .26s linear}
-    @keyframes raidBossFloat{50%{transform:translateY(-6px)}}
-    @keyframes raidBossHit{0%,100%{transform:translateX(0)}30%{transform:translateX(-7px) scale(1.03)}65%{transform:translateX(6px)}}
-    .raid-units{position:absolute;inset:0;z-index:5;pointer-events:none}
-    .raid-unit{position:absolute;width:82px;height:104px;transform:translate(-50%,-90%);display:flex;flex-direction:column;align-items:center;justify-content:flex-end;transition:left .09s linear,top .09s linear;will-change:left,top}
-    .raid-unit-shadow{position:absolute;bottom:12px;width:46px;height:12px;border-radius:50%;background:#000a;filter:blur(3px)}
-    .raid-unit-skin{position:relative;width:82px;height:82px;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 4px 5px #000b);transform:scaleX(var(--face,1))}
-    .raid-unit.you .raid-unit-skin{filter:drop-shadow(0 0 8px #ffd98ab0) drop-shadow(0 4px 5px #000b)}
-    .raid-unit.you .raid-unit-name{color:#ffe0a2}
-    .raid-unit.moving .raid-unit-skin{animation:raidWalkBob .26s ease-in-out infinite}
-    @keyframes raidWalkBob{50%{transform:translateY(-3px) scaleX(var(--face,1))}}
-    .raid-unit.down .raid-unit-skin{filter:grayscale(1) brightness(.55);transform:rotate(-72deg) translateY(8px) scaleX(var(--face,1));opacity:.75}
-    .raid-unit.down .raid-unit-bar i{background:#7d3e39}
-    .raid-unit-fallback{position:relative;width:58px;height:58px;border-radius:50%;display:grid;place-items:center;background:#203530;border:1px solid #79917f;color:#f0d9a6;font:700 20px Georgia,serif}
-    .raid-unit-bar{position:relative;width:56px;height:5px;margin-top:1px;border:1px solid #2f1a18;border-radius:4px;background:#1c0e0d;overflow:hidden}
-    .raid-unit-bar i{display:block;height:100%;background:linear-gradient(90deg,#3d9a67,#9ce8b0);transition:width .2s}
-    .raid-unit-name{position:relative;max-width:92px;margin-top:2px;font:700 9px/1.2 system-ui,sans-serif;color:#eee0c6;text-align:center;text-shadow:0 1px 3px #000;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .raid-unit.warded .raid-unit-shadow{box-shadow:0 0 22px #69a9ff}
-    .raid-field-timer{position:absolute;right:12px;top:62px;z-index:6;font:700 26px/1 ui-monospace,monospace;color:#f6e6bc;text-shadow:0 2px 8px #000;pointer-events:none}
-    .raid-field-timer.low{color:#ff9c86}
-    .raid-field-telegraph{position:absolute;left:50%;bottom:32px;transform:translateX(-50%);z-index:6;max-width:80%;padding:4px 9px;border-radius:99px;background:#120707cc;border:1px solid #6b3a2e;color:#ffc6ae;font:600 10px/1.2 system-ui,sans-serif;text-align:center;pointer-events:none}
-    .raid-field-telegraph:empty{display:none}
-    .raid-field-hint{position:absolute;right:10px;bottom:8px;z-index:6;font:600 9px/1.2 system-ui,sans-serif;letter-spacing:.06em;color:#c5b59b;opacity:.7;pointer-events:none;text-shadow:0 1px 3px #000}
-    .raid-fx{position:absolute;inset:0;z-index:7;pointer-events:none;overflow:hidden}
-    .raid-float{position:absolute;transform:translate(-50%,-50%);font:800 12px/1 ui-monospace,monospace;color:#ffd28d;text-shadow:0 2px 3px #000;animation:raidFloat .85s ease-out forwards}
-    .raid-float.hurt{color:#ff8e7e}
-    .raid-float.heal{color:#9ce8b0}
-    .raid-arena.slam{animation:raidSlam .22s linear}
-    @keyframes raidSlam{30%{transform:translateX(-3px)}60%{transform:translateX(3px)}}
-    .raid-command{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:12px;margin-top:10px}
-    @media(max-width:820px){.raid-command{grid-template-columns:1fr}.raid-arena{height:58vh;min-height:300px}}
-    .raid-command .raid-panel{padding:11px}
-    .raid-command .raid-actions{grid-template-columns:repeat(2,minmax(0,1fr))}
-    .raid-command .raid-actions .raid-btn{min-height:44px}
+    /* The run frame. The FIGHT is not drawn here - it is the game's own WebGL scene. This panel is
+       the stage/objective/party frame plus the two interactions a stage can ask for. */
+    .raid-runbar{display:flex;align-items:center;gap:12px;margin:2px 0 6px;padding:9px 12px;border:1px solid #37514c;border-radius:11px;background:linear-gradient(90deg,#0b1a1a,#0a1418)}
+    .raid-runbar-stage{display:flex;flex-direction:column;gap:1px;min-width:0;flex:1}
+    .raid-runbar-stage b{font:700 15px/1.2 Georgia,serif;color:#f2dfb4}
+    .raid-runbar-stage small{font-size:11px;color:#9fb8b1}
+    .raid-runbar-clock{font:700 24px/1 ui-monospace,monospace;color:#f6e6bc;letter-spacing:.05em}
+    .raid-runbar-clock.low{color:#ff9c86}
+    .raid-runbar-flag{margin:-2px 0 8px;padding:0 12px;font:700 12px/1.4 system-ui,sans-serif;color:#ffe0a2;opacity:0;transition:opacity .25s ease}
+    .raid-runbar-flag.on{opacity:1}
+    .raid-stages{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:7px;margin:10px 0 0}
+    .raid-stage{display:flex;flex-direction:column;gap:2px;border:1px solid #35504b;border-radius:9px;background:#0a1717;padding:8px}
+    .raid-stage span{font:700 10px/1 ui-monospace,monospace;letter-spacing:.18em;color:#8fb6ae}
+    .raid-stage b{font:700 12px/1.25 system-ui,sans-serif;color:#f0e2c4}
+    .raid-stage small{font-size:10px;color:#93aaa4}
+    .raid-avatar{width:38px;height:44px;image-rendering:pixelated}
+
+    /* In-viewport HUD (assets/raid-dungeon.js). It sits on the field, never over a safe area's floor
+       marker: the top bar is one line and the party strip hugs the bottom-left. */
+    #raidHudLayer{position:fixed;inset:0;pointer-events:none;z-index:44}
+    .raid-hud{position:absolute;inset:0;pointer-events:none;font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#e9f0ff}
+    .raid-hud[hidden]{display:none}
+    /* The stage/timer row is the raid's own header, so it sits just under the game's top bar rather
+       than under it. 112px clears the header on desktop; the media query below tightens it on phones,
+       where the top bar wraps. */
+    /* A raid is its own screen: the field's combat pill, minimap, side rail, chat and quest chips are
+       field-only chrome and are put away for the fight. The player's portrait card, the bottom dock
+       and the top bar stay, so every control they already know is still where it was. */
+    body.raid-fighting #eclipseCombat,body.raid-fighting #minimapTools,body.raid-fighting #sideRail,
+    body.raid-fighting #eclipseMapCard,body.raid-fighting #feedWrap,body.raid-fighting #eclipseCompanions,
+    body.raid-fighting #pgQuests,body.raid-fighting #hint,body.raid-fighting #tag,
+    body.raid-fighting #socialChat{display:none!important}
+    .raid-hud-top{position:absolute;left:50%;transform:translateX(-50%);top:64px;display:flex;align-items:stretch;gap:8px;max-width:min(560px,92vw)}
+    .raid-hud-stage{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px;padding:7px 12px;border-radius:10px;background:#070c1acc;border:1px solid #3a4a72;backdrop-filter:blur(3px)}
+    .raid-hud-step{font:700 9px/1 ui-monospace,monospace;letter-spacing:.18em;color:#8fa7d8}
+    .raid-hud-stage b{font:700 14px/1.2 Georgia,serif;color:#f4e6c6}
+    .raid-hud-stage small{font-size:11px;color:#a9bad8}
+    .raid-hud-timer{flex:none;display:flex;flex-direction:column;align-items:flex-end;justify-content:center;padding:6px 12px;border-radius:10px;background:#070c1acc;border:1px solid #3a4a72}
+    .raid-hud-timer span{font:700 22px/1 ui-monospace,monospace;color:#f6e6bc}
+    .raid-hud-timer small{font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:#8fa7d8}
+    .raid-hud-warning{position:absolute;left:50%;top:150px;transform:translateX(-50%);display:flex;align-items:center;gap:9px;padding:7px 13px;border-radius:99px;background:#26070dd9;border:1px solid #b04a3a;color:#ffd6c4;font:700 12px/1.2 system-ui,sans-serif;box-shadow:0 4px 18px #0009}
+    .raid-hud-warning[hidden]{display:none}
+    .raid-hud-warning b{font:700 13px/1 ui-monospace,monospace;color:#ffe6a8;min-width:38px;text-align:right}
+    .raid-hud-warning[data-kind="astral-cataclysm"]{background:#07260fd9;border-color:#54a06a;color:#d6ffdf}
+    .raid-hud-warning[data-kind="soul-cleave"]{background:#26070dd9;border-color:#b04a3a}
+    .raid-hud-warning[data-kind="ritual"]{background:#1d0a2ad9;border-color:#9b6ad0;color:#ecd9ff}
+    .raid-hud-boss{position:absolute;left:50%;top:202px;transform:translateX(-50%);width:min(520px,72vw)}
+    .raid-hud-boss[hidden]{display:none}
+    .raid-hud-boss-head{display:flex;justify-content:space-between;align-items:baseline;font:700 11px/1.2 system-ui,sans-serif;color:#ffd9a0;text-shadow:0 1px 3px #000}
+    .raid-hud-bar{height:9px;border-radius:6px;background:#1a0f1ecc;border:1px solid #6a4b62;overflow:hidden}
+    .raid-hud-bar i{display:block;height:100%;background:linear-gradient(90deg,#8b2f4a,#e0805a);transition:width .22s ease}
+    .raid-hud-party{position:absolute;left:10px;bottom:96px;pointer-events:none;display:flex;flex-direction:column;gap:4px;width:min(210px,46vw)}
+    .raid-hud-member{padding:4px 7px;border-radius:8px;background:#070c1ab8;border:1px solid #33456b}
+    .raid-hud-member.you{border-color:#d5b06e}
+    .raid-hud-member.down{border-color:#9d4a44;background:#1d0c0ccc}
+    .raid-hud-member-head{display:flex;justify-content:space-between;font-size:10px;color:#dbe6ff}
+    .raid-hud-member-head small{font:700 9px/1 ui-monospace,monospace;color:#a8bade}
+    .raid-hud-member.down .raid-hud-member-head small{color:#ff9c86}
+    .raid-hud-member .raid-hud-bar{height:6px;margin-top:3px}
+    .raid-hud-member .raid-hud-bar i{background:linear-gradient(90deg,#2f8f5e,#93e6ac)}
+    .raid-hud-member.down .raid-hud-bar i{background:#773b37}
+    .raid-hud-tip{position:absolute;left:50%;bottom:96px;transform:translateX(-50%);padding:4px 10px;border-radius:99px;background:#070c1a99;border:1px solid #33456b;font:600 10px/1.3 system-ui,sans-serif;color:#b9c8e6;white-space:nowrap;max-width:60vw;overflow:hidden;text-overflow:ellipsis}
+    @media(max-width:640px){.raid-hud-tip{display:none}.raid-hud-warning{top:160px}.raid-hud-boss{top:214px;width:86vw}}
     .raid-spacer{flex:1}
   </style>
   <div class="raid-shell">
@@ -218,26 +236,39 @@
       <span id="raidConn" class="raid-tag">Connecting…</span>
       <button class="raid-close" id="raidClose" type="button" aria-label="Close Rift Raid">✕</button>
     </header>
+    <div id="raidStageToast" class="raid-runbar-flag" role="status" aria-live="polite"></div>
     <div id="raidBody" class="raid-spacer"></div>
     <footer class="raid-note" id="raidFoot">Server-owned damage, timing and rewards. Your field keeps farming in the background.</footer>
   </div>
 </div>`);
     $('raidClose').addEventListener('click', close);
-    addEventListener('keydown', event => arenaKey(event, true));
-    addEventListener('keyup', event => arenaKey(event, false));
     $('raidOverlay').addEventListener('click', event => {
       const button = event.target.closest('button[data-raid-action]');
       if (button && !button.disabled) handle(button.dataset.raidAction, button.dataset.raidValue || '');
-      const member = event.target.closest('[data-raid-target]');
-      if (member) { R.targetId = Number(member.dataset.raidTarget) || 0; render(); }
     });
+  }
+
+  // The overlay belongs to the lobby and the between-stage screen. Once a live run is being fought,
+  // the fight is the screen: the panel steps aside and only the field HUD stays up (the Resume
+  // button already told the player this). Opening again from the lobby still shows the panel first.
+  function syncOverlayToRun() {
+    const el = $('raidOverlay');
+    if (!el) return;
+    const fighting = R.open && R.view === 'arena' && R.run?.state === 'active';
+    el.hidden = !R.open || fighting;
+    const body = document.body;
+    if (body) {
+      body.classList.toggle('raid-open', R.open);
+      // Field-only chrome is put away for the duration of a fight (the CSS lives in this sheet).
+      body.classList.toggle('raid-fighting', fighting);
+    }
   }
 
   async function open() {
     installShell();
     R.open = true;
     R.error = '';
-    $('raidOverlay').hidden = false;
+    syncOverlayToRun();
     document.body.classList.add('raid-open');
     // Reuse the existing plaza socket for party actions. It is the same connection/message channel
     // the game already uses; there is no raid WebSocket and no second renderer.
@@ -245,15 +276,17 @@
       try { PGSocial.enter(); } catch {}
     }
     await refresh();
-    if (!R.timer) R.timer = setInterval(tick, 250);
+    // The overlay itself has no ticker: the run panel is repainted from adoptRun/syncArena, and the
+    // in-run HUD is driven by the renderer. The only interval is the 2 s run poll, started when a
+    // run is actually adopted and stopped when it ends.
   }
   function close() {
     R.open = false;
-    const el = $('raidOverlay');
-    if (el) el.hidden = true;
-    document.body.classList.remove('raid-open');
-    if (R.timer) { clearInterval(R.timer); R.timer = null; }
-    stopArenaLoop();
+    syncOverlayToRun();
+    // Closing the overlay never stops the run and never stops the poll: the HUD is driven by the
+    // 2 s run poll for as long as the server says the run is active, and the poll stops itself the
+    // moment it is not. That is what keeps a solo player's HUD live while the panel is closed.
+    if (!R.inRun && !(R.run && R.run.state === 'active')) stopPolling();
   }
 
   // Account clears are the authority for the earned aura and the four Rift Raid titles. Mirror the
@@ -309,41 +342,116 @@
     }
   }
 
+  // The run is the server's. The client mirrors it, and on a new run or a stage change it hands the
+  // renderer the new stage. Nothing here computes damage or a mechanic.
   function adoptRun(run) {
     if (!run) return;
-    const newRun = R.run?.id !== run.id;
-    if (newRun) {
-      R.deadlineSettledFor = '';
-      stopArenaLoop();
-      R.arena = null;
-      R.lastBossHp = num(run.hpRemaining);
-    }
-    const previousBoss = R.lastBossHp;
+    const isNew = R.run?.id !== run.id;
     R.run = run;
-    R.serverOffset = num(run.serverNow, Date.now()) - Date.now();
-    const a = ensureArenaState(run);
-    const mine = (run.members || []).find(m => m.id === myId());
-    if (mine) R.lane = mine.lane;
-    if (!R.targetId) {
-      const living = (run.members || []).find(m => m.id !== myId() && m.hp > 0 && num(m.hp) < num(m.maxHp));
-      R.targetId = living ? Number(living.id) : 0;
+    R.stageSeen = num(run.stageIndex, 0);
+    // Every login starts in the plaza, and the plaza is a screen of its own: the field does not draw
+    // behind it. A raid is fought on the field, so adopting a live run steps out first — the same path
+    // as the hub's own Field button (PGSocial.leave), not a second way out of the plaza.
+    if (run.state === 'active') {
+      try {
+        if (document.body && document.body.classList.contains('social-open')
+          && typeof PGSocial !== 'undefined' && PGSocial && typeof PGSocial.leave === 'function') PGSocial.leave();
+      } catch {}
+      // The fight is the screen: any window left open from the plaza (the guide opens itself on the
+      // first trip to the field) would sit on top of it. This is the same close Escape performs.
+      try {
+        if (isNew && typeof escapeUI === 'function' && typeof tabs !== 'undefined' && tabs.length) escapeUI();
+      } catch {}
     }
-    if (!newRun && num(run.hpRemaining) < previousBoss) {
-      flashBoss();
-      floatAt($('raidBossArt'), '-' + fmt(previousBoss - num(run.hpRemaining)));
+    if (globalThis.PGRaidDungeon) {
+      try {
+        const rd = globalThis.PGRaidDungeon;
+        rd.noteSnapshot(run);
+        if (num(run.serverNow, 0) > 0) R.serverOffset = num(run.serverNow) - Date.now();
+        // Only a live run keeps the dungeon mounted. The moment it ends the field comes back and the
+        // results are shown as a panel over it, which is also what a player expects after a wipe.
+        const live = run.state === 'active';
+        if (live) {
+          if (!rd.active || rd.stageKey !== run.stageKey) {
+            rd.begin(dungeonHooks(), run.id, run.stageKey, myId());
+            rd.reconcile(run);
+          } else {
+            rd.reconcile(run);
+          }
+        } else {
+          rd.end();
+        }
+        R.inRun = run.state === 'active';
+        rd.hudUpdate(run);
+      } catch (error) { console.error('Raid dungeon update failed', error); }
     }
-    if (a && mine) {
-      if (a.lastMyHp > mine.hp) floatAt($('raidUnit_' + mine.id), '-' + fmt(a.lastMyHp - mine.hp), 'hurt');
-      a.lastMyHp = num(mine.hp);
-      // `lane` is the lane we last asked the room for; `confirmed` is the lane the room reports.
-      // A refused move (the 250 ms server floor) leaves them apart, and the walk loop re-sends the
-      // lane under the sprite instead of letting the client and the room disagree.
-      if (mine.lane) {
-        a.confirmed = mine.lane;
-        if (!a.pending && laneOfX(a.x) === mine.lane) a.lane = mine.lane;
+    // A stage transition is a visible move for the whole party: the overlay announces it once, and
+    // the renderer has already rebuilt the layout.
+    if (isNew) {
+      R.notice = '';
+      stopPolling();
+      if (run.state === 'active') startPolling();
+    }
+    updateRunOverlay(run);
+  }
+
+  // ---- the run overlay ---------------------------------------------------------------------------
+  // During combat the overlay is closed and only the field HUD (assets/raid-dungeon.js) is on screen.
+  // It re-opens by itself for a stage transition or a terminal result, and for nothing else.
+  function updateRunOverlay(run) {
+    if (!run) return;
+    if (run.state === 'active') {
+      if (R.open && R.view === 'arena') {
+        // Re-open the panel for the one stage announcement, then step back out of the fight.
+        syncOverlayToRun();
+        // A transition is worth one short announcement, not a modal: the player is still playing.
+        const announce = document.getElementById('raidStageToast');
+        if (announce) {
+          announce.textContent = 'Stage ' + (num(run.stageIndex) + 1) + ' of 4 · ' + (run.stageName || '');
+          announce.classList.add('on');
+          clearTimeout(R.toastTimer);
+          R.toastTimer = setTimeout(() => announce.classList.remove('on'), 2600);
+        }
       }
+      return;
     }
-    R.lastBossHp = num(run.hpRemaining);
+    settle(run.id);
+  }
+
+  // The room is read only for the events the socket does not carry: a teammate's revive hold, a
+  // reconnect, or a stage transition. 2 s while the run is live, stopped the moment it ends or the
+  // player leaves the tab. This is the ONLY recurring request in the raid.
+  function startPolling() {
+    stopPolling();
+    R.lastPollAt = Date.now();
+    R.timer = setInterval(pollRun, 2000);
+  }
+  function stopPolling() {
+    if (R.timer) { clearInterval(R.timer); R.timer = null; }
+  }
+  async function pollRun() {
+    const run = R.run;
+    if (!run || run.state !== 'active') { stopPolling(); return; }
+    if (typeof document !== 'undefined' && document.hidden) return;
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) return;
+    R.lastPollAt = Date.now();
+    try {
+      const data = await api('', { action: 'sync', runId: run.id });
+      if (data.run) adoptRun(data.run);
+      if (data.settlement) {
+        // The run ended while the panel was closed: show the result the server actually paid.
+        stopPolling();
+        R.result = data.settlement;
+        R.rewardRows = data.settlement.rewards || [];
+        R.view = 'results';
+        if (!R.open) open().catch(() => {});
+        else render();
+      }
+      if (data.missing) { stopPolling(); R.error = data.err || 'That raid no longer exists.'; if (R.open) render(); }
+    } catch (error) {
+      // A failed poll is not a failed run. The next tick retries; the room still owns the state.
+      if (error && error.status === 404) { stopPolling(); if (R.open) render(); }
+    }
   }
 
   function myId() {
@@ -470,8 +578,13 @@
         await refresh();
       } else if (action === 'refresh') {
         await refresh();
-      } else if (['strike', 'dodge', 'ward', 'heal', 'revive'].includes(action)) {
-        await sendCombat(action);
+      } else if (action === 'revive') {
+        const target = (R.run?.members || []).find(m => m.downed && m.id !== myId());
+        if (target) await sendPaid('revive', { targetId: target.id });
+      } else if (action === 'portal') {
+        await sendPaid('interact', { targetId: 'portal' });
+      } else if (action === 'leave') {
+        close();
       } else if (action === 'settle') {
         await settle(R.run?.id || R.activeRun?.id);
       } else if (action === 'close') {
@@ -494,32 +607,52 @@
     return id;
   }
 
-  async function sendCombat(action) {
+  function newActionId() {
+    return 'raid:' + (globalThis.crypto?.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2));
+  }
+
+  // Paid interactions are receipted by the server: it stores the action id and replays the first
+  // result, so a retry after a lost response can never revive twice or open a portal twice.
+  async function sendPaid(kind, extra = {}) {
     const run = R.run;
-    if (!run || run.state !== 'active') return;
-    const key = action + ':' + (action === 'dodge' ? R.lane : (['ward', 'heal', 'revive'].includes(action) ? R.targetId || '' : ''));
+    if (!run || run.state !== 'active') return null;
+    const key = kind + ':' + (extra.targetId || '');
     const actionId = actionIdFor(key);
-    const body = { action: 'act', runId: run.id, combatAction: action, actionId };
-    if (action === 'dodge') body.zone = R.lane;
-    if (['ward', 'heal', 'revive'].includes(action)) body.targetId = R.targetId || undefined;
-    R.busy = key;
     try {
-      const data = await api('', body);
+      const data = await api('', { action: 'act', runId: run.id, combatAction: kind, actionId, ...extra });
       if (data.run) adoptRun(data.run);
-      if (action === 'strike') playAttack();
+      R.pending.delete(key);
       if (data.settlement) {
         R.result = data.settlement; R.rewardRows = data.settlement.rewards || []; R.view = 'results';
+        render();
       }
-      R.pending.delete(key);
+      return data;
     } catch (error) {
-      // Keep the same action id: a lost response may have been accepted by the room. Retrying this
-      // key replays the receipt instead of applying a second strike/heal/upgrade.
+      // Keep the action id: the receipt is what makes the retry safe.
       R.error = error.message || 'No response from the room. Retry the same action.';
-      throw error;
-    } finally {
-      R.busy = '';
       render();
+      return null;
     }
+  }
+
+  // A destination intent. Deliberately fire-and-forget: a refused move (the server's 220 ms floor) is
+  // not something to show the player, and the next destination supersedes it anyway.
+  function sendMove(x, z) {
+    const run = R.run;
+    if (!run || run.state !== 'active') return;
+    const at = globalThis.PGRaidDungeon ? globalThis.PGRaidDungeon.serverNow() : Date.now();
+    if (at - num(R.lastMoveSentAt) < 200) return;
+    R.lastMoveSentAt = at;
+    api('', { action: 'act', runId: run.id, combatAction: 'move', actionId: newActionId(), x, z })
+      .then(data => { if (data && data.run) adoptRun(data.run); })
+      .catch(() => {});
+  }
+  function sendFocus(targetId) {
+    const run = R.run;
+    if (!run || run.state !== 'active' || !targetId) return;
+    api('', { action: 'act', runId: run.id, combatAction: 'focus', actionId: newActionId(), targetId })
+      .then(data => { if (data && data.run) adoptRun(data.run); })
+      .catch(() => {});
   }
 
   function tick() {
@@ -537,6 +670,7 @@
   function render() {
     const body = $('raidBody');
     if (!body) return;
+    syncOverlayToRun();
     const a = R.account || {};
     setText('raidEntries', (num(a.entriesLeft)) + ' / 2 entries');
     const conn = $('raidConn');
@@ -547,16 +681,12 @@
     }
     if (R.view === 'results') body.innerHTML = renderResults();
     else if (R.view === 'arena' || (R.run && R.run.state === 'active')) {
-      // Keep the arena DOM (and its animated skins) alive across socket updates. Replacing the
-      // whole body on every movement acknowledgement used to restart every APNG and snap the
-      // player back to their lane slot; syncArena updates the HUD, units and command panel instead.
-      if (R.run && R.arena?.runId === R.run.id && body.querySelector('#raidArena')) {
-        syncArena();
-        mountArena();
-        return;
-      }
+      // Keep the run panel alive across updates instead of rewriting the whole body: a rewrite
+      // would restart every avatar canvas and drop keyboard focus.
+      if (R.run && body.querySelector('#raidRunClock')) { syncArena(); return; }
+      R.arenaKey = '';
       body.innerHTML = R.run ? renderArena() : renderLobby();
-      if (R.run) mountArena();
+      if (R.run) syncArena();
     }
     else body.innerHTML = renderLobby();
     for (const canvas of body.querySelectorAll('canvas[data-class]')) {
@@ -576,7 +706,7 @@
     return `<section class="raid-panel raid-forge" style="margin-top:12px">
       <div class="raid-eyebrow">Rift Forge · weapon stars</div>
       <h3 class="raid-h">${weapon ? esc(weapon.name || 'Equipped weapon') : 'Equip a weapon first'}</h3>
-      <p class="raid-muted">Stars are permanent weapon upgrades: +2% ATK in every zone and +1.5% defence penetration against the Rift Sovereign per star (penetration caps at the boss's 30% armour). A failed forge never removes a star.</p>
+      <p class="raid-muted">Stars are permanent weapon upgrades: +2% ATK in every zone and +1.5% defence penetration against Thanatos and shielded enemies per star (penetration caps at their 16% armour). A failed forge never removes a star.</p>
       <div class="raid-stats">
         <div class="raid-stat"><small>Stars</small><b>${star} / ${STAR_MAX}</b></div>
         <div class="raid-stat"><small>All-content ATK</small><b>+${atk}%</b></div>
@@ -618,10 +748,11 @@
     return `${errorBox()}
       <div class="raid-grid">
         <section class="raid-panel">
-          <div class="raid-eyebrow">The Rift Sovereign · one encounter</div>
-          <h3 class="raid-h">Hold the line for six minutes.</h3>
-          <p class="raid-muted">Three escort phases break before the Sovereign. Walk the rift arena, step out of the lane marked for the next fracture, guard or mend a teammate, and rescue the downed. A downed adventurer cannot act until a living teammate revives them.</p>
-          <div class="raid-boss" style="margin:10px 0 12px"><img src="${BOSS_ART}" alt="The Rift Sovereign"><div class="boss-label"><b>Rift Sovereign</b><div class="raid-muted">Fracture Slam · Rift Sweep · 30% armour</div></div></div>
+          <div class="raid-eyebrow">Four stages · one dungeon</div>
+          <h3 class="raid-h">Walk to Thanatos.</h3>
+          <p class="raid-muted">The Starlit Approach, the Fallen Arcade, the Runic Observatory, then Thanatos's Sanctuary. Your character keeps their real gear, class skills and automatic combat: you choose where to stand and what to hit. Every stage has one telegraphed mechanic, and the boss has three — a cone you step out of, a cataclysm you shelter from in the marked ward, and a ritual you interrupt by killing its sources. A full run takes about seven minutes.</p>
+          <div class="raid-stages">${['Starlit Approach','Fallen Arcade','Runic Observatory',"Thanatos's Sanctuary"].map((name, i) => `<div class="raid-stage"><span>${i + 1}</span><b>${name}</b><small>${['Clear the packs', 'Break the rift anchors', 'Stop the ritual', 'Defeat Thanatos'][i]}</small></div>`).join('')}</div>
+          <div class="raid-note" style="margin-top:10px">Solo or with two or three adventurers. Enemy health is scaled from the party's measured damage, and incoming damage is never multiplied by party size, so a solo run needs no second player, no simultaneous switches and no dedicated healer.</div>
           <div class="raid-stats">
             <div class="raid-stat"><small>Entries left</small><b>${num(a.entriesLeft)} / 2</b></div>
             <div class="raid-stat"><small>Rift shards available</small><b>${fmt(shardBalance())}</b></div>
@@ -637,7 +768,7 @@
           ${party ? `<div class="raid-row" style="margin-bottom:8px"><span class="raid-code">${esc(party.id)}</span><span class="raid-tag">${party.open ? 'Open' : 'Locked'}</span><span class="raid-tag">${party.isLeader ? 'You lead' : 'Member'}</span></div>` : `<p class="raid-muted">Form a party here, or open the same lobby from the Social Hub. The first player hosts the world lobby; a friend opens Rift Raid and presses Form / join party.</p>`}
           ${members.length ? members.map((m, i) => `
             <div class="raid-member">
-              <canvas id="raidAv${i}" width="42" height="48" data-class="${esc(m.cls || 'Novice')}" data-sex="m"></canvas>
+              <canvas id="raidAv${i}" class="raid-avatar" width="42" height="48" data-class="${esc(m.cls || 'Novice')}" data-sex="${esc(m.sex || 'm')}"></canvas>
               <div><div class="nm">${esc(m.name)}${m.id === myId() ? ' · you' : ''}</div><div class="cls">${esc(m.cls || 'No cloud save')}${m.magic ? ' · magic' : ''}</div></div>
               <div class="tags"><span class="${m.ready ? 'raid-ready' : 'raid-notready'}">${m.ready ? 'Ready' : m.readyStored ? 'Ready stale' : 'Not ready'}</span><br>${m.eligible ? num(m.entriesLeft) + ' entries' : esc(m.reason || 'Not eligible')}</div>
             </div>`).join('') : '<div class="raid-note">No party yet. Form/join creates the lobby used by the Social Hub too.</div>'}
@@ -651,8 +782,8 @@
       ${renderForge()}
       ${renderCards()}
       <section class="raid-panel" style="margin-top:12px">
-        <div class="raid-eyebrow">Earned, never sold</div>
-        <p class="raid-note">Rewards are settled on the server and applied to your save through the existing grant queue; a full clear pays its own ledger row plus a fractured chest, and a failed run still pays a pity chest. Your first clear unlocks the Rift Aura, and qualifying clears unlock four Rift titles in the Mastery Index (filter: Rift Raid). No Cash Shop item is involved.</p>
+        <div class="raid-eyebrow">Earned, never sold · unchanged rules</div>
+        <p class="raid-note">Rewards are settled on the server and applied to your save through the existing grant queue: a full clear pays its own ledger row plus a fractured chest, and a failed run still pays a pity chest. Your first clear unlocks the Rift Aura, and qualifying clears unlock four Rift titles in the Mastery Index (filter: Rift Raid). Entries stay at two per day (00:00 Malaysia time). No Cash Shop item is involved, and this update does not change the economy, the card collection or the forge.</p>
       </section>`;
   }
 
@@ -660,386 +791,109 @@
     return `<div class="raid-bar hp"><i style="width:${pct(hp, max)}%"></i></div>`;
   }
 
-  // --- Walkable arena -----------------------------------------------------------------------
-  // The server still owns the three lanes. The client gives them a physical arena: the player
-  // moves freely, the lane under their feet is sent as a `move` action, and hazards resolve against
-  // that lane. No second WebGL renderer: the map is the existing volcanic atlas, the party is the
-  // existing animated class skins, and the boss is the existing Ascension thumbnail.
-  const LANE_X = { left: 22, center: 50, right: 78 };
-  const laneOfX = x => (x < 34 ? 'left' : x > 66 ? 'right' : 'center');
-  const KEY_DIRS = {
-    w: 'up', arrowup: 'up', s: 'down', arrowdown: 'down',
-    a: 'left', arrowleft: 'left', d: 'right', arrowright: 'right',
-  };
+  // ---- the run view -----------------------------------------------------------------------------
+  // The dungeon is drawn by the game itself; this panel is the run's *frame*: which stage, what the
+  // objective is, the party, and the two interactions a stage can ask for. It never draws the fight.
+  const STAGE_TIPS = [
+    'Walk the bridge, clear every pack, then take the exit portal. One wide sweep is telegraphed: step out of the marked strip.',
+    'Two rift anchors shield the guards and heal them. Kill both anchors first, then finish the pack.',
+    'The ritual sources are the priority: kill them before the channel ends. If the ritual completes, the whole circle is hit.',
+    'Thanatos. Leave the cone before it fires, stand in the ward for the cataclysm, and kill the ritual sources.',
+  ];
 
-  function unitSkin(member, attack = false) {
+  // The host is the game's own frame. The renderer mounts on the same scene/camera/canvas/hero and the
+  // field's own objects are hidden (index.html) rather than rebuilt, so the map is restored untouched.
+  function dungeonHooks() {
+    const f = globalThis.PGField;
+    if (!f) return null;
     try {
-      const skins = globalThis.CLASS_SKINS;
-      if (!skins || !skins.classes) return '';
-      const cls = member.cls || 'Novice';
-      const sex = member.sex === 'f' ? 'f' : 'm';
-      const set = skins.classes[cls]?.[sex] || skins.classes[cls]?.m || skins.classes.Novice?.m;
-      const files = set?.files || {};
-      const file = (attack ? files.attack : (files.S || files.SE || files.NE))
-        || files.SE || files.S || files.NE || files.attack;
-      return file ? encodeURI((skins.dir || 'Updates/Sprite') + '/' + file) : '';
-    } catch { return ''; }
+      return {
+        scene: f.scene && f.scene(), camera: f.camera && f.camera(), canvas: f.canvas && f.canvas(),
+        player: f.player && f.player(),
+      };
+    } catch { return null; }
   }
 
-  function myMember() {
-    return (R.run?.members || []).find(m => m.id === myId()) || null;
-  }
-
-  function ensureArenaState(run) {
-    if (!run) return null;
-    if (R.arena && R.arena.runId === run.id && R.arena.owner === myId()) return R.arena;
-    const mine = (run.members || []).find(m => m.id === myId()) || (run.members || [])[0];
-    const lane = mine?.lane || 'center';
-    R.arena = {
-      runId: run.id, owner: myId(), x: LANE_X[lane] || 50, y: 73, targetX: null, targetY: null,
-      lane, confirmed: lane, refused: '', retryAt: 0, keys: new Set(), pending: false, lastSent: 0, raf: 0, lastFrame: 0,
-      lastMyHp: num(mine?.hp), lastAutoAt: 0, attackTimer: 0, field: null, pointerId: null,
-      face: 1, mounted: false,
-    };
-    return R.arena;
-  }
-
-  function unitPosition(member, index) {
-    const a = R.arena;
-    if (a && member.id === myId()) return { x: a.x, y: a.y };
-    const base = LANE_X[member.lane] || 50;
-    const spread = index === 0 ? 0 : index === 1 ? -6 : 6;
-    return { x: clamp(base + spread, 9, 91), y: 68 + (index === 1 ? 4 : index === 2 ? 2 : 0) };
-  }
-
-  function renderUnits(run) {
-    const mine = myId();
-    return (run.members || []).map((m, i) => {
-      const pos = unitPosition(m, i);
-      const skin = unitSkin(m);
-      const face = m.id === mine ? (R.arena?.face || 1) : 1;
-      const you = m.id === mine;
-      return `<div class="raid-unit ${you ? 'you' : ''} ${m.hp <= 0 ? 'down' : ''} ${m.wardUntil > serverNow() ? 'warded' : ''}" id="raidUnit_${m.id}" data-unit="${m.id}" style="left:${pos.x}%;top:${pos.y}%;--face:${face}">
-        <span class="raid-unit-shadow"></span>
-        ${skin ? `<img class="raid-unit-skin" src="${skin}" alt="">` : `<span class="raid-unit-fallback">${esc((m.name || '?').slice(0, 1).toUpperCase())}</span>`}
-        <span class="raid-unit-bar"><i style="width:${pct(m.hp, m.maxHp)}%"></i></span>
-        <span class="raid-unit-name">${esc(m.name)}${you ? ' · you' : ''}</span>
-      </div>`;
-    }).join('');
-  }
-
-  function renderArenaCommand(run) {
-    const members = run.members || [];
-    const my = members.find(m => m.id === myId()) || members[0] || null;
-    const canAct = !!my && my.hp > 0 && run.state === 'active';
-    const target = members.find(m => m.id === R.targetId) || null;
-    const downed = members.filter(m => m.hp <= 0);
-    return `<div class="raid-command">
-      <section class="raid-panel">
-        <div class="raid-eyebrow">Your party</div>
-        <div class="raid-party">${members.map(m => `<article class="raid-pcard ${m.hp <= 0 ? 'down' : ''} ${m.id === myId() ? 'you' : ''}" data-raid-target="${m.id}">
-          <div class="phead"><canvas id="raidArenaAv${m.id}" width="38" height="44" data-class="${esc(m.cls || 'Novice')}" data-sex="${esc(m.sex || 'm')}"></canvas><div><div class="pname">${esc(m.name)}${m.id === myId() ? ' · you' : ''}</div><div class="pmeta">${esc(m.cls || 'Adventurer')} · ${m.magic ? 'MATK' : 'ATK'} ${fmt(m.dps)}</div></div></div>
-          ${hpBar(m.hp, m.maxHp)}
-          <div class="raid-row" style="justify-content:space-between"><small>${m.hp <= 0 ? 'Downed · needs rescue' : fmt(m.hp) + ' / ' + fmt(m.maxHp)}</small><small>${m.wardUntil > serverNow() ? 'Ward' : ''}</small></div>
-          <div class="raid-row" style="margin-top:4px">${m.hp <= 0 ? `<span class="raid-tag hot">Revive needed</span>` : m.id === myId() ? `<span class="raid-tag">You</span>` : `<button class="raid-btn small ${R.targetId === m.id ? 'primary' : 'ghost'}" data-raid-target="${m.id}">${R.targetId === m.id ? 'Targeted' : 'Target'}</button>`}</div>
-        </article>`).join('')}</div>
-      </section>
-      <section class="raid-panel">
-        <div class="raid-eyebrow">Arena commands</div>
-        <div class="raid-actions">
-          <button class="raid-btn primary" data-raid-action="strike" ${!canAct || R.busy === 'strike:' ? 'disabled' : ''}>Focus strike<small>${my ? 'Ready ' + Math.max(0, Math.ceil((num(my.strikeReadyAt) - serverNow()) / 1000)) + 's' : 'Server cooldown'}</small></button>
-          <button class="raid-btn" data-raid-action="ward" ${!canAct || !target || target.hp <= 0 ? 'disabled' : ''}>Guard${target ? ' · ' + esc(target.name) : ''}<small>−50% hazard damage</small></button>
-          <button class="raid-btn" data-raid-action="heal" ${!canAct || !target || target.hp <= 0 || target.hp >= target.maxHp ? 'disabled' : ''}>Mend<small>25% max HP</small></button>
-          <button class="raid-btn ${downed.length ? 'danger' : 'ghost'}" data-raid-action="revive" ${!canAct || !target || target.hp > 0 ? 'disabled' : ''}>Rescue${target ? ' · ' + esc(target.name) : ''}<small>A living teammate</small></button>
-        </div>
-        <div class="raid-note" style="margin-top:7px">WASD, arrow keys or drag/tap the ground to walk. Step out of a glowing lane before the telegraph ends. Tap a party card to target Guard, Mend or Rescue.</div>
-      </section>
-    </div>`;
+  function objectiveOf(run) {
+    const summary = run.summary || {};
+    if (run.stageCleared) return 'Exit portal open';
+    if ((run.enemies || []).some(e => e.kind === 'boss')) return 'Defeat Thanatos';
+    const left = num(summary.requiredAlive, 0);
+    return left + ' enem' + (left === 1 ? 'y' : 'ies') + ' left';
   }
 
   function renderArena() {
     const run = R.run;
     if (!run) return renderLobby();
-    ensureArenaState(run);
-    const embers = Array.from({ length: 18 }, (_, i) => `<i style="left:${(i * 37) % 100}%;animation-delay:${-(i % 9) * 0.7}s;animation-duration:${4.6 + (i % 5) * 0.55}s"></i>`).join('');
+    const mine = (run.members || []).find(m => m.id === myId()) || null;
+    const downed = (run.members || []).filter(m => m.downed);
+    const stage = num(run.stageIndex, 0);
+    const tip = STAGE_TIPS[clamp(stage, 0, 3)] || '';
+    const left = Math.max(0, num(run.stageEndsAt) - serverNow());
     return `<div id="raidErrorSlot">${errorBox()}</div>
-      <div class="raid-arena" id="raidArena" tabindex="0" aria-label="Rift arena. Move with WASD, arrow keys, or by dragging and tapping the ground. Stay out of the red lanes.">
-        <div class="raid-arena-art" aria-hidden="true"></div>
-        <div class="raid-arena-vignette" aria-hidden="true"></div>
-        <div class="raid-ember-layer" aria-hidden="true">${embers}</div>
-        <div class="raid-zones" aria-hidden="true">${LANES.map(lane => `<div class="raid-zone ${(run.hazard?.dangerZones || []).includes(lane) ? 'danger' : ''}" data-raid-zone="${lane}"><span>${(run.hazard?.dangerZones || []).includes(lane) ? 'DANGER' : LANE_LABEL[lane]}</span></div>`).join('')}</div>
-        <div class="raid-field-top">
-          <div class="raid-boss-line"><span class="raid-eyebrow">${esc(run.phaseNames?.[clamp(num(run.phaseIndex), 0, 3)] || 'The Rift Sovereign')}</span><b>Rift Sovereign</b><span class="raid-boss-hp" id="raidBossHpText">${fmt(run.hpRemaining)} / ${fmt(run.totalHp)}</span></div>
-          <div class="raid-bar big" id="raidBossBar"><i style="width:${pct(run.hpRemaining, run.totalHp)}%"></i></div>
-          <div class="raid-phase" id="raidPhase">${(run.phaseHps || []).map((_, i) => `<span class="${i <= num(run.phaseIndex) ? 'on' : ''}"></span>`).join('')}</div>
-        </div>
-        <div class="raid-boss-wrap" id="raidBossArt"><img class="raid-boss-img" src="${BOSS_ART}" alt="The Rift Sovereign"></div>
-        <div class="raid-units" id="raidUnits" data-ids="${(run.members || []).map(m => m.id).join(',')}">${renderUnits(run)}</div>
-        <div class="raid-field-timer" id="raidTimer">${clock(num(run.deadlineAt) - serverNow())}</div>
-        <div class="raid-field-telegraph" id="raidTelegraph"></div>
-        <div class="raid-field-hint">WASD / drag / tap to move</div>
-        <div class="raid-fx" id="raidFx"></div>
+      <div class="raid-runbar">
+        <div class="raid-runbar-stage"><span class="raid-eyebrow">Stage ${stage + 1} of 4</span><b>${esc(run.stageName || '')}</b><small>${esc(objectiveOf(run))}</small></div>
+        <div class="raid-runbar-clock ${left < 30000 ? 'low' : ''}" id="raidRunClock">${clock(left)}</div>
       </div>
-      <div id="raidCommand">${renderArenaCommand(run)}</div>
-      <div class="raid-row" style="margin-top:10px"><button class="raid-btn ghost small" data-raid-action="refresh">Refresh from room</button><button class="raid-btn ghost small" data-raid-action="close">Back to field</button></div>`;
+      <p class="raid-note">${esc(tip)}</p>
+      <div class="raid-party">${(run.members || []).map(m => {
+        const p = pct(m.hp, m.maxHp);
+        const reviving = m.downed && m.reviveProgress > 0;
+        return `<article class="raid-pcard ${m.downed ? 'down' : ''} ${m.id === myId() ? 'you' : ''}">
+          <div class="phead"><canvas class="raid-avatar" width="38" height="44" data-class="${esc(m.cls || 'Novice')}" data-sex="${esc(m.sex || 'm')}"></canvas>
+            <div><div class="pname">${esc(m.name || '')}${m.id === myId() ? ' · you' : ''}</div>
+            <div class="pmeta">${esc(m.cls || 'Adventurer')} · ${m.magic ? 'MATK' : 'ATK'} ${fmt(m.dps)}</div></div></div>
+          ${hpBar(m.hp, m.maxHp)}
+          <div class="raid-row" style="justify-content:space-between"><small>${m.downed ? (reviving ? 'Reviving ' + Math.round(m.reviveProgress * 100) + '%' : 'Downed · needs a living teammate') : fmt(m.hp) + ' / ' + fmt(m.maxHp)}</small><small>${Math.round(p)}%</small></div>
+        </article>`;
+      }).join('')}</div>
+      <div class="raid-row" style="margin-top:10px">
+        ${run.stageCleared ? `<button class="raid-btn primary" data-raid-action="portal">Enter the exit portal</button>` : `<span class="raid-note">The exit unlocks when every required enemy in this stage is defeated.</span>`}
+        ${downed.length && mine && !mine.downed ? `<button class="raid-btn danger" data-raid-action="revive">Revive ${esc(downed[0].name || 'teammate')}</button>` : ''}
+        <button class="raid-btn ghost small" data-raid-action="leave">Close panel</button>
+      </div>
+      <p class="raid-note" style="margin-top:8px">Stepping out hides this panel but does not leave the run: your character keeps fighting on the field, and the HUD stays on screen. Tap the ground to move, tap an enemy to focus, and use the Resume button to come back here.</p>`;
   }
 
   function paintArenaHud(run) {
     if (!run) return;
-    setText('raidBossHpText', fmt(run.hpRemaining) + ' / ' + fmt(run.totalHp));
-    const bossBar = $('raidBossBar');
-    if (bossBar) { const fill = bossBar.querySelector('i'); if (fill) fill.style.width = pct(run.hpRemaining, run.totalHp) + '%'; }
-    const phase = $('raidPhase');
-    if (phase) [...phase.children].forEach((span, i) => span.classList.toggle('on', i <= num(run.phaseIndex)));
-    const zones = run.hazard?.dangerZones || [];
-    for (const lane of LANES) {
-      const zone = document.querySelector(`[data-raid-zone="${lane}"]`);
-      if (!zone) continue;
-      zone.classList.toggle('danger', zones.includes(lane));
-      const label = zone.querySelector('span');
-      if (label) label.textContent = zones.includes(lane) ? 'DANGER' : LANE_LABEL[lane];
-    }
-    const left = num(run.deadlineAt) - serverNow();
-    const timer = $('raidTimer');
-    if (timer) { timer.textContent = clock(left); timer.classList.toggle('low', left < 30000); }
-    const tele = $('raidTelegraph');
-    if (tele) {
-      if (run.hazard) {
-        const until = num(run.hazard.endsAt) - serverNow();
-        tele.textContent = until > 0 ? `Move out of ${zones.map(z => LANE_LABEL[z]).join(' + ')} · ${Math.max(0, until / 1000).toFixed(1)}s` : 'The lane is resolving.';
-      } else if (run.state === 'active' && run.schedule?.nextHazardAt) {
-        const until = num(run.schedule.nextHazardAt) - serverNow();
-        tele.textContent = until > 0 ? `Next fracture in ${Math.max(0, Math.ceil(until / 1000))}s` : 'Fracture incoming.';
-      } else tele.textContent = '';
+    const clockEl = $('raidRunClock');
+    if (clockEl) {
+      const left = Math.max(0, num(run.stageEndsAt) - serverNow());
+      clockEl.textContent = clock(left);
+      clockEl.classList.toggle('low', left < 30000);
     }
   }
 
   function syncArena() {
-    const run = R.run;
-    if (!run) return;
-    const a = ensureArenaState(run);
-    const err = $('raidErrorSlot');
-    if (err) err.innerHTML = errorBox();
-    paintArenaHud(run);
-    const members = run.members || [];
-    const units = $('raidUnits');
-    if (units && units.dataset.ids !== members.map(m => m.id).join(',')) {
-      units.innerHTML = renderUnits(run);
-      units.dataset.ids = members.map(m => m.id).join(',');
+    // The run panel is rebuilt only when a visible fact changed; the field HUD is repainted by the
+    // renderer every ~180 ms from the same snapshot, so there is nothing to do at 60 fps here.
+    const body = $('raidBody');
+    if (!body) return;
+    const key = [R.run?.id, R.run?.stageIndex, R.run?.stageCleared, (R.run?.members || []).map(m => m.downed ? 1 : 0).join('')].join(':');
+    if (R.arenaKey === key) { paintArenaHud(R.run); return; }
+    R.arenaKey = key;
+    body.innerHTML = renderArena();
+    for (const canvas of body.querySelectorAll('canvas[data-class]')) {
+      try { if (typeof drawSkinPreview === 'function') drawSkinPreview(canvas.id, null, canvas.dataset.class, canvas.dataset.sex || 'm'); } catch {}
     }
-    for (const m of members) {
-      const el = $('raidUnit_' + m.id);
-      if (!el) continue;
-      const pos = unitPosition(m, members.indexOf(m));
-      el.style.left = pos.x + '%';
-      el.style.top = pos.y + '%';
-      el.classList.toggle('down', m.hp <= 0);
-      el.classList.toggle('warded', m.wardUntil > serverNow());
-      const fill = el.querySelector('.raid-unit-bar i');
-      if (fill) fill.style.width = pct(m.hp, m.maxHp) + '%';
-      const name = el.querySelector('.raid-unit-name');
-      if (name) name.textContent = m.name + (m.id === myId() ? ' · you' : '');
-    }
-    if (a) { a.lastMyHp = num(myMember()?.hp); }
-    const command = $('raidCommand');
-    if (command) {
-      command.innerHTML = renderArenaCommand(run);
-      for (const canvas of command.querySelectorAll('canvas[data-class]')) {
-        try { if (typeof drawSkinPreview === 'function') drawSkinPreview(canvas.id, null, canvas.dataset.class, canvas.dataset.sex || 'm'); } catch {}
-      }
-    }
-  }
-
-  function arenaActionId() {
-    return 'raid:' + (globalThis.crypto?.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2));
-  }
-
-  function sendMove(zone) {
-    const run = R.run, a = R.arena, mine = myMember();
-    // A downed member cannot act, and a refused lane (the room owns the truth) must not be
-    // re-sent every frame: the arena would otherwise bill a request per 320 ms while the sprite
-    // stands still behind a wall of refusals.
-    if (!run || !a || run.state !== 'active' || a.pending || !mine || mine.hp <= 0) return;
-    // A refused lane backs off instead of hammering the room, but it is retried: if the player keeps
-    // standing in the lane they walked into, the client and the room must eventually agree.
-    if (a.refused === zone && Date.now() < a.retryAt) return;
-    a.pending = true; a.lastSent = Date.now(); a.lane = zone;
-    api('', { action: 'act', runId: run.id, combatAction: 'move', actionId: arenaActionId(), zone })
-      .then(data => {
-        a.refused = '';
-        if (data.run) adoptRun(data.run);
-        if (R.arena === a) syncArena();
-      })
-      .catch(() => {
-        const live = myMember();
-        if (R.arena === a) {
-          // The room refused this lane: snap the bookkeeping back to what it reported and let the
-          // player walk out of the refused lane before the client tries again.
-          a.refused = zone;
-          a.retryAt = Date.now() + 500;
-          if (live) { a.lane = live.lane; a.confirmed = live.lane; }
-        }
-      })
-      .finally(() => {
-        if (R.arena !== a) return;
-        a.pending = false;
-        const current = laneOfX(a.x);
-        // The sprite may have crossed another boundary while this request was in flight, or the
-        // room may have refused it. Either way the lane under the sprite wins on the next tick.
-        if (current !== a.confirmed && Date.now() - a.lastSent >= 300) sendMove(current);
-      });
-  }
-
-  function playAttack() {
-    const a = R.arena, mine = myMember();
-    if (!a || !mine) return;
-    const img = $('raidUnit_' + mine.id)?.querySelector('.raid-unit-skin');
-    const attack = unitSkin(mine, true);
-    if (!img || !attack) return;
-    img.src = attack;
-    clearTimeout(a.attackTimer);
-    a.attackTimer = setTimeout(() => {
-      if (R.arena !== a) return;
-      const idle = unitSkin(mine, false);
-      if (idle) img.src = idle;
-    }, 520);
-  }
-
-  function flashBoss() {
-    const boss = $('raidBossArt');
-    if (!boss) return;
-    boss.classList.remove('hit');
-    void boss.offsetWidth;
-    boss.classList.add('hit');
-    setTimeout(() => boss.classList.remove('hit'), 280);
-  }
-
-  function floatAt(anchor, text, kind = '') {
-    const fx = $('raidFx'), arena = $('raidArena');
-    if (!fx || !arena || !anchor || !document.createElement) return;
-    const ar = arena.getBoundingClientRect(), r = anchor.getBoundingClientRect();
-    const el = document.createElement('span');
-    el.className = 'raid-float ' + kind;
-    el.textContent = text;
-    el.style.left = (r.left - ar.left + r.width / 2) + 'px';
-    el.style.top = (r.top - ar.top + r.height * 0.35) + 'px';
-    fx.appendChild(el);
-    setTimeout(() => el.remove(), 900);
-  }
-
-  function stopArenaLoop() {
-    if (R.arena?.raf && typeof cancelAnimationFrame === 'function') cancelAnimationFrame(R.arena.raf);
-    if (R.arena) { R.arena.raf = 0; clearTimeout(R.arena.attackTimer); }
-  }
-
-  function arenaKey(event, down) {
-    if (!R.open || R.view !== 'arena' || !R.arena) return;
-    const tag = (event.target && event.target.tagName || '').toLowerCase();
-    if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
-    const dir = KEY_DIRS[String(event.key || '').toLowerCase()];
-    if (!dir) return;
-    event.preventDefault();
-    if (down) { R.arena.keys.add(dir); R.arena.targetX = null; R.arena.targetY = null; }
-    else R.arena.keys.delete(dir);
-  }
-
-  function arenaPoint(event) {
-    const field = R.arena?.field;
-    if (!field) return null;
-    const r = field.getBoundingClientRect();
-    return {
-      x: clamp(((event.clientX - r.left) / Math.max(1, r.width)) * 100, 8, 92),
-      y: clamp(((event.clientY - r.top) / Math.max(1, r.height)) * 100, 54, 88),
-    };
-  }
-
-  function mountArena() {
-    const a = R.arena, field = $('raidArena');
-    if (!a || !field) return;
-    // Reopening the overlay reuses the same arena DOM, so only bind the pointer listeners once per
-    // element; a full body rewrite (a new run, a reconnect) brings a fresh element and rebinds.
-    if (a.field === field) {
-      if (!a.raf) a.raf = requestAnimationFrame(arenaFrame);
-      return;
-    }
-    a.field = field;
-    field.addEventListener('pointerdown', event => {
-      if (event.target.closest('button')) return;
-      const p = arenaPoint(event);
-      if (!p) return;
-      field.focus({ preventScroll: true });
-      a.targetX = p.x; a.targetY = p.y; a.keys.clear();
-      a.pointerId = event.pointerId;
-      try { field.setPointerCapture(event.pointerId); } catch {}
-    });
-    field.addEventListener('pointermove', event => {
-      if (a.pointerId !== event.pointerId || !event.buttons) return;
-      const p = arenaPoint(event);
-      if (p) { a.targetX = p.x; a.targetY = p.y; }
-    });
-    field.addEventListener('pointerup', event => {
-      if (a.pointerId === event.pointerId) a.pointerId = null;
-    });
-    field.addEventListener('pointercancel', () => { a.pointerId = null; });
-    a.mounted = true;
-    if (typeof requestAnimationFrame === 'function' && !a.raf) a.raf = requestAnimationFrame(arenaFrame);
-  }
-
-  function arenaFrame(ts) {
-    const a = R.arena;
-    if (!R.open || R.view !== 'arena' || !a || !$('raidArena')) { if (a) a.raf = 0; return; }
-    const dt = Math.min(48, Math.max(0, ts - (a.lastFrame || ts)));
-    a.lastFrame = ts;
-    let dx = 0, dy = 0;
-    if (a.keys.has('left')) dx--;
-    if (a.keys.has('right')) dx++;
-    if (a.keys.has('up')) dy--;
-    if (a.keys.has('down')) dy++;
-    if (dx || dy) {
-      const len = Math.hypot(dx, dy);
-      const step = 34 * dt / 1000;
-      a.x += dx / len * step; a.y += dy / len * step;
-      if (dx) a.face = dx < 0 ? -1 : 1;
-      a.targetX = null; a.targetY = null;
-    } else if (a.targetX != null) {
-      const tx = a.targetX - a.x, ty = a.targetY - a.y;
-      const dist = Math.hypot(tx, ty);
-      const step = 56 * dt / 1000;
-      if (dist <= step) { a.x = a.targetX; a.y = a.targetY; a.targetX = a.targetY = null; }
-      else { a.x += tx / dist * step; a.y += ty / dist * step; if (tx) a.face = tx < 0 ? -1 : 1; }
-    }
-    a.x = clamp(a.x, 8, 92); a.y = clamp(a.y, 54, 88);
-    const el = $('raidUnit_' + myId());
-    if (el) {
-      el.style.left = a.x + '%'; el.style.top = a.y + '%';
-      el.style.setProperty('--face', a.face);
-      el.classList.toggle('moving', !!(dx || dy || a.targetX != null));
-    }
-    const lane = laneOfX(a.x);
-    if (lane !== a.confirmed && Date.now() - a.lastSent >= 320 && !a.pending) sendMove(lane);
-    const mine = myMember();
-    if (mine && mine.nextAutoAt && a.lastAutoAt !== mine.nextAutoAt && serverNow() >= num(mine.nextAutoAt) - 220) {
-      a.lastAutoAt = mine.nextAutoAt;
-      playAttack();
-    }
-    // The fracture lands on the whole arena: shake the map and flash the hurt lanes once, at the
-    // server timestamp that resolved them, so a walker feels the slam even between requests.
-    if (R.run?.hazard) a.lastHazardId = R.run.hazard.id;
-    else if (a.lastHazardId) {
-      a.lastHazardId = '';
-      const arena = $('raidArena');
-      if (arena) { arena.classList.remove('slam'); void arena.offsetWidth; arena.classList.add('slam'); setTimeout(() => arena.classList.remove('slam'), 240); }
-    }
-    if (R.arena === a) a.raf = requestAnimationFrame(arenaFrame);
   }
 
   function rewardText(row) {
+    // A chest row carries its roll under `rewards`; the API flattens it, but reading both shapes here
+    // means an older cached response still renders its real numbers instead of "Recorded".
+    const paid = row && row.rewards && typeof row.rewards === 'object' ? row.rewards : row;
     const bits = [];
-    if (num(row.riftShards)) bits.push(fmt(row.riftShards) + ' Rift Shards');
-    if (num(row.sigils)) bits.push(fmt(row.sigils) + " Valkyrie's Sigils");
-    if (num(row.regionalMaterials)) bits.push(fmt(row.regionalMaterials) + ' Astral Shards');
-    if (num(row.zeny)) bits.push(fmt(row.zeny) + ' Zeny');
+    if (num(paid.riftShards)) bits.push(fmt(paid.riftShards) + ' Rift Shards');
+    if (num(paid.sigils)) bits.push(fmt(paid.sigils) + " Valkyrie's Sigils");
+    if (num(paid.regionalMaterials)) bits.push(fmt(paid.regionalMaterials) + ' Astral Shards');
+    if (num(paid.zeny)) bits.push(fmt(paid.zeny) + ' Zeny');
     return bits.join(' · ') || 'Recorded';
+  }
+
+  function rewardStageName(index) {
+    const names = ['the Starlit Approach', 'the Fallen Arcade', 'the Runic Observatory', "Thanatos's Sanctuary"];
+    return names[clamp(num(index), 0, 3)] || 'the dungeon';
   }
 
   function renderResults() {
@@ -1048,28 +902,30 @@
     const cards = Array.isArray(r.cards) ? r.cards : [];
     const cleared = r.outcome === 'clear' || r.outcomeState === 'cleared';
     return `${errorBox()}<section class="raid-panel raid-results">
-      <div class="raid-eyebrow">${cleared ? 'Encounter cleared' : 'Encounter failed'}</div>
-      <div class="big">${cleared ? 'The Rift Sovereign falls.' : 'The party was overwhelmed.'}</div>
-      <p class="raid-muted">${cleared ? 'Full clear settled. Your first clear also unlocked the Rift Aura; check the Rift Raid filter in the Mastery Index for the four earned titles.' : 'Pity chest settled. The next attempt can start from the lobby when entries are available.'} ${r.acknowledged === false ? 'The room has not acknowledged the result yet; retry settlement to release it.' : ''}</p>
+      <div class="raid-eyebrow">${cleared ? 'Dungeon cleared' : 'Run ended'}</div>
+      <div class="big">${cleared ? 'Thanatos falls.' : 'The sanctuary holds.'}</div>
+      <p class="raid-muted">${cleared
+        ? 'All four stages cleared and settled. Your first clear also unlocks the Rift Aura; the Rift Raid filter in the Mastery Index lists the earned titles.'
+        : `The run ended on ${esc(rewardStageName(r.stageIndex))}. A pity chest is still paid, and your entries are not refunded.`} ${r.acknowledged === false ? 'The room has not acknowledged the result yet; retry settlement to release it.' : ''}</p>
       <div class="raid-rewards">${rows.map(row => `<div class="raid-reward"><small>${esc(row.kind || 'reward')}</small><b>${esc(rewardText(row))}</b></div>`).join('') || '<div class="raid-reward">Rewards are applied to your save through the grant queue.</div>'}${cards.map(card => `<div class="raid-reward" style="border-color:#8b6a3a"><small>${esc(card.kind)} card</small><b>${esc(card.name || cardName(card.cardKey))}</b></div>`).join('')}</div>
       <div class="raid-row" style="justify-content:center"><button class="raid-btn primary" data-raid-action="lobby">Return to lobby</button>${r.acknowledged === false ? '<button class="raid-btn" data-raid-action="settle">Retry settlement</button>' : ''}</div>
     </section>`;
   }
 
   globalThis.PGRaid = {
-    open, close, refresh, receive, receiveParty, api,
+    open, close, refresh, receive, receiveParty, api, settle,
+    // Called by the dungeon renderer for the two inputs it owns. Both are intents the server
+    // validates; neither carries a result.
+    move: sendMove,
+    focus: sendFocus,
+    revive: () => { const target = (R.run?.members || []).find(m => m.downed && m.id !== myId()); return target ? sendPaid('revive', { targetId: target.id }) : null; },
+    portal: () => sendPaid('interact', { targetId: 'portal' }),
     get state() { return R; },
+    get inRun() { return R.inRun; },
     // Test/handoff hooks; the browser UI never calls these directly.
     _render: render,
-    _moveTo(x, y) {
-      const a = R.arena;
-      if (!a) return null;
-      a.x = clamp(num(x), 8, 92);
-      a.y = clamp(num(y), 54, 88);
-      a.targetX = a.targetY = null;
-      const lane = laneOfX(a.x);
-      if (lane !== a.confirmed && !a.pending) sendMove(lane);
-      return { x: a.x, y: a.y, lane };
-    },
+    _adopt: adoptRun,
+    _poll: pollRun,
+    _stop: stopPolling,
   };
 })();

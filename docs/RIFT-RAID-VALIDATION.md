@@ -1,135 +1,71 @@
-# Rift Raid — Stage A/B validation report
+# Rift Raid — v449 Astral dungeon validation report
 
 Branch: `arena/bfc7d4d1-prontera-grind` (from `main` at `37a13bf`)
-Build label: `2026-11-20 haven-v448 Walkable Rift arena`
-Feature state: **closed by default** (`RAID_RULES.enabled = false`, `wrangler.toml` `RAID_ENABLED = "false"`; the Pages handler also requires the exact string `true`).
+Build label: `2026-11-20 haven-v449 Astral dungeon raid`
+Feature state: **closed by default** (`wrangler.toml` `RAID_ENABLED = "false"`; the Pages handler
+requires the exact string `true`).
+
+v448 shipped one boss encounter with three hazard lanes. v449 replaces it entirely: the raid is now a
+four-stage dungeon the party walks through, and the lane vocabulary (`strike`/`dodge`/`ward`/`heal`,
+`LANES`, hazard lanes, phase HP) no longer exists anywhere in the code.
 
 ## 1. Scope delivered
 
-One playable boss encounter for 1–3 player characters:
+One playable four-stage dungeon for 1–3 player characters, entered from **Map → Rift Raid** or the
+**Social Hub**, with exactly two entries per Malaysia calendar day and exactly-once reward settlement
+through the existing `grants` queue.
 
-- Map → **Rift Raid** tab and the **Social Hub** both open the same lobby.
-- Solo or a 2–3 character party; eligibility and remaining entries are shown before Ready.
-- **The arena is a walkable map.** Spawning puts the player sprite on the volcanic rift floor; WASD,
-  arrow keys, drag or tap move it freely between the three hazard lanes. The lane under the sprite is
-  published to the room as a `move` action, and hazards resolve against that server lane, so dodging
-  is real movement rather than a lane button.
-- Readiness is per member; roster or loadout changes clear it.
-- Server-owned encounter: HP, phases, lanes, hazards, cooldowns, damage, downing, revive, wipe,
-  clear, action receipts and reward rolls all live on the server.
-- Exactly two entries per Malaysia calendar day; exactly-once reward settlement through the
-  existing `grants` queue.
-- Lobby → Arena → Results, with reconnect and D1 checkpoint recovery.
+| Stage | Key | Name | Target | Objective |
+| --- | --- | --- | --- | --- |
+| 1 | `approach` | Starlit Approach | 52 s | three packs on a floating bridge, then the exit portal |
+| 2 | `arcade` | Fallen Arcade | 67 s | guards plus two rift anchors that shield them |
+| 3 | `observatory` | Runic Observatory | 67 s | elite waves plus two ritual sources |
+| 4 | `sanctuary` | Thanatos's Sanctuary | 240 s | Thanatos: soul cleave, astral cataclysm, Ritual of Ruin, enrage at 25% |
 
-Arcade surface (v448):
+- **Walking is the mechanic.** A `move` intent is a *destination*, clamped to the stage bounds and
+  held for 2.5 s; the server walks the member at 9.6 units/second on the run's own clock. With no
+  manual intent the server auto-approaches the focus target at class reach, and that automatic chase
+  **never enters and never tunnels through** a live telegraph (it is sliced into 100 ms chunks and
+  compares danger depth before/after every step).
+- **Combat is server-owned.** Auto-attack (2.6 s, 18% crit ×1.6), class skill (7.4 s ×2.35), pet
+  (3.4 s ×0.22), enemy attacks (2.9 s), boss armour 16%, weapon-star penetration, downed state,
+  revive (2.6 s hold, 3.2 unit reach, 35% HP), wipe on all-downed.
+- **The clock is fixed.** `startedAt`/`deadlineAt` are written to D1 when the run is reserved, and the
+  Social room builds its copy from **that** timestamp — a run's identity can never drift from its own
+  reservation. The public snapshot echoes them unchanged; `serverNow` is a separate field.
+- **The stage objective is a duration.** Enemy HP is `partyDps × seconds`, so a stage takes the same
+  wall-clock time for a fresh 12k-DPS character and a fully geared one; gear changes damage numbers
+  and safety, not the schedule. Stage objectives are bounded so the weakest legal save can always
+  clear the stage it paid an entry for.
 
-- `POST /api/raid` accepts `move` alongside `strike`/`dodge`/`ward`/`heal`/`revive`. `move` carries
-  the target lane, has a 250 ms server floor (`RAID_RULES.moveCooldownMs`), earns no dodge credit,
-  and is not checkpointed to D1 (the DO room remains the authority; the next strike/dodge/ward
-  checkpoint persists the lane).
-- The client renders the arena as DOM on the existing `assets/atlas/thor-volcano.png` art with
-  animated `CLASS_SKINS` sprites per member and the Ascension boss thumb. There is still no second
-  renderer: one local `requestAnimationFrame` loop moves the sprites and paints the HUD from the
-  server projection (`serverNow`, `moveReadyAt`, hazard `startsAt`/`endsAt`).
+### The client is one renderer
 
-Delivered in v447 (the previously deferred layer):
+`assets/raid-dungeon.js` mounts the dungeon inside the field's own three.js scene/`PGField`
+(`ORIGIN = -320`), so the hero, camera and drag controls are the ones the player already knows. The
+`PGField` lights are forced off (`RAID_LIGHT = {hemi:0, sun:0}`) and the dungeon rig carries its own
+(`hemi .55 / sun .8 / point .5`); floors are `DoubleSide`. `assets/astral-raid-scenes.js` is a UMD
+module (also `require`d by `tools/build_site.sh`) holding the four stage layouts. Field chrome
+(`#eclipseCombat`, `#minimapTools`, `#sideRail`, `#eclipseMapCard`, `#feedWrap`, `#eclipseCompanions`,
+`#pgQuests`, `#hint`, `#tag`, `#socialChat`) is hidden by `body.raid-fighting`; the portrait card, the
+bottom dock and the top bar intentionally stay.
 
-- **Weapon stars** — 20 maximum, forged from Rift Shards in the raid lobby. Every star grants
-  **+2% ATK in all content** (field, raid and any future zone) and **+1.5% defence penetration**
-  against the Rift Sovereign (capped at the boss's 30% armour). A failed attempt never removes a
-  star. Three optional extra-shard deposits raise the success chance.
-- **Raid cards** — three account-wide cards, one equipped slot. Clear/fractured/pity chests each
-  drop a card; duplicates add copies and rank the card up (ranks at 1/3/6/10/15 copies).
-- **Earned cosmetics** — the Rift Aura on the first qualifying clear, plus four Rift titles in the
-  Mastery Index (1/3/6/10 clears). No Cash Shop item, no purchase path.
-- Existing persisted records are untouched; the card tables are additive.
+## 2. What v449 fixed that v448 shipped broken
 
-## 2. Why this is not PR #263 copied
+These were found by writing the acceptance sims against the real engine, not by inspection:
 
-PR #263 was read as a reference only. The following prototype defects were replaced:
+| Defect | Effect | Fix |
+| --- | --- | --- |
+| `move` wrote `member.x/z` directly | a tap teleported the hero; a telegraph was undodgeable and no walk cost time | the intent is stored; the run's clock does the walk (`raid-engine.js` `applyRaidAction('move')`) |
+| Ritual sources took `boss.maxHp × 4%` | two sources needed 19.2 s of solo damage inside a 16 s channel: the **interrupt reward was mathematically unreachable** | a source is `partyDps × 6 s`, so two are 12 s of focus at any gear level |
+| Boss stage clock was `240 + 45 s` | the walk-in and two 16 s rituals pushed a full clear past the stage timer | `bossStageGraceSeconds = 120`; `raidStageSeconds()`/`raidRunSeconds()` are the single source of truth for both the API and the engine |
+| `maxClearSeconds` 120 vs a 52+45 s stage | the weakest allowed save got an objective longer than its own stage | floors bound to each stage's budget |
+| Auto-chase tested only the step *endpoint* | a long tick could hop over a 5-unit telegraph, and a member standing inside one was frozen | 100 ms chunks + danger-depth comparison |
+| Settle validator compared `startedAt`/`deadlineAt` to the current wall clock | every settlement failed with "the raid clock changed unexpectedly" | room installs the run from `payload.startedAt`; the snapshot echoes the fixed identity |
+| `rollRaidCard()` can return `null` | a card-roll miss crashed the whole settlement (no shards, no zeny) | the API skips a miss instead of dereferencing it |
+| Chest ledger rows nest amounts under `rewards` | the results panel printed "Recorded" for every chest | `flattenRewardRow()` in the API; the client reads both shapes |
+| `referenceDps: 120_000` | dead config, and ~7× the real ceiling (the game's own `genGear` formula tops out near 18k DPS at Lv150 N+ with +20 stars) | `referenceDps: 18_000`, with the measurement recorded in the rule comment |
 
-| Prototype | This branch |
-| --- | --- |
-| `member.maxHp` absent while `profile.maxHp` was used, producing `undefined`/NaN arithmetic | `sanitizeMember` repairs both fields to one finite ceiling before any damage, healing, ward or revive; `sanitizeRaidRun` repairs persisted runs |
-| Bag weapons invisible because the lookup read only `eq` and not the packed `inv` | `decodeRaidSave` runs the canonical `unpackSave` codec; the profile reads equipped + bag items |
-| Physical-only power approximation with hardcoded STR | 47-row class table (main stat, ATK/MATK multiplier, HP multiplier) + physical/magic power formulas; representative physical and magic builds are tested |
-| 15 s Strike / 9 s hive cadence where Dodge queued behind an attack | Separate `strike` (5 s cooldown) and `dodge` action paths; a dodge is an independent request and never waits for an in-flight strike |
-| Per-tick timer/DO loop | No raid alarm. Hazards are scheduled from `startedAt` and resolve at their own `endsAt`; quiet clients, late packets and simultaneous deadlines replay the fixed schedule |
-| Rewards paid as they were rolled | D1 ledger `UNIQUE(run_id,user_id,kind)` + unique `grants.ref`; retries read back exactly what D1 paid |
-| Migration 0018 / build v411 | `migrations/0022_player_character_raid.sql` + `0023_raid_cards.sql`; build `haven-v448` |
-
-## 3. Server architecture
-
-- `functions/_lib/raid-rules.js` — frozen tuning, day key, deterministic reward rolls, rule summary.
-- `functions/_lib/raid-profile.js` — class-aware profile v2, canonical save decode, readiness fingerprint.
-- `functions/_lib/raid-engine.js` — pure, clock-injected state machine, action receipts, hazard plan.
-- `functions/api/raid.js` — auth, feature gate, transactional D1 entry reservation, party readiness,
-  action forwarding, checkpoint persistence, settlement and recovery.
-- `workers/social/room.mjs` — request-driven run/party state in the existing Durable Object.
-- `workers/social/index.mjs` — private `/raid/*` routes and storage keys
-  `player-character-raid-v1:*` / `player-character-raid-parties-v1`.
-- `migrations/0022_player_character_raid.sql` — accounts, runs, members, entries, settlements,
-  chests, reward ledger, entry triggers, reward trigger and `grants.ref`.
-- `migrations/0023_raid_cards.sql` — account-wide `raid_cards`, per-chest `raid_card_drops`, the
-  duplicate-ranking trigger and the one-equipped-card index.
-- `assets/rift-progression.js` — shared star curve/cost/booster table and the field ATK multiplier.
-- `assets/rift-raid.js` — lobby/arena/results client, including the Rift Forge and card collection;
-  reuses native class preview canvases and the Ascension boss thumb; no second WebGL renderer.
-- `assets/mastery-titles.js` — four `raidClears` challenges and the Rift Raid title filter.
-- `assets/social.js` — `raid_state` / `raid_party` messages on the existing socket.
-
-### Health contract
-
-- `maxHp` is a finite integer in `[1000, 1e9]`; `hp` is clamped to `[0, maxHp]`.
-- Every mutation is a published action ID (`/^[A-Za-z0-9:_-]{8,100}$/`). A replay returns the stored
-  receipt and never re-applies damage/healing.
-- A player at 0 HP cannot strike, dodge, ward, heal or revive. Only another living member can
-  `revive`; the rescued member returns at 20% max HP with a fresh auto-attack clock.
-- A failed action still advances the fixed timeline before the refusal is returned.
-
-### Timing
-
-- Deadlines are fixed at install: solo 300 s, group 360 s.
-- Hazards first appear at 7.5 s and every 9 s thereafter; each has a 1.5 s telegraph and resolves at
-  its own `endsAt`.
-- Late snapshots/actions advance through the schedule; they never move `startsAt`, `endsAt`,
-  `nextHazardAt` or `deadlineAt` later.
-- Catch-up is bounded to 512 events; action receipts are retained for the whole run (512 cap, not a
-  rolling window).
-- A storage read failure is surfaced as an error; it is never treated as an empty encounter.
-- A settlement is recorded in D1 before the DO acknowledges it; the DO retains the terminal run for
-  an hour after acknowledgement so a lost response can be retried.
-- `GET /api/raid` also returns a 15-minute `lastRun` pointer for a member who was offline at the
-  moment of the clear; the client calls the same idempotent settle and shows the D1-paid rewards once.
-
-### Rewards
-
-- Full clear: clear ledger row + fractured chest.
-- Failure: pity chest.
-- Every chest also rolls one account-wide card. Clear and fractured each roll; pity rolls once.
-  `raid_card_drops` has `PRIMARY KEY(run_id,user_id,kind)`, and its trigger increments copies
-  only on the first insert, so a replayed settlement cannot award a second card or copy.
-- Both reward rows use `INSERT OR IGNORE` with `UNIQUE(run_id,user_id,kind)`; the ledger trigger
-  updates `raid_accounts` and inserts ordinary `gift`/`zeny` grants with deterministic `ref` values.
-- Rift Shards are recorded in `raid_accounts` and mirrored to `S.riftShards` through a
-  `resource:'riftShards'` grant; sigils/materials/zeny use the same direct-apply path.
-- Rift Raid grants are the narrow non-expiring exception in `db.js`; every ordinary GM gift keeps
-  the five-day rule.
-
-## 4. Migration
-
-Apply **both** raid migrations in order: `0022_player_character_raid.sql` then
-`0023_raid_cards.sql`. They are additive, have no self-transaction, and are auto-runnable by
-`tools/dev_server.js` and `wrangler d1 execute --file=`.
-
-`0022` adds `grants.ref` and a partial unique index; existing rows have `NULL` refs, so ordinary
-grants are unaffected. `0023` adds only the account-wide card collection and card-drop ledger. It
-does not alter saves, grants, chests or any existing reward row. Weapon stars are stored on the
-weapon item in the normal save (`stars` 0–20), so no migration is needed for them.
-
-## 5. Acceptance results
-
-Run from the repository root:
+## 3. Acceptance results
 
 ```sh
 node tools/tests/migration_sim.js
@@ -139,154 +75,108 @@ node tools/tests/raid_api_source_sim.mjs
 node tools/tests/raid_ui_sim.js
 node tools/tests/ui_sim.js
 node tools/tests/api_sim.js
-node tools/tests/chatcheck_sim.mjs
-node tools/tests/social_handshake_sim.mjs
+node tools/tests/combat_field_contract_sim.js
 ```
-
-Current results:
 
 | Test | Result |
 | --- | --- |
-| `migration_sim.js` | **14 passed, 0 failed** (0022 additive install, triggers, exactly-once ledger/grants, 0023 duplicate-safe card copies) |
-| `raid_profile_source_sim.mjs` | **9 passed, 0 failed** (47 class rows, packed-save stars, star ATK/penetration, card rank effects) |
-| `player_raid_engine_sim.mjs` | **15 passed, 0 failed** (includes solo/trio clear pacing, the 30% armour penetration step and walking out of a lane before a hazard resolves) |
-| `raid_api_source_sim.mjs` | **12 passed, 0 failed** (card drops, the one-equipped-card API and a `move` reaching the room) |
-| `raid_ui_sim.js` | **14 passed, 0 failed** (walkable arena mount, danger lane, `move` request, a held key walking across a lane boundary, a refused lane backing off, target persistence, forge success/failure, booster cost, aura/titles, card equip, field star ATK, reconnect) |
+| `player_raid_engine_sim.mjs` | **19 passed, 0 failed** |
+| `raid_api_source_sim.mjs` | **12 passed, 0 failed** |
+| `raid_ui_sim.js` | **20 passed, 0 failed** |
+| `raid_profile_source_sim.mjs` | **9 passed, 0 failed** |
+| `migration_sim.js` | **14 passed, 0 failed** |
 | `ui_sim.js` | **64 passed, 0 failed** |
 | `api_sim.js` | **78 passed, 0 failed** |
-| `chatcheck_sim.mjs` | **9 passed, 0 failed** |
-| `social_handshake_sim.mjs` | **10 passed, 0 failed** |
+| `combat_field_contract_sim.js` | pass (field contract unaffected) |
 
-The existing `ui_sim.js` initially reported one environment failure in this sandbox because `jsdom`
-and `three` were not installed; after installing the documented test dependencies it is 64/64. No
-assertion was deleted or loosened.
+`social_worker_sim.mjs` needs `miniflare`, which is not installed in this sandbox; it is unrelated to
+the raid and was not run here.
+
+### What the engine sim actually plays
+
+The two clear tests are not "stand still and win": each runs the client's real loop once per second
+per living member — walk out of a sweep/cone, walk into the cataclysm ward, shoot the ritual sources,
+walk to and revive a downed teammate, walk through the portal. Outcomes:
+
+| Party | Result | Stage clears |
+| --- | --- | --- |
+| solo, 12k DPS / 118k HP | cleared in ~374 s | 45 / 103 / 164 s |
+| solo, 17.9k DPS / 766k HP | cleared in ~368 s | 42 / 99 / 155 s |
+| trio, 12k DPS each | cleared in ~359 s | 45 / 97 / 151 s |
+| solo, never reacting | **failed** (wiped in the sanctuary) | — |
 
 ### Acceptance matrix
 
 | Requirement | Evidence | Status |
 | --- | --- | --- |
-| Real hazard damage, healing, downing, revive, wipe; no NaN/null HP | engine sim: fixed hazard resolution, heal/ward/revive, full party wipe, serialized round-trip finite HP | PASS (sim) |
-| Quiet clients, late actions, simultaneous mechanic deadlines | engine sim: late snapshot, deadline at fixed timestamp, two actions at one millisecond, 65 receipts | PASS (sim) |
-| Physical and magic profiles; current packed saves | engine sim: Lord Knight katar and Warlock staff; `packSave` bag weapon decoded via canonical codec | PASS (sim) |
-| Two then three sessions, leader/member disconnect | three jsdom client instances render the same run, keep their own card and survive leader reconnect; no browser binary in this sandbox | PASS (sim), **OWNER STAGING BROWSER** |
-| Weapon stars: max 20, all-content ATK, boss defence penetration, no loss on failure, 3 boosters | profile/engine sims assert the 30% armour step and 20-star cap; UI sim forges a failure (star kept) and a success with a paid booster | PASS (sim), **OWNER STAGING** |
-| Raid cards: account-wide, one equipped, duplicates rank, drops from all three chest kinds | migration sim (duplicate-safe copies), API sim (drop + equip + unequip), UI sim (rank/equip controls) | PASS (sim), **OWNER STAGING** |
-| Earned aura + four titles only | UI sim mirrors `qualifyingClears` into `S.raidClears`, asserts the aura class and the 1/3/6/10 title goals; no purchase path exists | PASS (sim), **OWNER STAGING** |
-| Lost-response retries; exactly-once entries/rewards | API source sim: resumed start, repeated settle, simultaneous starts, D1 ledger/grants including mirrored Rift Shards; UI sim applies `riftShards`/`ascMat0/2` directly and keeps Rift Raid out of the expiring mailbox | PASS (sim) |
-| Walkable arena: movement changes the server lane and dodges hazards | engine sim moves out of a danger lane before `endsAt` and takes no damage while the second move is refused by the 250 ms floor; API sim shows a `move` reaching the room; UI sim shows a walk publishing `combatAction:'move'` with the crossed lane | PASS (sim), **OWNER STAGING BROWSER** |
-| Phone-sized controls | UI sim checks 44/48 px controls; CSS uses full-screen overlay and single-column ≤720 px; the arena is `touch-action:none` with drag/tap movement | PASS (static), **OWNER PHONE** |
-| Measured DO activity | instrumented source sim (below) | PASS (Node only) |
-| Screenshots/video of lobby → fight → reconnect → results | not capturable in this sandbox | **OWNER STAGING** |
+| Four stages, in order, with their own targets | engine sim asserts keys, `targetSeconds` 52/67/67/240, bounds and the boss stage | PASS (sim) |
+| Server-owned combat, no client damage | engine sim: auto-attack/skill/pet resolve on the run clock; a `move`/`focus` never deals damage | PASS (sim) |
+| A dodgeable telegraph | engine sim: mechanic resolves on its own `endsAt`, only members inside take damage; auto-chase refuses to enter or tunnel | PASS (sim) |
+| Downed / revive / wipe | engine sim: a downed member cannot act, a revive beyond 3.2 units is refused, three holds revive, all-downed fails the run | PASS (sim) |
+| The ritual can be interrupted | engine sim: the ritual triggers at 70% boss HP with real sources; the clear runs interrupt it | PASS (sim) |
+| Fixed timeline | engine sim: `deadlineAt` is exactly `raidRunSeconds()`; API sim: a late snapshot never moves `startedAt`/`deadlineAt` | PASS (sim) |
+| Exactly-once entry and settlement | API sim: resumed start, repeated settle, simultaneous starts, ledger/grants, a card miss no longer aborts settlement | PASS (sim) |
+| Checkpoint recovery | API sim: a room that forgets the run restores from the D1 checkpoint | PASS (sim) |
+| Lobby, party, forge, cards, aura/titles | UI sim (20 assertions) | PASS (sim) |
+| Real browser | Chromium 131 + puppeteer-core, dev server on 8799: lobby → solo start → walk to `(0,-6)` → `(-6,-14)`, zero console errors; `body.raid-fighting` hides all ten field-chrome selectors | PASS (local browser), **OWNER STAGING** |
+| Phone-sized controls | UI sim checks 44/48 px controls; single-column ≤720 px | PASS (static), **OWNER PHONE** |
+| Screenshots/video of a full clear | not capturable at SwiftShader frame rates in this sandbox | **OWNER STAGING** |
 
-## 6. Measured resource cost
+## 4. Measured resource cost
 
-Instrumented `raid_api_source_sim.mjs` for one two-player start, one strike, one settlement, a
-reconnect read, a teammate readback, one rejected room install, and one room-forgets-the-run recovery:
+Instrumented `raid_api_source_sim.mjs` — one two-player start, an action, four stage transitions, a
+settlement, a reconnect read, a teammate readback, one rejected install and one room-forgets recovery:
 
 ```text
-D1 prepared statements: 202
+D1 prepared statements: 212
 D1 batches:              8
 D1 batched rows:         34
-Social DO requests:      19
-Room run writes:         10
+Social DO requests:      23
+Room run writes:         22
 New raid alarm calls:     0
 ```
 
-Interpretation:
+- A start is one DO `/raid/install`, one D1 transaction and one checkpoint write; no timer is armed.
+- An accepted action is one DO request, one DO storage write of the run, and one D1 checkpoint
+  `UPDATE` for paid actions only (movement/focus intents are deliberately not checkpointed), plus one
+  existing-socket broadcast.
+- A settlement is one DO snapshot plus one DO acknowledgement, then one D1 transaction.
+- There is **no** `setAlarm`, `setInterval` network loop or per-tick `send` in the raid code. The
+  client polls once every 2 s only while its own run is active and the tab is visible; the room
+  advances the run on that read. A 3-second server-side alarm for fully live idle damage would be new
+  recurring DO traffic and is **left for explicit owner approval** rather than being smuggled in.
 
-- A start is one DO `/raid/install`, one D1 transaction (run + members + entries) and one checkpoint
-  update; no timer is armed.
-- Each accepted action is one DO request, one DO storage `put` of the run, one D1 checkpoint
-  `UPDATE`, and one existing-socket broadcast. The broadcast replaces polling, not adds a timer.
-- A settlement is one DO snapshot plus one DO acknowledgement; D1 writes the account/contribution/
-  settlement/ledger/chest rows in one transaction.
-- There is **no** `setAlarm`, `setInterval` network loop, or per-tick `send` in the raid code.
-  Automatic attacks and hazards advance on the next action, snapshot or settlement. A player who
-  stops interacting sees the resolved timeline when they next read/settle; the client never polls.
-  Adding a 3-second alarm for fully live idle damage would be new recurring DO traffic and is left
-  for explicit owner approval rather than being smuggled into this branch.
-- A six-minute solo run with one action every 2 s is bounded by ~180 DO requests, ~180 DO puts and
-  ~180 D1 checkpoint updates, plus start/settle. The UI does not poll; reconnect reads one snapshot.
+**Open owner decision:** if a party closes the tab mid-run, the run stops advancing until someone
+reads it again (bounded by `deadlineAt`, so it always resolves). Fixing that needs a per-run alarm;
+the cost estimate and the proposal are deliberately *not* implemented here.
 
-Hosted Cloudflare CPU, D1 row-write counts and DO duration must still be recorded on staging; the
-numbers above are Node-simulator measurements, not production telemetry.
+## 5. Staging steps (separate reviewable step — not performed)
 
-## 7. Staging steps (separate reviewable step — not performed)
-
-The copy-paste Windows handoff (update local `main`, merge this branch in a temporary worktree,
-apply only 0022 + 0023, deploy staging) is in
-[`docs/RIFT-PROGRESSION-HANDOFF.md`](RIFT-PROGRESSION-HANDOFF.md).
+The PowerShell handoff for a Windows machine is in `docs/RIFT-PROGRESSION-HANDOFF.md`. Migrations
+already present on staging: `0022_player_character_raid.sql`, `0023_raid_cards.sql`. v449 adds no
+migration.
 
 1. Back up staging D1 and record `BASE_SCHEMA`.
-2. Apply `migrations/0022_player_character_raid.sql` and then `migrations/0023_raid_cards.sql` to `pg-staging` (in that order).
-3. Deploy `workers/social` and the Pages Functions to staging with `RAID_ENABLED=true`.
-4. Run the preflight (it never deploys):
-
-```sh
-RIFT_STAGE_BASE=https://<staging-host> \
-RIFT_STAGE_DB=pg-staging \
-BASE_SCHEMA=<recorded-schema> \
-CLOUDFLARE_API_TOKEN=... CLOUDFLARE_ACCOUNT_ID=... \
-node tools/staging/rift_raid_stage.mjs
-```
-
-5. Two real browsers: solo clear, failed run/pity, ready invalidation, reconnect.
-   The preflight can be rehearsed against localhost with
-   `RIFT_STAGE_BASE=http://127.0.0.1:8799 BASE_SCHEMA=x node tools/staging/rift_raid_stage.mjs`;
-   it passes locally (including `/api/chatcheck` reaching the Social room).
-6. Three real browsers: leader leaves, member leaves, simultaneous start, late action, phone layout.
-7. Capture screenshots/video and D1/DO metrics before any production discussion.
+2. Deploy `workers/social` and the Pages Functions to staging with `RAID_ENABLED=true`
+   (Pages `prontera-grind-staging`, DO `prontera-social-staging`, D1 `pg-staging`).
+3. Run the preflight (it never deploys):
+   `RIFT_STAGE_BASE=https://<staging-host> RIFT_STAGE_DB=pg-staging BASE_SCHEMA=<schema> node tools/staging/rift_raid_stage.mjs`
+4. Two real browsers: solo clear, failed run/pity, ready invalidation, reconnect.
+5. Three real browsers: leader leaves, member leaves, simultaneous start, late action, phone layout.
+6. Capture screenshots/video and D1/DO metrics before any production discussion.
 
 Production deployment is not part of this branch. `wrangler.toml` keeps `RAID_ENABLED = "false"`.
 
 ### Owner browser checklist
 
-- [ ] Map → Rift Raid shows entries and eligibility before Ready.
-- [ ] Social Hub → Open Rift Raid opens the same lobby.
-- [ ] Solo: lane telegraph is readable on a phone; Dodge works while a Strike request is in flight.
-- [ ] Party of two: roster change clears Ready; loadout change clears Ready.
-- [ ] Leader disconnects/reconnects: same run, HP, phase, receipts and deadline.
-- [ ] Member disconnects/reconnects: same arena; no duplicate entry.
-- [ ] Kill the room tab/worker: reconnect restores from checkpoint; a failed storage read does not
-      silently start a new encounter.
-- [ ] Clear: result settles once; rewards appear once in the existing grant flow.
-- [ ] Failure: pity chest settles once.
-- [ ] Rift Forge: select the standard attempt and each of the three extra-shard deposits; a failure
-      keeps the star count and only spends shards; a success adds exactly one star.
-- [ ] At 20 stars the Forge shows Maxed; the field Character sheet shows the star line and the
-      weapon’s ATK rises everywhere (not just in the raid).
-- [ ] Rift Raid cards: the result shows the dropped card, the lobby shows copies/rank, Equip moves
-      the gold slot, and a second client sees the same account card.
-- [ ] First clear: the Rift Aura appears around the portrait; Mastery Index → Rift Raid shows the
-      earned title and the next clear goal.
-- [ ] Repeat a settlement request / retry after a lost response: no second reward.
-- [ ] Phone viewport: no horizontal overflow; lane/action buttons ≥44 px.
-- [ ] Record DO request count, DO storage ops, D1 rows and screenshots.
-
-## 8. Known gaps / risks
-
-1. **No browser screenshots or video in this sandbox.** No Chromium/Playwright browser binary is
-   available, so the visual acceptance remains owner-run on staging.
-2. **No hosted Cloudflare measurement.** The Node instrumentation proves the code path and absence
-   of alarms, but hosted DO duration/storage and D1 row writes need staging telemetry.
-3. **Checkpoint gap.** If the DO accepts an action and the process dies before the Pages checkpoint
-   write, the next restore uses the previous checkpoint (or the install payload if the very first
-   install response was lost). The run, roster, phase and deadline remain; at most the last action's
-   receipt can be replayed. The normal path writes the checkpoint before returning the action.
-4. **One world-party lobby.** The existing Social room supports one raid party at a time; this is
-   sufficient for acceptance (1–3 characters) but is not a multi-party matchmaker.
-5. **No idle tick.** Automatic attacks/hazards resolve on the next request by design (no alarm and
-   no client polling). If the owner wants the arena to visibly tick while every player is idle,
-   that requires either a DO alarm or a periodic socket message and must be approved separately.
-6. **UI uses the existing plaza socket for live party updates.** Opening the lobby enters the plaza
-   (the existing renderer), not a second WebGL context. Solo play does not require the plaza scene.
-7. **Party material bonus is applied** to shards, sigils and regional materials with a
-   server-side stochastic rounding roll. It is not applied to zeny.
-8. **Star and card numbers are v1 tuning.** 20 stars at +2% ATK/+1.5% penetration, the 8→26 shard
-   base cost and the 10/24/42-point booster steps are deliberately conservative; the owner should
-   measure a few clears before treating them as final. Card effects are snapshotted at run start;
-   equipping a card mid-run does not change that run.
-9. **Star forging is a save progression path, like refine.** It spends the mirrored `S.riftShards`
-   and writes `weapon.stars` into the normal save; it is not a second server purchase ledger. A
-   hand-edited save can therefore claim stars, the same trust boundary as refine. Card ownership is
-   D1-owned and cannot be forged by the client.
+- [ ] Map → Rift Raid and Social Hub → Open Rift Raid both open the same lobby, with entries shown.
+- [ ] Solo: the stage header, timer and party strip are readable on a phone; the field chrome is gone.
+- [ ] Walking with WASD, arrows, drag and tap all move the hero at a believable speed (not a teleport).
+- [ ] A soul-cleave telegraph is walkable out of; the astral cataclysm ward is walkable into.
+- [ ] Hitting 70% boss HP starts the Ritual of Ruin; killing both sources interrupts it.
+- [ ] Downed state: a living teammate can walk over and revive; a solo down ends the run.
+- [ ] Clear: results screen lists real shard/sigil/material/zeny numbers, settles once.
+- [ ] Failure: the fractured/pity chest settles once and still names its numbers.
+- [ ] Four stages in order, each with its own objective and portal; the boss stage shows Thanatos.
+- [ ] Rift Forge: failure keeps stars, a paid booster raises the rate, 20 stars shows Maxed.
+- [ ] Cards: a drop appears, Equip moves the gold slot, a second client sees the same account card.

@@ -39,6 +39,7 @@ require assets/weapon_joints_data.js
 require assets/digimon-sanctuary.js
 require assets/digimon-battle.js
 require assets/rift-raid.js
+require assets/astral-raid-scenes.js
 require assets/rift-progression.js
 require assets/social-digimon.js
 require assets/digimon/roster.js

@@ -1363,7 +1363,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-20 haven-v448 Walkable Rift arena';
+const BUILD='2026-11-20 haven-v449 Astral dungeon raid';
 // v364: this write used to sit AFTER the `//` on the BUILD line, so it was part of the comment and
 // never ran - the login card showed an empty #buildTag and there was no way to confirm which file
 // the browser had loaded. It also has to survive the script running before the login card exists.
@@ -9762,7 +9762,7 @@ function gmToolsPanel(){
  return `<div class="gm-tools"><div class="atabs gm-sections" role="tablist" aria-label="GM tool sections">${GM_SECTIONS.map(tab).join('')}</div>${head}${GM_SECTIONS.map(([k])=>`<section class="gm-section" data-gmsec="${k}"${section===k?'':' hidden'}>${bodies[k]||''}</section>`).join('')}</div>`;
 }
 const V={
-  map(){const navigation=mapCollectionTabs();if(mapSeason==='raid')return navigation+`<section class="raid-destination"><div class="raid-destination-art raid-destination-arena"><img src="assets/mobs/v1/thumb-1639.png" alt="The Rift Sovereign"><span>RIFT ARENA · WALK · DODGE · 1–3 ADVENTURERS</span></div><div class="raid-destination-copy"><small>RIFT RAID · WALKABLE ARENA</small><h2>Hold the line with your characters.</h2><p>Walk the volcanic rift arena with your party. Step out of the marked lane before each fracture lands, strike the Sovereign, guard a teammate, mend the wounded and rescue the downed. A full clear pays a fractured chest; a failed run still pays a pity chest. Two entries per Malaysia day.</p><div class="raid-destination-actions"><button type="button" class="eclipse-primary" onclick="PGRaid.open()">Open Rift Raid</button><button type="button" onclick="PGSocial.enter()">Open Social Hub</button></div><small class="raid-destination-note">The same lobby opens from the Social Hub. Readiness resets when the roster or your loadout changes.</small></div></section>`;if(mapSeason==='social')return navigation+`<section class="social-destination"><div class="social-scene" role="img" aria-label="Prontera town fountain square with market stalls, half-timbered houses and cascading canal"><span>PRONTERA · SOCIAL HUB · UP TO 20 ADVENTURERS</span><h2>Meet at the Fountain Plaza</h2><p>Take a breather by the central fountain, fish the twin waterfall ponds, or pull up a chair at live Hold'em tables — all while your field grind keeps running.</p></div><div class="social-features"><article class="social-feat"><small>MINI-GAME · WATERFALL PONDS</small><h3>🎣 Plaza Fishing</h3><p>Cast from arched bridges or pondside chairs for <b>155 species</b> across <b>6 rarities</b> (up to 1.8t giants &amp; rare mutations). Earn Fishcoins for rods, bait &amp; bag tiers, collect <b>20 Fishing Titles</b>, show off catches, or toggle <b>Auto-Fish</b>.</p></article><article class="social-feat"><small>MINI-GAME · WEST PROMENADE</small><h3>♠️ Texas Hold'em Poker</h3><p>Join <b>two live 6-seat Hold'em tables</b> hosted by Dealer Vane &amp; Dealer Mira. Claim <b>1,000 free chips daily</b> or buy Zeny stacks, play live hands with fellow adventurers &amp; table bots, and build your chip bank.</p></article><article class="social-feat"><small>HANGOUT · ZERO DOWNTIME</small><h3>💬 Promenade &amp; Idle Grind</h3><p><b>Your farming keeps going.</b> Walk freely at your field speed, sit with friends on two-seater park benches, and share <b>32 classic RO emotions</b>. World &amp; Whisper follow you here; Local chat stays in this plaza.</p></article></div><div class="social-cta"><div class="social-pills"><span>155 Fish Species</span><span>2 Live Hold'em Tables</span><span>32 RO Emotions</span><span>Background Farming Active</span></div><div class="social-cta-actions"><button type="button" class="eclipse-primary" onclick="PGSocial.enter()">Enter Fountain Plaza →</button><button type="button" onclick="PGRaid.open()">Open Rift Raid lobby</button></div></div><section class="social-raid-card"><small>NEW · CO-OP ENCOUNTER</small><h3>Rift Raid</h3><p>Bring one to three characters against the Rift Sovereign. The same party lobby opens here and in the Map.</p><button type="button" onclick="PGRaid.open()">Open the raid lobby</button></section></section>`;if(mapSeason==='echo')return navigation+`<section class="echo-destination"><div class="echo-scene" role="img" aria-label="A moonlit underworld court with ruined pillars and a ritual stone floor"><span>ENDLESS ECHO</span><strong>The silent court</strong><small>Three minutes. One unbroken challenge.</small></div><div class="hd">Endless Echo</div><p>Face the Lord of Death Illusion in a three-minute damage trial.</p><div class="trial-stats"><span>Personal best <b>${Math.round(trialState().best||0).toLocaleString()} DPS</b></span><span><b>${trialLeftToday()}/2</b> ranked attempts left</span><span><b>${S.shards|0}</b> Echo Shards</span></div><button data-trial="lobby">Enter Endless Echo</button></section>`;const F=fieldOf(mapM,mapL),mp=MAPS[mapM],pr=S.prog[mapM],nmo=nmMapOpen(mapM),cap=mapM>=10?(ascensionOpen(mapM)?pr:0):Math.max(pr,nmMaxFor(mapM));
+  map(){const navigation=mapCollectionTabs();if(mapSeason==='raid')return navigation+`<section class="raid-destination"><div class="raid-destination-art raid-destination-arena"><img src="assets/mobs/v1/thumb-1639.png" alt="Thanatos's Sanctuary"><span>ASTRAL DUNGEON · FOUR STAGES · 1–3 ADVENTURERS</span></div><div class="raid-destination-copy"><small>RIFT RAID · ASTRAL DUNGEON</small><h2>Descend with your characters.</h2><p>Walk a four-stage Astral dungeon with your party: the Starlit Approach, the Fallen Arcade, the Runic Observatory and Thanatos's Sanctuary. Walk out of a soul cleave, into the astral ward, break the Ritual of Ruin, revive a downed teammate and take the boss. A full clear pays the dungeon's rewards; a failed run still pays a pity chest. Two entries per Malaysia day.</p><div class="raid-destination-actions"><button type="button" class="eclipse-primary" onclick="PGRaid.open()">Open Rift Raid</button><button type="button" onclick="PGSocial.enter()">Open Social Hub</button></div><small class="raid-destination-note">The same lobby opens from the Social Hub. Readiness resets when the roster or your loadout changes.</small></div></section>`;if(mapSeason==='social')return navigation+`<section class="social-destination"><div class="social-scene" role="img" aria-label="Prontera town fountain square with market stalls, half-timbered houses and cascading canal"><span>PRONTERA · SOCIAL HUB · UP TO 20 ADVENTURERS</span><h2>Meet at the Fountain Plaza</h2><p>Take a breather by the central fountain, fish the twin waterfall ponds, or pull up a chair at live Hold'em tables — all while your field grind keeps running.</p></div><div class="social-features"><article class="social-feat"><small>MINI-GAME · WATERFALL PONDS</small><h3>🎣 Plaza Fishing</h3><p>Cast from arched bridges or pondside chairs for <b>155 species</b> across <b>6 rarities</b> (up to 1.8t giants &amp; rare mutations). Earn Fishcoins for rods, bait &amp; bag tiers, collect <b>20 Fishing Titles</b>, show off catches, or toggle <b>Auto-Fish</b>.</p></article><article class="social-feat"><small>MINI-GAME · WEST PROMENADE</small><h3>♠️ Texas Hold'em Poker</h3><p>Join <b>two live 6-seat Hold'em tables</b> hosted by Dealer Vane &amp; Dealer Mira. Claim <b>1,000 free chips daily</b> or buy Zeny stacks, play live hands with fellow adventurers &amp; table bots, and build your chip bank.</p></article><article class="social-feat"><small>HANGOUT · ZERO DOWNTIME</small><h3>💬 Promenade &amp; Idle Grind</h3><p><b>Your farming keeps going.</b> Walk freely at your field speed, sit with friends on two-seater park benches, and share <b>32 classic RO emotions</b>. World &amp; Whisper follow you here; Local chat stays in this plaza.</p></article></div><div class="social-cta"><div class="social-pills"><span>155 Fish Species</span><span>2 Live Hold'em Tables</span><span>32 RO Emotions</span><span>Background Farming Active</span></div><div class="social-cta-actions"><button type="button" class="eclipse-primary" onclick="PGSocial.enter()">Enter Fountain Plaza →</button><button type="button" onclick="PGRaid.open()">Open Rift Raid lobby</button></div></div><section class="social-raid-card"><small>NEW · CO-OP ENCOUNTER</small><h3>Rift Raid</h3><p>Bring one to three characters into the four-stage Astral dungeon, from the Starlit Approach to Thanatos. The same party lobby opens here and in the Map.</p><button type="button" onclick="PGRaid.open()">Open the raid lobby</button></section></section>`;if(mapSeason==='echo')return navigation+`<section class="echo-destination"><div class="echo-scene" role="img" aria-label="A moonlit underworld court with ruined pillars and a ritual stone floor"><span>ENDLESS ECHO</span><strong>The silent court</strong><small>Three minutes. One unbroken challenge.</small></div><div class="hd">Endless Echo</div><p>Face the Lord of Death Illusion in a three-minute damage trial.</p><div class="trial-stats"><span>Personal best <b>${Math.round(trialState().best||0).toLocaleString()} DPS</b></span><span><b>${trialLeftToday()}/2</b> ranked attempts left</span><span><b>${S.shards|0}</b> Echo Shards</span></div><button data-trial="lobby">Enter Endless Echo</button></section>`;const F=fieldOf(mapM,mapL),mp=MAPS[mapM],pr=S.prog[mapM],nmo=nmMapOpen(mapM),cap=mapM>=10?(ascensionOpen(mapM)?pr:0):Math.max(pr,nmMaxFor(mapM));
     // The map tab is a compact 450px, two-band panel: pick a map on the top band, walk its fields on the
     // next one, read the drop tables underneath. The field band is sticky, so the level you are
     // choosing stays on screen while the tables below it scroll - no scrolling down to find it.
@@ -12271,6 +12271,14 @@ function bootRenderer(){
 const R=bootRenderer();
 const scene=new THREE.Scene(),cam=new THREE.PerspectiveCamera(38,2,.1,200);
 let az=0,el=.95,zoom=1;
+// v449: the Rift Raid draws inside THIS scene. These four hooks are the whole integration surface:
+// the dungeon renderer never reaches into the game's internals beyond them, and each returns the live
+// object rather than a copy. Defined after `pl` below; assigned here as closures over the binding.
+// The Rift Raid needs the field's own frame, but it must never keep the field's monsters, drops or
+// scenery: a raid is not a field with the mobs hidden. `newField()` builds a clean field and returns
+// the previous S, which the caller restores verbatim on the way out.
+const PGField={scene:()=>scene,camera:()=>cam,canvas:()=>R&&R.domElement,player:()=>pl};
+globalThis.PGField=PGField;
 
 function resize(){
   const w=window.innerWidth, h=view.clientHeight||(window.innerHeight - 50);
@@ -16037,6 +16045,20 @@ dom?.addEventListener('wheel',e=>{e.preventDefault();zoom=Math.min(2,Math.max(zo
 const CAMERA_FOCUS_Y=.28,CAMERA_LEAD_Z=.25,ct=new THREE.Vector3(0,CAMERA_FOCUS_Y,0);let lastKey='';
 // Astral paving reaches 0.091; other fields sit just above zero. Keep native sprite pivots intact.
 function actorFloorY(x=pl.x,z=pl.z){if(!TRIAL.on&&!JOB_RITE.on&&KIT.nativeWorld)return PGNativeFields.heightAt(S.mp,x,z,S.lvl)+.035;return !TRIAL.on&&!JOB_RITE.on&&S.mp===10?.12:.035;}
+// The follow camera is shared by the field and the raid. `CAMERA_FOCUS_Y`/`CAMERA_LEAD_Z` are the
+// field's framing; the raid passes its own so a boss arena is read from a slightly higher, closer
+// angle while keeping the same drag/zoom controls the player already knows.
+let raidFieldHidden=false;
+function cameraFollow(focusY,leadZ,distScale){
+  if(!R)return;
+  const fy=focusY===undefined?CAMERA_FOCUS_Y:focusY,lz=leadZ===undefined?CAMERA_LEAD_Z:leadZ;
+  ct.y+=(fy+(KIT.nativeWorld?actorFloorY()-.035:0)-ct.y)*.1;
+  ct.x+=(pl.x*.6-ct.x)*.05;ct.z+=(pl.z-lz-ct.z)*.05;
+  const pitch=KIT.nativeWorld?Math.max(.45,el-.17):el,dd=((KIT.nativeWorld?(cam.aspect<1?40:44):(cam.aspect<1.5?26:18))/zoom)*(distScale||1),sk=S.cameraShake===false?0:shake*.03;
+  if(KIT.nativeWorld&&scene.fog&&!scene.fog.isFogExp2){scene.fog.near=Math.max(55,dd*1.1);scene.fog.far=dd*2.6}
+  cam.position.set(ct.x+Math.sin(az)*Math.cos(pitch)*dd+rnd(-sk,sk),Math.sin(pitch)*dd+.5,ct.z+Math.cos(az)*Math.cos(pitch)*dd+rnd(-sk,sk));
+  cam.lookAt(ct);cam.updateMatrixWorld(true);
+}
 function draw(){
   if(!S)return;
   if(document.body&&document.body.classList&&document.body.classList.contains('social-open')){
@@ -16044,6 +16066,48 @@ function draw(){
     return;
   }
   if(!R)return;
+  // --- Rift Raid (v449): the dungeon draws inside this same scene -------------------------------
+  // While a raid is on screen the field's own props, drops and monsters stay hidden: the raid has
+  // its own layout, party and enemies, and one scene is cheaper than a second renderer. Its world
+  // only ticks from here, so a hidden tab or a social panel costs the raid nothing.
+  if(globalThis.PGRaidDungeon&&globalThis.PGRaidDungeon.active){
+    try{
+      const rd=globalThis.PGRaidDungeon;
+      if(rd.attach()){
+        // The field's own props are hidden (not removed): the raid's mount is the only visible
+        // thing in the scene, and leaving the run restores the field exactly as it was.
+        raidFieldHidden=true;ground.visible=false;road.visible=false;deco.visible=false;if(mobSpriteLayer)mobSpriteLayer.style.display='none';for(const el of document.querySelectorAll('.mob-sprite-img,.fl,.drop,.weapon-sprite-wrap'))el.style.display='none';
+        // The hero is the game's own sprite, so it is built here too: a player who walks in from the
+        // plaza has never drawn a field frame, and the raid is the first screen that needs it.
+        const cR=C(),wR=S.eq.weapon,wtR=heroWeaponType(cR.n,cR.wt,wR&&wR.wt);
+        ensureHero({cls:cR.n,cloth:hx(S.eq.armor?TC[rarIdx(S.eq.armor)]:cR.col),clothN:hx(S.eq.armor?TC[rarIdx(S.eq.armor)]:cR.col),cape:cR.cape?hx(cR.cape):'',hair:hx(S.eq.head?TC[rarIdx(S.eq.head)]:0xd0492c),hairN:hx(S.eq.head?TC[rarIdx(S.eq.head)]:0xd0492c),hat:cR.hat?hx(cR.hat):'',wt:wtR,metal:hx(wR?TC[rarIdx(wR)]:0xc0c0c0),skin:'#ffd2a8',look:lookOf(cR.n),tier:cR.tier||0,sex:S.sex||'m',hair:S.hair|0,shield:!!(S.eq.off&&S.eq.off.slot==='off')});
+        heroSpr&&(heroSpr.visible=true);
+        P.position.set(pl.x,0,pl.z);
+        // Face the direction of travel while walking, otherwise face the camera side of the arena
+        // (the raid camera looks down -Z, so 0 is "toward the viewer").
+        const hd=viewDir(pl.run?pl.ry:0),sk2=heroSpr&&heroSpr.userData.skin;
+        if(heroSpr){
+          // All four hero kinds the field can build are painted here: the native wardrobe hero, the
+          // class skin APNG, the packed atlas and the fallback billboard. Without this the wardrobe
+          // hero arrives in the raid as an unpainted sheet.
+          if(heroSpr.userData.wardrobe){captureWardrobeFrame(heroSpr,hd,pl.run,atkAnim,performance.now(),false)}
+          else if(sk2){const rt=skinRoute(sk2.p,hd,atkAnim);rt.weaponType=wtR;captureSkinFrame(heroSpr,rt)}
+          else if(heroSpr.userData.pack)setPackCell(heroSpr,hd,pl.run,atkAnim,t);
+          else setCell(heroSpr,hd,animRow(pl.run,atkAnim,t,10))}
+        rd.tick();                  // the raid interpolates on its own wall clock
+        // The raid holds its own point on the plane; the field's player is a proxy for it.
+        // Local raid space is offset onto its own stretch of the plane; the field's player and its
+        // camera have to sit on the same stretch or the dungeon is drawn off screen.
+        const hp=rd.heroPos?rd.heroPos():null;if(hp){const ro=rd.origin||0;pl.x=hp.x;pl.z=hp.z+ro;P.position.set(pl.x,0,pl.z)}
+        cameraFollow(.9,2.6,0.92);  // the same drag/zoom camera, framed for a boss arena
+        R.render(scene,cam);
+        return;
+      }
+    }catch(e){if(!draw.e){draw.e=1;console.error(e)}}
+  }
+  // Leaving the run (or never being in one) puts the field back. These are the only scene flags the
+  // raid touches, so a normal field draw is unchanged by this feature.
+  if(raidFieldHidden){raidFieldHidden=false;ground.visible=true;road.visible=true;deco.visible=true;if(mobSpriteLayer)mobSpriteLayer.style.display='';for(const el of document.querySelectorAll('.mob-sprite-img,.fl,.drop,.weapon-sprite-wrap'))el.style.display='';try{globalThis.PGRaidDungeon&&globalThis.PGRaidDungeon.detach()}catch(e){}}
   const bn=isBoss(),key=(JOB_RITE.on?'rite:':TRIAL.on?'trial:':'field:')+S.mp+':'+S.lvl+':'+bn,c=C(),mp=MAPS[S.mp];
   if(key!==lastKey){lastKey=key;
     // v77: the trial is a scene of its own. Entering and leaving changes the key, so the arena is
@@ -16102,12 +16166,7 @@ function draw(){
   dmesh.forEach((m,d)=>{if(!live.has(d)){scene.remove(m);dmesh.delete(d)}});
   shots.forEach(s=>{if(!s.m){s.m=mk(scene,s.arrow?BX(.5,.04,.04):SP(.14),s.col);s.m.material.emissive.set(s.col);s.m.castShadow=false;s.m.rotation.y=-Math.atan2(s.z1-s.z0,s.x1-s.x0)}
     const k=Math.min(1,s.t),x=s.x0+(s.x1-s.x0)*k,z=s.z0+(s.z1-s.z0)*k;s.m.position.set(x,1.4+(KIT.nativeWorld?actorFloorY(x,z)-.035:0),z)});
-  ct.y+=(CAMERA_FOCUS_Y+(KIT.nativeWorld?actorFloorY()-.035:0)-ct.y)*.1;
-  ct.x+=(pl.x*.6-ct.x)*.05;ct.z+=(pl.z-CAMERA_LEAD_Z-ct.z)*.05;
-  const pitch=KIT.nativeWorld?Math.max(.45,el-.17):el,dd=(KIT.nativeWorld?(cam.aspect<1?40:44):(cam.aspect<1.5?26:18))/zoom,sk=S.cameraShake===false?0:shake*.03;
-  if(KIT.nativeWorld&&scene.fog){scene.fog.near=Math.max(55,dd*1.1);scene.fog.far=dd*2.6}
-  cam.position.set(ct.x+Math.sin(az)*Math.cos(pitch)*dd+rnd(-sk,sk),Math.sin(pitch)*dd+.5,ct.z+Math.cos(az)*Math.cos(pitch)*dd+rnd(-sk,sk));
-  cam.lookAt(ct);cam.updateMatrixWorld(true);
+  cameraFollow();
   for(const m of mobs){const v=mobMesh.get(m);if(v)syncMobImage(v,m,mobVisualScale(m))}
   for(const p of S.pets.filter(p=>p.on)){const v=petMesh.get(p.id),r=petR[p.id],sp=PETS[p.sp];
     if(v&&r&&sp)syncMobImage(v,{x:r.x,z:r.z,run:r.run,a:p.id,shape:petFallbackShape(sp),flash:0,lunge:r.lunge||0},PET_VISUAL_SCALE)}
@@ -16515,5 +16574,8 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden&&(pendingU
 <script src="assets/plaza-bots.js?v=445"></script>
 <script src="assets/adventure-guide.js?v=445"></script>
 <script src="assets/social.js?v=446"></script>
-<script src="assets/rift-raid.js?v=448"></script></body>
+<script src="assets/astral-raid-scenes.js?v=449"></script>
+<script src="assets/raid-dungeon.js?v=449"></script>
+<script src="assets/rift-raid.js?v=449"></script>
+<div id="raidHudLayer" aria-live="polite"></div></body>
 </html>

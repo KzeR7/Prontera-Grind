@@ -2,7 +2,8 @@
  *
  * Stars are an account/character-level weapon upgrade paid with Rift Shards. A star never
  * disappears on a failed attempt. Every star adds ATK% in *all* content, and also adds defence
- * penetration against the Rift Sovereign (the raid profile converts it into `armorPen`).
+ * penetration against Thanatos and the dungeon's anchors (the raid profile converts it into
+ * `armorPen`, capped at the 16% boss armour).
  */
 (function (root) {
   'use strict';

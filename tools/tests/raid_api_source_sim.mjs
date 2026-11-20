@@ -12,6 +12,7 @@ import { onRequestGet, onRequestPost, _raidTest } from '../../functions/api/raid
 import { tokenHash } from '../../functions/_lib/auth.js';
 import { packSave } from '../../functions/_lib/save-codec.js';
 import { raidProfileFromSave } from '../../functions/_lib/raid-profile.js';
+import { RAID_STAGES, RAID_RULES } from '../../functions/_lib/raid-rules.js';
 import { SocialRoom } from '../../workers/social/room.mjs';
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -106,6 +107,7 @@ const request = (url, user, method = 'GET', body = null) => new Request('https:/
   ...(body ? { body: JSON.stringify(body) } : {}),
 });
 const jsonBody = async response => response.json();
+const safeJson = value => { try { return typeof value === 'string' ? JSON.parse(value) : value; } catch { return null; } };
 
 let pass = 0, fail = 0;
 const t = async (name, fn) => {
@@ -162,25 +164,58 @@ await t('a lost start response resumes the same run instead of charging again', 
   assert.equal(sql.prepare('SELECT COUNT(*) AS n FROM raid_entries WHERE run_id=?').get(runId).n, 2);
 });
 
-await t('a walk action reaches the room and moves the member lane', async () => {
+await t('a move intent reaches the room as a destination, never as damage', async () => {
+  const before = room.raidRuns.get(runId);
+  const me = before.members.find(m => m.id === users[0].id);
+  const start = { x: me.x, z: me.z };
   const move = await _raidTest.actionRun(env, users[0], {
-    runId, combatAction: 'move', actionId: 'api:move:lane1', zone: 'left',
+    runId, combatAction: 'move', actionId: 'api:move:intent1', x: -4.5, z: -3,
   });
-  assert.equal(move.ok, true, JSON.stringify(move.data));
-  assert.equal(room.raidRuns.get(runId).members.find(m => m.id === users[0].id).lane, 'left');
+  assert.equal(move.data.ok, true, JSON.stringify({ err: move.data.err }));
+  const after = room.raidRuns.get(runId).members.find(m => m.id === users[0].id);
+  assert.equal(after.intentX, -4.5, 'the destination is stored as the intent');
+  assert.equal(after.intentZ, -3);
+  assert.equal(after.damage, me.damage, 'a move deals no damage');
+  assert.ok(Math.hypot(after.x - start.x, after.z - start.z) < RAID_RULES.walkSpeed, 'and it is not a teleport');
+  // The 220 ms floor is real, and it is a refusal rather than a second payment.
+  const tooSoon = await _raidTest.actionRun(env, users[0], {
+    runId, combatAction: 'move', actionId: 'api:move:intent2', x: 0, z: 4,
+  });
+  assert.equal(tooSoon.data.status, 429, JSON.stringify({ status: tooSoon.data.status }));
+  assert.equal(after.intentX, -4.5, 'a refused move changes nothing');
 });
 
-await t('a strike clears only when the server reaches zero and settles once', async () => {
+await t('a party that clears all four stages settles once, paying each member once', async () => {
   const run = room.raidRuns.get(runId);
-  run.phaseIndex = 3;
-  run.phaseHp = 1;
-  run.hpRemaining = 1;
-  clock = run.startedAt + 8000;
-  const action = await _raidTest.actionRun(env, users[0], {
-    runId, combatAction: 'strike', actionId: 'api:strike:clear1',
-  });
-  assert.equal(action.ok, true, JSON.stringify(action.data));
-  assert.equal(action.data.settlement?.outcome, 'clear');
+  // Kill the encounter through the engine's own conditions: every required enemy down, the sanctuary
+  // reached, the boss dead. Nothing here writes a victory flag.
+  const stages = RAID_STAGES.length;
+  for (let stage = 0; stage < stages; stage++) {
+    // Kill the objective, then let the room's own clock notice: `raidSnapshot` is what calls
+    // `advanceRaidRun`, exactly as the 2 s client poll does.
+    for (const e of run.enemies) e.hp = 0;
+    clock = run.updatedAt + 60;
+    const tick = room.raidSnapshot(runId, { id: users[0].id });
+    assert.equal(tick.ok, true, JSON.stringify({ err: tick.err }));
+    if (stage < stages - 1) {
+      assert.equal(tick.run.stageCleared, true, 'stage ' + (stage + 1) + ' cleared');
+      const action = await _raidTest.actionRun(env, users[0], {
+        runId, combatAction: 'interact', actionId: 'api:portal:' + stage, targetId: 'portal',
+      });
+      assert.equal(action.data.ok, true, JSON.stringify({ err: action.data.err }));
+      clock = run.updatedAt + 60;
+      room.raidSnapshot(runId, { id: users[0].id });
+      assert.equal(run.stageIndex, stage + 1, 'the party walked through to stage ' + (stage + 2));
+    }
+  }
+  assert.equal(run.state, 'cleared', 'the room owns the clear, not the client: ' + run.state);
+  // A real room is read within a poll of the clear, so the settle re-read sees the same clock. This
+  // scripted clock had to advance far to finish four stages; hand it back the moment of the clear.
+  clock = run.finishedAt;
+  // The first settle after the clear is the one that pays.
+  const settled = await _raidTest.settleRun(env, users[0], runId);
+  assert.equal(settled.ok, true, JSON.stringify({ err: settled.data?.err }));
+  assert.equal(settled.data.outcome, 'clear', JSON.stringify(settled.data));
   const first = await _raidTest.settleRun(env, users[0], runId);
   assert.equal(first.ok, true);
   const rewards = first.data.rewards;
@@ -198,7 +233,14 @@ await t('a strike clears only when the server reaches zero and settles once', as
   assert.ok(rewards.length >= 1);
   const kinds = rewards.map(r => r.kind).sort();
   assert.deepEqual(kinds, ['clear', 'fractured']);
-  assert.ok(rewards.every(r => Number(r.riftShards) > 0 && Number(r.zeny) > 0));
+  for (const row of rewards) {
+    // A ledger row is either a clear roll (`rewards` inline) or a chest row (`rewards` nested), so
+    // read both shapes rather than assuming one.
+    const paid = row.rewards && typeof row.rewards === 'object' ? row.rewards : row;
+    assert.ok(Number.isFinite(Number(paid.riftShards)) && Number(paid.riftShards) > 0,
+      'every paid row names its shards: ' + JSON.stringify(row).slice(0, 160));
+    assert.ok(Number.isFinite(Number(paid.zeny)) && Number(paid.zeny) > 0, 'and its zeny');
+  }
   const ledgerShards = sql.prepare('SELECT SUM(CAST(json_extract(payload,\'$.riftShards\') AS INTEGER)) AS n FROM raid_reward_ledger WHERE user_id=?').get(users[0].id).n;
   assert.equal(shards, ledgerShards, 'the account shard balance is exactly the ledger sum');
   const grants = sql.prepare("SELECT kind,created_by,ref,payload FROM grants WHERE user_id=? ORDER BY id").all(users[0].id);
@@ -207,8 +249,13 @@ await t('a strike clears only when the server reaches zero and settles once', as
   assert.equal(new Set(grants.map(g => g.ref)).size, grants.length);
   assert.ok(grants.some(g => JSON.parse(g.payload).resource === 'riftShards'), 'Rift Shards are mirrored into the save grant');
   assert.equal(second.data.acknowledged, true);
-  assert.equal(Array.isArray(first.data.cards) && first.data.cards.length, 2, 'clear + fractured each drop a card');
-  assert.equal(sql.prepare('SELECT COUNT(*) AS n FROM raid_card_drops WHERE run_id=? AND user_id=?').get(runId, users[0].id).n, 2);
+  // A clear always drops a card; the fractured chest drops one 85% of the time. The readback must
+  // equal the rows actually written, and never contain a null card.
+  const cardRows = sql.prepare('SELECT kind,card_key FROM raid_card_drops WHERE run_id=? AND user_id=? ORDER BY kind').all(runId, users[0].id);
+  assert.ok(cardRows.length >= 1 && cardRows.length <= 2, 'card rows written: ' + cardRows.length);
+  assert.ok(cardRows.some(r => r.kind === 'clear'), 'a clear always drops a card');
+  assert.ok(cardRows.every(r => typeof r.card_key === 'string' && r.card_key.length > 0), 'and never a null key');
+  assert.equal(first.data.cards.length, cardRows.length, 'the settle readback is exactly what the ledger holds');
 });
 
 await t('a card drop is account-wide, duplicate-safe and one card can be equipped', async () => {
@@ -297,17 +344,26 @@ await t('a failed storage read is reported, not treated as an empty encounter', 
 await t('a late snapshot does not move the fixed timeline', async () => {
   const solo = [...room.raidRuns.values()].find(r => r.state === 'active');
   if (!solo) return;
-  const started = solo.startedAt, deadline = solo.deadlineAt;
-  clock = solo.nextHazardAt + 50;
+  const started = solo.startedAt, deadline = solo.deadlineAt, stageEnds = solo.stageEndsAt, stageIndex = solo.stageIndex;
+  clock = Math.max(solo.updatedAt, started) + 50;
   const before = room.raidSnapshot(solo.id, { id: users[1].id });
-  assert.equal(before.ok, true);
-  const ends = before.run.hazard?.endsAt;
+  assert.equal(before.ok, true, JSON.stringify(before));
+  const published = (before.run.mechanics || []).map(m => `${m.kind}@${m.endsAt}`).join(',');
   clock = solo.startedAt + 100000;
   const after = room.raidSnapshot(solo.id, { id: users[1].id });
-  assert.equal(after.ok, true);
-  assert.equal(solo.startedAt, started);
-  assert.equal(solo.deadlineAt, deadline);
-  if (ends) assert.ok(after.run.hazard === null || after.run.hazard.endsAt > ends, 'an old telegraph cannot be extended');
+  assert.equal(after.ok, true, JSON.stringify(after));
+  assert.equal(solo.startedAt, started, 'a snapshot never reschedules the run');
+  assert.equal(solo.deadlineAt, deadline, 'nor its deadline');
+  assert.ok(solo.stageEndsAt >= stageEnds, 'a stage clock only ever moves forward, never backwards');
+  assert.ok(solo.stageIndex >= stageIndex, 'a read never rewinds the run');
+  // A resolved telegraph is never resurrected or extended by a later read.
+  const alive = new Set((after.run.mechanics || []).map(m => `${m.kind}@${m.endsAt}`));
+  for (const token of published.split(',').filter(Boolean)) {
+    const [kind] = token.split('@');
+    assert.ok(![...alive].some(a => a.startsWith(kind + '@') && a !== token) || alive.has(token),
+      'a telegraph is either the same one or gone, never moved: ' + token);
+  }
+  assert.equal(after.run.serverNow, Math.max(clock, solo.updatedAt), 'the snapshot reports the clock it used');
 });
 
 const raidSource = fs.readFileSync(path.join(root, 'functions/api/raid.js'), 'utf8');
