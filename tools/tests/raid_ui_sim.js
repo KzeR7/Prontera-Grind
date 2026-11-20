@@ -282,6 +282,8 @@ function runFixture(overrides = {}) {
     assert.match(panel, /raid-destination/);
     assert.match(panel, /PGRaid\.open\(\)/);
     assert.match(panel, /Two entries per Malaysia day/);
+    assert.match(panel, /Walk the volcanic rift arena/, 'the Map tab describes the walkable arena');
+    assert.match(panel, /raid-destination-arena/, 'the Map tab previews the arena map art');
     w.eval("mapSeason='atlas'");
   });
 
