@@ -15,7 +15,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.join(here, '..', '..');
@@ -45,6 +45,32 @@ await t('the engine chain is published for the browser by the build', () => {
   }
 });
 
+// The loader contract, pinned: a dynamic `import()` needs a URL. A bare filesystem path works on
+// POSIX by accident and throws ERR_UNSUPPORTED_ESM_URL_SCHEME on Windows, where `C:\...` parses as a
+// URL *scheme*. This is a portability guard, not a gameplay assertion -- it only inspects the other
+// raid tests for the pattern that broke them.
+await t('no raid test passes a bare filesystem path to import()', () => {
+  const dir = path.join(root, 'tools', 'tests');
+  const offenders = [];
+  for (const file of fs.readdirSync(dir)) {
+    if (!/^raid_.*\.(mjs|cjs|js)$/.test(file)) continue;
+    const raw = fs.readFileSync(path.join(dir, file), 'utf8');
+    // Strip comments first: these files discuss `import(path...)` in prose (including this guard),
+    // and a scanner that reads its own comments is the classic false positive.
+    const src = raw.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/(^|[^:])\/\/[^\n]*/g, '$1 ');
+    for (const match of src.matchAll(/\bimport\s*\(\s*(?!['"`])([^)]{0,80})/g)) {
+      const arg = match[1].trim();
+      if (/^pathToFileURL\b/.test(arg)) continue;         // the correct form
+      if (arg === '') continue;
+      offenders.push(file + ': import(' + arg.split('\n')[0] + ')');
+    }
+    for (const match of src.matchAll(/['"]file:\/\/['"]\s*\+/g)) {
+      offenders.push(file + ': hand-built file:// + path');
+    }
+  }
+  assert.deepEqual(offenders, [], 'these would fail on Windows: ' + offenders.join(' | '));
+});
+
 // Stage a fresh copy from source so this test never depends on stale build output.
 const work = fs.mkdtempSync(path.join(root, 'node_modules', '.raid-solo-'));
 for (const lib of LIBS) {
@@ -62,8 +88,11 @@ await t('the engine has no Node or Workers built-ins, so the browser can run it 
   }
 });
 
-const E = await import(path.join(work, 'raid-engine.js'));
-const RULES = await import(path.join(work, 'raid-rules.js'));
+// `import()` takes a URL, not a filesystem path. A bare path works on POSIX by accident and fails on
+// Windows, where `C:\...` is not a valid specifier -- it is parsed as a URL scheme of `c:`. The
+// conversion is the whole fix; the assertions below are untouched.
+const E = await import(pathToFileURL(path.join(work, 'raid-engine.js')).href);
+const RULES = await import(pathToFileURL(path.join(work, 'raid-rules.js')).href);
 
 const profile = {
   profileVersion: 2, cls: 'Lord Knight', magic: false, main: 'str', lv: 150, sex: 'm',
@@ -218,7 +247,7 @@ await t('a checkpoint is scoped by account + run id + rules version', async () =
     setItem: (k, v) => store.set(k, String(v)),
     removeItem: k => store.delete(k),
   };
-  const solo = await import(path.join(root, 'assets', 'raid-solo.js'));
+  const solo = await import(pathToFileURL(path.join(root, 'assets', 'raid-solo.js')).href);
   void solo;
   const S = globalThis.PGRaidSolo;
   const run = soloRun();

@@ -17,6 +17,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const http = require('node:http');
 const { JSDOM } = require('jsdom');
+const { pathToFileURL } = require('node:url');
 
 const ROOT = path.resolve(__dirname, '..', '..');
 const DIST = path.join(ROOT, 'dist');
@@ -83,7 +84,9 @@ const MIME = { '.js': 'text/javascript', '.mjs': 'text/javascript', '.html': 'te
   // prove is that the file is importable as a module at all (parsed and linked by Node's loader from
   // the file system), which catches a syntax or bare-specifier error in the published copy.
   await t('the published engine is a loadable ES module', async () => {
-    const mod = await import('file://' + path.join(DIST, 'assets', 'raid-engine', 'raid-engine.js'));
+    // `pathToFileURL` rather than string concatenation: on Windows a drive path produces
+    // `file://C:\...`, which is not a valid URL (the host becomes `C:`), and the import fails.
+    const mod = await import(pathToFileURL(path.join(DIST, 'assets', 'raid-engine', 'raid-engine.js')).href);
     if (typeof mod.createRaidRun !== 'function') throw new Error('createRaidRun is not exported');
     if (typeof mod.advanceRaidRun !== 'function') throw new Error('advanceRaidRun is not exported');
     if (typeof mod.applyRaidAction !== 'function') throw new Error('applyRaidAction is not exported');
