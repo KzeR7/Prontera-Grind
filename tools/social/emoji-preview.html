@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>Prontera-Grind — Emoji Editor (offline)</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 0; background: #0f172a; color: #e2e8f0; }
+  header { background: #1e293b; border-bottom: 1px solid #334155; padding: 16px 24px; position: sticky; top: 0; z-index: 100; }
+  header h1 { margin: 0; font-size: 1.05rem; letter-spacing: 0.05em; color: #94a3b8; text-transform: uppercase; }
+  header p { margin: 4px 0 0; font-size: 0.85rem; color: #64748b; }
+  .container { display: flex; flex-direction: column; gap: 16px; padding: 24px; max-width: 1300px; margin: 0 auto; width: 100%; }
+  .toolbar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; background: #1e293b; border: 1px solid #334155; border-radius: 10px; padding: 12px 16px; }
+  .btn { background: #3b82f6; color: #fff; border: none; padding: 8px 14px; border-radius: 8px; font-size: 0.9rem; cursor: pointer; font-weight: 600; }
+  .btn:hover { background: #2563eb; }
+  .btn.secondary { background: #475569; }
+  .btn.secondary:hover { background: #334155; }
+  .btn.danger { background: #ef4444; }
+  .btn.danger:hover { background: #dc2626; }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .path-row { margin-top: 8px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .path-row input { flex: 1; min-width: 200px; padding: 6px 10px; border-radius: 6px; border: 1px solid #475569; background: #0f172a; color: #e2e8f0; font-size: 0.85rem; }
+  .path-row input:focus { outline: none; border-color: #3b82f6; }
+  .main { display: flex; gap: 16px; flex: 1; min-height: 0; flex-wrap: wrap; }
+  .panel { background: #1e293b; border: 1px solid #334155; border-radius: 10px; display: flex; flex-direction: column; min-height: 0; }
+  .panel-header { padding: 12px 16px; border-bottom: 1px solid #334155; font-weight: 700; font-size: 0.9rem; color: #cbd5e1; display: flex; justify-content: space-between; align-items: center; }
+  .panel-body { flex: 1; overflow: auto; padding: 16px; }
+  .emoji-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 14px; }
+  .emoji-card { background: #0f172a; border: 2px solid transparent; border-radius: 10px; padding: 12px; display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: grab; transition: all 0.15s; position: relative; }
+  .emoji-card.dragging { opacity: 0.5; border-color: #3b82f6; transform: rotate(2deg); }
+  .emoji-card:hover { border-color: #334155; background: #0b0d14; }
+  .emoji-card.selected { border-color: #3b82f6; background: #111827; box-shadow: 0 0 0 2px #3b82f6; }
+  .emoji-img { width: 72px; height: 72px; object-fit: contain; image-rendering: pixelated; background: #000; border-radius: 6px; border: 1px solid #334155; cursor: pointer; }
+  .emoji-img.uploaded { border-color: #22c55e; box-shadow: 0 0 0 1px #22c55e; }
+  .emoji-name { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.72rem; color: #94a3b8; word-break: break-all; text-align: center; margin-top: 2px; }
+  .cmd-row { width: 100%; display: flex; gap: 6px; margin-top: 4px; }
+  .cmd-input { flex: 1; padding: 6px 8px; border-radius: 6px; border: 1px solid #475569; background: #0f172a; color: #e2e8f0; font-family: ui-monospace, monospace; font-size: 0.85rem; }
+  .cmd-input:focus { outline: none; border-color: #3b82f6; }
+  .cmd-input.modified { border-color: #22c55e; }
+  .upload-btn { width: 34px; padding: 0; font-size: 0.85rem; min-width: 34px; }
+  .upload-input { display: none; }
+  .order-badge { position: absolute; top: 6px; left: 6px; background: #3b82f6; color: #fff; font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; font-weight: 700; }
+  .status-chip { font-size: 0.68rem; padding: 2px 6px; border-radius: 4px; margin-top: 4px; }
+  .status-ok { background: #166534; color: #bbf7d0; }
+  .status-missing { background: #991b1b; color: #fecaca; }
+  .status-custom { background: #7c3aed; color: #e9d5ff; }
+  .preview-panel { flex: 0 0 360px; }
+  .preview-header { display: flex; justify-content: space-between; align-items: center; }
+  .chat-preview { background: #0f172a; border-radius: 8px; padding: 12px; height: 300px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; border: 1px solid #334155; }
+  .chat-line { display: flex; gap: 8px; align-items: flex-start; font-size: 0.9rem; }
+  .chat-line .name { color: #3b82f6; font-weight: 700; font-size: 0.8rem; }
+  .chat-line .msg { color: #e2e8f0; }
+  .chat-line .emo-img { width: 30px; height: 30px; object-fit: contain; image-rendering: pixelated; border: 1px solid #334155; border-radius: 4px; }
+  .chat-input-area { margin-top: 10px; display: flex; gap: 8px; }
+  .chat-input { flex: 1; padding: 8px 10px; border-radius: 6px; border: 1px solid #475569; background: #0f172a; color: #e2e8f0; font-family: inherit; }
+  .chat-input:focus { outline: none; border-color: #3b82f6; }
+  .stats { margin-top: auto; padding: 10px 16px; border-top: 1px solid #334155; font-size: 0.8rem; color: #64748b; background: #0f172a; border-radius: 0 0 10px 10px; }
+  .import-export { margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap; }
+  .import-export .btn { flex: 1; min-width: 130px; font-size: 0.85rem; padding: 7px 10px; }
+  .hint { font-size: 0.8rem; color: #94a3b8; margin-top: 6px; line-height: 1.45; }
+  .empty { color: #64748b; font-style: italic; text-align: center; padding: 40px 0; }
+  .file-input { display: none; }
+  .apply-box { margin-top: 10px; border: 1px solid #334155; border-radius: 8px; padding: 12px 16px; background: #0f172a; }
+  .apply-box h3 { margin: 0 0 8px 0; font-size: 0.85rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; }
+  .apply-box pre { margin: 0; font-size: 0.78rem; overflow: auto; background: #020617; border: 1px solid #1e293b; border-radius: 6px; padding: 10px; color: #cbd5e1; }
+  .apply-box pre .k { color: #ff79c6; }
+  .apply-box pre .s { color: #f1fa8c; }
+  .apply-box pre .n { color: #8be9fd; }
+  .apply-box pre .p { color: #ff79c6; }
+  .apply-box pre .c { color: #6272a4; font-style: italic; }
+  @media (max-width: 900px) {
+    .main { flex-direction: column; }
+    .preview-panel { flex: 0 0 auto; height: 340px; width: 100%; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Emoji Editor (offline)</h1>
+  <p>Preview emojis, rename slash commands, rearrange tray order — no server needed. Open this file directly.</p>
+</header>
+
+<div class="container">
+  <div class="toolbar">
+    <div>
+      <div style="font-size:0.85rem; color:#94a3b8;">Emoji folder path</div>
+      <input type="text" id="emoPath" value="../../assets/social/emotions/" placeholder="path to emotions folder">
+      <span id="pathStatus" style="font-size:0.75rem; color:#64748b; margin-left:6px;">ready</span>
+    </div>
+    <button class="btn secondary" id="btnReload">Reload images</button>
+    <button class="btn" id="btnExport">Export config JSON</button>
+    <button class="btn secondary" id="btnCopy">Copy to clipboard</button>
+    <button class="btn danger" id="btnReset">Reset to defaults</button>
+  </div>
+
+  <div class="main">
+    <div class="panel" style="flex: 1; min-width: 320px;">
+      <div class="panel-header">
+        Emoji tray
+        <span style="font-weight:400; font-size:0.75rem; color:#64748b;" id="count">0 emojis</span>
+      </div>
+      <div class="panel-body">
+        <div class="emoji-grid" id="grid"></div>
+        <p class="hint">Drag cards to reorder. Edit the text field to change the slash command (e.g. <code>/gg</code>). Click an emoji image to replace it with a clearer PNG you already have. Emotion id (filename) stays fixed.</p>
+      </div>
+    </div>
+
+    <div class="panel preview-panel" style="min-width: 300px;">
+      <div class="panel-header">
+        Live chat preview
+        <span style="font-weight:400; font-size:0.75rem; color:#64748b;">type a command</span>
+      </div>
+      <div class="panel-body">
+        <div class="chat-preview" id="chat"></div>
+        <div class="chat-input-area">
+          <input type="text" class="chat-input" id="chatInput" placeholder="Type /gg, /thx, /smile…">
+        </div>
+        <div class="hint">Type <code>/command</code> to preview how the emoji appears in world chat.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="stats" id="exportNote" style="color:#64748b;">Make changes, then export.</div>
+
+  <div class="apply-box">
+    <h3>How to apply to the game</h3>
+    <pre id="applySnippet"></pre>
+  </div>
+
+  <div class="import-export" style="margin-top:10px;">
+    <input type="file" id="fileInput" accept=".json" class="file-input">
+    <button class="btn secondary" id="btnImport">Import config JSON</button>
+  </div>
+</div>
+
+<script>
+// Default: this HTML lives in tools/social/, emotions are at assets/social/emotions/
+let BASE_PATH = '../../assets/social/emotions/';
+
+const DEFAULT_ORDER = ['surprise','question','music','heart','love','sweat','idea','anger','cloud','money','dots','rock','scissors','paper','kiss','ok','dead','sorry','laugh','smile','cry','shy','kissheart','think','hmm','blush','drool','meh','panic','sleep','mail','gg','omg','oh','x','hlp','go','sob','kis','pif','que2','bzz','awsm','pat','mp','slur','com','grat','hp','fsh','spin','sigh','dum','crwd','dice','e20','hum','abs','oops','spit','ene','whisp','clap','bye','happy','amazed','best','best2','chaos','absurd','joy','kiskis','funny','martialarts','wah','no1','salute'];
+
+const DEFAULT_NAMES = {
+  surprise:'!', gg:'sc', ok:'thx', sorry:'sry', cry:'sob', cloud:'ag', idea:'ic',
+  laugh:'heh', mail:'mail', anger:'an', blush:'ok', dead:'desp', dots:'...',
+  drool:'blek', heart:'lv', hmm:'hf', kiss:'kf', kissheart:'kis', love:'lv2',
+  meh:'sk', money:'$', music:'ho', panic:'yw', paper:'3', question:'?',
+  rock:'1', scissors:'2', shy:'gg', sleep:'zz', smile:'no', sweat:'swt', think:'kis2',
+  omg:'omg', oh:'oh', x:'x', hlp:'hlp', go:'go', sob:'sob', kis:'kis', pif:'pif',
+  que2:'??', bzz:'bzz', awsm:'awsm', pat:'pat', mp:'mp', slur:'slur', com:'com',
+  grat:'grat', hp:'hp', fsh:'fsh', spin:'spin', sigh:'sigh', dum:'dum', crwd:'crwd',
+  dice:'dice', e20:'e20', hum:'hum', abs:'abs', oops:'oops', spit:'spit', ene:'ene',
+  whisp:'whisp', clap:'clap', bye:'bye', happy:'happy', amazed:'amazed', best:'best',
+  best2:'best2', chaos:'chaos', absurd:'absurd', joy:'joy', kiskis:'kiskis',
+  funny:'funny', martialarts:'martialarts', wah:'wah', no1:'no1', salute:'salute'
+};
+
+const DEFAULT_ACTIONS = {
+  surprise:0, question:1, music:2, heart:3, love:4, sweat:5, idea:6, anger:7,
+  cloud:8, money:9, dots:10, rock:11, scissors:12, paper:13, kiss:14, ok:15,
+  dead:16, sorry:17, laugh:18, smile:22, cry:28, shy:29, kissheart:30, think:31,
+  hmm:32, blush:33, drool:38, meh:39, panic:44, sleep:67, mail:68, gg:78,
+  omg:86, oh:87, x:88, hlp:89, go:90, sob:91, kis:92, pif:93, que2:94,
+  bzz:95, awsm:96, pat:97, mp:98, slur:99, com:100, grat:101, hp:102, fsh:103,
+  spin:104, sigh:105, dum:106, crwd:107, dice:108, e20:109, hum:110, abs:111,
+  oops:112, spit:113, ene:114, whisp:115, clap:116, bye:117, happy:118,
+  amazed:119, best:120, best2:121, chaos:122, absurd:123, joy:124,
+  kiskis:125, funny:126, martialarts:127, wah:128, no1:129, salute:130
+};
+
+let state = {
+  order: [...DEFAULT_ORDER],
+  names: { ...DEFAULT_NAMES },
+  actions: { ...DEFAULT_ACTIONS },
+  customImgs: {}   // emotionId -> blob URL for uploaded replacement
+};
+
+const pathInput = document.getElementById('emoPath');
+const pathStatus = document.getElementById('pathStatus');
+const grid = document.getElementById('grid');
+const chat = document.getElementById('chat');
+const chatInput = document.getElementById('chatInput');
+const countEl = document.getElementById('count');
+const exportNote = document.getElementById('exportNote');
+const applySnippet = document.getElementById('applySnippet');
+
+// Resolve image url for an emotion id
+function emoUrl(id) {
+  if (state.customImgs[id]) return state.customImgs[id];
+  return BASE_PATH + id + '.png?t=' + Date.now();
+}
+
+function renderGrid() {
+  grid.innerHTML = '';
+  state.order.forEach((id, idx) => {
+    const card = document.createElement('div');
+    card.className = 'emoji-card';
+    card.draggable = true;
+    card.dataset.id = id;
+
+    const badge = document.createElement('span');
+    badge.className = 'order-badge';
+    badge.textContent = idx + 1;
+
+    const img = document.createElement('img');
+    img.className = 'emoji-img' + (state.customImgs[id] ? ' uploaded' : '');
+    img.src = emoUrl(id);
+    img.alt = id;
+    img.onerror = () => {
+      img.src = 'data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2272%22 height=%2272%22><rect width=%2272%22 height=%2272%22 fill=%22%23334155%22/><text x=%2250%22 y=%2255%22 font-size=%2213%22 fill=%22%2364748b%22 text-anchor=%22middle%22>missing</text></svg>';
+      img.classList.add('uploaded');
+    };
+
+    // chip showing source
+    const chip = document.createElement('div');
+    chip.className = 'status-chip ' + (state.customImgs[id] ? 'status-custom' : 'status-ok');
+    chip.textContent = state.customImgs[id] ? 'custom' : 'file';
+
+    img.onclick = (e) => {
+      e.stopPropagation();
+      const fileInput = document.getElementById('uploadInput_' + id);
+      fileInput.value = '';
+      fileInput.click();
+    };
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.id = 'uploadInput_' + id;
+    fileInput.className = 'upload-input';
+    fileInput.accept = 'image/png,image/apng,image/webp,image/gif';
+    fileInput.onchange = (e) => {
+      const f = e.target.files[0];
+      if (!f) return;
+      const url = URL.createObjectURL(f);
+      state.customImgs[id] = url;
+      img.src = url;
+      img.classList.add('uploaded');
+      chip.textContent = 'custom';
+      chip.className = 'status-chip status-custom';
+      renderChatPreview();
+    };
+    card.appendChild(fileInput);
+
+    const name = document.createElement('div');
+    name.className = 'emoji-name';
+    name.textContent = id;
+
+    const cmdRow = document.createElement('div');
+    cmdRow.className = 'cmd-row';
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'cmd-input';
+    input.value = state.names[id] || id;
+    input.title = 'Slash command without leading /';
+    input.oninput = (e) => {
+      state.names[id] = e.target.value.trim() || id;
+      input.classList.toggle('modified', state.names[id] !== (DEFAULT_NAMES[id] || id));
+      renderChatPreview();
+    };
+
+    const label = document.createElement('div');
+    label.className = 'cmd-label';
+    label.textContent = '/' + (state.names[id] || id);
+
+    // Drag and drop
+    card.ondragstart = (e) => {
+      card.classList.add('dragging');
+      e.dataTransfer.setData('text/plain', id);
+      e.dataTransfer.effectAllowed = 'move';
+    };
+    card.ondragend = () => {
+      card.classList.remove('dragging');
+      document.querySelectorAll('.emoji-card').forEach(c => c.classList.remove('drag-over'));
+    };
+    card.ondragover = (e) => { e.preventDefault(); card.classList.add('drag-over'); };
+    card.ondragleave = () => card.classList.remove('drag-over');
+    card.ondrop = (e) => {
+      e.preventDefault();
+      card.classList.remove('drag-over');
+      const fromId = e.dataTransfer.getData('text/plain');
+      if (fromId === id) return;
+      reorder(fromId, id);
+    };
+
+    card.onclick = (e) => {
+      if (e.target === input || e.target === label || e.target === badge || e.target === img || e.target === chip) return;
+      document.querySelectorAll('.emoji-card').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+      input.focus();
+    };
+
+    card.append(badge, img, chip, name, cmdRow);
+    cmdRow.append(input, label);
+    grid.appendChild(card);
+  });
+  countEl.textContent = state.order.length + ' emojis';
+  updateApplySnippet();
+}
+
+function reorder(fromId, toId) {
+  const fromIdx = state.order.indexOf(fromId);
+  const toIdx = state.order.indexOf(toId);
+  if (fromIdx === -1 || toIdx === -1) return;
+  const [removed] = state.order.splice(fromIdx, 1);
+  state.order.splice(toIdx, 0, removed);
+  renderGrid();
+  renderChatPreview();
+}
+
+function htmlEscape(t) { return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function renderChatPreview() {
+  chat.innerHTML = '';
+  const cmdToId = {};
+  for (const [id, cmd] of Object.entries(state.names)) cmdToId[cmd] = id;
+
+  const lines = [
+    { from: 'You', cmd: state.names['gg'] || 'gg' },
+    { from: 'Alessa', cmd: state.names['smile'] || 'ok' },
+    { from: 'Kirua', cmd: state.names['cry'] || 'sob' },
+    { from: 'Luna', cmd: state.names['laugh'] || 'heh' },
+    { from: 'Ryze', cmd: state.names['think'] || 'hmm' },
+    { from: 'You', cmd: state.names['love'] || 'lv2' },
+  ];
+
+  lines.forEach(({ from, cmd }) => {
+    const id = cmdToId[cmd];
+    const line = document.createElement('div');
+    line.className = 'chat-line';
+    const nameEl = document.createElement('span');
+    nameEl.className = 'name';
+    nameEl.textContent = from + ': ';
+    const emoImg = document.createElement('img');
+    emoImg.className = 'emo-img';
+    emoImg.src = id ? emoUrl(id) : '';
+    emoImg.alt = '/' + cmd;
+    emoImg.onerror = () => { emoImg.style.display = 'none'; };
+    const msgEl = document.createElement('span');
+    msgEl.className = 'msg';
+    msgEl.textContent = id ? '' : '(emoji missing)';
+    line.append(nameEl, emoImg, msgEl);
+    chat.appendChild(line);
+  });
+  chat.scrollTop = chat.scrollHeight;
+}
+
+chatInput.oninput = (e) => {
+  const val = e.target.value.trim();
+  if (val.startsWith('/') && val.length > 1) {
+    const cmd = val.slice(1);
+    const id = (Object.entries(state.names).find(([_, c]) => c === cmd) || [null])[0];
+    const line = document.createElement('div');
+    line.className = 'chat-line';
+    const nameEl = document.createElement('span');
+    nameEl.className = 'name';
+    nameEl.textContent = 'You: ';
+    const emoImg = document.createElement('img');
+    emoImg.className = 'emo-img';
+    emoImg.src = id ? emoUrl(id) : '';
+    emoImg.alt = val;
+    emoImg.onerror = () => { emoImg.style.display = 'none'; };
+    const msgEl = document.createElement('span');
+    msgEl.className = 'msg';
+    msgEl.textContent = id ? '' : 'unknown command';
+    line.append(nameEl, emoImg, msgEl);
+    chat.appendChild(line);
+    chat.scrollTop = chat.scrollHeight;
+    e.target.value = '';
+  } else if (val) {
+    e.target.value = '';
+  }
+};
+chatInput.onkeydown = (e) => { if (e.key === 'Enter') { e.preventDefault(); chatInput.oninput(e); } };
+
+function escHtml(t){return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+function updateApplySnippet() {
+  const orderStr = state.order.map(id => "'"+id+"'").join(', ');
+  const namesEntries = Object.entries(state.names).map(([id,cmd]) => {
+    const def = DEFAULT_NAMES[id];
+    const mark = (cmd !== def) ? ' // changed' : '';
+    return `    ${escHtml(id)}:'${escHtml(cmd)}',${mark}`;
+  }).join('\n');
+  const snippet =
+`// assets/social-rules.js
+const EMOTIONS=[${orderStr}];
+
+const EMOTE_NAMES={
+${namesEntries}
+};
+const EMOTE_BY_CMD=Object.fromEntries(Object.entries(EMOTE_NAMES).map(([id,c])=>[c,id]));`;
+  applySnippet.textContent = snippet;
+}
+
+function exportConfig() {
+  const out = {
+    order: state.order,
+    names: state.names,
+    actions: state.actions,
+    exportedAt: new Date().toISOString(),
+    note: 'Apply order/names to assets/social-rules.js (EMOTIONS, EMOTE_NAMES). Place replacement PNGs in assets/social/emotions/<id>.png'
+  };
+  const blob = new Blob([JSON.stringify(out, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'emoji-config.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  exportNote.textContent = 'Exported emoji-config.json.';
+  setTimeout(() => exportNote.textContent = '', 2500);
+}
+
+document.getElementById('btnExport').onclick = exportConfig;
+document.getElementById('btnCopy').onclick = async () => {
+  const out = { order: state.order, names: state.names, actions: state.actions };
+  const text = JSON.stringify(out, null, 2);
+  try {
+    await navigator.clipboard.writeText(text);
+    exportNote.textContent = 'Config JSON copied to clipboard.';
+    setTimeout(() => exportNote.textContent = '', 2500);
+  } catch (err) {
+    exportNote.textContent = 'Copy failed — use Export button.';
+    setTimeout(() => exportNote.textContent = '', 2500);
+  }
+};
+document.getElementById('btnImport').onclick = () => document.getElementById('fileInput').click();
+document.getElementById('fileInput').onchange = (e) => {
+  if (!e.target.files[0]) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      if (Array.isArray(data.order)) state.order = data.order;
+      if (data.names && typeof data.names === 'object') state.names = { ...DEFAULT_NAMES, ...data.names };
+      renderGrid();
+      renderChatPreview();
+      exportNote.textContent = 'Config imported.';
+      setTimeout(() => exportNote.textContent = '', 2500);
+    } catch (err) {
+      alert('Invalid JSON file.');
+    }
+  };
+  reader.readAsText(e.target.files[0]);
+};
+document.getElementById('btnReset').onclick = () => {
+  if (!confirm('Reset all slash commands and tray order to defaults? Custom images will be cleared.')) return;
+  state.customImgs = {};
+  state = { order: [...DEFAULT_ORDER], names: { ...DEFAULT_NAMES }, actions: { ...DEFAULT_ACTIONS }, customImgs: {} };
+  pathInput.value = '../../assets/social/emotions/';
+  BASE_PATH = '../../assets/social/emotions/';
+  renderGrid();
+  renderChatPreview();
+  exportNote.textContent = 'Reset to defaults.';
+  setTimeout(() => exportNote.textContent = '', 2500);
+};
+
+pathInput.onchange = (e) => {
+  BASE_PATH = e.target.value.endsWith('/') ? e.target.value : e.target.value + '/';
+  pathStatus.textContent = 'path set';
+  renderGrid();
+  renderChatPreview();
+};
+document.getElementById('btnReload').onclick = () => {
+  renderGrid();
+  renderChatPreview();
+  exportNote.textContent = 'Images reloaded.';
+  setTimeout(() => exportNote.textContent = '', 2000);
+};
+
+// Init
+renderGrid();
+renderChatPreview();
+</script>
+</body>
+</html>
