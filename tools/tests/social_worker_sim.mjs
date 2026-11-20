@@ -140,11 +140,27 @@ try{
 
  // A real folded pot pays the disconnected winner. The payout must survive a DO restart,
  // replay with the same id until the wallet ACKs, and never leak into World history.
+ // Forced delayed-arrival regression: seat player 11 first, let it begin a preliminary hand
+ // against the house, seat player 10 while that hand is underway, complete the house hand
+ // cleanly through valid actions, and ensure the subsequent two-human hand properly deals.
  const p1=await connect(mf,10),p2=await connect(mf,11);
  for(const peer of [p1,p2]){peer.ws.send(JSON.stringify({type:'join',look:{cls:'Novice',appearance:{version:1,sex:'m'},speed:13}}));await until(peer.messages,m=>m.type==='room','poker plaza join')}
- p1.ws.send(JSON.stringify({type:'poker_sit',seat:0,buyIn:1000}));p2.ws.send(JSON.stringify({type:'poker_sit',seat:1,buyIn:1000}));
- await until(p1.messages,m=>m.type==='poker'&&m.tables?.[0]?.phase==='preflop'&&m.tables[0].seats[0]?.arrived&&m.tables[0].seats[1]?.arrived&&!m.tables[0].house?.inHand,'live poker hand',20000);
- const hand=[...p1.messages].reverse().find(m=>m.type==='poker'&&m.tables?.[0]?.phase==='preflop').tables[0];
+ p2.ws.send(JSON.stringify({type:'poker_sit',seat:1,buyIn:1000}));
+ const houseHand=await until(p2.messages,m=>m.type==='poker'&&m.tables?.[0]?.phase==='preflop'&&m.tables[0].house?.inHand,'preliminary house preflop',20000);
+ p1.ws.send(JSON.stringify({type:'poker_sit',seat:0,buyIn:1000}));
+ if(houseHand.tables[0].turnSeat===1){p2.ws.send(JSON.stringify({type:'poker_act',action:'fold'}))}
+ else{
+  const p2Turn=await until(p2.messages,m=>m.type==='poker'&&(m.tables?.[0]?.turnSeat===1||m.tables?.[0]?.phase==='showdown'),'p2 house turn',10000);
+  if(p2Turn.tables[0].turnSeat===1)p2.ws.send(JSON.stringify({type:'poker_act',action:'fold'}));
+ }
+ const preflopMsg=await until(p1.messages,m=>{
+  if(m.type!=='poker'||!m.tables?.[0])return false;
+  const t=m.tables[0];
+  if(t.phase!=='preflop')return false;
+  const s0=t.seats.find(s=>s&&s.id===10),s1=t.seats.find(s=>s&&s.id===11);
+  return !!(s0?.arrived&&s0?.inHand&&s1?.arrived&&s1?.inHand&&!t.house?.inHand);
+ },'live poker hand',20000);
+ const hand=preflopMsg.tables[0];
  const winnerSeat=hand.turnSeat===0?1:0,winnerId=winnerSeat===0?10:11;
  const winner=winnerSeat===0?p1:p2,loser=winnerSeat===0?p2:p1;
  winner.ws.close();await new Promise(r=>setTimeout(r,150));
