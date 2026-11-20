@@ -153,6 +153,25 @@ build's faster-looking clears were under-simulation, not speed.
 backgrounded (the engine catches up cell by cell on resume) and a co-op party whose members poll at
 different cadences or disconnect and reconnect.
 
+### The catch-up bound
+
+`advanceRaidRun` stops after `RAID_RULES.maxCatchupEvents` (60,000) resolved cells and returns with
+`updatedAt` set to the real cursor, so a bounded read never marks unprocessed time as simulated. Worth
+recording, because it changes what a reader should worry about:
+
+| | |
+| --- | --- |
+| Cells in a full run | 681 s / 100 ms = **6,810** |
+| Cap | **60,000** |
+| Reachable in a real run | **No** |
+
+A whole run — every cell, from the first swing to the terminal check — is an order of magnitude below
+the cap. So in production the loop always completes and a run is never left partially advanced by the
+bound. The guard exists to keep a pathological input (a hand-crafted `now` far beyond the deadline, a
+corrupted checkpoint) from spinning, not to ration normal play. It is exercised separately and the
+honest-cursor property holds on that path too: after a forced bounded pass, `cursorAt <= updatedAt`,
+and a second read continues from the real cursor rather than skipping or re-paying the gap.
+
 ### What the engine sim actually plays
 
 The two clear tests are not "stand still and win": each runs the client's real loop once per second
