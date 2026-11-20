@@ -114,6 +114,7 @@ export class SocialRoom {
   this.pvpQueues=new Map();this.pvpMatches=new Map();this.pvpByRoom=new Map();this.parties=new Map();this.partyInvites=new Map();
   // MVP fishing: per-room active spawn + next spawn timer
   this.mvpActive=new Map();this.mvpNextAt=new Map();
+  this.mvpLoaded=opts.mvpLoaded??true;
   this.onBattleActivity=opts.onBattleActivity||null;
   this.onMvpChange=opts.onMvpChange||null;
   this.onOccupancyChange=opts.onOccupancyChange||null;
@@ -374,9 +375,9 @@ export class SocialRoom {
  }
  mvpSnapshot(room){const a=this.mvpActive.get(room);return a?{room,sp:a.sp,id:a.id,spawnedAt:a.spawnedAt,endsAt:a.endsAt}:null}
  broadcastMvp(room){const snap=this.mvpSnapshot(room);if(snap)this.broadcast({type:'mvp_spawn',...snap},p=>p.room===room)}
- scheduleMvp(room,now=this.now()){const delay=MVP_SPAWN_MIN+this.random()*(MVP_SPAWN_MAX-MVP_SPAWN_MIN);this.mvpNextAt.set(room,now+delay);this.onMvpChange?.()}
+ scheduleMvp(room,now=this.now()){if(this.mvpLoaded===false)return;const delay=MVP_SPAWN_MIN+this.random()*(MVP_SPAWN_MAX-MVP_SPAWN_MIN);this.mvpNextAt.set(room,now+delay);this.onMvpChange?.()}
  spawnMvp(room,now=this.now(),requestedSp=null,customId=null){
-  if(!Number.isInteger(room)||room<1||room>MAX_ROOMS||this.mvpActive.has(room))return null;
+  if(this.mvpLoaded===false||!Number.isInteger(room)||room<1||room>MAX_ROOMS||this.mvpActive.has(room))return null;
   if(requestedSp!==null&&!MVP_IDS.includes(requestedSp))return null;
   const sp=requestedSp||MVP_IDS[Math.floor(this.random()*MVP_IDS.length)];
   const id=customId||('mvp:'+now.toString(36)+':'+Math.random().toString(36).slice(2,8));
@@ -389,12 +390,14 @@ export class SocialRoom {
  }
  hasActiveMvp(){return this.mvpActive.size>0}
  despawnMvp(room,now=this.now()){
+  if(this.mvpLoaded===false)return;
   const cur=this.mvpActive.get(room);if(!cur)return;
   this.mvpActive.delete(room);
   this.broadcast({type:'mvp_despawn',room,sp:cur.sp,id:cur.id},p=>p.room===room);
   this.scheduleMvp(room,now);
  }
  nextMvpSpawnAt(now=this.now()){
+  if(this.mvpLoaded===false)return 0;
   const occupied=new Set([...this.clients.values()].map(p=>p.room).filter(Boolean));
   if(!occupied.size)return 0;
   let earliest=0;
@@ -409,6 +412,7 @@ export class SocialRoom {
   return earliest;
  }
  nextMvpExpiryAt(now=this.now()){
+  if(this.mvpLoaded===false)return 0;
   let earliest=0;
   for(const active of this.mvpActive.values()){
    if(active&&Number.isFinite(active.endsAt)){
@@ -419,6 +423,7 @@ export class SocialRoom {
   return earliest;
  }
  tickMvp(now=this.now()){
+  if(this.mvpLoaded===false)return;
   // collect rooms that exist or have pending mvp state
   const rooms=new Set([...this.mvpActive.keys(),...this.mvpNextAt.keys()]);
   for(const p of this.clients.values())if(p.room)rooms.add(p.room);
@@ -865,7 +870,7 @@ export class SocialRoom {
   this.send(c,{type:'room',room:c.room,rooms,rules:R.rulesFingerprint(),players:[...this.clients.values()].filter(p=>p.room===c.room).map(p=>this.snapshot(p,c)),bots:{seed:this.botSeed(c.room),at:now,count:PLAZA_BOT_COUNT}});
   this.send(c,{type:'gym',room:c.room,entries:this.gymSnapshot(c.room)});
   // MVP active state for this room
-  {const m=this.mvpSnapshot(c.room);if(m)this.send(c,{type:'mvp_spawn',...m})}
+  if(this.mvpLoaded!==false){const m=this.mvpSnapshot(c.room);if(m)this.send(c,{type:'mvp_spawn',...m})}
   this.send(c,{type:'battle',room:c.room,at:now,...this.battleSnapshot(c.room)});
   this.send(c,this.pokerPayload(c.room,c.id,now));
   this.broadcastPlayer(c,p=>p.room===c.room,c);
@@ -878,8 +883,10 @@ export class SocialRoom {
   // arrivals mutually distinct) instead of the old entrance grid.
   const spawn=R.fountainSpawn(members)||{x:0,z:12};
   c.room=room;c.x=spawn.x;c.z=spawn.z;c.dir=0;c.at=now;c.sit=false;c.path=[];c.seat=null;c.pokerSeat=null;c.fish=null;
-  if(!this.mvpActive.has(room)&&!this.mvpNextAt.has(room))this.scheduleMvp(room,now);
-  this.tickMvp(now);
+  if(this.mvpLoaded!==false){
+   if(!this.mvpActive.has(room)&&!this.mvpNextAt.has(room))this.scheduleMvp(room,now);
+   this.tickMvp(now);
+  }
   this.sendRoom(c,now);
   this.onOccupancyChange?.();
  }

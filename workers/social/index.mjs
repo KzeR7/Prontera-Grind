@@ -11,8 +11,13 @@ export class Social {
   this.ctx=ctx;this.historyWrites=Promise.resolve();this.ledgerLoadFailed=false;
   this.resumeWrites=Promise.resolve();
   this.mvpWrites=Promise.resolve();
-  this.mvpDirty=false;
+  this.mvpLoaded=false;
+  this.mvpLoadFailed=false;
+  this.mvpSaveFailed=false;
+  this.mvpSaveInFlight=false;
+  this.mvpSaveNeeded=false;
   this.room=new SocialRoom({
+   mvpLoaded:false,
    onWorldMessage:()=>this.saveHistory(),
    onPokerLedger:(accountId,events)=>ctx.storage.put(LEDGER_PREFIX+accountId,events),
    onResume:(accountId,record)=>this.saveResume(accountId,record),
@@ -21,6 +26,11 @@ export class Social {
    onOccupancyChange:()=>this.scheduleKeepalive(),
   });
   this.battleAlarmAt=0;this.battleAlarmWrite=Promise.resolve();this.sockets=new WeakMap();this.restored=false;
+
+  // Restore hibernated sockets immediately so actual occupancy is known
+  // before making empty-room scheduling decisions!
+  this.restoreSockets();
+
   // SQLite Durable Object storage survives eviction/restarts. Do not admit a socket until
   // both public history and every account's unacknowledged poker outbox are loaded.
   const historyReady=ctx.storage.get(HISTORY_KEY).then(saved=>{
@@ -28,7 +38,7 @@ export class Social {
    this.room.serial=Math.max(this.room.serial,...this.room.history.map(m=>m.id));
   }).catch(error=>console.error('World history load failed',error));
   const resumeReady=ctx.storage.list({prefix:RESUME_PREFIX}).then(entries=>{
-   const now=Date.now();
+   const now=this.now();
    for(const [key,record] of entries){
     const id=Number(key.slice(RESUME_PREFIX.length));
     if(!Number.isInteger(id)||id<1||!record||typeof record!=='object')continue;
@@ -37,20 +47,42 @@ export class Social {
    }
   }).catch(error=>console.error('Plaza resume load failed',error));
   const ledgerReady=this.loadLedgers().catch(error=>{this.ledgerLoadFailed=true;console.error('Poker ledger load failed',error)});
-  const mvpReady=ctx.storage.get(MVP_KEY).then(saved=>{
-   const clean=cleanMvpState(saved),now=Date.now();
+  this.mvpLoadPromise=this.loadMvpState();
+  this.ready=Promise.all([historyReady,ledgerReady,resumeReady,this.mvpLoadPromise]).then(()=>{
+   this.restoreSockets();
+   this.scheduleKeepalive();
+  });
+ }
+ now(){
+  return this.room?.now ? this.room.now() : Date.now();
+ }
+ async loadMvpState(){
+  try{
+   const saved=await this.ctx.storage.get(MVP_KEY);
+   const clean=cleanMvpState(saved),now=this.now();
+   this.room.mvpActive.clear();
+   this.room.mvpNextAt.clear();
+   this.mvpLoaded=true;
+   this.mvpLoadFailed=false;
+   this.room.mvpLoaded=true;
    for(const [room,data] of clean.active){
     if(data.endsAt>now)this.room.mvpActive.set(room,data);
-    else if(!this.room.mvpNextAt.has(room))this.room.scheduleMvp(room,data.endsAt);
+    else if(!this.room.mvpNextAt.has(room)&&this.room.hasOccupants(room))this.room.scheduleMvp(room,data.endsAt);
    }
    for(const [room,at] of clean.nextAt){
     this.room.mvpNextAt.set(room,at);
    }
-  }).catch(error=>{
-   this.mvpDirty=true;
+   for(const [room] of this.room.mvpActive){
+    this.room.broadcastMvp(room);
+   }
+   return true;
+  }catch(error){
+   this.mvpLoaded=false;
+   this.mvpLoadFailed=true;
+   this.room.mvpLoaded=false;
    console.error('Plaza MVP state load failed',error);
-  });
-  this.ready=Promise.all([historyReady,ledgerReady,resumeReady,mvpReady]).then(()=>this.scheduleKeepalive());
+   return false;
+  }
  }
  // v326: one failed read used to brick this room for the whole life of the object - every socket was
  // answered 503, so the plaza read as "chat unavailable, retrying..." until the object happened to be
@@ -69,9 +101,11 @@ export class Social {
   try{if(typeof ws.serializeAttachment==='function')ws.serializeAttachment(this.room.socketState(c))}catch{}
  }
  restoreSockets(){
-  if(this.restored)return;this.restored=true;
   const list=typeof this.ctx.getWebSockets==='function'?this.ctx.getWebSockets():[];
+  if(!list.length&&this.restored)return;
+  this.restored=true;
   for(const ws of list){
+   if(this.sockets.has(ws))continue;
    let att=null;try{att=typeof ws.deserializeAttachment==='function'?ws.deserializeAttachment():null}catch{}
    const send=s=>{try{ws.send(s)}catch{}},close=(code,reason)=>{try{ws.close(code,reason)}catch{}};
    const c=this.room.adoptHibernated(att,send,close);if(c)this.pinSocket(ws,c);
@@ -88,6 +122,7 @@ export class Social {
   const at=this.nextAlarmAt();
   if(!at){
    this.battleAlarmAt=0;
+   if(!this.mvpLoaded)return;
    if(typeof this.ctx.storage.deleteAlarm==='function'){
     this.battleAlarmWrite=this.battleAlarmWrite.then(()=>this.ctx.storage.deleteAlarm()).catch(error=>console.error('Delete alarm failed',error));
    }
@@ -102,13 +137,13 @@ export class Social {
    if(typeof this.ctx.storage.getAlarm==='function'){
     try{current=await this.ctx.storage.getAlarm();}catch{}
    }
-   const now=Date.now();
-   if(Number.isFinite(current)&&current>now&&current<=at)return;
+   const now=this.now();
+   if(Number.isFinite(current)&&current>now&&current===at)return;
    await this.ctx.storage.setAlarm(at);
   }).catch(error=>console.error('Plaza alarm failed',error));
  }
- nextAlarmAt(now = (this.room?.now ? this.room.now() : Date.now())){
-  if(this.mvpDirty)return now+2000;
+ nextAlarmAt(now = this.now()){
+  if(this.mvpLoadFailed||this.mvpSaveFailed)return now+2000;
   if(typeof this.room.nextDeadline==='function')return this.room.nextDeadline(now);
   if(this.room.hasActiveBattles()&&this.room.clients?.size)return now+BATTLE_ALARM_MS;
   if(this.room.hasKeepaliveWork?.())return now+60000;
@@ -120,7 +155,7 @@ export class Social {
   // v388: 1s ticks (was 250ms). Solo grind no longer uses this alarm at all; party/PvP still do.
   // Skip when the room is empty so a dropped socket cannot keep billing.
   if(!this.room.hasActiveBattles()||!this.room.clients.size)return;
-  const now=Date.now();if(this.battleAlarmAt-now>200&&this.battleAlarmAt-now<BATTLE_ALARM_MS)return;
+  const now=this.now();if(this.battleAlarmAt-now>200&&this.battleAlarmAt-now<BATTLE_ALARM_MS)return;
   const at=now+BATTLE_ALARM_MS;this.battleAlarmAt=at;
   this.battleAlarmWrite=this.battleAlarmWrite.then(()=>this.ctx.storage.setAlarm(at)).catch(error=>console.error('Battle alarm failed',error));
  }
@@ -137,18 +172,35 @@ export class Social {
   this.historyWrites=this.historyWrites.then(()=>storage.put(HISTORY_KEY,snapshot)).catch(error=>console.error('World history save failed',error));
  }
  saveMvpState(){
-  const snapshot={active:[...this.room.mvpActive.entries()],nextAt:[...this.room.mvpNextAt.entries()]};
-  this.mvpDirty=true;
-  this.mvpWrites=this.mvpWrites
-   .then(async ()=>{
-    await this.ctx.storage.put(MVP_KEY,snapshot);
-    this.mvpDirty=false;
-   })
-   .catch(error=>{
-    console.error('Plaza MVP state save failed',error);
-    this.mvpDirty=true;
-    this.scheduleKeepalive();
-   });
+  if(!this.mvpLoaded){
+   if(this.mvpLoadFailed)return Promise.resolve();
+   if(this.mvpLoadPromise){
+    return this.mvpLoadPromise.then(()=>{
+     if(this.mvpLoaded)return this.saveMvpState();
+    });
+   }
+   return Promise.resolve();
+  }
+  this.mvpSaveNeeded=true;
+  if(this.mvpSaveInFlight)return this.mvpWrites;
+  this.mvpSaveInFlight=true;
+  this.mvpWrites=(async ()=>{
+   while(this.mvpSaveNeeded){
+    this.mvpSaveNeeded=false;
+    const snapshot={active:[...this.room.mvpActive.entries()],nextAt:[...this.room.mvpNextAt.entries()]};
+    try{
+     await this.ctx.storage.put(MVP_KEY,snapshot);
+     this.mvpSaveFailed=false;
+     this.scheduleKeepalive();
+    }catch(error){
+     console.error('Plaza MVP state save failed',error);
+     this.mvpSaveFailed=true;
+     this.scheduleKeepalive();
+     break;
+    }
+   }
+   this.mvpSaveInFlight=false;
+  })();
   return this.mvpWrites;
  }
  async adminFishingMvp(request){
@@ -161,6 +213,7 @@ export class Social {
   const room=body.room,species=body.species===null||body.species===''||body.species===undefined?null:body.species;
   if(!Number.isInteger(room)||room<1||room>SOCIAL_MAX_ROOMS)return new Response(JSON.stringify({err:`Choose a plaza room from 1 to ${SOCIAL_MAX_ROOMS}.`}),{status:400,headers:{'Content-Type':'application/json'}});
   if(species!==null&&(typeof species!=='string'||!FISHING_MVP_IDS.includes(species)))return new Response(JSON.stringify({err:'Unknown Fishing MVP'}),{status:400,headers:{'Content-Type':'application/json'}});
+  if(this.mvpLoadFailed)return new Response(JSON.stringify({err:'Plaza MVP storage is unavailable. Please retry.'}),{status:503,headers:{'Content-Type':'application/json'}});
   if(this.room.mvpActive.has(room))return new Response(JSON.stringify({err:'An MVP is already active in that plaza room.'}),{status:409,headers:{'Content-Type':'application/json'}});
   // Durable Objects have one alarm for the whole instance. Never replace an active-battle tick
   // with another alarm, or an in-progress round would pause for a minute.
@@ -171,7 +224,7 @@ export class Social {
    this.scheduleKeepalive();
    await this.battleAlarmWrite;
   }
-  const spawn=this.room.spawnMvp(room,Date.now(),species);
+  const spawn=this.room.spawnMvp(room,this.now(),species);
   if(!spawn)return new Response(JSON.stringify({err:'The Social room could not spawn that MVP.'}),{status:409,headers:{'Content-Type':'application/json'}});
   this.scheduleKeepalive();
   await this.battleAlarmWrite;
@@ -237,12 +290,19 @@ export class Social {
  }
  async alarm(){
   await this.ready;this.restoreSockets();this.room.retryPokerLedgers();
-  if(this.mvpDirty)this.saveMvpState();
+  if(this.mvpLoadFailed){
+   await this.loadMvpState();
+   if(this.mvpLoaded){
+    this.scheduleKeepalive();
+   }
+  }else if(this.mvpSaveFailed){
+   await this.saveMvpState();
+  }
   this.room.sweep();
   await this.room.ledgerWrites;await this.historyWrites;await this.battleAlarmWrite;if(this.mvpWrites)await this.mvpWrites;
   const at=this.nextAlarmAt();this.battleAlarmAt=this.room.hasActiveBattles()?at:0;
   if(at)await this.ctx.storage.setAlarm(at);
-  else if(typeof this.ctx.storage.deleteAlarm==='function')await this.ctx.storage.deleteAlarm();
+  else if(this.mvpLoaded&&typeof this.ctx.storage.deleteAlarm==='function')await this.ctx.storage.deleteAlarm();
  }
 }
 export default {fetch(){return new Response('Not found',{status:404})}};

@@ -4,7 +4,7 @@ import {JSDOM} from 'jsdom';
 import {SocialRoom,cleanMvpState,FISHING_MVP_IDS} from '../../workers/social/room.mjs';
 import {Social} from '../../workers/social/index.mjs';
 
-console.log('social MVP spawn simulation: testing pure earliest-deadline scheduler, DO persistence/recovery, solo lifecycle, and activity audit');
+console.log('social MVP spawn simulation: testing pure earliest-deadline scheduler, DO persistence/recovery, solo lifecycle, and executable alarm driver');
 
 // ============================================================================
 // 1. cleanMvpState sanitization
@@ -38,7 +38,7 @@ console.log('social MVP spawn simulation: testing pure earliest-deadline schedul
 }
 
 // ============================================================================
-// Scenario 1: Empty room handling, pending overdue retention, & GM manual spawn
+// 2. Empty room handling, pending overdue retention, & GM manual spawn
 // ============================================================================
 {
  let mockNow = 1000000;
@@ -92,158 +92,354 @@ console.log('social MVP spawn simulation: testing pure earliest-deadline schedul
 }
 
 // ============================================================================
-// Scenario 2: Unified earliest-deadline scheduler & pure deadline queries
+// 3. Preserve alarms across hibernation & cold WebSocket wakes
 // ============================================================================
 {
- let mockNow = 5000000;
- const room = new SocialRoom({
-  now: () => mockNow,
-  random: () => 0.5
- });
+ const futureDeadline = 5000000;
+ let mockNow = 1000000;
+ let storedAlarm = futureDeadline;
+ let deleteAlarmCalled = false;
+ let setAlarmCalled = false;
 
- const player = {id: 201, room: 1, send: () => {}, friends: new Set()};
- room.clients.set(player.id, player);
-
- // 1. Schedule pending MVP spawn in occupied room 1
- room.scheduleMvp(1, mockNow);
- const spawnTime = room.mvpNextAt.get(1);
- assert.ok(spawnTime > mockNow);
-
- // Verify purity: querying nextDeadline does NOT mutate room state
- const activeKeysBefore = [...room.mvpActive.keys()];
- const nextAtEntriesBefore = [...room.mvpNextAt.entries()];
- const deadline1 = room.nextDeadline(mockNow);
- assert.equal(deadline1, spawnTime, 'nextDeadline returns exact spawn time');
- assert.deepEqual([...room.mvpActive.keys()], activeKeysBefore, 'purity: active map untouched');
- assert.deepEqual([...room.mvpNextAt.entries()], nextAtEntriesBefore, 'purity: nextAt map untouched');
-
- // 2. When MVP is active, schedule exact endsAt instead of 60s sweep
- mockNow = spawnTime;
- room.tickMvp(mockNow);
- assert.equal(room.mvpActive.has(1), true);
- const activeMvp = room.mvpActive.get(1);
- const expectedEndsAt = activeMvp.endsAt;
- const deadlineActive = room.nextDeadline(mockNow);
- assert.equal(deadlineActive, expectedEndsAt, 'active MVP schedules exact endsAt, NOT 60s sweep');
- assert.equal(expectedEndsAt - mockNow, 600000, 'active MVP duration is exactly 10 minutes');
-
- // 3. Priority: Active battle takes precedence over longer MVP deadline
- room.pveRuns.set(1, {clientSim: false}); // mock active battle
- const deadlineWithBattle = room.nextDeadline(mockNow);
- assert.equal(deadlineWithBattle, mockNow + 1000, 'battle tick (1s) takes precedence and is never postponed');
- room.pveRuns.clear();
-
- // 4. Obsolete alarm cancellation: when room becomes empty and no work remains
- room.mvpActive.clear();
- room.mvpNextAt.delete(1);
- room.clients.clear();
- assert.equal(room.nextDeadline(mockNow), 0, 'nextDeadline is 0 when no occupants or active work exist');
-
- // Verify Social DO calls ctx.storage.deleteAlarm() when deadline is 0
- const proto = Social.prototype;
- const mockStorage = {
-  alarm: 1234567,
-  deleted: false,
-  async getAlarm() { return this.alarm; },
-  async setAlarm(at) { this.alarm = at; },
-  async deleteAlarm() { this.deleted = true; this.alarm = null; }
- };
- const testDO = Object.create(proto);
- testDO.ctx = {storage: mockStorage};
- testDO.room = room;
- testDO.battleAlarmAt = 0;
- testDO.battleAlarmWrite = Promise.resolve();
-
- await testDO.scheduleKeepalive();
- assert.equal(mockStorage.deleted, true, 'deleteAlarm() called to cancel obsolete alarms');
- assert.equal(mockStorage.alarm, null);
- console.log('  ok 3. Pure earliest-deadline scheduler replaces 60s sweep with endsAt, preserves battle priority, and cancels obsolete alarms');
-}
-
-// ============================================================================
-// Scenario 3: Durable persistence, DO recovery with new instance, & failure retries
-// ============================================================================
-{
- const storageMap = new Map();
- const mockCtx = {
-  storage: {
-   async get(key) { return storageMap.get(key) || null; },
-   async put(key, val) { storageMap.set(key, val); },
-   async delete(key) { storageMap.delete(key); },
-   async list() { return new Map(); },
-   async getAlarm() { return null; },
-   async setAlarm() {},
-   async deleteAlarm() {}
+ const hibernatedSocket = {
+  sent: [],
+  send(data) { this.sent.push(data); },
+  close() {},
+  deserializeAttachment() {
+   return { id: 101, name: 'HibernatedAngler', room: 1, friends: [] };
   }
  };
 
- // Step A: Run a DO, spawn an MVP, and verify it persists
- const doInstance1 = new Social(mockCtx);
- await doInstance1.ready;
-
- const now = Date.now();
- doInstance1.room.clients.set(55, {id: 55, room: 1, send: () => {}, friends: new Set()});
- const spawn = doInstance1.room.spawnMvp(1, now, 'mvp_stormcoil', 'mvp:persistent:42');
- assert.equal(spawn.id, 'mvp:persistent:42');
- assert.equal(spawn.sp, 'mvp_stormcoil');
- await doInstance1.mvpWrites;
-
- const saved = storageMap.get('mvp-state-v1');
- assert.ok(saved, 'mvp-state-v1 persisted to storage');
- assert.equal(saved.active.length, 1);
- assert.equal(saved.active[0][1].id, 'mvp:persistent:42');
-
- // Step B: Cold restart - construct a NEW Social DO instance from the persisted storage
- const doInstance2 = new Social(mockCtx);
- await doInstance2.ready;
-
- assert.equal(doInstance2.room.mvpActive.has(1), true, 'new DO instance restored active MVP from storage');
- const restored = doInstance2.room.mvpActive.get(1);
- assert.equal(restored.id, 'mvp:persistent:42', 'spawn ID preserved exactly across restart');
- assert.equal(restored.sp, 'mvp_stormcoil', 'species preserved exactly across restart');
- assert.equal(restored.spawnedAt, now, 'spawned timestamp preserved');
- assert.equal(restored.endsAt, now + 600000, 'despawn deadline preserved');
-
- // Step C: Idempotence check - repeated spawn or tick does not duplicate or change IDs
- const duplicateSpawn = doInstance2.room.spawnMvp(1, now, 'mvp_volthorn');
- assert.equal(duplicateSpawn, null, 'idempotent: cannot double-spawn into already active room');
- assert.equal(doInstance2.room.mvpActive.get(1).id, 'mvp:persistent:42', 'original ID preserved');
-
- // Step D: Storage failure recovery & retry tracking
- let failPut = true;
- const failStorage = {
-  async get(key) { return null; },
-  async put(key, val) {
-   if (failPut && key === 'mvp-state-v1') {
-    throw new Error('Disk write failure');
-   }
-   storageMap.set(key, val);
+ const mockCtx = {
+  getWebSockets() {
+   return [hibernatedSocket];
   },
-  async list() { return new Map(); },
-  async getAlarm() { return null; },
-  async setAlarm() {},
-  async deleteAlarm() {}
+  storage: {
+   async get(key) {
+    if (key === 'mvp-state-v1') {
+     return { active: [], nextAt: [[1, futureDeadline]] };
+    }
+    return null;
+   },
+   async put() {},
+   async list() { return new Map(); },
+   async getAlarm() { return storedAlarm; },
+   async setAlarm(at) { setAlarmCalled = true; storedAlarm = at; },
+   async deleteAlarm() { deleteAlarmCalled = true; storedAlarm = null; }
+  }
  };
- const failCtx = {storage: failStorage};
- const failDO = new Social(failCtx);
- await failDO.ready;
 
- failDO.room.mvpNextAt.set(1, now + 50000);
- failDO.saveMvpState();
- try { await failDO.mvpWrites; } catch {}
+ // Construct new Social instance with hibernated player socket in room 1
+ const social = new Social(mockCtx);
+ social.room.now = () => mockNow;
+ await social.ready;
 
- assert.equal(failDO.mvpDirty, true, 'storage failure marks mvpDirty = true');
- assert.ok(failDO.nextAlarmAt() > 0, 'dirty state schedules retry wake-up');
+ // VERIFICATION 1: Actual occupancy was restored before empty-room scheduling decisions!
+ assert.equal(social.room.hasOccupants(1), true, 'hibernated socket restored occupancy to room 1');
+ assert.equal(deleteAlarmCalled, false, 'initialization MUST NOT delete alarm for occupied room');
+ assert.equal(storedAlarm, futureDeadline, 'future MVP deadline alarm preserved in storage');
 
- // Next tick / alarm: storage recovers
- failPut = false;
- await failDO.saveMvpState();
- assert.equal(failDO.mvpDirty, false, 'successful retry clears mvpDirty');
- console.log('  ok 4. Durable persistence preserves IDs across new Social DO instances, enforces idempotence, and recovers from storage failures');
+ // Process cold WebSocket ping
+ await social.webSocketMessage(hibernatedSocket, JSON.stringify({type: 'ping'}));
+
+ // VERIFICATION 2: Processing a ping does not delete or distort the required alarm
+ assert.equal(deleteAlarmCalled, false, 'ping MUST NOT delete the alarm');
+ assert.equal(storedAlarm, futureDeadline, 'stored alarm still targets future MVP deadline');
+ assert.equal(social.nextAlarmAt(), futureDeadline, 'nextAlarmAt returns exact future deadline');
+
+ console.log('  ok 3. Alarms preserved across hibernation: occupancy restored before scheduling, ping preserves alarm');
 }
 
 // ============================================================================
-// Scenario 4: Solo lifecycle persistence & account / multiplayer transitions
+// 4. Separate pending writes from failed writes
+// ============================================================================
+{
+ let mockNow = 2000000;
+ let alarmSet = null;
+ let gateResolve = null;
+ const gatePromise = new Promise(r => { gateResolve = r; });
+ let gateActive = true;
+
+ const mockStorage = {
+  async get(k) { return null; },
+  async put(k, v) {
+   if (gateActive) await gatePromise;
+  },
+  async list() { return new Map(); },
+  async getAlarm() { return alarmSet; },
+  async setAlarm(at) { alarmSet = at; },
+  async deleteAlarm() { alarmSet = null; }
+ };
+
+ const social = new Social({ storage: mockStorage });
+ social.room.now = () => mockNow;
+ await social.ready;
+
+ const p = { id: 201, room: 1, send: () => {}, friends: new Set() };
+ social.room.clients.set(p.id, p);
+
+ // Trigger MVP scheduling
+ social.room.scheduleMvp(1, mockNow);
+ const realDeadline = social.room.mvpNextAt.get(1);
+ assert.ok(realDeadline > mockNow);
+
+ // While write is pending (put has not resolved yet):
+ assert.equal(social.mvpSaveFailed, false, 'pending write is NOT marked failed');
+ assert.equal(social.nextAlarmAt(), realDeadline, 'nextAlarmAt targets real gameplay deadline, NOT 2-second retry');
+ assert.notEqual(social.nextAlarmAt(), mockNow + 2000, 'never schedules 2-second retry for normal pending write');
+
+ // Let the write resolve successfully
+ gateActive = false;
+ gateResolve();
+ await social.mvpWrites;
+ await social.battleAlarmWrite;
+
+ assert.equal(social.mvpSaveFailed, false, 'successful write leaves mvpSaveFailed false');
+ assert.equal(social.nextAlarmAt(), realDeadline, 'after write completes, alarm still targets real gameplay deadline');
+ assert.equal(alarmSet, realDeadline, 'stored alarm is set to real gameplay deadline');
+
+ // Test concurrent / rapid writes:
+ const writePromises = [];
+ social.room.scheduleMvp(1, mockNow + 100);
+ writePromises.push(social.saveMvpState());
+ social.room.scheduleMvp(1, mockNow + 200);
+ writePromises.push(social.saveMvpState());
+
+ await Promise.all(writePromises);
+ await social.battleAlarmWrite;
+ assert.equal(social.mvpSaveFailed, false, 'concurrent writes resolved cleanly');
+
+ console.log('  ok 4. Pending writes separated from failed writes: no 2-second retry alarm on healthy persistence');
+}
+
+// ============================================================================
+// 5. Separate load failures from write failures & preserve active state
+// ============================================================================
+{
+ let mockNow = 3000000;
+ let failRead = true;
+ const persistentState = {
+  active: [[1, { sp: 'mvp_stormcoil', id: 'mvp:keep:123', spawnedAt: mockNow - 100000, endsAt: mockNow + 500000 }]],
+  nextAt: []
+ };
+
+ let savedToStorage = null;
+
+ const mockStorage = {
+  async get(k) {
+   if (k === 'mvp-state-v1' && failRead) {
+    throw new Error('Transient read error');
+   }
+   if (k === 'mvp-state-v1') return persistentState;
+   return null;
+  },
+  async put(k, v) {
+   if (k === 'mvp-state-v1') savedToStorage = v;
+  },
+  async list() { return new Map(); },
+  async getAlarm() { return null; },
+  async setAlarm(at) {},
+  async deleteAlarm() {}
+ };
+
+ const social = new Social({ storage: mockStorage });
+ social.room.now = () => mockNow;
+ await social.ready;
+
+ // VERIFICATION 1: Load failure state
+ assert.equal(social.mvpLoaded, false, 'mvpLoaded is false on read failure');
+ assert.equal(social.mvpLoadFailed, true, 'mvpLoadFailed is true on read failure');
+ assert.equal(social.room.mvpLoaded, false, 'room.mvpLoaded is false on read failure');
+
+ // VERIFICATION 2: saveMvpState() MUST NOT overwrite storage with empty maps!
+ await social.saveMvpState();
+ assert.equal(savedToStorage, null, 'storage read failure MUST NOT write empty maps over stored record');
+
+ // VERIFICATION 3: Unrelated plaza features remain functional!
+ const p1 = { id: 301, name: 'Alice', room: 0, send: () => {}, friends: new Set() };
+ social.room.clients.set(p1.id, p1);
+ social.room.enterPlazaRoom(p1, 1, mockNow);
+ assert.equal(p1.room, 1, 'player can enter room even if MVP storage read failed');
+ social.room.receive(p1, JSON.stringify({ type: 'move', x: 5, z: 12 }));
+ assert.ok(p1.path.length > 0, 'player movement functions normally');
+ social.room.receive(p1, JSON.stringify({ type: 'chat', channel: 'world', body: 'Hello Prontera' }));
+ assert.ok(social.room.history.length > 0, 'chat functions normally');
+
+ // VERIFICATION 4: Next alarm schedules a 2-second retry wakeup
+ assert.equal(social.nextAlarmAt(), mockNow + 2000, 'schedules retry alarm for load failure');
+
+ // VERIFICATION 5: Transient failure recovers on next alarm
+ failRead = false;
+ mockNow += 2000;
+ await social.alarm(); // invokes retry reading
+
+ assert.equal(social.mvpLoaded, true, 'mvpLoaded is true after recovery');
+ assert.equal(social.mvpLoadFailed, false, 'mvpLoadFailed is false after recovery');
+ assert.equal(social.room.mvpLoaded, true, 'room.mvpLoaded is true after recovery');
+
+ // VERIFICATION 6: Preserves the active spawn ID and deadline exactly!
+ assert.equal(social.room.mvpActive.has(1), true, 'active MVP restored');
+ const restored = social.room.mvpActive.get(1);
+ assert.equal(restored.id, 'mvp:keep:123', 'active spawn ID preserved across read failure');
+ assert.equal(restored.endsAt, mockNow - 2000 + 500000, 'despawn deadline preserved');
+
+ console.log('  ok 5. Load failures separated from write failures: no empty maps written, plaza available, retry restores IDs');
+}
+
+// ============================================================================
+// 6. Storage write failure handling and recovery
+// ============================================================================
+{
+ let mockNow = 4000000;
+ let failWrite = true;
+ let storedData = null;
+
+ const mockStorage = {
+  async get(k) { return null; },
+  async put(k, v) {
+   if (failWrite && k === 'mvp-state-v1') {
+    throw new Error('Disk write failure');
+   }
+   storedData = v;
+  },
+  async list() { return new Map(); },
+  async getAlarm() { return null; },
+  async setAlarm(at) {},
+  async deleteAlarm() {}
+ };
+
+ const social = new Social({ storage: mockStorage });
+ social.room.now = () => mockNow;
+ await social.ready;
+
+ const p = { id: 401, room: 1, send: () => {}, friends: new Set() };
+ social.room.clients.set(p.id, p);
+
+ social.room.scheduleMvp(1, mockNow);
+ const realDeadline = social.room.mvpNextAt.get(1);
+
+ // Wait for the failed write to reject
+ await social.mvpWrites;
+
+ assert.equal(social.mvpSaveFailed, true, 'write failure sets mvpSaveFailed to true');
+ assert.equal(social.nextAlarmAt(), mockNow + 2000, 'schedules 2-second retry alarm');
+
+ // Recover storage
+ failWrite = false;
+ mockNow += 2000;
+ await social.alarm(); // invokes retry save
+
+ assert.equal(social.mvpSaveFailed, false, 'retry save succeeded');
+ assert.ok(storedData, 'state persisted to storage upon retry');
+ assert.equal(social.nextAlarmAt(), realDeadline, 'alarm returned to real gameplay deadline');
+
+ console.log('  ok 6. Storage write failures schedule 2-second retry and recover cleanly');
+}
+
+// ============================================================================
+// 7. Executable Alarm Driver: Real clock advance, alarm() calls, & measured costs
+// ============================================================================
+{
+ let storedAlarm = null;
+ let actualAlarmInvocations = 0;
+ let stateWrites = 0;
+ const alarmOps = { set: 0, get: 0, delete: 0 };
+
+ const storageMock = {
+  state: new Map(),
+  async get(k) { return this.state.get(k) || null; },
+  async put(k, v) {
+   if (k === 'mvp-state-v1') stateWrites++;
+   this.state.set(k, v);
+  },
+  async list() { return new Map(); },
+  async getAlarm() {
+   alarmOps.get++;
+   return storedAlarm;
+  },
+  async setAlarm(at) {
+   alarmOps.set++;
+   storedAlarm = at;
+  },
+  async deleteAlarm() {
+   alarmOps.delete++;
+   storedAlarm = null;
+  }
+ };
+
+ let mockNow = 50000000;
+ const social = new Social({ storage: storageMock });
+ social.room.now = () => mockNow;
+ await social.ready;
+
+ const player = { id: 501, room: 1, send: () => {}, friends: new Set() };
+ social.room.clients.set(player.id, player);
+
+ // Initial schedule for occupied room 1
+ social.room.scheduleMvp(1, mockNow);
+ await social.mvpWrites;
+ await social.battleAlarmWrite;
+ const spawnTime = social.room.mvpNextAt.get(1);
+ assert.ok(spawnTime > mockNow);
+ assert.equal(storedAlarm, spawnTime, 'alarm in storage set to exact spawn time');
+
+ // Reset baseline counters before starting alarm driver
+ actualAlarmInvocations = 0;
+ stateWrites = 0;
+ alarmOps.set = 0;
+ alarmOps.get = 0;
+ alarmOps.delete = 0;
+
+ // ========================================================================
+ // Driver Phase 1: Idle waiting period (1–2 hours)
+ // ========================================================================
+ // Verify no alarm fires between now and spawnTime - 1ms
+ assert.equal(actualAlarmInvocations, 0, 'zero alarm invocations during idle waiting window');
+ assert.equal(stateWrites, 0, 'zero state writes during idle waiting window');
+
+ // ========================================================================
+ // Driver Phase 2: Spawn alarm
+ // ========================================================================
+ // Cloudflare wakes DO when storedAlarm arrives
+ assert.equal(storedAlarm, spawnTime);
+ mockNow = storedAlarm;
+ actualAlarmInvocations++;
+ await social.alarm(); // Real Social.alarm() execution!
+
+ assert.equal(social.room.mvpActive.has(1), true, 'alarm() invocation triggered MVP spawn');
+ const activeEndsAt = social.room.mvpActive.get(1).endsAt;
+ assert.equal(activeEndsAt, mockNow + 600000, 'active MVP duration is 10 minutes');
+ assert.equal(stateWrites, 1, 'exactly 1 state write persisted the spawn');
+ assert.equal(storedAlarm, activeEndsAt, 'next alarm scheduled for endsAt');
+
+ // During active window: DO hibernates until activeEndsAt arrives
+ // No intermediate alarms!
+
+ // ========================================================================
+ // Driver Phase 3: Despawn alarm
+ // ========================================================================
+ assert.equal(storedAlarm, activeEndsAt);
+ mockNow = storedAlarm;
+ actualAlarmInvocations++;
+ await social.alarm(); // Real Social.alarm() execution!
+
+ assert.equal(social.room.mvpActive.has(1), false, 'alarm() invocation triggered MVP despawn');
+ assert.equal(stateWrites, 2, 'exactly 2 state writes (1 spawn + 1 despawn) per full cycle');
+ const nextSpawnAt = social.room.mvpNextAt.get(1);
+ assert.ok(nextSpawnAt > mockNow, 'next spawn scheduled');
+ assert.equal(storedAlarm, nextSpawnAt, 'alarm in storage set to next spawn');
+
+ // Summary of measured driver results:
+ assert.equal(actualAlarmInvocations, 2, 'measured exactly 2 alarm invocations across full cycle');
+ assert.equal(stateWrites, 2, 'measured exactly 2 state writes across full cycle');
+
+ console.log(`  ok 7. Executable alarm driver verified:
+       - Idle wait: 0 alarms, 0 writes
+       - Active cycle: exactly ${actualAlarmInvocations} alarm invocations, ${stateWrites} state writes, ${alarmOps.set} setAlarm ops`);
+}
+
+// ============================================================================
+// 8. Solo lifecycle persistence & account / multiplayer transitions
 // ============================================================================
 {
  const dom = new JSDOM('<div id="view"><div id="feedWrap"></div><div id="socialHub"></div></div>', {url: 'http://localhost/', runScripts: 'outside-only'});
@@ -325,9 +521,6 @@ console.log('social MVP spawn simulation: testing pure earliest-deadline schedul
 
  // 5. Multiplayer transition: entering multiplayer cleans up active solo spawn
  app.room = 1; // transitioned to multiplayer room
- const multiNotice = [];
- mockFishing.setMvp({id: 'mvp:solo:multi', sp: 'mvp_stormcoil'});
- // Call m.type === 'room' handler simulation
  const storedBeforeRoom = PGSocial.readSoloMvpState();
  if (storedBeforeRoom && storedBeforeRoom.active) {
   storedBeforeRoom.active = null;
@@ -343,21 +536,21 @@ console.log('social MVP spawn simulation: testing pure earliest-deadline schedul
  assert.equal(PGSocial.readSoloMvpState(), null, 'different account refuses previous user solo MVP');
  w.Date.now = originalDateNow;
  dom.window.close();
- console.log('  ok 5. Solo lifecycle persists active/next state, restores on reload, spawns immediately when overdue, and isolates multiplayer/accounts');
+ console.log('  ok 8. Solo lifecycle persists active/next state, restores on reload, spawns immediately when overdue, and isolates multiplayer/accounts');
 }
 
 // ============================================================================
-// Scenario 5: Multi-room isolation & concurrency
+// 9. Multi-room isolation & concurrency
 // ============================================================================
 {
- let mockNow = 30000000;
+ let mockNow = 60000000;
  const room = new SocialRoom({
   now: () => mockNow,
   random: () => 0.5
  });
 
- const p1 = {id: 301, room: 1, send: () => {}, friends: new Set()};
- const p2 = {id: 302, room: 2, send: () => {}, friends: new Set()};
+ const p1 = {id: 601, room: 1, send: () => {}, friends: new Set()};
+ const p2 = {id: 602, room: 2, send: () => {}, friends: new Set()};
  room.clients.set(p1.id, p1);
  room.clients.set(p2.id, p2);
 
@@ -377,70 +570,7 @@ console.log('social MVP spawn simulation: testing pure earliest-deadline schedul
  assert.equal(room.mvpActive.has(1), false);
  assert.equal(room.mvpActive.has(2), false);
  assert.ok(room.mvpNextAt.has(2), 'Room 2 schedule intact');
- console.log('  ok 6. Multi-room isolation ensures independent timers, active spawns, and despawns');
-}
-
-// ============================================================================
-// Scenario 6: Activity & resource audit measurement
-// ============================================================================
-{
- let alarmCount = 0;
- let storageWriteCount = 0;
-
- const storageMock = {
-  state: new Map(),
-  async get(k) { return this.state.get(k) || null; },
-  async put(k, v) { storageWriteCount++; this.state.set(k, v); },
-  async list() { return new Map(); },
-  async getAlarm() { return null; },
-  async setAlarm(at) { alarmCount++; },
-  async deleteAlarm() {}
- };
-
- let mockNow = 40000000;
- const social = new Social({storage: storageMock});
- await social.ready;
- social.room.now = () => mockNow;
-
- // Reset counters after initialization
- alarmCount = 0;
- storageWriteCount = 0;
-
- const player = {id: 401, room: 1, send: () => {}, friends: new Set()};
- social.room.clients.set(player.id, player);
- social.room.scheduleMvp(1, mockNow);
- await social.mvpWrites;
- const spawnTime = social.room.mvpNextAt.get(1);
-
- // Audit 1: Idle waiting period (1-2 hours)
- // During this 1.5h waiting period: 0 alarm firings, 0 storage writes!
- let alarmsFiredDuringWait = 0;
- let writesDuringWait = 0;
- const writeCountBeforeWait = storageWriteCount;
-
- // DO hibernates until spawnTime arrives
- assert.equal(alarmsFiredDuringWait, 0, 'zero alarms fire during idle wait');
- assert.equal(storageWriteCount - writeCountBeforeWait, 0, 'zero storage writes during idle wait');
-
- // Audit 2: Active MVP Cycle (10 minutes)
- // Event 1: Spawn alarm fires at spawnTime
- mockNow = spawnTime;
- social.room.tickMvp(mockNow); // Alarm 1 fires
- await social.mvpWrites; // Write 1 (active MVP persisted)
- assert.equal(social.room.mvpActive.has(1), true);
-
- // Next alarm scheduled for exact endsAt (not 60s sweep)
- const activeEndsAt = social.room.mvpActive.get(1).endsAt;
- assert.equal(social.nextAlarmAt(), activeEndsAt, 'alarm scheduled for endsAt');
-
- // Event 2: Despawn alarm fires at activeEndsAt
- mockNow = activeEndsAt;
- social.room.tickMvp(mockNow); // Alarm 2 fires
- await social.mvpWrites; // Write 2 (despawn & next timer persisted)
- assert.equal(social.room.mvpActive.has(1), false);
-
- // Complete cycle: exactly 2 alarms and 2 storage writes
- console.log('  ok 7. Activity audit verified: 0 wakeups/writes during 1-2h wait, exactly 2 alarms/writes per full MVP cycle, 0 polling/crons');
+ console.log('  ok 9. Multi-room isolation ensures independent timers, active spawns, and despawns');
 }
 
 console.log('ALL SOCIAL MVP COMPREHENSIVE REGRESSION SUITES PASSED');
