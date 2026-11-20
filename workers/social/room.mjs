@@ -12,6 +12,7 @@ const R=globalThis.PGSocialRules,P=globalThis.PGSocialPoker,B=globalThis.PGDigim
 // measured from when it was accepted, and activity slides the idle window forward, so an active
 // player is no longer dropped every five minutes the way REAUTH_MS alone used to force.
 export const SOCIAL_MAX_ROOMS=50;
+export const BATTLE_ALARM_MS=1000;
 const IDLE_MS=300000,REAUTH_MS=1800000,MAX_ROOMS=SOCIAL_MAX_ROOMS,LEDGER_BATCH=100;
 // v389: how long a device-simulated PvP match may stay 'fighting' with no report from either device
 // before the plaza abandons it. GENEROUS on purpose - it must never cut a real fight short; a normal
@@ -115,6 +116,7 @@ export class SocialRoom {
   this.mvpActive=new Map();this.mvpNextAt=new Map();
   this.onBattleActivity=opts.onBattleActivity||null;
   this.onMvpChange=opts.onMvpChange||null;
+  this.onOccupancyChange=opts.onOccupancyChange||null;
  }
  // v366: `send` reports whether the bytes actually left. The handshake below is delivered from a
  // promise continuation, so a synchronous throw cannot reach the caller and used to be swallowed:
@@ -365,14 +367,19 @@ export class SocialRoom {
  broadcastGym(room){if(room)this.broadcast({type:'gym',room,entries:this.gymSnapshot(room)},p=>p.room===room)}
  stopGym(c){if(!c.gym)return;const room=c.gym.room;c.gym=null;this.broadcastGym(room)}
  // ----------------------------- MVP fishing spawn -----------------------------
+ hasOccupants(room){
+  if(!Number.isInteger(room)||room<1)return false;
+  for(const p of this.clients.values())if(p.room===room)return true;
+  return false;
+ }
  mvpSnapshot(room){const a=this.mvpActive.get(room);return a?{room,sp:a.sp,id:a.id,spawnedAt:a.spawnedAt,endsAt:a.endsAt}:null}
  broadcastMvp(room){const snap=this.mvpSnapshot(room);if(snap)this.broadcast({type:'mvp_spawn',...snap},p=>p.room===room)}
  scheduleMvp(room,now=this.now()){const delay=MVP_SPAWN_MIN+this.random()*(MVP_SPAWN_MAX-MVP_SPAWN_MIN);this.mvpNextAt.set(room,now+delay);this.onMvpChange?.()}
- spawnMvp(room,now=this.now(),requestedSp=null){
+ spawnMvp(room,now=this.now(),requestedSp=null,customId=null){
   if(!Number.isInteger(room)||room<1||room>MAX_ROOMS||this.mvpActive.has(room))return null;
   if(requestedSp!==null&&!MVP_IDS.includes(requestedSp))return null;
   const sp=requestedSp||MVP_IDS[Math.floor(this.random()*MVP_IDS.length)];
-  const id='mvp:'+now.toString(36)+':'+Math.random().toString(36).slice(2,8);
+  const id=customId||('mvp:'+now.toString(36)+':'+Math.random().toString(36).slice(2,8));
   const endsAt=now+MVP_DURATION,spawn={room,sp,id,spawnedAt:now,endsAt};
   this.mvpActive.set(room,{sp,id,spawnedAt:now,endsAt});
   this.mvpNextAt.delete(room);
@@ -393,13 +400,23 @@ export class SocialRoom {
   let earliest=0;
   for(const room of occupied){
    if(this.mvpActive.has(room))continue;
-   let next=this.mvpNextAt.get(room);
-   if(next===undefined){this.scheduleMvp(room,now);next=this.mvpNextAt.get(room)}
-   if(next!==undefined){
-    if(!earliest||next<earliest)earliest=next;
+   const next=this.mvpNextAt.get(room);
+   if(Number.isFinite(next)){
+    const target=next<=now?now+1000:next;
+    if(!earliest||target<earliest)earliest=target;
    }
   }
-  return earliest?Math.max(now+1000,earliest):0;
+  return earliest;
+ }
+ nextMvpExpiryAt(now=this.now()){
+  let earliest=0;
+  for(const active of this.mvpActive.values()){
+   if(active&&Number.isFinite(active.endsAt)){
+    const target=active.endsAt<=now?now+1000:active.endsAt;
+    if(!earliest||target<earliest)earliest=target;
+   }
+  }
+  return earliest;
  }
  tickMvp(now=this.now()){
   // collect rooms that exist or have pending mvp state
@@ -408,9 +425,16 @@ export class SocialRoom {
   for(const room of rooms){
    const active=this.mvpActive.get(room);
    if(active){if(now>=active.endsAt)this.despawnMvp(room,now);continue}
-   let next=this.mvpNextAt.get(room);
-   if(next===undefined){this.scheduleMvp(room,now);continue}
-   if(now>=next)this.spawnMvp(room,now);
+   const next=this.mvpNextAt.get(room);
+   if(next===undefined){
+    if(this.hasOccupants(room))this.scheduleMvp(room,now);
+    continue;
+   }
+   if(now>=next){
+    if(this.hasOccupants(room)){
+     this.spawnMvp(room,now);
+    }
+   }
   }
  }
  startGym(c,m,now){
@@ -464,7 +488,33 @@ export class SocialRoom {
   }
   return false;
  }
- hasKeepaliveWork(){return this.hasActiveBattles()||this.hasActiveMvp()||this.hasLivePoker()||this.ledgerDirty.size>0}
+ nextPokerDeadline(now=this.now()){
+  if(this.ledgerDirty?.size>0)return now+60000;
+  if(!this.hasLivePoker())return 0;
+  let earliest=0;
+  for(const list of this.tables.values()){
+   if(!list)continue;
+   for(const t of list){
+    if(!t)continue;
+    const d=typeof t.nextDeadline==='function'?t.nextDeadline():0;
+    if(d>0){
+     const target=d<=now?now+1000:d;
+     if(!earliest||target<earliest)earliest=target;
+    }
+   }
+  }
+  return earliest||(now+60000);
+ }
+ nextDeadline(now=this.now()){
+  if(this.hasActiveBattles()&&this.clients.size)return now+BATTLE_ALARM_MS;
+  let earliest=0;
+  const consider=at=>{if(at&&(!earliest||at<earliest))earliest=at};
+  consider(this.nextMvpExpiryAt(now));
+  consider(this.nextMvpSpawnAt(now));
+  consider(this.nextPokerDeadline(now));
+  return earliest;
+ }
+ hasKeepaliveWork(){return this.hasActiveBattles()||this.hasLivePoker()||this.ledgerDirty.size>0}
  socketState(c){return {id:c.id,name:c.name,gm:!!c.gm,friends:[...c.friends],room:c.room||0,x:c.x,z:c.z,dir:c.dir,sit:!!c.sit,seat:c.seat,pokerSeat:c.pokerSeat,look:c.look||null,path:Array.isArray(c.path)?c.path:[],at:c.at,expires:c.expires,reauthAt:c.reauthAt,fish:c.fish||null}}
  adoptHibernated(state,send,close){
   if(!state||!Number.isInteger(state.id))return null;
@@ -746,7 +796,7 @@ export class SocialRoom {
  // `viewer` is who is asking: whether this person is a friend is a fact about the two accounts, so
  // the same player is flagged for one client and not for another. Omit it for a neutral snapshot.
  snapshot(c,viewer=null){R.advance(c,this.now());return {id:c.id,name:c.name,gm:c.gm,room:c.room,x:c.x,z:c.z,dir:c.dir,sit:c.sit,path:c.path,at:c.at,look:c.look,seat:c.seat,pokerSeat:c.pokerSeat,fish:c.fish||null,party:this.partyOf(c)?.id||null,friend:!!(viewer&&viewer!==c&&viewer.friends.has(c.id))};}
- leave(c){const room=c.room;this.stopBattle(c,'left');this.partyRemove(c,'left');this.partyInvites.delete(c.id);this.standPoker(c,this.now(),false);c.room=0;c.path=[];c.seat=null;c.pokerSeat=null;c.fish=null;if(room){this.broadcast({type:'left',id:c.id,room},p=>p.room===room);this.broadcastPoker(room,this.now());this.schedulePoker(room);this.syncRooms();}}
+ leave(c){const room=c.room;this.stopBattle(c,'left');this.partyRemove(c,'left');this.partyInvites.delete(c.id);this.standPoker(c,this.now(),false);c.room=0;c.path=[];c.seat=null;c.pokerSeat=null;c.fish=null;if(room){this.broadcast({type:'left',id:c.id,room},p=>p.room===room);this.broadcastPoker(room,this.now());this.schedulePoker(room);this.syncRooms();}this.onOccupancyChange?.();}
  disconnect(c){
   if(this.clients.get(c.id)!==c)return;
   // Remove membership BEFORE any party, battle or gym cleanup can broadcast. A closed
@@ -772,6 +822,7 @@ export class SocialRoom {
    if(Number.isInteger(c.pokerSeat))this.tables.get(room)?.[Math.floor(c.pokerSeat/6)]?.markArrived(c.id,false,now);
    this.broadcast({type:'left',id:c.id,room},p=>p.room===room);
    this.broadcastPoker(room,now);this.syncRooms();
+   this.onOccupancyChange?.();
    return;
   }
   this.leave(c);
@@ -830,6 +881,7 @@ export class SocialRoom {
   if(!this.mvpActive.has(room)&&!this.mvpNextAt.has(room))this.scheduleMvp(room,now);
   this.tickMvp(now);
   this.sendRoom(c,now);
+  this.onOccupancyChange?.();
  }
  // The warning is a client affordance; this is the authority. An old client, a queued floor
  // click or a room-switch packet cannot silently stand up a reserved poker player.

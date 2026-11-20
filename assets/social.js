@@ -1233,33 +1233,106 @@ function fishingAnnounce(fish){
  return pushFishNote({sp:fish.sp,w:fish.w,kind:fish.kind,name:'You',from:app.id||SOLO_ID,at:Date.now()});
 }
 function bindFishing(){const F=FISHING();if(!F)return;F.bind({host:()=>typeof S==='object'&&S?S:null,scene:()=>app.scene,self:fishingSelf,moveTo:(x,z)=>moveAction(x,z),walkTo:(x,z)=>performMoveAction(x,z,true),showOff:fishingShowOff,announce:fishingAnnounce,rig:fishingRig,titleChanged:fishingTitleChanged,notice,isUpdating:()=>typeof CLOUD!=='undefined'&&!!CLOUD.updating,save:()=>{if(typeof save==='function'&&typeof S==='object'&&S)save()},button:$id('socialFishBtn')})}
+const SOLO_MVP_KEY='pg_solo_mvp_v1';
+function soloUserKey(){
+ const u=typeof CLOUD!=='undefined'&&CLOUD.user?(typeof CLOUD.user==='string'?CLOUD.user:CLOUD.user.username):typeof currentUser==='string'&&currentUser?currentUser:'';
+ return u||app.user||'solo';
+}
+function readSoloMvpState(){
+ try{
+  const raw=localStorage.getItem(SOLO_MVP_KEY);
+  if(!raw)return null;
+  const parsed=JSON.parse(raw);
+  if(!parsed||typeof parsed!=='object')return null;
+  const user=soloUserKey();
+  if(parsed.user&&parsed.user!==user){
+   localStorage.removeItem(SOLO_MVP_KEY);
+   return null;
+  }
+  return parsed;
+ }catch{return null;}
+}
+function writeSoloMvpState(state){
+ try{
+  if(!state){localStorage.removeItem(SOLO_MVP_KEY);return;}
+  state.user=soloUserKey();
+  localStorage.setItem(SOLO_MVP_KEY,JSON.stringify(state));
+ }catch{}
+}
+function clearSoloMvpStorage(){
+ try{localStorage.removeItem(SOLO_MVP_KEY)}catch{}
+ soloMvpNextAt=0;
+}
 let soloMvpNextAt=0;
 function tickSoloMvp(){
  if(!app.wanted||app.room)return;
  const F=FISHING();if(!F||!F.SPECIES)return;
- if(F.getMvp?.())return;
  const now=Date.now();
+ const currentMvp=F.getMvp?.();
+
+ if(currentMvp){
+  if(currentMvp.endsAt&&now>=currentMvp.endsAt){
+   F.clearMvp?.({id:currentMvp.id});
+   const state=readSoloMvpState();
+   if(state&&state.active){
+    state.active=null;
+    writeSoloMvpState(state);
+   }
+  }
+  return;
+ }
+
+ let state=readSoloMvpState();
+
+ // 1. Restore active spawn if within active window
+ if(state&&state.active&&Number.isFinite(state.active.endsAt)){
+  if(now<state.active.endsAt){
+   F.setMvp?.({
+    sp:state.active.sp,
+    id:state.active.id,
+    spawnedAt:state.active.spawnedAt,
+    endsAt:state.active.endsAt
+   });
+   soloMvpNextAt=Number.isFinite(state.nextAt)?state.nextAt:0;
+   return;
+  }else{
+   state.active=null;
+   writeSoloMvpState(state);
+  }
+ }
+
+ // 2. Restore or initialize next scheduled spawn deadline
  if(!soloMvpNextAt){
-  let saved=0;try{saved=Number(sessionStorage.getItem('pg_solo_mvp_next')||0)}catch{}
-  if(saved&&saved>now&&saved<=now+2*3600000){
-   soloMvpNextAt=saved;
+  if(state&&Number.isFinite(state.nextAt)){
+   soloMvpNextAt=state.nextAt;
   }else{
    const delay=(60*60*1000)+Math.random()*(60*60*1000);
    soloMvpNextAt=now+delay;
-   try{sessionStorage.setItem('pg_solo_mvp_next',String(soloMvpNextAt))}catch{}
+   state=state||{};
+   state.nextAt=soloMvpNextAt;
+   writeSoloMvpState(state);
   }
  }
+
+ // 3. Spawn immediately if scheduled time has arrived or passed (overdue)
  if(now>=soloMvpNextAt){
   const mvpList=F.SPECIES.filter(s=>s.rarity==='mvp');
   if(mvpList.length){
    const chosen=mvpList[Math.floor(Math.random()*mvpList.length)];
    const id='mvp:solo:'+now.toString(36)+':'+Math.random().toString(36).slice(2,8);
-   F.setMvp?.({sp:chosen.id,id,spawnedAt:now,endsAt:now+10*60*1000});
+   const spawnedAt=now;
+   const endsAt=now+10*60*1000;
+   const nextDelay=(60*60*1000)+Math.random()*(60*60*1000);
+   soloMvpNextAt=now+nextDelay;
+   const active={sp:chosen.id,id,spawnedAt,endsAt};
+   writeSoloMvpState({active,nextAt:soloMvpNextAt});
+   F.setMvp?.(active);
    worldNotice(`⚠️ MVP ${chosen.name||chosen.id} spawned at the pond — 10 min!`);
+  }else{
+   const nextDelay=(60*60*1000)+Math.random()*(60*60*1000);
+   soloMvpNextAt=now+nextDelay;
+   writeSoloMvpState({active:null,nextAt:soloMvpNextAt});
   }
-  const nextDelay=(60*60*1000)+Math.random()*(60*60*1000);
-  soloMvpNextAt=now+nextDelay;
-  try{sessionStorage.setItem('pg_solo_mvp_next',String(soloMvpNextAt))}catch{}
  }
 }
 const digimonSelect=$id('socialDigimon');
@@ -2453,7 +2526,7 @@ function receive(m){
   // workers/social is redeployed to match the page. Say so once, the moment it is detectable,
   // instead of leaving the player to diagnose rubber-banding.
   if(m.room&&R.rulesFingerprint&&!app.rulesNoticed){const mine=R.rulesFingerprint();if(m.rules!==mine){app.rulesNoticed=true;worldNotice(m.rules?'Plaza mismatch — page '+mine+' vs Social Worker '+m.rules+'. Redeploy workers/social to match this page; movement, seats and battles will misbehave until they agree.':'This Social Worker is older than the page ('+mine+') — no plaza fingerprint was sent. Redeploy workers/social to match; movement, seats and battles will misbehave until they agree.')}}
-  if(worldTraining?.room&&m.room&&m.room!==worldTraining.room)cancelWorldTraining('Gym training stopped after changing plazas.');friendPresenceChanged();if(soloTables)for(const t of soloTables)t.stand(SOLO_ID,Date.now());const activeMvp=FISHING()?.getMvp?.();if(activeMvp&&String(activeMvp.id||'').startsWith('mvp:solo:'))try{FISHING().clearMvp({id:activeMvp.id})}catch{}const moved=app.room!==m.room;if(moved){stashLocal(app.room);clearPokerResult();app.poker=null;app.pokerTables=null;pokerUI.renderKey='';}app.room=m.room;if(Array.isArray(m.rooms))app.rooms=m.rooms;plazaBotsOnRoom(m);resetPlayers();if(moved){app.messages=app.messages.filter(x=>x.channel!=='local');const back=recallLocal(m.room);if(back.length)app.messages=mergeChatMessages(app.messages,back)}pokerTableChat.clear();for(const p of m.players)putPlayer(p);if(app.room)select('local');else syncSoloPlayer();tabsUI();population();if(app.resume&&app.room){const r=app.resume;app.resume=null;if(Number.isInteger(r.pokerSeat)&&!Number.isInteger(app.players.get(app.id)?.pokerSeat))send({type:'poker_sit',seat:r.pokerSeat,buyIn:Math.max(P?.MIN_BUY_IN||40,Math.min(pokerWallet().chips,r.pokerBuyIn||P?.DEFAULT_BUY_IN||1000))});else if(Number.isInteger(r.seat)&&app.players.get(app.id)?.seat!==r.seat)send({type:'seat',id:r.seat});else if(r.sit&&!app.players.get(app.id)?.sit)send({type:'sit',confirmLeave:true})}renderPokerUI(true)} if(m.type==='player'&&m.player.room===app.room){putPlayer(m.player);friendPresenceChanged()}
+  if(worldTraining?.room&&m.room&&m.room!==worldTraining.room)cancelWorldTraining('Gym training stopped after changing plazas.');friendPresenceChanged();if(soloTables)for(const t of soloTables)t.stand(SOLO_ID,Date.now());const activeMvp=FISHING()?.getMvp?.();if(activeMvp&&String(activeMvp.id||'').startsWith('mvp:solo:'))try{FISHING().clearMvp({id:activeMvp.id})}catch{}if(m.room>0){const smState=readSoloMvpState();if(smState&&smState.active){smState.active=null;writeSoloMvpState(smState);}}const moved=app.room!==m.room;if(moved){stashLocal(app.room);clearPokerResult();app.poker=null;app.pokerTables=null;pokerUI.renderKey='';}app.room=m.room;if(Array.isArray(m.rooms))app.rooms=m.rooms;plazaBotsOnRoom(m);resetPlayers();if(moved){app.messages=app.messages.filter(x=>x.channel!=='local');const back=recallLocal(m.room);if(back.length)app.messages=mergeChatMessages(app.messages,back)}pokerTableChat.clear();for(const p of m.players)putPlayer(p);if(app.room)select('local');else syncSoloPlayer();tabsUI();population();if(app.resume&&app.room){const r=app.resume;app.resume=null;if(Number.isInteger(r.pokerSeat)&&!Number.isInteger(app.players.get(app.id)?.pokerSeat))send({type:'poker_sit',seat:r.pokerSeat,buyIn:Math.max(P?.MIN_BUY_IN||40,Math.min(pokerWallet().chips,r.pokerBuyIn||P?.DEFAULT_BUY_IN||1000))});else if(Number.isInteger(r.seat)&&app.players.get(app.id)?.seat!==r.seat)send({type:'seat',id:r.seat});else if(r.sit&&!app.players.get(app.id)?.sit)send({type:'sit',confirmLeave:true})}renderPokerUI(true)} if(m.type==='player'&&m.player.room===app.room){putPlayer(m.player);friendPresenceChanged()}
 
  if(m.type==='left'&&m.room===app.room){app.players.delete(m.id);app.scene?.removePlayer(m.id);population();friendPresenceChanged()}
  if(m.type==='message'){if(m.channel==='local'&&m.room!==app.room)return;app.messages=mergeChatMessages(app.messages,[m]);if(m.channel==='world')saveWorldHistory();else if(m.channel==='local')stashLocal();if(app.channel!==m.channel||chat.classList.contains('minimized'))app.unread.add(m.channel);if(!app.muted.has(m.from)){if(m.channel==='local'){const fishShown=FISHING()?.onLocalMessage?.(m.from,m.body||'');if(!fishShown)app.scene?.bubble(m.from,m);pokerTableChatBubble(m)}if(app.channel===m.channel)renderMessages(true)}tabsUI()}}
@@ -2700,7 +2773,7 @@ function connect(){
    // once the retry ladder has had a chance, so the status line names the cause instead of repeating
    // "retrying" forever. Not for 4001 (that one explains itself) and not before a second attempt.
    if(e.code!==4001&&app.retry>=2)diagnoseSocket()};ws.onerror=()=>status('Chat unavailable — checking connection…');}
-let lastLog='',lastLook='',keepAliveAt=0;setInterval(()=>{try{plazaBotsTick()}catch{}try{tickSoloMvp()}catch{}if(app.channel==='log'&&feedHidden())syncDisplay();const account=typeof CLOUD.user==='string'?CLOUD.user:CLOUD.user?.username;if(app.user&&account&&account!==app.user){const ws=app.socket;app.socket=null;ws?.close();app.connected=false;app.messages=[];localHistory.clear();app.unread.clear();app.friends.clear();app.blocked=false;app.nextConnect=0;leave();app.user=null}if(!CLOUD.on){if(app.user||app.socket){const ws=app.socket;app.socket=null;ws?.close();app.connected=false;app.messages=[];localHistory.clear();app.unread.clear();app.muted.clear();app.friends.clear();app.blocked=false;app.nextConnect=0;app.user=null;leave()}else if(app.wanted&&app.scene){const look=JSON.stringify(currentLook());if(look!==lastLook){syncSoloPlayer();lastLook=look}}status('Sign in to use player chat');return}if(!app.socket)connect();
+let lastLog='',lastLook='',keepAliveAt=0;setInterval(()=>{try{plazaBotsTick()}catch{}try{tickSoloMvp()}catch{}if(app.channel==='log'&&feedHidden())syncDisplay();const account=typeof CLOUD.user==='string'?CLOUD.user:CLOUD.user?.username;if(app.user&&account&&account!==app.user){const ws=app.socket;app.socket=null;ws?.close();app.connected=false;app.messages=[];localHistory.clear();app.unread.clear();app.friends.clear();app.blocked=false;app.nextConnect=0;leave();app.user=null;clearSoloMvpStorage();}if(!CLOUD.on){if(app.user||app.socket){const ws=app.socket;app.socket=null;ws?.close();app.connected=false;app.messages=[];localHistory.clear();app.unread.clear();app.muted.clear();app.friends.clear();app.blocked=false;app.nextConnect=0;app.user=null;leave();clearSoloMvpStorage();}else if(app.wanted&&app.scene){const look=JSON.stringify(currentLook());if(look!==lastLook){syncSoloPlayer();lastLook=look}}status('Sign in to use player chat');return}if(!app.socket)connect();
  // v313: a socket can open against a cold Durable Object and then sit there - Pages accepted the
  // upgrade, the room has not said hello. Nothing used to notice: the plaza showed "Connecting to
  // chat…" forever with a healthy-looking socket and no reconnect. A handshake that takes longer than
@@ -2746,5 +2819,5 @@ function friendPresenceChanged(){
 // plaza's per-viewer `friend` flag follow immediately instead of at the next reconnect.
 function syncFriends(ids){const next=new Set((Array.isArray(ids)?ids:[]).filter(Number.isInteger));const changed=next.size!==app.friends.size||[...next].some(id=>!app.friends.has(id));app.friends=next;if(changed){renderMessages(true);if(app.connected&&app.socket&&app.socket.readyState===1)send({type:'friends',ids:[...next]})}}
 function whisper(name){const clean=String(name||'').trim();if(!clean)return;$id('socialTo').value=clean;select('whisper');$id('socialInput').focus()}
-window.PGSocial={enter,leave,app,select,syncDisplay,pokerOpen,minimizePokerModal,syncPokerBounds,pokerSeatAction,claimDailyPokerChips,buyPokerChipsWithZeny,syncFriends,whisper,drawPlazaMap,focusHubPanel,refreshDigimon:()=>{if(!sanctuaryPanel.hidden){sanctuarySync();sanctuaryRender()}}};select('world');connect();
+window.PGSocial={enter,leave,app,select,syncDisplay,pokerOpen,minimizePokerModal,syncPokerBounds,pokerSeatAction,claimDailyPokerChips,buyPokerChipsWithZeny,syncFriends,whisper,drawPlazaMap,focusHubPanel,refreshDigimon:()=>{if(!sanctuaryPanel.hidden){sanctuarySync();sanctuaryRender()}},tickSoloMvp,readSoloMvpState,writeSoloMvpState,clearSoloMvpStorage};select('world');connect();
 })();
