@@ -143,8 +143,8 @@ try{
  const p1=await connect(mf,10),p2=await connect(mf,11);
  for(const peer of [p1,p2]){peer.ws.send(JSON.stringify({type:'join',look:{cls:'Novice',appearance:{version:1,sex:'m'},speed:13}}));await until(peer.messages,m=>m.type==='room','poker plaza join')}
  p1.ws.send(JSON.stringify({type:'poker_sit',seat:0,buyIn:1000}));p2.ws.send(JSON.stringify({type:'poker_sit',seat:1,buyIn:1000}));
- await until(p1.messages,m=>m.type==='poker'&&m.tables?.[0]?.phase==='preflop','live poker hand',20000);
- const hand=[...p1.messages].reverse().find(m=>m.type==='poker').tables[0];
+ await until(p1.messages,m=>m.type==='poker'&&m.tables?.[0]?.phase==='preflop'&&m.tables[0].seats[0]?.arrived&&m.tables[0].seats[1]?.arrived&&!m.tables[0].house?.inHand,'live poker hand',20000);
+ const hand=[...p1.messages].reverse().find(m=>m.type==='poker'&&m.tables?.[0]?.phase==='preflop').tables[0];
  const winnerSeat=hand.turnSeat===0?1:0,winnerId=winnerSeat===0?10:11;
  const winner=winnerSeat===0?p1:p2,loser=winnerSeat===0?p2:p1;
  winner.ws.close();await new Promise(r=>setTimeout(r,150));
