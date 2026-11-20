@@ -12,7 +12,7 @@ param(
 #        Pages:  prontera-grind-staging
 #        Worker: prontera-social-staging
 #        D1:     pg-staging (3a38c6fc-96a8-491d-b97b-fd536e575ca4)
-#   4. Applies 0022 then 0023 to pg-staging only when their tables are absent.
+#   4. Applies 0022 then 0023 to pg-staging, or upgrades the older v411 raid schema in place.
 #   5. Verifies the deployed version.txt reports this build.
 #
 # It never deploys horizonhaven, pg, prontera-social or prontera-gate. It refuses to continue if a
@@ -173,13 +173,33 @@ new_sqlite_classes = ["Social"]
   $hasCardTrigger = $triggers -contains 'raid_card_drop_apply'
   $grantCols = D1Json "PRAGMA table_info(grants);" $worktree | ForEach-Object { $_.name }
   $hasRef = $grantCols -contains 'ref'
+  $runCols = D1Json "PRAGMA table_info(raid_runs);" $worktree | ForEach-Object { $_.name }
 
   if (-not $hasRaid) {
     if ($hasRef) { Fail 'pg-staging has grants.ref but no raid_runs. Inspect it before retrying; nothing was applied.' }
     Write-Host '    applying 0022_player_character_raid.sql'
     Invoke-Checked 'npx' ($Wrangler + @('d1', 'execute', 'DB', '--remote', '--file=migrations/0022_player_character_raid.sql')) $worktree
-  } elseif (-not $hasRef) {
-    Fail 'pg-staging has raid_runs but no grants.ref. Inspect the partial 0022 state; nothing was applied.'
+  } elseif (-not $hasRef -or $runCols -notcontains 'seed' -or $runCols -notcontains 'checkpoint_json' -or $runCols -notcontains 'checkpoint_at') {
+    # pg-staging still has the isolated v411 raid experiment (migration 0018): raid_runs exists,
+    # grants.ref does not, and the table predates seed/checkpoint_json/checkpoint_at. Upgrade it
+    # in place rather than trying to apply 0022 (its CREATE TABLE IF NOT EXISTS would be a no-op).
+    # Only the missing columns are added, so a genuinely partial 0022 also repairs cleanly.
+    Write-Host '    existing raid schema is pre-v447; upgrading it in place'
+    if ($runCols -notcontains 'seed') {
+      Invoke-Checked 'npx' ($Wrangler + @('d1', 'execute', 'DB', '--remote', '--command', 'ALTER TABLE raid_runs ADD COLUMN seed INTEGER NOT NULL DEFAULT 1;')) $worktree
+    }
+    if ($runCols -notcontains 'checkpoint_json') {
+      Invoke-Checked 'npx' ($Wrangler + @('d1', 'execute', 'DB', '--remote', '--command', "ALTER TABLE raid_runs ADD COLUMN checkpoint_json TEXT NOT NULL DEFAULT '{}';")) $worktree
+    }
+    if ($runCols -notcontains 'checkpoint_at') {
+      Invoke-Checked 'npx' ($Wrangler + @('d1', 'execute', 'DB', '--remote', '--command', 'ALTER TABLE raid_runs ADD COLUMN checkpoint_at INTEGER NOT NULL DEFAULT 0;')) $worktree
+    }
+    if (-not $hasRef) {
+      Invoke-Checked 'npx' ($Wrangler + @('d1', 'execute', 'DB', '--remote', '--command', 'ALTER TABLE grants ADD COLUMN ref TEXT;')) $worktree
+      Invoke-Checked 'npx' ($Wrangler + @('d1', 'execute', 'DB', '--remote', '--command', 'CREATE UNIQUE INDEX IF NOT EXISTS idx_grants_ref ON grants(ref) WHERE ref IS NOT NULL;')) $worktree
+    }
+    Write-Host '    replacing the settlement triggers with the exactly-once v447 versions'
+    Invoke-Checked 'npx' ($Wrangler + @('d1', 'execute', 'DB', '--remote', '--file=tools/staging/legacy_raid_upgrade.sql')) $worktree
   } else {
     Write-Host '    0022 already present'
   }

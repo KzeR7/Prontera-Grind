@@ -108,6 +108,22 @@ The script refuses to continue if a production name or ID (`horizonhaven`, `pg`,
 `prontera-social`, `prontera-gate`, the production D1 UUID) reaches a generated config. It leaves
 the worktree in `%TEMP%` on failure for diagnosis.
 
+### Existing v411 staging database
+
+`pg-staging` was used by the older v411 raid experiment, whose migration 0018 created `raid_runs`
+without the v447 `seed` / checkpoint columns and without the exactly-once `grants.ref` ledger. The
+handoff detects that state (`raid_runs` exists, `grants.ref` or the checkpoint columns do not) and
+upgrades it in place:
+
+- adds `raid_runs.seed`, `checkpoint_json`, `checkpoint_at` and `grants.ref` only when missing;
+- drops and recreates `raid_chest_to_ledger` and `raid_reward_apply` from
+  `tools/staging/legacy_raid_upgrade.sql`;
+- cancels old active runs that have no checkpoint, because they cannot be resumed by this build;
+- then applies `0023_raid_cards.sql`.
+
+It does not drop the old raid tables, does not delete completed history, and does not touch
+production. A fresh database still receives `0022` followed by `0023`.
+
 ### If the script reports local changes
 
 It will not discard or stash your files. Local Wrangler state and scratch archives (for example
