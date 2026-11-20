@@ -1,0 +1,74 @@
+{
+ "_comment": "Pins each versioned social asset to the ?v= it was last shipped under. An asset whose bytes change while its ?v= stays put FAILS update_watch_sim, because browsers keep serving the cached copy - the v445 emoji miss. Regenerate with: UPDATE=1 node tools/tests/update_watch_sim.js",
+ "build": 446,
+ "assets": {
+  "assets/social.js": {
+   "v": 446,
+   "sha256": "c69f452061ceb77f80c904fdf184d629b95a9de002cce8aef8055424ce75d190"
+  },
+  "assets/social.css": {
+   "v": 446,
+   "sha256": "d22412af26a26759e1d3963cd945edc47439719a9a1d660a316bb5cccde03fad"
+  },
+  "assets/social-poker.js": {
+   "v": 446,
+   "sha256": "f101aec13226758b074267e8f83d064fb117fdf3f13683971a8f52116a00f356"
+  },
+  "assets/social-rules.js": {
+   "v": 446,
+   "sha256": "bc64dfa2a148d8153cd4e9a03099fa6656b9c389e34ada899b6600c2e3463814"
+  },
+  "assets/social-scene.js": {
+   "v": 446,
+   "sha256": "c8eb6d53e1aa86c052476236b2ee08a2409c235573942a98e238a1e2a43a6ada"
+  },
+  "assets/social-fishing.js": {
+   "v": 446,
+   "sha256": "8b45579b47c522656ac29a4b34a3b22a0d16c59a49616cd7ab2b5f50a7f8e00d"
+  },
+  "assets/social-fishing.css": {
+   "v": 446,
+   "sha256": "f1c9127ab2d299cd5221bc82e5499781b639af8cad9a321eab646043f8a5c39c"
+  },
+  "assets/digimon/roster.js": {
+   "v": 446,
+   "sha256": "07479d85f4f0a4796ab853718d5a215b47a4c54956559d141f0f8404d9ac1d16"
+  },
+  "assets/digimon/base-stats.js": {
+   "v": 446,
+   "sha256": "4c0edce7b7aeb3bd6063d5c5c19087a90398ca09f0e073bb0e7b5678de1ea68d"
+  },
+  "assets/digimon-sanctuary.js": {
+   "v": 446,
+   "sha256": "3a9354df6c0340779117e45d931ef3fe7bc66af686ab1d3f70e13ce8e8ad2541"
+  },
+  "assets/social-digimon.js": {
+   "v": 446,
+   "sha256": "698591c6be52d8567fbf6bbdf32fb355f7ab8acf0206f98d01e08575e80be4be"
+  },
+  "assets/plaza-bots.js": {
+   "v": 446,
+   "sha256": "9bd891bbd32a6b4b4d86c7dbd654f57947b18601973a9a60d84dc1b9c3c4b7d2"
+  },
+  "assets/ui/eclipse.css": {
+   "v": 446,
+   "sha256": "b8540ca2de40d7a2b499a2fcbedeff1fd31720ef433b7642e088817ab4ac837b"
+  },
+  "assets/ui/mobile.css": {
+   "v": 446,
+   "sha256": "cf21f081c15e581cf47a33ff9196553ca49841642903694c03df4a0937b1f86b"
+  },
+  "assets/wardrobe.js": {
+   "v": 446,
+   "sha256": "52f8b78a0df924f7ca9e8a4d60a546c2fad77335525edce1c0602ca6974b1cee"
+  },
+  "assets/expanded-jobs.js": {
+   "v": 446,
+   "sha256": "18bb1319714323ce0f7cbdcd42d277d23d599d9cda71fdf8414357132106a5b7"
+  },
+  "assets/wardrobe-ui.js": {
+   "v": 446,
+   "sha256": "41ed25f0c76907f09bedbfddb15a2758ac99c8cd08dc0e78478426c79ce3cd20"
+  }
+ }
+}
