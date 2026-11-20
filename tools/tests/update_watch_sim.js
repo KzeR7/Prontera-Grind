@@ -339,11 +339,34 @@ t('every asset versioned in index.html points at a build, never at a stale cache
                    'assets/digimon-sanctuary.js',
                    'assets/social-digimon.js', 'assets/plaza-bots.js',
                    'assets/ui/eclipse.css', 'assets/ui/mobile.css',
-                   'assets/wardrobe.js', 'assets/expanded-jobs.js', 'assets/wardrobe-ui.js']) {
+                   'assets/wardrobe.js', 'assets/expanded-jobs.js', 'assets/wardrobe-ui.js',
+                   // The raid runtime. It was missing from this list, which is why a changed
+                   // assets/rift-raid.js shipped under an unchanged `?v=449` and a cached copy would
+                   // have kept running the old client.
+                   'assets/rift-raid.js', 'assets/raid-solo.js', 'assets/raid-dungeon.js',
+                   'assets/astral-raid-scenes.js']) {
     const found = tags.find(([, file]) => file === f);
     assert.ok(found, f + ' is loaded by index.html');
     assert.strictEqual(found[2], build, f + ' must be busted to the build that changed it');
   }
+});
+
+// A separate assertion on purpose. The loop above stops at its first mismatch (assets/social.js is
+// currently behind the build), so a stale raid tag added to that list would be checked only if
+// everything before it happened to be current. The raid runtime is what this change modifies, so it
+// gets its own check that cannot be masked by an older failure. A stale `?v=` here is not cosmetic:
+// dist/_headers serves /assets/* from cache, so the browser keeps running the previous client.
+t('the raid runtime is always busted to the current build', () => {
+  const tags = [...src.matchAll(/(?:src|href)="(assets\/[^"?]+\.js)\?v=(\d+)"/g)];
+  const build = (BUILD.match(/haven-v(\d+)/) || [])[1];
+  const raid = ['assets/rift-raid.js', 'assets/raid-solo.js', 'assets/raid-dungeon.js', 'assets/astral-raid-scenes.js'];
+  const stale = [];
+  for (const f of raid) {
+    const found = tags.find(([, file]) => file === f);
+    assert.ok(found, f + ' is loaded by index.html');
+    if (found[2] !== build) stale.push(f + ' has ?v=' + found[2] + ', build is ' + build);
+  }
+  assert.deepStrictEqual(stale, [], 'stale raid asset tags: ' + stale.join('; '));
 });
 
 // v326 + v418: the automatic update reset must land the cloud save before navigating, and NEVER race
