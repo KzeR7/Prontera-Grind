@@ -37,8 +37,10 @@ function Invoke-Checked([string]$Exe, [string[]]$Arguments, [string]$Cwd) {
   } finally { Pop-Location }
 }
 
-function Git([string[]]$Arguments, [string]$Cwd = $Repo) {
-  $output = & git -C $Cwd @Arguments
+function Invoke-Git([string[]]$Arguments, [string]$Cwd = $Repo) {
+  # Use git.exe explicitly: a PowerShell function named "Git" shadows the native command and
+  # would recurse into itself (the call-depth-overflow bug in the first handoff build).
+  $output = & git.exe -C $Cwd @Arguments
   if ($LASTEXITCODE -ne 0) { Fail "git $($Arguments -join ' ') failed (exit $LASTEXITCODE)." }
   return ($output -join "`n").Trim()
 }
@@ -72,26 +74,26 @@ $repoFull = (Resolve-Path $Repo).Path
 if (-not (Test-Path (Join-Path $repoFull '.git'))) { Fail "Not a git checkout: $repoFull" }
 
 Write-Host "1/7 Fetching GitHub and updating local main in $repoFull"
-$dirty = Git @('status', '--porcelain')
+$dirty = Invoke-Git @('status', '--porcelain')
 if ($dirty) {
   Fail "Your checkout has local changes. Commit or stash them first; this handoff will not discard them.`n$dirty"
 }
-Git @('fetch', 'origin', '--prune') | Out-Null
-Git @('switch', 'main') | Out-Null
-Git @('pull', '--ff-only', 'origin', 'main') | Out-Null
-Write-Host ('    local main is ' + (Git @('rev-parse', '--short', 'HEAD')))
+Invoke-Git @('fetch', 'origin', '--prune') | Out-Null
+Invoke-Git @('switch', 'main') | Out-Null
+Invoke-Git @('pull', '--ff-only', 'origin', 'main') | Out-Null
+Write-Host ('    local main is ' + (Invoke-Git @('rev-parse', '--short', 'HEAD')))
 
 Write-Host "2/7 Fetching $Branch"
-Git @('fetch', 'origin', $Branch) | Out-Null
-$branchTip = Git @('rev-parse', 'FETCH_HEAD')
+Invoke-Git @('fetch', 'origin', $Branch) | Out-Null
+$branchTip = Invoke-Git @('rev-parse', 'FETCH_HEAD')
 $worktree = Join-Path ([System.IO.Path]::GetTempPath()) ('pg-rift-stage-' + [Guid]::NewGuid().ToString('N').Substring(0, 8))
 $completed = $false
-Git @('worktree', 'add', '--detach', $worktree, $branchTip) | Out-Null
+Invoke-Git @('worktree', 'add', '--detach', $worktree, $branchTip) | Out-Null
 try {
   Push-Location $worktree
   try {
     Write-Host '3/7 Merging latest origin/main into the staging worktree'
-    & git -c 'user.name=Prontera Staging' -c 'user.email=staging@local' merge --no-edit origin/main
+    & git.exe -c 'user.name=Prontera Staging' -c 'user.email=staging@local' merge --no-edit origin/main
     if ($LASTEXITCODE -ne 0) {
       Fail "The branch does not merge cleanly with main. Resolve it on GitHub, then rerun. Worktree kept at $worktree"
     }
@@ -227,7 +229,7 @@ new_sqlite_classes = ["Social"]
   # Keep the worktree on failure for diagnosis; remove it only when the handoff completed cleanly.
   if ($worktree -and (Test-Path $worktree)) {
     if ($completed) {
-      & git -C $repoFull worktree remove --force $worktree 2>$null | Out-Null
+      & git.exe -C $repoFull worktree remove --force $worktree 2>$null | Out-Null
     } else {
       Write-Host "Worktree kept for inspection: $worktree"
     }
