@@ -41,6 +41,61 @@ assert.ok(R.EMOTE_LAYOUT.dice, 'the dice has a layout covering all six faces');
 {
   const fs2 = require('fs'), dir = path.join(__dirname, '..', '..', 'assets', 'social', 'emotions');
   const be32 = (b, o) => (b[o] << 24 | b[o + 1] << 16 | b[o + 2] << 8 | b[o + 3]) >>> 0;
+  // Count fully transparent pixels in the last frame. APNG frames are ordinary PNG sub-images, so
+  // inflate the final image data and undo the scanline filters - about twenty lines, and it keeps the
+  // check synchronous with the rest of this file.
+  const zlib = require('zlib');
+  const transparentInLastFrame = png => {
+    let last = null, off = 8;
+    while (off + 8 <= png.length) {
+      const len = be32(png, off), type = png.toString('latin1', off + 4, off + 8);
+      if (type === 'fcTL') last = { w: be32(png, off + 12), h: be32(png, off + 16) , data: [] };
+      else if (type === 'IDAT') last && last.data.push(png.subarray(off + 8, off + 8 + len));
+      // fdAT = 4-byte sequence number, then zlib data.
+      else if (type === 'fdAT' && last) last.data.push(png.subarray(off + 12, off + 8 + len));
+      off += 12 + len;
+    }
+    if (!last || !last.w) return -1;
+    const raw = zlib.inflateSync(Buffer.concat(last.data));
+    const bpp = 4, stride = last.w * bpp;
+    const out = Buffer.alloc(stride * last.h);
+    let p = 0;
+    for (let y = 0; y < last.h; y++) {
+      const filter = raw[p++];
+      const row = raw.subarray(p, p + stride); p += stride;
+      const prev = y ? out.subarray((y - 1) * stride, y * stride) : Buffer.alloc(stride);
+      const cur = out.subarray(y * stride, (y + 1) * stride);
+      for (let i = 0; i < stride; i++) {
+        const a = i >= bpp ? cur[i - bpp] : 0, b = prev[i], c = i >= bpp ? prev[i - bpp] : 0;
+        let v = row[i];
+        if (filter === 1) v += a;
+        else if (filter === 2) v += b;
+        else if (filter === 3) v += (a + b) >> 1;
+        else if (filter === 4) {
+          const pp = a + b - c, pa = Math.abs(pp - a), pb = Math.abs(pp - b), pc = Math.abs(pp - c);
+          v += (pa <= pb && pa <= pc) ? a : (pb <= pc ? b : c);
+        }
+        cur[i] = v & 255;
+      }
+    }
+    // Count only ENCLOSED transparent pixels: see-through spots with opaque art on all four sides.
+    // Plain transparency is the bubble's legitimate surround, so counting it proves nothing; a
+    // punched face is exactly the enclosed kind. Measured: the lattice face had 20, the solid one 0.
+    const A = (x, y) => out[(y * last.w + x) * 4 + 3];
+    let n = 0;
+    for (let y = 1; y < last.h - 1; y++) {
+      for (let x = 1; x < last.w - 1; x++) {
+        if (A(x, y) >= 40) continue;
+        let l = false, r = false, u = false, d = false;
+        for (let i = x - 1; i >= 0; i--) if (A(i, y) >= 40) { l = true; break; }
+        for (let i = x + 1; i < last.w; i++) if (A(i, y) >= 40) { r = true; break; }
+        for (let j = y - 1; j >= 0; j--) if (A(x, j) >= 40) { u = true; break; }
+        for (let j = y + 1; j < last.h; j++) if (A(x, j) >= 40) { d = true; break; }
+        if (l && r && u && d) n++;
+      }
+    }
+    return n;
+  };
   for (const face of ['dice', 'dice2', 'dice3', 'dice4', 'dice5', 'dice6']) {
     const png = fs2.readFileSync(path.join(dir, face + '.png'));
     // An APNG that froze to one frame loses its animation entirely; that is a regression, not a fix.
@@ -67,6 +122,12 @@ assert.ok(R.EMOTE_LAYOUT.dice, 'the dice has a layout covering all six faces');
     // The landed face has to stay up long enough to read a number.
     assert.ok(lastDelay >= 1000, face + ' holds the landed face, last frame is ' + lastDelay + 'ms');
     assert.ok(total >= 2500, face + ' still shows the whole roll, got ' + total + 'ms');
+    // The face must be a solid tile. The wiki rips punch the tile out, so unfilled it is a lattice
+    // and on the dark plaza bubble every hole reads as a black spot (the owner's report). The landed
+    // frame has to be almost fully opaque; a regression that skips the fill drops well below this.
+    const punched = transparentInLastFrame(png);
+    assert.ok(punched >= 0, face + ' last frame decodes');
+    assert.equal(punched, 0, face + ' has a solid face, but ' + punched + ' see-through spots remain');
   }
 }
 for (const [id, cmd] of Object.entries(R.EMOTE_NAMES)) {

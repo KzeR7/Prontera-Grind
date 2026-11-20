@@ -23,6 +23,7 @@ identically to the 32 cut from the sprite sheet. Nothing is repainted, rescaled 
 import hashlib
 import json
 import sys
+from collections import deque
 from io import BytesIO
 from pathlib import Path
 
@@ -206,6 +207,118 @@ def measure(frames):
             max(b[2] for b in boxes), max(b[3] for b in boxes))
 
 
+def _tile_box(f):
+    """Bounding box of the die tile's rim ring on one frame, or None.
+
+    The rim is an opaque ring that encloses the pips. Finding it as "the smallest opaque blob whose
+    box contains every pip" keeps the bubble's outline out (that ring is far bigger), and unlike a
+    pips-plus-margin box it does not shrink on face 1, whose single pip sits off-centre.
+    """
+    px = f.load()
+    W, H = f.size
+    pips = [(x, y) for y in range(H) for x in range(W)
+            if px[x, y][3] >= 200 and 150 < px[x, y][0] < 230 and px[x, y][1] < 100]
+    if not pips:
+        return None
+    seen = [[False] * W for _ in range(H)]
+    best = None
+    for y in range(H):
+        for x in range(W):
+            if seen[y][x] or px[x, y][3] < 40:
+                continue
+            q = deque([(x, y)]); seen[y][x] = True; pts = []
+            while q:
+                cx, cy = q.popleft(); pts.append((cx, cy))
+                for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                    nx, ny = cx + dx, cy + dy
+                    if 0 <= nx < W and 0 <= ny < H and not seen[ny][nx] and px[nx, ny][3] >= 40:
+                        seen[ny][nx] = True; q.append((nx, ny))
+            xs = [q2[0] for q2 in pts]; ys = [q2[1] for q2 in pts]
+            bb = (min(xs), min(ys), max(xs) + 1, max(ys) + 1)
+            if all(bb[0] <= q2[0] < bb[2] and bb[1] <= q2[1] < bb[3] for q2 in pips):
+                area = (bb[2] - bb[0]) * (bb[3] - bb[1])
+                if best is None or area < best[0]:
+                    best = (area, bb)
+    return best[1] if best else None
+
+
+def solid_die_face(sets):
+    """Make the die a solid tile: one body colour, with the red pips on top.
+
+    The wiki rips punch the face out. Between the pips and the tile's rim most pixels are fully
+    transparent, so the die is a lattice rather than a tile; on the plaza bubble (a dark backdrop)
+    every hole shows through as a black spot. The owner's report was exactly that: "there are black
+    spots on the die ... can u just back it solid background with red dots".
+
+    `sets` is every frame of all six faces. All six share one tile geometry, so the box is measured
+    on the landed frame of each and the LARGEST is used - face 1 has a single off-centre pip and its
+    own box comes out too small, but the six faces are pixel-identical in size and framing by
+    construction, so the biggest ring is the right one for all of them.
+
+    Only transparent pixels inside that box are filled. Pips and rim are opaque and are left
+    byte-for-byte alone; the bubble's interior and transparent surround are outside the box and stay
+    exactly as they were.
+    """
+    # Measure on the landed frame of each set. That is the CLEAREST face in the clip - the one with
+    # the most pips visible - not simply the last frame, which in the source rip is the faded ghost.
+    best = None
+    for frames in sets:
+        scored = []
+        for f in frames:
+            if f.getbbox() is None:
+                continue
+            px = f.load(); W, H = f.size
+            pips = sum(1 for y in range(H) for x in range(W)
+                       if px[x, y][3] >= 200 and 150 < px[x, y][0] < 230 and px[x, y][1] < 100)
+            if pips:
+                scored.append((pips, f))
+        if not scored:
+            continue
+        box = _tile_box(max(scored, key=lambda t: t[0])[1])
+        if box:
+            area = (box[2] - box[0]) * (box[3] - box[1])
+            if best is None or area > best[0]:
+                best = (area, box)
+    if best is None:
+        return sets
+    # Grow by one pixel on each side. The ring detector returns the opaque ring's box, which stops
+    # at the ring's last column; the tile's own rim can sit a pixel beyond that, and leaving it out
+    # left a see-through stripe down the right of every face.
+    bx0, by0, bx1, by1 = best[1]
+    W, H = sets[0][0].size
+    tx0, ty0, tx1, ty1 = max(0, bx0 - 1), max(0, by0 - 1), min(W, bx1 + 1), min(H, by1 + 1)
+    # Body colour: the most common bright pixel inside the tile, so no new colour is invented.
+    counts = {}
+    for frames in sets:
+        for f in frames:
+            if f.getbbox() is None:
+                continue
+            px = f.load()
+            for y in range(ty0, ty1):
+                for x in range(tx0, tx1):
+                    r, g, b, a = px[x, y]
+                    if a >= 200 and r > 225 and g > 205 and b > 190:
+                        counts[(r, g, b, 255)] = counts.get((r, g, b, 255), 0) + 1
+    if not counts:
+        return sets
+    body = max(counts, key=counts.get)
+    out = []
+    for frames in sets:
+        solid = []
+        for f in frames:
+            if f.getbbox() is None:
+                solid.append(f); continue
+            f = f.copy()
+            px = f.load()
+            for y in range(ty0, ty1):
+                for x in range(tx0, tx1):
+                    if px[x, y][3] < 40:
+                        px[x, y] = body
+            solid.append(f)
+        out.append(solid)
+    return out
+
+
 def settle_dice(frames):
     """End the roll on the face it landed on, instead of letting the die fade away.
 
@@ -340,9 +453,15 @@ def main():
     if all(dice_paths):
         dice_sets = []
         dropped = 0
+        # Load all six first: the tile solidity pass needs every face to agree on one tile box, and
+        # face 1's lone off-centre pip gives a box that is too small on its own.
+        loaded = []
         for n, p in enumerate(dice_paths, 1):
             fr, dl = load_frames(p)
             fr, keyed = clean_frames(fr)
+            loaded.append((n, fr, dl, keyed))
+        solid = solid_die_face([fr for _, fr, _, _ in loaded])
+        for (n, fr, dl, keyed), fr in zip(loaded, solid):
             fr, kept = settle_dice(fr)
             if kept is not None:
                 # Keep the delays attached to the frames that survive, or the hold lands a beat off.

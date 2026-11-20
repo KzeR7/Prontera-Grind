@@ -136,6 +136,13 @@ Two things are done to the pixels beyond timing, and both were owner-reported de
   emote is a mood and a die is an outcome. Exactly one landed frame is kept: f20-24 are
   pixel-identical, and keeping the duplicates made the hold depend on how the encoder merged them
   (measured drift 1400 -> 1800 ms). One frame plus one explicit hold is deterministic.
+- **The tile is made solid.** The wiki rips punch the die face out: between the pips and the rim
+  most pixels are fully transparent, so the tile is a lattice. On the plaza bubble, which sits on a
+  dark backdrop, every hole showed through as a black spot (the owner's report). `solid_die_face`
+  fills the transparent pixels inside the tile box with the tile's own body colour, measured from
+  the art, leaving the pips, the rim and the bubble surround byte-for-byte alone. The tile box comes
+  from the rim ring that encloses the pips; the largest box across the six faces is used, because
+  face 1's single off-centre pip leaves its own ring fragmented.
 
 The dice is six files behind one id. `dice1.gif`..`dice6.gif` share one tumble and differ only in
 the landed face, so all six are converted from a single shared crop box into `dice.png` (face 1) and
