@@ -121,6 +121,19 @@ rather than left as an unexplored caveat.
 
 ---
 
+### Where the replay numbers come from, and what they are not
+
+The 35 ms / 31 KB figures are **local Node** measurements of the engine replaying a full 681 s run at
+5 s intent spacing (817 intents; worst case 2,621 grid cells). They are a property of the engine, not a
+measurement of Cloudflare's CPU accounting, and they should not be read as a Workers budget. The v450
+browser pass does not change this: it measured the *client* running the same engine in Chromium
+(408 s of run clock, ~1.9 ms of engine work per simulated second), which says nothing about
+`worker.cpuTime`. Squaring the replay cost against the deployed runtime still needs a staging
+measurement with CPU headers, which is why this remains a proposal with a measured *engine* cost rather
+than an estimated *deployment* cost.
+
+---
+
 ## 4. Interim statement for the PR
 
 > Solo settlement validates the reservation, the roster, the run clock, the shape of the reported

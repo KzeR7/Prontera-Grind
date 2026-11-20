@@ -1,9 +1,18 @@
-# Rift Raid — v449 Astral dungeon validation report
+# Rift Raid — Astral dungeon validation report (build v449 → v450)
 
 Branch: `arena/bfc7d4d1-prontera-grind` (from `main` at `37a13bf`)
-Build label: `2026-11-20 haven-v449 Astral dungeon raid`
+Build label: `2026-11-20 haven-v450 Astral dungeon raid`
 Feature state: **closed by default** (`wrangler.toml` `RAID_ENABLED = "false"`; the Pages handler
 requires the exact string `true`).
+
+The build label moved from v449 to v450 because this pass changes three shipped files —
+`assets/rift-raid.js`, `assets/raid-solo.js` and `functions/api/raid.js` — and `dist/_headers` serves
+`/assets/*` from cache. Leaving their `?v=` tags at 449 would have handed a cached browser the previous
+client, which is precisely the class of miss the version guard in `update_watch_sim.js` exists to catch:
+that guard listed the social assets but not the raid runtime, so it could not have caught it. The raid
+tags are now covered by their own assertion (§3.1). `RAID_RULES_VERSION` deliberately stays `v449-r1`:
+no rule, stage, reward or timing changed, and a bump would invalidate every in-flight checkpoint for no
+gameplay reason.
 
 v448 shipped one boss encounter with three hazard lanes. v449 replaces it entirely: the raid is now a
 four-stage dungeon the party walks through, and the lane vocabulary (`strike`/`dodge`/`ward`/`heal`,
@@ -198,9 +207,120 @@ walk to and revive a downed teammate, walk through the portal. Outcomes:
 | Exactly-once entry and settlement | API sim: resumed start, repeated settle, simultaneous starts, ledger/grants, a card miss no longer aborts settlement | PASS (sim) |
 | Checkpoint recovery | API sim: a room that forgets the run restores from the D1 checkpoint | PASS (sim) |
 | Lobby, party, forge, cards, aura/titles | UI sim (20 assertions) | PASS (sim) |
-| Real browser | Chromium 131 + puppeteer-core, dev server on 8799: lobby → solo start → walk to `(0,-6)` → `(-6,-14)`, zero console errors; `body.raid-fighting` hides all ten field-chrome selectors | PASS (local browser), **OWNER STAGING** |
-| Phone-sized controls | UI sim checks 44/48 px controls; single-column ≤720 px | PASS (static), **OWNER PHONE** |
-| Screenshots/video of a full clear | not capturable at SwiftShader frame rates in this sandbox | **OWNER STAGING** |
+| Real browser, solo, full clear | `tools/tests/raid_browser_acceptance.cjs` (§3.1): Chromium 131, the built `dist/`, the real Pages handlers, real SQLite behind a D1-shaped binding, the shipped `Social` DO class. **Cleared all four stages in 408 s of run clock with 7,919,183 damage**, 119 dodge moves, 0 downs | PASS (real browser) |
+| Zero raid-related DO requests in solo | same run, counted at the service binding: **0** Social fetches for the whole solo run, and no co-op `sync` poll was ever issued | PASS (measured) |
+| Settlement recorded exactly once | same run: one `raid_settlements` row, two reward rows, one entry consumed, results screen shows `outcome=clear`; a reload does not spend a second entry | PASS (real browser) |
+| Two real browser sessions, co-op | party formed across two independent contexts, both ready, run started, shared enemy/boss HP identical, a teammate focus dealt damage the other client read back, disconnect mid-run, rejoin the SAME run, no second entry, return after the deadline | PASS (real browser) |
+| Phone viewport | 390×844: panel usable (**7 actionable controls, minimum 44 px**, no horizontal overflow) **and** a solo run started from it | PASS (real browser) |
+| Screenshots of a full clear | `reports/browser-acceptance/*.jpg` — arena mid-run, results, phone | PASS (screenshots) |
+| Video of a full clear | Playwright records through an `ffmpeg` binary this sandbox does not have (and its download host is blocked) | **OWNER STAGING** |
+
+## 3.1 Real-browser acceptance (v450)
+
+Everything above this section is Node. This section is not: a real Chromium executed the built site,
+and the numbers come from that execution.
+
+```bash
+# Chromium comes from the @sparticuz/chromium npm tarball, because the Chrome CDN is unreachable here.
+npm install --prefix /tmp/br2 @sparticuz/chromium
+node -e "require('/tmp/br2/node_modules/@sparticuz/chromium').inflate('/tmp/br2/chromium')"
+LD_LIBRARY_PATH=/tmp/chlibs/lib PG_PLAY_BUDGET_MS=1020000 \
+  node tools/tests/raid_browser_acceptance.cjs      # 32 assertions, exits non-zero on any failure
+```
+
+**What is real.** `dist/` exactly as `tools/build_site.sh` emits it, served over HTTP; Chromium 131
+(real DOM, real ES module loading over the network, real timers, real `fetch`); the Pages Functions
+in `functions/api/raid.js` called through their `onRequest` handlers; SQLite databases built by
+applying every `migrations/*.sql` in order, behind a binding that implements the D1 statement API and
+counts statements/batches/rows; the shipped `Social` Durable Object class from `workers/social/index.mjs`
+instantiated over an in-memory storage double; and `assets/raid-engine/raid-engine.js` imported by the
+runner over HTTP — the same bytes as `functions/_lib/raid-engine.js` (asserted at runtime).
+
+**What is not real, and is therefore still an owner step.** The Pages/Workers runtime and its CPU
+accounting (nothing here is a CPU budget); Durable Object placement, eviction, hibernation and storage
+persistence; real D1 latency; WebGL dungeon rendering (no GPU in this build, so the renderer is
+exercised for load and state flow, not for pixels); and video capture (no `ffmpeg`).
+
+**How the run is played.** Not by calling engine internals. Inputs go through the client's own entry
+points — `PGRaid.move/focus/portal`, i.e. the functions the renderer's click and key handlers call —
+and the run advances on the shipped 100 ms loop against the real clock. Nothing advances a fake clock,
+so a six-minute fight takes six minutes; the budget is the run's own 681 s deadline plus slack. The
+build is not modified: an assertion fetches `assets/raid-engine/raid-engine.js` and checks its
+content type and size at runtime.
+
+**Measured, complete runs (the seed is drawn by the server, so these are different fights):**
+
+```text
+run A (the recorded acceptance run, 36/36 assertions, EXIT=0):
+  cleared after 465 s of run clock, stageIndex 3 (all four maps + Thanatos)
+  hp 19,169 / 118,512 at the end — a close finish, not a walkover
+  53 dodge moves answering live telegraphs, 571 focus intents, 3 portal presses
+  Social DO requests during the solo run: 0
+  co-op sync polls during the solo run: 0
+  raid_settlements rows: 1 · reward rows: 2 · raid_entries consumed: 1
+  reload after the clear: entries still 1, view=results, outcome=clear
+  results screen (reports/browser-acceptance/solo-result-desktop.jpg):
+    "Thanatos falls. · Dungeon cleared" with the server's own reward rows —
+    10 Rift Shards, 4 Valkyrie's Sigils, 2 Astral Shards, 1,000,000 Zeny (clear)
+    5 Rift Shards, 2 Valkyrie's Sigils, 1 Astral Shard, 250,000 Zeny (fractured)
+    plus a Sovereign Fang card from each chest
+
+run B (an earlier seed): cleared after 408 s, 7,919,183 damage, 119 dodges, 0 downs
+run C (a third seed): lost on Thanatos at 524 s with hp 0 after 7,536,476 damage;
+                      settled once with outcome=failed and paid the failure table
+```
+
+Run C is included on purpose: the script's policy is deliberately simple, and a loss is a legal
+outcome. What the acceptance run requires of any seed is that the fight resolves decisively and the
+settlement records exactly one outcome with the right shape — which it did in all three.
+
+Two-client co-op in the same run: party formed across two browser contexts, both ready, one start,
+identical enemy and boss HP on both clients, a teammate focus dealt damage the other client read back
+(1,699,775 → 1,522,608), a teammate move visible to the other client, the run surviving one
+disconnect, the returning client rejoining the **same** run id, and `raid_runs` for the returning
+account still 1 — reconnecting did not buy a second entry.
+
+**Exactly what "zero raid DO requests" means.** The count is of *raid* traffic to the Social room: no
+`install`, no `snapshot` poll, no `action`, no `ack`, and no room alarm — confirmed both by the
+service-binding counter (0 fetches) and by the absence of any `"action":"sync"` request. It does **not**
+claim the tab opened no socket at all: `PGRaid.open()` still tries to reuse the plaza connection for
+party actions (`PGSocial.enter`), which is the existing social session and not raid traffic. A solo run
+starts, simulates and settles correctly with that attempt failing; that is the case the API sim covers
+(`env.SOCIAL` replaced with an unavailable binding). The distinction matters because the requirement was
+"zero raid-related DO requests", not "no Social connection".
+
+**Four defects this found that no Node test could have.** All four are fixed and pinned by tests:
+
+1. **A reloaded tab could not resume its solo run.** The resume path took a synchronous snapshot
+   before anything had imported the engine, so it threw `The raid engine is not loaded yet` and
+   abandoned a run the account had already paid for. `PGRaidSolo.warm()` now loads the module first;
+   `raid_ui_sim.js` pins the ordering.
+2. **Every solo run started on 1,000 HP.** The client read `run.members[0].profile`, but `members` is
+   the *public* snapshot and has no `profile`, so the engine's floor applied. The reservation now
+   carries `run.profile` (the same reason it already carried `seed`), and the client sends it.
+3. **The live HUD was replaced by the reservation one frame after start.** The co-op `sync` poller was
+   still running during a solo run, and a local reservation was being adopted as run state — `R.run`
+   became `{state: undefined}`, the run "ended", and settle was called with no claim (409, no reward).
+   The poller now stops for a solo run, and a reservation is reported as `activeReservation`, never as
+   `activeRun`.
+4. **A clean solo clear was never recorded.** `updateRunOverlay` settled a finished run with no claim,
+   which the server correctly rejects as "The run result was not reported." The claim now comes from
+   the local run; a co-op settle still sends none, because the room is the authority there.
+
+A fifth finding is smaller but was still a real defect, and only a phone viewport could show it: the
+forge's booster rows use `.raid-btn.small` at **36 px**, under the 44 px touch minimum. The earlier
+"44 px controls" check passed because those buttons were *disabled* (no weapon equipped) and the check
+skipped disabled controls; with an equipped weapon they became actionable and measured 36 px. They are
+now 44 px at `max-width:720px` and on any `pointer:coarse` device.
+
+Two failures in earlier iterations were the *test's* fault, not the product's, and are recorded so the
+distinction is visible: the co-op start assumed one 400 ms sleep was enough for the room to see the
+second member's join (it now waits for the start button to become enabled), and a screenshot of the
+results was taken after the reload that returns the page to its sign-in splash (it is now taken before
+the reload). Screenshots that do not show the thing they claim to show are worse than no screenshots.
+
+Defects 3 and 4 mean a solo clear in v449 **displayed** but paid nothing. That is the single most
+important thing this browser run established.
 
 ## 4. Measured resource cost
 
