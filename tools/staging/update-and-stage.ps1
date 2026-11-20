@@ -176,6 +176,8 @@ new_sqlite_classes = ["Social"]
     if ($hasRef) { Fail 'pg-staging has grants.ref but no raid_runs. Inspect it before retrying; nothing was applied.' }
     Write-Host '    applying 0022_player_character_raid.sql'
     Invoke-Checked 'npx' ($Wrangler + @('d1', 'execute', 'DB', '--remote', '--file=migrations/0022_player_character_raid.sql')) $worktree
+  } elseif (-not $hasRef) {
+    Fail 'pg-staging has raid_runs but no grants.ref. Inspect the partial 0022 state; nothing was applied.'
   } else {
     Write-Host '    0022 already present'
   }
