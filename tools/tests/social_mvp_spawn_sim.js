@@ -432,6 +432,7 @@ console.log('social MVP spawn simulation: testing pure earliest-deadline schedul
  // Summary of measured driver results:
  assert.equal(actualAlarmInvocations, 2, 'measured exactly 2 alarm invocations across full cycle');
  assert.equal(stateWrites, 2, 'measured exactly 2 state writes across full cycle');
+ assert.equal(alarmOps.set, 2, 'measured exactly 2 setAlarm ops across full cycle without duplicate writes');
 
  console.log(`  ok 7. Executable alarm driver verified:
        - Idle wait: 0 alarms, 0 writes
@@ -571,6 +572,178 @@ console.log('social MVP spawn simulation: testing pure earliest-deadline schedul
  assert.equal(room.mvpActive.has(2), false);
  assert.ok(room.mvpNextAt.has(2), 'Room 2 schedule intact');
  console.log('  ok 9. Multi-room isolation ensures independent timers, active spawns, and despawns');
+}
+
+// ============================================================================
+// 10. Deadline priority: active battles & earlier poker override MVP retry,
+//     storage retries only when actually due, clean recovery
+// ============================================================================
+{
+ // Part A: Write failure during active battle
+ {
+  let storedAlarm = null;
+  let putCount = 0;
+  let failPut = true;
+  const storage = {
+   async get(k) { return null; },
+   async put(k, v) {
+    putCount++;
+    if (failPut && k === 'mvp-state-v1') throw new Error('Simulated write failure');
+   },
+   async list() { return new Map(); },
+   async getAlarm() { return storedAlarm; },
+   async setAlarm(at) { storedAlarm = at; },
+   async deleteAlarm() { storedAlarm = null; }
+  };
+
+  let mockNow = 1000000;
+  const social = new Social({ storage });
+  social.room.now = () => mockNow;
+  await social.ready;
+
+  const player = { id: 701, room: 1, send: () => {}, friends: new Set() };
+  social.room.clients.set(player.id, player);
+  social.room.hasActiveBattles = () => true;
+
+  // Active battle requires now + 1000 (1001000).
+  // MVP save failure retry is due at now + 2000 (1002000).
+  social.mvpSaveFailed = true;
+  social.mvpRetryAt = mockNow + 2000;
+
+  // Priority check: nextAlarmAt must prioritize battle (1001000) over retry (1002000)
+  assert.equal(social.nextAlarmAt(), mockNow + 1000, 'battle deadline (now + 1000) prioritized over MVP write retry (now + 2000)');
+
+  // Trigger Social.alarm() where retry is due now and fails
+  social.mvpRetryAt = mockNow;
+  let preAlarmPuts = putCount;
+  await social.alarm();
+
+  // VERIFICATION: handler must NOT overwrite the battle alarm with now + 2000!
+  assert.equal(storedAlarm, mockNow + 1000, 'Social.alarm() preserves battle alarm and does NOT overwrite with now + 2000');
+
+  // Advance to battle tick at now + 1000:
+  mockNow += 1000;
+  let battleTickPuts = putCount;
+  await social.alarm(); // battle tick
+
+  // VERIFICATION: earlier battle alarm must NOT cause storage retries on every gameplay tick!
+  assert.equal(putCount - battleTickPuts, 0, 'storage write retry is NOT invoked on battle tick before it is due');
+  assert.equal(storedAlarm, mockNow + 1000, 'next alarm scheduled for retry time (1002000)');
+
+  // Advance to retry time at 1002000:
+  mockNow += 1000;
+  failPut = false; // storage recovers
+  let retryTickPuts = putCount;
+  await social.alarm(); // retry tick
+
+  // VERIFICATION: retry runs when actually due and recovers
+  assert.equal(putCount - retryTickPuts, 1, 'storage write retry runs when actually due');
+  assert.equal(social.mvpSaveFailed, false, 'mvpSaveFailed cleared upon successful recovery');
+  assert.equal(social.mvpRetryAt, 0, 'mvpRetryAt reset to 0 upon successful recovery');
+ }
+
+ // Part B: Load failure during active battle
+ {
+  let storedAlarm = null;
+  let getCount = 0;
+  let failGet = true;
+  const storage = {
+   async get(k) {
+    if (k === 'mvp-state-v1') {
+     getCount++;
+     if (failGet) throw new Error('Simulated read failure');
+     return { active: [], nextAt: [] };
+    }
+    return null;
+   },
+   async put(k, v) {},
+   async list() { return new Map(); },
+   async getAlarm() { return storedAlarm; },
+   async setAlarm(at) { storedAlarm = at; },
+   async deleteAlarm() { storedAlarm = null; }
+  };
+
+  let mockNow = 2000000;
+  const social = new Social({ storage });
+  social.room.now = () => mockNow;
+  await social.ready;
+
+  assert.equal(social.mvpLoadFailed, true, 'initial load failed');
+
+  const player = { id: 702, room: 1, send: () => {}, friends: new Set() };
+  social.room.clients.set(player.id, player);
+  social.room.hasActiveBattles = () => true;
+
+  // Active battle requires now + 1000 (2001000).
+  // MVP load retry is due at now + 2000 (2002000).
+  assert.equal(social.nextAlarmAt(), mockNow + 1000, 'battle deadline (now + 1000) prioritized over MVP read retry (now + 2000)');
+
+  // Trigger Social.alarm() where retry is due now and fails
+  social.mvpRetryAt = mockNow;
+  await social.alarm();
+
+  // VERIFICATION: battle alarm preserved, not overwritten with now + 2000
+  assert.equal(storedAlarm, mockNow + 1000, 'Social.alarm() preserves battle alarm and does NOT overwrite with now + 2000 on load failure');
+
+  // Advance to battle tick at now + 1000:
+  mockNow += 1000;
+  let battleTickGets = getCount;
+  await social.alarm(); // battle tick
+
+  // VERIFICATION: storage read is NOT retried on battle tick
+  assert.equal(getCount - battleTickGets, 0, 'storage read retry is NOT invoked on battle tick before it is due');
+  assert.equal(storedAlarm, mockNow + 1000, 'next alarm scheduled for read retry time (2002000)');
+
+  // Advance to retry time at 2002000:
+  mockNow += 1000;
+  failGet = false; // storage recovers
+  let retryTickGets = getCount;
+  await social.alarm(); // retry tick
+
+  // VERIFICATION: read retry runs when actually due and recovers
+  assert.equal(getCount - retryTickGets, 1, 'storage read retry runs when actually due');
+  assert.equal(social.mvpLoaded, true, 'mvpLoaded restored to true');
+  assert.equal(social.mvpLoadFailed, false, 'mvpLoadFailed cleared upon recovery');
+  assert.equal(social.mvpRetryAt, 0, 'mvpRetryAt reset to 0 upon recovery');
+ }
+
+ // Part C: Earlier poker deadline overrides both active battle and MVP retry
+ {
+  let storedAlarm = null;
+  const storage = {
+   async get(k) { return null; },
+   async put(k, v) {},
+   async list() { return new Map(); },
+   async getAlarm() { return storedAlarm; },
+   async setAlarm(at) { storedAlarm = at; },
+   async deleteAlarm() { storedAlarm = null; }
+  };
+
+  let mockNow = 3000000;
+  const social = new Social({ storage });
+  social.room.now = () => mockNow;
+  await social.ready;
+
+  const player = { id: 703, room: 1, send: () => {}, friends: new Set() };
+  social.room.clients.set(player.id, player);
+  social.room.hasActiveBattles = () => true;
+
+  // Active battle requires now + 1000 (3001000).
+  // MVP save retry is due at now + 2000 (3002000).
+  // Poker table turn deadline is at now + 500 (3000500).
+  social.mvpSaveFailed = true;
+  social.mvpRetryAt = mockNow + 2000;
+  social.room.tables.set(1, [{ nextDeadline: () => mockNow + 500, seats: [1] }]);
+
+  // VERIFICATION: Poker deadline (3000500) wins over battle (3001000) and retry (3002000)
+  assert.equal(social.nextAlarmAt(), mockNow + 500, 'poker deadline (now + 500) prioritized over battle (now + 1000) and retry (now + 2000)');
+
+  social.scheduleKeepalive();
+  await social.battleAlarmWrite;
+  assert.equal(storedAlarm, mockNow + 500, 'stored alarm set to exact earliest poker deadline');
+ }
+
+ console.log('  ok 10. Deadline priority: active battles and earlier poker deadlines override MVP retry, storage retries only when due, clean recovery');
 }
 
 console.log('ALL SOCIAL MVP COMPREHENSIVE REGRESSION SUITES PASSED');

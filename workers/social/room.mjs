@@ -511,9 +511,9 @@ export class SocialRoom {
   return earliest||(now+60000);
  }
  nextDeadline(now=this.now()){
-  if(this.hasActiveBattles()&&this.clients.size)return now+BATTLE_ALARM_MS;
   let earliest=0;
-  const consider=at=>{if(at&&(!earliest||at<earliest))earliest=at};
+  const consider=at=>{if(at&&Number.isFinite(at)&&(!earliest||at<earliest))earliest=at};
+  if(this.hasActiveBattles()&&this.clients.size)consider(now+BATTLE_ALARM_MS);
   consider(this.nextMvpExpiryAt(now));
   consider(this.nextMvpSpawnAt(now));
   consider(this.nextPokerDeadline(now));

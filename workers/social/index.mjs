@@ -16,6 +16,7 @@ export class Social {
   this.mvpSaveFailed=false;
   this.mvpSaveInFlight=false;
   this.mvpSaveNeeded=false;
+  this.mvpRetryAt=0;
   this.room=new SocialRoom({
    mvpLoaded:false,
    onWorldMessage:()=>this.saveHistory(),
@@ -64,6 +65,7 @@ export class Social {
    this.room.mvpNextAt.clear();
    this.mvpLoaded=true;
    this.mvpLoadFailed=false;
+   if(!this.mvpSaveFailed)this.mvpRetryAt=0;
    this.room.mvpLoaded=true;
    for(const [room,data] of clean.active){
     if(data.endsAt>now)this.room.mvpActive.set(room,data);
@@ -80,6 +82,7 @@ export class Social {
    this.mvpLoaded=false;
    this.mvpLoadFailed=true;
    this.room.mvpLoaded=false;
+   this.mvpRetryAt=this.now()+2000;
    console.error('Plaza MVP state load failed',error);
    return false;
   }
@@ -124,14 +127,18 @@ export class Social {
    this.battleAlarmAt=0;
    if(!this.mvpLoaded)return;
    if(typeof this.ctx.storage.deleteAlarm==='function'){
-    this.battleAlarmWrite=this.battleAlarmWrite.then(()=>this.ctx.storage.deleteAlarm()).catch(error=>console.error('Delete alarm failed',error));
+    this.battleAlarmWrite=this.battleAlarmWrite.then(async ()=>{
+     let current=null;
+     if(typeof this.ctx.storage.getAlarm==='function'){
+      try{current=await this.ctx.storage.getAlarm();}catch{}
+     }
+     if(current===null||current===undefined)return;
+     await this.ctx.storage.deleteAlarm();
+    }).catch(error=>console.error('Delete alarm failed',error));
    }
    return;
   }
-  if(this.room.hasActiveBattles()&&this.room.clients?.size){
-   this.scheduleBattleAlarm();
-   return;
-  }
+  this.battleAlarmAt=this.room.hasActiveBattles()?at:0;
   this.battleAlarmWrite=this.battleAlarmWrite.then(async ()=>{
    let current=null;
    if(typeof this.ctx.storage.getAlarm==='function'){
@@ -143,13 +150,20 @@ export class Social {
   }).catch(error=>console.error('Plaza alarm failed',error));
  }
  nextAlarmAt(now = this.now()){
-  if(this.mvpLoadFailed||this.mvpSaveFailed)return now+2000;
-  if(typeof this.room.nextDeadline==='function')return this.room.nextDeadline(now);
-  if(this.room.hasActiveBattles()&&this.room.clients?.size)return now+BATTLE_ALARM_MS;
-  if(this.room.hasKeepaliveWork?.())return now+60000;
-  const mvpAt=this.room.nextMvpSpawnAt?.(now)||0;
-  if(mvpAt)return mvpAt;
-  return 0;
+  let earliest=0;
+  const consider=at=>{if(at&&Number.isFinite(at)&&(!earliest||at<earliest))earliest=at};
+  if(typeof this.room.nextDeadline==='function'){
+   consider(this.room.nextDeadline(now));
+  }else{
+   if(this.room.hasActiveBattles()&&this.room.clients?.size)consider(now+BATTLE_ALARM_MS);
+   else if(this.room.hasKeepaliveWork?.())consider(now+60000);
+   else consider(this.room.nextMvpSpawnAt?.(now)||0);
+  }
+  if(this.mvpLoadFailed||this.mvpSaveFailed){
+   const retryAt=(this.mvpRetryAt&&this.mvpRetryAt>now)?this.mvpRetryAt:(now+2000);
+   consider(retryAt);
+  }
+  return earliest;
  }
  scheduleBattleAlarm(){
   // v388: 1s ticks (was 250ms). Solo grind no longer uses this alarm at all; party/PvP still do.
@@ -191,10 +205,12 @@ export class Social {
     try{
      await this.ctx.storage.put(MVP_KEY,snapshot);
      this.mvpSaveFailed=false;
+     if(!this.mvpLoadFailed)this.mvpRetryAt=0;
      this.scheduleKeepalive();
     }catch(error){
      console.error('Plaza MVP state save failed',error);
      this.mvpSaveFailed=true;
+     this.mvpRetryAt=this.now()+2000;
      this.scheduleKeepalive();
      break;
     }
@@ -290,19 +306,22 @@ export class Social {
  }
  async alarm(){
   await this.ready;this.restoreSockets();this.room.retryPokerLedgers();
-  if(this.mvpLoadFailed){
-   await this.loadMvpState();
-   if(this.mvpLoaded){
-    this.scheduleKeepalive();
+  const now=this.now();
+  const retryDue=(this.mvpLoadFailed||this.mvpSaveFailed)&&(!this.mvpRetryAt||now>=this.mvpRetryAt);
+  if(retryDue){
+   if(this.mvpLoadFailed){
+    await this.loadMvpState();
+    if(this.mvpLoaded){
+     this.scheduleKeepalive();
+    }
+   }else if(this.mvpSaveFailed){
+    await this.saveMvpState();
    }
-  }else if(this.mvpSaveFailed){
-   await this.saveMvpState();
   }
   this.room.sweep();
   await this.room.ledgerWrites;await this.historyWrites;await this.battleAlarmWrite;if(this.mvpWrites)await this.mvpWrites;
-  const at=this.nextAlarmAt();this.battleAlarmAt=this.room.hasActiveBattles()?at:0;
-  if(at)await this.ctx.storage.setAlarm(at);
-  else if(this.mvpLoaded&&typeof this.ctx.storage.deleteAlarm==='function')await this.ctx.storage.deleteAlarm();
+  this.scheduleKeepalive();
+  await this.battleAlarmWrite;
  }
 }
 export default {fetch(){return new Response('Not found',{status:404})}};
