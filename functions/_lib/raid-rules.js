@@ -9,8 +9,11 @@
 // later than the schedule it was installed with.
 //
 // Cost note: the encounter is request-driven. Mechanics resolve from their scheduled timestamps when
-// any request arrives, so there is no alarm, no tick table and no per-frame traffic. See
-// docs/RIFT-RAID-VALIDATION.md for the measured per-run request/write estimates.
+// any request arrives, so there is no alarm and no tick table. There IS a recurring request, and it
+// must not be described away: a CO-OP client polls its room once every 2 s while its own run is active
+// and the tab is visible, because the room owns that simulation and a teammate's revive hold or a
+// stage transition is not carried by the plaza socket. A SOLO run makes no recurring request at all --
+// it is simulated in the browser (see docs/RIFT-RAID-VALIDATION.md for both measurements).
 
 // The rules version is part of a run's identity, not a display string. A solo checkpoint is scoped by
 // it (a browser that saved under different numbers must not resume under these), and settlement

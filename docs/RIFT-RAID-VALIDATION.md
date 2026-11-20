@@ -98,6 +98,32 @@ node tools/tests/combat_field_contract_sim.js
 `social_worker_sim.mjs` needs `miniflare`, which is not installed in this sandbox; it is unrelated to
 the raid and was not run here.
 
+### Measured clear times (not deadlines)
+
+The owner's rule: report what the fights actually take, separately from the clock they are allowed.
+These are full four-stage clears by the suite's own player loop (`playbase`), which dodges telegraphs,
+shoots ritual sources and takes every portal. Seed 3, Lv150 reference gear. **Nothing here is padded and
+no minimum duration is enforced.**
+
+| Build | Party | Result | Clear time | HP left | Dodges |
+| --- | --- | --- | --- | --- | --- |
+| Physical (17,729 DPS) | solo | cleared 4/4 | **383 s** (6:23) | 107,209 / 118,512 | 17 |
+| Magic (14,959 DPS) | solo | cleared 4/4 | **373 s** (6:13) | 69,132 / 69,132 | 16 |
+| Physical | duo | cleared 4/4 | **382 s** (6:22) | 102,684 / 118,512 | 16 |
+| Physical + magic | duo | cleared 4/4 | **363 s** (6:03) | 96,398 / 118,512 | 14 |
+| Physical | trio | cleared 4/4 | **376 s** (6:16) | 103,180 / 118,512 | 15 |
+| Physical + magic | trio | cleared 4/4 | **375 s** (6:15) | 101,518 / 118,512 | 16 |
+
+For comparison, the run clock is **681 s** and the per-stage budgets are 52 / 67 / 67 / 240 s. So a
+competent party finishes with roughly **five minutes of headroom** on the deadline, and a party that
+does not react to mechanics is wiped in the sanctuary (asserted in the same suite). The spread between
+builds and party sizes is 20 s — the fight is not sensitive to party size, which is what the
+HP-scaling-from-party-DPS rule is for.
+
+The earlier target of "~10–15 min" is **not met and is not being forced**: the fight ends when the
+boss dies. Padding it would mean raising HP or adding phases, which the owner explicitly ruled out
+until correctness was fixed. These are the honest numbers.
+
 ### Cadence invariance — measured, not asserted
 
 The property the fixed-cell scheduler exists to provide: **the same seed, profiles and intents produce the
@@ -181,9 +207,29 @@ New raid alarm calls:     0
   advances the run on that read. A 3-second server-side alarm for fully live idle damage would be new
   recurring DO traffic and is **left for explicit owner approval** rather than being smuggled in.
 
+### Solo: measured, and it is a different shape entirely
+
+A solo run is simulated in the browser, so the traffic profile is two requests, total:
+
+```
+measured: ONE complete solo run (reserve -> play -> settle)
+  Social DO requests: 0        <- the acceptance rule
+  D1 statements: 28  · batches: 2 · batched rows: 9
+  Pages requests: 2 (start, settle) · completion-validation CPU: 1 bounded claim check
+```
+
+Compare with a co-op run, above, where every action and every 2 s read is a DO request. The split is
+not a performance tweak; it removes the Durable Object from the solo path completely. The number is
+asserted by `tools/tests/raid_api_source_sim.mjs` (which counts every fetch to the SOCIAL binding and
+fails if one occurs) and again by the browser-level assertion in `raid_local_solo_sim.mjs`, which
+replaces `fetch` and `WebSocket` with throwing stubs for the duration of a run and proves neither is
+touched.
+
 **Open owner decision:** if a party closes the tab mid-run, the run stops advancing until someone
 reads it again (bounded by `deadlineAt`, so it always resolves). Fixing that needs a per-run alarm;
-the cost estimate and the proposal are deliberately *not* implemented here.
+the cost estimate and the proposal are deliberately *not* implemented here. Solo has no equivalent
+gap: the run advances while the tab is foregrounded, and a backgrounded or closed tab resumes from its
+checkpoint when reopened, because the engine resolves the elapsed cells on the next read.
 
 ## 5. Staging steps (separate reviewable step — not performed)
 
