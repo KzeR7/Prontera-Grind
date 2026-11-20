@@ -471,7 +471,9 @@ def main():
                 # read a number, and reading the number is the whole point of the emote. Setting the
                 # delay (rather than appending copies here) keeps the APNG sequence PIL writes valid.
                 dl[-1] = DICE_HOLD_MS
-                dropped = 28 - len(kept)
+                # Count against the rip's own length, not a hardcoded 28: a future re-rip with a
+                # different frame count should report honestly rather than a nonsense number.
+                dropped = len(loaded[n - 1][1]) - len(kept)
             dice_sets.append((n, fr, dl, keyed))
         if dropped:
             print(f'  dice: dropped {dropped} wobble/fade frames; the roll now ends on the landed face')
@@ -492,13 +494,17 @@ def main():
     skip = set()
     if dice_faces:
         skip.add('dice')
-    # Never overwrite art the sprite route already produced and verified. FILENAMES also lists the
-    # 32 shipped ids so a full refresh is possible, but matching a wiki GIF (panic <- Come.gif)
-    # must not silently replace a verified sprite render. --refresh opts in to that.
-    if '--refresh' not in sys.argv:
-        for eid, entry in lock.get('outputs', {}).items():
-            if entry.get('sha256'):
-                skip.add(eid)
+    # Never overwrite art the sprite route produced. FILENAMES also lists the 32 shipped ids, and
+    # matching a wiki GIF would silently replace a verified sprite render - `panic` is the trap,
+    # because its wiki filename is Come.gif. A lock entry with a sha256 but no `source` came from
+    # the sprite route and is never replaced, not even by --refresh. --refresh only re-converts the
+    # ids this importer owns (entries that carry a `source`), which is what re-running it means.
+    refresh = '--refresh' in sys.argv
+    for eid, entry in lock.get('outputs', {}).items():
+        if not entry.get('sha256'):
+            continue
+        if not refresh or not entry.get('source'):
+            skip.add(eid)
 
     found, missing = [], []
     for eid, fname in FILENAMES.items():

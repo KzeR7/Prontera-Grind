@@ -52,9 +52,9 @@ is retained when decoded pixels and timing already agree, preserving the origina
 12 files byte-for-byte. The 32 shipped IDs in `emotion-map.json` are mapped
 by inspecting the original animations, not substituting Unicode glyphs.
 
-### PR #269: the 14 added emotions (art pending)
+### PR #269: the 14 added emotions
 
-`emotion-map.json` now lists 46 ids: the original 32, then 14 more (`omg, oh, x, hlp, go, bzz, awsm,
+`emotion-map.json` lists 46 ids: the original 32, then 14 more (`omg, oh, x, hlp, go, bzz, awsm,
 pat, slur, grat, fsh, spin, dice, oops`) appended so no saved id moves index. Each new id maps to the
 action that really holds it in `emotion.act/spr`; `tools/tests/emotion_map_sim.js` pins every number
 against the `ET_*` enum and fails if one drifts.
@@ -65,9 +65,19 @@ numbers were past the end of the file, and the 7 that landed inside it were the 
 amazed, best, best2, chaos, absurd, joy, kiskis, funny, martialarts, salute`) are Ragnarok Online II
 emotes, not RO 1 - they have no frames in `emotion.spr` and were dropped.
 
-**These 14 have no PNGs yet.** `emotions-lock.json` records them with a `null` sha256, which means
-"registered, art not generated", and `social_sim.js` refuses any id that is neither hashed nor
-declared pending.
+**All 46 have art.** The 32 original ids come from the sprite route above; the 14 added ones come
+from the iRO Wiki GIFs via `import-emote-gifs.py`. Every entry in `emotions-lock.json` carries a real
+sha256, and `social_sim.js` fails if any id is neither hashed nor declared pending.
+
+### Reviewing the art
+
+`python3 tools/social/build-emotion-ref.py` regenerates `emoji-ref-data.json`, the authentic RO
+emotion table (action index from roBrowserLegacy's `Emotions.js`, commands and art from the iRO Wiki).
+
+`emoji-review.html` renders that table as a review page. Serve it over http - `python3 -m http.server`
+in `tools/social` - because it fetches the JSON at load time rather than carrying a copy that can go
+stale. It shows every id at the game's real 40 px slot on the dark UI, which is the only honest way to
+judge emote sizes and the dice's landing.
 
 There are two ways to supply the art. The first is the sprite route above: recover the bytes as
 `/tmp/emotion.act` and `/tmp/emotion.spr`, run `emotions.go`, then:
@@ -113,10 +123,11 @@ emote vanishes and leaves an empty speech bubble hanging over the character; the
 game already ships ends on a blank too, but for one 50 ms tick. A blank in the middle of an
 animation is a deliberate beat and is left alone.
 
-Already-verified art is never overwritten. `FILENAMES` lists the 32 shipped ids too, so a full
-refresh is possible, but a matching wiki GIF (`panic` is `Come.gif` on the wiki) would otherwise
-silently replace a verified sprite render - so an id whose lock entry already has a sha256 is
-skipped. `--refresh` opts in to replacing them.
+Already-verified art is never overwritten. `FILENAMES` lists the 32 shipped ids too, and matching a
+wiki GIF would silently replace a verified sprite render - `panic` is the trap, since its wiki
+filename is `Come.gif`. A lock entry with a sha256 but no `source` came from the sprite route and is
+always skipped, even under `--refresh`; `--refresh` only re-converts the ids this importer owns
+(those that carry a `source`).
 
 Two things are done to the pixels beyond timing, and both were owner-reported defects:
 

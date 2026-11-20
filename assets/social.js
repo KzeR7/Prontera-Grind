@@ -10,7 +10,7 @@ const app={socket:null,user:null,id:null,room:0,rooms:[],plazaFriends:0,wanted:f
 const escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 // The dice is six files behind one id: dice.png is face 1 and dice2..dice6 the rest. Every other
 // emotion is a single file, so a face only changes the path when one was actually rolled.
-const emojiURL=(id,face)=>'assets/social/emotions/'+(id==='dice'&&Number.isInteger(face)&&face>=2&&face<=6?id+face:id)+'.png';
+const emojiURL=R.emotionURL;   // shared with social-scene.js, so the dice's six-file rule lives in one place
 // v374 (owner: "make all the emotions the same size in the emoji tab"): every emote sits in a fixed square slot and is
 // scaled so its painted area fills the same visual size (EMOTE_LAYOUT). Small art is drawn pixelated, not smoothed.
 // Typed command -> emote id. RO names win; an id only works when it has no RO name (so /ok is no longer the Thanks art).

@@ -41,59 +41,53 @@ assert.ok(R.EMOTE_LAYOUT.dice, 'the dice has a layout covering all six faces');
 {
   const fs2 = require('fs'), dir = path.join(__dirname, '..', '..', 'assets', 'social', 'emotions');
   const be32 = (b, o) => (b[o] << 24 | b[o + 1] << 16 | b[o + 2] << 8 | b[o + 3]) >>> 0;
-  // Count fully transparent pixels in the last frame. APNG frames are ordinary PNG sub-images, so
-  // inflate the final image data and undo the scanline filters - about twenty lines, and it keeps the
-  // check synchronous with the rest of this file.
+  // Decode the last APNG frame and count the transparent pixels that are ENCLOSED - reachable only
+  // by crossing the bubble's outline. That is exactly what a punched-out die face looks like once it
+  // sits on a dark backdrop; plain transparency is the bubble's legitimate surround. APNG frames are
+  // ordinary PNG sub-images, so: inflate the final image data, undo the scanline filters, then
+  // flood-fill the transparency in from the border. Whatever is left over is enclosed.
+  // Measured: the lattice face had 20, the solid one 0, so this is a real regression guard.
   const zlib = require('zlib');
-  const transparentInLastFrame = png => {
+  const enclosedHoles = png => {
     let last = null, off = 8;
     while (off + 8 <= png.length) {
       const len = be32(png, off), type = png.toString('latin1', off + 4, off + 8);
-      if (type === 'fcTL') last = { w: be32(png, off + 12), h: be32(png, off + 16) , data: [] };
-      else if (type === 'IDAT') last && last.data.push(png.subarray(off + 8, off + 8 + len));
-      // fdAT = 4-byte sequence number, then zlib data.
-      else if (type === 'fdAT' && last) last.data.push(png.subarray(off + 12, off + 8 + len));
+      if (type === 'fcTL') last = { w: be32(png, off + 12), h: be32(png, off + 16), data: [] };
+      else if (type === 'IDAT' && last) last.data.push(png.subarray(off + 8, off + 8 + len));
+      else if (type === 'fdAT' && last) last.data.push(png.subarray(off + 12, off + 8 + len)); // skip seq no.
       off += 12 + len;
     }
     if (!last || !last.w) return -1;
-    const raw = zlib.inflateSync(Buffer.concat(last.data));
-    const bpp = 4, stride = last.w * bpp;
-    const out = Buffer.alloc(stride * last.h);
-    let p = 0;
-    for (let y = 0; y < last.h; y++) {
-      const filter = raw[p++];
-      const row = raw.subarray(p, p + stride); p += stride;
-      const prev = y ? out.subarray((y - 1) * stride, y * stride) : Buffer.alloc(stride);
-      const cur = out.subarray(y * stride, (y + 1) * stride);
+    const raw = zlib.inflateSync(Buffer.concat(last.data)), { w, h } = last, stride = w * 4;
+    const px = Buffer.alloc(stride * h);
+    for (let y = 0, p = 0; y < h; y++) {
+      const f = raw[p++], row = raw.subarray(p, p + stride); p += stride;
+      const prev = y ? px.subarray((y - 1) * stride, y * stride) : Buffer.alloc(stride);
+      const cur = px.subarray(y * stride, (y + 1) * stride);
       for (let i = 0; i < stride; i++) {
-        const a = i >= bpp ? cur[i - bpp] : 0, b = prev[i], c = i >= bpp ? prev[i - bpp] : 0;
+        const a = i >= 4 ? cur[i - 4] : 0, b = prev[i], c = i >= 4 ? prev[i - 4] : 0;
         let v = row[i];
-        if (filter === 1) v += a;
-        else if (filter === 2) v += b;
-        else if (filter === 3) v += (a + b) >> 1;
-        else if (filter === 4) {
-          const pp = a + b - c, pa = Math.abs(pp - a), pb = Math.abs(pp - b), pc = Math.abs(pp - c);
+        if (f === 1) v += a; else if (f === 2) v += b; else if (f === 3) v += (a + b) >> 1;
+        else if (f === 4) {
+          const q = a + b - c, pa = Math.abs(q - a), pb = Math.abs(q - b), pc = Math.abs(q - c);
           v += (pa <= pb && pa <= pc) ? a : (pb <= pc ? b : c);
         }
         cur[i] = v & 255;
       }
     }
-    // Count only ENCLOSED transparent pixels: see-through spots with opaque art on all four sides.
-    // Plain transparency is the bubble's legitimate surround, so counting it proves nothing; a
-    // punched face is exactly the enclosed kind. Measured: the lattice face had 20, the solid one 0.
-    const A = (x, y) => out[(y * last.w + x) * 4 + 3];
-    let n = 0;
-    for (let y = 1; y < last.h - 1; y++) {
-      for (let x = 1; x < last.w - 1; x++) {
-        if (A(x, y) >= 40) continue;
-        let l = false, r = false, u = false, d = false;
-        for (let i = x - 1; i >= 0; i--) if (A(i, y) >= 40) { l = true; break; }
-        for (let i = x + 1; i < last.w; i++) if (A(i, y) >= 40) { r = true; break; }
-        for (let j = y - 1; j >= 0; j--) if (A(x, j) >= 40) { u = true; break; }
-        for (let j = y + 1; j < last.h; j++) if (A(x, j) >= 40) { d = true; break; }
-        if (l && r && u && d) n++;
-      }
+    const clear = (x, y) => px[(y * w + x) * 4 + 3] < 40;
+    const seen = new Uint8Array(w * h), stack = [];
+    const push = (x, y) => {
+      if (x >= 0 && y >= 0 && x < w && y < h && !seen[y * w + x] && clear(x, y)) { seen[y * w + x] = 1; stack.push(x, y); }
+    };
+    for (let x = 0; x < w; x++) { push(x, 0); push(x, h - 1); }
+    for (let y = 0; y < h; y++) { push(0, y); push(w - 1, y); }
+    while (stack.length) {
+      const y = stack.pop(), x = stack.pop();
+      push(x + 1, y); push(x - 1, y); push(x, y + 1); push(x, y - 1);
     }
+    let n = 0;
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (clear(x, y) && !seen[y * w + x]) n++;
     return n;
   };
   for (const face of ['dice', 'dice2', 'dice3', 'dice4', 'dice5', 'dice6']) {
@@ -125,10 +119,19 @@ assert.ok(R.EMOTE_LAYOUT.dice, 'the dice has a layout covering all six faces');
     // The face must be a solid tile. The wiki rips punch the tile out, so unfilled it is a lattice
     // and on the dark plaza bubble every hole reads as a black spot (the owner's report). The landed
     // frame has to be almost fully opaque; a regression that skips the fill drops well below this.
-    const punched = transparentInLastFrame(png);
+    const punched = enclosedHoles(png);
     assert.ok(punched >= 0, face + ' last frame decodes');
     assert.equal(punched, 0, face + ' has a solid face, but ' + punched + ' see-through spots remain');
   }
+}
+// One shared URL rule. social.js and social-scene.js each carried their own copy of the dice's
+// six-file mapping, so the face range was written twice and could drift; both now use this.
+assert.equal(R.emotionURL('smile'), 'assets/social/emotions/smile.png', 'a plain emote is one file');
+assert.equal(R.emotionURL('dice', 1), 'assets/social/emotions/dice.png', 'face 1 is the base file');
+assert.equal(R.emotionURL('dice', 6), 'assets/social/emotions/dice6.png', 'face 6 is a suffix file');
+for (const bad of [undefined, null, 0, 7, 1.5, '3']) {
+  assert.equal(R.emotionURL('dice', bad), 'assets/social/emotions/dice.png',
+    'a face outside 2-6 falls back to the base file, not a broken path: ' + String(bad));
 }
 for (const [id, cmd] of Object.entries(R.EMOTE_NAMES)) {
   assert.ok(R.EMOTIONS.includes(id), 'named id ' + id + ' exists');

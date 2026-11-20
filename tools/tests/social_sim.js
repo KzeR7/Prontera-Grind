@@ -13,11 +13,11 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{createHash}=re
   if(!out.sha256){assert.ok(artPending.includes(id),id+' has no art hash and is not declared pending');continue}
   assert.equal(createHash('sha256').update(fs.readFileSync('assets/social/emotions/'+id+'.png')).digest('hex'),out.sha256,id+' art matches the lock');
  }
- // The 14 PR #269 ids now carry real art converted from the authentic iRO Wiki GIFs
- // (tools/social/import-emote-gifs.py), so only `x` is still pending: Ecks.gif was never
- // supplied. A pending id must not have a file on disk - a missing hash may never hide real art.
- assert.deepEqual(artPending.sort(),[],'no id is awaiting art any more: Ecks.gif arrived last');
- for(const id of artPending)assert.ok(!fs.existsSync('assets/social/emotions/'+id+'.png'),id+' has no file, as declared');
+ // All 46 ids carry real art, converted from the authentic iRO Wiki GIFs by
+ // tools/social/import-emote-gifs.py. `x` was the last gap and Ecks.gif closed it, so nothing is
+ // pending. This is asserted rather than assumed: a lock entry with no hash would let a missing
+ // file pass silently, which is exactly how an id sat art-less before.
+ assert.deepEqual(artPending.sort(),[],'every id has art: no lock entry is missing a hash');
  // The dice is six files behind one id: dice.png is face 1, dice2..dice6 the rest. A roll names
  // a face, so every one of them must exist or a roll of 4 draws a broken image.
  assert.equal(emotionLock.outputs.dice.faces,6,'the dice declares its six faces');
@@ -27,6 +27,14 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{createHash}=re
  const faceBytes=[1,2,3,4,5,6].map(face=>createHash('sha256').update(fs.readFileSync('assets/social/emotions/'+(face===1?'dice':'dice'+face)+'.png')).digest('hex'));
  assert.equal(new Set(faceBytes).size,6,'all six dice faces are different art');
  for(const id of R.EMOTIONS)assert.ok(fs.existsSync('assets/social/emotions/'+id+'.png')||artPending.includes(id),id+' has art or is pending');
+ // Which route made each file. A lock entry with a `source` came from import-emote-gifs.py (a wiki
+ // GIF); one without came from the sprite renderer and must never be replaced by the importer.
+ // `panic`'s wiki filename is Come.gif, so a careless --refresh silently swaps in the wrong art -
+ // it did exactly that twice before the importer learned to honour this split.
+ const fromWiki=Object.entries(emotionLock.outputs).filter(([,o])=>o.source).map(([id])=>id).sort();
+ assert.deepEqual(fromWiki,['awsm','bzz','dice','fsh','go','grat','hlp','oh','omg','oops','pat','slur','spin','x'],
+   'exactly the 14 imported ids carry a source; the rest came from the sprite route');
+ assert.ok(!emotionLock.outputs.panic.source,'panic has no wiki source, so no import may overwrite it');
  console.log('  '+artPending.length+' registered ids still need art: '+artPending.join(', '));
  const clients=Array.from({length:21},(_,i)=>join(i+1));assert.equal(clients[19].room,1);assert.equal(clients[20].room,2);assert.equal(clients[0].events.find(x=>x.type==='room').players.length,1);
  // v362: every room snapshot carries the plaza fingerprint so the page can refuse to trust a

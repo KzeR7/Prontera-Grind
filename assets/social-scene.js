@@ -2646,7 +2646,7 @@ void main(){
  }
  // The dice is six files behind one id (`dice` is face 1, dice2..dice6 the rest); a roll carries
  // the face the server chose, so every viewer's bubble shows the same number.
- const emotionArt=(id,face)=>'assets/social/emotions/'+(id==='dice'&&Number.isInteger(face)&&face>=2&&face<=6?id+face:id)+'.png';
+ const emotionArt=R.emotionURL;   // shared with social.js
  function bubble(id,m){const p=players.get(id);if(!p)return;p.bubble.replaceChildren();p.bubble.classList.toggle('social-emotion',!!m.emotion);if(m.emotion){const img=document.createElement('img');img.src=emotionArt(m.emotion,m.face);img.alt='/'+m.emotion;p.bubble.append(img)}else p.bubble.textContent=m.body;p.bubbleUntil=Math.max(performance.now(),clock)+6000;p.bhid=null}
  // Player-locked camera: the right mouse button orbits/tilts, pinch/wheel zooms, no map-roaming pan.
  // v298 (owner): the LEFT button no longer rotates - a left click always means "walk here".
