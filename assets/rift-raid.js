@@ -122,6 +122,9 @@
     .raid-btn.danger{background:#3d1d1d;border-color:#965454;color:#ffd9d0}
     .raid-btn.ghost{background:transparent;border-color:#3c5954}
     .raid-btn.small{min-height:36px;padding:6px 10px;font-size:12px}
+    /* A thumb is not a mouse. The compact variant is 36px, which is fine on a desktop and below the
+       44px touch minimum on a phone; the booster rows are real choices a player has to hit. */
+    @media(max-width:720px),(pointer:coarse){.raid-btn.small{min-height:44px;padding:8px 12px}}
     .raid-input{min-height:42px;padding:8px 10px;border-radius:9px;border:1px solid #426057;background:#081312;color:#f0e8d2;font:13px system-ui}
     .raid-member{display:flex;align-items:center;gap:9px;padding:8px;border:1px solid #2f4944;border-radius:10px;background:#0a1717;margin:6px 0}
     .raid-member canvas{width:42px;height:48px;image-rendering:pixelated;flex:none}
@@ -333,10 +336,13 @@
       R.eligibility = data.eligibility || null;
       R.party = data.party || R.party;
       R.activeRun = data.activeRun || null;
-      // A solo reservation comes back from `loadActiveRun` as the reservation record itself (it has
-      // `local: true` and a `members` roster, but no simulated state). It is not a renderable run.
-      R.activeRunLocal = (R.activeRun && R.activeRun.local) ? R.activeRun : null;
-      if (R.activeRunLocal) R.activeRun = null;
+      // A solo run is reported as `activeReservation`, not `activeRun`: it is a reservation (identity,
+      // seed, clock, roster) with no simulated state, and adopting it as a run snapshot replaced the
+      // live HUD with `{state: undefined}`. Older builds sent the reservation itself as `activeRun`
+      // with `local: true`; both are accepted here, and neither is ever adopted as run state.
+      R.activeRunLocal = data.activeReservation
+        || ((R.activeRun && R.activeRun.local) ? R.activeRun : null);
+      if (R.activeRun && R.activeRun.local) R.activeRun = null;
       R.lastSync = Date.now();
       if (data.activeRunError) R.error = data.activeRunError;
       // A solo run lives only in this tab, so the server has nothing to say about it: `activeRun` is
@@ -349,6 +355,9 @@
       if (R.activeRunLocal) {
         R.resumeRunId = R.activeRunLocal.id;
         R.resumeRulesVersion = R.activeRunLocal.rulesVersion || '';
+        // The tab already holds a live local run: this is a lobby refresh (a login, an account sync),
+        // not a rejoin. Adopting anything here would overwrite the HUD with reservation data.
+        if (R.solo || R.soloRunning) { render(); return; }
       }
       if (R.activeRun) {
         adoptRun(R.activeRun);
@@ -443,7 +452,14 @@
       }
       return;
     }
-    settle(run.id);
+    // A terminal run. A solo run's claim comes from the LOCAL run -- the only thing that knows what
+    // the browser actually reached -- because `settle` with no claim is a different request (no
+    // `result`), and the server rejects that with "The run result was not reported." Two paths supply
+    // it: the live loop's `onEnd` keeps the run on the record before clearing `R.solo`, and a reload
+    // that restored an already-terminal checkpoint does the same. A co-op run sends no claim at all:
+    // the room's snapshot is the authority there.
+    const local = R.solo || R.lastLocalRun || null;
+    settle(run.id, local && (run.local || local.local) ? local : null);
   }
 
   // The room is read only for the events the socket does not carry: a teammate's revive hold, a
@@ -458,6 +474,10 @@
     if (R.timer) { clearInterval(R.timer); R.timer = null; }
   }
   async function pollRun() {
+    // A solo run is simulated in this tab. There is no room to poll, and a sync would return the
+    // reservation (which carries no run state) — adopting that is what replaced the live HUD with
+    // `{state: undefined}` one frame after the run started.
+    if (R.solo || R.soloRunning) { stopPolling(); return; }
     const run = R.run;
     if (!run || run.state !== 'active') { stopPolling(); return; }
     if (typeof document !== 'undefined' && document.hidden) return;
@@ -465,7 +485,8 @@
     R.lastPollAt = Date.now();
     try {
       const data = await api('', { action: 'sync', runId: run.id });
-      if (data.run) adoptRun(data.run);
+      // A local reservation is not run state; adopting it would blank the arena.
+      if (data.run && !data.run.local) adoptRun(data.run);
       if (data.settlement) {
         // The run ended while the panel was closed: show the result the server actually paid.
         stopPolling();
@@ -539,7 +560,17 @@
         // A checkpoint that was already terminal when the tab closed: the fight is over and only the
         // settlement is outstanding. Settling it with its own claim is what makes a reload that races
         // the settle recover the rewards instead of showing an empty lobby.
+        // Nothing has imported the engine yet on a reloaded tab, and `snapshotSync` needs it in
+        // memory. Warm it first; if it cannot load, say so instead of falling through to a second
+        // paid entry.
+        try { await solo.warm(); } catch (error) {
+          R.error = 'Your saved solo run could not be restored (the raid engine did not load). Reload to try again.';
+          R.busy = ''; render(); return;
+        }
         if (saved.run.state !== 'active') {
+          // Keep the terminal local run reachable: `updateRunOverlay` builds the settle claim from it,
+          // and the restore path is precisely the case where `R.solo` has already been cleared.
+          R.lastLocalRun = saved.run;
           R.solo = null; R.soloRunning = false;
           R.result = null; R.lastResultId = '';
           R.view = 'results';
@@ -575,7 +606,10 @@
       startedAt: data.run.startedAt,
       deadlineAt: data.run.deadlineAt,
       rulesVersion: data.run.rulesVersion || data.rulesVersion || '',
-      member: { id: myId(), name: R.account?.name || 'Adventurer', profile: data.run.members?.[0]?.profile },
+      // `run.profile` is the server's own snapshot of this member. The public `run.members` entries
+      // carry flat fields and NO `profile`, so reading one from there silently produced a 1,000 HP
+      // member; the `members[0].profile` fallback is kept only for a response from an older build.
+      member: { id: myId(), name: R.account?.name || 'Adventurer', profile: data.run.profile || data.run.members?.[0]?.profile },
     };
     if (['cleared', 'failed'].includes(data.run.state)) {
       // The server already considers this run over: adopt and settle it, do not simulate it again.
@@ -619,6 +653,7 @@
         R.soloStop = null;
         R.soloRunning = false;
         R.solo = null;
+        R.lastLocalRun = local;
         // Persist the terminal state once so a reload that races the settle still shows the result
         // instead of starting a new run.
         solo.saveCheckpoint(local, accountKey);

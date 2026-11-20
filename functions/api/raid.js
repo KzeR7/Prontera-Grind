@@ -227,10 +227,25 @@ async function loadActiveRun(env, user) {
   const row = await db.raidActiveForUser(env.DB, user.id);
   if (!row) return { ok: true, run: null, error: '' };
   // A solo run is not in the room, so asking the room about it would (a) be a pointless request on
-  // every login and (b) report "the room is down" for a fight the room has nothing to do with. The
-  // reservation is the answer: the client uses it to resume its own local simulation.
+  // every login and (b) report "the room is down" for a fight the room has nothing to do with.
+  //
+  // What comes back is the RESERVATION, and a reservation is not a run: settle's checkpoint keeps
+  // `members` as the roster it was built from ({id,name,profile}) and carries no `state`, because the
+  // server deliberately does not pretend to have watched the fight. Handing that object out as
+  // `activeRun` and letting the client adopt it as a run snapshot replaced the live HUD with
+  // `{state: undefined}` on the very next lobby refresh — the loop then called settle with no claim.
+  // So the identity the client resumes from is explicit, and it is not mistaken for run state.
   const local = safeJson(row.checkpoint_json);
-  if (local && local.local) return { ok: true, run: local, error: '', local: true };
+  if (local && local.local) {
+    return { ok: true, error: '', local: true, reservation: {
+      id: row.id,
+      seed: Number(row.seed) || undefined,
+      startedAt: Number(row.started_at),
+      deadlineAt: Number(row.deadline_at),
+      rulesVersion: local.rulesVersion || RAID_RULES_VERSION,
+      members: Array.isArray(local.members) ? local.members : [],
+    } };
+  }
   const snapshot = await socialRequest(env, '/raid/snapshot', user, 'POST', { runId: row.id });
   if (snapshot.ok) return { ok: true, run: snapshot.data?.run || null, error: '' };
   if (snapshot.status === 404) {
@@ -399,6 +414,12 @@ async function startRaid(env, user, body) {
     // the seed is what makes its copy the same fight. It is not added to the public snapshot, because
     // for co-op the room owns the simulation and the clients never need it.
     run.seed = seed;
+    // The member's own sanitized profile, for the same reason and with the same scope. `run.members`
+    // is the PUBLIC snapshot, which carries flat fields (cls/hp/dps) and no `profile` object, so a
+    // client that tried to read one from there built the local run with `profile: undefined` — and
+    // the engine's floor put the player on 1,000 HP instead of their real ceiling. Solo only: a co-op
+    // client never simulates, and the room already holds the roster.
+    run.profile = profiles[0];
     return { ok: true, status: 200, data: {
       ok: true, local: true, runId, run, partySize, totalHp, stageEnemyHp: totalHp, deadlineAt,
       rulesVersion: RAID_RULES_VERSION,
@@ -781,6 +802,9 @@ async function getState(env, user, url) {
     day,
     account: publicAccount(account, user.id, entriesUsed, chests, active.run, cards),
     activeRun: active.run,
+    // Solo only: the reservation the tab resumes from. Never the same object as `activeRun`, so no
+    // caller can adopt it as run state.
+    activeReservation: active.local ? active.reservation : null,
     activeRunError: active.error || '',
     lastRun: recent ? { id: recent.id, state: recent.state, settledAt: Number(recent.settled_at) || 0 } : null,
     requestedRun,
@@ -892,7 +916,9 @@ export const onRequestPost = guard(async ({ request, env }) => {
         // reports the outcome it simulated and settles. Nothing is granted here.
         return json({ ok: true, run: null, local: true, expired: true, runId: body.runId, deadlineAt: Number(run.deadline_at) });
       }
-      return json({ ok: true, local: true, run: localCheckpoint, runId: body.runId });
+      // Same distinction as `loadActiveRun`: a local reservation is NOT run state. It is returned
+      // under its own key so a polling client cannot adopt it as a snapshot.
+      return json({ ok: true, local: true, reservation: localCheckpoint, run: null, runId: body.runId });
     }
     const snapshot = await socialRequest(env, '/raid/snapshot', user, 'POST', { runId: body.runId });
     if (!snapshot.ok) {

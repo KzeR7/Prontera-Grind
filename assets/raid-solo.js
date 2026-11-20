@@ -71,14 +71,26 @@
     }
   }
 
-  async function loadEngine() {
-    if (engine) return engine;
-    // Imported once and cached. The query string is the rules version so a stale cached module can
-    // never simulate a run that the server reserved under different numbers.
-    const url = SELF_URL ? new URL('raid-engine/raid-engine.js', SELF_URL).href : './raid-engine/raid-engine.js';
-    engine = await import(url);
-    return engine;
+  // One promise, not one value. A resume path that calls the synchronous snapshot twice (restore,
+  // then the frame that follows it) used to start two imports and could still find `engine` empty.
+  let engineLoad = null;
+  function loadEngine() {
+    if (engine) return Promise.resolve(engine);
+    if (!engineLoad) {
+      // Imported once and cached. The query string is the rules version so a stale cached module can
+      // never simulate a run that the server reserved under different numbers.
+      const url = SELF_URL ? new URL('raid-engine/raid-engine.js', SELF_URL).href : './raid-engine/raid-engine.js';
+      engineLoad = import(url).then((mod) => { engine = mod; return mod; },
+        (error) => { engineLoad = null; throw error; });
+    }
+    return engineLoad;
   }
+
+  // A resume path rebuilds a run's public snapshot BEFORE it starts a loop, and `snapshotSync` is
+  // synchronous by design so a frame never awaits between reading the clock and painting. That is only
+  // safe once the module is in memory: on a reloaded tab nothing has imported it yet, so this used to
+  // throw "The raid engine is not loaded yet" and abandon a run the account had already paid for.
+  R.warm = function warm() { return loadEngine().then(() => true); };
 
   R.storageStatus = () => storage();
 
@@ -196,7 +208,9 @@
       try {
         await R.advance(run, now);
         if (run.state !== 'active') {
-          R.stop();
+          // Stop THIS loop. Stopping "the" loop was module-global state: the first run to end froze
+          // every later one, which is what made the second solo run of a session sit still.
+          halt();
           if (typeof opts.onEnd === 'function') opts.onEnd(run);
           return;
         }
@@ -209,13 +223,17 @@
       }
     };
 
-    timer = setInterval(frame, every);
-    frame();
-    R.stop = function stop() {
+    function halt() {
       stopped = true;
       if (timer) { clearInterval(timer); timer = null; }
-    };
-    return R.stop;
+    }
+
+    timer = setInterval(frame, every);
+    frame();
+    // `R.stop` remains the handle for "stop the loop that is running", but it is only ever the most
+    // recently started loop's stopper; older loops are unaffected because each carries its own flag.
+    R.stop = halt;
+    return halt;
   };
 
   R.stop = R.stop || function () {};

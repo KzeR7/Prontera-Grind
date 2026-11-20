@@ -221,7 +221,13 @@ function account(overrides = {}) {
     w.PGRaidSolo = {
       begin: async () => { calls.push('begin'); throw new Error('a resume must not reserve'); },
       act: async (r, a, o) => ({ ok: true, run: r }),
-      snapshotSync: (r) => ({ ...runFixture(), id: r.id, stageKey: r.stageKey || 'approach' }),
+      // A reloaded tab has not imported the engine yet, and `snapshotSync` throws without it. The
+      // order of these two calls is the regression this pins (see the next test).
+      warm: async () => { calls.push('warm'); return true; },
+      snapshotSync: (r) => {
+        if (!calls.includes('warm')) throw new Error('The raid engine is not loaded yet.');
+        return { ...runFixture(), id: r.id, stageKey: r.stageKey || 'approach' };
+      },
       saveCheckpoint: () => ({ ok: true }),
       loadCheckpoint: () => ({ status: 'ok', run: JSON.parse(JSON.stringify(savedRun)) }),
       loop: () => { looped++; return () => {}; },
@@ -237,6 +243,49 @@ function account(overrides = {}) {
     assert.equal(looped, 1, 'the saved run was resumed into a local loop');
     assert.equal(w.PGRaid.state.soloResumed, true);
     // Clean up for the co-op tests that follow.
+    w.PGRaid.state.soloRunning = false;
+    w.PGRaid.state.solo = null;
+    localActive = null;
+    w.PGRaid.state.activeRunLocal = null;
+    w.PGRaid.state.run = null;
+    w.PGRaid.state.view = 'lobby';
+    w.PGRaid.state.resumeAttempted = true;
+    dungeon.calls.length = 0;
+  });
+
+  // Found by the real-browser acceptance run: on a reloaded tab no module has imported the engine
+  // yet, so the resume path's synchronous snapshot threw "The raid engine is not loaded yet", the
+  // resume was abandoned, and the player was left in the lobby with an entry already spent. Ordering
+  // is the whole fix, so ordering is what this pins.
+  await t('a reloaded tab warms the engine before it takes the resume snapshot', async () => {
+    const calls = [];
+    const savedRun = { id: 'raid:solo:reload-2', state: 'active', seed: 9, rulesVersion: 'v449-r1',
+      startedAt: now, updatedAt: now, deadlineAt: now + 400000, members: [{ id: 7, damage: 900 }],
+      enemies: [], stageKey: 'approach', stageIndex: 1 };
+    w.PGRaidSolo = {
+      begin: async () => { calls.push('begin'); throw new Error('a resume must not reserve'); },
+      act: async (r) => ({ ok: true, run: r }),
+      warm: async () => { calls.push('warm'); return true; },
+      snapshotSync: () => {
+        if (!calls.includes('warm')) throw new Error('The raid engine is not loaded yet.');
+        return runFixture();
+      },
+      saveCheckpoint: () => ({ ok: true }),
+      loadCheckpoint: () => ({ status: 'ok', run: JSON.parse(JSON.stringify(savedRun)) }),
+      loop: () => { calls.push('loop'); return () => {}; },
+      storageStatus: () => ({ ok: true }),
+    };
+    localActive = { ...savedRun, local: true };
+    w.PGRaid.state.resumeAttempted = false;
+    w.PGRaid.state.soloRunning = false;
+    w.PGRaid.state.error = '';
+    await w.PGRaid.open();
+    await new Promise(r => setTimeout(r, 20));
+    assert.equal(calls.includes('warm'), true, 'the engine was warmed on the resume path');
+    assert.ok(calls.indexOf('warm') < calls.indexOf('loop'), 'the engine was ready before the loop started');
+    assert.equal(w.PGRaid.state.error, '', 'the resume did not surface an error');
+    assert.equal(w.PGRaid.state.soloRunning, true, 'the saved run is actually running');
+    // Clean up for whatever follows.
     w.PGRaid.state.soloRunning = false;
     w.PGRaid.state.solo = null;
     localActive = null;
@@ -424,6 +473,52 @@ function account(overrides = {}) {
     assert.equal(settles, 1, 'the result was settled exactly once');
     assert.match(w.document.getElementById('raidOverlay').textContent, /Rift shards/i);
     w.fetch = realFetch;
+  });
+
+  // Found by the real-browser acceptance run: a solo run that ended went through `updateRunOverlay`,
+  // which settled with NO claim. The server answers that with 409 "The run result was not reported."
+  // and pays nothing, so the clear was shown to the player and never recorded. A co-op run must still
+  // send no claim (the room's snapshot is the authority there), so both shapes are pinned here.
+  await t('a solo run settles with its own claim, and a co-op run still sends none', async () => {
+    const seen = [];
+    const realFetch = w.fetch;
+    w.fetch = async (url, options = {}) => {
+      const body = options.body ? JSON.parse(options.body) : {};
+      if (body.action === 'settle') {
+        seen.push(body);
+        return { ok: true, status: 200, json: async () => ({ ok: true, outcome: 'failed', settledAt: Date.now(), acknowledged: true, rewards: [] }) };
+      }
+      return realFetch(url, options);
+    };
+    // A previous test left a settled result on the record, and settlement is once-per-run by design;
+    // clear it so this test exercises the settle call rather than the short-circuit.
+    w.PGRaid.state.result = null;
+    w.PGRaid.state.settling = false;
+    // A terminal SOLO snapshot: `local: true` is what marks it as this tab's run.
+    const soloTerminal = { ...live, id: 'raid:solo:end-1', local: true, state: 'failed', finishedAt: Date.now() };
+    w.PGRaid.state.lastLocalRun = { id: 'raid:solo:end-1', state: 'failed', finishedAt: Date.now(),
+      updatedAt: Date.now(), members: [{ id: 7, damage: 4242, support: 0, actions: 9 }] };
+    w.PGRaid.receive(soloTerminal);
+    await new Promise(r => setTimeout(r, 10));
+    assert.equal(seen.length, 1, 'the solo run settled once');
+    assert.ok(seen[0].result, 'the solo settle carried a claim');
+    assert.equal(seen[0].result.outcome, 'failed');
+    assert.equal(seen[0].result.damage, 4242, 'the claim carries what the browser reached');
+    assert.equal(seen[0].result.finishedAt, w.PGRaid.state.lastLocalRun.finishedAt);
+
+    seen.length = 0;
+    w.PGRaid.state.result = null;
+    w.PGRaid.state.settling = false;
+    w.PGRaid.state.lastLocalRun = null;
+    const coopTerminal = { ...live, id: 'raid:coop:end-1', local: false, state: 'failed', finishedAt: Date.now() };
+    w.PGRaid.receive(coopTerminal);
+    await new Promise(r => setTimeout(r, 10));
+    assert.equal(seen.length, 1, 'the co-op run settled once');
+    assert.equal(seen[0].result, undefined, 'a co-op settle sends no claim: the room is the authority');
+    w.fetch = realFetch;
+    w.PGRaid.state.run = null;
+    w.PGRaid.state.view = 'lobby';
+    w.PGRaid.state.result = null;
   });
 
   await t('three clients render the same run, each keeping its own "you"', async () => {
