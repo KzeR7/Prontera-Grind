@@ -58,8 +58,8 @@ function Find-Bash {
 function D1Json([string]$Sql, [string]$Cwd) {
   Push-Location $Cwd
   try {
-    $raw = & npx @Wrangler d1 execute DB --remote --json --command $Sql 2>&1
-    if ($LASTEXITCODE -ne 0) { Fail "D1 query failed: $($raw -join ' ')`nSQL: $Sql" }
+    $raw = & npx @Wrangler d1 execute DB --remote --json --command $Sql 2>$null
+    if ($LASTEXITCODE -ne 0) { Fail "D1 query failed; check Wrangler login, the DB binding and the SQL.`nSQL: $Sql" }
     $text = ($raw -join "`n")
     $parsed = $text | ConvertFrom-Json
     $last = @($parsed)[-1]
@@ -156,8 +156,8 @@ new_sqlite_classes = ["Social"]
   Write-Host "6/7 Verifying $DbName and applying only the missing raid migrations"
   Push-Location $worktree
   try {
-    $dbRaw = & npx @Wrangler d1 info DB --json 2>&1
-    if ($LASTEXITCODE -ne 0) { Fail "wrangler d1 info failed: $($dbRaw -join ' ')" }
+    $dbRaw = & npx @Wrangler d1 info DB --json 2>$null
+    if ($LASTEXITCODE -ne 0) { Fail 'wrangler d1 info failed; check Wrangler login and that the DB binding resolves.' }
     $dbInfo = (($dbRaw -join "`n") | ConvertFrom-Json)
     if ($dbInfo.name -ne $DbName -or $dbInfo.uuid -ne $DbId) {
       Fail "Refusing to write: remote DB is '$($dbInfo.name)' / '$($dbInfo.uuid)', not $DbName / $DbId."
