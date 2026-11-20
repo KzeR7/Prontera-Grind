@@ -35,6 +35,18 @@
   const CHECKPOINT_VERSION = 1;
   const KEY_PREFIX = 'pg.raid.solo.';
 
+  // Where this file was loaded from. A dynamic `import()` of a relative specifier resolves against
+  // the importing script's base URL, which is correct in a browser but implicit; capturing it here
+  // makes the resolution explicit and keeps working if the file is ever inlined or served from a
+  // nested path.
+  const SELF_URL = (function () {
+    try {
+      if (document.currentScript && document.currentScript.src) return document.currentScript.src;
+    } catch (error) { void error; }
+    try { return new URL('assets/raid-solo.js', document.baseURI).href; } catch (error) { void error; }
+    return '';
+  })();
+
   let engine = null;
 
   function keyFor(accountKey, runId) {
@@ -63,7 +75,8 @@
     if (engine) return engine;
     // Imported once and cached. The query string is the rules version so a stale cached module can
     // never simulate a run that the server reserved under different numbers.
-    engine = await import('./raid-engine/raid-engine.js');
+    const url = SELF_URL ? new URL('raid-engine/raid-engine.js', SELF_URL).href : './raid-engine/raid-engine.js';
+    engine = await import(url);
     return engine;
   }
 
