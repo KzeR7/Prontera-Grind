@@ -67,13 +67,31 @@ emotes, not RO 1 - they have no frames in `emotion.spr` and were dropped.
 
 **These 14 have no PNGs yet.** `emotions-lock.json` records them with a `null` sha256, which means
 "registered, art not generated", and `social_sim.js` refuses any id that is neither hashed nor
-declared pending. To finish, recover the sprite as above and run:
+declared pending.
+
+There are two ways to supply the art. The first is the sprite route above: recover the bytes as
+`/tmp/emotion.act` and `/tmp/emotion.spr`, run `emotions.go`, then:
 
 ```sh
-# /tmp/social-emotions from emotions.go, then:
 python3 tools/social/pack-emotions.py /tmp/social-emotions   # packs only the actions that exist
 python3 tools/social/emote-layout.py                         # prints the new EMOTE_LAYOUT
 ```
+
+The second needs no renderer and no Go, only Pillow. Save the emote GIFs from
+<https://irowiki.org/wiki/Emotes> into a folder, using their own file names (`Omg.gif`, `Sob.gif`,
+`Emote_bawi.png`, ...), and run:
+
+```sh
+python3 tools/social/import-emote-gifs.py <folder-with-gifs>
+python3 tools/social/emote-layout.py                       # prints the new EMOTE_LAYOUT
+```
+
+`import-emote-gifs.py` converts whichever files it finds into the same APNG shape the game already
+loads: frames cropped to the union of the painted pixels across the animation (exactly what
+`pack-emotions.py` does, so the tray maths is identical), original frame order, original delay,
+loop forever, transparent. It writes `assets/social/emotions/<id>.png`, records the sha256 in
+`emotions-lock.json` and leaves every id it did not find untouched - so the 32 cut from the sprite
+sheet stay byte-for-byte as shipped. It never repaints, rescales or invents art.
 
 `pack-emotions.py` skips and reports ids whose action is not in the sprite instead of crashing, and it
 merges into the lock file so the 32 verified entries keep their hashes. Paste the layout line into
