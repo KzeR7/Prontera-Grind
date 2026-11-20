@@ -88,22 +88,24 @@ TABLE = [
     ("wah",   128, 16, "KEK",           "wah",  ["wah"],                "Crying like a baby / panic",        "Wah.gif",  "new"),
     ("no1",   129, 21, "BEST",          "no1",  ["no1"],                "Thumbs up and a wink",              "No1.gif",  "new"),
 
-    # ---- PR #269 proposals that are NOT Ragnarok Online emotions at all ----
-    # These are Ragnarok Online II action emotes (/clap, /bye, /chaos, /happy, /absurd, /joy,
-    # /salute...), which have no entry in emotion.spr and no RO1 sprite artwork.
-    ("clap",        116, None, None, "clap",        [], "Ragnarok Online II action emote", None, "new"),
-    ("bye",         117, None, None, "bye",         [], "Ragnarok Online II action emote", None, "new"),
-    ("happy",       118, None, None, "happy",       [], "Ragnarok Online II action emote", None, "new"),
-    ("amazed",      119, None, None, "amazed",      [], "not an RO emote",                 None, "new"),
-    ("best",        120, None, None, "best",        [], "not an RO emote",                 None, "new"),
-    ("best2",       121, None, None, "best2",       [], "not an RO emote",                 None, "new"),
-    ("chaos",       122, None, None, "chaos",       [], "Ragnarok Online II action emote", None, "new"),
-    ("absurd",      123, None, None, "absurd",      [], "Ragnarok Online II action emote", None, "new"),
-    ("joy",         124, None, None, "joy",         [], "Ragnarok Online II action emote", None, "new"),
-    ("kiskis",      125, None, None, "kiskis",      [], "not an RO emote",                 None, "new"),
-    ("funny",       126, None, None, "funny",       [], "not an RO emote",                 None, "new"),
-    ("martialarts", 127, None, None, "martialarts", [], "not an RO emote",                 None, "new"),
-    ("salute",      130, None, None, "salute",      [], "Ragnarok Online II action emote", None, "new"),
+    # ---- PR #269 proposals that are not Ragnarok Online (RO1) emotions ----
+    # Verified against ragnarok.fandom.com/wiki/Emote, "Ragnarok Online II": every one of these
+    # is an RO II emote. Most are RO II action emotes (real 3D character animations); best and
+    # kiskis are also RO II emote bubbles. None exists in RO1's emotion.act/spr, which is the
+    # only emote source this game has, and the wiki's RO II tables carry no images for them.
+    ("clap",        116, None, None, "clap",        [], "RO II action emote, clapping",              None, "new"),
+    ("bye",         117, None, None, "bye",         [], "RO II action emote, waving goodbye",        None, "new"),
+    ("happy",       118, None, None, "happy",       [], "RO II action emote, happiness",             None, "new"),
+    ("amazed",      119, None, None, "amazed",      [], "RO II action emote, amazement",             None, "new"),
+    ("best",        120, None, None, "best",        [], "RO II action emote + emote bubble, approval", None, "new"),
+    ("best2",       121, None, None, "best2",       [], "RO II action emote, double approval",       None, "new"),
+    ("chaos",       122, None, None, "chaos",       [], "RO II action emote, unstable",              None, "new"),
+    ("absurd",      123, None, None, "absurd",      [], "RO II action emote, exasperation",          None, "new"),
+    ("joy",         124, None, None, "joy",         [], "RO II action emote, joyful",                None, "new"),
+    ("kiskis",      125, None, None, "kiskis",      [], "RO II action emote + emote bubble, face kiss", None, "new"),
+    ("funny",       126, None, None, "funny",       [], "RO II action emote, giggle laughter",       None, "new"),
+    ("martialarts", 127, None, None, "martialarts", [], "RO II action emote, hadouken pose",         None, "new"),
+    ("salute",      130, None, None, "salute",      [], "RO II action emote, salute pose",           None, "new"),
 ]
 
 

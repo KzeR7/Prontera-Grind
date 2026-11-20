@@ -886,7 +886,7 @@
    "enum": null,
    "prCmd": "clap",
    "cmds": [],
-   "desc": "Ragnarok Online II action emote",
+   "desc": "RO II action emote, clapping",
    "art": null
   },
   {
@@ -897,7 +897,7 @@
    "enum": null,
    "prCmd": "bye",
    "cmds": [],
-   "desc": "Ragnarok Online II action emote",
+   "desc": "RO II action emote, waving goodbye",
    "art": null
   },
   {
@@ -908,7 +908,7 @@
    "enum": null,
    "prCmd": "happy",
    "cmds": [],
-   "desc": "Ragnarok Online II action emote",
+   "desc": "RO II action emote, happiness",
    "art": null
   },
   {
@@ -919,7 +919,7 @@
    "enum": null,
    "prCmd": "amazed",
    "cmds": [],
-   "desc": "not an RO emote",
+   "desc": "RO II action emote, amazement",
    "art": null
   },
   {
@@ -930,7 +930,7 @@
    "enum": null,
    "prCmd": "best",
    "cmds": [],
-   "desc": "not an RO emote",
+   "desc": "RO II action emote + emote bubble, approval",
    "art": null
   },
   {
@@ -941,7 +941,7 @@
    "enum": null,
    "prCmd": "best2",
    "cmds": [],
-   "desc": "not an RO emote",
+   "desc": "RO II action emote, double approval",
    "art": null
   },
   {
@@ -952,7 +952,7 @@
    "enum": null,
    "prCmd": "chaos",
    "cmds": [],
-   "desc": "Ragnarok Online II action emote",
+   "desc": "RO II action emote, unstable",
    "art": null
   },
   {
@@ -963,7 +963,7 @@
    "enum": null,
    "prCmd": "absurd",
    "cmds": [],
-   "desc": "Ragnarok Online II action emote",
+   "desc": "RO II action emote, exasperation",
    "art": null
   },
   {
@@ -974,7 +974,7 @@
    "enum": null,
    "prCmd": "joy",
    "cmds": [],
-   "desc": "Ragnarok Online II action emote",
+   "desc": "RO II action emote, joyful",
    "art": null
   },
   {
@@ -985,7 +985,7 @@
    "enum": null,
    "prCmd": "kiskis",
    "cmds": [],
-   "desc": "not an RO emote",
+   "desc": "RO II action emote + emote bubble, face kiss",
    "art": null
   },
   {
@@ -996,7 +996,7 @@
    "enum": null,
    "prCmd": "funny",
    "cmds": [],
-   "desc": "not an RO emote",
+   "desc": "RO II action emote, giggle laughter",
    "art": null
   },
   {
@@ -1007,7 +1007,7 @@
    "enum": null,
    "prCmd": "martialarts",
    "cmds": [],
-   "desc": "not an RO emote",
+   "desc": "RO II action emote, hadouken pose",
    "art": null
   },
   {
@@ -1018,7 +1018,7 @@
    "enum": null,
    "prCmd": "salute",
    "cmds": [],
-   "desc": "Ragnarok Online II action emote",
+   "desc": "RO II action emote, salute pose",
    "art": null
   }
  ]
