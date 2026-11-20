@@ -1,9 +1,9 @@
 /* Player-character Rift Raid client.
  *
- * One request-driven arena: lobby -> ready -> arena -> results. It deliberately does not create a
- * renderer; the boss is the existing Ascension boss art and party portraits reuse the native class
- * preview canvas. Countdowns and telegraphs are drawn locally from the server's fixed timestamps,
- * while the room remains the only authority for damage, downing, victory and rewards.
+ * Lobby -> ready -> walkable arena -> results. The arena is a DOM map (existing volcanic atlas,
+ * animated class skins and Ascension boss art), not a second WebGL renderer. The player walks with
+ * WASD/arrows or by dragging; the lane under their feet is sent as a server move action, so the
+ * room remains the only authority for damage, hazards, downing, victory and rewards.
  */
 (function () {
   'use strict';
@@ -19,7 +19,7 @@
     activeRun: null, run: null, result: null, rewardRows: [], lane: 'center', targetId: 0,
     pending: new Map(), lastBossHp: 0, lastAutoAt: 0, serverOffset: 0, lastSync: 0,
     timer: null, partyAction: false, codeOpen: false, notice: '', lastResultId: '', settling: false,
-    deadlineSettledFor: '', forgeExtra: 0,
+    deadlineSettledFor: '', forgeExtra: 0, arena: null,
   };
 
   // These mirror assets/rift-progression.js. The fallback keeps the overlay usable in isolation
@@ -125,12 +125,6 @@
     .raid-phase{display:flex;gap:4px;margin-top:6px}.raid-phase span{height:4px;flex:1;background:#31413b;border-radius:2px}.raid-phase span.on{background:#d1a35f}
     .raid-timer{font:700 30px/1 ui-monospace,monospace;color:#f6e6bc;letter-spacing:.06em}
     .raid-timer.low{color:#ff9c86}
-    .raid-lanes{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:8px 0}
-    .raid-lane{min-height:78px;border-radius:10px;border:1px solid #3f5d57;background:#0b1b19;color:#e9e0c8;padding:8px;cursor:pointer;position:relative;font:600 12px system-ui;display:flex;flex-direction:column;justify-content:space-between;align-items:center}
-    .raid-lane small{font-weight:400;font-size:10px;color:#98b5ae}
-    .raid-lane.safe{border-color:#4a7b60}.raid-lane.danger{border-color:#a8493f;background:linear-gradient(180deg,#391b19,#1b0d0d);animation:raidDanger 1.1s ease-in-out infinite}
-    .raid-lane.chosen{outline:2px solid #e2bd76;outline-offset:1px}
-    .raid-lane .hazard{position:absolute;inset:0;border-radius:9px;background:repeating-linear-gradient(135deg,#a8493f22 0 8px,#a8493f55 8px 16px);pointer-events:none}
     @keyframes raidDanger{50%{box-shadow:inset 0 0 26px #e45b3a55}}
     .raid-party{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:8px}
     .raid-pcard{border:1px solid #35504b;border-radius:11px;background:#0a1717;padding:8px}
@@ -156,6 +150,65 @@
     .raid-note{font-size:11px;color:#9ab2ab;line-height:1.45}
     .raid-floater{position:absolute;right:12px;top:10px;font:700 14px ui-monospace,monospace;color:#ffd28d;text-shadow:0 1px 2px #000;animation:raidFloat .8s ease-out forwards;pointer-events:none}
     @keyframes raidFloat{to{transform:translateY(-20px);opacity:0}}
+    /* Walkable Rift arena: the boss and party are drawn on the volcanic map, and the player
+       moves freely between the three hazard lanes instead of clicking a lane card. */
+    .raid-arena{position:relative;height:clamp(320px,52vh,520px);min-height:320px;border:1px solid #5a4a37;border-radius:14px;overflow:hidden;background:#080605;isolation:isolate;touch-action:none;cursor:crosshair;outline:none;box-shadow:inset 0 0 80px #000b}
+    .raid-arena:focus-visible{outline:2px solid #e3c07d;outline-offset:2px}
+    .raid-arena-art{position:absolute;inset:-3%;background:url("assets/atlas/thor-volcano.png") center/cover no-repeat;filter:brightness(.72) saturate(1.12);transform:scale(1.05)}
+    .raid-arena-art:after{content:"";position:absolute;inset:0;background:radial-gradient(circle at 50% 12%,#ff6a2a26 0,transparent 35%),linear-gradient(180deg,#0000 40%,#050303cc 100%)}
+    .raid-arena-vignette{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 48%,transparent 36%,#0503039e 76%,#030202e8 100%);pointer-events:none}
+    .raid-ember-layer{position:absolute;inset:0;overflow:hidden;pointer-events:none;opacity:.65}
+    .raid-ember-layer i{position:absolute;bottom:-12px;width:3px;height:3px;border-radius:50%;background:#ffb15c;box-shadow:0 0 8px #ff7a2f;animation:raidEmber 5.5s linear infinite}
+    @keyframes raidEmber{0%{transform:translateY(0) translateX(0);opacity:0}12%{opacity:.9}100%{transform:translateY(-58vh) translateX(26px);opacity:0}}
+    .raid-zones{position:absolute;inset:0;display:grid;grid-template-columns:repeat(3,1fr);pointer-events:none;z-index:2}
+    .raid-zone{position:relative;border-left:1px dashed #ffffff12;border-right:1px dashed #ffffff0a;transition:background .2s ease,box-shadow .2s ease}
+    .raid-zone:first-child{border-left:0}.raid-zone:last-child{border-right:0}
+    .raid-zone.danger{background:linear-gradient(180deg,#ff3b1f00 0,#ff3b1f1f 38%,#ff3b1f4d 100%);box-shadow:inset 0 0 70px #ff3b1f55;animation:raidDanger 1.05s ease-in-out infinite}
+    .raid-zone span{position:absolute;bottom:9px;left:50%;transform:translateX(-50%);font:700 9px/1 system-ui,sans-serif;letter-spacing:.18em;text-transform:uppercase;color:#c9b79b;text-shadow:0 1px 3px #000;opacity:.8}
+    .raid-zone.danger span{color:#ffc0a8}
+    .raid-field-top{position:absolute;left:0;right:0;top:0;z-index:6;padding:10px 12px 6px;background:linear-gradient(#040606e8,#04060600);pointer-events:none}
+    .raid-boss-line{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+    .raid-boss-line b{font:700 15px/1.1 Georgia,serif;color:#f6dfb2}
+    .raid-boss-line .raid-boss-hp{margin-left:auto;font:700 11px/1 ui-monospace,monospace;color:#ffd7ad}
+    .raid-bar.big{height:12px;margin-top:4px;border-color:#7d4c38;background:#1d0d09}
+    .raid-phase{margin-top:3px;max-width:50%}
+    .raid-boss-wrap{position:absolute;left:50%;top:11%;width:154px;height:166px;transform:translateX(-50%);z-index:4;pointer-events:none;display:flex;align-items:flex-end;justify-content:center}
+    .raid-boss-wrap:before{content:"";position:absolute;bottom:2px;width:110px;height:26px;border-radius:50%;background:#000a;filter:blur(6px)}
+    .raid-boss-img{position:relative;width:100%;height:100%;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 0 18px #ff5a2f88) drop-shadow(0 6px 6px #000c);animation:raidBossFloat 3.2s ease-in-out infinite}
+    .raid-boss-wrap.hit .raid-boss-img{animation:raidBossHit .26s linear}
+    @keyframes raidBossFloat{50%{transform:translateY(-6px)}}
+    @keyframes raidBossHit{0%,100%{transform:translateX(0)}30%{transform:translateX(-7px) scale(1.03)}65%{transform:translateX(6px)}}
+    .raid-units{position:absolute;inset:0;z-index:5;pointer-events:none}
+    .raid-unit{position:absolute;width:82px;height:104px;transform:translate(-50%,-90%);display:flex;flex-direction:column;align-items:center;justify-content:flex-end;transition:left .09s linear,top .09s linear;will-change:left,top}
+    .raid-unit-shadow{position:absolute;bottom:12px;width:46px;height:12px;border-radius:50%;background:#000a;filter:blur(3px)}
+    .raid-unit-skin{position:relative;width:82px;height:82px;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 4px 5px #000b);transform:scaleX(var(--face,1))}
+    .raid-unit.you .raid-unit-skin{filter:drop-shadow(0 0 8px #ffd98ab0) drop-shadow(0 4px 5px #000b)}
+    .raid-unit.you .raid-unit-name{color:#ffe0a2}
+    .raid-unit.moving .raid-unit-skin{animation:raidWalkBob .26s ease-in-out infinite}
+    @keyframes raidWalkBob{50%{transform:translateY(-3px) scaleX(var(--face,1))}}
+    .raid-unit.down .raid-unit-skin{filter:grayscale(1) brightness(.55);transform:rotate(-72deg) translateY(8px) scaleX(var(--face,1));opacity:.75}
+    .raid-unit.down .raid-unit-bar i{background:#7d3e39}
+    .raid-unit-fallback{position:relative;width:58px;height:58px;border-radius:50%;display:grid;place-items:center;background:#203530;border:1px solid #79917f;color:#f0d9a6;font:700 20px Georgia,serif}
+    .raid-unit-bar{position:relative;width:56px;height:5px;margin-top:1px;border:1px solid #2f1a18;border-radius:4px;background:#1c0e0d;overflow:hidden}
+    .raid-unit-bar i{display:block;height:100%;background:linear-gradient(90deg,#3d9a67,#9ce8b0);transition:width .2s}
+    .raid-unit-name{position:relative;max-width:92px;margin-top:2px;font:700 9px/1.2 system-ui,sans-serif;color:#eee0c6;text-align:center;text-shadow:0 1px 3px #000;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .raid-unit.warded .raid-unit-shadow{box-shadow:0 0 22px #69a9ff}
+    .raid-field-timer{position:absolute;right:12px;top:62px;z-index:6;font:700 26px/1 ui-monospace,monospace;color:#f6e6bc;text-shadow:0 2px 8px #000;pointer-events:none}
+    .raid-field-timer.low{color:#ff9c86}
+    .raid-field-telegraph{position:absolute;left:50%;bottom:32px;transform:translateX(-50%);z-index:6;max-width:80%;padding:4px 9px;border-radius:99px;background:#120707cc;border:1px solid #6b3a2e;color:#ffc6ae;font:600 10px/1.2 system-ui,sans-serif;text-align:center;pointer-events:none}
+    .raid-field-telegraph:empty{display:none}
+    .raid-field-hint{position:absolute;right:10px;bottom:8px;z-index:6;font:600 9px/1.2 system-ui,sans-serif;letter-spacing:.06em;color:#c5b59b;opacity:.7;pointer-events:none;text-shadow:0 1px 3px #000}
+    .raid-fx{position:absolute;inset:0;z-index:7;pointer-events:none;overflow:hidden}
+    .raid-float{position:absolute;transform:translate(-50%,-50%);font:800 12px/1 ui-monospace,monospace;color:#ffd28d;text-shadow:0 2px 3px #000;animation:raidFloat .85s ease-out forwards}
+    .raid-float.hurt{color:#ff8e7e}
+    .raid-float.heal{color:#9ce8b0}
+    .raid-arena.slam{animation:raidSlam .22s linear}
+    @keyframes raidSlam{30%{transform:translateX(-3px)}60%{transform:translateX(3px)}}
+    .raid-command{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:12px;margin-top:10px}
+    @media(max-width:820px){.raid-command{grid-template-columns:1fr}.raid-arena{height:58vh;min-height:300px}}
+    .raid-command .raid-panel{padding:11px}
+    .raid-command .raid-actions{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .raid-command .raid-actions .raid-btn{min-height:44px}
     .raid-spacer{flex:1}
   </style>
   <div class="raid-shell">
@@ -170,11 +223,11 @@
   </div>
 </div>`);
     $('raidClose').addEventListener('click', close);
+    addEventListener('keydown', event => arenaKey(event, true));
+    addEventListener('keyup', event => arenaKey(event, false));
     $('raidOverlay').addEventListener('click', event => {
       const button = event.target.closest('button[data-raid-action]');
       if (button && !button.disabled) handle(button.dataset.raidAction, button.dataset.raidValue || '');
-      const lane = event.target.closest('[data-raid-lane]');
-      if (lane) { R.lane = lane.dataset.raidLane; render(); }
       const member = event.target.closest('[data-raid-target]');
       if (member) { R.targetId = Number(member.dataset.raidTarget) || 0; render(); }
     });
@@ -200,6 +253,7 @@
     if (el) el.hidden = true;
     document.body.classList.remove('raid-open');
     if (R.timer) { clearInterval(R.timer); R.timer = null; }
+    stopArenaLoop();
   }
 
   // Account clears are the authority for the earned aura and the four Rift Raid titles. Mirror the
@@ -257,17 +311,37 @@
 
   function adoptRun(run) {
     if (!run) return;
-    if (R.run?.id !== run.id) R.deadlineSettledFor = '';
+    const newRun = R.run?.id !== run.id;
+    if (newRun) {
+      R.deadlineSettledFor = '';
+      stopArenaLoop();
+      R.arena = null;
+      R.lastBossHp = num(run.hpRemaining);
+    }
+    const previousBoss = R.lastBossHp;
     R.run = run;
     R.serverOffset = num(run.serverNow, Date.now()) - Date.now();
-    if (run.hazard) R.lane = R.lane || 'center';
+    const a = ensureArenaState(run);
+    const mine = (run.members || []).find(m => m.id === myId());
+    if (mine) R.lane = mine.lane;
     if (!R.targetId) {
       const living = (run.members || []).find(m => m.id !== myId() && m.hp > 0 && num(m.hp) < num(m.maxHp));
       R.targetId = living ? Number(living.id) : 0;
     }
-    if (num(run.hpRemaining) < R.lastBossHp) {
-      const boss = $('raidBossArt');
-      if (boss) { boss.classList.remove('hit'); void boss.offsetWidth; boss.classList.add('hit'); }
+    if (!newRun && num(run.hpRemaining) < previousBoss) {
+      flashBoss();
+      floatAt($('raidBossArt'), '-' + fmt(previousBoss - num(run.hpRemaining)));
+    }
+    if (a && mine) {
+      if (a.lastMyHp > mine.hp) floatAt($('raidUnit_' + mine.id), '-' + fmt(a.lastMyHp - mine.hp), 'hurt');
+      a.lastMyHp = num(mine.hp);
+      // `lane` is the lane we last asked the room for; `confirmed` is the lane the room reports.
+      // A refused move (the 250 ms server floor) leaves them apart, and the walk loop re-sends the
+      // lane under the sprite instead of letting the client and the room disagree.
+      if (mine.lane) {
+        a.confirmed = mine.lane;
+        if (!a.pending && laneOfX(a.x) === mine.lane) a.lane = mine.lane;
+      }
     }
     R.lastBossHp = num(run.hpRemaining);
   }
@@ -432,6 +506,7 @@
     try {
       const data = await api('', body);
       if (data.run) adoptRun(data.run);
+      if (action === 'strike') playAttack();
       if (data.settlement) {
         R.result = data.settlement; R.rewardRows = data.settlement.rewards || []; R.view = 'results';
       }
@@ -449,17 +524,7 @@
 
   function tick() {
     if (!R.open) return;
-    const timer = $('raidTimer');
-    if (timer && R.run) {
-      const left = num(R.run.deadlineAt) - serverNow();
-      timer.textContent = clock(left);
-      timer.classList.toggle('low', left < 30000);
-    }
-    const telegraph = $('raidTelegraph');
-    if (telegraph && R.run?.hazard) {
-      const left = num(R.run.hazard.endsAt) - serverNow();
-      telegraph.textContent = left > 0 ? 'Resolves in ' + Math.max(0, (left / 1000).toFixed(1)) + 's' : 'Resolving…';
-    }
+    if (R.run && R.view === 'arena') paintArenaHud(R.run);
     if (R.run?.state === 'active' && num(R.run.deadlineAt) <= serverNow() && !R.busy && !R.settling
       && R.deadlineSettledFor !== R.run.id) {
       // The local countdown is only a hint. Ask the room once; the server remains the authority, and
@@ -481,7 +546,18 @@
       conn.classList.toggle('bad', !online);
     }
     if (R.view === 'results') body.innerHTML = renderResults();
-    else if (R.view === 'arena' || (R.run && R.run.state === 'active')) body.innerHTML = renderArena();
+    else if (R.view === 'arena' || (R.run && R.run.state === 'active')) {
+      // Keep the arena DOM (and its animated skins) alive across socket updates. Replacing the
+      // whole body on every movement acknowledgement used to restart every APNG and snap the
+      // player back to their lane slot; syncArena updates the HUD, units and command panel instead.
+      if (R.run && R.arena?.runId === R.run.id && body.querySelector('#raidArena')) {
+        syncArena();
+        mountArena();
+        return;
+      }
+      body.innerHTML = R.run ? renderArena() : renderLobby();
+      if (R.run) mountArena();
+    }
     else body.innerHTML = renderLobby();
     for (const canvas of body.querySelectorAll('canvas[data-class]')) {
       try { if (typeof drawSkinPreview === 'function') drawSkinPreview(canvas.id, null, canvas.dataset.class, canvas.dataset.sex || 'm'); } catch {}
@@ -544,7 +620,7 @@
         <section class="raid-panel">
           <div class="raid-eyebrow">The Rift Sovereign · one encounter</div>
           <h3 class="raid-h">Hold the line for six minutes.</h3>
-          <p class="raid-muted">Three escort phases break before the Sovereign. Attacks are automatic; you choose lanes, guard or mend a teammate, and rescue the downed. A downed adventurer cannot act until a living teammate revives them.</p>
+          <p class="raid-muted">Three escort phases break before the Sovereign. Walk the rift arena, step out of the lane marked for the next fracture, guard or mend a teammate, and rescue the downed. A downed adventurer cannot act until a living teammate revives them.</p>
           <div class="raid-boss" style="margin:10px 0 12px"><img src="${BOSS_ART}" alt="The Rift Sovereign"><div class="boss-label"><b>Rift Sovereign</b><div class="raid-muted">Fracture Slam · Rift Sweep · 30% armour</div></div></div>
           <div class="raid-stats">
             <div class="raid-stat"><small>Entries left</small><b>${num(a.entriesLeft)} / 2</b></div>
@@ -584,51 +660,365 @@
     return `<div class="raid-bar hp"><i style="width:${pct(hp, max)}%"></i></div>`;
   }
 
+  // --- Walkable arena -----------------------------------------------------------------------
+  // The server still owns the three lanes. The client gives them a physical arena: the player
+  // moves freely, the lane under their feet is sent as a `move` action, and hazards resolve against
+  // that lane. No second WebGL renderer: the map is the existing volcanic atlas, the party is the
+  // existing animated class skins, and the boss is the existing Ascension thumbnail.
+  const LANE_X = { left: 22, center: 50, right: 78 };
+  const laneOfX = x => (x < 34 ? 'left' : x > 66 ? 'right' : 'center');
+  const KEY_DIRS = {
+    w: 'up', arrowup: 'up', s: 'down', arrowdown: 'down',
+    a: 'left', arrowleft: 'left', d: 'right', arrowright: 'right',
+  };
+
+  function unitSkin(member, attack = false) {
+    try {
+      const skins = globalThis.CLASS_SKINS;
+      if (!skins || !skins.classes) return '';
+      const cls = member.cls || 'Novice';
+      const sex = member.sex === 'f' ? 'f' : 'm';
+      const set = skins.classes[cls]?.[sex] || skins.classes[cls]?.m || skins.classes.Novice?.m;
+      const files = set?.files || {};
+      const file = (attack ? files.attack : (files.S || files.SE || files.NE))
+        || files.SE || files.S || files.NE || files.attack;
+      return file ? encodeURI((skins.dir || 'Updates/Sprite') + '/' + file) : '';
+    } catch { return ''; }
+  }
+
+  function myMember() {
+    return (R.run?.members || []).find(m => m.id === myId()) || null;
+  }
+
+  function ensureArenaState(run) {
+    if (!run) return null;
+    if (R.arena && R.arena.runId === run.id && R.arena.owner === myId()) return R.arena;
+    const mine = (run.members || []).find(m => m.id === myId()) || (run.members || [])[0];
+    const lane = mine?.lane || 'center';
+    R.arena = {
+      runId: run.id, owner: myId(), x: LANE_X[lane] || 50, y: 73, targetX: null, targetY: null,
+      lane, confirmed: lane, keys: new Set(), pending: false, lastSent: 0, raf: 0, lastFrame: 0,
+      lastMyHp: num(mine?.hp), lastAutoAt: 0, attackTimer: 0, field: null, pointerId: null,
+      face: 1, mounted: false,
+    };
+    return R.arena;
+  }
+
+  function unitPosition(member, index) {
+    const a = R.arena;
+    if (a && member.id === myId()) return { x: a.x, y: a.y };
+    const base = LANE_X[member.lane] || 50;
+    const spread = index === 0 ? 0 : index === 1 ? -6 : 6;
+    return { x: clamp(base + spread, 9, 91), y: 68 + (index === 1 ? 4 : index === 2 ? 2 : 0) };
+  }
+
+  function renderUnits(run) {
+    const mine = myId();
+    return (run.members || []).map((m, i) => {
+      const pos = unitPosition(m, i);
+      const skin = unitSkin(m);
+      const face = m.id === mine ? (R.arena?.face || 1) : 1;
+      const you = m.id === mine;
+      return `<div class="raid-unit ${you ? 'you' : ''} ${m.hp <= 0 ? 'down' : ''} ${m.wardUntil > serverNow() ? 'warded' : ''}" id="raidUnit_${m.id}" data-unit="${m.id}" style="left:${pos.x}%;top:${pos.y}%;--face:${face}">
+        <span class="raid-unit-shadow"></span>
+        ${skin ? `<img class="raid-unit-skin" src="${skin}" alt="">` : `<span class="raid-unit-fallback">${esc((m.name || '?').slice(0, 1).toUpperCase())}</span>`}
+        <span class="raid-unit-bar"><i style="width:${pct(m.hp, m.maxHp)}%"></i></span>
+        <span class="raid-unit-name">${esc(m.name)}${you ? ' · you' : ''}</span>
+      </div>`;
+    }).join('');
+  }
+
+  function renderArenaCommand(run) {
+    const members = run.members || [];
+    const my = members.find(m => m.id === myId()) || members[0] || null;
+    const canAct = !!my && my.hp > 0 && run.state === 'active';
+    const target = members.find(m => m.id === R.targetId) || null;
+    const downed = members.filter(m => m.hp <= 0);
+    return `<div class="raid-command">
+      <section class="raid-panel">
+        <div class="raid-eyebrow">Your party</div>
+        <div class="raid-party">${members.map(m => `<article class="raid-pcard ${m.hp <= 0 ? 'down' : ''} ${m.id === myId() ? 'you' : ''}" data-raid-target="${m.id}">
+          <div class="phead"><canvas id="raidArenaAv${m.id}" width="38" height="44" data-class="${esc(m.cls || 'Novice')}" data-sex="${esc(m.sex || 'm')}"></canvas><div><div class="pname">${esc(m.name)}${m.id === myId() ? ' · you' : ''}</div><div class="pmeta">${esc(m.cls || 'Adventurer')} · ${m.magic ? 'MATK' : 'ATK'} ${fmt(m.dps)}</div></div></div>
+          ${hpBar(m.hp, m.maxHp)}
+          <div class="raid-row" style="justify-content:space-between"><small>${m.hp <= 0 ? 'Downed · needs rescue' : fmt(m.hp) + ' / ' + fmt(m.maxHp)}</small><small>${m.wardUntil > serverNow() ? 'Ward' : ''}</small></div>
+          <div class="raid-row" style="margin-top:4px">${m.hp <= 0 ? `<span class="raid-tag hot">Revive needed</span>` : m.id === myId() ? `<span class="raid-tag">You</span>` : `<button class="raid-btn small ${R.targetId === m.id ? 'primary' : 'ghost'}" data-raid-target="${m.id}">${R.targetId === m.id ? 'Targeted' : 'Target'}</button>`}</div>
+        </article>`).join('')}</div>
+      </section>
+      <section class="raid-panel">
+        <div class="raid-eyebrow">Arena commands</div>
+        <div class="raid-actions">
+          <button class="raid-btn primary" data-raid-action="strike" ${!canAct || R.busy === 'strike:' ? 'disabled' : ''}>Focus strike<small>${my ? 'Ready ' + Math.max(0, Math.ceil((num(my.strikeReadyAt) - serverNow()) / 1000)) + 's' : 'Server cooldown'}</small></button>
+          <button class="raid-btn" data-raid-action="ward" ${!canAct || !target || target.hp <= 0 ? 'disabled' : ''}>Guard${target ? ' · ' + esc(target.name) : ''}<small>−50% hazard damage</small></button>
+          <button class="raid-btn" data-raid-action="heal" ${!canAct || !target || target.hp <= 0 || target.hp >= target.maxHp ? 'disabled' : ''}>Mend<small>25% max HP</small></button>
+          <button class="raid-btn ${downed.length ? 'danger' : 'ghost'}" data-raid-action="revive" ${!canAct || !target || target.hp > 0 ? 'disabled' : ''}>Rescue${target ? ' · ' + esc(target.name) : ''}<small>A living teammate</small></button>
+        </div>
+        <div class="raid-note" style="margin-top:7px">WASD, arrow keys or drag/tap the ground to walk. Step out of a glowing lane before the telegraph ends. Tap a party card to target Guard, Mend or Rescue.</div>
+      </section>
+    </div>`;
+  }
+
   function renderArena() {
     const run = R.run;
     if (!run) return renderLobby();
-    const members = run.members || [];
-    const bossPct = pct(run.hpRemaining, run.totalHp);
-    const hazard = run.hazard;
-    const zones = hazard?.dangerZones || [];
-    const my = members.find(m => m.id === myId()) || members[0] || null;
-    const canAct = !!my && my.hp > 0;
-    const target = members.find(m => m.id === R.targetId) || null;
-    const downed = members.filter(m => m.hp <= 0);
-    const left = num(run.deadlineAt) - serverNow();
-    const phase = clamp(num(run.phaseIndex), 0, 3);
-    return `${errorBox()}
-      <div class="raid-grid">
-        <section class="raid-panel">
-          <div class="raid-row"><div class="raid-eyebrow">${esc(run.phaseNames?.[phase] || 'The Rift Sovereign')}</div><span class="raid-tag ${hazard ? 'hot' : ''}">${hazard ? 'DANGER' : 'Stable'}</span><span class="raid-tag">${esc(run.state)}</span></div>
-          <div class="raid-boss" id="raidBossArt"><img src="${BOSS_ART}" alt="The Rift Sovereign"><div class="boss-label">
-            <div class="raid-row" style="justify-content:space-between"><b>Rift Sovereign</b><small class="raid-muted">${fmt(run.hpRemaining)} / ${fmt(run.totalHp)}</small></div>
-            <div class="raid-bar" style="margin-top:4px"><i style="width:${bossPct}%"></i></div>
-            <div class="raid-phase">${(run.phaseHps || []).map((_, i) => `<span class="${i <= phase ? 'on' : ''}"></span>`).join('')}</div>
-          </div></div>
-          <div class="raid-lanes" role="group" aria-label="Choose a lane">${LANES.map(lane => `<button class="raid-lane ${zones.includes(lane) ? 'danger' : 'safe'} ${R.lane === lane ? 'chosen' : ''}" data-raid-lane="${lane}" aria-pressed="${R.lane === lane}">${zones.includes(lane) ? '<span class="hazard"></span>' : ''}<b>${LANE_LABEL[lane]}</b><small>${zones.includes(lane) ? 'Danger zone' : 'Safe lane'}</small></button>`).join('')}</div>
-          <div class="raid-row" style="justify-content:space-between"><span class="raid-muted" id="raidTelegraph">${hazard ? 'Resolves in ' + Math.max(0, (num(hazard.endsAt) - serverNow()) / 1000).toFixed(1) + 's' : 'Next hazard is scheduled by the server.'}</span><span class="raid-timer ${left < 30000 ? 'low' : ''}" id="raidTimer">${clock(left)}</span></div>
-          <div class="raid-feed" id="raidFeed">${(run.members || []).map(m => `<div>${esc(m.name)} · ${m.hp <= 0 ? 'DOWN' : fmt(m.hp) + ' HP'} · ${fmt(m.damage)} damage${m.wardUntil > serverNow() ? ' · warded' : ''}</div>`).join('')}<div>${hazard ? 'Move out of ' + hazard.dangerZones.map(z => LANE_LABEL[z]).join(' + ') + ' before the telegraph closes.' : 'Auto attacks continue. Focus strike, guard or mend when needed.'}</div></div>
-        </section>
-        <section class="raid-panel">
-          <div class="raid-eyebrow">Your party</div>
-          <div class="raid-party">${members.map(m => `<article class="raid-pcard ${m.hp <= 0 ? 'down' : ''} ${m.id === myId() ? 'you' : ''}" data-raid-target="${m.id}">
-            <div class="phead"><canvas id="raidArenaAv${m.id}" width="38" height="44" data-class="${esc(m.cls || 'Novice')}" data-sex="${esc(m.sex || 'm')}"></canvas><div><div class="pname">${esc(m.name)}${m.id === myId() ? ' · you' : ''}</div><div class="pmeta">${esc(m.cls || 'Adventurer')} · ${m.magic ? 'MATK' : 'ATK'} ${fmt(m.dps)}</div></div></div>
-            ${hpBar(m.hp, m.maxHp)}
-            <div class="raid-row" style="justify-content:space-between"><small>${m.hp <= 0 ? 'Downed · needs rescue' : fmt(m.hp) + ' / ' + fmt(m.maxHp)}</small><small>${m.wardUntil > serverNow() ? 'Ward' : ''}</small></div>
-            <div class="raid-row" style="margin-top:4px">${m.hp <= 0 ? `<span class="raid-tag hot">Revive needed</span>` : m.id === myId() ? `<span class="raid-tag">You</span>` : `<button class="raid-btn small ${R.targetId === m.id ? 'primary' : 'ghost'}" data-raid-target="${m.id}">${R.targetId === m.id ? 'Targeted' : 'Target'}</button>`}</div>
-          </article>`).join('')}</div>
-          <div class="raid-actions">
-            <button class="raid-btn primary" data-raid-action="strike" ${!canAct || R.busy === 'strike:' ? 'disabled' : ''}>Focus strike<small>${my ? 'Ready ' + Math.max(0, Math.ceil((num(my.strikeReadyAt) - serverNow()) / 1000)) + 's' : 'Server cooldown'}</small></button>
-            <button class="raid-btn" data-raid-action="dodge" ${!canAct ? 'disabled' : ''}>Dodge to ${LANE_LABEL[R.lane]}<small>Emergency move</small></button>
-            <button class="raid-btn" data-raid-action="ward" ${!canAct || !target || target.hp <= 0 ? 'disabled' : ''}>Guard${target ? ' · ' + esc(target.name) : ''}<small>−50% hazard damage</small></button>
-            <button class="raid-btn" data-raid-action="heal" ${!canAct || !target || target.hp <= 0 || target.hp >= target.maxHp ? 'disabled' : ''}>Mend<small>25% max HP</small></button>
-            <button class="raid-btn ${downed.length ? 'danger' : 'ghost'}" data-raid-action="revive" ${!canAct || !target || target.hp > 0 ? 'disabled' : ''}>Rescue${target ? ' · ' + esc(target.name) : ''}<small>A living teammate</small></button>
-          </div>
-          <div class="raid-note" style="margin-top:7px">Tap a lane to choose it; tap a party card to target. Lane and target stay selected across party updates. Strike never blocks Dodge.</div>
-        </section>
+    ensureArenaState(run);
+    const embers = Array.from({ length: 18 }, (_, i) => `<i style="left:${(i * 37) % 100}%;animation-delay:${-(i % 9) * 0.7}s;animation-duration:${4.6 + (i % 5) * 0.55}s"></i>`).join('');
+    return `<div id="raidErrorSlot">${errorBox()}</div>
+      <div class="raid-arena" id="raidArena" tabindex="0" aria-label="Rift arena. Move with WASD, arrow keys, or by dragging and tapping the ground. Stay out of the red lanes.">
+        <div class="raid-arena-art" aria-hidden="true"></div>
+        <div class="raid-arena-vignette" aria-hidden="true"></div>
+        <div class="raid-ember-layer" aria-hidden="true">${embers}</div>
+        <div class="raid-zones" aria-hidden="true">${LANES.map(lane => `<div class="raid-zone ${(run.hazard?.dangerZones || []).includes(lane) ? 'danger' : ''}" data-raid-zone="${lane}"><span>${(run.hazard?.dangerZones || []).includes(lane) ? 'DANGER' : LANE_LABEL[lane]}</span></div>`).join('')}</div>
+        <div class="raid-field-top">
+          <div class="raid-boss-line"><span class="raid-eyebrow">${esc(run.phaseNames?.[clamp(num(run.phaseIndex), 0, 3)] || 'The Rift Sovereign')}</span><b>Rift Sovereign</b><span class="raid-boss-hp" id="raidBossHpText">${fmt(run.hpRemaining)} / ${fmt(run.totalHp)}</span></div>
+          <div class="raid-bar big" id="raidBossBar"><i style="width:${pct(run.hpRemaining, run.totalHp)}%"></i></div>
+          <div class="raid-phase" id="raidPhase">${(run.phaseHps || []).map((_, i) => `<span class="${i <= num(run.phaseIndex) ? 'on' : ''}"></span>`).join('')}</div>
+        </div>
+        <div class="raid-boss-wrap" id="raidBossArt"><img class="raid-boss-img" src="${BOSS_ART}" alt="The Rift Sovereign"></div>
+        <div class="raid-units" id="raidUnits" data-ids="${(run.members || []).map(m => m.id).join(',')}">${renderUnits(run)}</div>
+        <div class="raid-field-timer" id="raidTimer">${clock(num(run.deadlineAt) - serverNow())}</div>
+        <div class="raid-field-telegraph" id="raidTelegraph"></div>
+        <div class="raid-field-hint">WASD / drag / tap to move</div>
+        <div class="raid-fx" id="raidFx"></div>
       </div>
+      <div id="raidCommand">${renderArenaCommand(run)}</div>
       <div class="raid-row" style="margin-top:10px"><button class="raid-btn ghost small" data-raid-action="refresh">Refresh from room</button><button class="raid-btn ghost small" data-raid-action="close">Back to field</button></div>`;
+  }
+
+  function paintArenaHud(run) {
+    if (!run) return;
+    setText('raidBossHpText', fmt(run.hpRemaining) + ' / ' + fmt(run.totalHp));
+    const bossBar = $('raidBossBar');
+    if (bossBar) { const fill = bossBar.querySelector('i'); if (fill) fill.style.width = pct(run.hpRemaining, run.totalHp) + '%'; }
+    const phase = $('raidPhase');
+    if (phase) [...phase.children].forEach((span, i) => span.classList.toggle('on', i <= num(run.phaseIndex)));
+    const zones = run.hazard?.dangerZones || [];
+    for (const lane of LANES) {
+      const zone = document.querySelector(`[data-raid-zone="${lane}"]`);
+      if (!zone) continue;
+      zone.classList.toggle('danger', zones.includes(lane));
+      const label = zone.querySelector('span');
+      if (label) label.textContent = zones.includes(lane) ? 'DANGER' : LANE_LABEL[lane];
+    }
+    const left = num(run.deadlineAt) - serverNow();
+    const timer = $('raidTimer');
+    if (timer) { timer.textContent = clock(left); timer.classList.toggle('low', left < 30000); }
+    const tele = $('raidTelegraph');
+    if (tele) {
+      if (run.hazard) {
+        const until = num(run.hazard.endsAt) - serverNow();
+        tele.textContent = until > 0 ? `Move out of ${zones.map(z => LANE_LABEL[z]).join(' + ')} · ${Math.max(0, until / 1000).toFixed(1)}s` : 'The lane is resolving.';
+      } else if (run.state === 'active' && run.schedule?.nextHazardAt) {
+        const until = num(run.schedule.nextHazardAt) - serverNow();
+        tele.textContent = until > 0 ? `Next fracture in ${Math.max(0, Math.ceil(until / 1000))}s` : 'Fracture incoming.';
+      } else tele.textContent = '';
+    }
+  }
+
+  function syncArena() {
+    const run = R.run;
+    if (!run) return;
+    const a = ensureArenaState(run);
+    const err = $('raidErrorSlot');
+    if (err) err.innerHTML = errorBox();
+    paintArenaHud(run);
+    const members = run.members || [];
+    const units = $('raidUnits');
+    if (units && units.dataset.ids !== members.map(m => m.id).join(',')) {
+      units.innerHTML = renderUnits(run);
+      units.dataset.ids = members.map(m => m.id).join(',');
+    }
+    for (const m of members) {
+      const el = $('raidUnit_' + m.id);
+      if (!el) continue;
+      const pos = unitPosition(m, members.indexOf(m));
+      el.style.left = pos.x + '%';
+      el.style.top = pos.y + '%';
+      el.classList.toggle('down', m.hp <= 0);
+      el.classList.toggle('warded', m.wardUntil > serverNow());
+      const fill = el.querySelector('.raid-unit-bar i');
+      if (fill) fill.style.width = pct(m.hp, m.maxHp) + '%';
+      const name = el.querySelector('.raid-unit-name');
+      if (name) name.textContent = m.name + (m.id === myId() ? ' · you' : '');
+    }
+    if (a) { a.lastMyHp = num(myMember()?.hp); }
+    const command = $('raidCommand');
+    if (command) {
+      command.innerHTML = renderArenaCommand(run);
+      for (const canvas of command.querySelectorAll('canvas[data-class]')) {
+        try { if (typeof drawSkinPreview === 'function') drawSkinPreview(canvas.id, null, canvas.dataset.class, canvas.dataset.sex || 'm'); } catch {}
+      }
+    }
+  }
+
+  function arenaActionId() {
+    return 'raid:' + (globalThis.crypto?.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2));
+  }
+
+  function sendMove(zone) {
+    const run = R.run, a = R.arena;
+    if (!run || !a || run.state !== 'active' || a.pending || !myMember()) return;
+    a.pending = true; a.lastSent = Date.now(); a.lane = zone;
+    const sentLane = zone;
+    api('', { action: 'act', runId: run.id, combatAction: 'move', actionId: arenaActionId(), zone })
+      .then(data => {
+        if (data.run) adoptRun(data.run);
+        if (R.arena === a) syncArena();
+      })
+      .catch(() => {
+        const live = myMember();
+        if (live && R.arena === a) { a.lane = live.lane; a.confirmed = live.lane; }
+      })
+      .finally(() => {
+        if (R.arena !== a) return;
+        a.pending = false;
+        const current = laneOfX(a.x);
+        // The sprite may have crossed another boundary while this request was in flight, or the
+        // room may have refused it. Either way the lane under the sprite wins on the next tick.
+        if (current !== a.confirmed && Date.now() - a.lastSent >= 300) sendMove(current);
+      });
+  }
+
+  function playAttack() {
+    const a = R.arena, mine = myMember();
+    if (!a || !mine) return;
+    const img = $('raidUnit_' + mine.id)?.querySelector('.raid-unit-skin');
+    const attack = unitSkin(mine, true);
+    if (!img || !attack) return;
+    img.src = attack;
+    clearTimeout(a.attackTimer);
+    a.attackTimer = setTimeout(() => {
+      if (R.arena !== a) return;
+      const idle = unitSkin(mine, false);
+      if (idle) img.src = idle;
+    }, 520);
+  }
+
+  function flashBoss() {
+    const boss = $('raidBossArt');
+    if (!boss) return;
+    boss.classList.remove('hit');
+    void boss.offsetWidth;
+    boss.classList.add('hit');
+    setTimeout(() => boss.classList.remove('hit'), 280);
+  }
+
+  function floatAt(anchor, text, kind = '') {
+    const fx = $('raidFx'), arena = $('raidArena');
+    if (!fx || !arena || !anchor || !document.createElement) return;
+    const ar = arena.getBoundingClientRect(), r = anchor.getBoundingClientRect();
+    const el = document.createElement('span');
+    el.className = 'raid-float ' + kind;
+    el.textContent = text;
+    el.style.left = (r.left - ar.left + r.width / 2) + 'px';
+    el.style.top = (r.top - ar.top + r.height * 0.35) + 'px';
+    fx.appendChild(el);
+    setTimeout(() => el.remove(), 900);
+  }
+
+  function stopArenaLoop() {
+    if (R.arena?.raf && typeof cancelAnimationFrame === 'function') cancelAnimationFrame(R.arena.raf);
+    if (R.arena) { R.arena.raf = 0; clearTimeout(R.arena.attackTimer); }
+  }
+
+  function arenaKey(event, down) {
+    if (!R.open || R.view !== 'arena' || !R.arena) return;
+    const tag = (event.target && event.target.tagName || '').toLowerCase();
+    if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+    const dir = KEY_DIRS[String(event.key || '').toLowerCase()];
+    if (!dir) return;
+    event.preventDefault();
+    if (down) { R.arena.keys.add(dir); R.arena.targetX = null; R.arena.targetY = null; }
+    else R.arena.keys.delete(dir);
+  }
+
+  function arenaPoint(event) {
+    const field = R.arena?.field;
+    if (!field) return null;
+    const r = field.getBoundingClientRect();
+    return {
+      x: clamp(((event.clientX - r.left) / Math.max(1, r.width)) * 100, 8, 92),
+      y: clamp(((event.clientY - r.top) / Math.max(1, r.height)) * 100, 54, 88),
+    };
+  }
+
+  function mountArena() {
+    const a = R.arena, field = $('raidArena');
+    if (!a || !field) return;
+    // Reopening the overlay reuses the same arena DOM, so only bind the pointer listeners once per
+    // element; a full body rewrite (a new run, a reconnect) brings a fresh element and rebinds.
+    if (a.field === field) {
+      if (!a.raf) a.raf = requestAnimationFrame(arenaFrame);
+      return;
+    }
+    a.field = field;
+    field.addEventListener('pointerdown', event => {
+      if (event.target.closest('button')) return;
+      const p = arenaPoint(event);
+      if (!p) return;
+      field.focus({ preventScroll: true });
+      a.targetX = p.x; a.targetY = p.y; a.keys.clear();
+      a.pointerId = event.pointerId;
+      try { field.setPointerCapture(event.pointerId); } catch {}
+    });
+    field.addEventListener('pointermove', event => {
+      if (a.pointerId !== event.pointerId || !event.buttons) return;
+      const p = arenaPoint(event);
+      if (p) { a.targetX = p.x; a.targetY = p.y; }
+    });
+    field.addEventListener('pointerup', event => {
+      if (a.pointerId === event.pointerId) a.pointerId = null;
+    });
+    field.addEventListener('pointercancel', () => { a.pointerId = null; });
+    a.mounted = true;
+    if (typeof requestAnimationFrame === 'function' && !a.raf) a.raf = requestAnimationFrame(arenaFrame);
+  }
+
+  function arenaFrame(ts) {
+    const a = R.arena;
+    if (!R.open || R.view !== 'arena' || !a || !$('raidArena')) { if (a) a.raf = 0; return; }
+    const dt = Math.min(48, Math.max(0, ts - (a.lastFrame || ts)));
+    a.lastFrame = ts;
+    let dx = 0, dy = 0;
+    if (a.keys.has('left')) dx--;
+    if (a.keys.has('right')) dx++;
+    if (a.keys.has('up')) dy--;
+    if (a.keys.has('down')) dy++;
+    if (dx || dy) {
+      const len = Math.hypot(dx, dy);
+      const step = 34 * dt / 1000;
+      a.x += dx / len * step; a.y += dy / len * step;
+      if (dx) a.face = dx < 0 ? -1 : 1;
+      a.targetX = null; a.targetY = null;
+    } else if (a.targetX != null) {
+      const tx = a.targetX - a.x, ty = a.targetY - a.y;
+      const dist = Math.hypot(tx, ty);
+      const step = 56 * dt / 1000;
+      if (dist <= step) { a.x = a.targetX; a.y = a.targetY; a.targetX = a.targetY = null; }
+      else { a.x += tx / dist * step; a.y += ty / dist * step; if (tx) a.face = tx < 0 ? -1 : 1; }
+    }
+    a.x = clamp(a.x, 8, 92); a.y = clamp(a.y, 54, 88);
+    const el = $('raidUnit_' + myId());
+    if (el) {
+      el.style.left = a.x + '%'; el.style.top = a.y + '%';
+      el.style.setProperty('--face', a.face);
+      el.classList.toggle('moving', !!(dx || dy || a.targetX != null));
+    }
+    const lane = laneOfX(a.x);
+    if (lane !== a.confirmed && Date.now() - a.lastSent >= 320 && !a.pending) sendMove(lane);
+    const mine = myMember();
+    if (mine && mine.nextAutoAt && a.lastAutoAt !== mine.nextAutoAt && serverNow() >= num(mine.nextAutoAt) - 220) {
+      a.lastAutoAt = mine.nextAutoAt;
+      playAttack();
+    }
+    // The fracture lands on the whole arena: shake the map and flash the hurt lanes once, at the
+    // server timestamp that resolved them, so a walker feels the slam even between requests.
+    if (R.run?.hazard) a.lastHazardId = R.run.hazard.id;
+    else if (a.lastHazardId) {
+      a.lastHazardId = '';
+      const arena = $('raidArena');
+      if (arena) { arena.classList.remove('slam'); void arena.offsetWidth; arena.classList.add('slam'); setTimeout(() => arena.classList.remove('slam'), 240); }
+    }
+    if (R.arena === a) a.raf = requestAnimationFrame(arenaFrame);
   }
 
   function rewardText(row) {
@@ -659,5 +1049,15 @@
     get state() { return R; },
     // Test/handoff hooks; the browser UI never calls these directly.
     _render: render,
+    _moveTo(x, y) {
+      const a = R.arena;
+      if (!a) return null;
+      a.x = clamp(num(x), 8, 92);
+      a.y = clamp(num(y), 54, 88);
+      a.targetX = a.targetY = null;
+      const lane = laneOfX(a.x);
+      if (lane !== a.confirmed && !a.pending) sendMove(lane);
+      return { x: a.x, y: a.y, lane };
+    },
   };
 })();

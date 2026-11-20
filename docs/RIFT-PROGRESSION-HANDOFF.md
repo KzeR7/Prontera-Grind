@@ -1,7 +1,8 @@
-# Rift progression handoff (haven-v447)
+# Rift progression + walkable raid handoff (haven-v448)
 
-This is the owner-run step for the layer that was deferred from v446: **weapon stars, raid cards,
-the Rift Aura and four earned titles**. It updates the local checkout to the latest GitHub `main`,
+This is the owner-run step for the layer that was deferred from v446 — **weapon stars, raid cards,
+the Rift Aura and four earned titles** — plus the v448 **walkable Rift arena** the raid now plays
+in. It updates the local checkout to the latest GitHub `main`,
 then deploys this feature branch to the isolated staging targets. It does **not** deploy production.
 
 ## What was added
@@ -91,7 +92,7 @@ What the script does, in order:
 2. Fetches `arena/bfc7d4d1-prontera-grind`, creates a temporary detached git worktree, and merges
    the latest `origin/main` into it. If that merge conflicts, it stops and changes nothing remote.
 3. Builds `dist` from that worktree with `tools/build_site.sh` and requires `version.txt` to equal
-   the `index.html` BUILD label (`haven-v447`).
+   the `index.html` BUILD label (`haven-v448`).
 4. Generates throw-away Wrangler configs for **only**:
    - Pages `prontera-grind-staging`
    - Worker `prontera-social-staging`
@@ -111,7 +112,7 @@ the worktree in `%TEMP%` on failure for diagnosis.
 ### Existing v411 staging database
 
 `pg-staging` was used by the older v411 raid experiment, whose migration 0018 created `raid_runs`
-without the v447 `seed` / checkpoint columns and without the exactly-once `grants.ref` ledger. The
+without the v447+ `seed` / checkpoint columns and without the exactly-once `grants.ref` ledger. The
 handoff detects that state (`raid_runs` exists, `grants.ref` or the checkpoint columns do not) and
 upgrades it in place:
 

@@ -1,7 +1,7 @@
 # Rift Raid — Stage A/B validation report
 
 Branch: `arena/bfc7d4d1-prontera-grind` (from `main` at `37a13bf`)
-Build label: `2026-11-20 haven-v447 Rift stars, cards and earned titles`
+Build label: `2026-11-20 haven-v448 Walkable Rift arena`
 Feature state: **closed by default** (`RAID_RULES.enabled = false`, `wrangler.toml` `RAID_ENABLED = "false"`; the Pages handler also requires the exact string `true`).
 
 ## 1. Scope delivered
@@ -10,12 +10,27 @@ One playable boss encounter for 1–3 player characters:
 
 - Map → **Rift Raid** tab and the **Social Hub** both open the same lobby.
 - Solo or a 2–3 character party; eligibility and remaining entries are shown before Ready.
+- **The arena is a walkable map.** Spawning puts the player sprite on the volcanic rift floor; WASD,
+  arrow keys, drag or tap move it freely between the three hazard lanes. The lane under the sprite is
+  published to the room as a `move` action, and hazards resolve against that server lane, so dodging
+  is real movement rather than a lane button.
 - Readiness is per member; roster or loadout changes clear it.
 - Server-owned encounter: HP, phases, lanes, hazards, cooldowns, damage, downing, revive, wipe,
   clear, action receipts and reward rolls all live on the server.
 - Exactly two entries per Malaysia calendar day; exactly-once reward settlement through the
   existing `grants` queue.
 - Lobby → Arena → Results, with reconnect and D1 checkpoint recovery.
+
+Arcade surface (v448):
+
+- `POST /api/raid` accepts `move` alongside `strike`/`dodge`/`ward`/`heal`/`revive`. `move` carries
+  the target lane, has a 250 ms server floor (`RAID_RULES.moveCooldownMs`), earns no dodge credit,
+  and is not checkpointed to D1 (the DO room remains the authority; the next strike/dodge/ward
+  checkpoint persists the lane).
+- The client renders the arena as DOM on the existing `assets/atlas/thor-volcano.png` art with
+  animated `CLASS_SKINS` sprites per member and the Ascension boss thumb. There is still no second
+  renderer: one local `requestAnimationFrame` loop moves the sprites and paints the HUD from the
+  server projection (`serverNow`, `moveReadyAt`, hazard `startsAt`/`endsAt`).
 
 Delivered in v447 (the previously deferred layer):
 
@@ -41,7 +56,7 @@ PR #263 was read as a reference only. The following prototype defects were repla
 | 15 s Strike / 9 s hive cadence where Dodge queued behind an attack | Separate `strike` (5 s cooldown) and `dodge` action paths; a dodge is an independent request and never waits for an in-flight strike |
 | Per-tick timer/DO loop | No raid alarm. Hazards are scheduled from `startedAt` and resolve at their own `endsAt`; quiet clients, late packets and simultaneous deadlines replay the fixed schedule |
 | Rewards paid as they were rolled | D1 ledger `UNIQUE(run_id,user_id,kind)` + unique `grants.ref`; retries read back exactly what D1 paid |
-| Migration 0018 / build v411 | `migrations/0022_player_character_raid.sql` + `0023_raid_cards.sql`; build `haven-v447` |
+| Migration 0018 / build v411 | `migrations/0022_player_character_raid.sql` + `0023_raid_cards.sql`; build `haven-v448` |
 
 ## 3. Server architecture
 
@@ -134,9 +149,9 @@ Current results:
 | --- | --- |
 | `migration_sim.js` | **14 passed, 0 failed** (0022 additive install, triggers, exactly-once ledger/grants, 0023 duplicate-safe card copies) |
 | `raid_profile_source_sim.mjs` | **9 passed, 0 failed** (47 class rows, packed-save stars, star ATK/penetration, card rank effects) |
-| `player_raid_engine_sim.mjs` | **14 passed, 0 failed** (includes solo/trio clear pacing and the 30% armour penetration step) |
-| `raid_api_source_sim.mjs` | **11 passed, 0 failed** (card drops and the one-equipped-card API) |
-| `raid_ui_sim.js` | **11 passed, 0 failed** (forge success/failure, booster cost, aura/titles, card equip, field star ATK, reconnect) |
+| `player_raid_engine_sim.mjs` | **15 passed, 0 failed** (includes solo/trio clear pacing, the 30% armour penetration step and walking out of a lane before a hazard resolves) |
+| `raid_api_source_sim.mjs` | **12 passed, 0 failed** (card drops, the one-equipped-card API and a `move` reaching the room) |
+| `raid_ui_sim.js` | **13 passed, 0 failed** (walkable arena mount, danger lane, `move` request, a held key walking across a lane boundary, target persistence, forge success/failure, booster cost, aura/titles, card equip, field star ATK, reconnect) |
 | `ui_sim.js` | **64 passed, 0 failed** |
 | `api_sim.js` | **78 passed, 0 failed** |
 | `chatcheck_sim.mjs` | **9 passed, 0 failed** |
@@ -158,7 +173,8 @@ assertion was deleted or loosened.
 | Raid cards: account-wide, one equipped, duplicates rank, drops from all three chest kinds | migration sim (duplicate-safe copies), API sim (drop + equip + unequip), UI sim (rank/equip controls) | PASS (sim), **OWNER STAGING** |
 | Earned aura + four titles only | UI sim mirrors `qualifyingClears` into `S.raidClears`, asserts the aura class and the 1/3/6/10 title goals; no purchase path exists | PASS (sim), **OWNER STAGING** |
 | Lost-response retries; exactly-once entries/rewards | API source sim: resumed start, repeated settle, simultaneous starts, D1 ledger/grants including mirrored Rift Shards; UI sim applies `riftShards`/`ascMat0/2` directly and keeps Rift Raid out of the expiring mailbox | PASS (sim) |
-| Phone-sized controls | UI sim checks 44/48 px controls; CSS uses full-screen overlay and single-column ≤720 px | PASS (static), **OWNER PHONE** |
+| Walkable arena: movement changes the server lane and dodges hazards | engine sim moves out of a danger lane before `endsAt` and takes no damage while the second move is refused by the 250 ms floor; API sim shows a `move` reaching the room; UI sim shows a walk publishing `combatAction:'move'` with the crossed lane | PASS (sim), **OWNER STAGING BROWSER** |
+| Phone-sized controls | UI sim checks 44/48 px controls; CSS uses full-screen overlay and single-column ≤720 px; the arena is `touch-action:none` with drag/tap movement | PASS (static), **OWNER PHONE** |
 | Measured DO activity | instrumented source sim (below) | PASS (Node only) |
 | Screenshots/video of lobby → fight → reconnect → results | not capturable in this sandbox | **OWNER STAGING** |
 

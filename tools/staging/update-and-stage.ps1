@@ -1,7 +1,7 @@
 param(
   [string]$Repo = (Get-Location).Path,
   [string]$Branch = 'arena/bfc7d4d1-prontera-grind',
-  [string]$BuildTag = 'haven-v447'
+  [string]$BuildTag = 'haven-v448'
 )
 
 # Owner-run Windows handoff for the Rift stars/cards/cosmetics build.
@@ -186,7 +186,7 @@ new_sqlite_classes = ["Social"]
     # grants.ref does not, and the table predates seed/checkpoint_json/checkpoint_at. Upgrade it
     # in place rather than trying to apply 0022 (its CREATE TABLE IF NOT EXISTS would be a no-op).
     # Only the missing columns are added, so a genuinely partial 0022 also repairs cleanly.
-    Write-Host '    existing raid schema is pre-v447; upgrading it in place'
+    Write-Host '    existing raid schema is pre-v448; upgrading it in place'
     if ($runCols -notcontains 'seed') {
       Invoke-Checked $Npx ($Wrangler + @('d1', 'execute', 'DB', '--remote', '--command', 'ALTER TABLE raid_runs ADD COLUMN seed INTEGER NOT NULL DEFAULT 1;')) $worktree
     }
@@ -200,7 +200,7 @@ new_sqlite_classes = ["Social"]
       Invoke-Checked $Npx ($Wrangler + @('d1', 'execute', 'DB', '--remote', '--command', 'ALTER TABLE grants ADD COLUMN ref TEXT;')) $worktree
       Invoke-Checked $Npx ($Wrangler + @('d1', 'execute', 'DB', '--remote', '--command', 'CREATE UNIQUE INDEX IF NOT EXISTS idx_grants_ref ON grants(ref) WHERE ref IS NOT NULL;')) $worktree
     }
-    Write-Host '    replacing the settlement triggers with the exactly-once v447 versions'
+    Write-Host '    replacing the settlement triggers with the exactly-once v448 versions'
     Invoke-Checked $Npx ($Wrangler + @('d1', 'execute', 'DB', '--remote', '--file=tools/staging/legacy_raid_upgrade.sql')) $worktree
   } else {
     Write-Host '    0022 already present'

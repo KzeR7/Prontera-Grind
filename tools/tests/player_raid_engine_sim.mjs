@@ -180,6 +180,21 @@ t('a full party wipe ends failed at the scheduled deadline state, with no NaN', 
   assert.equal(late.ok, false);
 });
 
+t('walking changes the server lane and can leave a hazard before it resolves', () => {
+  const p = profile('Lord Knight', false);
+  const run = baseRun([member(1, 'A', p)]);
+  const h = (advanceRaidRun(run, run.nextHazardAt + 1), run.hazard);
+  const safe = RAID_RULES.lanes.find(z => !h.dangerZones.includes(z));
+  run.members[0].lane = h.dangerZones[0];
+  const walk = applyRaidAction(run, 1, 'move', { actionId: 'move:safe:1', at: h.startsAt + 100, zone: safe });
+  assert.equal(walk.ok, true, walk.error || '');
+  assert.equal(run.members[0].lane, safe);
+  const tooSoon = applyRaidAction(run, 1, 'move', { actionId: 'move:again:1', at: h.startsAt + 150, zone: h.dangerZones[0] });
+  assert.equal(tooSoon.ok, false, 'movement has a small server floor');
+  advanceRaidRun(run, h.endsAt + 1);
+  assert.equal(run.members[0].hp, run.members[0].maxHp, 'moving out of the marked lane avoided the slam');
+});
+
 t('a strike request cannot block an emergency dodge', () => {
   const p = profile('Lord Knight', false);
   const run = baseRun([member(1, 'A', p), member(2, 'B', p)]);

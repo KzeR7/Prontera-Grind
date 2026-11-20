@@ -30,6 +30,10 @@ export const RAID_RULES = Object.freeze({
   autoAttackMs: 3_000,
   strikeCooldownMs: 5_000,
   strikeDamageSeconds: 2.0,
+  // Walking between arena lanes is a server action so hazards resolve against the position the
+  // player actually reached. The client sends only when the lane changes, and this small floor
+  // stops a jittering pointer from turning into an unbounded stream of writes.
+  moveCooldownMs: 250,
   // Hazard schedule is fixed from startedAt. A hazard is visible for tellMs and resolves at
   // startsAt+tellMs even if no request arrives at that exact moment.
   mechanics: Object.freeze({

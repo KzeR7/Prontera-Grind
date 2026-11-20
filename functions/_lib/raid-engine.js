@@ -8,7 +8,7 @@ const finite = (n, fallback = 0) => (Number.isFinite(Number(n)) ? Number(n) : fa
 const int = (n, fallback = 0) => Math.max(0, Math.floor(finite(n, fallback)));
 const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
 const isObj = v => v && typeof v === 'object' && !Array.isArray(v);
-const ACTIONS = new Set(['strike', 'dodge', 'ward', 'heal', 'revive']);
+const ACTIONS = new Set(['strike', 'dodge', 'ward', 'heal', 'revive', 'move']);
 const LANES = RAID_RULES.lanes;
 export const RAID_ACTION_ID_RE = /^[A-Za-z0-9:_-]{8,100}$/;
 
@@ -78,6 +78,7 @@ function sanitizeMember(raw, index, fallbackLane = laneForIndex(index)) {
     dodges: int(raw.dodges, 0),
     downs: int(raw.downs, 0),
     lastStrikeAt: int(raw.lastStrikeAt, 0),
+    lastMoveAt: int(raw.lastMoveAt, 0),
     lastHealAt: int(raw.lastHealAt, 0),
     lastWardAt: int(raw.lastWardAt, 0),
     lastReviveAt: int(raw.lastReviveAt, 0),
@@ -132,6 +133,7 @@ export function createRaidRun(input) {
     bossArmor: clamp(finite(input.bossArmor, RAID_RULES.bossArmor), 0, 0.8),
     autoAttackMs: RAID_RULES.autoAttackMs,
     strikeCooldownMs: RAID_RULES.strikeCooldownMs,
+    moveCooldownMs: RAID_RULES.moveCooldownMs,
     tellMs: RAID_RULES.mechanics.tellMs,
     intervalMs: RAID_RULES.mechanics.intervalMs,
     seed,
@@ -205,6 +207,7 @@ export function sanitizeRaidRun(raw) {
     bossArmor: clamp(finite(raw.bossArmor, RAID_RULES.bossArmor), 0, 0.8),
     autoAttackMs: RAID_RULES.autoAttackMs,
     strikeCooldownMs: RAID_RULES.strikeCooldownMs,
+    moveCooldownMs: RAID_RULES.moveCooldownMs,
     tellMs: RAID_RULES.mechanics.tellMs,
     intervalMs: RAID_RULES.mechanics.intervalMs,
     seed,
@@ -431,6 +434,16 @@ export function applyRaidAction(run, userId, action, opts = {}) {
       run.state = 'cleared';
       run.finishedAt = at;
     }
+  } else if (action === 'move') {
+    // Free movement in the arena. Walking into another lane is not a dodge: the hazard's scheduled
+    // endsAt still resolves against whichever lane the player is standing in at that timestamp.
+    const zone = typeof opts.zone === 'string' ? opts.zone : '';
+    if (!LANES.includes(zone)) return { ...reject('Choose a valid arena lane.', run), advanced };
+    if (at - member.lastMoveAt < run.moveCooldownMs) {
+      return { ...reject('You are already moving.', run), advanced };
+    }
+    member.lastMoveAt = at;
+    member.lane = zone;
   } else if (action === 'dodge') {
     const zone = typeof opts.zone === 'string' ? opts.zone : '';
     if (!LANES.includes(zone)) return { ...reject('Choose a valid lane to dodge into.', run), advanced };
@@ -478,7 +491,7 @@ export function applyRaidAction(run, userId, action, opts = {}) {
     member.support += healed;
   }
 
-  member.actions++;
+  if (action !== 'move') member.actions++;
   // Continue the fixed timeline to the action's server timestamp. A strike may reduce phase HP;
   // an already-due hazard still resolves at its own scheduled endsAt.
   advanceRaidRun(run, at);
@@ -493,6 +506,7 @@ export function applyRaidAction(run, userId, action, opts = {}) {
 export function raidMemberReady(member) {
   return {
     strikeReadyAt: (member.lastStrikeAt || 0) + RAID_RULES.strikeCooldownMs,
+    moveReadyAt: (member.lastMoveAt || 0) + RAID_RULES.moveCooldownMs,
     healReadyAt: (member.lastHealAt || 0) + RAID_RULES.support.healCooldownMs,
     wardReadyAt: (member.lastWardAt || 0) + RAID_RULES.support.wardCooldownMs,
     reviveReadyAt: (member.lastReviveAt || 0) + RAID_RULES.support.reviveCooldownMs,
@@ -528,6 +542,7 @@ export function raidPublicRun(run, now = Date.now()) {
     schedule: {
       autoAttackMs: run.autoAttackMs,
       strikeCooldownMs: run.strikeCooldownMs,
+      moveCooldownMs: run.moveCooldownMs,
       tellMs: run.tellMs,
       intervalMs: run.intervalMs,
       nextHazardAt: run.nextHazardAt,

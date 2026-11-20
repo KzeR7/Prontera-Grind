@@ -407,7 +407,7 @@ async function actionRun(env, user, body) {
   const runId = body.runId;
   const combatAction = String(body.combatAction || '');
   const actionId = body.actionId;
-  if (!runIdString(runId) || !['strike', 'dodge', 'ward', 'heal', 'revive'].includes(combatAction) || !actionIdString(actionId)) {
+  if (!runIdString(runId) || !['strike', 'dodge', 'ward', 'heal', 'revive', 'move'].includes(combatAction) || !actionIdString(actionId)) {
     return { ok: false, status: 400, data: { err: 'Invalid raid action.' } };
   }
   const run = await db.raidRun(env.DB, runId);
@@ -426,7 +426,9 @@ async function actionRun(env, user, body) {
     if (recovered.ok) result = await socialRequest(env, '/raid/action', user, 'POST', request);
   }
   if (!result.ok) return { ok: false, status: result.status, data: result.data };
-  if (result.data?.checkpoint) await writeCheckpoint(env, runId, result.data.checkpoint);
+  // A lane step can happen several times a second; the D1 checkpoint is a recovery aid, not the
+  // movement log. The DO still persists the authoritative position on every accepted action.
+  if (result.data?.checkpoint && combatAction !== 'move') await writeCheckpoint(env, runId, result.data.checkpoint);
   const live = result.data?.run;
   if (live && ['cleared', 'failed'].includes(live.state)) {
     const settled = await settleRun(env, user, runId);

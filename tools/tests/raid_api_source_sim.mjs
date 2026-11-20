@@ -162,6 +162,14 @@ await t('a lost start response resumes the same run instead of charging again', 
   assert.equal(sql.prepare('SELECT COUNT(*) AS n FROM raid_entries WHERE run_id=?').get(runId).n, 2);
 });
 
+await t('a walk action reaches the room and moves the member lane', async () => {
+  const move = await _raidTest.actionRun(env, users[0], {
+    runId, combatAction: 'move', actionId: 'api:move:lane1', zone: 'left',
+  });
+  assert.equal(move.ok, true, JSON.stringify(move.data));
+  assert.equal(room.raidRuns.get(runId).members.find(m => m.id === users[0].id).lane, 'left');
+});
+
 await t('a strike clears only when the server reaches zero and settles once', async () => {
   const run = room.raidRuns.get(runId);
   run.phaseIndex = 3;

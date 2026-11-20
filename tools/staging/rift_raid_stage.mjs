@@ -33,7 +33,7 @@ const bad = message => { console.log('  FAIL ' + message); failures.push(message
 
 console.log('Rift Raid staging preflight (no deploy)\n');
 if (!build) bad('index.html has no const BUILD');
-else if (!build.includes('haven-v447')) bad('BUILD must be the new haven-v447 staging candidate, got: ' + build);
+else if (!build.includes('haven-v448')) bad('BUILD must be the new haven-v448 staging candidate, got: ' + build);
 else ok('build label: ' + build);
 if (!base) bad('RIFT_STAGE_BASE is required');
 if (!baseSchema) bad('BASE_SCHEMA is required (the migration set already applied to staging)');

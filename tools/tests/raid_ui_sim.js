@@ -1,5 +1,5 @@
-// Rift Raid client smoke: the lobby renders eligibility before readiness, the arena keeps the chosen
-// lane across a party update, and the client contains no second renderer or polling loop.
+// Rift Raid client smoke: the lobby renders eligibility before readiness, the walkable arena keeps
+// its party/target across updates, and movement stays a server lane action with no WebGL renderer.
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
@@ -31,18 +31,18 @@ function runFixture(overrides = {}) {
 }
 
 (async () => {
-  console.log('player raid UI: lobby, arena lane persistence, no second renderer\n');
+  console.log('player raid UI: lobby, walkable arena, no second renderer\n');
   const game = createGame();
   const w = game.window;
   let currentRun = runFixture();
-  let getCount = 0, postCount = 0;
+  let getCount = 0, postCount = 0, lastCombat = null;
 
   w.fetch = async (url, options = {}) => {
     if (String(url).includes('/api/raid')) {
       if (!options.method) {
         getCount++;
         return { ok: true, status: 200, json: async () => ({
-          ok: true, enabled: true, account: { entriesLeft: 1, riftShards: 15, chestsToday: { pity: 0, fractured: 1 } },
+          ok: true, enabled: true, account: { userId: 7, entriesLeft: 1, riftShards: 15, chestsToday: { pity: 0, fractured: 1 } },
           party: { id: 'rp_abcd1234', leader: 7, open: true, isLeader: true, allReady: false, allEligible: true, canStart: false, members: [
             { id: 7, name: 'Alpha', cls: 'Lord Knight', magic: false, ready: false, readyStored: false, eligible: true, entriesLeft: 1, maxHp: 115272, dps: 800000 },
             { id: 8, name: 'Beta', cls: 'Warlock', magic: true, ready: false, readyStored: false, eligible: true, entriesLeft: 2, maxHp: 67242, dps: 800000 },
@@ -52,6 +52,7 @@ function runFixture(overrides = {}) {
       }
       postCount++;
       const body = JSON.parse(options.body || '{}');
+      if (body.action === 'act') lastCombat = body;
       if (body.action === 'start') return { ok: true, status: 200, json: async () => ({ ok: true, runId: currentRun.id, run: currentRun }) };
       if (body.action === 'act') return { ok: true, status: 200, json: async () => ({ ok: true, run: currentRun }) };
       return { ok: true, status: 200, json: async () => ({ ok: true, party: null }) };
@@ -73,39 +74,73 @@ function runFixture(overrides = {}) {
     w.PGRaid.close();
   });
 
-  await t('a start renders the arena with boss/party HP, lanes and a telegraph', async () => {
+  await t('a start renders the walkable arena, boss/party sprites and a danger lane', async () => {
     await w.PGRaid.open();
     await w.PGRaid.refresh();
     w.document.querySelector('[data-raid-action="solo"]').click();
     await new Promise(r => setTimeout(r, 0));
     const text = w.document.getElementById('raidOverlay').textContent;
     assert.match(text, /Rift Sovereign/);
-    assert.match(text, /Left/);
     assert.match(text, /Center/);
     assert.match(text, /Rescue/);
-    assert.match(text, /Danger zone/);
-    assert.ok(w.document.querySelectorAll('.raid-lane').length === 3);
+    assert.match(text, /DANGER/);
+    assert.ok(w.document.querySelectorAll('.raid-zone').length === 3, 'three physical arena lanes');
+    assert.ok(w.document.querySelector('#raidArena'), 'the map arena is mounted');
+    assert.ok(w.document.querySelectorAll('.raid-unit').length === 2, 'every party member has a map sprite');
+    assert.ok(w.document.querySelector('.raid-zone[data-raid-zone="left"]').classList.contains('danger'), 'left lane telegraphs danger');
     assert.ok(w.document.querySelectorAll('.raid-pcard').length === 2);
     assert.match(w.document.getElementById('raidOverlay').innerHTML, /width:/, 'HP bars use finite percentages');
   });
 
-  await t('a chosen lane and target survive an incoming party update', async () => {
-    const lane = w.document.querySelector('[data-raid-lane="center"]');
-    lane.click();
+  await t('walking to another lane sends the move action to the server', async () => {
+    w.PGRaid._moveTo(18, 74);
+    await new Promise(r => setTimeout(r, 0));
+    assert.ok(lastCombat, 'a combat request was sent');
+    assert.equal(lastCombat.combatAction, 'move');
+    assert.equal(lastCombat.zone, 'left');
+    assert.match(lastCombat.actionId, /^raid:/);
+  });
+
+  await t('holding a movement key walks the sprite and republishes the crossed lane', async () => {
+    const arena = w.PGRaid.state.arena;
+    assert.ok(arena, 'the arena has a walk state');
+    const startX = arena.x;
+    w.dispatchEvent(new w.KeyboardEvent('keydown', { key: 'a', bubbles: true }));
+    for (let frame = 1; frame <= 40 && w.__raf; frame++) {
+      const step = w.__raf;
+      w.__raf = null;
+      step(frame * 48);
+    }
+    w.dispatchEvent(new w.KeyboardEvent('keyup', { key: 'a', bubbles: true }));
+    assert.ok(arena.x < startX, 'the sprite walked left');
+    assert.equal(arena.x, 8, 'the sprite stops at the arena edge');
+    const sprite = w.document.querySelector('.raid-unit.you');
+    assert.ok(sprite, 'the sprite is still mounted');
+    assert.equal(sprite.style.left, '8%', 'the walk loop owns the sprite position');
+    assert.equal(arena.lane, 'left');
+    assert.equal(lastCombat.combatAction, 'move');
+    assert.equal(lastCombat.zone, 'left', 'crossing into the left lane is sent to the server');
+  });
+
+  await t('the target and arena DOM survive an incoming party update', async () => {
     const target = w.document.querySelector('[data-raid-target="8"]');
     target.click();
     const next = runFixture({ hpRemaining: 280000000, hazard: { id: 'h2', kind: 'fracture-slam', dangerZones: ['center'], startsAt: Date.now(), endsAt: Date.now() + 1500 } });
     w.PGRaid.receive(next);
     await new Promise(r => setTimeout(r, 0));
-    assert.equal(w.PGRaid.state.lane, 'center', 'the player selection is kept');
     assert.equal(w.PGRaid.state.targetId, 8, 'the rescue target is kept');
-    assert.ok(w.document.querySelector('[data-raid-lane="center"]').classList.contains('chosen'));
+    assert.equal(w.PGRaid.state.lane, 'center', 'the server lane is mirrored');
+    assert.ok(w.document.querySelector('.raid-zone[data-raid-zone="center"]').classList.contains('danger'));
+    assert.equal(w.document.querySelectorAll('#raidArena').length, 1, 'the arena is not rebuilt on every update');
+    assert.ok(w.document.querySelectorAll('.raid-unit').length === 2);
   });
 
-  await t('the client reuses the existing socket and contains no second renderer', () => {
+  await t('the client reuses the existing socket, moves through the server and adds no renderer', () => {
     const source = fs.readFileSync(path.join(ROOT, 'assets/rift-raid.js'), 'utf8');
     const social = fs.readFileSync(path.join(ROOT, 'assets/social.js'), 'utf8');
-    assert.ok(!/WebGLRenderer|new\s+THREE\.|createRenderer|requestAnimationFrame/.test(source), 'no new render loop');
+    assert.ok(!/WebGLRenderer|new\s+THREE\.|createRenderer/.test(source), 'no new WebGL renderer');
+    assert.match(source, /requestAnimationFrame\(arenaFrame\)/, 'the arena has one local movement loop');
+    assert.match(source, /combatAction: 'move'/, 'walking is sent to the server as a lane action');
     assert.ok(!/setInterval\s*\([^)]*(?:fetch|api\()/.test(source), 'the only interval is the local countdown');
     assert.match(social, /raid_state/);
     assert.match(source, /min-height:44px|min-height:48px/);
@@ -279,7 +314,7 @@ function runFixture(overrides = {}) {
     // Every client reconnects directly into the active arena.
     for (const c of clients) await c.w.PGRaid.open();
     for (const c of clients) {
-      assert.equal(c.w.document.querySelectorAll('.raid-lane').length, 3);
+      assert.equal(c.w.document.querySelectorAll('.raid-zone').length, 3);
       assert.equal(c.w.document.querySelectorAll('.raid-pcard').length, 3);
       const you = c.w.document.querySelector('.raid-pcard.you');
       assert.ok(you && you.dataset.raidTarget === String(c.id), 'client ' + c.id + ' sees its own card as you');
@@ -287,7 +322,7 @@ function runFixture(overrides = {}) {
     }
     const downed = clients.find(c => c.id === 9);
     assert.equal(downed.w.document.querySelector('[data-raid-action="strike"]').disabled, true, 'a downed player cannot act');
-    assert.equal(downed.w.document.querySelector('[data-raid-action="dodge"]').disabled, true);
+    assert.ok(downed.w.document.querySelector('.raid-unit.down'), 'a downed client shows its fallen sprite');
     // Leader drops, the others receive a lower-HP state, then the leader resumes the same run.
     clients[0].w.PGRaid.close();
     live = runFixture({ ...trio, hpRemaining: 390000000, hazard: { id: 'h9', kind: 'rift-sweep', dangerZones: ['left', 'center'], startsAt: Date.now(), endsAt: Date.now() + 1200 } });
