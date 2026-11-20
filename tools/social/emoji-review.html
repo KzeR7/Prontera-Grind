@@ -7,129 +7,130 @@
 <style>
   * { box-sizing: border-box; }
   :root {
-    --bg: #0b1020; --panel: #141b2f; --panel2: #0e1526; --line: #26314d;
-    --ink: #e6ecf7; --dim: #93a1c0; --dim2: #64748b;
-    --blue: #3b82f6; --green: #22c55e; --amber: #f59e0b; --red: #ef4444; --violet: #a855f7;
+    --bg:#0b1020; --panel:#141b2f; --panel2:#0e1526; --line:#26314d;
+    --ink:#e6ecf7; --dim:#93a1c0; --dim2:#64748b;
+    --blue:#3b82f6; --green:#22c55e; --amber:#f59e0b; --red:#ef4444; --violet:#a855f7;
   }
-  body { margin: 0; background: var(--bg); color: var(--ink);
-    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
-  a { color: #7dd3fc; }
+  body { margin:0; background:var(--bg); color:var(--ink);
+         font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
+  a { color:#7dd3fc; }
 
-  header { background: linear-gradient(180deg,#16203a,#111a2e); border-bottom: 1px solid var(--line);
-    padding: 16px 22px; position: sticky; top: 0; z-index: 60; }
-  .hrow { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; max-width: 1500px; margin: 0 auto; }
-  header h1 { margin: 0; font-size: 1.06rem; letter-spacing: .04em; text-transform: uppercase; color: #cbd5e1; }
-  header .sub { font-size: .84rem; color: var(--dim); }
-  .pill { font-size: .72rem; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--dim); }
+  header { background:linear-gradient(180deg,#16203a,#111a2e); border-bottom:1px solid var(--line);
+           padding:15px 22px; position:sticky; top:0; z-index:60; }
+  .hrow { display:flex; align-items:baseline; gap:12px; flex-wrap:wrap; max-width:1560px; margin:0 auto; }
+  header h1 { margin:0; font-size:1.05rem; letter-spacing:.04em; text-transform:uppercase; color:#cbd5e1; }
+  header .sub { font-size:.83rem; color:var(--dim); }
+  .pill { font-size:.7rem; padding:2px 8px; border-radius:999px; border:1px solid var(--line); color:var(--dim); }
 
-  .wrap { max-width: 1500px; margin: 0 auto; padding: 18px 22px 90px; }
+  .wrap { max-width:1560px; margin:0 auto; padding:16px 22px 90px; }
 
-  .banner { border-radius: 12px; padding: 14px 16px; margin-bottom: 16px; font-size: .88rem; line-height: 1.55;
-    border: 1px solid #6b4a12; background: #2a1e08; color: #fde9c0; }
-  .banner b { color: #fbbf24; }
-  .banner code { background: #3a2a0c; padding: 1px 5px; border-radius: 4px; color: #fde9c0; font-size: .85em; }
+  .banner { border-radius:12px; padding:13px 16px; margin-bottom:14px; font-size:.865rem; line-height:1.55;
+            border:1px solid #1e3a5f; background:#0e1e33; color:#c7d9f0; }
+  .banner b { color:#93c5fd; }
+  .banner.warn { border-color:#6b4a12; background:#2a1e08; color:#fde9c0; }
+  .banner.warn b { color:#fbbf24; }
+  .banner code { background:#16233d; padding:1px 5px; border-radius:4px; font-size:.86em; }
 
-  .toolbar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; background: var(--panel);
-    border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; margin-bottom: 16px; }
-  .btn { background: var(--blue); color: #fff; border: 0; padding: 8px 14px; border-radius: 8px;
-    font-size: .86rem; font-weight: 650; cursor: pointer; }
-  .btn:hover { filter: brightness(1.12); }
-  .btn.ghost { background: #2b3855; }
-  .btn.ghost:hover { background: #35446a; }
-  .btn.green { background: #15803d; }
-  .btn.amber { background: #b45309; }
-  .spacer { flex: 1; }
-  .search { padding: 8px 11px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel2);
-    color: var(--ink); font-size: .86rem; min-width: 210px; }
-  .search:focus { outline: 0; border-color: var(--blue); }
+  .toolbar { display:flex; gap:9px; flex-wrap:wrap; align-items:center; background:var(--panel);
+             border:1px solid var(--line); border-radius:12px; padding:11px 13px; margin-bottom:13px; }
+  .btn { background:var(--blue); color:#fff; border:0; padding:8px 14px; border-radius:8px;
+         font-size:.85rem; font-weight:650; cursor:pointer; }
+  .btn:hover { filter:brightness(1.12); }
+  .btn.ghost { background:#2b3855; } .btn.ghost:hover { background:#35446a; }
+  .btn.green { background:#15803d; }
+  .spacer { flex:1; }
+  .search { padding:8px 11px; border-radius:8px; border:1px solid var(--line); background:var(--panel2);
+            color:var(--ink); font-size:.85rem; min-width:200px; }
+  .search:focus { outline:0; border-color:var(--blue); }
 
-  .tabs { display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap; }
-  .tab { background: #1a2440; border: 1px solid var(--line); color: var(--dim); padding: 7px 13px;
-    border-radius: 9px; font-size: .84rem; cursor: pointer; font-weight: 600; }
-  .tab.on { background: #1d3a63; border-color: var(--blue); color: #dbeafe; }
-  .tab .n { opacity: .7; font-weight: 500; }
+  .tabs { display:flex; gap:6px; margin-bottom:12px; flex-wrap:wrap; }
+  .tab { background:#1a2440; border:1px solid var(--line); color:var(--dim); padding:7px 12px;
+         border-radius:9px; font-size:.83rem; cursor:pointer; font-weight:600; }
+  .tab.on { background:#1d3a63; border-color:var(--blue); color:#dbeafe; }
+  .tab .n { opacity:.72; font-weight:500; }
 
-  .counts { display: flex; gap: 18px; flex-wrap: wrap; font-size: .84rem; color: var(--dim); margin-bottom: 14px; }
-  .counts b { color: var(--ink); }
+  .counts { display:flex; gap:16px; flex-wrap:wrap; font-size:.82rem; color:var(--dim); margin-bottom:13px; }
+  .counts b { color:var(--ink); }
 
-  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(212px, 1fr)); gap: 13px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(228px,1fr)); gap:12px; }
 
-  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 11px;
-    display: flex; flex-direction: column; gap: 9px; position: relative; transition: border-color .12s, background .12s; }
-  .card:hover { border-color: #3a4a72; }
-  .card.keep { border-color: var(--green); background: #10231a; }
-  .card.drop { opacity: .42; }
-  .card.drop .stage { filter: grayscale(1); }
+  .card { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:11px;
+          display:flex; flex-direction:column; gap:8px; position:relative; transition:border-color .12s,background .12s; }
+  .card:hover { border-color:#3a4a72; }
+  .card.keep { border-color:var(--green); background:#0f2318; }
+  .card.drop { opacity:.45; }
+  .card.notro { border-left:3px solid #7f1d1d; }
 
-  .cardtop { display: flex; align-items: center; gap: 7px; }
-  .idx { font-size: .68rem; color: var(--dim2); font-variant-numeric: tabular-nums; }
-  .idname { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .82rem; font-weight: 700; color: #dbeafe; }
-  .tag { font-size: .6rem; letter-spacing: .05em; text-transform: uppercase; padding: 2px 6px; border-radius: 4px;
-    margin-left: auto; font-weight: 700; }
-  .tag.shipped { background: #1e3a8a; color: #bfdbfe; }
-  .tag.missing { background: #7f1d1d; color: #fecaca; }
+  .cardtop { display:flex; align-items:center; gap:7px; }
+  .idx { font-size:.66rem; color:var(--dim2); font-variant-numeric:tabular-nums; }
+  .idname { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:.81rem; font-weight:700; color:#dbeafe; }
+  .tag { font-size:.56rem; letter-spacing:.05em; text-transform:uppercase; padding:2px 5px; border-radius:4px;
+         font-weight:800; margin-left:auto; white-space:nowrap; }
+  .tag.shipped { background:#1e3a8a; color:#bfdbfe; }
+  .tag.real    { background:#166534; color:#bbf7d0; }
+  .tag.notro   { background:#7f1d1d; color:#fecaca; }
+  .tag.noword  { background:#4c1d95; color:#ddd6fe; }
 
-  /* ---- the "stage" is the game's own chat bubble ---- */
-  .stage { background:
-      radial-gradient(120% 90% at 50% 0%, #1b2d4d 0%, #0a0f1c 72%);
-    border: 1px solid #1e2942; border-radius: 9px; height: 118px; position: relative; overflow: hidden;
-    display: flex; align-items: center; justify-content: center; }
-  .stage.art { background: radial-gradient(120% 90% at 50% 0%, #1b2d4d 0%, #0a0f1c 72%); }
-  .stage.noart {
-    background-image: repeating-linear-gradient(45deg, #161d30 0 8px, #121828 8px 16px);
-    border-color: #2a3348; }
-  .emo { image-rendering: pixelated; max-width: 104px; max-height: 104px; object-fit: contain;
-    filter: drop-shadow(0 3px 5px rgba(0,0,0,.6)); }
-  .stage .trayemo { position: absolute; left: 6px; bottom: 4px; width: 30px; height: 30px;
-    image-rendering: pixelated; object-fit: contain; opacity: .95; border: 1px solid #2b3852;
-    border-radius: 5px; background: #05080f; }
-  .stage .traylbl { position: absolute; left: 40px; bottom: 8px; font-size: .58rem; color: var(--dim2);
-    text-transform: uppercase; letter-spacing: .08em; }
-  .noart-note { text-align: center; color: #8b9ab5; font-size: .72rem; line-height: 1.4; padding: 0 8px; }
-  .noart-note .big { display: block; font-size: 1.04rem; color: #cbd5e1; font-weight: 700;
-    font-family: ui-monospace, monospace; margin-bottom: 3px; }
+  /* ---- the game's own chat bubble ---- */
+  .stage { background:radial-gradient(120% 90% at 50% 0%,#1b2d4d 0%,#0a0f1c 72%);
+           border:1px solid #1e2942; border-radius:9px; height:126px; position:relative; overflow:hidden;
+           display:flex; align-items:center; justify-content:center; }
+  .stage.noart { background-image:repeating-linear-gradient(45deg,#161d30 0 8px,#121828 8px 16px);
+                 background-color:#121828; border-color:#2a3348; }
+  .artwork { max-width:112px; max-height:112px; image-rendering:pixelated;
+             filter:drop-shadow(0 3px 6px rgba(0,0,0,.65)); }
+  .ghost { opacity:.34; filter:grayscale(.75) drop-shadow(0 3px 6px rgba(0,0,0,.5)); }
+  .nopix { text-align:center; color:#8b9ab5; font-size:.72rem; line-height:1.45; padding:0 10px; }
+  .nopix .big { display:block; font-size:1.02rem; color:#cbd5e1; font-weight:700;
+                font-family:ui-monospace,monospace; margin-bottom:4px; }
+  .nopix .why { color:#fca5a5; font-weight:700; display:block; margin-bottom:4px; font-size:.74rem; }
+  .stage .trayemo { position:absolute; left:6px; bottom:4px; width:28px; height:28px;
+                    image-rendering:pixelated; object-fit:contain; border:1px solid #2b3852;
+                    border-radius:5px; background:#05080f; }
+  .stage .traylbl { position:absolute; left:38px; bottom:7px; font-size:.55rem; color:var(--dim2);
+                    text-transform:uppercase; letter-spacing:.08em; }
 
-  .cmds { display: flex; align-items: center; gap: 6px; }
-  .cmds .slash { color: var(--dim2); font-family: ui-monospace, monospace; font-size: .85rem; }
-  .cmds input { flex: 1; min-width: 0; padding: 5px 8px; border-radius: 6px; border: 1px solid #33405e;
-    background: #0a1020; color: #e6ecf7; font-family: ui-monospace, monospace; font-size: .82rem; }
-  .cmds input:focus { outline: 0; border-color: var(--blue); }
-  .cmds input.changed { border-color: var(--amber); color: #fde9c0; }
-  .cmds input.collide { border-color: var(--red); color: #fecaca; background: #200e0e; }
+  .cmds { display:flex; align-items:center; gap:6px; }
+  .cmds .slash { color:var(--dim2); font-family:ui-monospace,monospace; font-size:.85rem; }
+  .cmds input { flex:1; min-width:0; padding:5px 8px; border-radius:6px; border:1px solid #33405e;
+                background:#0a1020; color:#e6ecf7; font-family:ui-monospace,monospace; font-size:.81rem; }
+  .cmds input:focus { outline:0; border-color:var(--blue); }
+  .cmds input.collide { border-color:var(--red); color:#fecaca; background:#200e0e; }
 
-  .meta { font-size: .68rem; color: var(--dim2); line-height: 1.5; }
-  .meta .k { color: var(--dim); }
-  .desc { font-size: .74rem; color: #b6c2d8; line-height: 1.45; min-height: 2.1em; }
+  .desc { font-size:.745rem; color:#b6c2d8; line-height:1.45; min-height:2.15em; }
+  .meta { font-size:.665rem; color:var(--dim2); line-height:1.5; font-family:ui-monospace,monospace; }
+  .meta .k { color:#7c8aa8; }
+  .meta .bad { color:#fca5a5; font-weight:700; }
+  .realcmds { font-size:.7rem; color:#8fd8a8; font-family:ui-monospace,monospace; }
 
-  .actions { display: flex; gap: 6px; margin-top: auto; }
-  .toggle { flex: 1; padding: 7px 6px; border-radius: 7px; border: 1px solid var(--line);
-    background: #1a2440; color: var(--dim); font-size: .78rem; font-weight: 700; cursor: pointer; }
-  .toggle:hover { background: #223054; }
-  .toggle.on { background: #14532d; border-color: var(--green); color: #bbf7d0; }
-  .toggle.offstate { background: #3f1414; border-color: #7f1d1d; color: #fecaca; }
+  .warn { font-size:.65rem; color:#fca5a5; background:#2a0f0f; border:1px solid #7f1d1d;
+          border-radius:5px; padding:3px 6px; line-height:1.38; }
+  .warn.amber { color:#fcd34d; background:#2a1e08; border-color:#6b4a12; }
 
-  .warn { font-size: .66rem; color: #fca5a5; background: #2a0f0f; border: 1px solid #7f1d1d;
-    border-radius: 5px; padding: 3px 6px; line-height: 1.35; }
+  .actions { display:flex; gap:6px; margin-top:auto; }
+  .toggle { flex:1; padding:7px 6px; border-radius:7px; border:1px solid var(--line); background:#1a2440;
+            color:var(--dim); font-size:.77rem; font-weight:700; cursor:pointer; }
+  .toggle:hover { background:#223054; }
+  .toggle.on { background:#14532d; border-color:var(--green); color:#bbf7d0; }
+  .toggle.offstate { background:#3f1414; border-color:#7f1d1d; color:#fecaca; }
+  .static { color:#64748b; font-size:.71rem; align-self:center; }
 
-  .sect-title { font-size: .78rem; text-transform: uppercase; letter-spacing: .08em; color: var(--dim2);
-    margin: 26px 0 12px; padding-bottom: 7px; border-bottom: 1px solid var(--line); font-weight: 700; }
-
-  /* summary / copy panel */
-  .sumgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-  @media (max-width: 820px) { .sumgrid { grid-template-columns: 1fr; } }
-  .panelbox { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px; }
-  .panelbox h3 { margin: 0 0 9px; font-size: .8rem; text-transform: uppercase; letter-spacing: .07em; color: var(--dim); }
-  pre { margin: 0; background: #05080f; border: 1px solid #1a2540; border-radius: 8px; padding: 11px;
-    font-size: .73rem; line-height: 1.55; color: #b9c7de; overflow: auto; max-height: 300px; white-space: pre-wrap;
-    word-break: break-word; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
-  .keys { font-size: .78rem; color: var(--dim); line-height: 1.75; }
-  .keys kbd { background: #1f2a44; border: 1px solid #33405e; border-bottom-width: 2px; border-radius: 5px;
-    padding: 1px 6px; font-family: ui-monospace, monospace; font-size: .74rem; color: #dbeafe; }
-  .saved { font-size: .76rem; color: var(--green); }
-  .toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: 22px; background: #14532d;
-    border: 1px solid var(--green); color: #dcfce7; padding: 10px 18px; border-radius: 9px; font-size: .85rem;
-    font-weight: 600; opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 99; }
-  .toast.show { opacity: 1; }
+  .sect-title { font-size:.77rem; text-transform:uppercase; letter-spacing:.08em; color:var(--dim2);
+                margin:24px 0 12px; padding-bottom:7px; border-bottom:1px solid var(--line); font-weight:700; }
+  .sumgrid { display:grid; grid-template-columns:1fr 1fr; gap:13px; }
+  @media (max-width:860px) { .sumgrid { grid-template-columns:1fr; } }
+  .panelbox { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:13px; }
+  .panelbox h3 { margin:0 0 8px; font-size:.78rem; text-transform:uppercase; letter-spacing:.07em; color:var(--dim); }
+  pre { margin:0; background:#05080f; border:1px solid #1a2540; border-radius:8px; padding:10px;
+        font-size:.715rem; line-height:1.55; color:#b9c7de; overflow:auto; max-height:320px;
+        white-space:pre-wrap; word-break:break-word; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; }
+  .keys { font-size:.77rem; color:var(--dim); line-height:1.8; }
+  .keys kbd { background:#1f2a44; border:1px solid #33405e; border-bottom-width:2px; border-radius:5px;
+              padding:1px 6px; font-family:ui-monospace,monospace; font-size:.73rem; color:#dbeafe; }
+  .toast { position:fixed; left:50%; transform:translateX(-50%); bottom:20px; background:#14532d;
+           border:1px solid var(--green); color:#dcfce7; padding:10px 18px; border-radius:9px;
+           font-size:.85rem; font-weight:600; opacity:0; pointer-events:none; transition:opacity .2s; z-index:99; }
+  .toast.show { opacity:1; }
 </style>
 </head>
 <body>
@@ -137,69 +138,79 @@
 <header>
   <div class="hrow">
     <h1>PR #269 — Emoji Review</h1>
-    <span class="sub">45 proposed <em>new</em> world-chat emotions, side by side with the 32 that already ship</span>
+    <span class="sub">the 45 proposed emotions, drawn from their real RO source</span>
     <span class="spacer"></span>
-    <span class="pill">assets/social/emotions/</span>
+    <span class="pill" id="srcPill">source art</span>
   </div>
 </header>
 
 <div class="wrap">
 
   <div class="banner">
-    <b>Read this first.</b> The PR adds names, slash commands and tray order for 45 new emotions — but
-    <b>no art</b>. There is no <code>assets/social/emotions/&lt;id&gt;.png</code> for any of them, in the PR, on
-    <code>main</code>, or anywhere in this repo's history. The 32 that already ship are drawn live below
-    (real APNGs). The 45 proposals show a hatched tile because there is nothing to draw.
-    <br><b>Also: the PR's action numbers are wrong.</b> It maps new ids to actions 86–130, but the pinned
-    <code>emotion.act/spr</code> has 93 actions (0–92) and none of the 45. So this page takes no art from the PR;
-    the art budget is 0 bytes and every proposed tile is honestly empty.
-    <br>Pick what you want, then <b>Copy selection</b> and paste it back to me — I'll apply exactly that.
+    <b>What changed since you last looked:</b> your 45 tiles were empty because PR #269 ships <b>no image
+    files at all</b>. I pulled the authentic RO emotion table from two independent sources and rebuilt this
+    page, so every emotion now shows its real artwork:
+    <b>roBrowserLegacy</b> <code>DB/Emotions.js</code> for the <code>emotion.spr</code> action index and the
+    <b>iRO Wiki</b> emote table for the artwork and commands. Look at the cards now — they have pictures.
+  </div>
+
+  <div class="banner warn">
+    <b>And that research found a serious problem with the PR.</b>
+    Its action numbers are <b>wrong for all 32 real ones</b> — it maps <code>omg</code> to action 86, but
+    <code>/omg</code> is <code>ET_HUK</code> at action <b>23</b>. The other <b>13 aren't Ragnarok Online
+    emotions at all</b> (<code>clap, bye, chaos, happy, absurd, joy, salute</code>… are <b>RO II</b> action
+    emotes; <code>amazed, best, best2, kiskis, funny, martialarts</code> exist in neither). Each card shows the
+    true action, the true ET_ name and the PR's claim so you can check it yourself.
   </div>
 
   <div class="toolbar">
     <input class="search" id="q" type="search" placeholder="Filter by id, command or description…">
-    <button class="btn ghost" id="bAllNew">Keep all 45</button>
-    <button class="btn ghost" id="bNoneNew">Keep none</button>
+    <button class="btn ghost" id="bAllReal">Keep all 32 real</button>
+    <button class="btn ghost" id="bNone">Keep none</button>
     <button class="btn ghost" id="bReset">Reset</button>
     <span class="spacer"></span>
     <button class="btn green" id="bCopy">Copy selection</button>
   </div>
 
   <div class="tabs" id="tabs">
-    <button class="tab on" data-f="new">New proposals <span class="n" id="tNew"></span></button>
+    <button class="tab on" data-f="new">New proposals <span class="n" id="tNew">45</span></button>
+    <button class="tab" data-f="real">Real RO only <span class="n" id="tReal">32</span></button>
+    <button class="tab" data-f="notro">Not RO <span class="n" id="tNot">13</span></button>
     <button class="tab" data-f="shipped">Already shipped <span class="n">32</span></button>
-    <button class="tab" data-f="keep">Kept <span class="n" id="tKeep"></span></button>
-    <button class="tab" data-f="drop">Dropped <span class="n" id="tDrop"></span></button>
+    <button class="tab" data-f="keep">Kept <span class="n" id="tKeep">0</span></button>
+    <button class="tab" data-f="drop">Dropped <span class="n" id="tDrop">0</span></button>
     <button class="tab" data-f="all">Everything <span class="n">77</span></button>
   </div>
 
   <div class="counts">
-    <span>New kept: <b id="cKeep">0</b> / 45</span>
-    <span>New dropped: <b id="cDrop">0</b></span>
+    <span>Kept: <b id="cKeep">0</b> / 45</span>
+    <span>Dropped: <b id="cDrop">0</b></span>
+    <span>Kept that aren't real RO: <b id="cBad">0</b></span>
     <span>Shipped commands you changed: <b id="cChg">0</b></span>
-    <span>PR proposes renaming: <b id="cPrRen">14</b> shipped commands</span>
-    <span class="saved" id="savedNote"></span>
   </div>
 
   <div class="grid" id="grid"></div>
 
-  <div class="sect-title">Selection summary — this is what you paste back</div>
+  <div class="sect-title">Selection summary — paste this back</div>
   <div class="sumgrid">
     <div class="panelbox">
       <h3>Paste-back block</h3>
       <pre id="out">—</pre>
     </div>
     <div class="panelbox">
-      <h3>How to use this page</h3>
+      <h3>Using this page</h3>
       <div class="keys">
-        <b>Keep / Drop</b> on each card, or <kbd>Space</kbd> when a card is focused.<br>
-        <b>Slash command</b> is editable — it writes straight into the paste-back block.
-        Red = collides with another id, amber = changed from what ships today.<br>
-        Filter tabs narrow the grid; your picks are kept across tabs.<br>
-        Everything is stored in this browser only (<code>localStorage</code>) — nothing is sent anywhere.<br><br>
-        <b>Art:</b> to give a kept emotion a picture, drop
-        <code>assets/social/emotions/&lt;id&gt;.png</code> into the repo and reload this page.
-        A card that finds its PNG shows it automatically and stops being counted as missing.
+        <b>Keep / Drop</b> per card, or <kbd>Space</kbd> when a card is focused.<br>
+        <b>Slash command</b> is editable — writes straight into the paste-back block.
+        Green line above it = the commands RO really uses.<br>
+        Tabs split the 45 into <b>real RO</b> (32) and <b>not RO</b> (13).<br>
+        Picks live in this browser only (<code>localStorage</code>).<br><br>
+        <b>About the pictures.</b> iRO Wiki's emote GIFs are the exact RO sprite frames, drawn here
+        from that source. They are a <b>preview of what the emote looks like</b>, not game-ready files:
+        this repo's convention is a 160×160 APNG built from the pinned
+        <code>emotion.act</code>/<code>emotion.spr</code> by <code>pack-emotions.py</code>.
+        <code>grf.robrowser.com</code> is unreachable from this sandbox, so I could not decode those
+        two files. A kept emotion is a decision to add it; the files still have to be generated.
       </div>
     </div>
   </div>
@@ -208,279 +219,219 @@
 <div class="toast" id="toast">Copied</div>
 
 <script>
-// ---------------------------------------------------------------- canonical data
-// RO emotion enum, rAthena src/map/clif.hpp (emotion_type). Action index == enum position.
-const ET = ("SURPRISE QUESTION DELIGHT THROB SWEAT AHA FRET ANGER MONEY THINK SCISSOR ROCK WRAP FLAG "+
-"BIGTHROB THANKS KEK SORRY SMILE PROFUSELY_SWEAT SCRATCH BEST STARE_ABOUT HUK O X HELP GO CRY KIK CHUP "+
-"CHUPCHUP HNG OK CHAT_PROHIBIT INDONESIA_FLAG STARE HUNGRY COOL MERONG SHY GOODBOY SPTIME SEXY COMEON "+
-"SLEEPY CONGRATULATION HPTIME PH_FLAG MY_FLAG SI_FLAG BR_FLAG SPARK CONFUSE OHNO HUM BLABLA OTL DICE1 "+
-"DICE2 DICE3 DICE4 DICE5 DICE6 INDIA_FLAG LUV FLAG8 FLAG9 MOBILE MAIL ANTENNA0 ANTENNA1 ANTENNA2 "+
-"ANTENNA3 HUM2 ABS OOPS SPIT ENE PANIC WHISP YUT1 YUT2 YUT3 YUT4 YUT5 YUT6 YUT7").split(" ");
-// tools/social/README.md: emotions.go exports "all 93 original action timelines", so the pinned
-// emotion.act has 93 actions, indices 0..92. The rAthena enum above names the first 87 of them.
-const SPRITE_ACTIONS = 93;
+// ---------------------------------------------------------------- data
+// Action index: roBrowserLegacy DB/Emotions.js (the same emotion.spr this repo pins).
+// Artwork + commands: iRO Wiki /wiki/Emotes. Generated by tools/social/build-emotion-ref.py.
+const REF = {"_comment":"Generated by tools/social/build-emotion-ref.py - do not edit by hand.","sources":{"actionIndex":"roBrowserLegacy src/DB/Emotions.js (emotion.spr action index)","commandsAndArt":"iRO Wiki /wiki/Emotes (irowiki.org/w/images/...)","spriteActionCount":93},"emotions":[{"id":"surprise","state":"shipped","prAction":null,"action":0,"enum":"SURPRISE","prCmd":"!","cmds":["!"],"desc":"Exclamation mark, surprised","art":"Exc.gif"},{"id":"question","state":"shipped","prAction":null,"action":1,"enum":"QUESTION","prCmd":"?","cmds":["?"],"desc":"Question mark","art":"Que.gif"},{"id":"music","state":"shipped","prAction":null,"action":2,"enum":"DELIGHT","prCmd":"ho","cmds":["ho","delight"],"desc":"Music note, whistling","art":"Hoe.gif"},{"id":"heart","state":"shipped","prAction":null,"action":3,"enum":"THROB","prCmd":"lv","cmds":["lv","heart"],"desc":"Beating heart","art":"Lov.gif"},{"id":"love","state":"shipped","prAction":null,"action":4,"enum":"BIGTHROB","prCmd":"lv2","cmds":["lv2"],"desc":"Exploding heart","art":"Lov2.gif"},{"id":"sweat","state":"shipped","prAction":null,"action":5,"enum":"SWEAT","prCmd":"swt","cmds":["swt","sweat"],"desc":"Anime sweat drop","art":"Swt.gif"},{"id":"idea","state":"shipped","prAction":null,"action":6,"enum":"AHA","prCmd":"ic","cmds":["ic","aha"],"desc":"Light bulb","art":"Lit.gif"},{"id":"anger","state":"shipped","prAction":null,"action":7,"enum":"FRET","prCmd":"an","cmds":["an","fret"],"desc":"Anger vein","art":"Ang.gif"},{"id":"cloud","state":"shipped","prAction":null,"action":8,"enum":"ANGER","prCmd":"ag","cmds":["ag","anger"],"desc":"Storm cloud, frustration","art":"Agh.gif"},{"id":"money","state":"shipped","prAction":null,"action":9,"enum":"MONEY","prCmd":"$","cmds":["$","money"],"desc":"Dollar sign","art":"Money.gif"},{"id":"dots","state":"shipped","prAction":null,"action":10,"enum":"THINK","prCmd":"...","cmds":["..."],"desc":"Three dots, speechless","art":"....gif"},{"id":"rock","state":"shipped","prAction":null,"action":11,"enum":"ROCK","prCmd":"bawi","cmds":["rock","bawi"],"desc":"Rock fist (rock-paper-scissors)","art":"Emote_bawi.png"},{"id":"scissors","state":"shipped","prAction":null,"action":12,"enum":"SCISSOR","prCmd":"gawi","cmds":["scissors","gawi"],"desc":"Scissors (rock-paper-scissors)","art":"Emote_gawi.png"},{"id":"paper","state":"shipped","prAction":null,"action":13,"enum":"WRAP","prCmd":"bo","cmds":["paper","bo"],"desc":"Paper (rock-paper-scissors)","art":"Emote_bo.png"},{"id":"kiss","state":"shipped","prAction":null,"action":14,"enum":"THROB?14","prCmd":"kis2","cmds":[],"desc":"unmapped action 14","art":null},{"id":"ok","state":"shipped","prAction":null,"action":15,"enum":"THANKS","prCmd":"thx","cmds":["thx"],"desc":"Thank you!","art":"Thx.gif"},{"id":"dead","state":"shipped","prAction":null,"action":16,"enum":"KEK","prCmd":"desp","cmds":["desp","otl"],"desc":"Giving up, stick figure collapsed","art":"Desp.gif"},{"id":"sorry","state":"shipped","prAction":null,"action":17,"enum":"SORRY","prCmd":"sry","cmds":["sry","sorry"],"desc":"Sorry look","art":"Sry.gif"},{"id":"laugh","state":"shipped","prAction":null,"action":18,"enum":"SMILE","prCmd":"heh","cmds":["heh","smile"],"desc":"Laughing face","art":"Heh.gif"},{"id":"smile","state":"shipped","prAction":null,"action":22,"enum":"STARE_ABOUT","prCmd":"ok","cmds":["??"],"desc":"Shaking head / looking around","art":"Ono.gif"},{"id":"cry","state":"shipped","prAction":null,"action":28,"enum":"CRY","prCmd":"sob","cmds":["sob"],"desc":"Crying face","art":"Sob.gif"},{"id":"shy","state":"shipped","prAction":null,"action":29,"enum":"KIK","prCmd":"hum","cmds":["gg"],"desc":"Evil giggling face","art":"Ggg.gif"},{"id":"kissheart","state":"shipped","prAction":null,"action":30,"enum":"CHUP","prCmd":"kis","cmds":["kis"],"desc":"Kiss with a heart, facing right","art":"Kis.gif"},{"id":"think","state":"shipped","prAction":null,"action":31,"enum":"CHUPCHUP","prCmd":"hmm","cmds":["kis2"],"desc":"Kiss facing left","art":"Kis2.gif"},{"id":"hmm","state":"shipped","prAction":null,"action":32,"enum":"HNG","prCmd":"swt2","cmds":["pif"],"desc":"A pif, blowing smoke","art":"Pif.gif"},{"id":"blush","state":"shipped","prAction":null,"action":33,"enum":"OK","prCmd":"shy","cmds":["ok"],"desc":"Head bobbing up and down","art":"Ok.gif"},{"id":"drool","state":"shipped","prAction":null,"action":38,"enum":"MERONG","prCmd":"rice","cmds":["meh","e4"],"desc":"Flapping tongue, so what?","art":"Meh.gif"},{"id":"meh","state":"shipped","prAction":null,"action":39,"enum":"SHY","prCmd":"meh","cmds":["shy","e5"],"desc":"Blushing","art":"Shy.gif"},{"id":"panic","state":"shipped","prAction":null,"action":44,"enum":"COMEON","prCmd":"panic","cmds":["com","e9"],"desc":"Come-here finger","art":"Come.gif"},{"id":"sleep","state":"shipped","prAction":null,"action":67,"enum":"MOBILE","prCmd":"yawn","cmds":["yawn","e10"],"desc":"Big yawny face","art":"Yawn.gif"},{"id":"mail","state":"shipped","prAction":null,"action":68,"enum":"MAIL","prCmd":"mail","cmds":["mail","e22"],"desc":"Mail","art":"Mail.gif"},{"id":"gg","state":"shipped","prAction":null,"action":78,"enum":"ENE","prCmd":"gg","cmds":["ene","e31"],"desc":"\"Blessed\" face","art":"Ene.gif"},{"id":"omg","state":"new","prAction":86,"action":23,"enum":"HUK","prCmd":"omg","cmds":["omg"],"desc":"Shocked face!","art":"Omg.gif"},{"id":"oh","state":"new","prAction":87,"action":24,"enum":"O","prCmd":"oh","cmds":["oh","o"],"desc":"Sign with a red circle","art":"Ohh.gif"},{"id":"x","state":"new","prAction":88,"action":25,"enum":"X","prCmd":"x","cmds":["x","X"],"desc":"Sign with a red X","art":"Ecks.gif"},{"id":"hlp","state":"new","prAction":89,"action":26,"enum":"HELP","prCmd":"hlp","cmds":["hlp","help"],"desc":"Four Help signs pop above you","art":"Hlp.gif"},{"id":"go","state":"new","prAction":90,"action":27,"enum":"GO","prCmd":"go","cmds":["go"],"desc":"Explosive Go! sign","art":"Goo.gif"},{"id":"sob","state":"new","prAction":91,"action":28,"enum":"CRY","prCmd":"sob","cmds":["sob"],"desc":"Crying face","art":"Sob.gif"},{"id":"kis","state":"new","prAction":92,"action":30,"enum":"CHUP","prCmd":"kis","cmds":["kis"],"desc":"Kiss with a heart, facing right","art":"Kis.gif"},{"id":"pif","state":"new","prAction":93,"action":32,"enum":"HNG","prCmd":"pif","cmds":["pif"],"desc":"A pif, blowing smoke","art":"Pif.gif"},{"id":"que2","state":"new","prAction":94,"action":22,"enum":"STARE_ABOUT","prCmd":"??","cmds":["??"],"desc":"Shaking head, looking around","art":"Ono.gif"},{"id":"bzz","state":"new","prAction":95,"action":36,"enum":"STARE","prCmd":"bzz","cmds":["bzz","e1"],"desc":"Angry face with an anger vein","art":"Bzz.gif"},{"id":"awsm","state":"new","prAction":96,"action":38,"enum":"COOL","prCmd":"awsm","cmds":["awsm","e3"],"desc":"Eyes popping hearts","art":"Awsm.gif"},{"id":"pat","state":"new","prAction":97,"action":41,"enum":"GOODBOY","prCmd":"pat","cmds":["pat","e6"],"desc":"A hand petting","art":"Pat.gif"},{"id":"mp","state":"new","prAction":98,"action":42,"enum":"SPTIME","prCmd":"mp","cmds":["mp","e7"],"desc":"A clock with SP appears","art":"Mep.gif"},{"id":"slur","state":"new","prAction":99,"action":43,"enum":"SEXY","prCmd":"slur","cmds":["slur","e8"],"desc":"A lustful face with drool","art":"Slur.gif"},{"id":"com","state":"new","prAction":100,"action":44,"enum":"COMEON","prCmd":"com","cmds":["com","e9"],"desc":"A finger beckoning you over","art":"Come.gif"},{"id":"grat","state":"new","prAction":101,"action":46,"enum":"CONGRATULATION","prCmd":"grat","cmds":["grat","e11"],"desc":"Glittery Congratulations!","art":"Grat.gif"},{"id":"hp","state":"new","prAction":102,"action":47,"enum":"HPTIME","prCmd":"hp","cmds":["hp","e12"],"desc":"A clock with HP appears","art":"Hep.gif"},{"id":"fsh","state":"new","prAction":103,"action":52,"enum":"SPARK","prCmd":"fsh","cmds":["fsh","e13"],"desc":"Shiny eyes","art":"Fsh.gif"},{"id":"spin","state":"new","prAction":104,"action":53,"enum":"CONFUSE","prCmd":"spin","cmds":["spin","e14"],"desc":"Dizzy look with drool","art":"Spin.gif"},{"id":"sigh","state":"new","prAction":105,"action":54,"enum":"OHNO","prCmd":"sigh","cmds":["sigh","e15"],"desc":"An exhaling puff","art":"Sigh.gif"},{"id":"dum","state":"new","prAction":106,"action":55,"enum":"HUM","prCmd":"dum","cmds":["dum","e16"],"desc":"A blank expression, dumbstruck","art":"Dum.gif"},{"id":"crwd","state":"new","prAction":107,"action":56,"enum":"BLABLA","prCmd":"crwd","cmds":["crwd","e17"],"desc":"Expression of loud clamoring","art":"Crwd.gif"},{"id":"dice","state":"new","prAction":108,"action":58,"enum":"DICE1","prCmd":"dice","cmds":["dice","e19"],"desc":"A dice roll, 1-6","art":"Dice.gif"},{"id":"e20","state":"new","prAction":109,"action":65,"enum":"LUV","prCmd":"e20","cmds":["e20"],"desc":"A finger pointing upward","art":"E20.gif"},{"id":"hum","state":"new","prAction":110,"action":74,"enum":"HUM2","prCmd":"hum","cmds":["hum","e27"],"desc":"An annoyed expression","art":"Hum.gif"},{"id":"abs","state":"new","prAction":111,"action":75,"enum":"ABS","prCmd":"abs","cmds":["abs","e28"],"desc":"A soul leaving the body","art":"Abs.gif"},{"id":"oops","state":"new","prAction":112,"action":76,"enum":"OOPS","prCmd":"oops","cmds":["oops","e29"],"desc":"Eyepopping red face, embarrassed","art":"Oops.gif"},{"id":"spit","state":"new","prAction":113,"action":77,"enum":"SPIT","prCmd":"spit","cmds":["spit","e30"],"desc":"A mouth spitting","art":"Spit.gif"},{"id":"ene","state":"new","prAction":114,"action":78,"enum":"ENE","prCmd":"ene","cmds":["ene","e31"],"desc":"\"Blessed\" face","art":"Ene.gif"},{"id":"whisp","state":"new","prAction":115,"action":80,"enum":"WHISP","prCmd":"whisp","cmds":["whisp","e33"],"desc":"A spinning whisper face","art":"Whisp.gif"},{"id":"wah","state":"new","prAction":128,"action":16,"enum":"KEK","prCmd":"wah","cmds":["wah"],"desc":"Crying like a baby / panic","art":"Wah.gif"},{"id":"no1","state":"new","prAction":129,"action":21,"enum":"BEST","prCmd":"no1","cmds":["no1"],"desc":"Thumbs up and a wink","art":"No1.gif"},{"id":"clap","state":"new","prAction":116,"action":null,"enum":null,"prCmd":"clap","cmds":[],"desc":"Ragnarok Online II action emote","art":null},{"id":"bye","state":"new","prAction":117,"action":null,"enum":null,"prCmd":"bye","cmds":[],"desc":"Ragnarok Online II action emote","art":null},{"id":"happy","state":"new","prAction":118,"action":null,"enum":null,"prCmd":"happy","cmds":[],"desc":"Ragnarok Online II action emote","art":null},{"id":"amazed","state":"new","prAction":119,"action":null,"enum":null,"prCmd":"amazed","cmds":[],"desc":"not an RO emote","art":null},{"id":"best","state":"new","prAction":120,"action":null,"enum":null,"prCmd":"best","cmds":[],"desc":"not an RO emote","art":null},{"id":"best2","state":"new","prAction":121,"action":null,"enum":null,"prCmd":"best2","cmds":[],"desc":"not an RO emote","art":null},{"id":"chaos","state":"new","prAction":122,"action":null,"enum":null,"prCmd":"chaos","cmds":[],"desc":"Ragnarok Online II action emote","art":null},{"id":"absurd","state":"new","prAction":123,"action":null,"enum":null,"prCmd":"absurd","cmds":[],"desc":"Ragnarok Online II action emote","art":null},{"id":"joy","state":"new","prAction":124,"action":null,"enum":null,"prCmd":"joy","cmds":[],"desc":"Ragnarok Online II action emote","art":null},{"id":"kiskis","state":"new","prAction":125,"action":null,"enum":null,"prCmd":"kiskis","cmds":[],"desc":"not an RO emote","art":null},{"id":"funny","state":"new","prAction":126,"action":null,"enum":null,"prCmd":"funny","cmds":[],"desc":"not an RO emote","art":null},{"id":"martialarts","state":"new","prAction":127,"action":null,"enum":null,"prCmd":"martialarts","cmds":[],"desc":"not an RO emote","art":null},{"id":"salute","state":"new","prAction":130,"action":null,"enum":null,"prCmd":"salute","cmds":[],"desc":"Ragnarok Online II action emote","art":null}]};
 
-// 32 ids already in the game (assets/social-rules.js on main)
-const SHIPPED = ['surprise','question','music','heart','love','sweat','idea','anger','cloud','money','dots',
-'rock','scissors','paper','kiss','ok','dead','sorry','laugh','smile','cry','shy','kissheart','think','hmm',
-'blush','drool','meh','panic','sleep','mail','gg'];
+const SHIPPED = REF.emotions.filter(e => e.state === 'shipped');
+const NEW     = REF.emotions.filter(e => e.state === 'new');
+const byId    = Object.fromEntries(REF.emotions.map(e => [e.id, e]));
+const isNew   = id => byId[id] && byId[id].state === 'new';
+const allIds  = [...SHIPPED, ...NEW].map(e => e.id);
 
-const SHIPPED_CMD = {surprise:'!',question:'?',music:'ho',heart:'lv',love:'lv2',sweat:'swt',idea:'ic',
-anger:'an',cloud:'ag',money:'$',dots:'...',rock:'bawi',scissors:'gawi',paper:'bo',kiss:'kis2',ok:'thx',
-dead:'desp',sorry:'sry',laugh:'heh',smile:'ok',cry:'sob',shy:'hum',kissheart:'kis',think:'hmm',hmm:'swt2',
-blush:'shy',drool:'rice',meh:'meh',panic:'panic',sleep:'yawn',mail:'mail',gg:'gg'};
+// PR #269's own command changes for ids that already ship.
+const PR_RENAME = {gg:'sc', blush:'ok', drool:'blek', hmm:'hf', kiss:'kf', meh:'sk', panic:'yw',
+  paper:'3', rock:'1', scissors:'2', shy:'gg', sleep:'zz', smile:'no', think:'kis2'};
 
-// PR #269's proposal: id -> [proposed command, PR action]
-const NEWP = {
-  omg:['omg',86], oh:['oh',87], x:['x',88], hlp:['hlp',89], go:['go',90], sob:['sob',91], kis:['kis',92],
-  pif:['pif',93], que2:['??',94], bzz:['bzz',95], awsm:['awsm',96], pat:['pat',97], mp:['mp',98],
-  slur:['slur',99], com:['com',100], grat:['grat',101], hp:['hp',102], fsh:['fsh',103], spin:['spin',104],
-  sigh:['sigh',105], dum:['dum',106], crwd:['crwd',107], dice:['dice',108], e20:['e20',109], hum:['hum',110],
-  abs:['abs',111], oops:['oops',112], spit:['spit',113], ene:['ene',114], whisp:['whisp',115],
-  clap:['clap',116], bye:['bye',117], happy:['happy',118], amazed:['amazed',119], best:['best',120],
-  best2:['best2',121], chaos:['chaos',122], absurd:['absurd',123], joy:['joy',124], kiskis:['kiskis',125],
-  funny:['funny',126], martialarts:['martialarts',127], wah:['wah',128], no1:['no1',129], salute:['salute',130]
+// iRO Wiki artwork. The page is served from tools/social/, so the wiki's own path is kept
+// absolute (it must not resolve against this repo). Each filename is verified in build-emotion-ref.py.
+const IROWIKI = 'https://irowiki.org/w/images/';
+const ART_PATH = {                       // filename -> wiki hash directory
+  'Exc.gif':'7/70/', 'Que.gif':'8/82/', 'Hoe.gif':'8/86/', 'Lov.gif':'b/b6/', 'Lov2.gif':'c/ce/',
+  'Swt.gif':'1/17/', 'Swt2.gif':'9/98/', 'Lit.gif':'b/be/', 'Ang.gif':'d/df/', 'Agh.gif':'8/8b/',
+  'Money.gif':'6/66/', '....gif':'0/05/', 'Thx.gif':'e/e9/', 'Wah.gif':'5/5c/', 'Sry.gif':'0/0c/',
+  'Heh.gif':'5/57/', 'Hmm.gif':'4/47/', 'No1.gif':'1/16/', 'Ok.gif':'b/ba/', 'Omg.gif':'8/80/',
+  'Ohh.gif':'c/c7/', 'Ecks.gif':'8/86/', 'Hlp.gif':'2/21/', 'Goo.gif':'b/bb/', 'Sob.gif':'1/1d/',
+  'Ggg.gif':'e/e4/', 'Kis.gif':'6/68/', 'Kis2.gif':'5/51/', 'Pif.gif':'e/e0/', 'Ono.gif':'f/f8/',
+  'Bzz.gif':'0/00/', 'Rice.gif':'5/5e/', 'Awsm.gif':'2/26/', 'Meh.gif':'b/bb/', 'Shy.gif':'9/97/',
+  'Pat.gif':'e/e3/', 'Mep.gif':'1/1c/', 'Slur.gif':'4/4c/', 'Come.gif':'e/e6/', 'Yawn.gif':'8/83/',
+  'Grat.gif':'f/fa/', 'Hep.gif':'e/eb/', 'Fsh.gif':'e/e2/', 'Spin.gif':'7/71/', 'Sigh.gif':'7/7a/',
+  'Dum.gif':'c/ce/', 'Crwd.gif':'3/3b/', 'Desp.gif':'7/71/', 'Dice.gif':'3/3e/', 'E20.gif':'7/7f/',
+  'Hum.gif':'7/75/', 'Abs.gif':'2/21/', 'Oops.gif':'f/fe/', 'Spit.gif':'7/78/', 'Ene.gif':'2/20/',
+  'Panic.gif':'8/8b/', 'Whisp.gif':'c/cd/', 'Mail.gif':null,
+  'Emote_bawi.png':'d/d1/', 'Emote_bo.png':'6/69/', 'Emote_gawi.png':'a/a3/'
 };
-
-// PR #269's command changes for ids that already ship
-const CHANGED = {gg:'sc', blush:'ok', drool:'blek', hmm:'hf', kiss:'kf', meh:'sk', panic:'yw', paper:'3',
-  rock:'1', scissors:'2', shy:'gg', sleep:'zz', smile:'no', think:'kis2'};
-
-// Plain-English description for each proposal (the RO name the emotion stands for)
-const DESC = {
-  omg:'Shocked face', oh:'"Oh!" red circle', x:'Red X / "no"', hlp:'Four HELP signs', go:'"Go!" forward',
-  sob:'Bawling cry', kis:'Kiss (chup)', pif:'Snort / "hnng"', que2:'Scribbled question', bzz:'Blank stare',
-  awsm:'Cool shades', pat:'Good boy head-pat', mp:'"MP time" drip', slur:'Sultry face', com:'Come on!',
-  grat:'Congratulations', hp:'"HP time" glow', fsh:'Sparkle / flash', spin:'Dizzy spin', sigh:'Oh no…',
-  dum:'Dumbstruck', crwd:'Blah blah swarm', dice:'Dice roll', e20:'"!?" mark', hum:'Humming',
-  abs:'Abs / muscle flex', oops:'Oops sweat', spit:'Ptooey spit', ene:'"..." gloomy', whisp:'Whisper poof',
-  clap:'Applause', bye:'Wave goodbye', happy:'Beaming smile', amazed:'Star-struck', best:'Top score / "best"',
-  best2:'Double thumbs up', chaos:'Chaos swirl', absurd:'?! absurdity', joy:'Tears of joy', kiskis:'Air kisses',
-  funny:'LOL face', martialarts:'Fighting pose', wah:'Wailing panic', no1:'No.1 thumbs up', salute:'Salute'
-};
+const artUrl = fn => (fn && ART_PATH[fn]) ? IROWIKI + ART_PATH[fn] + fn : null;
 
 // ---------------------------------------------------------------- state
-const KEY = 'pr269emoji';
-let state = { keep:{}, cmd:{}, changed:{} };
+const KEY = 'pr269emoji2';
+let state = { keep:{}, cmd:{}, shippedCmd:{} };
 try { const s = JSON.parse(localStorage.getItem(KEY)||'{}'); if (s && s.keep) state = s; } catch {}
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch {} };
 
-// Is there art on disk for this id? The page lives in tools/social/, images in assets/social/emotions/.
-const BASE = '../../assets/social/emotions/';
-const artCache = {};   // id -> true/false once probed
-function probeArt(id, cb) {
-  if (id in artCache) return cb(artCache[id]);
-  const img = new Image();
-  img.onload = () => { artCache[id] = true; cb(true); };
-  img.onerror = () => { artCache[id] = false; cb(false); };
-  img.src = BASE + id + '.png';
-}
-
-// ---------------------------------------------------------------- render
 const grid = document.getElementById('grid');
 let filter = 'new', query = '';
 
-const allIds = [...SHIPPED, ...Object.keys(NEWP)];
-const isNew = id => id in NEWP;
-
-function currentCmd(id) {
-  if (state.cmd[id] !== undefined) return state.cmd[id];
-  return isNew(id) ? NEWP[id][0] : SHIPPED_CMD[id];
+function curCmd(id) {
+  if (isNew(id)) return state.cmd[id] !== undefined ? state.cmd[id] : byId[id].prCmd;
+  return state.shippedCmd[id] !== undefined ? state.shippedCmd[id] : byId[id].cmds[0] || '';
 }
-function origCmd(id) { return isNew(id) ? NEWP[id][0] : SHIPPED_CMD[id]; }
 
-// every command in use, to flag collisions
 function cmdMap() {
   const m = {};
-  for (const id of allIds) {
-    if (!isNew(id) && state.changed[id] === false) continue;      // shipped id explicitly opted out of rename
-    const c = currentCmd(id);
-    (m[c] = m[c] || []).push(id);
-  }
+  for (const id of allIds) { const c = curCmd(id); (m[c] = m[c] || []).push(id); }
   return m;
 }
 
 function visible() {
   return allIds.filter(id => {
-    const kept = state.keep[id] !== false && isNew(id) ? state.keep[id] === true : state.keep[id] !== false;
-    const k = isNew(id) ? state.keep[id] === true : true;
-    if (filter === 'new' && !isNew(id)) return false;
-    if (filter === 'shipped' && isNew(id)) return false;
-    if (filter === 'keep' && !(isNew(id) ? state.keep[id] === true : true)) return false;
-    if (filter === 'drop' && !(isNew(id) && state.keep[id] === false)) return false;
+    const e = byId[id], nw = isNew(id), kept = state.keep[id] === true;
+    if (filter === 'new' && !nw) return false;
+    if (filter === 'real' && !(nw && e.action !== null)) return false;
+    if (filter === 'notro' && !(nw && e.action === null)) return false;
+    if (filter === 'shipped' && nw) return false;
+    if (filter === 'keep' && !kept) return false;
+    if (filter === 'drop' && !(nw && state.keep[id] === false)) return false;
     if (query) {
-      const hay = (id + ' /' + currentCmd(id) + ' ' + (DESC[id]||'') + ' ' + ET[isNew(id)?NEWP[id][1]:0]).toLowerCase();
+      const hay = (id + ' /' + curCmd(id) + ' ' + (e.desc||'') + ' ' + (e.enum||'') + ' ' +
+                   (e.cmds||[]).join(' ')).toLowerCase();
       if (!hay.includes(query)) return false;
     }
     return true;
   });
 }
 
+function stageHtml(e) {
+  const url = artUrl(e.art);
+  const nw = e.state === 'new';
+  if (!url) {
+    return `<div class="nopix">
+      ${nw ? '<span class="why">No RO artwork exists</span>' : ''}
+      <span class="big">/${curCmd(e.id)}</span>
+      ${nw ? 'not a Ragnarok Online<br>emotion — nothing to draw' : 'no art for this id'}
+    </div>`;
+  }
+  // Real art available. For proposals the art is the authentic RO sprite frame.
+  const tray = `<img class="trayemo" src="${url}" alt="">`;
+  return `<img class="artwork" src="${url}" alt="${e.id}" title="${e.art}">
+          ${tray}<span class="traylbl">tray</span>`;
+}
+
 function render() {
   const cm = cmdMap();
   const list = visible();
   grid.innerHTML = '';
-  if (!list.length) {
-    grid.innerHTML = '<div style="grid-column:1/-1;color:#64748b;padding:40px 0;text-align:center;font-style:italic">Nothing here.</div>';
-  }
-  list.forEach(id => {
-    const nw = isNew(id);
-    const kept = nw ? state.keep[id] === true : true;
-    const card = document.createElement('div');
-    card.className = 'card' + (nw ? (kept ? ' keep' : ' drop') : '');
-    card.tabIndex = 0;
-    card.dataset.id = id;
+  if (!list.length) grid.innerHTML =
+    '<div style="grid-column:1/-1;color:#64748b;padding:36px 0;text-align:center;font-style:italic">Nothing here.</div>';
 
-    const cmd = currentCmd(id);
-    const collides = (cm[cmd]||[]).length > 1;
-    const changed = !nw && cmd !== SHIPPED_CMD[id];
-    const prAct = nw ? NEWP[id][1] : null;
-    const beyond = nw && prAct >= SPRITE_ACTIONS;
-    const canon = nw && !beyond ? ET[prAct] : null;
-    const prRename = !nw && CHANGED[id] ? CHANGED[id] : null;
+  list.forEach(id => {
+    const e = byId[id], nw = isNew(id), kept = state.keep[id] === true;
+    const cmd = curCmd(id);
+    const collide = (cm[cmd]||[]).length > 1;
+    const realRo = nw && e.action !== null;
+    const notRo  = nw && e.action === null;
+    const prRen  = !nw && PR_RENAME[id] ? PR_RENAME[id] : null;
+    const card = document.createElement('div');
+    card.className = 'card' + (nw ? (kept ? ' keep' : (state.keep[id]===false ? ' drop' : '')) : '')
+                   + (notRo ? ' notro' : '');
+    card.tabIndex = 0; card.dataset.id = id;
+
+    const tag = nw
+      ? (realRo ? '<span class="tag real">real RO</span>' : '<span class="tag notro">not RO</span>')
+      : '<span class="tag shipped">shipped</span>';
+
+    let actionLines = '';
+    if (nw && realRo) {
+      actionLines = `<span class="k">true action</span> ${e.action} · ${e.enum}
+        <br><span class="k">PR claims</span> <span class="bad">${e.prAction}</span>`;
+    } else if (nw) {
+      actionLines = `<span class="k">PR claims</span> <span class="bad">${e.prAction}</span>
+        <br><span class="bad">no such RO emotion</span>`;
+    } else {
+      actionLines = `<span class="k">action</span> ${e.action} · ${e.enum}`;
+    }
 
     card.innerHTML = `
       <div class="cardtop">
         <span class="idx">${allIds.indexOf(id)+1}</span>
-        <span class="idname">${id}</span>
-        ${nw ? `<span class="tag ${artCache[id]?'shipped':'missing'}">${artCache[id]?'art':'no art'}</span>`
-             : '<span class="tag shipped">shipped</span>'}
+        <span class="idname">${id}</span>${tag}
       </div>
-      <div class="stage ${nw?'':  'art'}" data-stage>
-        <div class="noart-note">loading…</div>
-        <span class="traylbl">${nw?'tray slot':'tray'}</span>
-      </div>
-      <div class="cmds">
-        <span class="slash">/</span>
-        <input data-cmd value="${cmd}" spellcheck="false" title="slash command">
-      </div>
-      ${nw ? `<div class="desc">${DESC[id]||''}</div>` : '<div class="desc" style="color:#64748b">Already in the game today.</div>'}
-      <div class="meta">
-        ${nw ? `<span class="k">PR action</span> ${prAct}${beyond?` <span style="color:#fca5a5">(sprite only has ${SPRITE_ACTIONS})</span>`:''}
-                ${canon?`<br><span class="k">that action renders</span> ${canon}`:''}`
-             : `<span class="k">action</span> ${shippedAction(id)}`}
-      </div>
-      ${collides ? `<div class="warn">/${cmd} is also used by ${(cm[cmd]||[]).filter(x=>x!==id).join(', ')} — only one can win</div>`:''}
-      ${changed ? `<div class="warn" style="color:#fcd34d;background:#2a1e08;border-color:#6b4a12">renames the shipped /${SHIPPED_CMD[id]} → /${cmd}</div>`:''}
-      ${prRename ? `<div class="warn" style="color:#fcd34d;background:#2a1e08;border-color:#6b4a12">PR #269 wants /${SHIPPED_CMD[id]} → /${prRename} — type it above to accept</div>`:''}
+      <div class="stage ${artUrl(e.art) ? '' : 'noart'}">${stageHtml(e)}</div>
+      <div class="cmds"><span class="slash">/</span>
+        <input data-cmd value="${cmd}" spellcheck="false" title="slash command"></div>
+      <div class="desc">${e.desc || ''}</div>
+      ${nw && realRo && e.cmds.length ? `<div class="realcmds">RO command${e.cmds.length>1?'s':''}: ${e.cmds.map(c=>'/'+c).join(' ')}</div>` : ''}
+      <div class="meta">${actionLines}</div>
+      ${collide ? `<div class="warn">/${cmd} also used by ${(cm[cmd]||[]).filter(x=>x!==id).join(', ')} — only one wins</div>` : ''}
+      ${prRen ? `<div class="warn amber">PR #269 wants /${byId[id].cmds[0]||'?'} → /${prRen}</div>` : ''}
       ${nw ? `<div class="actions">
-        <button class="toggle ${kept?'on':'offstate'}" data-keep>${kept?'✓ Keep':'✕ Drop'}</button>
-      </div>` : `<div class="actions" style="color:#64748b;font-size:.72rem;align-items:center">
-        always available
-      </div>`}
+          <button class="toggle ${kept?'on':(state.keep[id]===false?'offstate':'')}" data-keep>
+            ${kept?'✓ Keep':(state.keep[id]===false?'✕ Drop':'Keep?')}</button>
+        </div>`
+        : `<div class="actions"><span class="static">already in the game</span></div>`}
     `;
     grid.appendChild(card);
-
-    // art or honest empty tile
-    const stage = card.querySelector('[data-stage]');
-    probeArt(id, ok => {
-      if (ok) {
-        stage.classList.add('art');
-        stage.innerHTML = `<img class="emo" src="${BASE+id+'.png'}" alt="${id}">
-          <img class="trayemo" src="${BASE+id+'.png'}" alt=""><span class="traylbl">tray</span>`;
-        const t = card.querySelector('.tag');
-        if (t) { t.className = 'tag shipped'; t.textContent = 'art'; }
-      } else {
-        stage.classList.add('noart');
-        stage.innerHTML = nw
-          ? `<div class="noart-note"><span class="big">/${currentCmd(id)}</span>no PNG in<br>the repo yet</div>`
-          : `<div class="noart-note"><span class="big">${id}</span>art missing</div>`;
-      }
-    });
   });
 
-  // counters
-  const keptN = Object.keys(NEWP).filter(i => state.keep[i] === true).length;
-  const dropN = Object.keys(NEWP).filter(i => state.keep[i] === false).length;
-  const chgN = SHIPPED.filter(i => state.cmd[i] !== undefined && state.cmd[i] !== SHIPPED_CMD[i]).length;
+  const keptN = NEW.filter(e => state.keep[e.id] === true).length;
+  const dropN = NEW.filter(e => state.keep[e.id] === false).length;
+  const badN  = NEW.filter(e => state.keep[e.id] === true && e.action === null).length;
   document.getElementById('cKeep').textContent = keptN;
   document.getElementById('cDrop').textContent = dropN;
-  document.getElementById('cChg').textContent = chgN;
-  document.getElementById('tNew').textContent = Object.keys(NEWP).length;
+  document.getElementById('cBad').textContent  = badN;
+  document.getElementById('cChg').textContent  =
+    SHIPPED.filter(e => state.shippedCmd[e.id] !== undefined && state.shippedCmd[e.id] !== e.cmds[0]).length;
   document.getElementById('tKeep').textContent = keptN;
   document.getElementById('tDrop').textContent = dropN;
-
-  renderOut(keptN, dropN);
+  renderOut();
 }
 
-function shippedAction(id) {
-  const a = {surprise:0,question:1,music:2,heart:3,love:4,sweat:5,idea:6,anger:7,cloud:8,money:9,dots:10,
-    rock:11,scissors:12,paper:13,kiss:14,ok:15,dead:16,sorry:17,laugh:18,smile:22,cry:28,shy:29,
-    kissheart:30,think:31,hmm:32,blush:33,drool:38,meh:39,panic:44,sleep:67,mail:68,gg:78};
-  return a[id] !== undefined ? `${a[id]} — ${ET[a[id]]||'?'}` : '?';
-}
+function renderOut() {
+  const keep = NEW.filter(e => state.keep[e.id] === true);
+  const drop = NEW.filter(e => state.keep[e.id] === false);
+  const und  = NEW.filter(e => state.keep[e.id] === undefined);
+  const renames = SHIPPED.filter(e => state.shippedCmd[e.id] !== undefined && state.shippedCmd[e.id] !== e.cmds[0]);
+  const cmdOverride = NEW.filter(e => state.cmd[e.id] !== undefined && state.cmd[e.id] !== e.prCmd);
 
-function renderOut(keptN, dropN) {
-  const keep = Object.keys(NEWP).filter(i => state.keep[i] === true);
-  const drop = Object.keys(NEWP).filter(i => state.keep[i] === false);
-  const undecided = Object.keys(NEWP).filter(i => state.keep[i] === undefined);
-  const renamed = SHIPPED.filter(i => state.cmd[i] !== undefined && state.cmd[i] !== SHIPPED_CMD[i]);
-  const cmdLines = Object.keys(NEWP)
-    .filter(i => currentCmd(i) !== NEWP[i][0])
-    .map(i => `  ${i}: /${currentCmd(i)}`);
-
-  let h = '';
-  h += `# PR #269 emoji selection\n`;
-  h += `keep : ${keep.length ? keep.join(', ') : '(none)'}\n`;
-  h += `drop : ${drop.length ? drop.join(', ') : '(none)'}\n`;
-  if (undecided.length) h += `undecided (treat as drop) : ${undecided.join(', ')}\n`;
-  h += `\n# slash command overrides on NEW emotions\n`;
-  h += cmdLines.length ? cmdLines.join('\n') + '\n' : '  (none — use the PR\'s commands)\n';
-  h += `\n# renames accepted for ids that already ship\n`;
-  h += renamed.length ? renamed.map(i => `  ${i}: /${SHIPPED_CMD[i]} -> /${currentCmd(i)}`).join('\n') + '\n'
-                      : '  (none — keep every shipped command as it is today)\n';
-  const prRen = Object.keys(CHANGED);
-  const rejected = prRen.filter(i => currentCmd(i) === SHIPPED_CMD[i]);
-  if (rejected.length) h += `\n# PR #269 renames I REJECTED (keep today's command)\n` +
-    rejected.map(i => `  ${i}: stays /${SHIPPED_CMD[i]} (PR wanted /${CHANGED[i]})\n`).join('');
-  h += `\n# art\n  every kept emotion still needs assets/social/emotions/<id>.png\n`;
-  h += `  PR supplies none (0 bytes) for all ${Object.keys(NEWP).length} proposals\n`;
+  let h = '# PR #269 emoji selection\n';
+  h += `keep : ${keep.length ? keep.map(e=>e.id).join(', ') : '(none)'}\n`;
+  h += `drop : ${drop.length ? drop.map(e=>e.id).join(', ') : '(none)'}\n`;
+  if (und.length) h += `undecided (treat as drop) : ${und.map(e=>e.id).join(', ')}\n`;
+  h += `\n# slash commands I changed\n`;
+  h += cmdOverride.length ? cmdOverride.map(e => `  ${e.id}: /${curCmd(e.id)} (PR had /${e.prCmd})`).join('\n')+'\n'
+                          : '  (none — use the PR commands)\n';
+  h += `\n# shipped commands I changed\n`;
+  h += renames.length ? renames.map(e => `  ${e.id}: /${e.cmds[0]} -> /${state.shippedCmd[e.id]}`).join('\n')+'\n'
+                      : '  (none — keep today\'s commands)\n';
+  const bad = keep.filter(e => e.action === null);
+  if (bad.length) h += `\n# WARNING: kept ids that are not RO emotions\n  ${bad.map(e=>e.id).join(', ')}\n`;
+  h += `\n# action numbers (PR -> true emotion.spr index)\n  PR #269 is wrong for all 32 real ones; use these:\n`;
+  h += NEW.filter(e => e.action !== null).map(e => `  ${e.id}: ${e.prAction} -> ${e.action} (${e.enum})`).join('\n') + '\n';
+  h += `\n# art\n  still needs assets/social/emotions/<id>.png generated from the pinned\n`;
+  h += `  emotion.act/emotion.spr via tools/social/pack-emotions.py (see tools/social/README.md)\n`;
   document.getElementById('out').textContent = h;
 }
 
 // ---------------------------------------------------------------- events
 grid.addEventListener('click', e => {
   const card = e.target.closest('.card'); if (!card) return;
-  const id = card.dataset.id;
-  const keepBtn = e.target.closest('[data-keep]');
-  if (keepBtn) {
-    if (!isNew(id)) return;
-    const now = state.keep[id] === true;
-    state.keep[id] = now ? false : true;
-    save(); render();
-    return;
-  }
-  // clicking the stage toggles too (handy on phones)
-  if (e.target.closest('[data-stage]') && isNew(id)) {
-    const now = state.keep[id] === true;
-    state.keep[id] = now ? false : true;
+  const id = card.dataset.id; if (!isNew(id)) return;
+  if (e.target.closest('[data-keep]') || e.target.closest('.stage')) {
+    state.keep[id] = state.keep[id] === true ? false : true;
     save(); render();
   }
 });
 
 grid.addEventListener('input', e => {
   const inp = e.target.closest('[data-cmd]'); if (!inp) return;
-  const card = inp.closest('.card'); const id = card.dataset.id;
+  const id = inp.closest('.card').dataset.id;
   const v = inp.value.replace(/^\/+/, '').trim();
-  if (v === origCmd(id)) delete state.cmd[id]; else state.cmd[id] = v;
+  if (isNew(id)) { if (v === byId[id].prCmd) delete state.cmd[id]; else state.cmd[id] = v; }
+  else { if (v === (byId[id].cmds[0]||'')) delete state.shippedCmd[id]; else state.shippedCmd[id] = v; }
   save();
-  // live collision styling without a full re-render (keeps focus)
   const cm = cmdMap();
   grid.querySelectorAll('.card').forEach(c => {
-    const i = c.dataset.id, ci = c.querySelector('[data-cmd]'); if (!ci) return;
-    const cur = currentCmd(i);
-    ci.classList.toggle('collide', (cm[cur]||[]).length > 1);
-    ci.classList.toggle('changed', cur !== origCmd(i));
+    const cur = curCmd(c.dataset.id);
+    const ci = c.querySelector('[data-cmd]');
+    if (ci) ci.classList.toggle('collide', (cm[cur]||[]).length > 1);
   });
-  const keptN = Object.keys(NEWP).filter(i => state.keep[i] === true).length;
-  const dropN = Object.keys(NEWP).filter(i => state.keep[i] === false).length;
-  document.getElementById('cChg').textContent = SHIPPED.filter(i => state.cmd[i] !== undefined && state.cmd[i] !== SHIPPED_CMD[i]).length;
-  renderOut(keptN, dropN);
+  renderOut();
 });
 
 grid.addEventListener('keydown', e => {
-  const card = e.target.closest('.card'); if (!card) return;
   if (e.target.tagName === 'INPUT') return;
+  const card = e.target.closest('.card'); if (!card) return;
   if (e.code === 'Space' || e.key === 'k') {
     e.preventDefault();
     const id = card.dataset.id; if (!isNew(id)) return;
@@ -495,28 +446,30 @@ document.getElementById('tabs').addEventListener('click', e => {
   document.querySelectorAll('.tab').forEach(x => x.classList.toggle('on', x === t));
   render();
 });
-
-document.getElementById('q').addEventListener('input', e => { query = e.target.value.trim().toLowerCase(); render(); });
-
-document.getElementById('bAllNew').onclick = () => {
-  Object.keys(NEWP).forEach(i => state.keep[i] = true); save(); render();
+document.getElementById('q').addEventListener('input', e => {
+  query = e.target.value.trim().toLowerCase(); render();
+});
+document.getElementById('bAllReal').onclick = () => {
+  NEW.forEach(e => state.keep[e.id] = e.action !== null); save(); render();
 };
-document.getElementById('bNoneNew').onclick = () => {
-  Object.keys(NEWP).forEach(i => state.keep[i] = false); save(); render();
+document.getElementById('bNone').onclick = () => {
+  NEW.forEach(e => state.keep[e.id] = false); save(); render();
 };
 document.getElementById('bReset').onclick = () => {
-  if (!confirm('Reset every pick and command to the PR defaults?')) return;
-  state = { keep:{}, cmd:{}, changed:{} }; save(); render();
+  if (!confirm('Reset every pick and command?')) return;
+  state = { keep:{}, cmd:{}, shippedCmd:{} }; save(); render();
 };
 document.getElementById('bCopy').onclick = async () => {
   const txt = document.getElementById('out').textContent;
   try { await navigator.clipboard.writeText(txt); }
-  catch { const ta = document.createElement('textarea'); ta.value = txt; document.body.appendChild(ta);
-          ta.select(); document.execCommand('copy'); ta.remove(); }
+  catch { const ta = document.createElement('textarea'); ta.value = txt;
+          document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); }
   const t = document.getElementById('toast'); t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 1400);
 };
 
+document.getElementById('srcPill').textContent =
+  `${NEW.filter(e=>e.action!==null).length} real RO · ${NEW.filter(e=>e.action===null).length} not RO`;
 render();
 </script>
 </body>
