@@ -11,17 +11,21 @@ evidence from real multiplayer browser testing.
 | --- | --- |
 | **Correct PR** | <https://github.com/KzeR7/Prontera-Grind/pull/270> |
 | Branch | `arena/bfc7d4d1-prontera-grind` |
-| **Head SHA (the tested commit)** | `f979eda302f51b72b49a4647ba541d6816ceb959` |
+| **Head SHA (the tested commit)** | `a250ffd` — see §6 for the exact suite results on it |
 | Previous remote tip | `4dd545538babe700b2b5a4464eed0e8a102db765` (v448) |
 | Base | `main` @ `37a13bf` |
-| Commits ahead of `main` | 16 (15 v447/v448 + 1 v449) |
+| Commits ahead of `main` | 16 (15 v447/v448 + 1 v449) plus the v449 follow-ups in this revision |
 
 **PR #263 is not this work.** #263 is `arena/6f878512-prontera-grind` @ `6a764fae` — the v411 lane
 build. It stays open and untouched; it should be closed as superseded once this is accepted. Nothing
 was force-pushed, merged or deployed to reconcile this.
 
 The delivery was reported as "PR #263 → 6a764fa (v411)". That pairing is real but belongs to the old
-branch. The v449 rewrites live only on `arena/bfc7d4d1-prontera-grind` at `f979eda`.
+branch. The v449 rewrites live only on `arena/bfc7d4d1-prontera-grind`.
+
+This revision supersedes the `f979eda` head the report was written against: the scheduler was rewritten
+to resolve fixed cells, solo was moved into the browser, and the settlement contract for a solo run was
+made explicit. Cloudflare Pages, Workers Builds and CodeRabbit all pass on `a250ffd`.
 
 ## 2. Preservation audit of the 15 remote commits (`37a13bf..4dd5455`)
 
@@ -149,25 +153,75 @@ The published symptom — a party that keeps walking, keeps getting hit, and sto
 longer occurs. A solo reference-gear Lord Knight now clears stage 1 and fights on through stage 2 on a
 fresh read cadence, and the engine suite runs to completion instead of hanging.
 
-### 4.2 Where cadence invariance stands
+### 4.2 Where cadence invariance stands — resolved
 
-Measured over 100 / 250 / 1000 / 2000 / 5000 / 30000 ms reads and 100–681 s windows:
+**It is now exact, and it is asserted rather than argued.** `advanceRaidRun` resolves whole
+`SIM_TICK_MS` cells chronologically; `run.cursorAt` (last resolved cell) is kept separate from
+`updatedAt` (furthest instant observed), so a partial cell is never counted as simulated time and a
+bounded catch-up reports the work it actually did.
 
-| | committed `f979eda` | this branch |
-|---|---|---|
-| auto-attacks paid, window to 15 s | 12 / 11 / **9** | 11 / 12 / 12 |
-| outcome differences across cadences | yes | fewer, and no freezes |
+Measured on a full run (seed 12345, Lv150 reference Lord Knight, 17,729 DPS, focus re-issued on the 5 s
+wall clock):
 
-The committed engine loses **three swings** between a 100 ms poll and a 5 s read. This branch loses at
-most one, and never in total damage. Residual differences are in *which* enemy an in-progress party is
-mid-kill on at the comparison instant, not in whether the run progresses — every cadence examined
-reaches the same stage and the same total damage.
+| Read cadence | reviewed build `90b3882` | this branch |
+| --- | --- | --- |
+| 100 ms | dmg 4,511,017 · fin 271.8 s | dmg 4,511,017 · fin 272.4 s |
+| 1 s | dmg 4,363,704 · fin 263.0 s | dmg 4,511,017 · fin 272.4 s |
+| 2 s | dmg 4,441,321 · fin 265.0 s | dmg 4,511,017 · fin 272.4 s |
+| 5 s | dmg 4,363,704 · fin 265.0 s | dmg 4,511,017 · fin 272.4 s |
+| 30 s | dmg 4,363,704 · fin 265.0 s | dmg 4,511,017 · fin 272.4 s |
 
-Cadence invariance is **not yet exact** and is not claimed as exact. `raid_time_model_sim.mjs` encodes
-the strict version of the property and passes 8 of 14; the committed engine passes 10 of 14. Those six
-tests are a target, not a regression.
+The reviewed build produced **four different runs from the same run**, and agreed with itself only at
+100 ms. This branch produces one. The 100 ms column is the trustworthy one — it is the finest sampling
+and the one both builds agree on — so every coarse reader now converges *onto* it; the earlier
+"faster" coarse clears were under-simulation, not speed.
+
+`raid_time_model_sim.mjs` encodes the strict property and passes **19 of 19** here, against **11 of 19**
+on `90b3882`. `player_raid_engine_sim.mjs` additionally carries a cadence-invariance test that fails on
+`90b3882` at the 1 s reader. The property now covers what the split needs it to cover:
+
+- **solo** — a frame loop at any cadence, and a backgrounded tab that resumes after 30 s or after the
+  laptop slept, both land in the state a watched tab would have reached;
+- **co-op** — members polling at different cadences, and disconnecting and reconnecting, resolve to the
+  same party state; returning after the deadline resolves then, on the first successful read.
+
+Four of those recovery assertions were added with this revision and all four fail on `90b3882`.
 
 ### 4.3 What is green
 
-engine 19/19 · api 12/12 · profile 9/9 · raid_ui 20/20 · migration 14/14 · ui 64/64 · api 78/78.
-`raid_api_source_sim` (was 9/12) and `raid_profile_source_sim` (was 0/9) are both fully green now.
+engine 20/20 · time model 19/19 · api 14/14 · profile 9/9 · raid_ui 22/22 · local solo 12/12 ·
+solo-over-HTTP 6/6 · migration 14/14 · ui 64/64 · api_sim 78/78 · save_format_parity 46/46.
+
+Eight unrelated suites (`publish_sim`, `update_watch_sim`, `panel_layout_smoke`, `plaza_bots_sim`,
+`mastery_titles_buffs_sim`, `class_change_sim`, `gear_sim`, `drop_card_sheet_sim`) fail identically on
+`90b3882` in a clean worktree; they concern the social runtime, the affix chart and build-tag mirrors,
+not the raid, and are not claimed as passing.
+
+## 5. Solo and co-op are now different systems
+
+The split this revision adds is structural, not cosmetic.
+
+| | Solo | Co-op |
+| --- | --- | --- |
+| Simulation runs in | the browser (`assets/raid-engine/*`, published verbatim from `functions/_lib`) | the Social Durable Object |
+| `start` does | one D1 reservation: entry, run id, seed, rules version, profile snapshot | the same, plus a room install |
+| Recurring requests | **none** — 2 requests for the whole run (`start`, `settle`) | one 2 s room sync while active and visible |
+| Player input goes to | the local engine | the room, as an intent |
+| Rewards settle from | a bounded, validated claim (see the completion-validation doc) | the room's authoritative terminal snapshot |
+| Recovery | a local checkpoint scoped by account + run id + rules version | a D1 checkpoint the room rebuilds from |
+
+**Measured for one complete solo run:** 0 Social DO requests, 28 D1 statements in 2 batches, 2 Pages
+requests. **Zero** is asserted, not estimated: `raid_api_source_sim.mjs` counts every fetch to the
+SOCIAL binding, and `raid_local_solo_sim.mjs` runs a whole fight with `fetch`/`WebSocket` replaced by
+throwing stubs.
+
+**One engine.** `tools/build_site.sh` copies `raid-engine`, `raid-rules`, `raid-profile`, `save-codec`
+and `card-catalog` into `dist/assets/raid-engine/` unmodified. The chain is pure ESM with no Node or
+Workers built-ins, which is what lets the browser import it as-is; that constraint is enforced by a
+test rather than left to memory. There is no second rule set to drift.
+
+**What that means for a reader of the old docs:** any statement of the form "the raid is
+request-driven, so there is no recurring traffic" was true for mechanics resolution and misleading
+about the client, which polls a room every 2 s in co-op. It is now stated per mode, and solo genuinely
+has no recurring request.
+
