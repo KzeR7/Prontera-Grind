@@ -105,6 +105,9 @@ export const ROUTES = {
   'POST /api/gm/shop': ['onRequestPost', 'api/gm/shop.js'],
   'GET /api/friends': ['onRequestGet', 'api/friends.js'],
   'POST /api/friends': ['onRequestPost', 'api/friends.js'],
+  'GET /api/raid': ['onRequestGet', 'api/raid.js'],
+  'POST /api/raid': ['onRequestPost', 'api/raid.js'],
+  'GET /api/chatcheck': ['onRequestGet', 'api/chatcheck.js'],
 };
 
 const TYPES = {
@@ -125,6 +128,8 @@ const TYPES = {
 export function makeEnv(sqlite, { fakePayments = false } = {}) {
   const env = { DB: makeD1(sqlite) };
   if (fakePayments) env.SHOP_FAKE_CHECKOUT = '1';
+  // The raid stays closed unless the operator explicitly turns it on for a staging/local run.
+  if (process.env.RAID_ENABLED === 'true') env.RAID_ENABLED = 'true';
   return env;
 }
 

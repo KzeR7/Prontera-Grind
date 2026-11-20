@@ -4,6 +4,10 @@ import '../../assets/social-rules.js';
 import '../../assets/social-poker.js';
 import '../../assets/digimon-battle.js';
 import { isWorldChatAllowed, REJECT_MESSAGE } from './chat-filter.mjs';
+import {
+  createRaidRun, sanitizeRaidRun, advanceRaidRun, applyRaidAction, raidPublicRun,
+} from '../../functions/_lib/raid-engine.js';
+import { RAID_RULES } from '../../functions/_lib/raid-rules.js';
 const R=globalThis.PGSocialRules,P=globalThis.PGSocialPoker,B=globalThis.PGDigimonBattle;
 // v236: two different clocks. IDLE_MS is how long a silent connection may sit before the sweep
 // removes it - that is what kills half-open sockets. REAUTH_MS is the security bound: a connection
@@ -118,6 +122,14 @@ export class SocialRoom {
   this.onBattleActivity=opts.onBattleActivity||null;
   this.onMvpChange=opts.onMvpChange||null;
   this.onOccupancyChange=opts.onOccupancyChange||null;
+  // Player-character Rift Raid. Request-driven only: no alarm, no interval, no per-tick message.
+  // The Pages API calls these methods; the WebSocket carries lobby notices, not combat authority.
+  this.raidRuns=new Map();
+  this.raidParty=null;
+  this.raidLoaded=false;
+  this.raidLoadFailed=false;
+  this.onRaidRun=opts.onRaidRun||null;
+  this.onRaidParty=opts.onRaidParty||null;
  }
  // v366: `send` reports whether the bytes actually left. The handshake below is delivered from a
  // promise continuation, so a synchronous throw cannot reach the caller and used to be swallowed:
@@ -1083,4 +1095,192 @@ export class SocialRoom {
   // v319: an expired reservation quietly leaves the plaza counts; tell the field badges.
   if(populationChanged)this.syncRooms();
   this.tickMvp(now);this.tickAll(now);this.tickBattles(now);for(const c of [...this.clients.values()])if(now>c.reauthAt||(now>c.expires&&!fishingHeld(c)))this.refresh(c)}
+ // ------------------------------------------------------------ Rift Raid ----
+ // Everything here runs because a request arrived. There is deliberately no alarm: fixed
+ // startedAt/deadlineAt/endsAt timestamps are advanced on read/action, so a quiet client cannot
+ // postpone a mechanic and a late packet cannot buy extra time.
+ raidSaveRun(run){
+  if(!run)return;
+  try{this.onRaidRun?.(run)}catch(error){console.error('Raid run save failed',error)}
+ }
+ raidSaveParty(){
+  try{this.onRaidParty?.(this.raidParty)}catch(error){console.error('Raid party save failed',error)}
+ }
+ raidPublic(run,now=this.now()){return run?raidPublicRun(run,now):null}
+ raidBroadcast(run){
+  if(!run)return;
+  const ids=new Set(run.members.map(m=>m.id));
+  this.broadcast({type:'raid_state',run:raidPublicRun(run,this.now())},c=>ids.has(c.id));
+ }
+ raidMember(run,userId){
+  if(!run||!Number.isInteger(userId))return null;
+  return run.members.find(m=>m.id===userId)||null;
+ }
+ raidPartyPayload(){
+  const p=this.raidParty;
+  if(!p)return null;
+  return {id:p.id,leader:p.leader,open:p.open!==false,runId:p.runId||null,
+   members:p.members.map(m=>({id:m.id,name:m.name,ready:m.ready===true,readyFingerprint:m.readyFingerprint||'',joinedAt:m.joinedAt}))};
+ }
+ raidPartyJoin(user){
+  if(!user||!Number.isInteger(user.id)||user.id<1)return {ok:false,status:403,err:'Invalid identity.'};
+  const now=this.now();
+  if(!this.raidParty){
+   this.raidParty={id:'rp_'+crypto.randomUUID().slice(0,8),leader:user.id,open:true,runId:null,
+    members:[{id:user.id,name:String(user.name||user.username||'Adventurer').slice(0,32),ready:false,readyFingerprint:'',joinedAt:now}]};
+   this.raidSaveParty();
+   return {ok:true,status:200,party:this.raidPartyPayload()};
+  }
+  const p=this.raidParty;
+  const existing=p.members.find(m=>m.id===user.id);
+  if(existing){existing.name=String(user.name||user.username||existing.name).slice(0,32);this.raidSaveParty();return {ok:true,status:200,party:this.raidPartyPayload()}}
+  if(p.runId)return {ok:false,status:409,err:'That raid party is already inside the encounter.'};
+  if(p.open===false)return {ok:false,status:409,err:'That raid party is closed.'};
+  if(p.members.length>=RAID_RULES.maxParty)return {ok:false,status:409,err:'That raid party is full.'};
+  p.members.push({id:user.id,name:String(user.name||user.username||'Adventurer').slice(0,32),ready:false,readyFingerprint:'',joinedAt:now});
+  // A roster change invalidates every ready flag, including the leader's.
+  for(const m of p.members){m.ready=false;m.readyFingerprint=''}
+  this.raidSaveParty();
+  this.broadcast({type:'raid_party',party:this.raidPartyPayload()},c=>p.members.some(m=>m.id===c.id));
+  return {ok:true,status:200,party:this.raidPartyPayload()};
+ }
+ raidPartyLeave(user){
+  const p=this.raidParty;
+  if(!p||!user)return {ok:true,status:200,party:null};
+  p.members=p.members.filter(m=>m.id!==user.id);
+  if(!p.members.length){this.raidParty=null;this.raidSaveParty();return {ok:true,status:200,party:null}}
+  if(p.leader===user.id)p.leader=p.members[0].id;
+  for(const m of p.members){m.ready=false;m.readyFingerprint=''}
+  this.raidSaveParty();
+  this.broadcast({type:'raid_party',party:this.raidPartyPayload()},c=>p.members.some(m=>m.id===c.id));
+  return {ok:true,status:200,party:this.raidPartyPayload()};
+ }
+ raidPartyOpen(user,open){
+  const p=this.raidParty;
+  if(!p)return {ok:false,status:404,err:'No raid party.'};
+  if(p.leader!==user.id)return {ok:false,status:403,err:'Only the party leader can change the lobby.'};
+  if(p.runId)return {ok:false,status:409,err:'The encounter is already running.'};
+  p.open=open===true;
+  this.raidSaveParty();
+  this.broadcast({type:'raid_party',party:this.raidPartyPayload()},c=>p.members.some(x=>x.id===c.id));
+  return {ok:true,status:200,party:this.raidPartyPayload()};
+ }
+ raidPartyReady(user,ready,fingerprint){
+  const p=this.raidParty;
+  if(!p)return {ok:false,status:404,err:'Join a raid party first.'};
+  if(p.runId)return {ok:false,status:409,err:'The encounter is already running.'};
+  if(p.open===false)return {ok:false,status:409,err:'The party is closed.'};
+  const m=p.members.find(x=>x.id===user.id);
+  if(!m)return {ok:false,status:403,err:'You are not in that raid party.'};
+  if(ready===true&&(typeof fingerprint!=='string'||!/^[0-9a-f]{16,64}$/.test(fingerprint))){
+   return {ok:false,status:400,err:'A readiness fingerprint is required.'};
+  }
+  m.ready=ready===true;
+  m.readyFingerprint=ready===true?fingerprint:'';
+  this.raidSaveParty();
+  this.broadcast({type:'raid_party',party:this.raidPartyPayload()},c=>p.members.some(x=>x.id===c.id));
+  return {ok:true,status:200,party:this.raidPartyPayload()};
+ }
+ raidReadinessReset(user){
+  const p=this.raidParty;
+  if(!p)return {ok:true,status:200,party:null};
+  if(user&&!p.members.some(m=>m.id===user.id))return {ok:false,status:403,err:'You are not in that raid party.'};
+  for(const m of p.members){m.ready=false;m.readyFingerprint=''}
+  this.raidSaveParty();
+  this.broadcast({type:'raid_party',party:this.raidPartyPayload()},c=>p.members.some(x=>x.id===c.id));
+  return {ok:true,status:200,party:this.raidPartyPayload()};
+ }
+ raidInstall(payload,user,opts={}){
+  if(!payload||typeof payload.id!=='string'||!payload.id)return {ok:false,status:400,err:'Invalid raid install.'};
+  const existing=this.raidRuns.get(payload.id);
+  if(existing){
+   if(!this.raidMember(existing,user?.id))return {ok:false,status:403,err:'You are not part of this raid.'};
+   return {ok:true,status:200,run:this.raidPublic(existing),checkpoint:existing,duplicate:true};
+  }
+  const partySize=Number(payload.partySize);
+  if(![1,2,3].includes(partySize)||!Array.isArray(payload.members)||payload.members.length!==partySize){
+   return {ok:false,status:400,err:'Invalid raid roster.'};
+  }
+  if(!payload.members.some(m=>Number(m?.id)===user.id))return {ok:false,status:403,err:'You are not in that raid roster.'};
+  if(partySize>1&&!opts.recovery){
+   const p=this.raidParty;
+   if(!p||p.runId||p.open===false||p.leader!==user.id)return {ok:false,status:409,err:'The party lobby is not ready for this raid.'};
+   const ids=payload.members.map(m=>Number(m.id)).sort((a,b)=>a-b);
+   const partyIds=p.members.map(m=>m.id).sort((a,b)=>a-b);
+   if(ids.length!==partyIds.length||ids.some((id,i)=>id!==partyIds[i]))return {ok:false,status:409,err:'The raid roster changed. Ready up again.'};
+  }
+  const run=createRaidRun(payload);
+  if(!run)return {ok:false,status:400,err:'The raid room could not build that encounter.'};
+  this.raidRuns.set(run.id,run);
+  if(partySize>1&&this.raidParty){this.raidParty.open=false;this.raidParty.runId=run.id;this.raidSaveParty()}
+  this.raidSaveRun(run);
+  this.raidBroadcast(run);
+  return {ok:true,status:200,run:this.raidPublic(run),checkpoint:run};
+ }
+ raidRestore(payload,user){
+  if(!payload||typeof payload.id!=='string'||!payload.id)return {ok:false,status:400,err:'Invalid raid restore.'};
+  const existing=this.raidRuns.get(payload.id);
+  if(existing){
+   if(!this.raidMember(existing,user?.id))return {ok:false,status:403,err:'You are not part of this raid.'};
+   return {ok:true,status:200,run:this.raidPublic(existing),checkpoint:existing,duplicate:true};
+  }
+  const install=payload.state?null:this.raidInstall(payload,user,{recovery:true});
+  if(install)return install;
+  const run=sanitizeRaidRun(payload);
+  if(!run)return {ok:false,status:400,err:'The raid checkpoint could not be read.'};
+  if(!this.raidMember(run,user.id))return {ok:false,status:403,err:'You are not part of this raid.'};
+  if(run.state!=='active'&&run.settledAckAt)return {ok:false,status:409,err:'That result is already settled.'};
+  advanceRaidRun(run,this.now());
+  this.raidRuns.set(run.id,run);
+  this.raidSaveRun(run);
+  this.raidBroadcast(run);
+  return {ok:true,status:200,run:this.raidPublic(run),checkpoint:run,restored:true};
+ }
+ raidSnapshot(runId,user){
+  const run=this.raidRuns.get(runId);
+  if(!run)return {ok:false,status:404,err:'That raid is not loaded in this room.'};
+  if(!this.raidMember(run,user.id))return {ok:false,status:403,err:'You are not part of that raid.'};
+  if(run.state==='active'&&advanceRaidRun(run,this.now())){this.raidSaveRun(run);this.raidBroadcast(run)}
+  return {ok:true,status:200,run:this.raidPublic(run),checkpoint:run};
+ }
+ raidAction(runId,user,body){
+  const run=this.raidRuns.get(runId);
+  if(!run)return {ok:false,status:404,err:'That raid is not loaded in this room.'};
+  if(!this.raidMember(run,user.id))return {ok:false,status:403,err:'You are not part of that raid.'};
+  if(run.state!=='active'){
+   return {ok:true,status:200,run:this.raidPublic(run),checkpoint:run,terminal:true};
+  }
+  const result=applyRaidAction(run,user.id,body.action,{
+   actionId:body.actionId,zone:body.zone,targetId:body.targetId,at:this.now(),
+  });
+  this.raidSaveRun(run);
+  this.raidBroadcast(run);
+  if(['cleared','failed'].includes(run.state)){
+   return {ok:true,status:200,run:this.raidPublic(run),checkpoint:run,
+    duplicate:result?.duplicate===true,action:result?.action||body.action,result:result?.result||null,terminal:true};
+  }
+  if(!result?.ok){
+   return {ok:false,status:result?.code||409,err:result?.error||'That action was refused.',run:this.raidPublic(run),checkpoint:run};
+  }
+  return {ok:true,status:200,run:this.raidPublic(run),checkpoint:run,
+   duplicate:result.duplicate===true,action:result.action||body.action,result:result.result||null,terminal:false};
+ }
+ raidAck(runId,user,settledAt){
+  const run=this.raidRuns.get(runId);
+  if(!run)return {ok:true,status:200,alreadyGone:true};
+  if(!this.raidMember(run,user.id))return {ok:false,status:403,err:'You are not part of that raid.'};
+  if(!['cleared','failed'].includes(run.state))return {ok:false,status:409,err:'That raid is not terminal.'};
+  run.settledAckAt=Number.isFinite(Number(settledAt))?Number(settledAt):this.now();
+  run.deleteAt=this.now()+3600000;
+  this.raidSaveRun(run);
+  return {ok:true,status:200,acknowledged:true};
+ }
+ raidDropExpired(now=this.now()){
+  let changed=false;
+  for(const [id,run] of [...this.raidRuns]){
+   if(run.deleteAt&&now>run.deleteAt){this.raidRuns.delete(id);try{this.onRaidRun?.(null,id)}catch{}changed=true}
+  }
+  return changed;
+ }
+
 }

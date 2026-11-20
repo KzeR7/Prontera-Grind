@@ -932,3 +932,37 @@ production data, physical phones or live Cloudflare analytics credentials.
 Migration `0021_save_audit_evidence.sql` from this PR is required for structured
 storage and accumulated windows. Review markers use that existing window JSON;
 no additional migration or Social Durable Object traffic is introduced.
+
+## Rift Raid (migration 0022)
+
+Run the focused raid suite:
+
+```sh
+node tools/tests/migration_sim.js
+node tools/tests/raid_profile_source_sim.mjs
+node tools/tests/player_raid_engine_sim.mjs
+node tools/tests/raid_api_source_sim.mjs
+node tools/tests/raid_ui_sim.js
+```
+
+`raid_ui_sim.js` needs `jsdom`; it stubs `fetch` and drives the real lobby/arena DOM. `raid_api_source_sim.js`
+instruments prepared statements, batches, Durable Object requests, room writes and `setAlarm` calls; it
+asserts the raid path arms **no** alarm. Run `ui_sim.js`, `api_sim.js`, `chatcheck_sim.mjs`,
+`social_handshake_sim.mjs` alongside it.
+
+The local e2e smoke used the Pages router with auto-migrations:
+
+```sh
+bash tools/build_site.sh                # the dev server serves ./dist
+RAID_ENABLED=true node tools/dev_server.js --port 8799 --db /tmp/pg-raid-dev.sqlite
+```
+
+Then register, `PUT /api/save` (top-level `owner` and blob `owner` required), `POST /api/raid {action:'start'}`,
+and `POST /api/raid {action:'act', combatAction:'strike', actionId:'manual:strike:001'}`. This proves the
+real D1 migration, session and settlement path; it does not replace two/three real browser sessions.
+
+`tools/staging/rift_raid_stage.mjs` is a preflight only. Set `RIFT_STAGE_BASE`, `RIFT_STAGE_DB`,
+`BASE_SCHEMA` and optionally Cloudflare credentials. It now expects both raid migrations (0022 and
+0023) and the card tables/trigger. It never applies a migration, deploys or writes. See
+`docs/RIFT-RAID-VALIDATION.md` and `docs/RIFT-PROGRESSION-HANDOFF.md` for the owner acceptance
+checklist, measured costs and the Windows staging handoff.

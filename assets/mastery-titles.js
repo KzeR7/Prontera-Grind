@@ -48,11 +48,15 @@ const CHALLENGES=[
   {id:'stormbound',name:'Stormbound',category:'journey',metric:'baseLevel',goal:100,symbol:41,description:'Reach Base Level 100 on any class.'},
   {id:'eclipsed-limit',name:'Eclipsed Limit',category:'journey',metric:'baseLevel',goal:150,symbol:2,description:'Reach Base Level 150 on any class.'},
   {id:'echo-beginner',name:'Echo Beginner',category:'journey',metric:'echoRuns',goal:1,symbol:37,description:'Use one ranked Endless Echo attempt (finishing or leaving after the grace period).'},
-  {id:'echo-veteran',name:'Echo Veteran',category:'journey',metric:'echoRuns',goal:100,symbol:23,description:'Use 100 ranked Endless Echo attempts (finishing or leaving after the grace period).'}
+  {id:'echo-veteran',name:'Echo Veteran',category:'journey',metric:'echoRuns',goal:100,symbol:23,description:'Use 100 ranked Endless Echo attempts (finishing or leaving after the grace period).'},
+  {id:'rift-clearer',name:'Rift Clearer',category:'raid',metric:'raidClears',goal:1,symbol:50,description:'Clear the Rift Sovereign once.'},
+  {id:'sovereign-breaker',name:'Sovereign Breaker',category:'raid',metric:'raidClears',goal:3,symbol:49,description:'Clear the Rift Sovereign three times.'},
+  {id:'fracture-veteran',name:'Fracture Veteran',category:'raid',metric:'raidClears',goal:6,symbol:43,description:'Clear the Rift Sovereign six times.'},
+  {id:'eternal-warden',name:'Eternal Warden',category:'raid',metric:'raidClears',goal:10,symbol:32,description:'Clear the Rift Sovereign ten times.'}
 ];
 const BY_ID=Object.assign(Object.create(null),Object.fromEntries(CHALLENGES.map(t=>[t.id,t])));
-const FILTERS=[['all','All titles'],['earned','Earned'],['rank','Hunt ranks'],['hunt','Boss & hunts'],['forge','Forge'],['class','Classes'],['explore','Exploration'],['mastery','Mastery'],['journey','Journey']];
-const LABELS={rank:'Hunt rank',hunt:'Hunt challenge',forge:'Forge challenge',class:'Class challenge',explore:'Exploration challenge',mastery:'Mastery challenge',journey:'Journey challenge'};
+const FILTERS=[['all','All titles'],['earned','Earned'],['rank','Hunt ranks'],['hunt','Boss & hunts'],['raid','Rift Raid'],['forge','Forge'],['class','Classes'],['explore','Exploration'],['mastery','Mastery'],['journey','Journey']];
+const LABELS={rank:'Hunt rank',hunt:'Hunt challenge',raid:'Rift Raid challenge',forge:'Forge challenge',class:'Class challenge',explore:'Exploration challenge',mastery:'Mastery challenge',journey:'Journey challenge'};
 const count=v=>{const n=Number(v);return Number.isFinite(n)?Math.max(0,Math.min(Number.MAX_SAFE_INTEGER,Math.floor(n))):0};
 const e=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const xpOf=state=>Number.isFinite(Number(state?.indexXp))?count(state.indexXp):count(state?.kills);
@@ -81,7 +85,7 @@ function metrics(state,classes){
   return {weapon,armor,classes:classesDone,fourth,thanatos:count(ledger['10:Memory of Thanatos']),ifrit:count(ledger['11:Ifrit']),darklord:count(ledger['9:Dark Lord']),dragon:count(ledger['6:Dragon Lord']),
     kills:count(state.kills),clears:Array.isArray(state.mapClears)?state.mapClears.filter(x=>x===true).length:0,
     discovered:counts.filter(n=>n>0).length,finishedSpecies:counts.filter(n=>n>=50000).length,cardRanks,
-    baseLevel,echoRuns:count(state.trial&&state.trial.runs)};
+    baseLevel,echoRuns:count(state.trial&&state.trial.runs),raidClears:count(state.raidClears)};
 }
 function progress(title,state,classes,snapshot){
   if(!title)return 0;

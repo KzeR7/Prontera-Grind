@@ -493,18 +493,22 @@ export const insertGrant = (db, userId, kind, payload, note, createdBy) =>
 const GRANT_TTL_DAYS = 5;
 const GRANT_TTL_MS = GRANT_TTL_DAYS * 24 * 60 * 60 * 1000;
 export { GRANT_TTL_DAYS };
-export const grantExpiresAt = createdAt => Number(createdAt) + GRANT_TTL_MS;
-export const grantExpired = (grant, at = now()) => !grant || Number(grant.created_at) + GRANT_TTL_MS <= at;
+// Server-settled Rift Raid rewards are the narrow exception: their D1 ledger is durable and they
+// remain claimable until the cloud save accepts them. Every ordinary gift keeps the five-day rule.
+const grantNeverExpires = grant => grant?.created_by === 'Rift Raid';
+export const grantExpiresAt = (createdAt, createdBy = null) => createdBy === 'Rift Raid' ? null : Number(createdAt) + GRANT_TTL_MS;
+export const grantExpired = (grant, at = now()) => !grant || (!grantNeverExpires(grant) && Number(grant.created_at) + GRANT_TTL_MS <= at);
 
 export const pendingGrants = (db, userId) =>
-  db.prepare('SELECT * FROM grants WHERE user_id = ? AND claimed_at IS NULL AND created_at > ? ORDER BY id')
+  db.prepare("SELECT * FROM grants WHERE user_id = ? AND claimed_at IS NULL AND (created_by='Rift Raid' OR created_at > ?) ORDER BY id")
     .bind(userId, now() - GRANT_TTL_MS).all();
 
 export const claimGrants = (db, userId, ids) => {
   if (!ids.length) return null;
   const marks = ids.map(() => '?').join(',');
   // The age test is repeated here on purpose: claiming is the moment value changes hands.
-  return db.prepare(`UPDATE grants SET claimed_at = ? WHERE user_id = ? AND claimed_at IS NULL AND created_at > ? AND id IN (${marks})`)
+  return db.prepare(`UPDATE grants SET claimed_at = ? WHERE user_id = ? AND claimed_at IS NULL
+    AND (created_by='Rift Raid' OR created_at > ?) AND id IN (${marks})`)
     .bind(now(), userId, now() - GRANT_TTL_MS, ...ids).run();
 };
 
@@ -512,13 +516,13 @@ export const claimGrants = (db, userId, ids) => {
 // per grant, oldest first, with the deadline the client shows and the sender's note.
 export const mailBox = (db, userId) =>
   db.prepare(`SELECT id, kind, payload, note, created_by, created_at FROM grants
-              WHERE user_id = ? AND claimed_at IS NULL AND created_at > ? ORDER BY id`)
+              WHERE user_id = ? AND claimed_at IS NULL AND COALESCE(created_by,'')<>'Rift Raid' AND created_at > ? ORDER BY id`)
     .bind(userId, now() - GRANT_TTL_MS).all();
 
 // Sweep expired, never-claimed grants. Called opportunistically; nothing depends on it running,
 // because every read and every claim already filters by age.
 export const purgeExpiredGrants = (db, userId) =>
-  db.prepare('DELETE FROM grants WHERE user_id = ? AND claimed_at IS NULL AND created_at <= ?')
+  db.prepare("DELETE FROM grants WHERE user_id = ? AND claimed_at IS NULL AND COALESCE(created_by,'')<>'Rift Raid' AND created_at <= ?")
     .bind(userId, now() - GRANT_TTL_MS).run();
 
 export const grantsFor = (db, userId) =>
@@ -901,3 +905,98 @@ export const recentDamageAlerts = (db,limit=100) => db.prepare(`SELECT a.user_id
     ORDER BY a.last_seen DESC,a.user_id ASC LIMIT ?`).bind(limit).all();
 export const damageSamplesFor = (db,userId) => db.prepare(`SELECT sampled_at,map,stage,reported_total_damage,reported_echo_best
     FROM damage_samples WHERE user_id=? ORDER BY sampled_at DESC LIMIT 28`).bind(userId).all();
+
+// ----------------------------------------------------------- player raid ----
+// D1 owns the entry reservation and the settlement ledger. Live HP/phase/action receipts are in
+// the Social Durable Object; this section never stores or trusts client combat values.
+export const raidTablesInstalled = async db => {
+  const row = await db.prepare("SELECT 1 AS ok FROM sqlite_master WHERE type='table' AND name='raid_runs'").first();
+  return !!row;
+};
+export const raidAccount = (db, userId) => db.prepare('SELECT * FROM raid_accounts WHERE user_id=?').bind(userId).first();
+export const raidCardsForUser = (db, userId) => db.prepare(`SELECT card_key,copies,equipped,updated_at
+  FROM raid_cards WHERE user_id=? ORDER BY card_key`).bind(userId).all();
+export const raidCardForUser = (db, userId, cardKey) => db.prepare(`SELECT card_key,copies,equipped
+  FROM raid_cards WHERE user_id=? AND card_key=?`).bind(userId, cardKey).first();
+// Two statements are intentionally batched: clear every card, then set the one requested card. A
+// missing/duplicate equip therefore cannot create a second equipped card.
+export const raidSetEquippedCardStatements = (db, userId, cardKey, at = now()) => {
+  const statements = [db.prepare('UPDATE raid_cards SET equipped=0,updated_at=? WHERE user_id=?').bind(at, userId)];
+  if (cardKey) {
+    statements.push(db.prepare(`UPDATE raid_cards SET equipped=1,updated_at=?
+      WHERE user_id=? AND card_key=? AND copies>0`).bind(at, userId, cardKey));
+  }
+  return statements;
+};
+export const raidCardDropInsertStatement = (db, { runId, userId, kind, cardKey, createdAt }) =>
+  db.prepare('INSERT OR IGNORE INTO raid_card_drops(run_id,user_id,kind,card_key,created_at) VALUES(?,?,?,?,?)')
+    .bind(runId, userId, kind, cardKey, createdAt);
+export const raidCardDropsForUser = (db, runId, userId) => db.prepare(`SELECT kind,card_key,created_at
+  FROM raid_card_drops WHERE run_id=? AND user_id=? ORDER BY kind`).bind(runId, userId).all();
+export const raidAccountEnsureStatement = (db, userId, at = now()) =>
+  db.prepare('INSERT OR IGNORE INTO raid_accounts(user_id,updated_at) VALUES(?,?)').bind(userId, at);
+export const raidDailyEntries = (db, userId, dayKey) =>
+  db.prepare('SELECT COUNT(*) AS n FROM raid_entries WHERE user_id=? AND day_key=?').bind(userId, dayKey).first();
+export const raidDailyChests = (db, userId, dayKey) => db.prepare(`SELECT COUNT(*) AS total,
+    SUM(CASE WHEN kind='pity' THEN 1 ELSE 0 END) AS pity,
+    SUM(CASE WHEN kind='fractured' THEN 1 ELSE 0 END) AS fractured
+  FROM raid_chests WHERE user_id=? AND day_key=?`).bind(userId, dayKey).first();
+export const raidActiveForUser = (db, userId) => db.prepare(`SELECT r.*,m.profile_json FROM raid_runs r
+  JOIN raid_run_members m ON m.run_id=r.id
+  WHERE m.user_id=? AND r.state='active' ORDER BY r.started_at DESC LIMIT 1`).bind(userId).first();
+// A short-lived result window lets a member who disconnected before the clear see the settlement
+// they already earned. It is a read, not a second reward path; settleRun remains the only payer.
+export const raidRecentSettledForUser = (db, userId, since) => db.prepare(`SELECT r.* FROM raid_runs r
+  JOIN raid_run_members m ON m.run_id=r.id
+  WHERE m.user_id=? AND r.state IN ('cleared','failed') AND r.settled_at>=?
+  ORDER BY r.settled_at DESC LIMIT 1`).bind(userId, since).first();
+export const raidRun = (db, runId) => db.prepare('SELECT * FROM raid_runs WHERE id=?').bind(runId).first();
+export const raidRunMember = (db, runId, userId) =>
+  db.prepare('SELECT * FROM raid_run_members WHERE run_id=? AND user_id=?').bind(runId, userId).first();
+export const raidRunMembers = (db, runId) =>
+  db.prepare('SELECT * FROM raid_run_members WHERE run_id=? ORDER BY user_id').bind(runId).all();
+export const raidRunInsertStatement = (db, { id, leaderId, partySize, totalHp, seed, startedAt, deadlineAt, checkpoint }) =>
+  db.prepare(`INSERT INTO raid_runs(id,leader_id,party_size,total_hp,seed,started_at,deadline_at,state,checkpoint_json,checkpoint_at)
+    VALUES(?,?,?,?,?,?,?,'active',?,?)`).bind(id, leaderId, partySize, totalHp, seed, startedAt, deadlineAt,
+      JSON.stringify(checkpoint || {}), startedAt);
+export const raidRunMemberInsertStatement = (db, { runId, userId, name, profile }) =>
+  db.prepare(`INSERT INTO raid_run_members(run_id,user_id,display_name,profile_json)
+    VALUES(?,?,?,?)`).bind(runId, userId, String(name || 'Adventurer').slice(0, 32), JSON.stringify(profile || {}));
+export const raidEntryInsertStatement = (db, { userId, dayKey, runId, enteredAt }) =>
+  db.prepare('INSERT INTO raid_entries(user_id,day_key,run_id,entered_at) VALUES(?,?,?,?)')
+    .bind(userId, dayKey, runId, enteredAt);
+// Explicit child deletes keep the rollback correct even if a SQLite engine has foreign_keys off.
+export const raidRunDeleteStatements = (db, runId) => [
+  db.prepare('DELETE FROM raid_entries WHERE run_id=?').bind(runId),
+  db.prepare('DELETE FROM raid_run_members WHERE run_id=?').bind(runId),
+  db.prepare('DELETE FROM raid_runs WHERE id=?').bind(runId),
+];
+export const raidRunCheckpointStatement = (db, { runId, checkpointAt, checkpoint }) =>
+  db.prepare(`UPDATE raid_runs SET checkpoint_json=?,checkpoint_at=?
+    WHERE id=? AND state='active' AND checkpoint_at<=?`)
+    .bind(JSON.stringify(checkpoint || {}), checkpointAt, runId, checkpointAt);
+export const raidSettlement = (db, runId) =>
+  db.prepare('SELECT * FROM raid_settlements WHERE run_id=?').bind(runId).first();
+export const raidSettlementInsertStatement = (db, { runId, outcome, settledAt, result }) =>
+  db.prepare('INSERT OR IGNORE INTO raid_settlements(run_id,outcome,settled_at,result_json) VALUES(?,?,?,?)')
+    .bind(runId, outcome, settledAt, JSON.stringify(result || {}));
+export const raidRunSettleStatement = (db, { runId, outcome, settledAt, result }) =>
+  db.prepare(`UPDATE raid_runs SET state=?,settled_at=?,result_json=? WHERE id=? AND state='active'`)
+    .bind(outcome, settledAt, JSON.stringify(result || {}), runId);
+export const raidChestInsertStatement = (db, { runId, userId, dayKey, kind, payload, createdAt }) =>
+  db.prepare('INSERT OR IGNORE INTO raid_chests(run_id,user_id,day_key,kind,payload,created_at) VALUES(?,?,?,?,?,?)')
+    .bind(runId, userId, dayKey, kind, JSON.stringify(payload || {}), createdAt);
+export const raidRewardLedgerInsertStatement = (db, { runId, userId, kind, payload, createdAt }) =>
+  db.prepare('INSERT OR IGNORE INTO raid_reward_ledger(run_id,user_id,kind,payload,created_at) VALUES(?,?,?,?,?)')
+    .bind(runId, userId, kind, JSON.stringify(payload || {}), createdAt);
+export const raidRewardsForUser = (db, runId, userId) =>
+  db.prepare('SELECT kind,payload,created_at FROM raid_reward_ledger WHERE run_id=? AND user_id=? ORDER BY kind')
+    .bind(runId, userId).all();
+export const raidGrantsForRun = (db, runId) =>
+  db.prepare("SELECT id,user_id,kind FROM grants WHERE ref LIKE ? ORDER BY id").bind('raid:' + runId + ':%').all();
+export const raidRunContributionStatement = (db, { runId, userId, damage, support, actions, dodges, downs, meaningful }) =>
+  db.prepare(`UPDATE raid_run_members SET damage=?,support=?,actions=?,dodges=?,downs=?,meaningful=?
+    WHERE run_id=? AND user_id=?`).bind(
+    Math.max(0, Math.floor(Number(damage) || 0)), Math.max(0, Math.floor(Number(support) || 0)),
+    Math.max(0, Math.floor(Number(actions) || 0)), Math.max(0, Math.floor(Number(dodges) || 0)),
+    Math.max(0, Math.floor(Number(downs) || 0)), meaningful ? 1 : 0, runId, userId);

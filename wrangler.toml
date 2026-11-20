@@ -67,6 +67,9 @@ database_id = "50a6448b-1f12-466c-a28a-10544bedf750"   # printed by `wrangler d1
 # is a misconfiguration that fails closed on purpose (that is what "required" means).
 [vars]
 WRITE_GATE = "required"
+# Rift Raid stays closed until staging acceptance. Set the staging environment variable to the
+# exact string "true" for the acceptance run; this file remains false for production.
+RAID_ENABLED = "false"
 
 # The switch itself: a separate Worker with no D1 binding, no route and workers_dev = false, so a
 # D1 restore cannot roll back the flag that is meant to guard it.

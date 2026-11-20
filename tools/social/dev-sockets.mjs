@@ -25,7 +25,34 @@ export function attachSocial(server,DB,{previewAuth=false}={}){
  return {
   idFromName:name=>{if(name!=='world')throw Error('Unknown local Social object');return name},
   get:()=>({fetch:async request=>{
-   const url=new URL(request.url);if(url.pathname!=='/gm/fishing-mvp')return new Response('Not found',{status:404});
+   const url=new URL(request.url);
+   if(url.pathname.startsWith('/raid/')){
+    let me=null;try{me=JSON.parse(request.headers.get('X-Social-Identity')||'null')}catch{}
+    if(!me||!Number.isInteger(me.id)||me.id<1)return response({ok:false,err:'Invalid identity.'},400);
+    let body=null;if(request.method==='POST'){try{body=await request.json()}catch{}}
+    const user={id:me.id,name:me.username};
+    let result=null;
+    if(url.pathname==='/raid/party'&&request.method==='GET')result={ok:true,party:room.raidPartyPayload()};
+    else if(url.pathname==='/raid/party/join'&&request.method==='POST')result=room.raidPartyJoin(user);
+    else if(url.pathname==='/raid/party/leave'&&request.method==='POST')result=room.raidPartyLeave(user);
+    else if(url.pathname==='/raid/party/open'&&request.method==='POST')result=room.raidPartyOpen(user,body?.open!==false);
+    else if(url.pathname==='/raid/ready'&&request.method==='POST')result=room.raidPartyReady(user,body?.ready===true,body?.fingerprint);
+    else if(url.pathname==='/raid/readiness-reset'&&request.method==='POST')result=room.raidReadinessReset(user);
+    else if(url.pathname==='/raid/install'&&request.method==='POST')result=room.raidInstall(body,user);
+    else if(url.pathname==='/raid/restore'&&request.method==='POST')result=room.raidRestore(body,user);
+    else if(url.pathname==='/raid/action'&&request.method==='POST')result=room.raidAction(body?.runId,user,body||{});
+    else if(url.pathname==='/raid/snapshot'&&request.method==='POST')result=room.raidSnapshot(body?.runId,user);
+    else if(url.pathname==='/raid/ack'&&request.method==='POST')result=room.raidAck(body?.runId,user,body?.settledAt);
+    else return response({ok:false,err:'Not found.'},404);
+    if(!result||result.ok===false)return response({ok:false,err:result?.err||'Raid request failed.',...(result?.run?{run:result.run}:{}),...(result?.party?{party:result.party}:{})},result?.status||409);
+    return response(result,result.status||200);
+   }
+   if(url.pathname!=='/gm/fishing-mvp'){
+    // The real Durable Object answers a non-upgrade probe with 426; /api/chatcheck relies on that
+    // to distinguish a reachable room from an unreachable Worker. Match it locally.
+    if(request.headers.get('Upgrade')?.toLowerCase()!=='websocket')return new Response('WebSocket required',{status:426});
+    return new Response('Not found',{status:404});
+   }
    if(request.method!=='POST')return response({err:'POST required'},405);
    let admin=null;try{admin=JSON.parse(request.headers.get('X-Social-Admin')||'null')}catch{}
    if(!admin||!Number.isInteger(admin.id)||admin.id<1||typeof admin.username!=='string'||!Number.isInteger(admin.gm)||admin.gm<1)return response({err:'Authenticated GM identity required'},403);

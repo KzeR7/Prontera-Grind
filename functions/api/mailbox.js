@@ -22,7 +22,7 @@ const shape = g => ({
   note: g.note,
   from: g.created_by,
   at: g.created_at,
-  expiresAt: db.grantExpiresAt(g.created_at),
+  expiresAt: db.grantExpiresAt(g.created_at,g.created_by),
 });
 
 export const onRequestGet = guard(async ({ request, env }) => {

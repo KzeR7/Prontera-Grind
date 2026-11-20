@@ -14,7 +14,7 @@ const shape = g => ({
   at: g.created_at, from: g.created_by,
   // v401: gifts vanish 5 days after they are sent, so the client can say when rather than let one
   // disappear silently. The server is still the authority - this is only for display.
-  expiresAt: db.grantExpiresAt(g.created_at),
+  expiresAt: db.grantExpiresAt(g.created_at,g.created_by),
 });
 
 export const onRequestGet = guard(async ({ request, env }) => {

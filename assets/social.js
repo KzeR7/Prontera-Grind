@@ -2438,6 +2438,10 @@ function leave(){visit++;app.entering=false;worldNearbyStat='';worldNearby.hidde
    if(typeof BGM!=='undefined')BGM.sync(typeof S==='object'&&S?S.mp:0)}$id('socialLeave').onclick=()=>{if(fishingBlocked(()=>$id('socialLeave').onclick()))return;confirmPokerLeave(()=>leave())};
 const socialHubBtn=$id('socialHubBtn');if(socialHubBtn)socialHubBtn.onclick=()=>enter();syncHubButton();$id('socialSit').onclick=toggleSit;
 function receive(m){
+ // Player-character Rift Raid reuses this socket: the room broadcasts an authoritative snapshot
+ // after each accepted action, so the arena never needs a polling timer or a second renderer.
+ if(m.type==='raid_state'){try{globalThis.PGRaid?.receive?.(m.run)}catch(error){console.error('Raid state',error)}return}
+ if(m.type==='raid_party'){try{globalThis.PGRaid?.receiveParty?.(m.party)}catch(error){console.error('Raid party',error)}return}
  if(m.type==='battle'){battleSnapshot(m);return}
  if(m.type==='battle_fx'){
   app.scene?.battleEvent?.(m);

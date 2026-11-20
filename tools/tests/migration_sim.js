@@ -156,5 +156,92 @@ t('migrations stay auto-runnable: no file opens its own transaction or edits liv
   }
 });
 
+
+// 0022 is additive: it must install next to existing saves, reserve entries race-safely, and pay a
+// retried settlement exactly once through the ordinary grants queue.
+t('0022 raid migration installs beside existing saves and preserves every old row', () => {
+  const D = new DatabaseSync(':memory:');
+  for (const name of fs.readdirSync(path.join(root, 'migrations'))
+    .filter(n => /^\d+_.*\.sql$/.test(n) && n < '0022').sort()) D.exec(migration(name));
+  const uid = D.prepare("INSERT INTO users(username,pass_hash,created_at) VALUES('Raider','h',1)").run().lastInsertRowid;
+  D.prepare("INSERT INTO saves(user_id,version,blob,saved_at,updated_at,last_seen,rate_kph,kills_total) VALUES(?,1,'{\"lv\":150}',1,1,1,0,0)").run(uid);
+  D.exec(migration('0022_player_character_raid.sql'));
+  assert.equal(D.prepare('SELECT blob FROM saves WHERE user_id=?').get(uid).blob, '{"lv":150}');
+  assert.equal(D.prepare("SELECT COUNT(*) AS n FROM sqlite_master WHERE type='table' AND name='raid_runs'").get().n, 1);
+  assert.equal(D.prepare("SELECT COUNT(*) AS n FROM sqlite_master WHERE type='trigger' AND name IN ('raid_entry_daily_limit','raid_entry_active_limit','raid_reward_apply')").get().n, 3);
+  assert.equal(D.prepare("PRAGMA table_info(grants)").all().some(c => c.name === 'ref'), true);
+  assert.equal(D.prepare("SELECT COUNT(*) AS n FROM sqlite_master WHERE type='index' AND name='idx_grants_ref'").get().n, 1);
+});
+
+t('0022 reserves at most two entries per day and one active run per account', () => {
+  const D = new DatabaseSync(':memory:');
+  D.exec(migration('0001_init.sql')); D.exec(migration('0022_player_character_raid.sql'));
+  const uid = D.prepare("INSERT INTO users(username,pass_hash,created_at) VALUES('Entries','h',1)").run().lastInsertRowid;
+  const mk = id => {
+    D.prepare("INSERT INTO raid_runs(id,leader_id,party_size,total_hp,started_at,deadline_at) VALUES(?,?,1,100,1,2)").run(id, uid);
+    D.prepare("INSERT INTO raid_run_members(run_id,user_id,display_name) VALUES(?,?,'Entries')").run(id, uid);
+  };
+  mk('r1');
+  D.prepare("INSERT INTO raid_entries(user_id,day_key,run_id,entered_at) VALUES(?,'2026-01-01','r1',1)").run(uid);
+  D.prepare("UPDATE raid_runs SET state='failed' WHERE id='r1'").run();
+  mk('r2');
+  D.prepare("INSERT INTO raid_entries(user_id,day_key,run_id,entered_at) VALUES(?,'2026-01-01','r2',2)").run(uid);
+  D.prepare("UPDATE raid_runs SET state='failed' WHERE id='r2'").run();
+  mk('r3');
+  assert.throws(() => D.prepare("INSERT INTO raid_entries(user_id,day_key,run_id,entered_at) VALUES(?,'2026-01-01','r3',3)").run(uid), /raid_daily_entry_limit/);
+  const uid2 = D.prepare("INSERT INTO users(username,pass_hash,created_at) VALUES('Active','h',1)").run().lastInsertRowid;
+  D.prepare("INSERT INTO raid_runs(id,leader_id,party_size,total_hp,started_at,deadline_at) VALUES('a1',?,1,100,1,2)").run(uid2);
+  D.prepare("INSERT INTO raid_run_members(run_id,user_id,display_name) VALUES('a1',?,'Active')").run(uid2);
+  D.prepare("INSERT INTO raid_entries(user_id,day_key,run_id,entered_at) VALUES(?,'2026-01-01','a1',1)").run(uid2);
+  D.prepare("INSERT INTO raid_runs(id,leader_id,party_size,total_hp,started_at,deadline_at) VALUES('a2',?,1,100,1,2)").run(uid2);
+  D.prepare("INSERT INTO raid_run_members(run_id,user_id,display_name) VALUES('a2',?,'Active')").run(uid2);
+  assert.throws(() => D.prepare("INSERT INTO raid_entries(user_id,day_key,run_id,entered_at) VALUES(?,'2026-01-01','a2',2)").run(uid2), /raid_active_run/);
+});
+
+t('0022 settles a clear and a failure exactly once, including ordinary grants', () => {
+  const D = new DatabaseSync(':memory:');
+  D.exec(migration('0001_init.sql')); D.exec(migration('0022_player_character_raid.sql'));
+  const uid = D.prepare("INSERT INTO users(username,pass_hash,created_at) VALUES('Payout','h',1)").run().lastInsertRowid;
+  D.prepare("INSERT INTO raid_runs(id,leader_id,party_size,total_hp,started_at,deadline_at) VALUES('pay',?,3,100,1,2)").run(uid);
+  D.prepare("INSERT INTO raid_accounts(user_id,updated_at) VALUES(?,1)").run(uid);
+  const payload = JSON.stringify({ riftShards: 20, sigils: 30, regionalMaterials: 5, zeny: 1000000, partySize: 3, support: 40 });
+  D.prepare("INSERT OR IGNORE INTO raid_reward_ledger(run_id,user_id,kind,payload,created_at) VALUES('pay',?,'clear',?,1)").run(uid, payload);
+  D.prepare("INSERT OR IGNORE INTO raid_reward_ledger(run_id,user_id,kind,payload,created_at) VALUES('pay',?,'clear',?,1)").run(uid, payload);
+  D.prepare("INSERT OR IGNORE INTO raid_chests(run_id,user_id,day_key,kind,payload,created_at) VALUES('pay',?,'2026-01-01','pity',?,1)").run(uid, JSON.stringify({ riftShards: 5, sigils: 4, regionalMaterials: 1, zeny: 100000, partySize: 3 }));
+  D.prepare("INSERT OR IGNORE INTO raid_chests(run_id,user_id,day_key,kind,payload,created_at) VALUES('pay',?,'2026-01-01','fractured',?,1)").run(uid, JSON.stringify({ riftShards: 2, sigils: 2, regionalMaterials: 0, zeny: 0, partySize: 3 }));
+  const account = D.prepare('SELECT * FROM raid_accounts WHERE user_id=?').get(uid);
+  assert.equal(account.rift_shards, 27);
+  assert.equal(account.qualifying_clears, 1);
+  assert.equal(account.trio_clears, 1);
+  assert.equal(account.support_clears, 1);
+  assert.equal(D.prepare('SELECT COUNT(*) AS n FROM grants WHERE user_id=?').get(uid).n, 10);
+  assert.equal(D.prepare('SELECT COUNT(DISTINCT ref) AS n FROM grants WHERE user_id=?').get(uid).n, 10);
+  assert.equal(D.prepare("SELECT COUNT(*) AS n FROM grants WHERE user_id=? AND json_extract(payload,'$.resource')='riftShards'").get(uid).n, 3);
+  assert.equal(D.prepare("SELECT SUM(CAST(json_extract(payload,'$.amount') AS INTEGER)) AS n FROM grants WHERE user_id=? AND json_extract(payload,'$.resource')='riftShards'").get(uid).n, 27);
+  assert.equal(D.prepare('SELECT COUNT(*) AS n FROM raid_reward_ledger WHERE run_id=? AND user_id=?').get('pay', uid).n, 3);
+});
+
+t('0023 raid cards are account-wide, duplicate-ranking and exactly-once per chest', () => {
+  const D = new DatabaseSync(':memory:');
+  D.exec(migration('0001_init.sql')); D.exec(migration('0022_player_character_raid.sql')); D.exec(migration('0023_raid_cards.sql'));
+  const uid = D.prepare("INSERT INTO users(username,pass_hash,created_at) VALUES('Cards','h',1)").run().lastInsertRowid;
+  D.prepare("INSERT INTO raid_runs(id,leader_id,party_size,total_hp,started_at,deadline_at) VALUES('cards',?,1,100,1,2)").run(uid);
+  D.prepare("INSERT INTO raid_accounts(user_id,updated_at) VALUES(?,1)").run(uid);
+  const drop = (kind, key) => D.prepare("INSERT OR IGNORE INTO raid_card_drops(run_id,user_id,kind,card_key,created_at) VALUES('cards',?,?,?,1)").run(uid, kind, key);
+  drop('clear', 'sovereign-fang');
+  drop('clear', 'sovereign-fang'); // replay: PRIMARY KEY suppresses the second copy
+  drop('fractured', 'sovereign-fang');
+  drop('pity', 'astral-bulwark');
+  const rows = D.prepare('SELECT card_key,copies,equipped FROM raid_cards WHERE user_id=? ORDER BY card_key').all(uid);
+  assert.deepEqual(rows.map(r => ({ ...r })), [
+    { card_key: 'astral-bulwark', copies: 1, equipped: 0 },
+    { card_key: 'sovereign-fang', copies: 2, equipped: 0 },
+  ]);
+  D.prepare('UPDATE raid_cards SET equipped=0 WHERE user_id=?').run(uid);
+  D.prepare("UPDATE raid_cards SET equipped=1 WHERE user_id=? AND card_key='sovereign-fang'").run(uid);
+  assert.equal(D.prepare('SELECT SUM(equipped) AS n FROM raid_cards WHERE user_id=?').get(uid).n, 1);
+  assert.equal(D.prepare("SELECT COUNT(*) AS n FROM raid_card_drops WHERE run_id='cards' AND user_id=?").get(uid).n, 3);
+});
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);

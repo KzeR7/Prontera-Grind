@@ -1202,3 +1202,25 @@ svg.ad-toolbar-art{width:22px;height:22px;vertical-align:middle;margin-right:5px
 #plazaRenderNotice{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);max-width:85%;margin:0;padding:12px 16px;background:#172a30ed;color:white;border-radius:6px;text-align:center;z-index:2;pointer-events:none}
 body.social-open #renderNotice{display:none}
 #plazaRenderNotice button{pointer-events:auto}
+
+/* Player-character Rift Raid destinations. The arena itself owns its scoped styles in
+   assets/rift-raid.js; these rules only make the Map and Social Hub entry cards legible. */
+.social-cta-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.social-cta-actions>button{min-height:42px;padding:9px 14px;border-radius:9px;border:1px solid var(--edge2,#3b536b);background:transparent;color:var(--ink,#e8eef4);font:600 12px/1.1 system-ui,sans-serif;cursor:pointer}
+.social-cta-actions>button.eclipse-primary{background:linear-gradient(180deg,#d5b271,#98713c);border-color:#e9ca8f;color:#1b1407}
+.social-raid-card{margin:14px;padding:14px;border:1px solid #47645c;border-radius:12px;background:linear-gradient(135deg,#132723,#0b1716);color:#e9e3d1}
+.social-raid-card small{font-size:10px;letter-spacing:.14em;color:#9dbab1}.social-raid-card h3{margin:3px 0 5px;font:700 20px/1.2 Georgia,serif;color:#f1d79d}
+.social-raid-card p{margin:0 0 9px;font-size:12px;line-height:1.5;color:#b4c7c0}.social-raid-card button{min-height:40px;padding:8px 12px;border-radius:8px;border:1px solid #6d876f;background:#1c332e;color:#f4e8ce;font:600 12px system-ui;cursor:pointer}
+.raid-destination{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:14px;border:1px solid #3d5550;border-radius:14px;background:linear-gradient(150deg,#142523,#091313);color:#eee7d5;overflow:hidden;margin:auto;max-width:920px}
+@media(max-width:700px){.raid-destination{grid-template-columns:1fr}}
+.raid-destination-art{position:relative;min-height:230px;background:radial-gradient(circle at 50% 35%,#34464c,#081113 72%);display:flex;align-items:flex-end;justify-content:center}
+.raid-destination-art img{width:100%;height:100%;max-height:320px;object-fit:contain;filter:drop-shadow(0 0 24px #000b)}
+.raid-destination-art span{position:absolute;left:10px;bottom:10px;right:10px;font-size:9px;letter-spacing:.14em;color:#b7cbc4;background:#07110fcc;border:1px solid #38534b;border-radius:7px;padding:5px 7px}
+.raid-destination-copy{padding:16px;display:flex;flex-direction:column;justify-content:center}
+.raid-destination-copy>small{font-size:10px;letter-spacing:.15em;color:#9cb9b1}
+.raid-destination-copy h2{margin:4px 0 7px;font:700 clamp(21px,4vw,30px)/1.12 Georgia,serif;color:#f3dba5}
+.raid-destination-copy p{margin:0 0 10px;font-size:12.5px;line-height:1.55;color:#b8cbc4}
+.raid-destination-actions{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:7px}
+.raid-destination-actions button{min-height:44px;padding:9px 14px;border-radius:9px;border:1px solid #61796d;background:#1a302c;color:#f2e8d1;font:600 12px system-ui;cursor:pointer}
+.raid-destination-actions button.eclipse-primary{background:linear-gradient(180deg,#cba05a,#8d652d);border-color:#e4c17e;color:#1a1205}
+.raid-destination-note{font-size:10.5px;line-height:1.45;color:#92aca4}

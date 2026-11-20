@@ -6,11 +6,20 @@ const MVP_KEY='mvp-state-v1';
 // v296: the plaza spot a dropped client resumes is durable, so a Durable Object eviction between
 // the drop and the reconnect no longer respawns the player at the entrance mid-fishing-session.
 const RESUME_PREFIX='resume-v1:';
+// Player-character Rift Raid: request-driven room state only. No alarm and no timer.
+const RAID_PREFIX='player-character-raid-v1:';
+const RAID_PARTIES_KEY='player-character-raid-parties-v1';
+const RAID_RETAIN_MS=3600000;
 export class Social {
  constructor(ctx){
   this.ctx=ctx;this.historyWrites=Promise.resolve();this.ledgerLoadFailed=false;
   this.resumeWrites=Promise.resolve();
   this.mvpWrites=Promise.resolve();
+  this.raidWrites=Promise.resolve();
+  this.raidPartyWrite=Promise.resolve();
+  this.raidLoaded=false;
+  this.raidLoadFailed=false;
+  this.raidLoadPromise=null;
   this.mvpLoaded=false;
   this.mvpLoadFailed=false;
   this.mvpSaveFailed=false;
@@ -25,6 +34,8 @@ export class Social {
    onBattleActivity:()=>this.scheduleBattleAlarm(),
    onMvpChange:()=>{this.saveMvpState();this.scheduleKeepalive();},
    onOccupancyChange:()=>this.scheduleKeepalive(),
+   onRaidRun:(run,id)=>this.saveRaidRun(run,id),
+   onRaidParty:party=>this.saveRaidParty(party),
   });
   this.battleAlarmAt=0;this.battleAlarmWrite=Promise.resolve();this.sockets=new WeakMap();this.restored=false;
 
@@ -49,7 +60,8 @@ export class Social {
   }).catch(error=>console.error('Plaza resume load failed',error));
   const ledgerReady=this.loadLedgers().catch(error=>{this.ledgerLoadFailed=true;console.error('Poker ledger load failed',error)});
   this.mvpLoadPromise=this.loadMvpState();
-  this.ready=Promise.all([historyReady,ledgerReady,resumeReady,this.mvpLoadPromise]).then(()=>{
+  this.raidLoadPromise=this.loadRaidState();
+  this.ready=Promise.all([historyReady,ledgerReady,resumeReady,this.mvpLoadPromise,this.raidLoadPromise]).then(()=>{
    this.restoreSockets();
    this.scheduleKeepalive();
   });
@@ -247,6 +259,146 @@ export class Social {
   if(this.mvpWrites)await this.mvpWrites;
   return new Response(JSON.stringify({ok:true,...spawn}),{status:200,headers:{'Content-Type':'application/json','Cache-Control':'no-store'}});
  }
+ // --- Rift Raid persistence -------------------------------------------------
+ // One key per run plus one lobby key. Loading is bounded by the runs that have not been
+ // acknowledged; a terminal result is retained for an hour after D1 acknowledgement so a lost
+ // response can still be retried. No alarm is armed for any of this.
+ async loadRaidState(){
+  try{
+   const entries=await this.ctx.storage.list({prefix:RAID_PREFIX});
+   const now=this.now();
+   const runs=new Map();
+   for(const [key,value] of entries){
+    const run=sanitizeRaidRun(value);
+    if(!run){await this.ctx.storage.delete(key).catch(()=>{});continue}
+    if(run.deleteAt&&now>run.deleteAt){await this.ctx.storage.delete(key).catch(()=>{});continue}
+    runs.set(run.id,run);
+   }
+   const party=await this.ctx.storage.get(RAID_PARTIES_KEY).catch(()=>null);
+   this.room.raidRuns=runs;
+   this.room.raidParty=this.cleanRaidParty(party);
+   this.room.raidLoaded=true;
+   this.room.raidLoadFailed=false;
+   this.raidLoaded=true;
+   this.raidLoadFailed=false;
+   return true;
+  }catch(error){
+   this.room.raidLoaded=false;
+   this.room.raidLoadFailed=true;
+   this.raidLoaded=false;
+   this.raidLoadFailed=true;
+   console.error('Raid state load failed',error);
+   return false;
+  }
+ }
+ cleanRaidParty(value){
+  if(!value||typeof value!=='object'||Array.isArray(value))return null;
+  if(typeof value.id!=='string'||!/^rp_[A-Za-z0-9-]{4,40}$/.test(value.id))return null;
+  if(!Number.isInteger(value.leader)||value.leader<1||!Array.isArray(value.members))return null;
+  const seen=new Set(),members=[];
+  for(const raw of value.members.slice(0,3)){
+   if(!raw||!Number.isInteger(raw.id)||raw.id<1||seen.has(raw.id))continue;
+   seen.add(raw.id);
+   members.push({id:raw.id,name:typeof raw.name==='string'?raw.name.slice(0,32):'Adventurer',
+    ready:raw.ready===true,readyFingerprint:typeof raw.readyFingerprint==='string'&&/^[0-9a-f]{16,64}$/.test(raw.readyFingerprint)?raw.readyFingerprint:'',
+    joinedAt:Number.isFinite(raw.joinedAt)?raw.joinedAt:0});
+  }
+  if(!members.length||!members.some(m=>m.id===value.leader))return null;
+  return {id:value.id,leader:value.leader,open:value.open!==false,runId:typeof value.runId==='string'?value.runId:null,members};
+ }
+ saveRaidRun(run,id){
+  const key=RAID_PREFIX+(run?.id||id||'');
+  if(!key||key===RAID_PREFIX)return Promise.resolve();
+  const snapshot=run&&run.id?run:null;
+  this.raidWrites=this.raidWrites.then(()=>snapshot?this.ctx.storage.put(RAID_PREFIX+snapshot.id,snapshot):this.ctx.storage.delete(key))
+   .catch(error=>console.error('Raid run save failed',error));
+  return this.raidWrites;
+ }
+ saveRaidParty(party){
+  const value=party||null;
+  this.raidPartyWrite=this.raidPartyWrite.then(()=>value?this.ctx.storage.put(RAID_PARTIES_KEY,value):this.ctx.storage.delete(RAID_PARTIES_KEY))
+   .catch(error=>console.error('Raid party save failed',error));
+  return this.raidPartyWrite;
+ }
+ async raidReady(){
+  if(this.raidLoadFailed&&this.raidLoadPromise)await this.raidLoadPromise;
+  if(this.raidLoadFailed)throw new Error('Raid storage is unavailable.');
+ }
+ raidJson(data,status=200){
+  return new Response(JSON.stringify(data),{status,headers:{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'}});
+ }
+ async raidRoute(request,path,identity){
+  const requestHost=new URL(request.url).host;
+  if(requestHost!=='social'){
+   return this.raidJson({ok:false,err:'Raid routes are private.'},403);
+  }
+  if(!identity||!Number.isInteger(identity.id)||identity.id<1||typeof identity.username!=='string'){
+   return this.raidJson({ok:false,err:'Invalid identity.'},400);
+  }
+  try{await this.raidReady()}
+  catch{return this.raidJson({ok:false,err:'Raid storage is unavailable. Retry.'},503)}
+  const user={id:identity.id,name:identity.username};
+  let body=null;
+  if(request.method==='POST'){try{body=await request.json()}catch{body=null}}
+  if(body&&typeof body!=='object')body=null;
+  if(path==='/raid/party'&&request.method==='GET'){
+   this.room.raidDropExpired(this.now());
+   return this.raidJson({ok:true,party:this.room.raidPartyPayload()});
+  }
+  if(path==='/raid/party/join'&&request.method==='POST'){
+   const result=this.room.raidPartyJoin(user);await this.raidPartyWrite;return this.raidResult(result);
+  }
+  if(path==='/raid/party/leave'&&request.method==='POST'){
+   const result=this.room.raidPartyLeave(user);await this.raidPartyWrite;return this.raidResult(result);
+  }
+  if(path==='/raid/party/open'&&request.method==='POST'){
+   const result=this.room.raidPartyOpen(user,body?.open!==false);await this.raidPartyWrite;return this.raidResult(result);
+  }
+  if(path==='/raid/ready'&&request.method==='POST'){
+   const result=this.room.raidPartyReady(user,body?.ready===true,body?.fingerprint);await this.raidPartyWrite;return this.raidResult(result);
+  }
+  if(path==='/raid/readiness-reset'&&request.method==='POST'){
+   const result=this.room.raidReadinessReset(user);await this.raidPartyWrite;return this.raidResult(result);
+  }
+  if(path==='/raid/install'&&request.method==='POST'){
+   const result=this.room.raidInstall(body,user);
+   if(result.ok)await this.raidWrites;
+   return this.raidResult(result);
+  }
+  if(path==='/raid/restore'&&request.method==='POST'){
+   const result=this.room.raidRestore(body,user);
+   if(result.ok)await this.raidWrites;
+   return this.raidResult(result);
+  }
+  if(path==='/raid/action'&&request.method==='POST'){
+   const runId=typeof body?.runId==='string'?body.runId:'';
+   const action=typeof body?.action==='string'?body.action:'';
+   if(!runId||!action)return this.raidJson({ok:false,err:'Invalid raid action.'},400);
+   const result=this.room.raidAction(runId,user,{action,actionId:body.actionId,zone:body.zone,targetId:body.targetId});
+   await this.raidWrites;
+   return this.raidResult(result);
+  }
+  if(path==='/raid/snapshot'&&request.method==='POST'){
+   const runId=typeof body?.runId==='string'?body.runId:'';
+   if(!runId)return this.raidJson({ok:false,err:'Invalid raid id.'},400);
+   const result=this.room.raidSnapshot(runId,user);
+   await this.raidWrites;
+   return this.raidResult(result);
+  }
+  if(path==='/raid/ack'&&request.method==='POST'){
+   const runId=typeof body?.runId==='string'?body.runId:'';
+   if(!runId)return this.raidJson({ok:false,err:'Invalid raid id.'},400);
+   const result=this.room.raidAck(runId,user,body?.settledAt);
+   if(result.ok)await this.raidWrites;
+   return this.raidResult(result);
+  }
+  return this.raidJson({ok:false,err:'Not found.'},404);
+ }
+ raidResult(result){
+  if(!result||typeof result!=='object')return this.raidJson({ok:false,err:'Raid request failed.'},500);
+  if(result.ok===false){const {ok,status,err,run,party}=result;return this.raidJson({ok:false,err:err||'Raid request failed.',...(run?{run}:{}),...(party?{party}:{})},status||409)}
+  return this.raidJson(result,result.status||200);
+ }
  async fetch(request){
   await this.ready;
   if(this.ledgerLoadFailed){
@@ -256,6 +408,10 @@ export class Social {
   }
   const requestPath=new URL(request.url).pathname;
   if(requestPath==='/gm/fishing-mvp')return this.adminFishingMvp(request);
+  if(requestPath.startsWith('/raid/')){
+   let identity=null;try{identity=JSON.parse(request.headers.get('X-Social-Identity')||'null')}catch{}
+   return this.raidRoute(request,requestPath,identity);
+  }
   if(request.headers.get('Upgrade')?.toLowerCase()!=='websocket'){
    // v367: the 426 is the only non-destructive probe of this room. Let it carry the last greeting
    // failure, so /api/chatcheck can report a room-side fault instead of declaring victory.
