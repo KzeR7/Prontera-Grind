@@ -56,6 +56,12 @@ const MAX_FISH_W=5000;
 export const FISHING_MVP_IDS=Object.freeze(['mvp_tidewarden','mvp_rimewraith','mvp_tidecourser','mvp_dreadnought','mvp_thousandeye','mvp_auricmaw','mvp_worldeye','mvp_volthorn','mvp_dreadclaw','mvp_stormcoil']);
 const MVP_IDS=FISHING_MVP_IDS;
 const MVP_SPAWN_MIN=60*60*1000,MVP_SPAWN_MAX=2*60*60*1000,MVP_DURATION=10*60*1000;
+function shuffledMvpDeck(random,previous){
+ const deck=[...MVP_IDS];
+ for(let i=deck.length-1;i>0;i--){const j=Math.floor(random()*(i+1));[deck[i],deck[j]]=[deck[j],deck[i]]}
+ if(deck.length>1&&deck[0]===previous){const j=1+Math.floor(random()*(deck.length-1));[deck[0],deck[j]]=[deck[j],deck[0]]}
+ return deck;
+}
 const ledgerIdValid=id=>typeof id==='string'&&/^[A-Za-z0-9:_-]{1,100}$/.test(id);
 // Only public World text/emotions are durable. Whispers and Local never enter this record.
 export function cleanWorldHistory(value){
@@ -81,7 +87,7 @@ export function cleanPokerLedgerQueues(value){
  return queues;
 }
 export function cleanMvpState(value){
- if(!value||typeof value!=='object'||Array.isArray(value))return {active:[],nextAt:[]};
+ if(!value||typeof value!=='object'||Array.isArray(value))return {active:[],nextAt:[],lastSp:[],decks:[]};
  const active=Array.isArray(value.active)?value.active.filter(pair=>
   Array.isArray(pair)&&pair.length===2&&Number.isInteger(pair[0])&&pair[0]>=1&&pair[0]<=SOCIAL_MAX_ROOMS&&
   pair[1]&&typeof pair[1]==='object'&&typeof pair[1].sp==='string'&&FISHING_MVP_IDS.includes(pair[1].sp)&&
@@ -90,7 +96,15 @@ export function cleanMvpState(value){
  const nextAt=Array.isArray(value.nextAt)?value.nextAt.filter(pair=>
   Array.isArray(pair)&&pair.length===2&&Number.isInteger(pair[0])&&pair[0]>=1&&pair[0]<=SOCIAL_MAX_ROOMS&&Number.isFinite(pair[1])
  ):[];
- return {active,nextAt};
+ const lastSp=Array.isArray(value.lastSp)?value.lastSp.filter(pair=>
+  Array.isArray(pair)&&pair.length===2&&Number.isInteger(pair[0])&&pair[0]>=1&&pair[0]<=SOCIAL_MAX_ROOMS&&FISHING_MVP_IDS.includes(pair[1])
+ ):[];
+ const decks=Array.isArray(value.decks)?value.decks.flatMap(pair=>{
+  if(!Array.isArray(pair)||pair.length!==2||!Number.isInteger(pair[0])||pair[0]<1||pair[0]>SOCIAL_MAX_ROOMS||!Array.isArray(pair[1]))return [];
+  const seen=new Set(),deck=pair[1].filter(sp=>FISHING_MVP_IDS.includes(sp)&&!seen.has(sp)&&seen.add(sp));
+  return [[pair[0],deck]];
+ }):[];
+ return {active,nextAt,lastSp,decks};
 }
 // Only positive integer account ids belong in a friend list.
 const cleanFriendId=id=>Number.isInteger(id)&&id>0;
@@ -113,7 +127,7 @@ export class SocialRoom {
   this.random=opts.random||B.randomUnit;this.battleSerial=0;this.pveRuns=new Map();
   this.pvpQueues=new Map();this.pvpMatches=new Map();this.pvpByRoom=new Map();this.parties=new Map();this.partyInvites=new Map();
   // MVP fishing: per-room active spawn + next spawn timer
-  this.mvpActive=new Map();this.mvpNextAt=new Map();
+  this.mvpActive=new Map();this.mvpNextAt=new Map();this.mvpLastSp=new Map(opts.lastSp||[]);this.mvpDecks=new Map(opts.decks||[]);
   this.mvpLoaded=opts.mvpLoaded??true;
   this.onBattleActivity=opts.onBattleActivity||null;
   this.onMvpChange=opts.onMvpChange||null;
@@ -379,10 +393,19 @@ export class SocialRoom {
  spawnMvp(room,now=this.now(),requestedSp=null,customId=null){
   if(this.mvpLoaded===false||!Number.isInteger(room)||room<1||room>MAX_ROOMS||this.mvpActive.has(room))return null;
   if(requestedSp!==null&&!MVP_IDS.includes(requestedSp))return null;
-  const sp=requestedSp||MVP_IDS[Math.floor(this.random()*MVP_IDS.length)];
+  // Draw from a shuffled bag: every MVP appears once before the bag reshuffles. Persist the
+  // remaining bag so room eviction cannot turn a streak into repeated independent random rolls.
+  const previous=this.mvpLastSp.get(room);
+  let deck=this.mvpDecks.get(room);
+  if(!Array.isArray(deck)||!deck.length)deck=shuffledMvpDeck(this.random,previous);
+  let sp=requestedSp;
+  if(requestedSp){deck=deck.filter(id=>id!==requestedSp)}
+  else sp=deck.shift();
+  this.mvpDecks.set(room,deck);
   const id=customId||('mvp:'+now.toString(36)+':'+Math.random().toString(36).slice(2,8));
   const endsAt=now+MVP_DURATION,spawn={room,sp,id,spawnedAt:now,endsAt};
   this.mvpActive.set(room,{sp,id,spawnedAt:now,endsAt});
+  this.mvpLastSp.set(room,sp);
   this.mvpNextAt.delete(room);
   this.broadcast({type:'mvp_spawn',...spawn},p=>p.room===room);
   this.onMvpChange?.();

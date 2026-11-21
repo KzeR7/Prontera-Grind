@@ -1009,11 +1009,14 @@ assert(rimDist<2.4,'the walk targets the pond rim, not the spawn');
  FISH.bind({host:()=>hostS,scene:()=>null,self:()=>null,moveTo:()=>{},notice:m=>mvpNotices.push(m),save:()=>{}});
  const mvpEnds=Date.now()+10*60*1000;
  FISH.setMvp({sp:'mvp_stormcoil',id:'mvp-ui-test',spawnedAt:Date.now(),endsAt:mvpEnds});
+ FISH.setMvp({sp:'mvp_stormcoil',id:'mvp-ui-test',spawnedAt:Date.now(),endsAt:mvpEnds}); // repeated worker snapshot / reconnect
  const mvpBannerText=d2.getElementById('fishingMvpBanner').textContent;
  assert(/Stormcoil Leviathan/.test(mvpBannerText)&&!/\d+%|hook|catch chance|land chance/i.test(mvpBannerText),'the active MVP banner names the fish and omits rates');
+ assert.equal(mvpNotices.length,1,'duplicate spawn snapshots do not spam repeat announcements');
  assert(mvpNotices[0]&&/Stormcoil Leviathan/.test(mvpNotices[0])&&!/\d+%|hook|catch chance|land chance/i.test(mvpNotices[0]),'the spawn announcement omits rates');
  FISH.clearMvp({id:'mvp-ui-test'});
  assert(mvpNotices[1]&&/fled the pond/i.test(mvpNotices[1])&&!/\d+%|hook|catch chance|land chance/i.test(mvpNotices[1]),'the despawn notice omits rates');
+ assert.equal(mvpNotices.length,2,'one despawn produces only one notice');
  if(FISH.setMvp._ticker){clearInterval(FISH.setMvp._ticker);FISH.setMvp._ticker=null}
  dom2.window.close();
  // --- Part D: the page wires v295 up (save shape, cache versions, build tag) ---------------

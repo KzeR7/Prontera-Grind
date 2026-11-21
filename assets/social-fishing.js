@@ -924,9 +924,10 @@ function renderMvpBanner(){
 }
 function setMvp(data){
  if(!data||!data.sp||!data.id) return;
+ const isSameSpawn=mvpActive?.id===data.id&&mvpActive?.sp===data.sp;
  mvpActive={sp:data.sp,id:data.id,spawnedAt:Number(data.spawnedAt)||Date.now(),endsAt:Number(data.endsAt)||Date.now()+10*60*1000};
  renderMvpBanner();
- if(opts&&opts.notice){
+ if(!isSameSpawn&&opts&&opts.notice){
   const sp=speciesById(mvpActive.sp);
   opts.notice(`⚠️ MVP ${sp?sp.name:mvpActive.sp} has spawned at the pond! 10-minute window — reel it in!`);
  }

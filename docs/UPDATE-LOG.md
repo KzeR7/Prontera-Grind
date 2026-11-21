@@ -12288,3 +12288,8 @@ re-recording them here would have written wrong numbers into the repository.
 * **Changed:** Combo slot text and hover now show the actual class/Ascension-adjusted cooldown, including Sura's 5-second Asura while Monk and Champion remain at 6 seconds. Ascension skill details use the same cooldown. No combat values changed.
 * **Checks:** All 260 simulation/smoke suites and four generated-asset/preview checks passed. The Sura regression checks slot text and tooltip for Sura and Champion. Fixed two Sura research runners' syntax and reran them; both exactly reproduce their recorded JSONL results. Balance fixtures were remeasured against the baseline. The built site passed the desktop/mobile Chromium/SwiftShader sphere, title and fishing integration rehearsal (synthetic state, not a physical device).
 * **Delivery:** PR #268; no manual deployment.
+
+### 2026-11-21 — `haven-v447 Randomized Fishing MVP selection and deduplicated alerts`
+* **Changed:** Random plaza Fishing MVPs now come from a shuffled ten-species bag: every species appears once before reshuffling, with no same-species repeat across the boundary. The remaining bag is persisted so a Durable Object eviction does not reset the rotation. Repeated snapshots/reconnects for the same active MVP no longer append duplicate local fishing announcements.
+* **Checks:** `social_mvp_spawn_sim.js` verifies the shuffled bag covers all ten species before reshuffling, preserves the bag through storage recovery, and prevents boundary repeats; `social_fishing_sim.js` verifies repeated active-spawn snapshots announce only once.
+* **Delivery:** Local changes on `arena/08ceee25-prontera-grind`; no deployment.
