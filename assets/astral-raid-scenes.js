@@ -37,10 +37,13 @@
 
   // Mirrors STAGE_BOUNDS in the engine. A mismatch is a client bug, not a gameplay choice.
   const BOUNDS = Object.freeze({
-    approach: Object.freeze({ kind: 'rect', minX: -19, maxX: 19, minZ: -34, maxZ: 17 }),
-    arcade: Object.freeze({ kind: 'rect', minX: -22, maxX: 22, minZ: -36, maxZ: 17 }),
-    observatory: Object.freeze({ kind: 'circle', x: 0, z: 0, r: 21 }),
-    sanctuary: Object.freeze({ kind: 'rect', minX: -24, maxX: 24, minZ: -26, maxZ: 22 }),
+    // These mirror the shipped Astral map's own fight span (`arena {halfWidth:13, z0:-20, z1:20}`),
+    // which is what actually bounds the fight. They are only used if that map fails to load; the
+    // inflated 38x51 halls this file used to claim were a second, disagreeing source of truth.
+    approach: Object.freeze({ kind: 'rect', minX: -13, maxX: 13, minZ: -20, maxZ: 20 }),
+    arcade: Object.freeze({ kind: 'rect', minX: -13, maxX: 13, minZ: -20, maxZ: 20 }),
+    observatory: Object.freeze({ kind: 'circle', x: 0, z: 0, r: 13 }),
+    sanctuary: Object.freeze({ kind: 'rect', minX: -13, maxX: 13, minZ: -20, maxZ: 20 }),
   });
 
   function random(seed) { return () => ((seed = seed * 16807 % 2147483647) - 1) / 2147483646; }

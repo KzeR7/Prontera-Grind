@@ -48,11 +48,19 @@ const ACTIONS = new Set([...INTENTS, ...PAID_ACTIONS]);
 // camera had to sit close, the packs filled the screen, and there was nowhere to walk. Each stage is
 // now a hall worth the name, and STAGE_BOUNDS is the single source of truth: the engine clamps
 // movement to it, and assets/astral-raid-scenes.js draws exactly this footprint.
+// The fight happens on ONE span of the shipped Astral route, and the route says how much room that
+// is: `arena {halfWidth: 13, z0: focus-20, z1: focus+20}` around each span's focus point. These are
+// that declaration, in local coordinates (centre at z = 0), so the deck the player stands on and the
+// rectangle the engine clamps to are finally the same shape.
+//
+// They were previously invented - 38 to 48 units wide, 51 deep - while the map's deck was 26 wide
+// and 40 deep. Mobs spawned off the platform because the engine was told there was more floor than
+// the renderer had drawn.
 export const STAGE_BOUNDS = Object.freeze({
-  approach: Object.freeze({ minX: -19, maxX: 19, minZ: -34, maxZ: 17 }),
-  arcade: Object.freeze({ minX: -22, maxX: 22, minZ: -36, maxZ: 17 }),
-  observatory: Object.freeze({ minX: -21, maxX: 21, minZ: -21, maxZ: 21 }),
-  sanctuary: Object.freeze({ minX: -24, maxX: 24, minZ: -26, maxZ: 22 }),
+  approach: Object.freeze({ minX: -13, maxX: 13, minZ: -20, maxZ: 20 }),
+  arcade: Object.freeze({ minX: -13, maxX: 13, minZ: -20, maxZ: 20 }),
+  observatory: Object.freeze({ minX: -13, maxX: 13, minZ: -20, maxZ: 20 }),
+  sanctuary: Object.freeze({ minX: -13, maxX: 13, minZ: -20, maxZ: 20 }),
 });
 
 export function stageBounds(stageKey) {
@@ -220,8 +228,8 @@ const ENEMY_LAYOUT = Object.freeze({
     Object.freeze({ id: 'b1-g3', name: 'Agony Demon', spriteId: 1707, shape: 'demon', x: 7.8, z: -4.4, pack: 0 }),
     Object.freeze({ id: 'b1-g4', name: 'Despair Phantom', spriteId: 1705, shape: 'demon', x: 8.2, z: -8.8, pack: 0 }),
     Object.freeze({ id: 'b1-g5', name: 'Tower Watcher', spriteId: 1700, shape: 'demon', x: 0.2, z: -10.6, pack: 0, ranged: true }),
-    Object.freeze({ id: 'b-anchor-l', kind: 'anchor', name: 'Rift Anchor', spriteId: 1708, shape: 'demon', x: -11.4, z: -26.2, pack: 1, label: 'Shield anchor' }),
-    Object.freeze({ id: 'b-anchor-r', kind: 'anchor', name: 'Rift Anchor', spriteId: 1708, shape: 'demon', x: 11.4, z: -26.2, pack: 1, label: 'Shield anchor' }),
+    Object.freeze({ id: 'b-anchor-l', kind: 'anchor', name: 'Rift Anchor', spriteId: 1708, shape: 'demon', x: -9.2, z: -15.4, pack: 1, label: 'Shield anchor' }),
+    Object.freeze({ id: 'b-anchor-r', kind: 'anchor', name: 'Rift Anchor', spriteId: 1708, shape: 'demon', x: 9.2, z: -15.4, pack: 1, label: 'Shield anchor' }),
     Object.freeze({ id: 'b1-g6', name: 'Death Whisperer', spriteId: 1706, shape: 'demon', x: -2.4, z: -18.2, pack: 2 }),
     Object.freeze({ id: 'b1-g7', name: 'Agony Demon', spriteId: 1707, shape: 'demon', x: 2.6, z: -18.4, pack: 2 }),
   ]),

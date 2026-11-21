@@ -206,15 +206,45 @@
   }
 
   let texturedRetry = false;
+  let astralRequested = false;
   let loadedSurfaces = null;
+  // Stage index into the real Astral route (1..5). The raid walks the four named spans, which are the
+  // same spans the field's Ascension route already renders.
+  const STAGE_SPAN = { approach: 1, arcade: 3, observatory: 4, sanctuary: 5 };
+
   function ensureWorld(stageKey) {
     if (D.world && D.stageKey === stageKey) return D.world;
     disposeWorld();
-    const scenes = root.PGAstralRaidScenes;
-    if (!scenes) return null;
-    let world;
     const surfaces = loadedSurfaces;
-    try { world = scenes.build(stageKey, surfaces ? { surfaces } : {}); } catch (error) { console.error('Raid scenery failed', error); return null; }
+    let world = null;
+    // Use the REAL map. `assets/astral-scenery.js` is the shipped, textured Astral route - the one
+    // the field already draws - and it exports the fight area it was built around (`arena`). The
+    // first pass re-implemented this look in a second file, which is how a 228-line map that already
+    // worked became 584 lines of nearly-the-same-scenery with its own bounds, its own fog and its own
+    // lighting to get wrong. Build the real one and read its numbers.
+    // The shipped map is loaded on demand by the Ascension route, so a raid that starts first must
+    // ask for it. Loading is fire-and-forget: this frame draws the fallback scenes, and the moment
+    // the real map arrives `texturedRetry` below forces one rebuild on the good map.
+    if (!root.PGAstralScenery && !astralRequested) {
+      astralRequested = true;
+      const tag = document.createElement('script');
+      tag.src = 'assets/astral-scenery.js';
+      tag.onload = () => { if (D.on) D.world = null; };
+      tag.onerror = () => console.warn('Astral map unavailable; arena keeps its own scenery');
+      document.head.appendChild(tag);
+    }
+    const real = root.PGAstralScenery;
+    if (real && typeof real.build === 'function') {
+      try { world = real.build(STAGE_SPAN[stageKey] || 1, surfaces ? { surfaces } : {}); } catch (error) { console.error('Astral map failed to build', error); world = null; }
+      if (world) world.raidArena = world.arena;
+    }
+    // Fall back to the purpose-built raid scenes only if the shipped map is unavailable, so a load
+    // order change can never leave the arena empty.
+    if (!world) {
+      const scenes = root.PGAstralRaidScenes;
+      if (!scenes) return null;
+      try { world = scenes.build(stageKey, surfaces ? { surfaces } : {}); } catch (error) { console.error('Raid scenery failed', error); return null; }
+    }
     // The first build happens before the images finish loading; rebuild once, when they land, so
     // the player's first run is not the flat-colour version.
     if (!surfaces && !texturedRetry) {
@@ -228,7 +258,12 @@
     D.world = world;
     D.stageKey = stageKey;
     D.mount = new THREE.Group();
+    // The real map is authored in route coordinates (its spans sit at z = -8, -74, -140, -208). The
+    // raid works in flat local space, so the mounted copy is shifted by the span's focus: whatever
+    // the map declares as the arena centre becomes local z = 0.
     D.mount.position.set(0, 0, ORIGIN);
+    const focus = arenaFocus();
+    if (focus) for (const child of [...world.scene.children]) child.position.z -= focus;
     for (const child of [...world.scene.children]) D.mount.add(child);
     D.sky = world.scene.background;
     D.fog = world.scene.fog;
@@ -389,9 +424,7 @@
   }
 
   function stageSpawn() {
-    const b = D.world && D.world.bounds;
-    if (!b) return { x: 0, z: 8 };
-    if (b.kind === 'circle') return { x: 0, z: b.r - 2.2 };
+    const b = boundsOf(D.stageKey);
     return { x: 0, z: b.maxZ - 2.2 };
   }
 
@@ -493,12 +526,28 @@
   // The playable rectangle for a stage, straight from the scenery module so the client and the deck
   // cannot disagree. The observatory is a disc, so it is reported as its bounding square and the
   // circular deck is what actually bounds it; the pad keeps the hero off the rim either way.
+  // The playable rectangle, taken from the map that is actually on screen.
+  //
+  // The real Astral map is a long route; a fight happens on one span of it, and the map says which
+  // span: `arena {halfWidth, z0, z1}` around a focus point. Reading that is the whole point of
+  // building on the real map - the floor, the bounds and the camera all come from one place instead
+  // of three that can disagree.
   function boundsOf(stageKey) {
+    if (D.world && D.world.raidArena) {
+      const a = D.world.raidArena, focus = D.world.view && Number.isFinite(D.world.view.focus) ? D.world.view.focus : 0;
+      return { minX: -a.halfWidth, maxX: a.halfWidth, minZ: a.z0 - focus, maxZ: a.z1 - focus };
+    }
     const scenes = root.PGAstralRaidScenes;
     const b = (scenes && scenes.BOUNDS && (scenes.BOUNDS[stageKey] || scenes.BOUNDS.approach)) || null;
-    if (!b) return { minX: -19, maxX: 19, minZ: -34, maxZ: 17 };
+    if (!b) return { minX: -13, maxX: 13, minZ: -20, maxZ: 20 };
     if (b.kind === 'circle') return { minX: -b.r, maxX: b.r, minZ: -b.r, maxZ: b.r };
     return b;
+  }
+
+  // Where the map says the party joins the fight: the near edge of the span, centre.
+  function arenaFocus() {
+    if (D.world && D.world.view && Number.isFinite(D.world.view.focus)) return D.world.view.focus;
+    return 0;
   }
 
   function keyVector() {

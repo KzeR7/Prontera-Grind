@@ -916,8 +916,8 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="preload" href="assets/ui/fonts/font-5.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-6.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-7.ttf" as="font" type="font/ttf" crossorigin>
-<link rel="stylesheet" href="assets/ui/eclipse.css?v=452">
-<link rel="stylesheet" href="assets/ui/mobile.css?v=452">
+<link rel="stylesheet" href="assets/ui/eclipse.css?v=453">
+<link rel="stylesheet" href="assets/ui/mobile.css?v=453">
 <style>
 /* Rift Aura: the one earned-only cosmetic. It is tied to the account's first qualifying clear,
    never sold and never removable from the save once the account earns it. */
@@ -930,9 +930,9 @@ body.has-rift-aura #heroTitle{filter:drop-shadow(0 0 6px #79e4ff88)}
 <link rel="stylesheet" href="assets/ui/mastery-titles.css?v=446">
 <script src="assets/ui/mobile.js?v=274"></script>
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
-<link rel="stylesheet" href="assets/social.css?v=452">
+<link rel="stylesheet" href="assets/social.css?v=453">
 <link rel="stylesheet" href="assets/social-battle.css?v=393">
-  <link rel="stylesheet" href="assets/social-fishing.css?v=452"><link rel="stylesheet" href="assets/friends.css?v=273">
+  <link rel="stylesheet" href="assets/social-fishing.css?v=453"><link rel="stylesheet" href="assets/friends.css?v=273">
 <link rel="stylesheet" href="assets/adventure-guide.css?v=446">
 </head>
 <body>
@@ -1063,10 +1063,10 @@ body.has-rift-aura #heroTitle{filter:drop-shadow(0 0 6px #79e4ff88)}
 <div id="tooltip"></div>
 <link rel="stylesheet" href="assets/wardrobe.css?v=138">
 <link rel="stylesheet" href="assets/shop.css?v=318">
-<script src="assets/wardrobe.js?v=452"></script>
+<script src="assets/wardrobe.js?v=453"></script>
 <script src="assets/shop-catalog.js?v=321"></script>
 <script src="assets/fourth-jobs.js?v=179"></script>
-<script src="assets/expanded-jobs.js?v=452"></script>
+<script src="assets/expanded-jobs.js?v=453"></script>
 <script src="assets/ascension.js?v=156"></script>
 <script src="assets/native-mob-heights.js?v=153"></script>
 <script src="assets/native-fields.js?v=197"></script>
@@ -1363,7 +1363,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-20 haven-v452 Raid movement, targeting and HP bars';
+const BUILD='2026-11-20 haven-v453 Raid on the shipped Astral map';
 // v364: this write used to sit AFTER the `//` on the BUILD line, so it was part of the comment and
 // never ran - the login card showed an empty #buildTag and there was no way to confirm which file
 // the browser had loaded. It also has to survive the script running before the login card exists.
@@ -16587,27 +16587,27 @@ setInterval(updateWatch,60000);
 // be hours old while the player was on another tab, and the check is a 60-byte text file.
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&(pendingUpdateBuild||Date.now()-PAGE_STARTED_AT>30000))updateWatch()});
 </script>
-<script src="assets/wardrobe-ui.js?v=452"></script>
+<script src="assets/wardrobe-ui.js?v=453"></script>
 <script src="assets/shop.js?v=321"></script>
 <script src="assets/friends.js?v=273"></script>
-<script src="assets/digimon/roster.js?v=452"></script>
-<script src="assets/digimon/base-stats.js?v=452"></script>
-<script src="assets/social-rules.js?v=452"></script>
-<script src="assets/social-poker.js?v=452"></script>
-<script src="assets/digimon-sanctuary.js?v=452"></script>
+<script src="assets/digimon/roster.js?v=453"></script>
+<script src="assets/digimon/base-stats.js?v=453"></script>
+<script src="assets/social-rules.js?v=453"></script>
+<script src="assets/social-poker.js?v=453"></script>
+<script src="assets/digimon-sanctuary.js?v=453"></script>
 <script src="assets/digimon-battle.js?v=393"></script>
-<script src="assets/social-digimon.js?v=452"></script>
+<script src="assets/social-digimon.js?v=453"></script>
 <script src="assets/social-gym-redesign.js?v=393"></script>
 <script src="assets/social-pond-design.js?v=393"></script>
 <script src="assets/social-title-art.js?v=446"></script>
-<script src="assets/social-scene.js?v=452"></script>
-<script src="assets/social-fishing.js?v=452"></script>
-<script src="assets/plaza-bots.js?v=452"></script>
+<script src="assets/social-scene.js?v=453"></script>
+<script src="assets/social-fishing.js?v=453"></script>
+<script src="assets/plaza-bots.js?v=453"></script>
 <script src="assets/adventure-guide.js?v=446"></script>
-<script src="assets/social.js?v=452"></script>
-<script src="assets/astral-raid-scenes.js?v=452"></script>
-<script src="assets/raid-dungeon.js?v=452"></script>
-<script src="assets/raid-solo.js?v=452"></script>
-<script src="assets/rift-raid.js?v=452"></script>
+<script src="assets/social.js?v=453"></script>
+<script src="assets/astral-raid-scenes.js?v=453"></script>
+<script src="assets/raid-dungeon.js?v=453"></script>
+<script src="assets/raid-solo.js?v=453"></script>
+<script src="assets/rift-raid.js?v=453"></script>
 <div id="raidHudLayer" aria-live="polite"></div></body>
 </html>

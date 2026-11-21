@@ -205,18 +205,42 @@ const PLAY_BUDGET_MS = Number(process.env.PG_PLAY_BUDGET_MS || 1_020_000);
     // 1c. The hero cannot leave the deck.
     const offDeck = await page.evaluate(async () => {
       const D = globalThis.PGRaidDungeon;
-      const b = globalThis.PGAstralRaidScenes.BOUNDS[D.stageKey] || globalThis.PGAstralRaidScenes.BOUNDS.approach;
-      const minX = b.kind === 'circle' ? -b.r : b.minX, maxX = b.kind === 'circle' ? b.r : b.maxX;
-      const minZ = b.kind === 'circle' ? -b.r : b.minZ, maxZ = b.kind === 'circle' ? b.r : b.maxZ;
+      // Read the rectangle the arena is actually using, not a table in another file: with the real
+      // map mounted, the bounds come from the map's own declared arena span.
+      const b = D._state.world && D._state.world.raidArena
+        ? (() => {
+            const a = D._state.world.raidArena;
+            const f = D._state.world.view && Number.isFinite(D._state.world.view.focus) ? D._state.world.view.focus : 0;
+            return { minX: -a.halfWidth, maxX: a.halfWidth, minZ: a.z0 - f, maxZ: a.z1 - f };
+          })()
+        : { minX: -13, maxX: 13, minZ: -20, maxZ: 20 };
+      const minX = b.minX, maxX = b.maxX, minZ = b.minZ, maxZ = b.maxZ;
       // Ask to walk far outside the deck, then let the client run.
       if (D.requestMove) D.requestMove(maxX + 40, maxZ + 40);
       await new Promise(r => setTimeout(r, 1400));
       const p = D.heroPos();
-      return { p, minX, maxX, minZ, maxZ,
+      return { p, minX, maxX, minZ, maxZ, arena: !!D._state.world.raidArena,
         inside: p.x >= minX - 0.001 && p.x <= maxX + 0.001 && p.z >= minZ - 0.001 && p.z <= maxZ + 0.001 };
     });
     if (offDeck.inside) H.ok('the hero cannot walk off the deck', `x=${offDeck.p.x.toFixed(2)} z=${offDeck.p.z.toFixed(2)} within bounds`);
     else H.fail('the hero cannot walk off the deck', `x=${offDeck.p.x.toFixed(2)} z=${offDeck.p.z.toFixed(2)} outside ${JSON.stringify([offDeck.minX, offDeck.maxX, offDeck.minZ, offDeck.maxZ])}`);
+
+    // 1c-ii. The arena is drawn by the shipped Astral map, not by a second implementation.
+    const mapSource = await page.evaluate(() => {
+      const D = globalThis.PGRaidDungeon;
+      const w = D._state.world;
+      return {
+        kind: w && w.kind ? w.kind : '',
+        title: w && w.title ? w.title : '',
+        hasRoute: !!(w && w.route && Array.isArray(w.route.focus)),
+        footprint: w && w.footprint ? w.footprint : '',
+      };
+    });
+    if (mapSource.kind === 'astral' && mapSource.hasRoute) {
+      H.ok('the arena is the shipped Astral map', `${mapSource.title} (${mapSource.footprint}), route spans ${'ready'}`);
+    } else {
+      H.fail('the arena is the shipped Astral map', 'got ' + JSON.stringify(mapSource));
+    }
 
     // 1d. Every enemy carries its own health bar, and mobs that die are held as corpses briefly
     //     instead of blinking out of existence.
