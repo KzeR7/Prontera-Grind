@@ -950,6 +950,18 @@ export const raidRecentSettledForUser = (db, userId, since) => db.prepare(`SELEC
   JOIN raid_run_members m ON m.run_id=r.id
   WHERE m.user_id=? AND r.state IN ('cleared','failed') AND r.settled_at>=?
   ORDER BY r.settled_at DESC LIMIT 1`).bind(userId, since).first();
+// Retire an ACTIVE run whose deadline has passed. `cancelled` is the state the schema already
+// allows for exactly this; it is not a settlement, so nothing is paid and no chest is written.
+//
+// The guard `state='active' AND deadline_at<=?` makes this safe to run on every lobby read: it is a
+// no-op for a live run, and two concurrent expiries cannot both win. Expiring the row is what
+// releases the one-active-run rule, which `raidActiveForUser` and the raid_entry_active_limit
+// trigger both key off `state='active'` — without this, an abandoned solo run blocks that account
+// from ever raiding again.
+export const raidExpireStaleStatement = (db, { runId, now }) =>
+  db.prepare(`UPDATE raid_runs SET state='cancelled', settled_at=?, result_json=?
+    WHERE id=? AND state='active' AND deadline_at<=?`)
+    .bind(now, JSON.stringify({ outcome: 'expired', reason: 'deadline-passed' }), runId, now);
 export const raidRun = (db, runId) => db.prepare('SELECT * FROM raid_runs WHERE id=?').bind(runId).first();
 export const raidRunMember = (db, runId, userId) =>
   db.prepare('SELECT * FROM raid_run_members WHERE run_id=? AND user_id=?').bind(runId, userId).first();

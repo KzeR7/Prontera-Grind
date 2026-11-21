@@ -162,12 +162,15 @@ async function partyView(env, user) {
   const members = [];
   for (const raw of Array.isArray(party.members) ? party.members : []) {
     const id = Number(raw.id);
-    const [entries, active, saved, cardRows] = await Promise.all([
+    const [entries, activeRow, saved, cardRows] = await Promise.all([
       db.raidDailyEntries(env.DB, id, day),
       db.raidActiveForUser(env.DB, id),
       db.saveByUser(env.DB, id),
       cardsFor(env, id),
     ]);
+    // Same stale-run rule as loadActiveRun: an abandoned run must not mark this member permanently
+    // ineligible (`activeRun: true` shows as "Finish your active raid" in the party panel).
+    const active = await expireIfStale(env, activeRow);
     let profile = { ok: false, reason: 'no-save' };
     let fingerprint = '';
     if (saved?.blob && saveBelongsTo(saved.blob, { id, userId: id, username: raw.name })) {
@@ -223,8 +226,37 @@ async function partyView(env, user) {
   };
 }
 
+// An ACTIVE row whose deadline has passed is a run nobody is playing any more: the tab was closed,
+// the browser crashed, the entry was spent and the result never arrived. Nothing ever moved such a
+// row out of `active` — settle is the only transition, and settle is exactly what a vanished tab
+// never calls — so `raidActiveForUser` kept returning it forever and every later start answered
+// "You already have an active raid that could not be resumed yet." Permanently, across days.
+//
+// Nothing else cleans this up. The client does have an `expired` branch for an active local run past
+// its deadline, but it is only reachable through `sync`, and pollRun returns before syncing whenever
+// a solo run is in flight — so for a solo run that branch is dead code and the row is never retired.
+//
+// Retiring it costs the player nothing, which is why this is safe to do unprompted. settle() reads
+// its outcome from the validated claim and inserts `raid_settlements` with INSERT OR IGNORE, not from
+// this row, so a tab that does come back still settles and is paid in full — verified: a retired run
+// settles to one settlement, one chest and one ledger row. The sweep only removes the row from the
+// active index; it writes no settlement, so nothing is granted on the player's behalf either.
+async function expireIfStale(env, row) {
+  if (!row || row.state !== 'active') return row;
+  const at = now();
+  if (int(row.deadline_at) > at) return row;
+  try {
+    await db.raidExpireStaleStatement(env.DB, { runId: row.id, now: at }).run();
+  } catch (error) {
+    // A failed sweep must not fail the request it was riding on; the row stays active and the next
+    // read tries again.
+    console.error('Raid stale-run expiry failed', error);
+  }
+  return null;
+}
+
 async function loadActiveRun(env, user) {
-  const row = await db.raidActiveForUser(env.DB, user.id);
+  const row = await expireIfStale(env, await db.raidActiveForUser(env.DB, user.id));
   if (!row) return { ok: true, run: null, error: '' };
   // A solo run is not in the room, so asking the room about it would (a) be a pointless request on
   // every login and (b) report "the room is down" for a fight the room has nothing to do with.
@@ -305,7 +337,7 @@ async function writeCheckpoint(env, runId, checkpoint) {
 async function startRaid(env, user, body) {
   if (!(await installed(env))) return { ok: false, status: 503, data: { err: 'Rift Raid D1 migration is not installed.', installed: false } };
   const mode = body.mode === 'party' ? 'party' : 'solo';
-  const existing = await db.raidActiveForUser(env.DB, user.id);
+  const existing = await expireIfStale(env, await db.raidActiveForUser(env.DB, user.id));
   if (existing) {
     const recovered = await recoverRun(env, user, existing);
     if (recovered.ok) return { ok: true, status: 200, data: { ok: true, resumed: true, runId: existing.id, run: recovered.run } };
@@ -345,7 +377,7 @@ async function startRaid(env, user, body) {
     if (int(entries?.n) >= RAID_RULES.dailyEntries) {
       return { ok: false, status: 429, data: { err: `${member.name} has used both raid entries for today.` } };
     }
-    const active = await db.raidActiveForUser(env.DB, member.id);
+    const active = await expireIfStale(env, await db.raidActiveForUser(env.DB, member.id));
     if (active) return { ok: false, status: 409, data: { err: `${member.name} already has an active raid.` } };
     const cardRows = await cardsFor(env, member.id);
     profiles.push(applyRaidCard(loaded.profile, Array.isArray(cardRows) ? cardRows : (cardRows?.results || [])));
@@ -825,7 +857,7 @@ async function readyAction(env, user, body) {
     const day = raidDayKey(now());
     const entries = await db.raidDailyEntries(env.DB, user.id, day);
     if (int(entries?.n) >= RAID_RULES.dailyEntries) return { ok: false, status: 429, data: { err: 'You have no raid entries left today.' } };
-    const active = await db.raidActiveForUser(env.DB, user.id);
+    const active = await expireIfStale(env, await db.raidActiveForUser(env.DB, user.id));
     if (active) return { ok: false, status: 409, data: { err: 'Finish your active raid before readying again.' } };
   }
   const result = await socialRequest(env, '/raid/ready', user, 'POST', { ready, fingerprint });

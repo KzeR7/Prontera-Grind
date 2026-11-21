@@ -370,6 +370,34 @@ the cost estimate and the proposal are deliberately *not* implemented here. Solo
 gap: the run advances while the tab is foregrounded, and a backgrounded or closed tab resumes from its
 checkpoint when reopened, because the engine resolves the elapsed cells on the next read.
 
+### Solo runs that are abandoned are now retired, not left blocking (found in staging)
+
+The first staging session surfaced a defect the local suites could not: a solo reservation whose tab
+was closed before settle stayed `active` forever, and every later start answered **"You already have
+an active raid that could not be resumed yet."** — permanently, across days.
+
+Nothing retired it. `settle` is the only transition out of `active`, and a closed tab never calls it;
+`raidActiveForUser` and the `raid_entry_active_limit` trigger both key off `state='active'`, so the
+dead row also blocked that account from readying or joining a party. The client does have an
+`expired` branch for exactly this case, but it is only reachable through `sync`, and `pollRun`
+returns before syncing whenever a solo run is in flight — for solo it is unreachable.
+
+The fix sweeps on read (`expireIfStale` in `functions/api/raid.js`): an `active` row past its
+deadline is set to `cancelled`, which the schema already allowed. It is a single guarded UPDATE
+(`WHERE state='active' AND deadline_at<=?`), so it is a no-op for a live run and idempotent when two
+reads race. It runs on the lobby read, start, ready and the party roster read.
+
+Two properties make it free rather than a trade, and both are pinned by tests:
+
+* **It pays nothing.** No settlement, chest or ledger row is written for a retired run.
+* **It takes nothing away.** `settle` takes its outcome from the validated claim and inserts
+  `raid_settlements` with `INSERT OR IGNORE` — it does not require the row to still say `active`. So
+  a tab that comes back after the sweep still settles and is paid in full, exactly once.
+
+The daily entry is deliberately *not* refunded: the run was entered and reserved, and re-entering
+requires a new reservation. `tools/tests/raid_api_source_sim.mjs` covers all three cases — retire and
+unblock, retired-but-still-paid, and live-run-untouched.
+
 ## 5. Staging steps (separate reviewable step — not performed)
 
 The owner-run PowerShell handoff is `tools/staging/update-and-stage.ps1`; the walkthrough for a

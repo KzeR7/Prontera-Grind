@@ -494,6 +494,101 @@ await t('a complete solo run reserves and settles without one Social request', a
 // the client remembering. A client that lost its checkpoint (cleared storage, a different device, a
 // reload before the checkpoint was written) still cannot buy a second entry while the first run is
 // active, because the reservation itself is the lock.
+await t('an abandoned run past its deadline stops blocking the account, and pays nothing', async () => {
+  // The lockout this guards: a solo reservation whose tab was closed before settle stayed `active`
+  // forever. settle is the only exit and a closed tab never calls it, so every later start answered
+  // 409 "You already have an active raid that could not be resumed yet." - permanently, across days,
+  // because raidActiveForUser and the raid_entry_active_limit trigger both key off state='active'.
+  const me = await soloUser('StaleRun');
+  const first = await postRaid(me, { action: 'start', mode: 'solo' });
+  assert.equal(first.ok, true, JSON.stringify(first.data).slice(0, 200));
+
+  // The player walks away; the run's deadline passes with no settle.
+  const run = sql.prepare('SELECT * FROM raid_runs WHERE id=?').get(first.data.runId);
+  assert.equal(run.state, 'active');
+  sql.prepare('UPDATE raid_runs SET started_at=?, deadline_at=? WHERE id=?')
+    .run(Number(run.started_at) - 7_200_000, clock - 60_000, run.id);
+
+  // The lobby read must not offer the dead run as something to resume...
+  const state = await jsonBody(await onRequestGet({ request: request('/api/raid', me), env }));
+  assert.equal(state.activeRun, null, 'the expired run is not an active run');
+  assert.equal(state.activeReservation, null, 'and it is not a resumable reservation either');
+
+  // ...and starting again must work rather than answering the 409 lockout. This is the assertion
+  // that would have caught the bug: before the fix this was a 409 with the "could not be resumed"
+  // message, and it stayed a 409 every day after.
+  const second = await postRaid(me, { action: 'start', mode: 'solo' });
+  assert.equal(second.ok, true, 'a new run starts after the stale one expires: ' + JSON.stringify(second.data).slice(0, 200));
+  assert.notEqual(second.data.runId, first.data.runId, 'it is a NEW run, not the dead one');
+
+  // The dead row is retired as cancelled - not settled - so it is out of the active index and it
+  // never pays anything.
+  const retired = sql.prepare('SELECT state FROM raid_runs WHERE id=?').get(first.data.runId);
+  assert.equal(retired.state, 'cancelled', 'the abandoned run is retired, not left active');
+  assert.equal(sql.prepare('SELECT COUNT(*) AS n FROM raid_settlements WHERE run_id=?').get(first.data.runId).n, 0,
+    'an abandoned run writes no settlement');
+  assert.equal(sql.prepare('SELECT COUNT(*) AS n FROM raid_chests WHERE run_id=?').get(first.data.runId).n, 0,
+    'and no chest: nothing is granted for a run nobody finished');
+  assert.equal(sql.prepare('SELECT COUNT(*) AS n FROM grants WHERE ref LIKE ?').get('raid:' + first.data.runId + ':%').n, 0,
+    'and no grant reaches the player');
+});
+
+await t('a run retired as expired still pays its own tab when it comes back', async () => {
+  // This is what makes the sweep free rather than a trade. settle() takes its outcome from the
+  // validated claim and inserts raid_settlements with INSERT OR IGNORE; it does NOT require the run
+  // row to still say `active`. So retiring a stale row, and settling a run whose row was already
+  // retired, are both safe. Pin that, because the day settle starts reading run.state is the day the
+  // sweep starts costing players the rewards they actually earned.
+  const me = await soloUser('LateTab');
+  const started = await postRaid(me, { action: 'start', mode: 'solo' });
+  assert.equal(started.ok, true, JSON.stringify(started.data).slice(0, 200));
+  const runId = started.data.runId;
+
+  const row = sql.prepare('SELECT * FROM raid_runs WHERE id=?').get(runId);
+  const checkpoint = JSON.parse(row.checkpoint_json);
+  const startedAt = Number(row.started_at) - 800_000;
+  const deadlineAt = clock - 30_000;
+  sql.prepare('UPDATE raid_runs SET started_at=?, deadline_at=?, checkpoint_json=? WHERE id=?')
+    .run(startedAt, deadlineAt, JSON.stringify({ ...checkpoint, startedAt, deadlineAt }), runId);
+
+  // A lobby read sweeps it first: that is the ordering the real player hits.
+  await onRequestGet({ request: request('/api/raid', me), env });
+  assert.equal(sql.prepare('SELECT state FROM raid_runs WHERE id=?').get(runId).state, 'cancelled');
+
+  // The tab returns and reports what it simulated, inside the run's own clock.
+  const settled = await postRaid(me, { action: 'settle', runId, result: {
+    outcome: 'failed', finishedAt: Math.min(deadlineAt, startedAt + 700_000),
+    damage: 120_000, support: 0, actions: 40,
+  } });
+  assert.equal(settled.ok, true, 'a retired run still settles: ' + JSON.stringify(settled.data).slice(0, 200));
+  assert.equal(settled.data.outcome, 'failed');
+  assert.ok(Array.isArray(settled.data.rewards) && settled.data.rewards.length,
+    'and it pays the real reward row, not an empty settlement');
+  assert.equal(sql.prepare('SELECT COUNT(*) AS n FROM raid_settlements WHERE run_id=?').get(runId).n, 1);
+  assert.equal(sql.prepare('SELECT COUNT(*) AS n FROM raid_chests WHERE run_id=?').get(runId).n, 1);
+
+  // And a second settle must not pay twice - exactly-once still holds after the sweep.
+  const again = await postRaid(me, { action: 'settle', runId, result: {
+    outcome: 'failed', finishedAt: Math.min(deadlineAt, startedAt + 700_000), damage: 120_000, support: 0, actions: 40,
+  } });
+  assert.equal(again.ok, true, 'the repeat settle is answered from the existing settlement');
+  assert.equal(sql.prepare('SELECT COUNT(*) AS n FROM raid_chests WHERE run_id=?').get(runId).n, 1,
+    'paying exactly once survives settling a retired run');
+});
+
+await t('a live run is never expired by a lobby read', async () => {
+  // The mirror of the test above: the sweep is deadline-gated, so an ordinary refresh of a run that
+  // is still in play must leave it exactly where it is.
+  const me = await soloUser('LiveRun');
+  const started = await postRaid(me, { action: 'start', mode: 'solo' });
+  assert.equal(started.ok, true, JSON.stringify(started.data).slice(0, 200));
+  const state = await jsonBody(await onRequestGet({ request: request('/api/raid', me), env }));
+  assert.ok(state.activeReservation, 'the live reservation is still offered to the tab');
+  assert.equal(state.activeReservation.id, started.data.runId);
+  assert.equal(sql.prepare('SELECT state FROM raid_runs WHERE id=?').get(started.data.runId).state, 'active',
+    'a run inside its deadline is untouched');
+});
+
 await t('a client with no local state cannot buy a second solo entry', async () => {
   const me = await soloUser('SoloAmnesia');
   const first = await postRaid(me, { action: 'start', mode: 'solo' });
