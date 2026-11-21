@@ -105,6 +105,14 @@ html.pg-mobile body.social-open.social-fishing-panel-open #socialChat{display:no
 #fishingTools{display:flex;align-items:center;gap:12px;padding:7px 12px;border-bottom:1px solid #243d44}
 #fishingTools select{background:#0e161d;border:1px solid #5d7d87;color:#e8f2ee;border-radius:4px;font:11px "Trebuchet MS",sans-serif;padding:3px 5px}
 #fishingTools label{display:flex;align-items:center;gap:4px;color:#b9d2d8;cursor:pointer}
+#fishingSellFilter{padding:6px 12px;border-bottom:1px solid #243d44;color:#b9d2d8;font-size:11px}
+#fishingSellFilter summary{cursor:pointer;color:#d7e9e5;font-weight:bold}
+#fishingSellFilterPanel{display:flex;align-items:center;flex-wrap:wrap;gap:8px 12px;padding:8px 0 2px}
+#fishingSellFilterPanel fieldset{display:flex;align-items:center;flex-wrap:wrap;gap:5px 9px;margin:0;padding:4px 7px;border:1px solid #35535c;border-radius:6px}
+#fishingSellFilterPanel legend{padding:0 4px;color:#8fb4bd;font-size:10px}
+#fishingSellFilterPanel label{display:flex;align-items:center;gap:4px;white-space:nowrap}
+#fishingSellFilterPanel button{background:#24424b;border:1px solid #6fa3b0;border-radius:5px;color:#eef4ec;font:bold 10.5px "Trebuchet MS",sans-serif;padding:5px 9px;cursor:pointer}
+#fishingSellFilterPanel small{color:#91aeb5}
 #fishingGrid{flex:1;min-height:70px;overflow:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:7px;padding:10px 12px;scrollbar-width:thin;scrollbar-color:#54767e transparent}
 .fishing-empty{grid-column:1/-1;color:#93adb3;font-style:italic;text-align:center;margin:18px 6px}
 .fishing-slot{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;background:#182d34;border:1.5px solid var(--rar,#3d5a63);border-radius:8px;padding:7px 3px 5px;cursor:pointer;color:#dcebe7;font:10px "Trebuchet MS",sans-serif;transition:transform .08s,box-shadow .12s}

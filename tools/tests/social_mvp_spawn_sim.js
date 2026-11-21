@@ -10,10 +10,10 @@ console.log('social MVP spawn simulation: testing pure earliest-deadline schedul
 // 1. cleanMvpState sanitization
 // ============================================================================
 {
- assert.deepEqual(cleanMvpState(null), {active:[], nextAt:[]});
- assert.deepEqual(cleanMvpState('invalid'), {active:[], nextAt:[]});
- assert.deepEqual(cleanMvpState([]), {active:[], nextAt:[]});
- assert.deepEqual(cleanMvpState({active:'bad', nextAt:123}), {active:[], nextAt:[]});
+ assert.deepEqual(cleanMvpState(null), {active:[], nextAt:[], lastSp:[], decks:[]});
+ assert.deepEqual(cleanMvpState('invalid'), {active:[], nextAt:[], lastSp:[], decks:[]});
+ assert.deepEqual(cleanMvpState([]), {active:[], nextAt:[], lastSp:[], decks:[]});
+ assert.deepEqual(cleanMvpState({active:'bad', nextAt:123}), {active:[], nextAt:[], lastSp:[], decks:[]});
 
  const wellFormed = {
   active: [
@@ -25,7 +25,9 @@ console.log('social MVP spawn simulation: testing pure earliest-deadline schedul
    [1, 5000000],
    [2, 6000000],
    [100, 7000000] // room out of range
-  ]
+  ],
+  lastSp: [[1, 'mvp_stormcoil'], [2, 'not_a_fish'], [100, 'mvp_tidewarden']],
+  decks: [[1, ['mvp_stormcoil', 'mvp_thousandeye', 'mvp_stormcoil', 'bad']], [100, ['mvp_tidewarden']]]
  };
  const cleaned = cleanMvpState(wellFormed);
  assert.equal(cleaned.active.length, 1);
@@ -34,6 +36,8 @@ console.log('social MVP spawn simulation: testing pure earliest-deadline schedul
  assert.equal(cleaned.active[0][1].id, 'mvp:test:1');
  assert.equal(cleaned.nextAt.length, 2);
  assert.deepEqual(cleaned.nextAt, [[1, 5000000], [2, 6000000]]);
+ assert.deepEqual(cleaned.lastSp, [[1, 'mvp_stormcoil']], 'valid previous species survive persistence sanitization');
+ assert.deepEqual(cleaned.decks, [[1, ['mvp_stormcoil', 'mvp_thousandeye']]], 'the random bag is validated and deduplicated on recovery');
  console.log('  ok 1. cleanMvpState filters malformed and out-of-range records');
 }
 
@@ -86,13 +90,39 @@ console.log('social MVP spawn simulation: testing pure earliest-deadline schedul
 
  assert.equal(room.hasOccupants(1), true, 'room 1 now has occupants');
  assert.equal(room.mvpActive.has(1), true, 'MVP spawned promptly upon player entry');
- const spawnMsg = msgs.find(m => m.type === 'mvp_spawn');
- assert.ok(spawnMsg, 'entering player received mvp_spawn in room snapshot');
+ const spawnEvents=msgs.filter(m=>m.type==='mvp_spawn');
+ assert.equal(spawnEvents.length,2,'an overdue return gets one live spawn plus one state snapshot');
+ const spawnMsg=spawnEvents.find(m=>m.snapshot!==true);
+ assert.ok(spawnMsg, 'entering player received the live overdue spawn');
+ assert.equal(spawnEvents.find(m=>m.snapshot===true)?.id,spawnMsg.id,'the state snapshot is the same active encounter, not another spawn');
+ const spawnedId=room.mvpActive.get(1).id;room.tickMvp(mockNow+1000);
+ assert.equal(room.mvpActive.get(1).id,spawnedId,'a repeated scheduler tick does not create another overdue spawn');
+ assert.equal(msgs.filter(m=>m.type==='mvp_spawn').length,2,'repeated tick broadcasts no second spawn');
+ assert.notEqual(spawnMsg.sp, 'mvp_stormcoil', 'the random spawn avoids repeating the previous room species');
  console.log('  ok 2. Empty rooms do not auto-spawn, retain overdue pending state, and preserve GM manual spawning');
 }
 
 // ============================================================================
-// 3. Preserve alarms across hibernation & cold WebSocket wakes
+// 3. Random MVP bag: every species appears once before reshuffle, including bag boundary
+// ============================================================================
+{
+ let now=2000000;
+ const room=new SocialRoom({now:()=>now,random:()=>0.5});
+ const seen=[];
+ for(let i=0;i<FISHING_MVP_IDS.length+1;i++){
+  const spawn=room.spawnMvp(1,now);
+  assert.ok(spawn,'random MVP spawn '+i+' succeeds');
+  seen.push(spawn.sp);
+  room.despawnMvp(1,now+600000);
+  now+=600000;
+ }
+ assert.equal(new Set(seen.slice(0,FISHING_MVP_IDS.length)).size,FISHING_MVP_IDS.length,'the shuffled bag emits all ten distinct species');
+ assert.notEqual(seen[FISHING_MVP_IDS.length],seen[FISHING_MVP_IDS.length-1],'a reshuffled bag never repeats across its boundary');
+ console.log('  ok 3. Random MVP bag cycles through all ten before reshuffling');
+}
+
+// ============================================================================
+// 4. Preserve alarms across hibernation & cold WebSocket wakes
 // ============================================================================
 {
  const futureDeadline = 5000000;
@@ -147,7 +177,7 @@ console.log('social MVP spawn simulation: testing pure earliest-deadline schedul
  assert.equal(storedAlarm, futureDeadline, 'stored alarm still targets future MVP deadline');
  assert.equal(social.nextAlarmAt(), futureDeadline, 'nextAlarmAt returns exact future deadline');
 
- console.log('  ok 3. Alarms preserved across hibernation: occupancy restored before scheduling, ping preserves alarm');
+ console.log('  ok 4. Alarms preserved across hibernation: occupancy restored before scheduling, ping preserves alarm');
 }
 
 // ============================================================================
@@ -209,7 +239,7 @@ console.log('social MVP spawn simulation: testing pure earliest-deadline schedul
  await social.battleAlarmWrite;
  assert.equal(social.mvpSaveFailed, false, 'concurrent writes resolved cleanly');
 
- console.log('  ok 4. Pending writes separated from failed writes: no 2-second retry alarm on healthy persistence');
+ console.log('  ok 5. Pending writes separated from failed writes: no 2-second retry alarm on healthy persistence');
 }
 
 // ============================================================================
@@ -220,7 +250,9 @@ console.log('social MVP spawn simulation: testing pure earliest-deadline schedul
  let failRead = true;
  const persistentState = {
   active: [[1, { sp: 'mvp_stormcoil', id: 'mvp:keep:123', spawnedAt: mockNow - 100000, endsAt: mockNow + 500000 }]],
-  nextAt: []
+  nextAt: [],
+  lastSp: [[1, 'mvp_stormcoil']],
+  decks: [[1, ['mvp_tidewarden', 'mvp_rimewraith']]]
  };
 
  let savedToStorage = null;
@@ -282,8 +314,10 @@ console.log('social MVP spawn simulation: testing pure earliest-deadline schedul
  const restored = social.room.mvpActive.get(1);
  assert.equal(restored.id, 'mvp:keep:123', 'active spawn ID preserved across read failure');
  assert.equal(restored.endsAt, mockNow - 2000 + 500000, 'despawn deadline preserved');
+ assert.equal(social.room.mvpLastSp.get(1), 'mvp_stormcoil', 'previous species restored after eviction');
+ assert.deepEqual(social.room.mvpDecks.get(1), ['mvp_tidewarden', 'mvp_rimewraith'], 'unseen random-bag entries survive eviction');
 
- console.log('  ok 5. Load failures separated from write failures: no empty maps written, plaza available, retry restores IDs');
+ console.log('  ok 6. Load failures separated from write failures: no empty maps written, plaza available, retry restores IDs');
 }
 
 // ============================================================================
@@ -333,7 +367,7 @@ console.log('social MVP spawn simulation: testing pure earliest-deadline schedul
  assert.ok(storedData, 'state persisted to storage upon retry');
  assert.equal(social.nextAlarmAt(), realDeadline, 'alarm returned to real gameplay deadline');
 
- console.log('  ok 6. Storage write failures schedule 2-second retry and recover cleanly');
+ console.log('  ok 7. Storage write failures schedule 2-second retry and recover cleanly');
 }
 
 // ============================================================================
@@ -372,7 +406,8 @@ console.log('social MVP spawn simulation: testing pure earliest-deadline schedul
  social.room.now = () => mockNow;
  await social.ready;
 
- const player = { id: 501, room: 1, send: () => {}, friends: new Set() };
+ const spawnedPackets=[];
+ const player = { id: 501, room: 1, send: raw => {const m=JSON.parse(raw);if(m.type==='mvp_spawn')spawnedPackets.push(m)}, friends: new Set() };
  social.room.clients.set(player.id, player);
 
  // Initial schedule for occupied room 1
@@ -380,7 +415,7 @@ console.log('social MVP spawn simulation: testing pure earliest-deadline schedul
  await social.mvpWrites;
  await social.battleAlarmWrite;
  const spawnTime = social.room.mvpNextAt.get(1);
- assert.ok(spawnTime > mockNow);
+ assert(spawnTime>=mockNow+60*60*1000&&spawnTime<=mockNow+2*60*60*1000,'production schedule remains a randomized 1–2 hours');
  assert.equal(storedAlarm, spawnTime, 'alarm in storage set to exact spawn time');
 
  // Reset baseline counters before starting alarm driver
@@ -407,6 +442,7 @@ console.log('social MVP spawn simulation: testing pure earliest-deadline schedul
  await social.alarm(); // Real Social.alarm() execution!
 
  assert.equal(social.room.mvpActive.has(1), true, 'alarm() invocation triggered MVP spawn');
+ assert.equal(spawnedPackets.length,1,'the occupied-room production alarm broadcasts its MVP spawn exactly once');
  const activeEndsAt = social.room.mvpActive.get(1).endsAt;
  assert.equal(activeEndsAt, mockNow + 600000, 'active MVP duration is 10 minutes');
  assert.equal(stateWrites, 1, 'exactly 1 state write persisted the spawn');
@@ -434,7 +470,7 @@ console.log('social MVP spawn simulation: testing pure earliest-deadline schedul
  assert.equal(stateWrites, 2, 'measured exactly 2 state writes across full cycle');
  assert.equal(alarmOps.set, 2, 'measured exactly 2 setAlarm ops across full cycle without duplicate writes');
 
- console.log(`  ok 7. Executable alarm driver verified:
+ console.log(`  ok 8. Executable alarm driver verified:
        - Idle wait: 0 alarms, 0 writes
        - Active cycle: exactly ${actualAlarmInvocations} alarm invocations, ${stateWrites} state writes, ${alarmOps.set} setAlarm ops`);
 }
@@ -510,34 +546,40 @@ console.log('social MVP spawn simulation: testing pure earliest-deadline schedul
  assert.equal(activeFishingMvp.sp, originalSp, 'same species restored');
  assert.equal(activeFishingMvp.endsAt, originalEndsAt, 'same despawn timestamp restored');
 
- // 4. Returning after active window has ended, when next scheduled spawn has elapsed:
- // Spawns immediately without restarting 1-2h timer!
- activeFishingMvp = null;
- const nextDueTime = storedActive.nextAt;
- w.Date.now = () => nextDueTime + 5000; // return after next schedule is overdue
- PGSocial.tickSoloMvp();
-
- assert.ok(activeFishingMvp, 'overdue return spawns an MVP immediately');
- assert.notEqual(activeFishingMvp.id, originalId, 'fresh spawn ID for new cycle');
-
- // 5. Multiplayer transition: entering multiplayer cleans up active solo spawn
- app.room = 1; // transitioned to multiplayer room
- const storedBeforeRoom = PGSocial.readSoloMvpState();
- if (storedBeforeRoom && storedBeforeRoom.active) {
-  storedBeforeRoom.active = null;
-  PGSocial.writeSoloMvpState(storedBeforeRoom);
+ // 4. Full shuffled-bag cycle across overdue deadlines and simulated reloads.
+ const seen=[originalSp];let dueTime=storedActive.nextAt;
+ assert.equal(storedActive.lastSp,originalSp,'previous species is saved with the solo state');
+ assert.equal(storedActive.bag.length,FISHING_MVP_IDS.length-1,'the remaining solo bag is persisted');
+ const bagAtReload=[...storedActive.bag];
+ assert.deepEqual(Array.from(PGSocial.readSoloMvpState().bag),bagAtReload,'reloading retains the same remaining bag');
+ const soloMessages=[];app.socket={readyState:1,send:m=>soloMessages.push(m)};
+ for(let i=1;i<FISHING_MVP_IDS.length;i++){
+  activeFishingMvp=null; // each iteration begins as a fresh page with no in-memory MVP
+  w.Date.now=()=>dueTime+5000; // returning after the saved deadline is overdue
+  PGSocial.tickSoloMvp();
+  assert.ok(activeFishingMvp,'overdue solo return spawns immediately at step '+i);
+  seen.push(activeFishingMvp.sp);
+  const saved=PGSocial.readSoloMvpState();
+  assert.equal(saved.active.sp,activeFishingMvp.sp,'the chosen species is durably paired with its active spawn');
+  assert.equal(saved.active.id,activeFishingMvp.id,'the spawn id survives the same save');
+  dueTime=saved.nextAt;
  }
- const storedMulti = PGSocial.readSoloMvpState();
- assert.equal(storedMulti.active, null, 'active solo spawn cleaned up on multiplayer handoff');
- assert.ok(storedMulti.nextAt > 0, 'scheduled next deadline preserved for returning to solo');
-
- // 6. Account switch: switching user isolates and clears previous user data
- app.room = 0;
- w.CLOUD.user = 'DifferentUser';
- assert.equal(PGSocial.readSoloMvpState(), null, 'different account refuses previous user solo MVP');
- w.Date.now = originalDateNow;
+ assert.equal(new Set(seen).size,FISHING_MVP_IDS.length,'solo shows all ten species once before reshuffling');
+ // Entering multiplayer hides the solo banner but does not discard its active spawn or bag.
+ app.room=1;PGSocial.tickSoloMvp();
+ const savedWhileMultiplayer=PGSocial.readSoloMvpState();
+ assert.ok(savedWhileMultiplayer.active,'solo active spawn is preserved while in a multiplayer room');
+ assert.ok(savedWhileMultiplayer.nextAt>0,'solo deadline is preserved across the room switch');
+ app.room=0;activeFishingMvp=null;w.Date.now=()=>savedWhileMultiplayer.active.spawnedAt+1000;PGSocial.tickSoloMvp();
+ assert.equal(activeFishingMvp.id,savedWhileMultiplayer.active.id,'returning solo restores the same still-live spawn');
+ assert.equal(activeFishingMvp.endsAt,savedWhileMultiplayer.active.endsAt,'returning solo never extends endsAt');
+ assert.equal(soloMessages.length,0,'solo scheduling and restores make no plaza Durable Object calls');
+ // Account switch refuses prior state, including its bag and current spawn.
+ w.CLOUD.user='DifferentUser';
+ assert.equal(PGSocial.readSoloMvpState(),null,'different account refuses previous user solo MVP');
+ w.Date.now=originalDateNow;
  dom.window.close();
- console.log('  ok 8. Solo lifecycle persists active/next state, restores on reload, spawns immediately when overdue, and isolates multiplayer/accounts');
+ console.log('  ok 9. Solo shuffled bag cycles through all species, reload/room changes preserve deadlines, account switching isolates state, and solo sends no DO messages');
 }
 
 // ============================================================================
@@ -571,7 +613,7 @@ console.log('social MVP spawn simulation: testing pure earliest-deadline schedul
  assert.equal(room.mvpActive.has(1), false);
  assert.equal(room.mvpActive.has(2), false);
  assert.ok(room.mvpNextAt.has(2), 'Room 2 schedule intact');
- console.log('  ok 9. Multi-room isolation ensures independent timers, active spawns, and despawns');
+ console.log('  ok 10. Multi-room isolation ensures independent timers, active spawns, and despawns');
 }
 
 // ============================================================================
@@ -743,7 +785,7 @@ console.log('social MVP spawn simulation: testing pure earliest-deadline schedul
   assert.equal(storedAlarm, mockNow + 500, 'stored alarm set to exact earliest poker deadline');
  }
 
- console.log('  ok 10. Deadline priority: active battles and earlier poker deadlines override MVP retry, storage retries only when due, clean recovery');
+ console.log('  ok 11. Deadline priority: active battles and earlier poker deadlines override MVP retry, storage retries only when due, clean recovery');
 }
 
 console.log('ALL SOCIAL MVP COMPREHENSIVE REGRESSION SUITES PASSED');
