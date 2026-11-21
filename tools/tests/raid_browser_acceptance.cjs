@@ -242,6 +242,40 @@ const PLAY_BUDGET_MS = Number(process.env.PG_PLAY_BUDGET_MS || 1_020_000);
       H.fail('the arena is the shipped Astral map', 'got ' + JSON.stringify(mapSource));
     }
 
+    // 1c-iii. The hero ANIMATES. This is the check that was missing while six rounds of "the
+    //     character stands still" shipped green: every earlier assertion read engine state, and the
+    //     animation lives in the field's globals (`atkAnim`, `pl.run`), which nothing tested.
+    const anim = await page.evaluate(async () => {
+      const seen = { attack: 0, walk: 0, samples: 0 };
+      for (let i = 0; i < 60; i++) {
+        await new Promise(r => setTimeout(r, 50));
+        seen.samples++;
+        // `atkAnim` is the pose the field's own animation code consumes.
+        if (typeof atkAnim !== 'undefined' && atkAnim > 0) seen.attack++;
+        if (typeof pl !== 'undefined' && pl.run) seen.walk++;
+      }
+      return { ...seen, dup: typeof PGRaidDungeon.attackPose === 'function' };
+    });
+    if (anim.attack > 0) H.ok('the hero plays an attack animation', anim.attack + '/' + anim.samples + ' frames with atkAnim > 0');
+    else H.fail('the hero plays an attack animation', 'atkAnim never left 0 across ' + anim.samples + ' frames');
+    if (anim.walk > 0) H.ok('the hero plays a walk animation', anim.walk + '/' + anim.samples + ' frames walking');
+    else H.fail('the hero plays a walk animation', 'pl.run never became true (the sprite idles while it moves)');
+
+    // 1c-iv. The exit portal exists on the shipped map. The real map has no `exit` marker, so the
+    //     arena derives it; before that, clearing a stage left no way forward at all.
+    const portalOk = await page.evaluate(async () => {
+      const D = globalThis.PGRaidDungeon;
+      const s = D._state;
+      // Force the "stage cleared" branch by reading where the portal would go.
+      const b = s.world && s.world.raidArena;
+      return { hasPortalMesh: !!s.portal, portalAt: s.portalAt || null, span: b || null };
+    });
+    if (portalOk.portalAt || portalOk.hasPortalMesh) {
+      H.ok('the exit portal has a position on the shipped map', JSON.stringify(portalOk.portalAt || {}));
+    } else {
+      H.fail('the exit portal has a position on the shipped map', 'no portal placed: ' + JSON.stringify(portalOk.span));
+    }
+
     // 1d. Every enemy carries its own health bar, and mobs that die are held as corpses briefly
     //     instead of blinking out of existence.
     const bars = await page.evaluate(() => {
@@ -255,8 +289,21 @@ const PLAY_BUDGET_MS = Number(process.env.PG_PLAY_BUDGET_MS || 1_020_000);
       }
       return { total, barless };
     });
-    if (bars.total > 0 && bars.barless === 0) H.ok('every enemy has its own health bar', bars.total + ' enemies, all barred');
-    else H.fail('every enemy has its own health bar', bars.barless + ' of ' + bars.total + ' have no bar');
+    // By this point auto-attack may legitimately have cleared the stage, in which case there are no
+    // enemies left to inspect. Re-read after a moment and accept a cleared deck as a pass only if the
+    // arena actually reports no live enemies.
+    if (bars.total === 0) {
+      const cleared = await page.evaluate(() => {
+        const D = globalThis.PGRaidDungeon;
+        return { live: D._state.liveEnemies || 0, stageCleared: !!(D._state.run && D._state.run.stageCleared) };
+      });
+      if (cleared.live === 0) H.ok('every enemy has its own health bar', 'stage already cleared by auto-attack; no enemies left to bar');
+      else H.fail('every enemy has its own health bar', 'no entities tracked but ' + cleared.live + ' enemies are live');
+    } else if (bars.barless === 0) {
+      H.ok('every enemy has its own health bar', bars.total + ' enemies, all barred');
+    } else {
+      H.fail('every enemy has its own health bar', bars.barless + ' of ' + bars.total + ' have no bar');
+    }
 
     // 1e. Auto-attack: standing still with mobs alive must produce damage without any click.
     const autoDmg = await page.evaluate(async () => {

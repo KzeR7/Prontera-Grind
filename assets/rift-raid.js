@@ -322,6 +322,7 @@
     body.raid-fighting #wins,body.raid-fighting #welcomePanel,body.raid-fighting #offlineCard,
     body.raid-fighting #adventureGuide,body.raid-fighting #eventBanner,body.raid-fighting #guildBar,
     body.raid-fighting #socialDock,body.raid-fighting #pgDock,body.raid-fighting .eclipse-toast,
+    body.raid-fighting #bgmPlayer,body.raid-fighting #socialBgmMount,
     body.raid-fighting #activityTicker,body.raid-fighting #pgQuest,body.raid-fighting #dailyCard,
     body.raid-fighting #mailCard,body.raid-fighting #rouletteCard{display:none!important}
     /* Whatever is left of the field's own chrome must not sit on top of the arena: the raid layer
@@ -800,7 +801,9 @@
     R.solo = run;
     if (typeof R.soloStop === 'function') { try { R.soloStop(); } catch {} }
     R.soloStop = solo.loop(run, {
-      every: 100,
+      // 50 ms: the same size as the engine's simulation cell. Polling slower than the cell batches
+      // every hit into 100 ms lumps, which is felt as input lag and a chunky attack animation.
+      every: 50,
       accountKey,
       serverOffset: num(R.serverOffset, 0),
       onFrame: (local, snap) => {
@@ -1369,11 +1372,70 @@
     if (!body) return;
     const key = [R.run?.id, R.run?.stageIndex, R.run?.stageCleared, (R.run?.members || []).map(m => m.downed ? 1 : 0).join('')].join(':');
     if (R.arenaKey === key) { paintArenaHud(R.run); return; }
+    const first = !R.arenaKey;
     R.arenaKey = key;
-    body.innerHTML = renderArena();
-    for (const canvas of body.querySelectorAll('canvas[data-class]')) {
-      try { if (typeof drawSkinPreview === 'function') drawSkinPreview(canvas.id, null, canvas.dataset.class, canvas.dataset.sex || 'm'); } catch {}
+    // Rewrite the panel once when the arena first appears. After that every change - a stage
+    // clearing, a member going down, a revive - patches the parts that exist instead of replacing
+    // #raidBody wholesale. The wholesale rewrite was the "UI blinks, then you are stuck": it
+    // destroyed the exit-portal control at the exact moment the player needed to press it, and
+    // restarted every avatar canvas while the fight kept running underneath.
+    if (first) {
+      body.innerHTML = renderArena();
+      for (const canvas of body.querySelectorAll('canvas[data-class]')) {
+        try { if (typeof drawSkinPreview === 'function') drawSkinPreview(canvas.id, null, canvas.dataset.class, canvas.dataset.sex || 'm'); } catch {}
+      }
+      return;
     }
+    patchArena(body);
+    paintArenaHud(R.run);
+  }
+
+  // In-place update for an arena panel that is already on screen. Everything here is a text or
+  // attribute write on an element that already exists; nothing is replaced, so nothing blinks and no
+  // pressed control is torn out from under the pointer.
+  function patchArena(body) {
+    const run = R.run;
+    if (!run || !body) return;
+    // The action row is the one that holds the Leave button - there is no dedicated data attribute
+    // in the markup, and inventing one here silently found nothing (the portal then never appeared
+    // through the patch path at all).
+    const actionsOf = () => {
+      const leave = body.querySelector('[data-raid-action="leave"]');
+      return leave ? leave.parentElement : null;
+    };
+    const exit = body.querySelector('[data-raid-action="portal"]');
+    const note = body.querySelector('[data-arena-note]') || body.querySelector('.raid-note');
+    // The exit unlocks the instant the stage clears: add the control if it is missing rather than
+    // rebuilding the panel to introduce it.
+    if (run.stageCleared && !exit) {
+      const host = actionsOf();
+      if (host) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'raid-btn primary';
+        button.dataset.raidAction = 'portal';
+        button.textContent = 'Enter the exit portal';
+        host.insertBefore(button, host.firstChild);
+      }
+      if (note) note.textContent = 'Exit portal open';
+    } else if (!run.stageCleared && exit) {
+      exit.remove();
+      if (note) note.textContent = 'The exit unlocks when every required enemy in this stage is defeated.';
+    }
+    // Downed members: same treatment for the revive control.
+    const downs = (run.members || []).filter(m => m.downed).length;
+    const revive = body.querySelector('[data-raid-action="revive"]');
+    if (downs > 0 && !revive) {
+      const host = actionsOf();
+      if (host) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'raid-btn danger';
+        button.dataset.raidAction = 'revive';
+        button.textContent = 'Revive a teammate';
+        host.appendChild(button);
+      }
+    } else if (downs === 0 && revive) revive.remove();
   }
 
   function rewardText(row) {

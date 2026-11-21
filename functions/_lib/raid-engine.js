@@ -100,7 +100,12 @@ const WALK_CHUNK_MS = 100;
 // makes the run a function of the clock rather than of how often a client happened to poll. Exported
 // because the callers that own recovery (the browser's solo loop, the co-op sweep) have to reason about
 // cell boundaries themselves: a read that does not cross a cell boundary is allowed to resolve nothing.
-export const SIM_TICK_MS = 100;
+// 50 ms, not 100. The cell is the granularity at which a swing, a hit and a telegraph can be resolved,
+// so it is also the floor on how responsive the fight can feel: at 100 ms every swing landed up to a
+// tenth of a second late and the whole fight read as sluggish next to the field, which resolves on the
+// frame clock. The engine is still a pure function of time, so replay and settlement are unaffected -
+// the grid is simply finer.
+export const SIM_TICK_MS = 50;
 
 function sanitizeReceipt(raw) {
   if (!isObj(raw) || typeof raw.id !== 'string' || !RAID_ACTION_ID_RE.test(raw.id)) return null;

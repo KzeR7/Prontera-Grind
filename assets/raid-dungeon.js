@@ -51,6 +51,7 @@
     myId: 0,
     targetId: '',
     facing: 0,
+    swingAt: 0,
     lastMoveAt: 0,
     pendingMove: null,
     inputBound: false,
@@ -294,14 +295,18 @@
   }
 
   function syncPortal(run) {
-    const b = D.world && D.world;
     if (!D.mount) return;
     const portal = portalMesh();
-    const at = b ? b.exit : null;
-    if (!at) { portal.group.visible = false; return; }
+    // The shipped Astral map declares a fight span, not an exit marker - `exit` only ever existed on
+    // the hand-written fallback scenes. Reading it off the real map gave `undefined`, so the portal
+    // was never placed: clearing a stage left no way forward and the run looked stuck. The far edge
+    // of the span is the exit, which is where the deck actually ends.
+    const b = boundsOf(D.stageKey);
+    const at = { x: 0, z: b.minZ + 1.2 };
     portal.group.position.set(at.x, 0, at.z);
     portal.open = run.stageCleared === true;
     portal.group.visible = portal.open;
+    D.portalAt = at;
   }
 
   // Online play is about the party, not just the ground: a stack of small markers under the HUD
@@ -681,8 +686,15 @@
         // larger than a body length is a real desync (a resume, a stage change), so that one is taken
         // whole rather than slid through the scenery.
         const ex = num(m.x) - D.heroPos.x, ez = num(m.z) - D.heroPos.z;
-        if (Math.hypot(ex, ez) > 4) { D.heroPos.x = num(m.x); D.heroPos.z = num(m.z); D.dest = null; }
-        else { D.heroPos.x += ex * 0.35; D.heroPos.z += ez * 0.35; }
+        const gap = Math.hypot(ex, ez);
+        if (gap > 4) { D.heroPos.x = num(m.x); D.heroPos.z = num(m.z); D.dest = null; }
+        else {
+          D.heroPos.x += ex * 0.35; D.heroPos.z += ez * 0.35;
+          // The engine walks the member itself (the auto-chase). That motion never sets D.dest, so
+          // the hero played an idle cycle while it slid across the deck. Any real movement of the
+          // authoritative position is walking, wherever the intent came from.
+          if (gap > 0.02) { D.walking = true; D.walkUntil = performance.now() + 220; D.lastWalkDir = Math.atan2(ex, ez); }
+        }
       }
       ent.id = m.id;
       ent.name = m.name || '';
@@ -696,7 +708,9 @@
         if (tex) { ent.sprite.material.map = tex; ent.sprite.material.needsUpdate = true; ent.sprite.userData.cls = m.cls; }
       }
     }
+    D.liveEnemies = 0;
     for (const e of run.enemies || []) {
+      if (!(e.dead === true) && num(e.hp) > 0) D.liveEnemies++;
       const key = 'e' + e.id;
       enemies.add(key);
       const ent = entityFor(key, e.kind, e);
@@ -707,7 +721,12 @@
       ent.hp = num(e.hp); ent.maxHp = Math.max(1, num(e.maxHp));
       ent.dead = e.dead === true || ent.hp <= 0;
       ent.casting = e.casting || null;
-      if (ent.hp < ent.lastHp) ent.hitAt = performance.now();
+      if (ent.hp < ent.lastHp) {
+        ent.hitAt = performance.now();
+        // A landed swing. The hero's own attack pose is driven from this, so the character visibly
+        // swings at the cadence the engine resolves damage - one clock, one animation.
+        markSwing();
+      }
       ent.lastHp = ent.hp;
       ent.group.visible = !ent.dead;
       if (ent.sprite.userData.spriteId !== e.spriteId) {
@@ -834,6 +853,46 @@
     for (const [key, te] of [...D.telegraphs]) if (!live.has(key)) dropTelegraph(key);
   }
 
+  // ---------------------------------------------------------------- swing -------
+  // The engine resolves damage on its own cadence and the client never sees "a swing" as an event -
+  // it sees an enemy's HP drop. That is the only honest trigger available, so a drop arms the pose and
+  // the pose decays over SWING_MS. It is the same idea as the field's `atkAnim`, which runs 1 -> 0
+  // across its swing, and the field's own animation code consumes the value unchanged.
+  // A pose has to fill the gap between swings, not just the frame a number changed. HP only updates
+  // when a swing LANDS, and the engine batches its reads, so a hit-triggered pose flashed once every
+  // few seconds - measured at 1 of 60 frames, which is exactly "standing still". The fix is to run the
+  // pose on the swing cadence itself: a claim that a swing is happening is true from the moment the
+  // target takes damage until the cadence interval is up, and the pose sweeps that whole window.
+  const SWING_MS = 260;
+  function markSwing() {
+    const now = performance.now();
+    D.swingAt = now;
+    // Learn the cadence from the gap between observed swings, clamped to something a character can
+    // plausibly swing at, so the pose does not run continuously or stutter on a slow tick.
+    if (D.lastSwingAt) {
+      const gap = now - D.lastSwingAt;
+      if (gap > 80 && gap < 2000) D.swingGap = D.swingGap ? D.swingGap * 0.6 + gap * 0.4 : gap;
+    }
+    D.lastSwingAt = now;
+  }
+  function attackPose() {
+    if (!D.swingAt) return 0;
+    const now = performance.now();
+    const age = now - D.swingAt;
+    if (age < SWING_MS) return Math.max(0, 1 - age / SWING_MS);
+    // Between observed swings, keep a slow idle-swing cycle running while there is a live target, so
+    // the hero reads as fighting rather than posing. It only runs when the arena has something to
+    // hit - a cleared stage settles back to idle.
+    const gap = D.swingGap || 0;
+    // Only while the arena still holds a live enemy. Without this gate the hero keeps swinging at an
+    // empty deck after the last pack dies, which is its own kind of broken.
+    if (gap > 0 && D.liveEnemies > 0 && now - D.swingAt < gap) {
+      const phase = ((now - D.swingAt) % SWING_MS) / SWING_MS;
+      return Math.max(0, 1 - phase) * 0.9;
+    }
+    return 0;
+  }
+
   // ---------------------------------------------------------------- bars --------
   // Redrawn only when the numbers move: a canvas upload per enemy per frame is the kind of thing that
   // is invisible on a desktop and painful on a phone. The bar hides itself once the mob is dead, which
@@ -897,9 +956,13 @@
           D.heroPos.x = cx; D.heroPos.z = cz; D.dest = null; D.walking = false;
         }
         D.facing = Math.atan2(dx, dz);   // the field reads this for the sprite's 8-way facing
+        D.walkUntil = now + 220;
       }
     }
-    if (!D.dest) D.walking = false;
+    // Walking is true while the local walk has a destination OR the engine moved the member
+    // recently (`walkUntil`). The old rule - "not walking unless D.dest" - froze the animation the
+    // moment the engine, rather than a tap, was doing the walking.
+    if (!D.dest && !(D.walkUntil && now < D.walkUntil)) D.walking = false;
     // The field's hero sprite is the raid's hero: it walks while the raid walks (index.html reads
     // walking() through PGField's proxy hero state).
     if (D.hooks && D.hooks.player) { const p = typeof D.hooks.player === 'function' ? D.hooks.player() : D.hooks.player; if (p) p.run = !!D.walking; }
@@ -1072,6 +1135,8 @@
     facing: () => D.facing,
     // Whether the hero is mid-step, so the field plays a walk cycle instead of a frozen idle.
     walking: () => !!D.walking,
+    // 1 -> 0 across a swing, consumed by the field's own animation code as `atkAnim`.
+    attackPose,
     get active() { return D.on; },
     get stageKey() { return D.stageKey; },
     get targetId() { return D.targetId; },

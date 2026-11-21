@@ -197,7 +197,9 @@
   // moment the run is terminal. `onFrame` receives the public snapshot so the renderer never touches
   // engine internals.
   R.loop = function loop(run, opts = {}) {
-    const every = Math.max(50, Number(opts.every) || 100);
+    // Never slower than the engine's own cell (50 ms): a frame longer than a cell only delays
+    // damage that has already been decided.
+    const every = Math.max(16, Number(opts.every) || 50);
     const accountKey = opts.accountKey || '';
     let timer = null;
     let stopped = false;

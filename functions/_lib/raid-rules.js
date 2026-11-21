@@ -55,10 +55,15 @@ export const RAID_RULES = Object.freeze({
   // profile comes from the server-side class snapshot (raid-profile.js); the client only ever
   // reports intent.
   combat: Object.freeze({
-    playerAutoAttackMs: 2_600,       // the field's own automatic attack cadence
+    // The field's own swing cadence is `aspd()`, which floors at 130 ms and lands around 270-850 ms
+    // for a real build. This was 2,600 ms - ten times slower than the field it is supposed to feel
+    // like - which is the whole of "attack is sloggy". Damage per swing is scaled from this interval
+    // (dps * interval), so shortening it does not change clear time; it only changes how often the
+    // character visibly swings.
+    playerAutoAttackMs: 420,
     playerCritChance: 0.18,
     playerCritMultiplier: 1.6,
-    skillEveryMs: 7_400,             // an automatic class-skill swing; alternates physical/magic flavour
+    skillEveryMs: 2_400,             // an automatic class-skill swing; alternates physical/magic flavour
     skillMultiplier: 2.35,
     petEveryMs: 3_400,
     petMultiplier: 0.22,
