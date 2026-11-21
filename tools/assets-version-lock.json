@@ -280,7 +280,7 @@
   },
   "assets/raid-dungeon.js": {
    "v": 450,
-   "sha256": "05880cb984dd7d8e16c760082e0ab45295de1a46d06908d45060ef00eb935fc4"
+   "sha256": "1d940105cac63c626a648f1700796f03ba9da5fbcc7d4eb271441ce2d590a993"
   },
   "assets/raid-solo.js": {
    "v": 450,
@@ -288,7 +288,7 @@
   },
   "assets/rift-raid.js": {
    "v": 450,
-   "sha256": "e8933a8de8a399c18ce6320c38b40a9d9e5c14634b3aa676a797150802a0e7c1"
+   "sha256": "9a91de8c507738139e2eec748a256c72ab55af38f4ed74c3c3644aa79bd68641"
   }
  }
 }

@@ -111,11 +111,15 @@ function publicCards(rows) {
   });
 }
 
-function publicAccount(account, userId, entriesUsed, chests, activeRun, cards) {
+function publicAccount(account, userId, entriesUsed, chests, activeRun, cards, username = '') {
   const a = account || {};
   const cardRows = publicCards(cards);
   return {
     userId: Number(userId),
+    // The account's own display name. Without it the client fell back to the literal 'Adventurer'
+    // for the solo roster, so the arena HUD greeted every player as "Adventurer" — the name was
+    // simply never in this payload, on any account.
+    name: String(username || '').slice(0, 32),
     riftShards: int(a.rift_shards),
     qualifyingClears: int(a.qualifying_clears),
     soloClears: int(a.solo_clears),
@@ -832,7 +836,7 @@ async function getState(env, user, url) {
     enabled: true,
     rules: raidRuleSummary(),
     day,
-    account: publicAccount(account, user.id, entriesUsed, chests, active.run, cards),
+    account: publicAccount(account, user.id, entriesUsed, chests, active.run, cards, user.username),
     activeRun: active.run,
     // Solo only: the reservation the tab resumes from. Never the same object as `activeRun`, so no
     // caller can adopt it as run state.

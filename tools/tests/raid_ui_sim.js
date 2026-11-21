@@ -740,6 +740,39 @@ function account(overrides = {}) {
   });
 
   assert.ok(getCount >= 2 && postCount >= 1);
+
+  // --- the fight screen is a screen of its own ------------------------------------------------
+  // These three are staging findings, and each was invisible to every existing check because the
+  // acceptance harness screenshots the RESULTS panel, never the fight.
+  t('the fight puts the field HUD away instead of stacking a farm HUD on the dungeon', () => {
+    const css = fs.readFileSync(path.join(ROOT, 'assets', 'rift-raid.js'), 'utf8');
+    const block = css.slice(css.indexOf('body.raid-fighting #eclipseCombat'));
+    for (const id of ['#eclipseHeader', '#hud', '#dock', '#xp-dock']) {
+      assert.ok(new RegExp('body\\.raid-fighting[^{]*' + id.replace('#', '\\#')).test(block)
+        || block.includes('body.raid-fighting ' + id),
+        id + ' is hidden while a raid fight is on screen');
+    }
+  });
+
+  t('the arena names the player from the account, not the "Adventurer" fallback', () => {
+    const js = fs.readFileSync(path.join(ROOT, 'assets', 'rift-raid.js'), 'utf8');
+    assert.ok(/function soloMemberName/.test(js), 'there is one place that decides the solo name');
+    assert.ok(/R\.account\?\.name/.test(js), 'and it reads the account name first');
+    // The literal must survive only as the last resort inside that helper, never inline in the
+    // reservation the arena renders.
+    assert.ok(!/name:\s*R\.account\?\.name\s*\|\|\s*'Adventurer'/.test(js),
+      'the reservation does not inline the fallback');
+  });
+
+  t('leaving a run clears the walking flag and unbinds the arena input', () => {
+    const js = fs.readFileSync(path.join(ROOT, 'assets', 'raid-dungeon.js'), 'utf8');
+    const end = js.slice(js.indexOf('function end()'), js.indexOf('function stageSpawn()'));
+    assert.ok(/D\.walking\s*=\s*false/.test(end), 'the walking flag is cleared');
+    assert.ok(/p\.run\s*=\s*false/.test(end), 'and the field hero proxy is un-flagged');
+    assert.ok(/removeEventListener/.test(end), 'the arena input is removed from the field canvas');
+    assert.ok(/D\.inputBound\s*=\s*false/.test(end), 'and can be bound again on the next run');
+  });
+
   game.close();
   console.log('\n' + pass + ' passed, ' + fail + ' failed');
   process.exit(fail ? 1 : 0);

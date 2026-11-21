@@ -204,6 +204,25 @@
     body.raid-fighting #eclipseMapCard,body.raid-fighting #feedWrap,body.raid-fighting #eclipseCompanions,
     body.raid-fighting #pgQuests,body.raid-fighting #hint,body.raid-fighting #tag,
     body.raid-fighting #socialChat{display:none!important}
+    /* The raid is its own screen, so the FIELD's furniture goes with the rest of it. Leaving the
+       header, the portrait card, the hotbar and the stat footer up put a farming HUD on top of a
+       dungeon: the arena was squeezed into the gap between them and read as a broken field rather
+       than a fight. The raid draws its own stage/timer header, its own party rows and its own
+       objective line, and its exit is the panel's close button, so none of this is needed here. */
+    body.raid-fighting #eclipseHeader,body.raid-fighting #hud,body.raid-fighting #dock,
+    body.raid-fighting #xp-dock,body.raid-fighting #hudBuffs,body.raid-fighting #heroTitle,
+    body.raid-fighting #comboFieldStatus{display:none!important}
+    /* With the field chrome gone the arena owns the whole viewport, and the raid HUD hangs from the
+       top edge instead of the 64px the field header used to occupy. */
+    body.raid-fighting #raidHudLayer .raid-hud-top{top:14px}
+    /* The dungeon canvas is a field of its own: kill the field's vignette/edges so the arena edges
+       are what the player sees, and keep the whole scene clickable while the HUD stays inert. */
+    body.raid-fighting #ov{cursor:crosshair}
+    /* A phone has no room for a second HUD row: tighten the stage card and the party stack. */
+    @media(max-width:700px){
+      body.raid-fighting #raidHudLayer .raid-hud-top{top:8px;max-width:calc(100vw - 16px)}
+      body.raid-fighting #raidHudLayer .raid-hud-party{bottom:12px;width:min(150px,42vw)}
+    }
     .raid-hud-top{position:absolute;left:50%;transform:translateX(-50%);top:64px;display:flex;align-items:stretch;gap:8px;max-width:min(560px,92vw)}
     .raid-hud-stage{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px;padding:7px 12px;border-radius:10px;background:#070c1acc;border:1px solid #3a4a72;backdrop-filter:blur(3px)}
     .raid-hud-step{font:700 9px/1 ui-monospace,monospace;letter-spacing:.18em;color:#8fa7d8}
@@ -609,7 +628,7 @@
       // `run.profile` is the server's own snapshot of this member. The public `run.members` entries
       // carry flat fields and NO `profile`, so reading one from there silently produced a 1,000 HP
       // member; the `members[0].profile` fallback is kept only for a response from an older build.
-      member: { id: myId(), name: R.account?.name || 'Adventurer', profile: data.run.profile || data.run.members?.[0]?.profile },
+      member: { id: myId(), name: soloMemberName(data), profile: data.run.profile || data.run.members?.[0]?.profile },
     };
     if (['cleared', 'failed'].includes(data.run.state)) {
       // The server already considers this run over: adopt and settle it, do not simulate it again.
@@ -622,6 +641,18 @@
     R.busy = '';
     R.soloResumed = false;
     startSoloLoop(run, accountKey);
+  }
+
+  // The name the arena shows for you. `account.name` is the authoritative one; the older builds sent
+  // no name at all on the account payload, which is why every player read "Adventurer" in the solo
+  // HUD. Fall back through the page's own signed-in name before the generic label, so a stale page
+  // still greets the right person.
+  function soloMemberName(data) {
+    const fromRun = (data?.run?.members || []).find(m => Number(m.id) === Number(myId()));
+    const candidates = [R.account?.name, fromRun?.name,
+      typeof currentUser === 'string' ? currentUser : '', R.account?.username];
+    for (const c of candidates) if (typeof c === 'string' && c.trim()) return c.trim().slice(0, 32);
+    return 'Adventurer';
   }
 
   // The local loop. It reads the clock, lets the engine resolve the elapsed cells, mirrors the

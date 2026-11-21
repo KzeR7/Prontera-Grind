@@ -47,6 +47,7 @@
     lastMoveAt: 0,
     pendingMove: null,
     inputBound: false,
+    listeners: [],
     keys: new Set(),
     stats: { frames: 0, moves: 0, focus: 0 },
   };
@@ -307,6 +308,22 @@
     D.snapshots.length = 0;
     D.dest = null;
     D.portal = null;
+    D.walking = false;
+    D.keys.clear();
+    // The walk flag is written straight onto the field's own hero proxy, so leaving the run has to
+    // put it back. Before this, a hero who was mid-step when the arena ended kept `run = true` on the
+    // field, and the field's sprite walked in place with no destination to reach.
+    if (D.hooks && D.hooks.player) {
+      const p = typeof D.hooks.player === 'function' ? D.hooks.player() : D.hooks.player;
+      if (p) p.run = false;
+    }
+    // Take the arena's input off the field's canvas: it was bound in begin() and never removed, so
+    // taps and keys kept being interpreted as raid moves after the fight was over.
+    for (const [target, type, fn, opts] of D.listeners || []) {
+      try { target.removeEventListener(type, fn, opts); } catch { /* target already gone */ }
+    }
+    D.listeners = [];
+    D.inputBound = false;
     if (D.hooks && D.hooks.map) D.hooks.map(null);
   }
 
@@ -334,11 +351,16 @@
     return typeof h.scene === 'function' ? h.scene() : h.scene || null;
   }
 
+  // Every listener bound below is kept so end() can take it off again. Without that the arena's
+  // input stayed live after the run: pointer and key handlers kept firing against a disposed world,
+  // and the field could not have its own input model back cleanly.
   function bindInput() {
     if (D.inputBound) return;
     const canvas = hookCanvas();
     if (!canvas) return;
     D.inputBound = true;
+    D.listeners = [];
+    const on = (target, type, fn, opts) => { target.addEventListener(type, fn, opts); D.listeners.push([target, type, fn, opts]); };
 
     const destOf = (clientX, clientY) => {
       const host = hookCamera();
@@ -353,16 +375,16 @@
     };
 
     let pointer = null;
-    canvas.addEventListener('pointerdown', event => {
+    on(canvas, 'pointerdown', event => {
       if (!D.on || event.button > 0) return;
       pointer = { id: event.pointerId, x: event.clientX, y: event.clientY, moved: 0 };
     });
-    canvas.addEventListener('pointermove', event => {
+    on(canvas, 'pointermove', event => {
       if (!pointer || pointer.id !== event.pointerId) return;
       pointer.moved += Math.abs(event.clientX - pointer.x) + Math.abs(event.clientY - pointer.y);
       pointer.x = event.clientX; pointer.y = event.clientY;
     });
-    canvas.addEventListener('pointerup', event => {
+    on(canvas, 'pointerup', event => {
       if (!D.on || !pointer || pointer.id !== event.pointerId) return;
       const moved = pointer.moved;
       pointer = null;
@@ -372,9 +394,9 @@
       const dest = destOf(event.clientX, event.clientY);
       if (dest) requestMove(dest.x, dest.z);
     });
-    canvas.addEventListener('pointercancel', () => { pointer = null; });
+    on(canvas, 'pointercancel', () => { pointer = null; });
 
-    root.addEventListener('keydown', event => {
+    on(root, 'keydown', event => {
       if (!D.on) return;
       if (event.target && /input|textarea|select/i.test(event.target.tagName || '')) return;
       const key = String(event.key || '').toLowerCase();
@@ -382,8 +404,8 @@
       D.keys.add(key);
       event.preventDefault();
     });
-    root.addEventListener('keyup', event => { D.keys.delete(String(event.key || '').toLowerCase()); });
-    root.addEventListener('blur', () => D.keys.clear());
+    on(root, 'keyup', event => { D.keys.delete(String(event.key || '').toLowerCase()); });
+    on(root, 'blur', () => D.keys.clear());
   }
 
   // Screen-space pick: project every live enemy and take the closest one within a thumb's radius.
