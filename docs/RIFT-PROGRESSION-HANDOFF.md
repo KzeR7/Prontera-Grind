@@ -88,7 +88,10 @@ The single-boss arena is gone. A run is four stages, in order, joined by an exit
 Prerequisites on the Windows machine used for staging:
 
 - Git for Windows (provides `bash.exe`).
-- Node.js / npm and an already-authenticated Wrangler (`npx wrangler whoami` should work).
+- Node.js / npm and an already-authenticated Wrangler: `npx.cmd wrangler whoami` must print an
+  account. Use `npx.cmd`, not `npx` — PowerShell blocks the `npx.ps1` shim on a default
+  execution policy ("running scripts is disabled on this system"). Every command in
+  `update-and-stage.ps1` is already `.cmd`/`.exe`, so the script itself is unaffected.
 - An existing `Prontera-Grind` checkout. The script refuses to run over uncommitted changes.
 
 Copy the launcher out of the branch first (it is not on `main`), then run it:

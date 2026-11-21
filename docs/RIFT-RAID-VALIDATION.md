@@ -383,7 +383,7 @@ a no-op. Run it from the checkout, in PowerShell:
 ```powershell
 cd C:\path\to\Prontera-Grind
 git status --porcelain                  # must print nothing
-npx --yes wrangler@4.154.0 whoami       # must print an account
+npx.cmd --yes wrangler@4.154.0 whoami   # must print an account (npx.cmd: plain `npx` is blocked here)
 powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\staging\update-and-stage.ps1 -BuildTag haven-v450
 ```
 
