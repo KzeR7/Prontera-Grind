@@ -21,5 +21,11 @@ docs/proposals/terrain-v2/floor-*.png
 # local screenshot harnesses (playwright, throwaway)
 .tmpcheck/
 
+# Browser acceptance captures: the driver always writes full-size PNGs, and every run overwrites
+# them, so they must never dirty the working tree — tools/staging/update-and-stage.ps1 refuses to
+# run unless `git status --porcelain` is empty. The reviewed, compressed copies that the docs and
+# reports/browser-acceptance/README.md link to are committed as *.jpg in the same folder.
+reports/browser-acceptance/*.png
+
 # local source cache for tools/make_expanded_pack.py
 .cache/

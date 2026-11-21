@@ -16,6 +16,11 @@ The script exits non-zero on any failed assertion and prints a `passed, failed` 
 run takes about ten minutes of wall clock, because the solo fight is played at its real length
 against the real clock — no fake clock is used anywhere.
 
+Each run overwrites `reports/browser-acceptance/*.png` with full-size captures. Those are ignored by
+git on purpose: they change on every run, and a dirty working tree stops
+`tools/staging/update-and-stage.ps1`. The table below names the committed, compressed `*.jpg` copies
+of the same screenshots, which are what the docs link to.
+
 | File | What it shows |
 | --- | --- |
 | `solo-arena.jpg` | Mid-fight, desktop viewport: the Astral dungeon stage, the stage/objective HUD, the character on the platform. |
