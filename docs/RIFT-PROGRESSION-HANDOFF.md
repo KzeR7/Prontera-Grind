@@ -94,7 +94,11 @@ Prerequisites on the Windows machine used for staging:
   `update-and-stage.ps1` is already `.cmd`/`.exe`, so the script itself is unaffected.
 - An existing `Prontera-Grind` checkout. The script refuses to run over uncommitted changes.
 
-Copy the launcher out of the branch first (it is not on `main`), then run it:
+**The script is not on `main`.** `main` contains no `.ps1` file at all — the handoff lives only on
+`arena/bfc7d4d1-prontera-grind`. Running `-File .\tools\staging\update-and-stage.ps1` from a
+checkout that is on `main` therefore fails with *"The argument … does not exist"*, because the pull
+step has already left your checkout on `main`. Copy the script out of the branch first, then run the
+copy:
 
 ```powershell
 # Works even when PowerShell opens in C:\WINDOWS\system32.
@@ -104,8 +108,11 @@ Set-Location $repo
 
 git fetch origin arena/bfc7d4d1-prontera-grind
 $stageScript = Join-Path $env:TEMP 'pg-update-and-stage.ps1'
-git show FETCH_HEAD:tools/staging/update-and-stage.ps1 |
-  Set-Content -Encoding ascii $stageScript
+git show FETCH_HEAD:tools/staging/update-and-stage.ps1 | Set-Content -Encoding ascii $stageScript
+# Guard: an unfetched/renamed ref would otherwise write an empty file and fail confusingly later.
+$lines = (Get-Content $stageScript | Measure-Object -Line).Lines
+if ($lines -lt 200) { throw "Extracted script is only $lines lines - check the branch name and retry." }
+
 powershell -ExecutionPolicy Bypass -File $stageScript -Repo $repo -BuildTag haven-v450
 ```
 

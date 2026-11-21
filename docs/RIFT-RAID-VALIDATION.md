@@ -378,13 +378,25 @@ Windows machine is `docs/RIFT-PROGRESSION-HANDOFF.md`. Migrations already presen
 applies those two only if `pg-staging` is missing them.
 
 The branch already contains the latest `main` (merged at `f648eab`), so the script's step-3 merge is
-a no-op. Run it from the checkout, in PowerShell:
+a no-op.
+
+**The script is not on `main`.** It only exists on this branch — `main` contains no `.ps1` file at
+all — so `-File .\tools\staging\update-and-stage.ps1` cannot work from a checkout that is on `main`
+(the state the handoff leaves it in). Copy it out of the branch first, then run the copy, from
+PowerShell:
 
 ```powershell
-cd C:\path\to\Prontera-Grind
-git status --porcelain                  # must print nothing
-npx.cmd --yes wrangler@4.154.0 whoami   # must print an account (npx.cmd: plain `npx` is blocked here)
-powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\staging\update-and-stage.ps1 -BuildTag haven-v450
+$repo = Join-Path $env:USERPROFILE 'Desktop\Prontera-Grind'
+Set-Location $repo
+git status --porcelain                        # must print nothing
+npx.cmd --yes wrangler@4.154.0 whoami         # must print an account (plain `npx` is blocked here)
+
+git fetch origin arena/bfc7d4d1-prontera-grind
+$stageScript = Join-Path $env:TEMP 'pg-update-and-stage.ps1'
+git show FETCH_HEAD:tools/staging/update-and-stage.ps1 | Set-Content -Encoding ascii $stageScript
+Get-Content $stageScript | Measure-Object -Line   # sanity: must be ~281 lines, not 0
+
+powershell -NoProfile -ExecutionPolicy Bypass -File $stageScript -Repo $repo -BuildTag haven-v450
 ```
 
 Needs Git for Windows (`bash.exe`) and node on PATH. It touches only `prontera-grind-staging`,
