@@ -781,7 +781,7 @@ w.S.lv=150;w.S.auraShow=true;w.moveSpd=()=>9.5;
  }
 
  // MVP integration: exercise the actual receive() router and fishing module together. A first live
- // event announces once to Local + activity/HUD; snapshots refresh state but stay silent.
+ // event keeps the red Fishing banner and one Local notice; the duplicate blue activity/HUD alert is absent.
  {
   w.eval(fs.readFileSync('assets/social-fishing.js','utf8'));
   const F=w.PGSocialFishing;
@@ -789,18 +789,23 @@ w.S.lv=150;w.S.auraShow=true;w.moveSpd=()=>9.5;
   app.room=1;app.wanted=true;
   const chat=d=>w.document.querySelectorAll('#socialLines .social-notice').length;
   const events=()=>w.PGSocial.activityLog().length;
-  const baseChat=chat(),baseEvents=events(),now=Date.now();
+  const blueHud=()=>w.document.querySelector('#sanctuaryWorldStatus span')?.textContent||'';
+  const baseChat=chat(),baseEvents=events(),baseHud=blueHud(),now=Date.now();
   const spawn={type:'mvp_spawn',room:1,sp:'mvp_stormcoil',id:'mvp:notice:one',spawnedAt:now,endsAt:now+600000,serverNow:now,snapshot:false};
   w.PGSocial.receive(spawn);
   w.PGSocial.receive({...spawn,snapshot:true,endsAt:now+900000,serverNow:now+1000});
   w.PGSocial.receive(spawn);
   assert.equal(chat()-baseChat,1,'live spawn plus duplicate snapshots add one Local notice');
-  assert.equal(events()-baseEvents,1,'live spawn plus duplicate snapshots add one activity entry');
+  assert.equal(events()-baseEvents,0,'MVP spawn does not add a duplicate activity/HUD announcement');
+  assert.equal(blueHud(),baseHud,'the blue transient status is not overwritten by an MVP spawn');
+  assert.equal(w.document.querySelector('#socialHudStack > #fishingMvpBanner')?.hidden,false,'the red Fishing MVP banner remains visible');
+  assert.match(fs.readFileSync('assets/social.css','utf8'),/#fishingMvpBanner\{[^}]*background:linear-gradient\(180deg,#3a1220/,'the retained banner uses its red style');
   assert.equal(F.getMvp().endsAt,now+600000,'a duplicate snapshot cannot extend authoritative endsAt');
   const despawn={type:'mvp_despawn',room:1,sp:'mvp_stormcoil',id:spawn.id,serverNow:now+2000};
   w.PGSocial.receive(despawn);w.PGSocial.receive(despawn);
   assert.equal(chat()-baseChat,2,'duplicate despawn adds only one Local expiry notice');
-  assert.equal(events()-baseEvents,2,'duplicate despawn adds only one activity expiry entry');
+  assert.equal(events()-baseEvents,0,'MVP despawn does not restore the duplicate blue activity/HUD alert');
+  assert.equal(blueHud(),baseHud,'MVP despawn leaves the blue transient status untouched');
   w.PGSocial.receive({...spawn,snapshot:true,serverNow:now+3000});
   assert.equal(F.getMvp(),null,'a despawned snapshot cannot resurrect the encounter');
   assert.equal(chat()-baseChat,2,'replayed despawned spawn adds no new chat notice');

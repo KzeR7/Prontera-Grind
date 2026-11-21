@@ -1241,7 +1241,8 @@ function fishingAnnounce(fish){
  if(app.room&&send({type:'fishbrag',sp:fish.sp,w:fish.w,kind:fish.kind==='secret'?'secret':'mega'}))return true;
  return pushFishNote({sp:fish.sp,w:fish.w,kind:fish.kind,name:'You',from:app.id||SOLO_ID,at:Date.now()});
 }
-function fishingMvpNotice(kind,text){notice(text);worldNotice(text)}
+// Keep the Local notice, but leave the blue transient activity HUD alone; the red Fishing banner is the on-screen alert.
+function fishingMvpNotice(_kind,text){notice(text)}
 function bindFishing(){const F=FISHING();if(!F)return;F.bind({host:()=>typeof S==='object'&&S?S:null,scene:()=>app.scene,self:fishingSelf,moveTo:(x,z)=>moveAction(x,z),walkTo:(x,z)=>performMoveAction(x,z,true),showOff:fishingShowOff,announce:fishingAnnounce,rig:fishingRig,titleChanged:fishingTitleChanged,notice,mvpNotice:fishingMvpNotice,isUpdating:()=>typeof CLOUD!=='undefined'&&!!CLOUD.updating,save:()=>{if(typeof save==='function'&&typeof S==='object'&&S)save()},button:$id('socialFishBtn')})}
 const SOLO_MVP_KEY='pg_solo_mvp_v1';
 function soloUserKey(){
