@@ -388,7 +388,7 @@ export class SocialRoom {
   return false;
  }
  mvpSnapshot(room){const a=this.mvpActive.get(room);return a?{room,sp:a.sp,id:a.id,spawnedAt:a.spawnedAt,endsAt:a.endsAt}:null}
- broadcastMvp(room){const snap=this.mvpSnapshot(room);if(snap)this.broadcast({type:'mvp_spawn',...snap},p=>p.room===room)}
+ broadcastMvp(room){const snap=this.mvpSnapshot(room);if(snap)this.broadcast({type:'mvp_spawn',...snap,snapshot:true,serverNow:this.now()},p=>p.room===room)}
  scheduleMvp(room,now=this.now()){if(this.mvpLoaded===false)return;const delay=MVP_SPAWN_MIN+this.random()*(MVP_SPAWN_MAX-MVP_SPAWN_MIN);this.mvpNextAt.set(room,now+delay);this.onMvpChange?.()}
  spawnMvp(room,now=this.now(),requestedSp=null,customId=null){
   if(this.mvpLoaded===false||!Number.isInteger(room)||room<1||room>MAX_ROOMS||this.mvpActive.has(room))return null;
@@ -403,7 +403,7 @@ export class SocialRoom {
   else sp=deck.shift();
   this.mvpDecks.set(room,deck);
   const id=customId||('mvp:'+now.toString(36)+':'+Math.random().toString(36).slice(2,8));
-  const endsAt=now+MVP_DURATION,spawn={room,sp,id,spawnedAt:now,endsAt};
+  const endsAt=now+MVP_DURATION,spawn={room,sp,id,spawnedAt:now,endsAt,serverNow:now,snapshot:false};
   this.mvpActive.set(room,{sp,id,spawnedAt:now,endsAt});
   this.mvpLastSp.set(room,sp);
   this.mvpNextAt.delete(room);
@@ -416,7 +416,7 @@ export class SocialRoom {
   if(this.mvpLoaded===false)return;
   const cur=this.mvpActive.get(room);if(!cur)return;
   this.mvpActive.delete(room);
-  this.broadcast({type:'mvp_despawn',room,sp:cur.sp,id:cur.id},p=>p.room===room);
+  this.broadcast({type:'mvp_despawn',room,sp:cur.sp,id:cur.id,serverNow:now},p=>p.room===room);
   this.scheduleMvp(room,now);
  }
  nextMvpSpawnAt(now=this.now()){
@@ -893,7 +893,7 @@ export class SocialRoom {
   this.send(c,{type:'room',room:c.room,rooms,rules:R.rulesFingerprint(),players:[...this.clients.values()].filter(p=>p.room===c.room).map(p=>this.snapshot(p,c)),bots:{seed:this.botSeed(c.room),at:now,count:PLAZA_BOT_COUNT}});
   this.send(c,{type:'gym',room:c.room,entries:this.gymSnapshot(c.room)});
   // MVP active state for this room
-  if(this.mvpLoaded!==false){const m=this.mvpSnapshot(c.room);if(m)this.send(c,{type:'mvp_spawn',...m})}
+  if(this.mvpLoaded!==false){const m=this.mvpSnapshot(c.room);if(m)this.send(c,{type:'mvp_spawn',...m,snapshot:true,serverNow:now})}
   this.send(c,{type:'battle',room:c.room,at:now,...this.battleSnapshot(c.room)});
   this.send(c,this.pokerPayload(c.room,c.id,now));
   this.broadcastPlayer(c,p=>p.room===c.room,c);

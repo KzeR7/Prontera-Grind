@@ -397,8 +397,23 @@ const bulk=F.sellBulk(st,'dupes');
 assert.equal(bulk.sold,1,'only the light duplicate minnow sells');
 assert(st.bag.some(e=>e.w===.6)&&st.bag.some(e=>e.mut==='golden')&&st.bag.some(e=>e.sp==='koi'));
 assert(st.coins===bulk.coins&&bulk.coins>0);
+// Rarity + mutation filter sells only the explicit match, preserving locks and best records by default.
+st=F.normalize(null);
+const filterLight=F.addCatch(st,{sp:'minnow',rarity:'common',w:.2},1);
+const filterBest=F.addCatch(st,{sp:'minnow',rarity:'common',w:.6},2);
+const filterGolden=F.addCatch(st,{sp:'minnow',rarity:'common',w:.3,mut:'golden'},3);
+const filterRare=F.addCatch(st,{sp:'koi',rarity:'rare',w:5},4);
+const filterLocked=F.addCatch(st,{sp:'goby',rarity:'common',w:.4},5);F.toggleLock(st,filterLocked.id);
+const filtered=F.sellFiltered(st,{rarities:['common'],mutation:'none'});
+assert.equal(filtered.sold,1,'common unmutated duplicates match only the selected rarity+mutation filter');
+assert(!st.bag.some(e=>e.id===filterLight.id));
+assert(st.bag.some(e=>e.id===filterBest.id)&&st.bag.some(e=>e.id===filterGolden.id)&&st.bag.some(e=>e.id===filterRare.id)&&st.bag.some(e=>e.id===filterLocked.id),'best records, other rarities, mutations and locked fish are spared');
+const mutatedSale=F.sellFiltered(st,{rarities:['common'],mutation:'golden',includeBest:true});
+assert.equal(mutatedSale.sold,1,'the exact mutation can be targeted');
+assert(!st.bag.some(e=>e.id===filterGolden.id));
+assert.equal(F.sellFiltered(st,{rarities:['common'],mutation:'none',includeBest:true}).sold,1,'include-best opt-in can sell a record');
 const all=F.sellBulk(st,'all');
-assert.equal(all.sold,3);assert.equal(st.bag.length,0,'sell-everything empties the bag');
+assert.equal(all.sold,1,'sell-everything still honors the locked-fish protection');assert.equal(st.bag.length,1);assert.equal(st.bag[0].id,filterLocked.id,'the locked catch survives every sale filter');
 
 // --- v294: keep-locks protect fish from every sale path -----------------------------------
 st=F.normalize(null);
@@ -870,6 +885,21 @@ assert.equal(F.rodSpriteURL('mythril',64),null,'rod sprite URLs degrade to null 
  d2.getElementById('fishingSellDupes').onclick();
  assert(/auto-sell is on/i.test(d2.getElementById('fishingStatus').textContent),'and with auto-sell on it says why the bag is empty');
  hostS.fishing.settings.autoSell=false;
+ // The Bag's rarity/mutation bulk filter is wired to the same protected sale core.
+ hostS.fishing.bag.length=0;
+ FISH.addCatch(hostS.fishing,{sp:'minnow',rarity:'common',w:.1},Date.now());
+ FISH.addCatch(hostS.fishing,{sp:'minnow',rarity:'common',w:.2},Date.now()+1);
+ FISH.addCatch(hostS.fishing,{sp:'minnow',rarity:'common',w:.15,mut:'golden'},Date.now()+2);
+ FISH.addCatch(hostS.fishing,{sp:'koi',rarity:'rare',w:5},Date.now()+3);
+ FISH.openBag();
+ const commonFilter=d2.querySelector('[data-sell-rarity="common"]');commonFilter.checked=true;commonFilter.onchange();
+ d2.getElementById('fishingSellMutation').value='none';d2.getElementById('fishingSellMutation').onchange({target:d2.getElementById('fishingSellMutation')});
+ d2.getElementById('fishingSellFiltered').onclick();
+ assert.equal(hostS.fishing.bag.length,3,'Sell matching removes only the common unmutated dupe');
+ d2.getElementById('fishingSellMutation').value='golden';d2.getElementById('fishingSellMutation').onchange({target:d2.getElementById('fishingSellMutation')});
+ d2.getElementById('fishingSellBest').checked=true;d2.getElementById('fishingSellBest').onchange({target:d2.getElementById('fishingSellBest')});
+ d2.getElementById('fishingSellFiltered').onclick();
+ assert.equal(hostS.fishing.bag.length,2,'the selected mutation can be sold without changing other rarities');
  // --- Part C2: Auto fishing survives being moved (the AFK spawn teleport) -----------------
  let frame2=null,clock2=1000,moved=null;
  w2.requestAnimationFrame=cb=>{frame2=cb};

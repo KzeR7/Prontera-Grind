@@ -90,8 +90,14 @@ console.log('social MVP spawn simulation: testing pure earliest-deadline schedul
 
  assert.equal(room.hasOccupants(1), true, 'room 1 now has occupants');
  assert.equal(room.mvpActive.has(1), true, 'MVP spawned promptly upon player entry');
- const spawnMsg = msgs.find(m => m.type === 'mvp_spawn');
- assert.ok(spawnMsg, 'entering player received mvp_spawn in room snapshot');
+ const spawnEvents=msgs.filter(m=>m.type==='mvp_spawn');
+ assert.equal(spawnEvents.length,2,'an overdue return gets one live spawn plus one state snapshot');
+ const spawnMsg=spawnEvents.find(m=>m.snapshot!==true);
+ assert.ok(spawnMsg, 'entering player received the live overdue spawn');
+ assert.equal(spawnEvents.find(m=>m.snapshot===true)?.id,spawnMsg.id,'the state snapshot is the same active encounter, not another spawn');
+ const spawnedId=room.mvpActive.get(1).id;room.tickMvp(mockNow+1000);
+ assert.equal(room.mvpActive.get(1).id,spawnedId,'a repeated scheduler tick does not create another overdue spawn');
+ assert.equal(msgs.filter(m=>m.type==='mvp_spawn').length,2,'repeated tick broadcasts no second spawn');
  assert.notEqual(spawnMsg.sp, 'mvp_stormcoil', 'the random spawn avoids repeating the previous room species');
  console.log('  ok 2. Empty rooms do not auto-spawn, retain overdue pending state, and preserve GM manual spawning');
 }
@@ -400,7 +406,8 @@ console.log('social MVP spawn simulation: testing pure earliest-deadline schedul
  social.room.now = () => mockNow;
  await social.ready;
 
- const player = { id: 501, room: 1, send: () => {}, friends: new Set() };
+ const spawnedPackets=[];
+ const player = { id: 501, room: 1, send: raw => {const m=JSON.parse(raw);if(m.type==='mvp_spawn')spawnedPackets.push(m)}, friends: new Set() };
  social.room.clients.set(player.id, player);
 
  // Initial schedule for occupied room 1
@@ -408,7 +415,7 @@ console.log('social MVP spawn simulation: testing pure earliest-deadline schedul
  await social.mvpWrites;
  await social.battleAlarmWrite;
  const spawnTime = social.room.mvpNextAt.get(1);
- assert.ok(spawnTime > mockNow);
+ assert(spawnTime>=mockNow+60*60*1000&&spawnTime<=mockNow+2*60*60*1000,'production schedule remains a randomized 1–2 hours');
  assert.equal(storedAlarm, spawnTime, 'alarm in storage set to exact spawn time');
 
  // Reset baseline counters before starting alarm driver
@@ -435,6 +442,7 @@ console.log('social MVP spawn simulation: testing pure earliest-deadline schedul
  await social.alarm(); // Real Social.alarm() execution!
 
  assert.equal(social.room.mvpActive.has(1), true, 'alarm() invocation triggered MVP spawn');
+ assert.equal(spawnedPackets.length,1,'the occupied-room production alarm broadcasts its MVP spawn exactly once');
  const activeEndsAt = social.room.mvpActive.get(1).endsAt;
  assert.equal(activeEndsAt, mockNow + 600000, 'active MVP duration is 10 minutes');
  assert.equal(stateWrites, 1, 'exactly 1 state write persisted the spawn');
@@ -538,34 +546,40 @@ console.log('social MVP spawn simulation: testing pure earliest-deadline schedul
  assert.equal(activeFishingMvp.sp, originalSp, 'same species restored');
  assert.equal(activeFishingMvp.endsAt, originalEndsAt, 'same despawn timestamp restored');
 
- // 4. Returning after active window has ended, when next scheduled spawn has elapsed:
- // Spawns immediately without restarting 1-2h timer!
- activeFishingMvp = null;
- const nextDueTime = storedActive.nextAt;
- w.Date.now = () => nextDueTime + 5000; // return after next schedule is overdue
- PGSocial.tickSoloMvp();
-
- assert.ok(activeFishingMvp, 'overdue return spawns an MVP immediately');
- assert.notEqual(activeFishingMvp.id, originalId, 'fresh spawn ID for new cycle');
-
- // 5. Multiplayer transition: entering multiplayer cleans up active solo spawn
- app.room = 1; // transitioned to multiplayer room
- const storedBeforeRoom = PGSocial.readSoloMvpState();
- if (storedBeforeRoom && storedBeforeRoom.active) {
-  storedBeforeRoom.active = null;
-  PGSocial.writeSoloMvpState(storedBeforeRoom);
+ // 4. Full shuffled-bag cycle across overdue deadlines and simulated reloads.
+ const seen=[originalSp];let dueTime=storedActive.nextAt;
+ assert.equal(storedActive.lastSp,originalSp,'previous species is saved with the solo state');
+ assert.equal(storedActive.bag.length,FISHING_MVP_IDS.length-1,'the remaining solo bag is persisted');
+ const bagAtReload=[...storedActive.bag];
+ assert.deepEqual(Array.from(PGSocial.readSoloMvpState().bag),bagAtReload,'reloading retains the same remaining bag');
+ const soloMessages=[];app.socket={readyState:1,send:m=>soloMessages.push(m)};
+ for(let i=1;i<FISHING_MVP_IDS.length;i++){
+  activeFishingMvp=null; // each iteration begins as a fresh page with no in-memory MVP
+  w.Date.now=()=>dueTime+5000; // returning after the saved deadline is overdue
+  PGSocial.tickSoloMvp();
+  assert.ok(activeFishingMvp,'overdue solo return spawns immediately at step '+i);
+  seen.push(activeFishingMvp.sp);
+  const saved=PGSocial.readSoloMvpState();
+  assert.equal(saved.active.sp,activeFishingMvp.sp,'the chosen species is durably paired with its active spawn');
+  assert.equal(saved.active.id,activeFishingMvp.id,'the spawn id survives the same save');
+  dueTime=saved.nextAt;
  }
- const storedMulti = PGSocial.readSoloMvpState();
- assert.equal(storedMulti.active, null, 'active solo spawn cleaned up on multiplayer handoff');
- assert.ok(storedMulti.nextAt > 0, 'scheduled next deadline preserved for returning to solo');
-
- // 6. Account switch: switching user isolates and clears previous user data
- app.room = 0;
- w.CLOUD.user = 'DifferentUser';
- assert.equal(PGSocial.readSoloMvpState(), null, 'different account refuses previous user solo MVP');
- w.Date.now = originalDateNow;
+ assert.equal(new Set(seen).size,FISHING_MVP_IDS.length,'solo shows all ten species once before reshuffling');
+ // Entering multiplayer hides the solo banner but does not discard its active spawn or bag.
+ app.room=1;PGSocial.tickSoloMvp();
+ const savedWhileMultiplayer=PGSocial.readSoloMvpState();
+ assert.ok(savedWhileMultiplayer.active,'solo active spawn is preserved while in a multiplayer room');
+ assert.ok(savedWhileMultiplayer.nextAt>0,'solo deadline is preserved across the room switch');
+ app.room=0;activeFishingMvp=null;w.Date.now=()=>savedWhileMultiplayer.active.spawnedAt+1000;PGSocial.tickSoloMvp();
+ assert.equal(activeFishingMvp.id,savedWhileMultiplayer.active.id,'returning solo restores the same still-live spawn');
+ assert.equal(activeFishingMvp.endsAt,savedWhileMultiplayer.active.endsAt,'returning solo never extends endsAt');
+ assert.equal(soloMessages.length,0,'solo scheduling and restores make no plaza Durable Object calls');
+ // Account switch refuses prior state, including its bag and current spawn.
+ w.CLOUD.user='DifferentUser';
+ assert.equal(PGSocial.readSoloMvpState(),null,'different account refuses previous user solo MVP');
+ w.Date.now=originalDateNow;
  dom.window.close();
- console.log('  ok 9. Solo lifecycle persists active/next state, restores on reload, spawns immediately when overdue, and isolates multiplayer/accounts');
+ console.log('  ok 9. Solo shuffled bag cycles through all species, reload/room changes preserve deadlines, account switching isolates state, and solo sends no DO messages');
 }
 
 // ============================================================================

@@ -651,6 +651,26 @@ function sellBulk(state,mode){
  state.coins=Math.min(COIN_MAX,state.coins+coins);
  return {sold,coins};
 }
+// Explicit bulk-sale filter: locks are absolute; records are protected unless the player opts in.
+function sellFiltered(state,filter={}){
+ if(!state)return {sold:0,coins:0};
+ const rarities=new Set(Array.isArray(filter.rarities)?filter.rarities.filter(id=>Object.hasOwn(RARITY_INDEX,id)):[]);
+ if(!rarities.size)return {sold:0,coins:0};
+ const mutation=Object.hasOwn(MUTATIONS,filter.mutation)?filter.mutation:filter.mutation||'any';
+ const best=new Map();for(const e of state.bag){const old=best.get(e.sp);if(!old||e.w>old.w)best.set(e.sp,e)}
+ const keep=new Set(state.bag.filter(e=>e.lock).map(e=>e.id));
+ if(filter.includeBest!==true)for(const e of best.values())keep.add(e.id);
+ let sold=0,coins=0;
+ state.bag=state.bag.filter(e=>{
+  const sp=speciesById(e.sp),matches=sp&&rarities.has(sp.rarity)&&(
+   mutation==='any'||(mutation==='none'?!e.mut:mutation==='mutated'?!!e.mut:e.mut===mutation)
+  );
+  if(!matches||keep.has(e.id))return true;
+  sold++;coins+=value(e);return false;
+ });
+ state.coins=Math.min(COIN_MAX,state.coins+coins);
+ return {sold,coins};
+}
 // v294: per-fish keep-lock. A locked fish cannot be sold (single, bulk or auto) or released.
 function toggleLock(state,entryId){
  const e=state&&state.bag.find(x=>x.id===entryId);if(!e)return null;
@@ -755,9 +775,35 @@ function sound(kind){
  }catch{}
 }
 const ui={phase:'off',pond:-1,holding:false,chargeT0:0,castR:null,mods:null,biteAt:0,biteEnd:0,shakeAt:0,shakeEl:null,roll:null,reel:null,raf:0,last:0,selected:null,sort:'new',result:null,
- tab:'bag',auto:false,autoNext:0,autoPower:.8,autoHookAt:0,autoSampleAt:0,autoTarget:.5,rigTarget:null,walkT0:0};
+ tab:'bag',auto:false,autoNext:0,autoPower:.8,autoHookAt:0,autoSampleAt:0,autoTarget:.5,rigTarget:null,walkT0:0,sellFilter:{rarities:[],mutation:'any',includeBest:false}};
 // MVP fishing: active spawn from the Social Worker, one catch per spawn per player.
-let mvpActive=null; // {sp,id,spawnedAt,endsAt}
+let mvpActive=null; // {sp,id,spawnedAt,endsAt,mode,room,identity}
+const MVP_EVENT_LIMIT=256,MVP_SCOPE_LIMIT=128,mvpEventHistory=new Map(),mvpScopeLatest=new Map();
+let mvpClockOffset=0,mvpClockServerAt=0;
+function mvpScope(data={},options={}){
+ const mode=options.mode||data.mode||(Number.isInteger(Number(options.room??data.room))&&Number(options.room??data.room)>0?'plaza':'solo');
+ const room=mode==='plaza'?Number(options.room??data.room):0;
+ if(!['solo','plaza'].includes(mode)||(mode==='plaza'&&(!Number.isInteger(room)||room<1)))return null;
+ return {mode,room};
+}
+function mvpIdentity(scope,id){return scope.mode+'|'+scope.room+'|'+id}
+function mvpScopeKey(scope){return scope.mode+'|'+scope.room}
+function rememberMvpScope(key,entry){mvpScopeLatest.delete(key);mvpScopeLatest.set(key,entry);while(mvpScopeLatest.size>MVP_SCOPE_LIMIT)mvpScopeLatest.delete(mvpScopeLatest.keys().next().value)}
+function mvpNow(mode='solo'){return Date.now()+(mode==='plaza'?mvpClockOffset:0)}
+function observeMvpClock(serverNow){
+ if(!Number.isFinite(serverNow)||serverNow<mvpClockServerAt)return;
+ mvpClockServerAt=serverNow;mvpClockOffset=serverNow-Date.now();
+}
+function rememberMvp(identity,entry){
+ mvpEventHistory.delete(identity);mvpEventHistory.set(identity,entry);
+ while(mvpEventHistory.size>MVP_EVENT_LIMIT)mvpEventHistory.delete(mvpEventHistory.keys().next().value);
+}
+function mvpAnnouncement(kind,data){
+ const sp=speciesById(data.sp),name=sp?sp.name:data.sp;
+ const text=kind==='spawn'?`⚠️ MVP ${name} has spawned at the pond! 10-minute window — reel it in!`:`The MVP ${name} has fled the pond.`;
+ if(opts&&typeof opts.mvpNotice==='function')opts.mvpNotice(kind,text,data);
+ else if(opts&&typeof opts.notice==='function')opts.notice(text);
+}
 // v422: the claimed marker lives IN THE SAVE (state().mvpCaught) - a reload used to wipe this
 // in-memory Set and the same spawn could be caught again. The Set is only a lookup cache for the
 // save's array, rebuilt whenever the fishing state OBJECT changes (reload, account switch, cloud
@@ -835,7 +881,11 @@ function ensureDom(){
  // instead of covering them; a page without that column keeps the old placement.
  (doc.getElementById('socialHudStack')||hub).append(mvpBanner);
  const panel=doc.createElement('section');panel.id='fishingPanel';panel.hidden=true;panel.setAttribute('role','dialog');panel.setAttribute('aria-label','Fishing Bag');
- panel.innerHTML='<header id="fishingPanelHead" title="Drag to move"><strong>🎣 Fishing</strong><span id="fishingCoins" title="Fishcoins — sell catches to earn, spend on rods &amp; bait"></span><button id="fishingPanelClose" type="button" aria-label="Close Fishing window">✕</button></header><nav id="fishingTabs" role="tablist" aria-label="Fishing sections"><button type="button" role="tab" data-ftab="bag" aria-selected="true">🧺 Bag</button><button type="button" role="tab" data-ftab="index" aria-selected="false">📖 Index</button><button type="button" role="tab" data-ftab="shop" aria-selected="false">🛒 Shop</button><button type="button" role="tab" data-ftab="titles" aria-selected="false">🏅 Titles</button></nav><div id="fishingBagView"><div id="fishingRecords"></div><div id="fishingTools"><select id="fishingSort" aria-label="Sort fish"><option value="new">Newest</option><option value="heavy">Heaviest</option><option value="rare">Rarest</option><option value="value">Most valuable</option></select><button id="fishingSellDupes" type="button" title="Sells everything except your heaviest of each species, every mutated fish and every 🔒 locked fish">💰 Sell dupes</button><label title="After every catch, automatically sell it unless it is mutated, locked, or your new heaviest of that species"><input type="checkbox" id="fishingAutoSell"> Auto-sell dupes</label><label title="Fishing sound effects"><input type="checkbox" id="fishingSound"> Sounds</label></div><div id="fishingGrid" role="listbox" aria-label="Caught fish"></div><footer id="fishingDetail" hidden></footer></div><div id="fishingIndexView" hidden></div><div id="fishingShopView" hidden></div><div id="fishingTitlesView" hidden></div>';
+ panel.innerHTML='<header id="fishingPanelHead" title="Drag to move"><strong>🎣 Fishing</strong><span id="fishingCoins" title="Fishcoins — sell catches to earn, spend on rods &amp; bait"></span><button id="fishingPanelClose" type="button" aria-label="Close Fishing window">✕</button></header><nav id="fishingTabs" role="tablist" aria-label="Fishing sections"><button type="button" role="tab" data-ftab="bag" aria-selected="true">🧺 Bag</button><button type="button" role="tab" data-ftab="index" aria-selected="false">📖 Index</button><button type="button" role="tab" data-ftab="shop" aria-selected="false">🛒 Shop</button><button type="button" role="tab" data-ftab="titles" aria-selected="false">🏅 Titles</button></nav><div id="fishingBagView"><div id="fishingRecords"></div><div id="fishingTools"><select id="fishingSort" aria-label="Sort fish"><option value="new">Newest</option><option value="heavy">Heaviest</option><option value="rare">Rarest</option><option value="value">Most valuable</option></select><button id="fishingSellDupes" type="button" title="Sells everything except your heaviest of each species, every mutated fish and every 🔒 locked fish">💰 Sell dupes</button><label title="After every catch, automatically sell it unless it is mutated, locked, or your new heaviest of that species"><input type="checkbox" id="fishingAutoSell"> Auto-sell dupes</label><label title="Fishing sound effects"><input type="checkbox" id="fishingSound"> Sounds</label></div><details id="fishingSellFilter"><summary>Sell by rarity &amp; mutation</summary><div id="fishingSellFilterPanel"><fieldset id="fishingSellRarities"><legend>Rarities to sell</legend></fieldset><label>Mutation <select id="fishingSellMutation"></select></label><label title="Also sell the heaviest fish of each species"><input type="checkbox" id="fishingSellBest"> Include best records</label><button id="fishingSellFiltered" type="button">Sell matching</button><small>Locked fish are always kept.</small></div></details><div id="fishingGrid" role="listbox" aria-label="Caught fish"></div><footer id="fishingDetail" hidden></footer></div><div id="fishingIndexView" hidden></div><div id="fishingShopView" hidden></div><div id="fishingTitlesView" hidden></div>';
+ const rarityFilters=panel.querySelector('#fishingSellRarities');
+ if(rarityFilters)rarityFilters.insertAdjacentHTML('beforeend',RARITIES.map(r=>`<label><input type="checkbox" data-sell-rarity="${r.id}"> ${esc(r.label)}</label>`).join(''));
+ const mutationFilter=panel.querySelector('#fishingSellMutation');
+ if(mutationFilter)mutationFilter.innerHTML='<option value="any">Any mutation</option><option value="none">Unmutated only</option><option value="mutated">Any mutated fish</option>'+Object.entries(MUTATIONS).map(([id,m])=>`<option value="${id}">${esc(m.label)}</option>`).join('');
  const shakes=doc.createElement('div');shakes.id='fishingShakes';shakes.hidden=true;
  // v290: the toolbar button opens this menu instead of instantly walking to a pond. Start
  // fishing is an explicit choice; Bag / Index / Shop open anywhere in the plaza, no walking.
@@ -855,6 +905,16 @@ function ensureDom(){
  doc.getElementById('fishingPanelClose').onclick=()=>toggleBag(false);
  doc.getElementById('fishingSort').onchange=e=>{ui.sort=e.target.value;renderBag()};
  doc.getElementById('fishingSellDupes').onclick=()=>{if(updatingPaused())return;const r=sellBulk(state(),'dupes');persist();if(r.sold){sound('coin');status(`Sold ${r.sold} fish for ${fmt(r.coins)} Fishcoins.`)}else status(state().settings.autoSell?'Nothing to sell — auto-sell is on, so dupes never pile up.':'Nothing to sell — every fish is a record, mutated or locked.');ui.selected=null;renderPanel();renderDockGear()};
+ panel.querySelectorAll('[data-sell-rarity]').forEach(input=>input.onchange=()=>{ui.sellFilter.rarities=[...panel.querySelectorAll('[data-sell-rarity]:checked')].map(x=>x.dataset.sellRarity)});
+ doc.getElementById('fishingSellMutation').onchange=e=>{ui.sellFilter.mutation=e.target.value};
+ doc.getElementById('fishingSellBest').onchange=e=>{ui.sellFilter.includeBest=e.target.checked};
+ doc.getElementById('fishingSellFiltered').onclick=()=>{
+  if(updatingPaused())return;
+  const r=sellFiltered(state(),ui.sellFilter);persist();
+  if(r.sold){sound('coin');status(`Sold ${r.sold} matching fish for ${fmt(r.coins)} Fishcoins.`)}
+  else status(ui.sellFilter.rarities.length?'No eligible fish match — locked fish and best records are protected.':'Choose at least one rarity to sell.');
+  ui.selected=null;renderPanel();renderDockGear();
+ };
  doc.getElementById('fishingAutoSell').onchange=e=>{if(updatingPaused()){e.target.checked=!!state().settings.autoSell;return}state().settings.autoSell=e.target.checked;persist();status(e.target.checked?'Auto-sell on — dupes are sold as you catch them (records, mutations and 🔒 locked fish are kept).':'Auto-sell off.')};
  doc.getElementById('fishingSound').onchange=e=>{if(updatingPaused()){e.target.checked=!!state().settings.sound;return}state().settings.sound=e.target.checked;persist()};
  els.autoBtn.onclick=()=>setAuto(!ui.auto);
@@ -910,40 +970,63 @@ function toggleMenu(force){
  }
 }
 function status(text){if(els)els.status.textContent=text||''}
-function mvpTimeLeft(){if(!mvpActive) return 0; return Math.max(0, Math.floor((mvpActive.endsAt - Date.now())/1000));}
+function mvpTimeLeft(){if(!mvpActive)return 0;return Math.max(0,Math.floor((mvpActive.endsAt-mvpNow(mvpActive.mode))/1000))}
 function renderMvpBanner(){
- if(!els||!els.mvpBanner) return;
+ if(!els||!els.mvpBanner)return;
  if(!mvpActive){els.mvpBanner.hidden=true;els.mvpBanner.textContent='';return}
- const sp=speciesById(mvpActive.sp);
- const name=sp?sp.name:mvpActive.sp;
- const secs=mvpTimeLeft();
- const claimed=mvpClaimed().has(mvpActive.id);
- const mins=Math.floor(secs/60), sec=String(secs%60).padStart(2,'0');
+ const sp=speciesById(mvpActive.sp),name=sp?sp.name:mvpActive.sp,secs=mvpTimeLeft();
+ const claimed=mvpClaimed().has(mvpActive.id),mins=Math.floor(secs/60),sec=String(secs%60).padStart(2,'0');
  els.mvpBanner.hidden=false;
- els.mvpBanner.innerHTML=(claimed?`✅ <b>${esc(name)}</b> caught! Next spawn soon.`:`⚠️ <b>MVP ${esc(name)}</b> at the pond! ${mins}:${sec} left · one per spawn`);
+ els.mvpBanner.innerHTML=claimed?`✅ <b>${esc(name)}</b> caught! Next spawn soon.`:`⚠️ <b>MVP ${esc(name)}</b> at the pond! ${mins}:${sec} left · one per spawn`;
 }
-function setMvp(data){
- if(!data||!data.sp||!data.id) return;
- const isSameSpawn=mvpActive?.id===data.id&&mvpActive?.sp===data.sp;
- mvpActive={sp:data.sp,id:data.id,spawnedAt:Number(data.spawnedAt)||Date.now(),endsAt:Number(data.endsAt)||Date.now()+10*60*1000};
- renderMvpBanner();
- if(!isSameSpawn&&opts&&opts.notice){
-  const sp=speciesById(mvpActive.sp);
-  opts.notice(`⚠️ MVP ${sp?sp.name:mvpActive.sp} has spawned at the pond! 10-minute window — reel it in!`);
+function setMvp(data,options={}){
+ if(!data||typeof data.id!=='string'||!data.id||data.id.length>120)return {accepted:false,notify:false};
+ const sp=speciesById(data.sp);if(!sp||sp.rarity!=='mvp')return {accepted:false,notify:false};
+ const scope=mvpScope(data,options);if(!scope)return {accepted:false,notify:false};
+ if(scope.mode==='plaza')observeMvpClock(Number(data.serverNow));
+ const scopeKey=mvpScopeKey(scope),identity=mvpIdentity(scope,data.id),old=mvpEventHistory.get(identity),latest=mvpScopeLatest.get(scopeKey);
+ const spawnedAt=Number(data.spawnedAt),rawEndsAt=Number(data.endsAt);
+ if(!Number.isFinite(spawnedAt)||!Number.isFinite(rawEndsAt)||rawEndsAt<=spawnedAt)return {accepted:false,notify:false};
+ if(old&&(old.sp!==sp.id||old.status!=='active'))return {accepted:false,notify:false};
+ if(latest&&latest.identity===identity&&latest.status!=='active')return {accepted:false,notify:false};
+ if(latest&&latest.identity!==identity&&spawnedAt<=latest.spawnedAt)return {accepted:false,notify:false};
+ const prior=old||(latest?.identity===identity?latest:null),endsAt=prior?Math.min(prior.endsAt,rawEndsAt):rawEndsAt;
+ if(mvpNow(scope.mode)>=endsAt){
+  const retired={status:'expired',identity,sp:sp.id,spawnedAt:prior?Math.min(prior.spawnedAt,spawnedAt):spawnedAt,endsAt,spawnNotified:prior?.spawnNotified===true,despawnNotified:prior?.despawnNotified===true};
+  rememberMvp(identity,retired);
+  if(latest?.identity===identity)rememberMvpScope(scopeKey,retired);
+  if(mvpActive?.identity===identity){mvpActive=null;renderMvpBanner();try{sceneFishing()?.setMvp?.(null,false)}catch{}}
+  return {accepted:false,notify:false,expired:true};
  }
- // also create pond warning sign in scene
- try{const f=sceneFishing(); if(f&&f.setMvp) f.setMvp(mvpActive.sp, true)}catch{}
- // refresh ticker
- if(!setMvp._ticker){setMvp._ticker=setInterval(()=>{ if(mvpActive&&Date.now()>=mvpActive.endsAt){clearMvp({id:mvpActive.id});} else renderMvpBanner(); },1000); }
-}
-function clearMvp(data){
- if(mvpActive&&data&&data.id&&mvpActive.id!==data.id) return;
- if(!mvpActive) return;
- const sp=speciesById(mvpActive.sp);
- if(opts&&opts.notice) opts.notice(`The MVP ${sp?sp.name:mvpActive.sp} has fled the pond.`);
- mvpActive=null;
+ const duplicate=!!prior;
+ if(latest&&latest.identity!==identity){
+  const superseded=mvpEventHistory.get(latest.identity);
+  if(superseded?.status==='active')rememberMvp(latest.identity,{...superseded,status:'superseded'});
+ }
+ mvpActive={sp:sp.id,id:data.id,spawnedAt:prior?Math.min(prior.spawnedAt,spawnedAt):spawnedAt,endsAt,mode:scope.mode,room:scope.room,identity};
+ const notify=options.announce!==false&&!duplicate;
+ const history={status:'active',identity,sp:sp.id,spawnedAt:mvpActive.spawnedAt,endsAt,spawnNotified:!!prior?.spawnNotified||notify,despawnNotified:!!prior?.despawnNotified};
+ rememberMvp(identity,history);rememberMvpScope(scopeKey,history);
  renderMvpBanner();
- try{const f=sceneFishing(); if(f&&f.setMvp) f.setMvp(null,false)}catch{}
+ if(notify)mvpAnnouncement('spawn',mvpActive);
+ try{const f=sceneFishing();if(f&&f.setMvp)f.setMvp(mvpActive.sp,true)}catch{}
+ if(!setMvp._ticker){setMvp._ticker=setInterval(()=>{if(mvpActive&&mvpNow(mvpActive.mode)>=mvpActive.endsAt)clearMvp(mvpActive,{reason:'expired'});else renderMvpBanner()},1000)}
+ return {accepted:true,notify,duplicate,active:mvpActive};
+}
+function clearMvp(data,options={}){
+ const current=mvpActive,scope=mvpScope(data||current||{},options);if(!scope)return {accepted:false,notify:false};
+ if(scope.mode==='plaza')observeMvpClock(Number(data?.serverNow));
+ const id=typeof data?.id==='string'?data.id:current?.id;if(!id)return {accepted:false,notify:false};
+ const identity=mvpIdentity(scope,id),latest=mvpScopeLatest.get(mvpScopeKey(scope)),old=mvpEventHistory.get(identity)||(latest?.identity===identity?latest:null);
+ if((current&&identity===current.identity&&data?.sp&&data.sp!==current.sp)||(old?.sp&&data?.sp&&old.sp!==data.sp))return {accepted:false,notify:false};
+ if(current&&identity!==current.identity&&options.retire===false)return {accepted:false,notify:false};
+ if(!old||old.status!=='active'||latest?.identity!==identity||latest.status!=='active')return {accepted:false,notify:false};
+ const active=current?.identity===identity?current:{sp:old.sp,id,spawnedAt:old.spawnedAt,endsAt:old.endsAt,mode:scope.mode,room:scope.room,identity};
+ const announce=options.announce!==false;
+ if(current?.identity===identity){mvpActive=null;renderMvpBanner();try{const f=sceneFishing();if(f&&f.setMvp)f.setMvp(null,false)}catch{}}
+ if(options.retire!==false){const retired={status:options.reason==='expired'?'expired':'despawned',identity,sp:active.sp,spawnedAt:active.spawnedAt,endsAt:active.endsAt,spawnNotified:!!old.spawnNotified,despawnNotified:!!old.despawnNotified||announce};rememberMvp(identity,retired);rememberMvpScope(mvpScopeKey(scope),retired);}
+ if(announce)mvpAnnouncement('despawn',active);
+ return {accepted:true,notify:announce,active};
 }
 function setAuto(on){
  ui.auto=!!on;
@@ -2142,7 +2225,7 @@ return {
  FISHING_TITLES,FISHING_TITLE_BY_ID,titleUnlocked,equipTitle,equippedTitle,titleColor,discoveredSpecies,bestWeight,mutationKinds,
  speciesById,rarityById,rate,rateWith,tierShares,value,rollCatch,castRating,makeReel,reelStep,normalize,addCatch,
  ROD_GATE,ROD_RANK,rodCeiling,gateRodFor,GATE_ESCAPE,
- buyRod,equipRod,buyBait,selectBait,sellFish,sellBulk,toggleLock,shouldAutoSell,showOffText,parseShowOff,showOffScale,
+ buyRod,equipRod,buyBait,selectBait,sellFish,sellBulk,sellFiltered,toggleLock,shouldAutoSell,showOffText,parseShowOff,showOffScale,
  showOffData,cleanShowOff,showOffEvent,rodSprite,rodSpriteURL,ROD_TIER_COLORS,
  // v301: the crop manifest, so tests can prove every drawing on disk is wired up.
  FISH_ART,
