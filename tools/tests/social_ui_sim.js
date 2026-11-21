@@ -780,5 +780,77 @@ w.S.lv=150;w.S.auraShow=true;w.moveSpd=()=>9.5;
   assert.match(panelCss,/#wins \.social-destination\{[^}]*flex:none;[^}]*\}/,'the destination card keeps its height so the panel scrolls instead of compressing the card');
  }
 
- console.log('PASS chat UI: stable hover/click tabs, dead-socket watchdog, seat-preserving re-authentication, disconnected account cleanup, Local history across reconnects, plaza switches and a same-tab reload (sessionStorage, never localStorage), an immediate reconnect when the network returns, a probed (not killed) quiet socket, a handshake timeout, Local privacy on exit, emotion tray on world/whisper/local, recipient control, minimize, history cap, solo/preview plaza fallback, decoupled chat/log visibility and text-only message rendering; v319 field Social Hub button with live population badge and one-click entry; v355 plaza maps with party panel and v356 tree-and-bench map cover');dom.window.close();
+ // MVP integration: exercise the actual receive() router and fishing module together. A first live
+ // event keeps the red Fishing banner and one Local notice; the duplicate blue activity/HUD alert is absent.
+ {
+  w.eval(fs.readFileSync('assets/social-fishing.js','utf8'));
+  const F=w.PGSocialFishing;
+  F.bind({host:()=>w.S,scene:()=>null,notice:t=>{},mvpNotice:w.PGSocial.fishingMvpNotice,save:()=>{}});
+  app.room=1;app.wanted=true;
+  const chat=d=>w.document.querySelectorAll('#socialLines .social-notice').length;
+  const events=()=>w.PGSocial.activityLog().length;
+  const blueHud=()=>w.document.querySelector('#sanctuaryWorldStatus span')?.textContent||'';
+  const baseChat=chat(),baseEvents=events(),baseHud=blueHud(),now=Date.now();
+  const spawn={type:'mvp_spawn',room:1,sp:'mvp_stormcoil',id:'mvp:notice:one',spawnedAt:now,endsAt:now+600000,serverNow:now,snapshot:false};
+  w.PGSocial.receive(spawn);
+  w.PGSocial.receive({...spawn,snapshot:true,endsAt:now+900000,serverNow:now+1000});
+  w.PGSocial.receive(spawn);
+  assert.equal(chat()-baseChat,1,'live spawn plus duplicate snapshots add one Local notice');
+  assert.equal(events()-baseEvents,0,'MVP spawn does not add a duplicate activity/HUD announcement');
+  assert.equal(blueHud(),baseHud,'the blue transient status is not overwritten by an MVP spawn');
+  assert.equal(w.document.querySelector('#socialHudStack > #fishingMvpBanner')?.hidden,false,'the red Fishing MVP banner remains visible');
+  assert.match(fs.readFileSync('assets/social.css','utf8'),/#fishingMvpBanner\{[^}]*background:linear-gradient\(180deg,#3a1220/,'the retained banner uses its red style');
+  assert.equal(F.getMvp().endsAt,now+600000,'a duplicate snapshot cannot extend authoritative endsAt');
+  const despawn={type:'mvp_despawn',room:1,sp:'mvp_stormcoil',id:spawn.id,serverNow:now+2000};
+  w.PGSocial.receive(despawn);w.PGSocial.receive(despawn);
+  assert.equal(chat()-baseChat,2,'duplicate despawn adds only one Local expiry notice');
+  assert.equal(events()-baseEvents,0,'MVP despawn does not restore the duplicate blue activity/HUD alert');
+  assert.equal(blueHud(),baseHud,'MVP despawn leaves the blue transient status untouched');
+  w.PGSocial.receive({...spawn,snapshot:true,serverNow:now+3000});
+  assert.equal(F.getMvp(),null,'a despawned snapshot cannot resurrect the encounter');
+  assert.equal(chat()-baseChat,2,'replayed despawned spawn adds no new chat notice');
+  const superseded={...spawn,id:'mvp:notice:superseded',spawnedAt:now+3000,endsAt:now+603000,serverNow:now+3000,snapshot:false};
+  const successor={...spawn,id:'mvp:notice:successor',spawnedAt:now+4000,endsAt:now+604000,serverNow:now+4000,snapshot:false};
+  w.PGSocial.receive(superseded);w.PGSocial.receive(successor);
+  const afterSuccessor={chat:chat(),events:events()};
+  w.PGSocial.receive({...superseded,snapshot:true,serverNow:now+5000});
+  assert.equal(F.getMvp().id,successor.id,'a superseded spawn snapshot cannot replace the newer encounter');
+  assert.equal(chat(),afterSuccessor.chat,'superseded replay produces no Local announcement');
+  assert.equal(events(),afterSuccessor.events,'superseded replay produces no activity/HUD announcement');
+  const expired={...spawn,id:'mvp:notice:expired',spawnedAt:now-700000,endsAt:now-100000,serverNow:now,snapshot:false};
+  w.PGSocial.receive(expired);w.PGSocial.receive(expired);
+  assert.equal(F.getMvp().id,successor.id,'an expired spawn replay never replaces the newer active encounter');
+  assert.equal(chat(),afterSuccessor.chat,'expired spawn replay adds no chat notice');
+  // A room handoff hides the old banner silently; an old delayed event is ignored, and a valid
+  // room-2 snapshot restores the correct banner without another announcement.
+  const roomSpawn={...spawn,id:'mvp:notice:room-one',spawnedAt:now+8000,serverNow:now+8000,endsAt:now+608000};
+  w.PGSocial.receive(roomSpawn);
+  const roomCounts={chat:chat(),events:events()};
+  w.PGSocial.receive({type:'room',room:2,rooms:[],players:[],bots:{seed:1,at:now,count:0},rules:w.PGSocialRules.rulesFingerprint()});
+  assert.equal(F.getMvp(),null,'room change removes the previous room banner');
+  const afterHandoff={chat:chat(),events:events()};
+  w.PGSocial.receive({...roomSpawn,serverNow:now+9000});
+  assert.equal(F.getMvp(),null,'a delayed room-1 spawn cannot contaminate room 2');
+  const roomTwo={...roomSpawn,room:2,id:'mvp:notice:room-two',spawnedAt:now+9000,snapshot:true,serverNow:now+9000,endsAt:now+609000};
+  w.PGSocial.receive(roomTwo);
+  assert.equal(F.getMvp().room,2,'the room-2 snapshot restores its authoritative banner');
+  assert.equal(chat(),afterHandoff.chat,'handoff and room snapshots do not repeat Local alerts');
+  assert.equal(events(),afterHandoff.events,'handoff and room snapshots do not repeat activity/HUD alerts');
+  F.clearMvp(F.getMvp(),{announce:false,retire:false});
+  // Solo rotation reload goes through the real Social scheduler, Fishing module and notice callback.
+  app.room=0;app.wanted=true;
+  w.PGSocial.writeSoloMvpState({active:null,nextAt:Date.now()-1,lastSp:null,bag:['mvp_stormcoil','mvp_thousandeye']});
+  w.PGSocial.tickSoloMvp();
+  const soloActive=F.getMvp(),soloNoticeCounts={chat:chat(),events:events()};
+  assert.equal(soloActive.mode,'solo');assert.equal(soloActive.sp,'mvp_stormcoil','solo consumes the persisted shuffled bag');
+  assert.deepEqual(Array.from(w.PGSocial.readSoloMvpState().bag),['mvp_thousandeye'],'solo rotation persists its remainder');
+  F.clearMvp(soloActive,{announce:false,retire:false});
+  w.PGSocial.tickSoloMvp();
+  assert.equal(F.getMvp().id,soloActive.id,'solo reload restores the same active spawn');
+  assert.equal(F.getMvp().endsAt,soloActive.endsAt,'solo reload preserves its original deadline');
+  assert.equal(chat(),soloNoticeCounts.chat,'solo reload does not repeat the Local alert');
+  assert.equal(events(),soloNoticeCounts.events,'solo reload does not repeat activity/HUD alerts');
+  w.PGSocial.clearSoloMvpStorage();
+ }
+ console.log('PASS chat UI: stable hover/click tabs, dead-socket watchdog, seat-preserving re-authentication, disconnected account cleanup, Local history across reconnects, plaza switches and a same-tab reload (sessionStorage, never localStorage), an immediate reconnect when the network returns, a probed (not killed) quiet socket, a handshake timeout, Local privacy on exit, emotion tray on world/whisper/local, recipient control, minimize, history cap, solo/preview plaza fallback, decoupled chat/log visibility and text-only message rendering; v319 field Social Hub button with live population badge and one-click entry; v355 plaza maps with party panel and v356 tree-and-bench map cover; MVP lifecycle notification/replay integration');dom.window.close();
 })().catch(e=>{console.error(e);process.exit(1)});

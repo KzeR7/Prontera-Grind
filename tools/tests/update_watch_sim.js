@@ -360,6 +360,7 @@ t('an asset whose bytes changed must ship under a new ?v=, or browsers keep the 
   const lockPath = path.join(__dirname, '..', 'assets-version-lock.json');
   const tags = new Map([...src.matchAll(/(?:src|href)="(assets\/[^"?]+\.(?:js|css))\?v=(\d+)"/g)]
     .map(([, file, v]) => [file, Number(v)]));
+  const build = (BUILD.match(/haven-v(\d+)/) || [])[1];
   const sha = f => crypto.createHash('sha256').update(fs.readFileSync(path.join(__dirname, '..', '..', f))).digest('hex');
   if (process.env.UPDATE === '1') {
     const out = { _comment: LOCK_COMMENT, build: Number(build), assets: {} };
