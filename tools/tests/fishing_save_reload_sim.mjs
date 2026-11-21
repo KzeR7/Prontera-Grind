@@ -1027,6 +1027,48 @@ await test('MVP one-catch marker persists across reload, is capped, and normaliz
     assert.equal(norm, JSON.stringify(['mvp:k7f2q1:a1b2c3']), 'normalize keeps unique, well-formed spawn ids only');
   } finally { c2.close(); }
 
+  // 11b. v451 regression: a full Index (>96 species, MVP at index 101+) must survive a reload.
+  // The old load() sanitizer sliced the dex to 96 entries, so MVP catches vanished from the
+  // Index on the next login. SPECIES order puts common+uncommon+rare+legendary+mythical+secret
+  // at 101 entries, so every mvp_* species lands past the old cap.
+  await test('full Index incl. MVP species survives reload', async () => {
+    const srv = await createAccountServer();
+    const profile = createProfileStorage();
+    const transport = makeServerTransport(srv);
+    const c1 = bootClient({ profile, transport });
+    try {
+      await c1.signInSession(srv);
+      const setUp = c1.ev(`(()=>{
+        const F=window.PGSocialFishing;
+        S.fishing=F.normalize(S.fishing);
+        const now=Date.now();
+        for(const sp of F.SPECIES){
+          F.addCatch(S.fishing,{sp:sp.id,rarity:sp.rarity,w:Math.max(sp.min,0.1),mut:null},now);
+        }
+        save();
+        const f=unpackSave(JSON.parse(lsGet(saveKey()))).fishing;
+        return { n:Object.keys(f.dex||{}).length, total:F.SPECIES.length, mvp:f.dex['mvp_tidewarden']&&f.dex['mvp_tidewarden'].n };
+      })()`);
+      assert.equal(setUp.n, setUp.total, 'all species are in the Index on disk');
+      assert.equal(setUp.mvp, 1, 'the MVP catch is recorded on disk');
+      assert.equal(await c1.ev('cloudPush(true)'), 'ok', 'the big Index reaches the server copy too');
+    } finally { c1.close(); }
+
+    // Reload: same browser storage, fresh page, fresh in-memory state.
+    const c2 = bootClient({ profile, transport });
+    try {
+      await c2.signInSession(srv);
+      const after = c2.ev(`(()=>{
+        const F=window.PGSocialFishing;
+        const d=S.fishing.dex||{};
+        return { n:Object.keys(d).length, total:F.SPECIES.length, mvp:d['mvp_tidewarden']&&d['mvp_tidewarden'].n, allMvp:Object.keys(d).filter(k=>k.startsWith('mvp_')).length };
+      })()`);
+      assert.equal(after.n, after.total, 'the full Index survived the reload');
+      assert.equal(after.mvp, 1, 'the MVP Index entry survived the reload — no rollback');
+      assert.equal(after.allMvp, 10, 'all 10 MVP species remain in the Index');
+    } finally { c2.close(); }
+  });
+
   // Another account on the same browser never inherits the marker.
   const srv3 = await createAccountServer();
   const profile3 = createProfileStorage();
