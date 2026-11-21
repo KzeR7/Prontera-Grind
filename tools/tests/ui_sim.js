@@ -1686,7 +1686,7 @@ t('the Log window filters by category, and the on-screen feed folds away', () =>
   // the tags really are on the real call sites
   assert.ok(src.includes("log(`Picked up [${rarOf(it).n}] ${it.name}`,rarCls(it),'gear',{item:it,label:'Loot acquired'})"), 'pickups are tagged, and a Nightmare drop is tagged N');
   assert.ok(src.includes(",'kills,zeny',{title:mob.n+' defeated'"), 'a kill is tagged as kills AND zeny');
-  assert.ok(src.includes("log(`Got card: [${GRADE[it.g]}] ${cardTxt(it)}`,'r'+GI[it.g],'card')"), 'cards are tagged');
+  assert.ok(src.includes("log(`Got card: [${(GRADE[it.g]||'Mythic')}] ${cardTxt(it)}`,'r'+GI[it.g],'card')"), 'cards are tagged');
   // the on-screen log's own tab
   assert.ok(src.includes('id="feedTab"') && src.includes('id="feedWrap"'), 'the on-screen log gets a tab');
   assert.ok(src.includes("$('feedTab').onclick=()=>ACT.feed();"), 'the tab is wired');
