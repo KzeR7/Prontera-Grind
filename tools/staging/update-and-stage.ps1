@@ -1,7 +1,7 @@
 param(
   [string]$Repo = (Get-Location).Path,
   [string]$Branch = 'arena/bfc7d4d1-prontera-grind',
-  [string]$BuildTag = 'haven-v454'
+  [string]$BuildTag = 'haven-v455'
 )
 
 # Owner-run Windows handoff for the Rift player-character raid build (haven-v454).
@@ -198,6 +198,10 @@ new_sqlite_classes = ["Social"]
   $hasCards = $tables -contains 'raid_cards'
   $triggers = D1Json "SELECT name FROM sqlite_master WHERE type='trigger';" $worktree | ForEach-Object { $_.name }
   $hasCardTrigger = $triggers -contains 'raid_card_drop_apply'
+  # 0024 only replaces the body of an existing trigger, so it cannot be detected by name alone.
+  # Read the trigger's own SQL and look for the GM exemption it adds.
+  $entryLimitSql = (D1Json "SELECT sql FROM sqlite_master WHERE type='trigger' AND name='raid_entry_daily_limit';" $worktree | ForEach-Object { $_.sql }) -join "`n"
+  $hasGmEntryBypass = $entryLimitSql -match 'gm'
   $grantCols = D1Json "PRAGMA table_info(grants);" $worktree | ForEach-Object { $_.name }
   $hasRef = $grantCols -contains 'ref'
   $runCols = D1Json "PRAGMA table_info(raid_runs);" $worktree | ForEach-Object { $_.name }
@@ -235,6 +239,12 @@ new_sqlite_classes = ["Social"]
     Invoke-Checked $Npx ($Wrangler + @('d1', 'execute', 'DB', '--remote', '--file=migrations/0023_raid_cards.sql')) $worktree
   } else {
     Write-Host '    0023 already present'
+  }
+  if (-not $hasGmEntryBypass) {
+    Write-Host '    applying 0024_raid_gm_unlimited_entries.sql (GM entries are not capped)'
+    Invoke-Checked $Npx ($Wrangler + @('d1', 'execute', 'DB', '--remote', '--file=migrations/0024_raid_gm_unlimited_entries.sql')) $worktree
+  } else {
+    Write-Host '    0024 already present'
   }
 
   Write-Host "7/7 Deploying $SocialProject first, then $PagesProject"

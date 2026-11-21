@@ -325,6 +325,30 @@
     body.raid-fighting #bgmPlayer,body.raid-fighting #socialBgmMount,
     body.raid-fighting #activityTicker,body.raid-fighting #pgQuest,body.raid-fighting #dailyCard,
     body.raid-fighting #mailCard,body.raid-fighting #rouletteCard{display:none!important}
+    /* Damage meter: top-right, under the Leave control, where a player's eye already goes. */
+    .raid-hud-dps{position:absolute;right:10px;top:64px;width:min(232px,42vw);padding:8px 9px;border-radius:10px;
+      border:1px solid #3d554f;background:#0b1517dd;backdrop-filter:blur(3px)}
+    .raid-hud-dps[hidden]{display:none}
+    .raid-hud-dps-head{display:flex;align-items:baseline;gap:6px;margin-bottom:6px}
+    .raid-hud-dps-head span{font:700 9px/1 ui-monospace,monospace;letter-spacing:.16em;color:#93b2ae}
+    .raid-hud-dps-head b{font:700 16px/1 ui-monospace,monospace;color:#f4dfaa;margin-left:auto}
+    .raid-hud-dps-head small{font:700 9px/1 ui-monospace,monospace;color:#93b2ae}
+    .raid-hud-dps-row{display:flex;align-items:center;gap:6px;margin-top:4px;font-size:11px}
+    .raid-hud-dps-row .nm{flex:0 0 74px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#cfd8d4}
+    .raid-hud-dps-row.you .nm{color:#f4dfaa;font-weight:700}
+    .raid-hud-dps-row .bar{flex:1 1 auto;height:7px;border-radius:4px;background:#16262a;overflow:hidden}
+    .raid-hud-dps-row .bar i{display:block;height:100%;background:linear-gradient(90deg,#4f8f7a,#7ed08a)}
+    .raid-hud-dps-row.you .bar i{background:linear-gradient(90deg,#c79a4e,#f4dfaa)}
+    .raid-hud-dps-row b{flex:0 0 auto;font:700 10px/1 ui-monospace,monospace;color:#e7e0cb}
+    /* Buff / debuff strip: bottom-left, above the party health row. */
+    .raid-hud-buffs{position:absolute;left:10px;bottom:96px;display:flex;gap:6px}
+    .raid-hud-buffs[hidden]{display:none}
+    .raid-buff{position:relative;width:40px;height:40px;border-radius:9px;display:grid;place-items:center;
+      border:1px solid #3d554f;background:#0d1a1cdd}
+    .raid-buff i{font-style:normal;font-size:18px;line-height:1}
+    .raid-buff b{position:absolute;right:2px;bottom:1px;font:700 9px/1 ui-monospace,monospace;color:#e7e0cb}
+    .raid-buff.bad{border-color:#a4583c;box-shadow:0 0 10px #c2603c55}
+    .raid-buff.good{border-color:#4f8f6a;box-shadow:0 0 10px #4f8f6a55}
     /* Whatever is left of the field's own chrome must not sit on top of the arena: the raid layer
        is above it, and the canvas keeps pointer events for movement. */
     body.raid-fighting #raidHudLayer{pointer-events:none}
@@ -359,7 +383,13 @@
     .raid-hud-warning[data-kind="astral-cataclysm"]{background:#07260fd9;border-color:#54a06a;color:#d6ffdf}
     .raid-hud-warning[data-kind="soul-cleave"]{background:#26070dd9;border-color:#b04a3a}
     .raid-hud-warning[data-kind="ritual"]{background:#1d0a2ad9;border-color:#9b6ad0;color:#ecd9ff}
-    .raid-hud-boss{position:absolute;left:50%;top:202px;transform:translateX(-50%);width:min(520px,72vw)}
+    /* The boss bar is the one piece of information a player checks mid-fight. It was 520px wide and
+       sat below two other rows, which read as a detail rather than the headline. */
+    .raid-hud-boss{position:absolute;left:50%;top:150px;transform:translateX(-50%);width:min(880px,86vw)}
+    .raid-hud-boss-head span{font-size:15px}
+    .raid-hud-boss-head small{font-size:13px}
+    .raid-hud-boss .raid-hud-bar{height:18px;border-radius:9px}
+    .raid-hud-boss .raid-hud-bar i{background:linear-gradient(90deg,#d8693f,#f0a074)}
     .raid-hud-boss[hidden]{display:none}
     .raid-hud-boss-head{display:flex;justify-content:space-between;align-items:baseline;font:700 11px/1.2 system-ui,sans-serif;color:#ffd9a0;text-shadow:0 1px 3px #000}
     .raid-hud-bar{height:9px;border-radius:6px;background:#1a0f1ecc;border:1px solid #6a4b62;overflow:hidden}
@@ -1064,7 +1094,7 @@
     if (!body) return;
     syncOverlayToRun();
     const a = R.account || {};
-    setText('raidEntries', (num(a.entriesLeft)) + ' / 2 entries');
+    setText('raidEntries', entriesLabel(a));
     const conn = $('raidConn');
     if (conn) {
       const online = typeof navigator === 'undefined' || navigator.onLine !== false;
@@ -1253,7 +1283,7 @@
     return `${errorBox()}
       <div class="raid-entry">
         <section class="raid-maps" aria-label="Raid destinations">
-          <div class="raid-maps-head"><b>Rift maps</b><span class="raid-tag">${num(a.entriesLeft)}/2 entries</span></div>
+          <div class="raid-maps-head"><b>Rift maps</b><span class="raid-tag">${entriesLabel(a)}</span></div>
           <div class="raid-map-list">
             ${RAIDS.map(r => `<button class="raid-map" type="button" data-raid-map="${esc(r.key)}"
                 aria-pressed="${r.key === raid.key ? 'true' : 'false'}" data-locked="${r.open ? 0 : 1}"
@@ -1436,6 +1466,14 @@
         host.appendChild(button);
       }
     } else if (downs === 0 && revive) revive.remove();
+  }
+
+  // The entry counter, in one place. A GM account is not capped server-side, so the lobby must not
+  // print "0 / 2 entries" while letting them straight in.
+  function entriesLabel(a) {
+    if (!a) return '2 / 2 entries';
+    if (a.entriesUnlimited === true || a.entriesLeft === 'unlimited') return '∞ entries · GM';
+    return num(a.entriesLeft) + ' / 2 entries';
   }
 
   function rewardText(row) {

@@ -4,7 +4,7 @@
 // Social Durable Object owns live HP/lanes/cooldowns/action receipts. There is no raid alarm, tick
 // loop or per-second message: every request below is caused by a player opening the lobby, taking an
 // action, reconnecting or settling a result.
-import { currentUser } from '../_lib/auth.js';
+import { currentUser, isGm } from '../_lib/auth.js';
 import { json, guard, readJson, fail, unauth } from '../_lib/http.js';
 import { saveBelongsTo } from '../_lib/validate.js';
 import * as db from '../_lib/db.js';
@@ -111,7 +111,7 @@ function publicCards(rows) {
   });
 }
 
-function publicAccount(account, userId, entriesUsed, chests, activeRun, cards, username = '') {
+function publicAccount(account, userId, entriesUsed, chests, activeRun, cards, username = '', gm = false) {
   const a = account || {};
   const cardRows = publicCards(cards);
   return {
@@ -126,7 +126,10 @@ function publicAccount(account, userId, entriesUsed, chests, activeRun, cards, u
     trioClears: int(a.trio_clears),
     supportClears: int(a.support_clears),
     entriesUsed,
-    entriesLeft: Math.max(0, RAID_RULES.dailyEntries - entriesUsed),
+    // A GM sees `Infinity` so the lobby can print "unlimited" rather than a stale 0/2 while the
+    // server is happy to let them in. JSON has no Infinity, so it is carried as the string.
+    entriesLeft: gm ? 'unlimited' : Math.max(0, RAID_RULES.dailyEntries - entriesUsed),
+    entriesUnlimited: gm === true,
     chestsToday: {
       total: int(chests?.total),
       pity: int(chests?.pity),
@@ -150,9 +153,13 @@ async function accountState(env, user) {
   return { day, account, entriesUsed, chests, cards: Array.isArray(cards) ? cards : (cards?.results || []) };
 }
 
-function eligibilityOf(entriesUsed, activeRun, saveProfile) {
+function eligibilityOf(entriesUsed, activeRun, saveProfile, isGmUser = false) {
   if (!saveProfile.ok) return { eligible: false, reason: saveProfile.reason === 'no-save' ? 'Sync a cloud save before joining.' : 'The cloud save could not be read.' };
-  if (entriesUsed >= RAID_RULES.dailyEntries) return { eligible: false, reason: 'No daily entries left.' };
+  // A GM account is not subject to the daily cap. The cap is a player-facing pacing rule, and the
+  // owner needs to enter repeatedly to test a four-stage dungeon; making them edit the database
+  // between runs is not a rule, it is a chore. The bypass is server-side and keyed on the
+  // authenticated `user.gm`, never on anything the client sends.
+  if (!isGmUser && entriesUsed >= RAID_RULES.dailyEntries) return { eligible: false, reason: 'No daily entries left.' };
   if (activeRun) return { eligible: false, reason: 'Already in an active raid.' };
   return { eligible: true, reason: '' };
 }
@@ -189,7 +196,7 @@ async function partyView(env, user) {
     }
     const entriesUsed = int(entries?.n);
     const stale = !!raw.readyFingerprint && !!fingerprint && raw.readyFingerprint !== fingerprint;
-    const elig = eligibilityOf(entriesUsed, active, profile);
+    const elig = eligibilityOf(entriesUsed, active, profile, isGm(user));
     members.push({
       id,
       name: raw.name,
@@ -836,7 +843,7 @@ async function getState(env, user, url) {
     enabled: true,
     rules: raidRuleSummary(),
     day,
-    account: publicAccount(account, user.id, entriesUsed, chests, active.run, cards, user.username),
+    account: publicAccount(account, user.id, entriesUsed, chests, active.run, cards, user.username, isGm(user)),
     activeRun: active.run,
     // Solo only: the reservation the tab resumes from. Never the same object as `activeRun`, so no
     // caller can adopt it as run state.
@@ -845,7 +852,7 @@ async function getState(env, user, url) {
     lastRun: recent ? { id: recent.id, state: recent.state, settledAt: Number(recent.settled_at) || 0 } : null,
     requestedRun,
     party,
-    eligibility: eligibilityOf(entriesUsed, active.run, selfSave),
+    eligibility: eligibilityOf(entriesUsed, active.run, selfSave, isGm(user)),
     hasSave: selfSave.ok,
   });
 }
@@ -882,7 +889,7 @@ async function cardAction(env, user, body) {
   const { account, entriesUsed, chests, cards } = await accountState(env, user);
   return { ok: true, status: 200, data: {
     ok: true,
-    account: publicAccount(account, user.id, entriesUsed, chests, null, cards),
+    account: publicAccount(account, user.id, entriesUsed, chests, null, cards, user.username, isGm(user)),
   } };
 }
 

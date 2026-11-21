@@ -916,8 +916,8 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="preload" href="assets/ui/fonts/font-5.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-6.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-7.ttf" as="font" type="font/ttf" crossorigin>
-<link rel="stylesheet" href="assets/ui/eclipse.css?v=454">
-<link rel="stylesheet" href="assets/ui/mobile.css?v=454">
+<link rel="stylesheet" href="assets/ui/eclipse.css?v=455">
+<link rel="stylesheet" href="assets/ui/mobile.css?v=455">
 <style>
 /* Rift Aura: the one earned-only cosmetic. It is tied to the account's first qualifying clear,
    never sold and never removable from the save once the account earns it. */
@@ -930,9 +930,9 @@ body.has-rift-aura #heroTitle{filter:drop-shadow(0 0 6px #79e4ff88)}
 <link rel="stylesheet" href="assets/ui/mastery-titles.css?v=446">
 <script src="assets/ui/mobile.js?v=274"></script>
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
-<link rel="stylesheet" href="assets/social.css?v=454">
+<link rel="stylesheet" href="assets/social.css?v=455">
 <link rel="stylesheet" href="assets/social-battle.css?v=393">
-  <link rel="stylesheet" href="assets/social-fishing.css?v=454"><link rel="stylesheet" href="assets/friends.css?v=273">
+  <link rel="stylesheet" href="assets/social-fishing.css?v=455"><link rel="stylesheet" href="assets/friends.css?v=273">
 <link rel="stylesheet" href="assets/adventure-guide.css?v=446">
 </head>
 <body>
@@ -1063,10 +1063,10 @@ body.has-rift-aura #heroTitle{filter:drop-shadow(0 0 6px #79e4ff88)}
 <div id="tooltip"></div>
 <link rel="stylesheet" href="assets/wardrobe.css?v=138">
 <link rel="stylesheet" href="assets/shop.css?v=318">
-<script src="assets/wardrobe.js?v=454"></script>
+<script src="assets/wardrobe.js?v=455"></script>
 <script src="assets/shop-catalog.js?v=321"></script>
 <script src="assets/fourth-jobs.js?v=179"></script>
-<script src="assets/expanded-jobs.js?v=454"></script>
+<script src="assets/expanded-jobs.js?v=455"></script>
 <script src="assets/ascension.js?v=156"></script>
 <script src="assets/native-mob-heights.js?v=153"></script>
 <script src="assets/native-fields.js?v=197"></script>
@@ -1366,7 +1366,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-21 haven-v454 Raid animation, cadence and portal fixes';
+const BUILD='2026-11-21 haven-v455 Raid deck, facing, camera and HUD parity';
 // v364: this write used to sit AFTER the `//` on the BUILD line, so it was part of the comment and
 // never ran - the login card showed an empty #buildTag and there was no way to confirm which file
 // the browser had loaded. It also has to survive the script running before the login card exists.
@@ -16080,7 +16080,17 @@ dom?.addEventListener('wheel',e=>{e.preventDefault();zoom=Math.min(2,Math.max(zo
 // pushed the avatar down into the lower third of the view.
 const CAMERA_FOCUS_Y=.28,CAMERA_LEAD_Z=.25,ct=new THREE.Vector3(0,CAMERA_FOCUS_Y,0);let lastKey='';
 // Astral paving reaches 0.091; other fields sit just above zero. Keep native sprite pivots intact.
-function actorFloorY(x=pl.x,z=pl.z){if(!TRIAL.on&&!JOB_RITE.on&&KIT.nativeWorld)return PGNativeFields.heightAt(S.mp,x,z,S.lvl)+.035;return !TRIAL.on&&!JOB_RITE.on&&S.mp===10?.12:.035;}
+function actorFloorY(x=pl.x,z=pl.z){
+  // A raid draws on its own stretch of the plane (ORIGIN, far from the field's route), so the field's
+  // terrain height there is meaningless. Asking for it put the hero UNDER the deck: the sampler
+  // returned the field's floor at a point 320 units away, and the field then overwrote the raid's own
+  // hero height every frame - which also made the arena flicker between two positions.
+  // The shipped deck's top surface is at y=0.015 (assets/astral-scenery.js writes the ShapeGeometry
+  // there). The hero's own feet sit `+.035` above the surface in the field, so the raid asks for the
+  // same offset from the deck - returning 0 put the sprite half a unit INTO the deck, which is what
+  // the screenshot showed as a character drawn under the floor with its health bar floating.
+  if(globalThis.PGRaidDungeon&&globalThis.PGRaidDungeon.active)return .05;
+  if(!TRIAL.on&&!JOB_RITE.on&&KIT.nativeWorld)return PGNativeFields.heightAt(S.mp,x,z,S.lvl)+.035;return !TRIAL.on&&!JOB_RITE.on&&S.mp===10?.12:.035;}
 // The follow camera is shared by the field and the raid. `CAMERA_FOCUS_Y`/`CAMERA_LEAD_Z` are the
 // field's framing; the raid passes its own so a boss arena is read from a slightly higher, closer
 // angle while keeping the same drag/zoom controls the player already knows.
@@ -16088,7 +16098,7 @@ let raidFieldHidden=false;
 function cameraFollow(focusY,leadZ,distScale){
   if(!R)return;
   const fy=focusY===undefined?CAMERA_FOCUS_Y:focusY,lz=leadZ===undefined?CAMERA_LEAD_Z:leadZ;
-  ct.y+=(fy+(KIT.nativeWorld?actorFloorY()-.035:0)-ct.y)*.1;
+  ct.y+=(fy+((KIT.nativeWorld&&!(globalThis.PGRaidDungeon&&globalThis.PGRaidDungeon.active))?actorFloorY()-.035:0)-ct.y)*.1;
   ct.x+=(pl.x*.6-ct.x)*.05;ct.z+=(pl.z-lz-ct.z)*.05;
   const pitch=KIT.nativeWorld?Math.max(.45,el-.17):el,dd=((KIT.nativeWorld?(cam.aspect<1?40:44):(cam.aspect<1.5?26:18))/zoom)*(distScale||1),sk=S.cameraShake===false?0:shake*.03;
   if(KIT.nativeWorld&&scene.fog&&!scene.fog.isFogExp2){scene.fog.near=Math.max(55,dd*1.1);scene.fog.far=dd*2.6}
@@ -16118,7 +16128,7 @@ function draw(){
         const cR=C(),wR=S.eq.weapon,wtR=heroWeaponType(cR.n,cR.wt,wR&&wR.wt);
         ensureHero({cls:cR.n,cloth:hx(S.eq.armor?TC[rarIdx(S.eq.armor)]:cR.col),clothN:hx(S.eq.armor?TC[rarIdx(S.eq.armor)]:cR.col),cape:cR.cape?hx(cR.cape):'',hair:hx(S.eq.head?TC[rarIdx(S.eq.head)]:0xd0492c),hairN:hx(S.eq.head?TC[rarIdx(S.eq.head)]:0xd0492c),hat:cR.hat?hx(cR.hat):'',wt:wtR,metal:hx(wR?TC[rarIdx(wR)]:0xc0c0c0),skin:'#ffd2a8',look:lookOf(cR.n),tier:cR.tier||0,sex:S.sex||'m',hair:S.hair|0,shield:!!(S.eq.off&&S.eq.off.slot==='off')});
         heroSpr&&(heroSpr.visible=true);
-        P.position.set(pl.x,0,pl.z);
+        P.position.set(pl.x,actorFloorY(),pl.z);
         // Face the direction of travel while walking, otherwise face the camera side of the arena
         // (the raid camera looks down -Z, so 0 is "toward the viewer").
         //
@@ -16142,22 +16152,29 @@ function draw(){
         // Without this the character "stands still, no walking, no attacking animation".
         // `atkAnim` is decayed every frame by 1/swingDur, so the pose length has to come with it:
         // setting atkAnim alone would be overwritten by the next update() and the hero would flicker.
+        // A character cannot swing and walk at the same time - and picking one is what the field
+        // already does: `pl.run` wins and the walk cycle plays. The pose was applied unconditionally,
+        // so the hero swung its weapon while running across the deck.
+        pl.run = typeof rd.walking === 'function' ? !!rd.walking() : pl.run;
         if (typeof rd.attackPose === 'function') {
           const pose = rd.attackPose();
-          if (pose > 0) { atkAnim = pose; swingDur = 0.26; }
+          if (pose > 0 && !pl.run) { atkAnim = pose; swingDur = 0.26; }
+          else if (pl.run) atkAnim = 0;
         }
-        pl.run = typeof rd.walking === 'function' ? !!rd.walking() : pl.run;
         // The raid holds its own point on the plane; the field's player is a proxy for it.
         // Local raid space is offset onto its own stretch of the plane; the field's player and its
         // camera have to sit on the same stretch or the dungeon is drawn off screen.
-        const hp=rd.heroPos?rd.heroPos():null;if(hp){const ro=rd.origin||0;pl.x=hp.x;pl.z=hp.z+ro;P.position.set(pl.x,0,pl.z)}
-        // The same drag/zoom camera, but framed for a hall rather than the field's lane. The old
-        // distScale of 0.92 pulled the camera IN (a smaller distance means a closer view), which is
-        // the single biggest reason the arena read as a cramped box: the fight filled the screen
-        // edge to edge and nothing could be seen around it. 1.85 stands back far enough to show
-        // the floor, the packs and the exits at once, and it still answers to the player's pinch
-        // and wheel because `zoom` divides it.
-        cameraFollow(1.05,3.4,1.85);
+        const hp=rd.heroPos?rd.heroPos():null;if(hp){const ro=rd.origin||0;pl.x=hp.x;pl.z=hp.z+ro;P.position.set(pl.x,actorFloorY(),pl.z)}
+        // EXACTLY the field's camera. The arena is the same deck seen from the same angle, so it is
+        // framed the same way: `cameraFollow()` with no arguments is CAMERA_FOCUS_Y, CAMERA_LEAD_Z
+        // and distScale 1 - the framing the Astral route already uses.
+        //
+        // This used cameraFollow(1.05, 3.4, 1.85). A 1.85 distance scale stands the camera almost
+        // twice as far back as the field at more than three times its focus height, which is why the
+        // arena looked like an empty room seen from the ceiling and the mobs looked like ants: the
+        // meshes were never small, the camera was simply far away. It also rotated the world
+        // differently from the map, so the same hall read as a different place.
+        cameraFollow();
         R.render(scene,cam);
         return;
       }
@@ -16174,7 +16191,10 @@ function draw(){
     else if(TRIAL.on){clearAscension();const col=new THREE.Color(0x171020);scene.background=col;scene.fog=new THREE.Fog(col,22,64);ground.material.color.setHex(0x392d42);hemi.intensity=.52;sun.intensity=.48;trialArena()}
     else{const col=new THREE.Color(bn?0x8a6bb0:mp.sky);scene.background=col;scene.fog=new THREE.Fog(col,35,80);ground.material.color.setHex(mp.ground);hemi.intensity=.8;sun.intensity=.9;buildDeco(S.mp);road.material.color.setHex(S.mp===3?0xe9d9a8:0xd8cdb4)}}
   if(ascensionWorld)ascensionWorld.update(t,S.bg!==false);
-  P.position.set(pl.x,actorFloorY()+asuraLeapHeight(),pl.z);
+  // One authority for the hero's height. When a raid is live its own branch has already placed the
+  // hero on the arena floor; re-setting it here with the field's height was the double-write behind
+  // the flicker and the sinking.
+  if(!(globalThis.PGRaidDungeon&&globalThis.PGRaidDungeon.active))P.position.set(pl.x,actorFloorY()+asuraLeapHeight(),pl.z);
   if(spiritSpheres){const e=skillState().stacks?.sphere,n=globalThis.PGSpiritSpheres.isClass(S.cls)&&e&&e.until>t?e.n:0;spiritSpheres.update(n,t);}
   const w=S.eq.weapon,wt=heroWeaponType(c.n,c.wt,w&&w.wt),clothN=S.eq.armor?TC[rarIdx(S.eq.armor)]:c.col,hairN=S.eq.head?TC[rarIdx(S.eq.head)]:0xd0492c,metalN=w?TC[rarIdx(w)]:0xc0c0c0;
   ensureHero({cls:c.n,cloth:hx(clothN),clothN,cape:c.cape?hx(c.cape):'',hair:hx(hairN),hairN,hat:c.hat?hx(c.hat):'',wt,metal:hx(metalN),skin:'#ffd2a8',look:lookOf(c.n),tier:c.tier||0,sex:S.sex||'m',hair:S.hair|0,shield:!!(S.eq.off&&S.eq.off.slot==='off')});
@@ -16614,27 +16634,27 @@ setInterval(updateWatch,60000);
 // be hours old while the player was on another tab, and the check is a 60-byte text file.
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&(pendingUpdateBuild||Date.now()-PAGE_STARTED_AT>30000))updateWatch()});
 </script>
-<script src="assets/wardrobe-ui.js?v=454"></script>
+<script src="assets/wardrobe-ui.js?v=455"></script>
 <script src="assets/shop.js?v=321"></script>
 <script src="assets/friends.js?v=273"></script>
-<script src="assets/digimon/roster.js?v=454"></script>
-<script src="assets/digimon/base-stats.js?v=454"></script>
-<script src="assets/social-rules.js?v=454"></script>
-<script src="assets/social-poker.js?v=454"></script>
-<script src="assets/digimon-sanctuary.js?v=454"></script>
+<script src="assets/digimon/roster.js?v=455"></script>
+<script src="assets/digimon/base-stats.js?v=455"></script>
+<script src="assets/social-rules.js?v=455"></script>
+<script src="assets/social-poker.js?v=455"></script>
+<script src="assets/digimon-sanctuary.js?v=455"></script>
 <script src="assets/digimon-battle.js?v=393"></script>
-<script src="assets/social-digimon.js?v=454"></script>
+<script src="assets/social-digimon.js?v=455"></script>
 <script src="assets/social-gym-redesign.js?v=393"></script>
 <script src="assets/social-pond-design.js?v=393"></script>
 <script src="assets/social-title-art.js?v=450"></script>
-<script src="assets/social-scene.js?v=454"></script>
-<script src="assets/social-fishing.js?v=454"></script>
-<script src="assets/plaza-bots.js?v=454"></script>
+<script src="assets/social-scene.js?v=455"></script>
+<script src="assets/social-fishing.js?v=455"></script>
+<script src="assets/plaza-bots.js?v=455"></script>
 <script src="assets/adventure-guide.js?v=450"></script>
-<script src="assets/social.js?v=454"></script>
-<script src="assets/astral-raid-scenes.js?v=454"></script>
-<script src="assets/raid-dungeon.js?v=454"></script>
-<script src="assets/raid-solo.js?v=454"></script>
-<script src="assets/rift-raid.js?v=454"></script>
+<script src="assets/social.js?v=455"></script>
+<script src="assets/astral-raid-scenes.js?v=455"></script>
+<script src="assets/raid-dungeon.js?v=455"></script>
+<script src="assets/raid-solo.js?v=455"></script>
+<script src="assets/rift-raid.js?v=455"></script>
 <div id="raidHudLayer" aria-live="polite"></div></body>
 </html>

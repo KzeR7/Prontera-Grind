@@ -25,7 +25,11 @@
 
   const ORIGIN = -320;              // raid space sits away from the field's 0..-245 route
   const MODE_MONSTERS = 88;         // a map id that has no native field, so nothing else loads
-  const VISUAL = { member: 2.1, mob: 2.7, boss: 5.0, anchor: 2.9 };
+  // Sized against the deck, not against the old corridor. The Astral span is 26 wide and 40 deep;
+  // a 2.7-unit mob on that floor is a speck, which is why the arena read as an empty room with ants
+  // in it. The field's own monsters are roughly a third of a lane wide, and these now match that
+  // ratio. The boss is deliberately much larger - it is the thing the whole stage builds toward.
+  const VISUAL = { member: 3.2, mob: 4.2, boss: 9.5, anchor: 4.6 };
   // Must equal RAID_RULES.walkSpeed (9.6). It was 10.5, so the client's own walk outran the engine's
   // and every snapshot dragged the hero backwards - visible as a stutter while holding a key.
   const WALK_SPEED = 9.6;
@@ -207,14 +211,49 @@
   }
 
   let texturedRetry = false;
+  let texturesPending = false;
+  let astralBuilt = false;
   let astralRequested = false;
   let loadedSurfaces = null;
   // Stage index into the real Astral route (1..5). The raid walks the four named spans, which are the
   // same spans the field's Ascension route already renders.
   const STAGE_SPAN = { approach: 1, arcade: 3, observatory: 4, sanctuary: 5 };
 
+  // Which span of the route a mounted world is drawn for. The shipped map reports its own `stage`
+  // as the SPAN NUMBER it was asked for (1/3/4/5); the fallback scenes report the stage KEY
+  // ('approach', ...). Both are normalised here so one comparison can serve both - comparing them
+  // naively made the "is this the world I need?" test fail on every frame, and the arena disposed and
+  // rebuilt itself continuously, which is the flicker the owner reported when the map changed.
+  function spanOfWorld(w) {
+    if (!w) return null;
+    if (w.kind === 'astral' && Number.isFinite(Number(w.stage))) return Number(w.stage);
+    if (typeof w.stage === 'string' && STAGE_SPAN[w.stage]) return STAGE_SPAN[w.stage];
+    return null;
+  }
+
   function ensureWorld(stageKey) {
-    if (D.world && D.stageKey === stageKey) return D.world;
+    // A fallback stand-in is upgraded to the shipped map ONCE, as soon as that module is on the page.
+    // The `fallbackScene` tag is what makes it one-shot: the first swap drops the stand-in and the
+    // next build is the real map, which is not tagged. Without both halves of that this disposed and
+    // rebuilt the arena on every frame - 30 world swaps in two seconds, which is exactly the flicker
+    // the owner described when the map changed.
+    // Disposing is enough: `disposeWorld` drops the world, so the reuse checks below cannot match it
+    // and the real map is built on this same call. Blanking the stage key here would make the run's
+    // own key disagree with the arena's and re-enter `begin()` on the next frame.
+    if (D.world && D.world.fallbackScene && root.PGAstralScenery) disposeWorld();
+    // The mounted world is reused only if it was built for THIS stage's span. Comparing the key alone
+    // returned the previous stage's map after a transition, so the party fought the new stage on the
+    // old span of the route.
+    const wanted = STAGE_SPAN[stageKey] || 1;
+    if (D.world && D.stageKey === stageKey && spanOfWorld(D.world) === Number(wanted)) return D.world;
+    // Dispose only when a DIFFERENT stage needs the slot. If the mounted world is already the right
+    // span and only the bookkeeping drifted, adopting it is the correct move - rebuilding it is the
+    // flicker, and it is what made the arena strobe at 25 rebuilds a second.
+    if (D.world && spanOfWorld(D.world) === Number(wanted)) {
+      D.stageKey = stageKey;
+      return D.world;
+    }
+
     disposeWorld();
     const surfaces = loadedSurfaces;
     let world = null;
@@ -230,34 +269,54 @@
       astralRequested = true;
       const tag = document.createElement('script');
       tag.src = 'assets/astral-scenery.js';
-      tag.onload = () => { if (D.on) D.world = null; };
+      // Nothing is torn down here. `ensureWorld` already swaps a fallback stand-in for the real map
+      // on the next frame, and doing it twice - once here, once there - is what made the arena
+      // dispose and rebuild itself while the player was watching. One place owns the swap.
+      tag.onload = () => { astralRequested = true; };
       tag.onerror = () => console.warn('Astral map unavailable; arena keeps its own scenery');
       document.head.appendChild(tag);
     }
     const real = root.PGAstralScenery;
     if (real && typeof real.build === 'function') {
-      try { world = real.build(STAGE_SPAN[stageKey] || 1, surfaces ? { surfaces } : {}); } catch (error) { console.error('Astral map failed to build', error); world = null; }
-      if (world) world.raidArena = world.arena;
+      try { world = real.build(STAGE_SPAN[stageKey] || 1, surfaces ? { surfaces } : {}); } catch (error) { console.error('Astral map failed to build', error); D.lastBuildError = 'astral: ' + String(error && error.message); world = null; }
+      if (world) { world.raidArena = world.arena; astralBuilt = true; }
     }
     // Fall back to the purpose-built raid scenes only if the shipped map is unavailable, so a load
     // order change can never leave the arena empty.
     if (!world) {
       const scenes = root.PGAstralRaidScenes;
       if (!scenes) return null;
-      try { world = scenes.build(stageKey, surfaces ? { surfaces } : {}); } catch (error) { console.error('Raid scenery failed', error); return null; }
+      try { world = scenes.build(stageKey, surfaces ? { surfaces } : {}); } catch (error) { console.error('Raid scenery failed', error); world = null; }
+      if (!world) { D.lastBuildError = 'fallback scenery missing'; return null; }
+      // A fallback scene is a stand-in, not a decision. `astralBuilt` stays false and the world is
+      // tagged, so the moment the shipped map finishes loading it is swapped in once - the arena
+      // otherwise stayed on the fallback scenery for the whole session.
+      if (world) world.fallbackScene = true;
     }
-    // The first build happens before the images finish loading; rebuild once, when they land, so
-    // the player's first run is not the flat-colour version.
-    if (!surfaces && !texturedRetry) {
-      texturedRetry = true;
+    // The map is drawn immediately, flat-coloured if it has to be, and the textures are applied to
+    // it in place when they arrive.
+    //
+    // This used to null the world when the images landed so the next frame could rebuild "properly".
+    // That is exactly the flicker the owner reported: the rebuild disposed the mounted scene AND
+    // every entity under it, mid-fight, and the arena strobed between two versions of the same map
+    // while the health bars and the boss vanished and came back. Waiting for the textures instead
+    // was just as wrong - it left the deck empty for the whole load. So: build now, never swap a live
+    // scene, and let the materials upgrade themselves.
+    // Textures are requested once and used by every LATER build (the next stage, the next run).
+    // They are never applied by rebuilding the stage the player is standing in: `astral-scenery.js`
+    // reads `options.surfaces` when it builds and exposes no way to restyle a live scene, so the only
+    // way to "add textures" is to throw the arena away - which is the flicker. The first load of a
+    // session is drawn in the map's own flat colours, which is what the map looks like anyway.
+    if (!surfaces && !loadedSurfaces && !texturesPending) {
+      texturesPending = true;
       journeySurfaces().then(loaded => {
-        if (!loaded) return;
-        loadedSurfaces = loaded;
-        if (D.on) { D.world = null; /* rebuild on the next frame with textures */ }
+        texturesPending = false;
+        if (loaded) loadedSurfaces = loaded;   // used by the next stage build
       });
     }
     D.world = world;
     D.stageKey = stageKey;
+    D.lastBuildError = '';
     D.mount = new THREE.Group();
     // The real map is authored in route coordinates (its spans sit at z = -8, -74, -140, -208). The
     // raid works in flat local space, so the mounted copy is shifted by the span's focus: whatever
@@ -321,6 +380,7 @@
   }
 
   function disposeWorld() {
+
     for (const id of [...D.entities.keys()]) dropEntity(id);
     for (const id of [...D.telegraphs.keys()]) dropTelegraph(id);
     if (D.mount && D.mount.parent) D.mount.parent.remove(D.mount);
@@ -329,7 +389,12 @@
     D.pendingMove = null;
     if (D.world) { try { D.world.dispose(); } catch (_) {} }
     D.world = null;
-    D.stageKey = '';
+    // `stageKey` is deliberately NOT cleared here. It names the stage the RUN is on, not the stage
+    // that happens to be mounted, and `rift-raid.js` decides whether to re-enter the arena by
+    // comparing it with the run's own key. Clearing it here made that comparison fail on every
+    // frame after any dispose, so `begin()` ran continuously, rebuilding the scene each time: the
+    // flicker, and 95 builds in a few seconds. `ensureWorld` decides what to build from the key it
+    // is given; nothing needs the key blanked.
   }
 
   // index.html calls this from its own draw(): true means the raid is on screen. The field's HUD,
@@ -376,8 +441,16 @@
     if (!D.on) return false;
     const scene = hookScene();
     if (!scene) return false;
-    if (!D.world && !ensureWorld(D.stageKey || 'approach')) return false;
+    // `ensureWorld` is asked every frame, not only when there is no world at all. Gating it on
+    // `!D.world` meant a fallback stand-in was never re-examined, so once the arena mounted on the
+    // stand-in it stayed on it for the whole session even after the real map had loaded - which is
+    // why the "same deck as the Astral map" brief kept coming back. The function itself returns the
+    // mounted world unchanged unless something actually needs to change.
+    if (!ensureWorld(D.stageKey || 'approach')) return false;
     if (D.mount && D.mount.parent !== scene) scene.add(D.mount);
+    // A snapshot that landed between the dispose and this frame is applied now, so a stage change
+    // never loses the enemies it spawned.
+    if (D.reconcilePending) { const pending = D.reconcilePending; D.reconcilePending = null; reconcile(pending); }
     applyLook(scene);
     if (D.sky && scene.background !== D.sky) scene.background = D.sky;
     if (D.fog && scene.fog !== D.fog) scene.fog = D.fog;
@@ -390,8 +463,32 @@
     D.on = true;
     D.runId = runId || '';
     D.myId = Number(myId) || 0;
-    D.stageKey = stageKey || 'approach';
-    if (D.world && D.world.stage !== D.stageKey) disposeWorld();
+    const nextStage = stageKey || 'approach';
+    // Order matters: the key is advanced before anything looks at the mounted world, otherwise the
+    // reuse check below compares a new key against an old world and disposes a perfectly good scene.
+    const previousStage = D.stageKey;
+    D.stageKey = nextStage;
+    // A new run gets fresh one-shot guards: the previous run's "already rebuilt" flags would
+    // otherwise freeze the new run on whatever map it happened to mount first.
+    astralBuilt = false;
+    texturesPending = false;
+    D.worldNeedsBuild = false;
+    astralRequested = !!root.PGAstralScenery;
+    D.facing = 0;
+    D.swingAt = 0;
+    D.lastSwingAt = 0;
+    D.swingGap = 0;
+    D.walkUntil = 0;
+    // `world.stage` is the map's SPAN NUMBER (1/3/4/5), not the stage key ('approach', ...). Comparing
+    // the two never matched, so every `begin` - which runs on each stage change - disposed the whole
+    // scene, and the arena flashed at exactly the moment the map changed. A stage only needs a rebuild
+    // when it wants a DIFFERENT span; stages that share a span reuse the scene they already have.
+    const wantedSpan = STAGE_SPAN[D.stageKey] || 1;
+    if (D.world && spanOfWorld(D.world) !== Number(wantedSpan)) disposeWorld();
+    // The one-shot build guards belong to a key change, not to every `begin` call. Resetting them on
+    // a call that keeps the same stage re-armed the fallback upgrade and the map was torn down and
+    // rebuilt every frame - the flicker.
+    if (previousStage !== nextStage) astralBuilt = false;
     const spawn = stageSpawn();
     D.heroPos = { x: spawn.x, z: spawn.z };
     D.dest = null;
@@ -634,8 +731,8 @@
       const material = new THREE.SpriteMaterial({ map: texture, transparent: true, depthTest: false, depthWrite: false });
       bar = new THREE.Sprite(material);
       bar.center.set(0.5, 0.5);
-      bar.scale.set(kind === 'boss' ? 3.4 : 2.1, kind === 'boss' ? 0.42 : 0.26, 1);
-      bar.position.y = kind === 'boss' ? 4.6 : kind === 'anchor' ? 3.1 : 2.35;
+      bar.scale.set(kind === 'boss' ? 7.0 : 3.2, kind === 'boss' ? 0.66 : 0.34, 1);
+      bar.position.y = kind === 'boss' ? 8.4 : kind === 'anchor' ? 5.4 : 3.9;
       bar.renderOrder = 12;
       group.add(bar);
       bar.userData = { canvas, texture, shownHp: -1, shownMax: -1, shownDead: null };
@@ -666,7 +763,16 @@
   }
 
   function reconcile(run) {
-    if (!run || !D.mount) return;
+    // Entities belong to the RUN, not to the scene: they are rebuilt from this snapshot and are what
+    // the HUD, the picker and the arena read. This used to bail out whenever the mount happened to be
+    // null - which, after any stage change, is exactly the frame the poll lands on - so the enemies of
+    // that snapshot were never tracked: "5 enemies are live" with an empty entity map, no health bars,
+    // no click targets and no auto-attack.
+    if (!run) return;
+    // Entity meshes are added to the mount, so a frame without a scene has nothing to add them to.
+    // The snapshot is not lost: `begin()`/`attach()` re-reconcile as soon as the mount exists again,
+    // so the stage's enemies appear on the next frame instead of the whole stage being untracked.
+    if (!D.mount) { D.reconcilePending = run; return; }
     D.run = run;
     const members = new Set(), enemies = new Set();
     for (const m of run.members || []) {
@@ -693,7 +799,7 @@
           // The engine walks the member itself (the auto-chase). That motion never sets D.dest, so
           // the hero played an idle cycle while it slid across the deck. Any real movement of the
           // authoritative position is walking, wherever the intent came from.
-          if (gap > 0.02) { D.walking = true; D.walkUntil = performance.now() + 220; D.lastWalkDir = Math.atan2(ex, ez); }
+          if (gap > 0.02) { D.walking = true; D.walkUntil = performance.now() + 220; D.facing = Math.atan2(ez, ex); }
         }
       }
       ent.id = m.id;
@@ -935,7 +1041,10 @@
     // that was away snaps instead of sliding.
     if (!Number.isFinite(dt) || dt <= 0) dt = D.lastTick ? Math.min(0.1, (now - D.lastTick) / 1000) : 0.016;
     D.lastTick = now;
-    const k = clamp(dt * 10, 0, 1);
+    // Frame-rate independent smoothing. `dt * 10` is a per-frame lerp weight, so the same motion
+    // resolved twice as fast on a 120 Hz display and crawled on a 30 Hz one - the "rough" feel.
+    // A time constant produces the same motion at any refresh rate.
+    const k = 1 - Math.exp(-dt * 12);
     // Walk toward the latest destination. The hero is drawn here; the server advances the same walk.
     if (D.dest && D.heroPos) {
       const dx = D.dest.x - D.heroPos.x, dz = D.dest.z - D.heroPos.z;
@@ -955,14 +1064,21 @@
         if (cx !== D.heroPos.x || cz !== D.heroPos.z) {
           D.heroPos.x = cx; D.heroPos.z = cz; D.dest = null; D.walking = false;
         }
-        D.facing = Math.atan2(dx, dz);   // the field reads this for the sprite's 8-way facing
+        // The FIELD's own facing convention is `atan2(dz, dx)` - the field writes
+        // `pl.ry = -atan2(dz, dx)` when it walks. This used `atan2(dx, dz)`, which is 90 degrees off
+        // in every direction, so the sprite faced a quarter turn away from the way it was going.
+        D.facing = Math.atan2(dz, dx);
         D.walkUntil = now + 220;
       }
     }
     // Walking is true while the local walk has a destination OR the engine moved the member
     // recently (`walkUntil`). The old rule - "not walking unless D.dest" - froze the animation the
     // moment the engine, rather than a tap, was doing the walking.
-    if (!D.dest && !(D.walkUntil && now < D.walkUntil)) D.walking = false;
+    // ...and it is TRUE while the engine is moving the member, not only while a tap owns the walk.
+    // This only ever cleared the flag, so a hero the engine was chasing across the deck reported
+    // walking() === false for the whole chase and the sprite slid along in its idle pose.
+    if (D.dest || (D.walkUntil && now < D.walkUntil)) D.walking = true;
+    else D.walking = false;
     // The field's hero sprite is the raid's hero: it walks while the raid walks (index.html reads
     // walking() through PGField's proxy hero state).
     if (D.hooks && D.hooks.player) { const p = typeof D.hooks.player === 'function' ? D.hooks.player() : D.hooks.player; if (p) p.run = !!D.walking; }
@@ -980,10 +1096,27 @@
       const focused = ent.id && ent.id === D.targetId;
       ent.ringMat.opacity = focused ? 0.9 : ent.downed ? 0.5 : 0;
       ent.ringMat.color.setHex(ent.downed ? 0xff6a6a : focused ? 0xffd9a0 : 0x67dce5);
-      ent.ring.scale.setScalar(ent.kind === 'boss' ? 1.9 : 1.05);
+      ent.ring.scale.setScalar(ent.kind === 'boss' ? 3.2 : 1.6);
       if (ent.bar) drawBar(ent, focused);
       if (ent.kind === 'boss' || ent.kind === 'anchor') {
         ent.group.position.y = Math.sin(now / 900 + ent.x) * 0.05;
+      }
+      // Enemies animate. Every mob was pinned to sheet frame 0 - a literal still image - so a hall
+      // full of monsters looked like a shelf of statues even though the sheet on disk has an idle
+      // cycle. The field's own sheets are 16 actions x 8 directions and the idle block is the first
+      // eight cells, so the idle animation is just those cells in order.
+      if (ent.sprite && ent.sprite.userData.spriteId && !ent.dead) {
+        const sheetId = ent.sprite.userData.spriteId;
+        // Stagger by id so a pack does not breathe in lockstep.
+        const phase = (now / 190 + num(ent.id) * 3) % 8 | 0;
+        if (ent.sprite.userData.animCell !== phase) {
+          const tex = mobTexture(sheetId, phase);
+          if (tex && ent.sprite.material) {
+            ent.sprite.material.map = tex;
+            ent.sprite.material.needsUpdate = true;
+            ent.sprite.userData.animCell = phase;
+          }
+        }
       }
     }
     // The exit portal: pulse it, and treat "walk into it" as the interaction. The server decides
@@ -1041,6 +1174,11 @@
     <div class="raid-hud-bar"><i id="raidHudBossBar"></i></div>
   </div>
   <div class="raid-hud-party" id="raidHudParty"></div>
+  <div class="raid-hud-dps" id="raidHudDps" hidden>
+    <div class="raid-hud-dps-head"><span>DAMAGE</span><b id="raidHudDpsMine">0</b><small id="raidHudDpsSeconds"></small></div>
+    <div class="raid-hud-dps-rows" id="raidHudDpsRows"></div>
+  </div>
+  <div class="raid-hud-buffs" id="raidHudBuffs" hidden></div>
   <div class="raid-hud-tip" id="raidHudTip">WASD walk · tap the ground to move · tap an enemy to focus</div>
   <button type="button" class="raid-hud-exit" id="raidHudExit" aria-label="Leave the fight view">Leave</button>
 </div>`;
@@ -1081,6 +1219,58 @@
     const s = Math.max(0, Math.ceil(num(ms) / 1000));
     return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
   }
+  // A damage meter and a buff strip, both built from the snapshot the fight already carries.
+  //
+  // Neither existed: the arena showed a stage banner and a party health row, and nothing about what
+  // the player was actually doing. `run.members[].damage` is authoritative (the engine already
+  // tracks it for settlement), and `run.mechanics` says which debuff is live - so this is reading
+  // facts rather than inventing a client-side counter that could drift from the real one.
+  function paintDps(run) {
+    const box = $('raidHudDps');
+    if (!box) return;
+    const members = (run.members || []).slice().sort((a, b) => num(b.damage) - num(a.damage));
+    if (!members.length) { box.hidden = true; return; }
+    box.hidden = false;
+    const elapsed = Math.max(1, (num(run.elapsedMs) || (serverNow() - num(run.startedAt))) / 1000);
+    const total = members.reduce((n, m) => n + num(m.damage), 0);
+    const mine = members.find(m => m.id === D.myId) || members[0];
+    setText('raidHudDpsMine', Math.round(num(mine.damage) / elapsed).toLocaleString());
+    setText('raidHudDpsSeconds', ' dps · ' + Math.round(elapsed) + 's');
+    const rows = $('raidHudDpsRows');
+    if (rows) {
+      const top = Math.max(1, ...members.map(m => num(m.damage)));
+      rows.innerHTML = members.map(m => {
+        const share = Math.round(num(m.damage) / top * 100);
+        const cls = m.id === D.myId ? ' you' : '';
+        const dps = Math.round(num(m.damage) / elapsed).toLocaleString();
+        return '<div class="raid-hud-dps-row' + cls + '">' +
+          '<span class="nm">' + esc(m.name || 'Adventurer') + (m.downed ? ' · DOWN' : '') + '</span>' +
+          '<span class="bar"><i style="width:' + clamp(share, 0, 100) + '%"></i></span>' +
+          '<b>' + dps + '</b></div>';
+      }).join('');
+    }
+  }
+
+  function paintBuffs(run) {
+    const box = $('raidHudBuffs');
+    if (!box) return;
+    const at = serverNow();
+    const live = (run.mechanics || []).filter(m => !m.resolvedAt && m.endsAt > at);
+    // Mechanics ARE the buffs and debuffs of this fight: a soul cleave is a debuff with a timer, the
+    // ward is a safe zone. Showing them as icons with countdowns is the same information the field's
+    // buff strip carries, in the same place a player looks for it.
+    if (!live.length) { box.hidden = true; box.innerHTML = ''; return; }
+    box.hidden = false;
+    box.innerHTML = live.map(m => {
+      const left = Math.max(0, (num(m.endsAt) - at) / 1000);
+      const icon = m.kind === 'soul-cleave' ? '\u2694' : m.kind === 'astral-cataclysm' ? '\u25CE'
+        : m.kind === 'ritual' ? '\u26E9' : '\u2192';
+      const hue = m.kind === 'astral-cataclysm' ? 'good' : 'bad';
+      return '<span class="raid-buff ' + hue + '" role="img" aria-label="' + esc(m.kind || '') + '">' +
+        '<i>' + icon + '</i><b>' + left.toFixed(1) + '</b></span>';
+    }).join('');
+  }
+
   function hudUpdate(run) {
     if (!run || !D.on) return;
     setText('raidHudStep', (num(run.stageIndex, 0) + 1) + ' / 4');
@@ -1104,6 +1294,8 @@
     setText('raidHudClock', clock(num(run.stageEndsAt) - serverNow()));
     const party = $('raidHudParty');
     if (party) party.innerHTML = hudPartyRows(run);
+    paintDps(run);
+    paintBuffs(run);
     const warn = $('raidHudWarning');
     if (warn) {
       const at = serverNow();

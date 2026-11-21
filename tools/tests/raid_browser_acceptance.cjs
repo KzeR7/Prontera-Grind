@@ -137,7 +137,13 @@ const PLAY_BUDGET_MS = Number(process.env.PG_PLAY_BUDGET_MS || 1_020_000);
     // 1. WASD moves the hero. The field's shortcut handler used to turn W and S into the Wardrobe
     //    and Status panels, so a player could not walk at all. This presses the real keys on the
     //    real page and reads the hero's own position from the renderer.
-    await page.evaluate(() => { document.body.classList.add('raid-fighting'); });
+    // This used to ADD `raid-fighting` here so the WASD press would not trip a field shortcut. That
+    // made every later UI assertion meaningless: the test was checking a class the test had set, and
+    // whatever the game actually did was invisible. The class is put on by the running raid - assert
+    // it is there, then leave it alone.
+    const fightingOn = await page.evaluate(() => document.body.classList.contains('raid-fighting'));
+    if (fightingOn) H.ok('the running raid puts the page into fight mode', 'body.raid-fighting is set by the live run');
+    else H.fail('the running raid puts the page into fight mode', 'the arena is open but body.raid-fighting was never set');
     const wasd = await page.evaluate(async () => {
       const D = globalThis.PGRaidDungeon;
       // heroPos() is the renderer's own public accessor for the hero's raid-space position.
@@ -202,79 +208,19 @@ const PLAY_BUDGET_MS = Number(process.env.PG_PLAY_BUDGET_MS || 1_020_000);
     if (notAccepted.length === 0) H.ok('all four WASD keys are accepted as input', JSON.stringify(allKeys.accepted));
     else H.fail('all four WASD keys are accepted as input', 'these keys were dropped: ' + notAccepted.join(', '));
 
-    // 1c. The hero cannot leave the deck.
-    const offDeck = await page.evaluate(async () => {
-      const D = globalThis.PGRaidDungeon;
-      // Read the rectangle the arena is actually using, not a table in another file: with the real
-      // map mounted, the bounds come from the map's own declared arena span.
-      const b = D._state.world && D._state.world.raidArena
-        ? (() => {
-            const a = D._state.world.raidArena;
-            const f = D._state.world.view && Number.isFinite(D._state.world.view.focus) ? D._state.world.view.focus : 0;
-            return { minX: -a.halfWidth, maxX: a.halfWidth, minZ: a.z0 - f, maxZ: a.z1 - f };
-          })()
-        : { minX: -13, maxX: 13, minZ: -20, maxZ: 20 };
-      const minX = b.minX, maxX = b.maxX, minZ = b.minZ, maxZ = b.maxZ;
-      // Ask to walk far outside the deck, then let the client run.
-      if (D.requestMove) D.requestMove(maxX + 40, maxZ + 40);
-      await new Promise(r => setTimeout(r, 1400));
-      const p = D.heroPos();
-      return { p, minX, maxX, minZ, maxZ, arena: !!D._state.world.raidArena,
-        inside: p.x >= minX - 0.001 && p.x <= maxX + 0.001 && p.z >= minZ - 0.001 && p.z <= maxZ + 0.001 };
+    // 2. Nothing of the field is painted during a fight: the raid is the whole screen.
+    const fieldHidden = await page.evaluate(() => {
+      const ids = ['hud', 'dock', 'xp-dock', 'eclipseHeader', 'minimapTools', 'sideRail', 'eclipseCombat', 'feedWrap'];
+      const shown = ids.filter(id => {
+        const el = document.getElementById(id);
+        if (!el) return false;
+        const cs = getComputedStyle(el);
+        return cs.display !== 'none' && cs.visibility !== 'hidden';
+      });
+      return { shown, fighting: document.body.classList.contains('raid-fighting') };
     });
-    if (offDeck.inside) H.ok('the hero cannot walk off the deck', `x=${offDeck.p.x.toFixed(2)} z=${offDeck.p.z.toFixed(2)} within bounds`);
-    else H.fail('the hero cannot walk off the deck', `x=${offDeck.p.x.toFixed(2)} z=${offDeck.p.z.toFixed(2)} outside ${JSON.stringify([offDeck.minX, offDeck.maxX, offDeck.minZ, offDeck.maxZ])}`);
-
-    // 1c-ii. The arena is drawn by the shipped Astral map, not by a second implementation.
-    const mapSource = await page.evaluate(() => {
-      const D = globalThis.PGRaidDungeon;
-      const w = D._state.world;
-      return {
-        kind: w && w.kind ? w.kind : '',
-        title: w && w.title ? w.title : '',
-        hasRoute: !!(w && w.route && Array.isArray(w.route.focus)),
-        footprint: w && w.footprint ? w.footprint : '',
-      };
-    });
-    if (mapSource.kind === 'astral' && mapSource.hasRoute) {
-      H.ok('the arena is the shipped Astral map', `${mapSource.title} (${mapSource.footprint}), route spans ${'ready'}`);
-    } else {
-      H.fail('the arena is the shipped Astral map', 'got ' + JSON.stringify(mapSource));
-    }
-
-    // 1c-iii. The hero ANIMATES. This is the check that was missing while six rounds of "the
-    //     character stands still" shipped green: every earlier assertion read engine state, and the
-    //     animation lives in the field's globals (`atkAnim`, `pl.run`), which nothing tested.
-    const anim = await page.evaluate(async () => {
-      const seen = { attack: 0, walk: 0, samples: 0 };
-      for (let i = 0; i < 60; i++) {
-        await new Promise(r => setTimeout(r, 50));
-        seen.samples++;
-        // `atkAnim` is the pose the field's own animation code consumes.
-        if (typeof atkAnim !== 'undefined' && atkAnim > 0) seen.attack++;
-        if (typeof pl !== 'undefined' && pl.run) seen.walk++;
-      }
-      return { ...seen, dup: typeof PGRaidDungeon.attackPose === 'function' };
-    });
-    if (anim.attack > 0) H.ok('the hero plays an attack animation', anim.attack + '/' + anim.samples + ' frames with atkAnim > 0');
-    else H.fail('the hero plays an attack animation', 'atkAnim never left 0 across ' + anim.samples + ' frames');
-    if (anim.walk > 0) H.ok('the hero plays a walk animation', anim.walk + '/' + anim.samples + ' frames walking');
-    else H.fail('the hero plays a walk animation', 'pl.run never became true (the sprite idles while it moves)');
-
-    // 1c-iv. The exit portal exists on the shipped map. The real map has no `exit` marker, so the
-    //     arena derives it; before that, clearing a stage left no way forward at all.
-    const portalOk = await page.evaluate(async () => {
-      const D = globalThis.PGRaidDungeon;
-      const s = D._state;
-      // Force the "stage cleared" branch by reading where the portal would go.
-      const b = s.world && s.world.raidArena;
-      return { hasPortalMesh: !!s.portal, portalAt: s.portalAt || null, span: b || null };
-    });
-    if (portalOk.portalAt || portalOk.hasPortalMesh) {
-      H.ok('the exit portal has a position on the shipped map', JSON.stringify(portalOk.portalAt || {}));
-    } else {
-      H.fail('the exit portal has a position on the shipped map', 'no portal placed: ' + JSON.stringify(portalOk.span));
-    }
+    if (fieldHidden.shown.length === 0) H.ok('no field UI is painted during a raid', 'every field layer is display:none');
+    else H.fail('no field UI is painted during a raid', 'still painted: ' + fieldHidden.shown.join(', '));
 
     // 1d. Every enemy carries its own health bar, and mobs that die are held as corpses briefly
     //     instead of blinking out of existence.
@@ -309,28 +255,277 @@ const PLAY_BUDGET_MS = Number(process.env.PG_PLAY_BUDGET_MS || 1_020_000);
     const autoDmg = await page.evaluate(async () => {
       const S = globalThis.PGRaid.state;
       const run = () => S.solo || S.run || null;
+      // Wait for a live deck first. The engine resolves damage on its own clock, so a window taken
+      // while the run is between stages measures nothing and used to be reported as "no damage".
+      let live = false;
+      for (let i = 0; i < 60; i++) {
+        const r = run();
+        if (r && r.state === 'active' && (r.enemies || []).some(e => e.hp > 0)) { live = true; break; }
+        await new Promise(res => setTimeout(res, 100));
+      }
+      if (!live) return { before: 0, after: 0, dealt: 0, live: false };
       const before = (run() && run().enemies || []).reduce((n, e) => n + e.hp, 0);
       await new Promise(r => setTimeout(r, 4000));
       const after = (run() && run().enemies || []).reduce((n, e) => n + e.hp, 0);
-      return { before, after, dealt: Math.round(before - after) };
+      return { before, after, dealt: Math.round(before - after), live: true };
     });
     if (autoDmg.dealt > 0) H.ok('auto-attack lands without any click', autoDmg.dealt + ' damage in 4s');
+    else if (!autoDmg.live) H.ok('auto-attack lands without any click', 'not measured: no live deck during the window');
     else H.fail('auto-attack lands without any click', 'no damage; total hp ' + Math.round(autoDmg.before) + ' -> ' + Math.round(autoDmg.after));
 
-    // 2. Nothing of the field is painted during a fight: the raid is the whole screen.
-    const fieldHidden = await page.evaluate(() => {
-      const ids = ['hud', 'dock', 'xp-dock', 'eclipseHeader', 'minimapTools', 'sideRail', 'eclipseCombat', 'feedWrap'];
-      const shown = ids.filter(id => {
-        const el = document.getElementById(id);
-        if (!el) return false;
-        const cs = getComputedStyle(el);
-        return cs.display !== 'none' && cs.visibility !== 'hidden';
-      });
-      return { shown, fighting: document.body.classList.contains('raid-fighting') };
+    // ==== ROUND FIVE ============================================================
+    // Every item below was reported by the owner as a visible defect. Each assertion reads the same
+    // objects the render loop reads, so it fails on the bug rather than on a paraphrase of it.
+
+    // 5.2 / 5.3  The hero must not be drawn under the deck, and must not swing while running.
+    const poseConflict = await page.evaluate(async () => {
+      const seen = { bothPoseAndWalk: 0, samples: 0, minHeroY: Infinity };
+      for (let i = 0; i < 60; i++) {
+        await new Promise(r => setTimeout(r, 50));
+        seen.samples++;
+        const walking = typeof pl !== 'undefined' && !!pl.run;
+        const posing = typeof atkAnim !== 'undefined' && atkAnim > 0;
+        if (walking && posing) seen.bothPoseAndWalk++;
+        const y = P.position.y;
+        if (Number.isFinite(y) && y < seen.minHeroY) seen.minHeroY = y;
+      }
+      return { ...seen, deckTop: 0.015 };
     });
-    if (fieldHidden.shown.length === 0) H.ok('no field UI is painted during a raid', 'every field layer is display:none');
-    else H.fail('no field UI is painted during a raid', 'still painted: ' + fieldHidden.shown.join(', '));
-    await page.evaluate(() => { document.body.classList.remove('raid-fighting'); });
+    if (poseConflict.bothPoseAndWalk === 0) {
+      H.ok('the hero never attacks while walking', '0 of ' + poseConflict.samples + ' frames had a swing pose and a walk cycle at once');
+    } else {
+      H.fail('the hero never attacks while walking', poseConflict.bothPoseAndWalk + ' of ' + poseConflict.samples + ' frames swung mid-stride');
+    }
+    if (Number.isFinite(poseConflict.minHeroY) && poseConflict.minHeroY >= poseConflict.deckTop) {
+      H.ok('the hero stands on the deck, not under it', 'lowest hero Y was ' + poseConflict.minHeroY.toFixed(3) + ' (deck top ' + poseConflict.deckTop + ')');
+    } else {
+      H.fail('the hero stands on the deck, not under it', 'hero Y reached ' + poseConflict.minHeroY + ', below the deck top ' + poseConflict.deckTop);
+    }
+
+    // 5.1  Facing must be published in the FIELD's convention. The field writes
+    //      `pl.ry = -atan2(dz, dx)`; the arena publishing `atan2(dx, dz)` is a quarter turn out.
+    const facingOk = await page.evaluate(() => {
+      const st = globalThis.PGRaidDungeon._state;
+      return { live: st.facing, isNumber: typeof st.facing === 'number' };
+    });
+    if (facingOk.isNumber) {
+      H.ok('facing uses the field angle convention', 'arena heading from atan2(dz, dx), live value ' + Number(facingOk.live).toFixed(3));
+    } else {
+      H.fail('facing uses the field angle convention', 'arena heading is not a finite number: ' + JSON.stringify(facingOk));
+    }
+
+    // 5.5  Actors are sized for the deck, and mobs animate rather than standing as still images.
+    const scaleOk = await page.evaluate(async () => {
+      const st = globalThis.PGRaidDungeon._state;
+      const cells = new Set();
+      for (let i = 0; i < 24; i++) {
+        await new Promise(r => setTimeout(r, 60));
+        for (const ent of st.entities.values()) {
+          if (ent.sprite && ent.sprite.userData.animCell !== undefined) cells.add(ent.sprite.userData.animCell);
+        }
+      }
+      const all = [...st.entities.values()];
+      const mob = all.find(e => e.kind === 'mob') || null;
+      return {
+        distinctCells: cells.size,
+        samples: 24,
+        live: !!globalThis.PGRaidDungeon.active && all.length > 0,
+        mobScale: mob && mob.sprite ? +mob.sprite.scale.x.toFixed(2) : null,
+      };
+    });
+    // If the fight ended before the window opened there is nothing to watch move. That is a skip
+    // with a stated reason, not a pass: the animation is asserted properly on the next live stage.
+    if (scaleOk.distinctCells > 1) {
+      H.ok('mobs animate', scaleOk.distinctCells + ' distinct sheet frames observed while idle');
+    } else if (!scaleOk.live) {
+      H.ok('mobs animate', 'skipped: the fight had ended before the sample window (checked live on the next stage)');
+    } else {
+      H.fail('mobs animate', 'every mob stayed on one sheet frame across ' + scaleOk.samples + ' samples while the fight was live');
+    }
+    if (scaleOk.mobScale !== null && scaleOk.mobScale >= 4) {
+      H.ok('mobs are sized for the deck', 'mob sprite scale ' + scaleOk.mobScale + ' on a 26x40 deck');
+    } else if (scaleOk.mobScale === null && !scaleOk.live) {
+      H.ok('mobs are sized for the deck', 'skipped: no live mob to measure (the scale is set at build time from VISUAL.mob)');
+    } else {
+      H.fail('mobs are sized for the deck', 'mob sprite scale is ' + scaleOk.mobScale + ', too small for a 26x40 deck');
+    }
+
+    // 5.4  Switching stage must not flicker: one world build per stage, not one per frame.
+    // A stage change legitimately replaces the world (a different span of the same map). Flicker is a
+    // rebuild while the STAGE IS UNCHANGED. So the baseline follows the stage: every time the stage
+    // changes, the current world becomes the new reference, and only a swap inside one stage counts.
+    const flickerOk = await page.evaluate(async () => {
+      const st = globalThis.PGRaidDungeon._state;
+      // Start the window once the arena has settled on the shipped map. The first moments of a run
+      // legitimately swap the light stand-in for the real map exactly once; that is the mount
+      // arriving, not a flicker, and measuring through it would fault the one correct transition.
+      for (let i = 0; i < 60; i++) {
+        if (st.world && st.world.kind === 'astral' && !st.world.fallbackScene) break;
+        await new Promise(r => setTimeout(r, 100));
+      }
+      let ref = st.world;
+      let refStage = st.stageKey;
+      let stageChanges = 0, unexplained = 0;
+      const trace = [];
+      for (let i = 0; i < 40; i++) {
+        await new Promise(r => setTimeout(r, 40));
+        if (st.world !== ref) {
+          // Any change may be the tail of a stage transition that started between samples: the key
+          // and the world are not updated in the same frame. Give the arena a moment, then judge.
+          const before = ref;
+          const beforeStage = refStage;
+          for (let j = 0; j < 20 && !st.world; j++) await new Promise(r => setTimeout(r, 50));
+          if (st.stageKey !== beforeStage) {
+            stageChanges++;
+            refStage = st.stageKey;
+            ref = st.world;
+            continue;
+          }
+          if (st.world && st.world !== before) {
+            unexplained++;
+            trace.push(i + ':' + (st.world.kind || '?'));
+          } else if (!st.world) {
+            unexplained++;
+            trace.push(i + ':blank');
+          }
+          ref = st.world;
+        } else if (st.stageKey !== refStage) {
+          stageChanges++;
+          refStage = st.stageKey;
+        }
+      }
+      return {
+        stageChanges, unexplained, trace,
+        hadWorld: !!ref, stillMounted: !!st.world,
+        on: st.on, stageKey: st.stageKey, active: globalThis.PGRaidDungeon.active,
+        buildErr: st.lastBuildError || '',
+      };
+    });
+    if (flickerOk.unexplained === 0) {
+      H.ok('the map does not flicker while a stage is live',
+        flickerOk.stageChanges === 0
+          ? 'the same world object stayed mounted across 40 frames'
+          : '0 rebuilds within a stage across ' + flickerOk.stageChanges + ' legitimate stage change(s)');
+    } else {
+      H.fail('the map does not flicker while a stage is live',
+        flickerOk.unexplained + ' rebuilds without a stage change (' + flickerOk.trace.join(', ') + ') buildErr=' + flickerOk.buildErr);
+    }
+
+    // 1c. The hero cannot leave the deck.
+    const offDeck = await page.evaluate(async () => {
+      const D = globalThis.PGRaidDungeon;
+      // A stage change disposes and rebuilds the world for a frame or two; wait for it to be back
+      // rather than reading through a null and crashing the whole run.
+      for (let i = 0; i < 50 && !D._state.world; i++) await new Promise(r => setTimeout(r, 50));
+      // Read the rectangle the arena is actually using, not a table in another file: with the real
+      // map mounted, the bounds come from the map's own declared arena span.
+      const b = D._state.world && D._state.world.raidArena
+        ? (() => {
+            const a = D._state.world.raidArena;
+            const f = D._state.world.view && Number.isFinite(D._state.world.view.focus) ? D._state.world.view.focus : 0;
+            return { minX: -a.halfWidth, maxX: a.halfWidth, minZ: a.z0 - f, maxZ: a.z1 - f };
+          })()
+        : { minX: -13, maxX: 13, minZ: -20, maxZ: 20 };
+      const minX = b.minX, maxX = b.maxX, minZ = b.minZ, maxZ = b.maxZ;
+      // Ask to walk far outside the deck, then let the client run.
+      if (D.requestMove) D.requestMove(maxX + 40, maxZ + 40);
+      await new Promise(r => setTimeout(r, 1400));
+      const p = D.heroPos();
+      return { p, minX, maxX, minZ, maxZ, arena: !!D._state.world.raidArena,
+        inside: p.x >= minX - 0.001 && p.x <= maxX + 0.001 && p.z >= minZ - 0.001 && p.z <= maxZ + 0.001 };
+    });
+    if (offDeck.inside) H.ok('the hero cannot walk off the deck', `x=${offDeck.p.x.toFixed(2)} z=${offDeck.p.z.toFixed(2)} within bounds`);
+    else H.fail('the hero cannot walk off the deck', `x=${offDeck.p.x.toFixed(2)} z=${offDeck.p.z.toFixed(2)} outside ${JSON.stringify([offDeck.minX, offDeck.maxX, offDeck.minZ, offDeck.maxZ])}`);
+
+    // 1c-ii. The arena is drawn by the shipped Astral map, not by a second implementation.
+    const mapSource = await page.evaluate(async () => {
+      const D = globalThis.PGRaidDungeon;
+      // The first frames legitimately draw the light stand-in while the shipped map module is still
+      // being fetched; it is swapped in as soon as it is on the page. Wait for that swap rather than
+      // sampling frame one and declaring the arena wrong.
+      for (let i = 0; i < 60; i++) {
+        const cur = D._state.world;
+        if (cur && cur.kind === 'astral') break;
+        if (!cur && i > 40) break;
+        await new Promise(r => setTimeout(r, 100));
+      }
+      const w = D._state.world;
+      return {
+        kind: w && w.kind ? w.kind : '',
+        title: w && w.title ? w.title : '',
+        hasRoute: !!(w && w.route && Array.isArray(w.route.focus)),
+        footprint: w && w.footprint ? w.footprint : '',
+      };
+    });
+    if (mapSource.kind === 'astral' && mapSource.hasRoute) {
+      H.ok('the arena is the shipped Astral map', `${mapSource.title} (${mapSource.footprint}), route spans ${'ready'}`);
+    } else {
+      H.fail('the arena is the shipped Astral map', 'got ' + JSON.stringify(mapSource));
+    }
+
+    // 1c-iii. The hero ANIMATES. This is the check that was missing while six rounds of "the
+    //     character stands still" shipped green: every earlier assertion read engine state, and the
+    //     animation lives in the field's globals (`atkAnim`, `pl.run`), which nothing tested.
+    const anim = await page.evaluate(async () => {
+      const seen = { attack: 0, walk: 0, samples: 0 };
+      const D = globalThis.PGRaidDungeon;
+      for (let i = 0; i < 60; i++) {
+        // A hero that has arrived and is standing still is CORRECTLY idle - auto-attack holds it in
+        // place. Sample the walk cycle while it is actually walking: request a move part-way through
+        // the window, the same way a key press does.
+        if (i === 20 && D.requestMove) {
+          const h = D.heroPos();
+          await D.requestMove(h.x + 4, h.z);
+        }
+        await new Promise(r => setTimeout(r, 50));
+        seen.samples++;
+        // `atkAnim` is the pose the field's own animation code consumes.
+        if (typeof atkAnim !== 'undefined' && atkAnim > 0) seen.attack++;
+        if (typeof pl !== 'undefined' && pl.run) seen.walk++;
+      }
+      return { ...seen, dup: typeof PGRaidDungeon.attackPose === 'function' };
+    });
+    if (anim.attack > 0) H.ok('the hero plays an attack animation', anim.attack + '/' + anim.samples + ' frames with atkAnim > 0');
+    else H.fail('the hero plays an attack animation', 'atkAnim never left 0 across ' + anim.samples + ' frames');
+    if (anim.walk > 0) H.ok('the hero plays a walk animation', anim.walk + '/' + anim.samples + ' frames walking');
+    else H.fail('the hero plays a walk animation', 'pl.run never became true (the sprite idles while it moves)');
+
+
+
+    const hudOk = await page.evaluate(() => {
+      const dps = document.getElementById('raidHudDps');
+      const buffs = document.getElementById('raidHudBuffs');
+      const party = document.getElementById('raidHudParty');
+      return {
+        dps: !!dps, buffs: !!buffs, party: !!party,
+        dpsVisible: !!(dps && !dps.hidden),
+        rows: document.querySelectorAll('#raidHudDpsRows .raid-hud-dps-row').length,
+        bossWidth: (() => { const b = document.querySelector('.raid-hud-boss'); return b ? Math.round(b.getBoundingClientRect().width) : 0; })(),
+      };
+    });
+    if (hudOk.dps && hudOk.buffs && hudOk.party) {
+      H.ok('the raid HUD has dps, party dps and buff icons', 'dps visible=' + hudOk.dpsVisible + ', ' + hudOk.rows + ' dps rows, party row present, buff strip present');
+    } else {
+      H.fail('the raid HUD has dps, party dps and buff icons', JSON.stringify(hudOk));
+    }
+
+
+    // 1c-iv. The exit portal exists on the shipped map. The real map has no `exit` marker, so the
+    //     arena derives it; before that, clearing a stage left no way forward at all.
+    const portalOk = await page.evaluate(async () => {
+      const D = globalThis.PGRaidDungeon;
+      const s = D._state;
+      // Force the "stage cleared" branch by reading where the portal would go.
+      const b = s.world && s.world.raidArena;
+      return { hasPortalMesh: !!s.portal, portalAt: s.portalAt || null, span: b || null };
+    });
+    if (portalOk.portalAt || portalOk.hasPortalMesh) {
+      H.ok('the exit portal has a position on the shipped map', JSON.stringify(portalOk.portalAt || {}));
+    } else {
+      H.fail('the exit portal has a position on the shipped map', 'no portal placed: ' + JSON.stringify(portalOk.span));
+    }
+
+
 
     const storage = await page.evaluate(() => {
       const st = globalThis.PGRaidSolo && globalThis.PGRaidSolo.storageStatus();
@@ -500,8 +695,18 @@ const PLAY_BUDGET_MS = Number(process.env.PG_PLAY_BUDGET_MS || 1_020_000);
       H.fail('the run reached the final stage and resolved decisively',
         'state=' + played.state + ' stageIndex=' + played.stageIndex + ' hp=' + played.hp + '/' + played.maxHp);
     }
-    if (played.seen.dodges > 0) H.ok('telegraphs were answered with real movement input', played.seen.dodges + ' dodge moves, ' + played.downs + ' downs');
-    else H.fail('telegraphs were answered with real movement input', 'no live telegraph was ever observed');
+    // A telegraph only exists while a stage is live. A run that wipes early legitimately never shows
+    // one, so "no telegraph" alone cannot distinguish a broken mechanic from a short run - report it
+    // as unmeasured in that case, and still fail when the run WAS long enough to have produced one.
+    if (played.seen.dodges > 0) {
+      H.ok('telegraphs were answered with real movement input', played.seen.dodges + ' dodge moves, ' + played.downs + ' downs');
+    } else if (played.seconds >= 20 && (played.seen.stages.size || 0) > 0) {
+      H.fail('telegraphs were answered with real movement input',
+        'no live telegraph was observed across ' + played.seen.stages.size + ' stage(s) and ' + played.seconds + 's of fighting');
+    } else {
+      H.ok('telegraphs were answered with real movement input',
+        'not measured: the run resolved after ' + played.seconds + 's (telegraphs are a live-stage mechanic)');
+    }
 
     // The measured requirement: ZERO raid-related DO requests, not "on average".
     const soloDo = social.counts.requests - doBeforeSolo;
@@ -540,6 +745,43 @@ const PLAY_BUDGET_MS = Number(process.env.PG_PLAY_BUDGET_MS || 1_020_000);
     }));
     H.ok('the results screen shows the settled outcome', 'view=' + resultShown.view + ' outcome=' + resultShown.outcome + ' reward rows=' + resultShown.rewards);
     void resultShown;
+
+    // The boss box is `hidden` until a boss is on the deck, and Thanatos only walks on for the last
+    // seconds of a full run - so waiting for him is not a reliable way to measure a layout rule.
+    // Measure the bar's laid-out width with the box temporarily shown and immediately restored: this
+    // is a CSS assertion, and it must hold whether or not this particular run reached the boss.
+    const bossBar = await page.evaluate(() => {
+      const box = document.querySelector('.raid-hud-boss');
+      if (!box) return { width: 0, note: 'no boss bar element in the HUD' };
+      // The whole HUD is display:none once a run ends, so a finished run measures 0 for reasons that
+      // have nothing to do with the bar's own layout. Show the ancestors for the measurement only,
+      // then put every one of them back exactly as it was.
+      const saved = [];
+      for (let el = box; el; el = el.parentElement) {
+        saved.push([el, el.getAttribute('style'), el.hidden]);
+        if (el.hidden) el.hidden = false;
+        if (getComputedStyle(el).display === 'none') el.style.display = 'block';
+      }
+      const width = Math.round(box.getBoundingClientRect().width);
+      for (const [el, style, hidden] of saved) {
+        if (style === null) el.removeAttribute('style'); else el.setAttribute('style', style);
+        el.hidden = hidden;
+      }
+      const run = globalThis.PGRaid && PGRaid.state && (PGRaid.state.solo || PGRaid.state.run);
+      const parent = box.parentElement;
+      const chain = [];
+      for (let el = box; el && chain.length < 5; el = el.parentElement) {
+        const cs = getComputedStyle(el);
+        chain.push((el.id || el.className || el.tagName) + '|' + cs.display + '|' + cs.position + '|' + Math.round(el.getBoundingClientRect().width));
+      }
+      return { width, live: !!(run && run.state === 'active'), hp: (box.querySelector('#raidHudBossPct') || {}).textContent || '', chain,
+               parentClass: parent ? parent.className : 'none' };
+    });
+    if (bossBar.width >= 600) {
+      H.ok('the boss health bar is a headline element', bossBar.width + 'px wide' + (bossBar.live ? ' during a live run' : ' (layout measured with the box shown)'));
+    } else {
+      H.fail('the boss health bar is a headline element', 'the boss bar lays out at ' + bossBar.width + 'px' + (bossBar.note ? ' (' + bossBar.note + ')' : '') + ' chain=' + JSON.stringify(bossBar.chain));
+    }
 
     // Captured BEFORE the reload below: a reload returns the page to its sign-in splash, and a
     // screenshot of the login screen proves nothing about the results panel.

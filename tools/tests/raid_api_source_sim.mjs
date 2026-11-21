@@ -9,7 +9,7 @@ import path from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import { fileURLToPath } from 'node:url';
 import { onRequestGet, onRequestPost, _raidTest } from '../../functions/api/raid.js';
-import { tokenHash } from '../../functions/_lib/auth.js';
+import { tokenHash, isGm } from '../../functions/_lib/auth.js';
 import { packSave } from '../../functions/_lib/save-codec.js';
 import { raidProfileFromSave } from '../../functions/_lib/raid-profile.js';
 import { RAID_STAGES, RAID_RULES, RAID_RULES_VERSION } from '../../functions/_lib/raid-rules.js';
@@ -606,6 +606,58 @@ await t('a client with no local state cannot buy a second solo entry', async () 
     'still exactly one entry spent');
   assert.equal(sql.prepare('SELECT COUNT(*) AS n FROM raid_runs WHERE leader_id=?').get(me.id).n, 1,
     'and exactly one run reserved');
+});
+
+await t('a GM account is not capped by daily entries', async () => {
+  // A GM needs to enter repeatedly to test a four-stage dungeon. The cap is a player pacing rule.
+  // There are TWO gates - the JS eligibility check and the `raid_entry_daily_limit` trigger - and
+  // the trigger is the one that actually aborts the insert, so both have to know about the bypass.
+  const gm = await soloUser('GammaGm');
+  sql.prepare('UPDATE users SET gm=1 WHERE id=?').run(gm.id);
+  assert.equal(isGm({ gm: 1 }), true, 'the GM helper reads the column');
+
+  const day = sql.prepare("SELECT strftime('%Y-%m-%d','now','+8 hours') AS d").get().d;
+  // Fill the day with finished runs, so the GM is at the cap but has no active run.
+  for (let i = 0; i < 2; i++) {
+    const rid = 'gmfill' + i;
+    sql.prepare('INSERT INTO raid_runs(id,leader_id,party_size,total_hp,started_at,deadline_at,state,settled_at) VALUES(?,?,?,?,?,?,?,?)')
+      .run(rid, gm.id, 1, 1000, 1, 2, 'cleared', 2);
+    sql.prepare('INSERT INTO raid_entries(user_id,day_key,run_id,entered_at) VALUES(?,?,?,?)')
+      .run(gm.id, day, rid, 1);
+  }
+  const used = sql.prepare('SELECT COUNT(*) AS n FROM raid_entries WHERE user_id=?').get(gm.id).n;
+  assert.equal(used, 2, 'the GM is at the cap before the check');
+
+  const view = await onRequestGet({ request: request('/api/raid', gm), env });
+  const data = await jsonBody(view);
+  assert.equal(view.status, 200);
+  assert.equal(data.account.entriesUnlimited, true, 'a GM is reported as unlimited');
+  assert.equal(data.account.entriesLeft, 'unlimited', 'the count is not a stale zero');
+  assert.equal(data.eligibility.eligible, true, 'a GM past the cap is still eligible');
+
+  // The trigger must allow the insert that the eligibility check just approved. `raid_entries.run_id`
+  // is a foreign key, so the run has to exist for the insert to reach the trigger at all.
+  sql.prepare('INSERT INTO raid_runs(id,leader_id,party_size,total_hp,started_at,deadline_at,state) VALUES(?,?,?,?,?,?,?)')
+    .run('gmfill2', gm.id, 1, 1000, 3, 4, 'active');
+  assert.doesNotThrow(() => sql.prepare('INSERT INTO raid_entries(user_id,day_key,run_id,entered_at) VALUES(?,?,?,?)')
+    .run(gm.id, day, 'gmfill2', 3), 'the daily-limit trigger exempts a GM');
+  // Clean up the active run so the account is not left mid-run for anything that follows.
+  sql.prepare("UPDATE raid_runs SET state='cleared', settled_at=4 WHERE id='gmfill2'").run();
+
+  // A non-GM account at the same cap is still refused, so the bypass is keyed on the GM column.
+  const plain = await soloUser('DeltaPlain');
+  for (let i = 0; i < 2; i++) {
+    const rid = 'plainfill' + i;
+    sql.prepare('INSERT INTO raid_runs(id,leader_id,party_size,total_hp,started_at,deadline_at,state,settled_at) VALUES(?,?,?,?,?,?,?,?)')
+      .run(rid, gm.id, 1, 1000, 1, 2, 'cleared', 2);
+    sql.prepare('INSERT INTO raid_entries(user_id,day_key,run_id,entered_at) VALUES(?,?,?,?)')
+      .run(plain.id, day, rid, 1);
+  }
+  assert.throws(() => sql.prepare('INSERT INTO raid_entries(user_id,day_key,run_id,entered_at) VALUES(?,?,?,?)')
+    .run(plain.id, day, 'plainfill2', 3), /raid_daily_entry_limit/, 'a plain account is still capped');
+  const plainView = await jsonBody(await onRequestGet({ request: request('/api/raid', plain), env }));
+  assert.equal(plainView.account.entriesLeft, 0, 'a plain account at the cap sees 0');
+  assert.equal(plainView.eligibility.eligible, false, 'a plain account at the cap is not eligible');
 });
 
 await t('a solo claim cannot buy rewards the run could not have produced', async () => {
