@@ -67,11 +67,16 @@ w.PGSocial.select('world');socket.onmessage({data:JSON.stringify({type:'message'
   assert.equal(menu.hidden,true,'and closes again');
  }
 
- // v374 (owner): typing /gg and pressing Enter sends the evil-grin emote on the current channel and the
+ // v374 (owner): typing an emotion command and pressing Enter sends it on the current channel and the
  // room echoes it back, so the sender sees it too. /thx is the Thanks art (id ok), not the id 'ok'.
- app.nextChat=0;w.PGSocial.select('local');app.room=1;w.document.getElementById('socialInput').value='/gg';
+ // The evil grin answers to /hz now: /gg means "good game" and clashed with the old plaza grin.
+ app.nextChat=0;w.PGSocial.select('local');app.room=1;w.document.getElementById('socialInput').value='/hz';
  w.document.getElementById('socialCompose').dispatchEvent(new w.Event('submit',{cancelable:true}));
- assert.equal(socket.sent.at(-1).type,'emotion','typed /gg is sent as an emotion');assert.equal(socket.sent.at(-1).emotion,'gg','/gg is the gg art');assert.equal(socket.sent.at(-1).channel,'local');
+ assert.equal(socket.sent.at(-1).type,'emotion','typed /hz is sent as an emotion');assert.equal(socket.sent.at(-1).emotion,'gg','/hz is the gg art');assert.equal(socket.sent.at(-1).channel,'local');
+ // /gg must NOT become an emote any more - it falls through to ordinary chat text.
+ app.nextChat=0;w.document.getElementById('socialInput').value='/gg';
+ w.document.getElementById('socialCompose').dispatchEvent(new w.Event('submit',{cancelable:true}));
+ assert.equal(socket.sent.at(-1).type,'chat','/gg is plain chat now, not the grin');assert.equal(socket.sent.at(-1).body,'/gg');
  w.document.getElementById('socialInput').value='';
 app.nextChat=0;w.PGSocial.select('local');app.room=1;w.document.getElementById('socialInput').value='first';w.document.getElementById('socialCompose').dispatchEvent(new w.Event('submit',{cancelable:true}));assert.equal(socket.sent.at(-1).body,'first');const count=socket.sent.length;w.document.getElementById('socialInput').value='second';w.document.getElementById('socialCompose').dispatchEvent(new w.Event('submit',{cancelable:true}));assert.equal(socket.sent.length,count);assert.equal(w.document.getElementById('socialInput').value,'second');assert(w.document.getElementById('socialSend').disabled);w.PGSocial.select('world');w.document.getElementById('socialCompose').dispatchEvent(new w.Event('submit',{cancelable:true}));assert.equal(socket.sent.length,count,'changing channel cannot evade cooldown');app.nextChat=0;w.document.getElementById('socialCompose').dispatchEvent(new w.Event('submit',{cancelable:true}));assert.equal(socket.sent.at(-1).body,'second');
 // Pointer and keyboard resizing uses the actual view bounds and restores a preferred size.
@@ -88,7 +93,7 @@ width=300;w.dispatchEvent(new w.Event('resize'));assert.equal(chat.style.width,'
 let cameraValues,reset=0;app.scene={cameraState:{angle:0,pitch:48,distance:48,panX:0,panZ:0,follow:true},setCamera:v=>{cameraValues=v},resetCamera:()=>reset++,clearPlayers(){},putPlayer(){}};
 for(const id of ['socialCamera','socialCameraReset','socialCameraPanel','socialOrbit','socialTilt','socialZoom'])assert.equal(w.document.getElementById(id),null,id+' is removed from the compact plaza UI');assert.equal(w.document.getElementById('sanctuaryOpen').textContent,'🥚 DigiPet');assert(!/Camera|Reset view/.test(w.document.getElementById('socialHubToolbar').textContent));assert.equal(w.document.getElementById('socialHubHelp'),null,'the top question-mark control is removed');assert.equal(w.document.getElementById('socialSit').parentElement.id,'socialHub','Sit is independent of the top toolbar');assert(!w.document.getElementById('socialHubToolbar').contains(w.document.getElementById('socialSit')));const unifiedCss=fs.readFileSync('assets/social.css','utf8');assert.match(unifiedCss,/#socialHubToolbar\{[^}]*linear-gradient/);assert.match(unifiedCss,/#socialHubToolbar\{[^}]*border:1px solid #c5a76b/);assert.match(unifiedCss,/#socialSit\{position:absolute;[^}]*var\(--docktop/);assert.match(unifiedCss,/#sanctuaryClose\{[^}]*display:inline-flex;align-items:center;justify-content:center/);assert.match(unifiedCss,/background-image:url\('digimon\/digidex-portraits.webp'\)/);assert.match(unifiedCss,/data-rank=mega-plus/);
 const sent=[];socket.send=s=>sent.push(JSON.parse(s));app.room=1;w.S.equippedTitle='poring';w.sessionTick();w.S.equippedTitle=null;w.sessionTick();assert(sent.some(m=>m.type==='look'&&m.look.title===''));assert(!sent.some(m=>m.type==='leave'),'appearance/title updates must preserve seat and coordinates');
-w.PGSocial.select('emoji');assert.equal(w.document.querySelectorAll('#socialEmoji button').length,32);
+w.PGSocial.select('emoji');assert.equal(w.document.querySelectorAll('#socialEmoji button').length,w.PGSocialRules.EMOTIONS.length,'the tray renders every emotion, including the 14 PR #269 adds');
 // v363 (owner: "when I walk around I keep being teleported back to spawn"): a plaza socket drop
 // used to rebuild the local placeholder on the fountain ring, so every reconnect blip looked like a
 // teleport. The spot the walk was standing on when the close arrived is kept instead.

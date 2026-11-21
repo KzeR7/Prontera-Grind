@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PR #269 — Emoji Review</title>
+<style>
+  * { box-sizing: border-box; }
+  :root {
+    --bg:#0b1020; --panel:#141b2f; --panel2:#0e1526; --line:#26314d;
+    --ink:#e6ecf7; --dim:#93a1c0; --dim2:#64748b;
+    --blue:#3b82f6; --green:#22c55e; --amber:#f59e0b; --red:#ef4444; --violet:#a855f7;
+  }
+  body { margin:0; background:var(--bg); color:var(--ink);
+         font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
+  a { color:#7dd3fc; }
+
+  header { background:linear-gradient(180deg,#16203a,#111a2e); border-bottom:1px solid var(--line);
+           padding:15px 22px; position:sticky; top:0; z-index:60; }
+  .hrow { display:flex; align-items:baseline; gap:12px; flex-wrap:wrap; max-width:1560px; margin:0 auto; }
+  header h1 { margin:0; font-size:1.05rem; letter-spacing:.04em; text-transform:uppercase; color:#cbd5e1; }
+  header .sub { font-size:.83rem; color:var(--dim); }
+  .pill { font-size:.7rem; padding:2px 8px; border-radius:999px; border:1px solid var(--line); color:var(--dim); }
+
+  .wrap { max-width:1560px; margin:0 auto; padding:16px 22px 90px; }
+
+  .banner { border-radius:12px; padding:13px 16px; margin-bottom:14px; font-size:.865rem; line-height:1.55;
+            border:1px solid #1e3a5f; background:#0e1e33; color:#c7d9f0; }
+  .banner b { color:#93c5fd; }
+  .banner.warn { border-color:#6b4a12; background:#2a1e08; color:#fde9c0; }
+  .banner.warn b { color:#fbbf24; }
+  .banner code { background:#16233d; padding:1px 5px; border-radius:4px; font-size:.86em; }
+
+  .toolbar { display:flex; gap:9px; flex-wrap:wrap; align-items:center; background:var(--panel);
+             border:1px solid var(--line); border-radius:12px; padding:11px 13px; margin-bottom:13px; }
+  .btn { background:var(--blue); color:#fff; border:0; padding:8px 14px; border-radius:8px;
+         font-size:.85rem; font-weight:650; cursor:pointer; }
+  .btn:hover { filter:brightness(1.12); }
+  .btn.ghost { background:#2b3855; } .btn.ghost:hover { background:#35446a; }
+  .btn.green { background:#15803d; }
+  .spacer { flex:1; }
+  .search { padding:8px 11px; border-radius:8px; border:1px solid var(--line); background:var(--panel2);
+            color:var(--ink); font-size:.85rem; min-width:200px; }
+  .search:focus { outline:0; border-color:var(--blue); }
+
+  .tabs { display:flex; gap:6px; margin-bottom:12px; flex-wrap:wrap; }
+  .tab { background:#1a2440; border:1px solid var(--line); color:var(--dim); padding:7px 12px;
+         border-radius:9px; font-size:.83rem; cursor:pointer; font-weight:600; }
+  .tab.on { background:#1d3a63; border-color:var(--blue); color:#dbeafe; }
+  .tab .n { opacity:.72; font-weight:500; }
+
+  .counts { display:flex; gap:16px; flex-wrap:wrap; font-size:.82rem; color:var(--dim); margin-bottom:13px; }
+  .counts b { color:var(--ink); }
+
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(228px,1fr)); gap:12px; }
+
+  .card { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:11px;
+          display:flex; flex-direction:column; gap:8px; position:relative; transition:border-color .12s,background .12s; }
+  .card:hover { border-color:#3a4a72; }
+  .card.keep { border-color:var(--green); background:#0f2318; }
+  .card.drop { opacity:.45; }
+  .card.notro { border-left:3px solid #7f1d1d; }
+
+  .cardtop { display:flex; align-items:center; gap:7px; }
+  .idx { font-size:.66rem; color:var(--dim2); font-variant-numeric:tabular-nums; }
+  .idname { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:.81rem; font-weight:700; color:#dbeafe; }
+  .tag { font-size:.56rem; letter-spacing:.05em; text-transform:uppercase; padding:2px 5px; border-radius:4px;
+         font-weight:800; margin-left:auto; white-space:nowrap; }
+  .tag.shipped { background:#1e3a8a; color:#bfdbfe; }
+  .tag.real    { background:#166534; color:#bbf7d0; }
+  .tag.notro   { background:#7f1d1d; color:#fecaca; }
+  .tag.noword  { background:#4c1d95; color:#ddd6fe; }
+
+  /* ---- the game's own chat bubble ---- */
+  .stage { background:radial-gradient(120% 90% at 50% 0%,#1b2d4d 0%,#0a0f1c 72%);
+           border:1px solid #1e2942; border-radius:9px; height:126px; position:relative; overflow:hidden;
+           display:flex; align-items:center; justify-content:center; }
+  .stage.noart { background-image:repeating-linear-gradient(45deg,#161d30 0 8px,#121828 8px 16px);
+                 background-color:#121828; border-color:#2a3348; }
+  .artwork { max-width:112px; max-height:112px; image-rendering:pixelated;
+             filter:drop-shadow(0 3px 6px rgba(0,0,0,.65)); }
+  .ghost { opacity:.34; filter:grayscale(.75) drop-shadow(0 3px 6px rgba(0,0,0,.5)); }
+  .nopix { text-align:center; color:#8b9ab5; font-size:.72rem; line-height:1.45; padding:0 10px; }
+  .nopix .big { display:block; font-size:1.02rem; color:#cbd5e1; font-weight:700;
+                font-family:ui-monospace,monospace; margin-bottom:4px; }
+  .nopix .why { color:#fca5a5; font-weight:700; display:block; margin-bottom:4px; font-size:.74rem; }
+  .stage .trayemo { position:absolute; left:6px; bottom:4px; width:28px; height:28px;
+                    image-rendering:pixelated; object-fit:contain; border:1px solid #2b3852;
+                    border-radius:5px; background:#05080f; }
+  .stage .traylbl { position:absolute; left:38px; bottom:7px; font-size:.55rem; color:var(--dim2);
+                    text-transform:uppercase; letter-spacing:.08em; }
+
+  .cmds { display:flex; align-items:center; gap:6px; }
+  .cmds .slash { color:var(--dim2); font-family:ui-monospace,monospace; font-size:.85rem; }
+  .cmds input { flex:1; min-width:0; padding:5px 8px; border-radius:6px; border:1px solid #33405e;
+                background:#0a1020; color:#e6ecf7; font-family:ui-monospace,monospace; font-size:.81rem; }
+  .cmds input:focus { outline:0; border-color:var(--blue); }
+  .cmds input.collide { border-color:var(--red); color:#fecaca; background:#200e0e; }
+
+  .desc { font-size:.745rem; color:#b6c2d8; line-height:1.45; min-height:2.15em; }
+  .meta { font-size:.665rem; color:var(--dim2); line-height:1.5; font-family:ui-monospace,monospace; }
+  .meta .k { color:#7c8aa8; }
+  .meta .bad { color:#fca5a5; font-weight:700; }
+  .realcmds { font-size:.7rem; color:#8fd8a8; font-family:ui-monospace,monospace; }
+
+  .warn { font-size:.65rem; color:#fca5a5; background:#2a0f0f; border:1px solid #7f1d1d;
+          border-radius:5px; padding:3px 6px; line-height:1.38; }
+  .warn.amber { color:#fcd34d; background:#2a1e08; border-color:#6b4a12; }
+
+  .actions { display:flex; gap:6px; margin-top:auto; }
+  .toggle { flex:1; padding:7px 6px; border-radius:7px; border:1px solid var(--line); background:#1a2440;
+            color:var(--dim); font-size:.77rem; font-weight:700; cursor:pointer; }
+  .toggle:hover { background:#223054; }
+  .toggle.on { background:#14532d; border-color:var(--green); color:#bbf7d0; }
+  .toggle.offstate { background:#3f1414; border-color:#7f1d1d; color:#fecaca; }
+  .static { color:#64748b; font-size:.71rem; align-self:center; }
+
+  .sect-title { font-size:.77rem; text-transform:uppercase; letter-spacing:.08em; color:var(--dim2);
+                margin:24px 0 12px; padding-bottom:7px; border-bottom:1px solid var(--line); font-weight:700; }
+  .sumgrid { display:grid; grid-template-columns:1fr 1fr; gap:13px; }
+  @media (max-width:860px) { .sumgrid { grid-template-columns:1fr; } }
+  .panelbox { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:13px; }
+  .panelbox h3 { margin:0 0 8px; font-size:.78rem; text-transform:uppercase; letter-spacing:.07em; color:var(--dim); }
+  pre { margin:0; background:#05080f; border:1px solid #1a2540; border-radius:8px; padding:10px;
+        font-size:.715rem; line-height:1.55; color:#b9c7de; overflow:auto; max-height:320px;
+        white-space:pre-wrap; word-break:break-word; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; }
+  .keys { font-size:.77rem; color:var(--dim); line-height:1.8; }
+  .keys kbd { background:#1f2a44; border:1px solid #33405e; border-bottom-width:2px; border-radius:5px;
+              padding:1px 6px; font-family:ui-monospace,monospace; font-size:.73rem; color:#dbeafe; }
+  .toast { position:fixed; left:50%; transform:translateX(-50%); bottom:20px; background:#14532d;
+           border:1px solid var(--green); color:#dcfce7; padding:10px 18px; border-radius:9px;
+           font-size:.85rem; font-weight:600; opacity:0; pointer-events:none; transition:opacity .2s; z-index:99; }
+  .toast.show { opacity:1; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hrow">
+    <h1>PR #269 — Emoji Review</h1>
+    <span class="sub">the 45 proposed emotions, drawn from their real RO source</span>
+    <span class="spacer"></span>
+    <span class="pill" id="srcPill">source art</span>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="banner">
+    <b>What changed since you last looked:</b> your 45 tiles were empty because PR #269 ships <b>no image
+    files at all</b>. I pulled the authentic RO emotion table from two independent sources and rebuilt this
+    page, so every emotion now shows its real artwork:
+    <b>roBrowserLegacy</b> <code>DB/Emotions.js</code> for the <code>emotion.spr</code> action index and the
+    <b>iRO Wiki</b> emote table for the artwork and commands. Look at the cards now — they have pictures.
+  </div>
+
+  <div class="banner warn">
+    <b>And that research found a serious problem with the PR.</b>
+    Its action numbers are <b>wrong for all 32 real ones</b> — it maps <code>omg</code> to action 86, but
+    <code>/omg</code> is <code>ET_HUK</code> at action <b>23</b>. The other <b>13 aren't Ragnarok Online
+    emotions at all</b>: every one is <b>Ragnarok Online II</b>. Most are RO II <em>action</em> emotes (real 3D
+    character animations); <code>best</code> and <code>kiskis</code> are also RO II emote bubbles. None exists in
+    RO1's <code>emotion.act/spr</code>, which is this game's only emote source — so there is no picture to show.
+    Each card states the true action, the true ET_ name and the PR's claim so you can check it yourself.
+  </div>
+
+  <div class="toolbar">
+    <input class="search" id="q" type="search" placeholder="Filter by id, command or description…">
+    <button class="btn ghost" id="bAllReal">Keep all 32 real</button>
+    <button class="btn ghost" id="bNone">Keep none</button>
+    <button class="btn ghost" id="bReset">Reset</button>
+    <span class="spacer"></span>
+    <button class="btn green" id="bCopy">Copy selection</button>
+  </div>
+
+  <div class="tabs" id="tabs">
+    <button class="tab on" data-f="new">New proposals <span class="n" id="tNew">45</span></button>
+    <button class="tab" data-f="real">Real RO only <span class="n" id="tReal">32</span></button>
+    <button class="tab" data-f="notro">RO II (not RO1) <span class="n" id="tNot">13</span></button>
+    <button class="tab" data-f="shipped">Already shipped <span class="n">32</span></button>
+    <button class="tab" data-f="keep">Kept <span class="n" id="tKeep">0</span></button>
+    <button class="tab" data-f="drop">Dropped <span class="n" id="tDrop">0</span></button>
+    <button class="tab" data-f="all">Everything <span class="n">77</span></button>
+  </div>
+
+  <div class="counts">
+    <span>Kept: <b id="cKeep">0</b> / 45</span>
+    <span>Dropped: <b id="cDrop">0</b></span>
+    <span>Kept that aren't RO1: <b id="cBad">0</b></span>
+    <span>Shipped commands you changed: <b id="cChg">0</b></span>
+  </div>
+
+  <div class="grid" id="grid"></div>
+
+  <div class="sect-title">Selection summary — paste this back</div>
+  <div class="sumgrid">
+    <div class="panelbox">
+      <h3>Paste-back block</h3>
+      <pre id="out">—</pre>
+    </div>
+    <div class="panelbox">
+      <h3>Using this page</h3>
+      <div class="keys">
+        <b>Keep / Drop</b> per card, or <kbd>Space</kbd> when a card is focused.<br>
+        <b>Slash command</b> is editable — writes straight into the paste-back block.
+        Green line above it = the commands RO really uses.<br>
+        Tabs split the 45 into <b>real RO</b> (32) and <b>not RO</b> (13).<br>
+        Picks live in this browser only (<code>localStorage</code>).<br><br>
+        <b>About the pictures.</b> iRO Wiki's emote GIFs are the exact RO sprite frames, drawn here
+        from that source. They are a <b>preview of what the emote looks like</b>, not game-ready files:
+        this repo's convention is a 160×160 APNG built from the pinned
+        <code>emotion.act</code>/<code>emotion.spr</code> by <code>pack-emotions.py</code>.
+        <code>grf.robrowser.com</code> is unreachable from this sandbox, so I could not decode those
+        two files. A kept emotion is a decision to add it; the files still have to be generated.
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast">Copied</div>
+
+<script>
+// ---------------------------------------------------------------- data
+// Action index: roBrowserLegacy DB/Emotions.js (the same emotion.spr this repo pins).
+// Artwork + commands: iRO Wiki /wiki/Emotes. Generated by tools/social/build-emotion-ref.py.
+// The emotion table is generated into emoji-ref-data.json by build-emotion-ref.py. Loading it
+// rather than inlining a copy keeps the page and the data from drifting apart; open this page
+// over http (e.g. `python3 -m http.server` in this directory), not file://.
+// Populated by loadRef() before anything else runs.
+let REF = null, SHIPPED = [], NEW = [], byId = {}, isNew = () => false, allIds = [];
+async function loadRef() {
+  const res = await fetch('emoji-ref-data.json');
+  if (!res.ok) throw new Error(`emoji-ref-data.json: HTTP ${res.status}`);
+  REF = await res.json();
+  SHIPPED = REF.emotions.filter(e => e.state === 'shipped');
+  NEW     = REF.emotions.filter(e => e.state === 'new');
+  byId    = Object.fromEntries(REF.emotions.map(e => [e.id, e]));
+  isNew   = id => byId[id] && byId[id].state === 'new';
+  allIds  = [...SHIPPED, ...NEW].map(e => e.id);
+}
+
+// PR #269's own command changes for ids that already ship.
+const PR_RENAME = {gg:'sc', blush:'ok', drool:'blek', hmm:'hf', kiss:'kf', meh:'sk', panic:'yw',
+  paper:'3', rock:'1', scissors:'2', shy:'gg', sleep:'zz', smile:'no', think:'kis2'};
+
+// iRO Wiki artwork. The page is served from tools/social/, so the wiki's own path is kept
+// absolute (it must not resolve against this repo). Each filename is verified in build-emotion-ref.py.
+const IROWIKI = 'https://irowiki.org/w/images/';
+const ART_PATH = {                       // filename -> wiki hash directory
+  'Exc.gif':'7/70/', 'Que.gif':'8/82/', 'Hoe.gif':'8/86/', 'Lov.gif':'b/b6/', 'Lov2.gif':'c/ce/',
+  'Swt.gif':'1/17/', 'Swt2.gif':'9/98/', 'Lit.gif':'b/be/', 'Ang.gif':'d/df/', 'Agh.gif':'8/8b/',
+  'Money.gif':'6/66/', '....gif':'0/05/', 'Thx.gif':'e/e9/', 'Wah.gif':'5/5c/', 'Sry.gif':'0/0c/',
+  'Heh.gif':'5/57/', 'Hmm.gif':'4/47/', 'No1.gif':'1/16/', 'Ok.gif':'b/ba/', 'Omg.gif':'8/80/',
+  'Ohh.gif':'c/c7/', 'Ecks.gif':'8/86/', 'Hlp.gif':'2/21/', 'Goo.gif':'b/bb/', 'Sob.gif':'1/1d/',
+  'Ggg.gif':'e/e4/', 'Kis.gif':'6/68/', 'Kis2.gif':'5/51/', 'Pif.gif':'e/e0/', 'Ono.gif':'f/f8/',
+  'Bzz.gif':'0/00/', 'Rice.gif':'5/5e/', 'Awsm.gif':'2/26/', 'Meh.gif':'b/bb/', 'Shy.gif':'9/97/',
+  'Pat.gif':'e/e3/', 'Mep.gif':'1/1c/', 'Slur.gif':'4/4c/', 'Come.gif':'e/e6/', 'Yawn.gif':'8/83/',
+  'Grat.gif':'f/fa/', 'Hep.gif':'e/eb/', 'Fsh.gif':'e/e2/', 'Spin.gif':'7/71/', 'Sigh.gif':'7/7a/',
+  'Dum.gif':'c/ce/', 'Crwd.gif':'3/3b/', 'Desp.gif':'7/71/', 'Dice.gif':'3/3e/', 'E20.gif':'7/7f/',
+  'Hum.gif':'7/75/', 'Abs.gif':'2/21/', 'Oops.gif':'f/fe/', 'Spit.gif':'7/78/', 'Ene.gif':'2/20/',
+  'Panic.gif':'8/8b/', 'Whisp.gif':'c/cd/', 'Mail.gif':null,
+  'Emote_bawi.png':'d/d1/', 'Emote_bo.png':'6/69/', 'Emote_gawi.png':'a/a3/'
+};
+const artUrl = fn => (fn && ART_PATH[fn]) ? IROWIKI + ART_PATH[fn] + fn : null;
+
+// Fallback copies on the Ragnarok Wiki CDN (ragnarok.fandom.com), keyed by the iRO filename
+// above. The two wikis name the same sprites differently (Omg.gif vs Emote_omg.gif).
+// Used only when iRO Wiki fails to load.
+const WIKIACDN = 'https://static.wikia.nocookie.net/ragnarok_gamepedia_en/images/';
+const WIKIA = {
+  'Exc.gif':WIKIACDN+'0/0b/Emote_exc.gif/revision/latest',
+  'Que.gif':WIKIACDN+'0/05/Emote_que.gif/revision/latest',
+  'Hoe.gif':WIKIACDN+'f/fe/Emote_ho.gif/revision/latest',
+  'Lov.gif':WIKIACDN+'d/d8/Emote_love.gif/revision/latest',
+  'Lov2.gif':WIKIACDN+'7/77/Emote_love2.gif/revision/latest',
+  'Swt.gif':WIKIACDN+'3/32/Emote_swt.gif/revision/latest',
+  'Lit.gif':WIKIACDN+'9/99/Emote_lit.gif/revision/latest',
+  'Ang.gif':WIKIACDN+'6/65/Emote_an.gif/revision/latest',
+  'Agh.gif':WIKIACDN+'2/26/Emote_ag.gif/revision/latest',
+  'Money.gif':WIKIACDN+'d/d6/Emote_money.gif/revision/latest',
+  '....gif':WIKIACDN+'e/e7/Emote_silence.gif/revision/latest',
+  'Thx.gif':WIKIACDN+'3/34/Emote_thx.gif/revision/latest',
+  'Wah.gif':WIKIACDN+'7/7c/Emote_wah.gif/revision/latest',
+  'Sry.gif':WIKIACDN+'9/9f/Emote_sry.gif/revision/latest',
+  'Heh.gif':WIKIACDN+'6/6c/Emote_heh.gif/revision/latest',
+  'Swt2.gif':WIKIACDN+'d/d6/Emote_swt2.gif/revision/latest',
+  'Hmm.gif':WIKIACDN+'7/75/Emote_hmm.gif/revision/latest',
+  'No1.gif':WIKIACDN+'6/6b/Emote_no1.gif/revision/latest',
+  'Ok.gif':WIKIACDN+'b/bc/Emote_ok.gif/revision/latest',
+  'Omg.gif':WIKIACDN+'a/af/Emote_omg.gif/revision/latest',
+  'Ohh.gif':WIKIACDN+'d/d2/Emote_ohh.gif/revision/latest',
+  'Ecks.gif':WIKIACDN+'b/bb/Emote_ecks.gif/revision/latest',
+  'Hlp.gif':WIKIACDN+'9/9b/Emote_help.gif/revision/latest',
+  'Goo.gif':WIKIACDN+'4/41/Emote_go.gif/revision/latest',
+  'Sob.gif':WIKIACDN+'7/77/Emote_sob.gif/revision/latest',
+  'Ggg.gif':WIKIACDN+'4/47/Emote_gg.gif/revision/latest',
+  'Kis.gif':WIKIACDN+'f/f9/Emote_kis.gif/revision/latest',
+  'Kis2.gif':WIKIACDN+'8/84/Emote_kis2.gif/revision/latest',
+  'Pif.gif':WIKIACDN+'c/c7/Emote_pif.gif/revision/latest',
+  'Ono.gif':WIKIACDN+'c/ca/Emote_que2.gif/revision/latest',
+  'Bzz.gif':WIKIACDN+'1/16/Emote_bzz.gif/revision/latest',
+  'Rice.gif':WIKIACDN+'4/44/Emote_rice.gif/revision/latest',
+  'Awsm.gif':WIKIACDN+'b/b3/Emote_awsm.gif/revision/latest',
+  'Meh.gif':WIKIACDN+'e/eb/Emote_meh.gif/revision/latest',
+  'Shy.gif':WIKIACDN+'2/2b/Emote_shy.gif/revision/latest',
+  'Pat.gif':WIKIACDN+'a/a9/Emote_pat.gif/revision/latest',
+  'Mep.gif':WIKIACDN+'f/ff/Emote_mp.gif/revision/latest',
+  'Slur.gif':WIKIACDN+'e/e1/Emote_slur.gif/revision/latest',
+  'Come.gif':WIKIACDN+'5/5d/Emote_come.gif/revision/latest',
+  'Yawn.gif':WIKIACDN+'1/15/Emote_yawn.gif/revision/latest',
+  'Grat.gif':WIKIACDN+'4/48/Emote_grat.gif/revision/latest',
+  'Hep.gif':WIKIACDN+'f/f6/Emote_hp.gif/revision/latest',
+  'Fsh.gif':WIKIACDN+'1/13/Emote_fsh.gif/revision/latest',
+  'Spin.gif':WIKIACDN+'5/55/Emote_spin.gif/revision/latest',
+  'Sigh.gif':WIKIACDN+'c/cb/Emote_sigh.gif/revision/latest',
+  'Dum.gif':WIKIACDN+'e/e5/Emote_dum.gif/revision/latest',
+  'Crwd.gif':WIKIACDN+'2/2f/Emote_crwd.gif/revision/latest',
+  'Desp.gif':WIKIACDN+'6/60/Emote_desp.gif/revision/latest',
+  'Dice.gif':WIKIACDN+'1/19/Emote_dice.gif/revision/latest',
+  'E20.gif':WIKIACDN+'6/6a/Emote_e20.gif/revision/latest',
+  'Hum.gif':WIKIACDN+'0/06/Emote_hum.gif/revision/latest',
+  'Abs.gif':WIKIACDN+'1/1b/Emote_abs.gif/revision/latest',
+  'Oops.gif':WIKIACDN+'0/0a/Emote_oops.gif/revision/latest',
+  'Spit.gif':WIKIACDN+'1/17/Emote_spit.gif/revision/latest',
+  'Ene.gif':WIKIACDN+'2/29/Emote_ene.gif/revision/latest',
+  'Panic.gif':WIKIACDN+'3/39/Emote_panic.gif/revision/latest',
+  'Whisp.gif':WIKIACDN+'6/68/Emote_whisp.gif/revision/latest'
+};
+
+// ---------------------------------------------------------------- state
+const KEY = 'pr269emoji2';
+let state = { keep:{}, cmd:{}, shippedCmd:{} };
+try { const s = JSON.parse(localStorage.getItem(KEY)||'{}'); if (s && s.keep) state = s; } catch {}
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch {} };
+
+const grid = document.getElementById('grid');
+let filter = 'new', query = '';
+
+function curCmd(id) {
+  if (isNew(id)) return state.cmd[id] !== undefined ? state.cmd[id] : byId[id].prCmd;
+  return state.shippedCmd[id] !== undefined ? state.shippedCmd[id] : byId[id].cmds[0] || '';
+}
+
+function cmdMap() {
+  const m = {};
+  for (const id of allIds) { const c = curCmd(id); (m[c] = m[c] || []).push(id); }
+  return m;
+}
+
+function visible() {
+  return allIds.filter(id => {
+    const e = byId[id], nw = isNew(id), kept = state.keep[id] === true;
+    if (filter === 'new' && !nw) return false;
+    if (filter === 'real' && !(nw && e.action !== null)) return false;
+    if (filter === 'notro' && !(nw && e.action === null)) return false;
+    if (filter === 'shipped' && nw) return false;
+    if (filter === 'keep' && !kept) return false;
+    if (filter === 'drop' && !(nw && state.keep[id] === false)) return false;
+    if (query) {
+      const hay = (id + ' /' + curCmd(id) + ' ' + (e.desc||'') + ' ' + (e.enum||'') + ' ' +
+                   (e.cmds||[]).join(' ')).toLowerCase();
+      if (!hay.includes(query)) return false;
+    }
+    return true;
+  });
+}
+
+function stageHtml(e) {
+  const url = artUrl(e.art);
+  const nw = e.state === 'new';
+  if (!url) {
+    return `<div class="nopix">
+      ${nw ? '<span class="why">No RO artwork exists</span>' : ''}
+      <span class="big">/${curCmd(e.id)}</span>
+      ${nw ? 'a Ragnarok Online <b>II</b> emote<br>not in RO1\'s sprite sheet'
+           : 'no art for this id'}
+    </div>`;
+  }
+  // Real art available. For proposals the art is the authentic RO sprite frame.
+  // iRO Wiki hosts the sprites; if it is down, fall back to the Ragnarok Wiki CDN copy.
+  const alt = WIKIA[e.art] || null;
+  const tray = `<img class="trayemo" src="${url}" alt="">`;
+  return `<img class="artwork" src="${url}" alt="${e.id}" title="${e.art}"
+            data-alt="${alt || ''}" data-id="${e.id}">
+          ${tray}<span class="traylbl">tray</span>`;
+}
+
+function render() {
+  const cm = cmdMap();
+  const list = visible();
+  grid.innerHTML = '';
+  if (!list.length) grid.innerHTML =
+    '<div style="grid-column:1/-1;color:#64748b;padding:36px 0;text-align:center;font-style:italic">Nothing here.</div>';
+
+  list.forEach(id => {
+    const e = byId[id], nw = isNew(id), kept = state.keep[id] === true;
+    const cmd = curCmd(id);
+    const collide = (cm[cmd]||[]).length > 1;
+    const realRo = nw && e.action !== null;
+    const notRo  = nw && e.action === null;
+    const prRen  = !nw && PR_RENAME[id] ? PR_RENAME[id] : null;
+    const card = document.createElement('div');
+    card.className = 'card' + (nw ? (kept ? ' keep' : (state.keep[id]===false ? ' drop' : '')) : '')
+                   + (notRo ? ' notro' : '');
+    card.tabIndex = 0; card.dataset.id = id;
+
+    const tag = nw
+      ? (realRo ? '<span class="tag real">real RO</span>' : '<span class="tag notro">RO II</span>')
+      : '<span class="tag shipped">shipped</span>';
+
+    let actionLines = '';
+    if (nw && realRo) {
+      actionLines = `<span class="k">true action</span> ${e.action} · ${e.enum}
+        <br><span class="k">PR claims</span> <span class="bad">${e.prAction}</span>`;
+    } else if (nw) {
+      actionLines = `<span class="k">PR claims</span> <span class="bad">${e.prAction}</span>
+        <br><span class="bad">no such RO1 emotion</span>`;
+    } else {
+      actionLines = `<span class="k">action</span> ${e.action} · ${e.enum}`;
+    }
+
+    card.innerHTML = `
+      <div class="cardtop">
+        <span class="idx">${allIds.indexOf(id)+1}</span>
+        <span class="idname">${id}</span>${tag}
+      </div>
+      <div class="stage ${artUrl(e.art) ? '' : 'noart'}">${stageHtml(e)}</div>
+      <div class="cmds"><span class="slash">/</span>
+        <input data-cmd value="${cmd}" spellcheck="false" title="slash command"></div>
+      <div class="desc">${e.desc || ''}</div>
+      ${nw && realRo && e.cmds.length ? `<div class="realcmds">RO command${e.cmds.length>1?'s':''}: ${e.cmds.map(c=>'/'+c).join(' ')}</div>` : ''}
+      <div class="meta">${actionLines}</div>
+      ${collide ? `<div class="warn">/${cmd} also used by ${(cm[cmd]||[]).filter(x=>x!==id).join(', ')} — only one wins</div>` : ''}
+      ${prRen ? `<div class="warn amber">PR #269 wants /${byId[id].cmds[0]||'?'} → /${prRen}</div>` : ''}
+      ${nw ? `<div class="actions">
+          <button class="toggle ${kept?'on':(state.keep[id]===false?'offstate':'')}" data-keep>
+            ${kept?'✓ Keep':(state.keep[id]===false?'✕ Drop':'Keep?')}</button>
+        </div>`
+        : `<div class="actions"><span class="static">already in the game</span></div>`}
+    `;
+    grid.appendChild(card);
+  });
+
+  const keptN = NEW.filter(e => state.keep[e.id] === true).length;
+  const dropN = NEW.filter(e => state.keep[e.id] === false).length;
+  const badN  = NEW.filter(e => state.keep[e.id] === true && e.action === null).length;
+  document.getElementById('cKeep').textContent = keptN;
+  document.getElementById('cDrop').textContent = dropN;
+  document.getElementById('cBad').textContent  = badN;
+  document.getElementById('cChg').textContent  =
+    SHIPPED.filter(e => state.shippedCmd[e.id] !== undefined && state.shippedCmd[e.id] !== e.cmds[0]).length;
+  document.getElementById('tKeep').textContent = keptN;
+  document.getElementById('tDrop').textContent = dropN;
+  renderOut();
+}
+
+function renderOut() {
+  const keep = NEW.filter(e => state.keep[e.id] === true);
+  const drop = NEW.filter(e => state.keep[e.id] === false);
+  const und  = NEW.filter(e => state.keep[e.id] === undefined);
+  const renames = SHIPPED.filter(e => state.shippedCmd[e.id] !== undefined && state.shippedCmd[e.id] !== e.cmds[0]);
+  const cmdOverride = NEW.filter(e => state.cmd[e.id] !== undefined && state.cmd[e.id] !== e.prCmd);
+
+  let h = '# PR #269 emoji selection\n';
+  h += `keep : ${keep.length ? keep.map(e=>e.id).join(', ') : '(none)'}\n`;
+  h += `drop : ${drop.length ? drop.map(e=>e.id).join(', ') : '(none)'}\n`;
+  if (und.length) h += `undecided (treat as drop) : ${und.map(e=>e.id).join(', ')}\n`;
+  h += `\n# slash commands I changed\n`;
+  h += cmdOverride.length ? cmdOverride.map(e => `  ${e.id}: /${curCmd(e.id)} (PR had /${e.prCmd})`).join('\n')+'\n'
+                          : '  (none — use the PR commands)\n';
+  h += `\n# shipped commands I changed\n`;
+  h += renames.length ? renames.map(e => `  ${e.id}: /${e.cmds[0]} -> /${state.shippedCmd[e.id]}`).join('\n')+'\n'
+                      : '  (none — keep today\'s commands)\n';
+  const bad = keep.filter(e => e.action === null);
+  if (bad.length) h += `\n# WARNING: kept ids that are RO II, not RO1\n  ${bad.map(e=>e.id).join(', ')}\n`;
+  h += `\n# action numbers (PR -> true emotion.spr index)\n  PR #269 is wrong for all 32 real ones; use these:\n`;
+  h += NEW.filter(e => e.action !== null).map(e => `  ${e.id}: ${e.prAction} -> ${e.action} (${e.enum})`).join('\n') + '\n';
+  h += `\n# art\n  still needs assets/social/emotions/<id>.png generated from the pinned\n`;
+  h += `  emotion.act/emotion.spr via tools/social/pack-emotions.py (see tools/social/README.md)\n`;
+  document.getElementById('out').textContent = h;
+}
+
+// ---------------------------------------------------------------- events
+grid.addEventListener('click', e => {
+  const card = e.target.closest('.card'); if (!card) return;
+  const id = card.dataset.id; if (!isNew(id)) return;
+  if (e.target.closest('[data-keep]') || e.target.closest('.stage')) {
+    state.keep[id] = state.keep[id] === true ? false : true;
+    save(); render();
+  }
+});
+
+grid.addEventListener('input', e => {
+  const inp = e.target.closest('[data-cmd]'); if (!inp) return;
+  const id = inp.closest('.card').dataset.id;
+  const v = inp.value.replace(/^\/+/, '').trim();
+  if (isNew(id)) { if (v === byId[id].prCmd) delete state.cmd[id]; else state.cmd[id] = v; }
+  else { if (v === (byId[id].cmds[0]||'')) delete state.shippedCmd[id]; else state.shippedCmd[id] = v; }
+  save();
+  const cm = cmdMap();
+  grid.querySelectorAll('.card').forEach(c => {
+    const cur = curCmd(c.dataset.id);
+    const ci = c.querySelector('[data-cmd]');
+    if (ci) ci.classList.toggle('collide', (cm[cur]||[]).length > 1);
+  });
+  renderOut();
+});
+
+grid.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT') return;
+  const card = e.target.closest('.card'); if (!card) return;
+  if (e.code === 'Space' || e.key === 'k') {
+    e.preventDefault();
+    const id = card.dataset.id; if (!isNew(id)) return;
+    state.keep[id] = state.keep[id] === true ? false : true;
+    save(); render();
+  }
+});
+
+document.getElementById('tabs').addEventListener('click', e => {
+  const t = e.target.closest('.tab'); if (!t) return;
+  filter = t.dataset.f;
+  document.querySelectorAll('.tab').forEach(x => x.classList.toggle('on', x === t));
+  render();
+});
+document.getElementById('q').addEventListener('input', e => {
+  query = e.target.value.trim().toLowerCase(); render();
+});
+document.getElementById('bAllReal').onclick = () => {
+  NEW.forEach(e => state.keep[e.id] = e.action !== null); save(); render();
+};
+document.getElementById('bNone').onclick = () => {
+  NEW.forEach(e => state.keep[e.id] = false); save(); render();
+};
+document.getElementById('bReset').onclick = () => {
+  if (!confirm('Reset every pick and command?')) return;
+  state = { keep:{}, cmd:{}, shippedCmd:{} }; save(); render();
+};
+document.getElementById('bCopy').onclick = async () => {
+  const txt = document.getElementById('out').textContent;
+  try { await navigator.clipboard.writeText(txt); }
+  catch { const ta = document.createElement('textarea'); ta.value = txt;
+          document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); }
+  const t = document.getElementById('toast'); t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 1400);
+};
+
+// If iRO Wiki is unreachable, fall back to the Ragnarok Wiki CDN copy of the same sprite.
+// Each image gets one retry; a card whose art cannot load says so instead of going blank.
+grid.addEventListener('error', e => {
+  const img = e.target;
+  if (!img || img.tagName !== 'IMG' || !img.classList.contains('artwork')) return;
+  const alt = img.dataset.alt;
+  if (alt && img.src !== alt) { img.src = alt; return; }
+  const stage = img.closest('.stage');
+  if (stage) {
+    stage.classList.add('noart');
+    stage.innerHTML = `<div class="nopix"><span class="why">art failed to load</span>
+      <span class="big">/${curCmd(img.dataset.id)}</span>check your connection</div>`;
+  }
+}, true);
+
+loadRef().then(() => {
+  document.getElementById('srcPill').textContent =
+    `${NEW.filter(e=>e.action!==null).length} real RO · ${NEW.filter(e=>e.action===null).length} not RO`;
+  render();
+}).catch(err => {
+  document.getElementById('toast').textContent = 'Could not load emoji-ref-data.json — ' + err.message;
+  document.getElementById('toast').classList.add('show');
+});
+</script>
+</body>
+</html>

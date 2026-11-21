@@ -8,13 +8,18 @@ if(window.__pgSocialBooted)return;window.__pgSocialBooted=true;
 const R=PGSocialRules,P=globalThis.PGSocialPoker||null,$id=id=>document.getElementById(id);
 const app={socket:null,user:null,id:null,room:0,rooms:[],plazaFriends:0,wanted:false,party:null,partyRoster:[],partyInvite:null,partyTab:'pve',channel:'world',messages:[],unread:new Set(),muted:new Set(),friends:new Set(),players:new Map(),retry:0,connected:false,nextConnect:0,blocked:false,scene:null,owner:null,nextChat:0,lastSeen:0,probeAt:0,resume:null,poker:null,pokerTables:null,battle:{pve:[],pvp:null,queue:[]},battleOffset:0,battleRewards:new Set(),battleResult:null,battleIntent:null,rulesNoticed:false};
 const escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const emojiURL=id=>'assets/social/emotions/'+id+'.png';
+// The dice is six files behind one id: dice.png is face 1 and dice2..dice6 the rest. Every other
+// emotion is a single file, so a face only changes the path when one was actually rolled.
+const emojiURL=R.emotionURL;   // shared with social-scene.js, so the dice's six-file rule lives in one place
 // v374 (owner: "make all the emotions the same size in the emoji tab"): every emote sits in a fixed square slot and is
 // scaled so its painted area fills the same visual size (EMOTE_LAYOUT). Small art is drawn pixelated, not smoothed.
 // Typed command -> emote id. RO names win; an id only works when it has no RO name (so /ok is no longer the Thanks art).
 function emoteFromCommand(cmd){const c=String(cmd||'').toLowerCase();if(R.EMOTE_BY_CMD?.[c])return R.EMOTE_BY_CMD[c];if(R.EMOTIONS.includes(c)&&!R.EMOTE_NAMES?.[c])return c;return null}
 const emoteLabel=id=>'/'+(R.EMOTE_NAMES?.[id]||id);
-function emoteSlot(id,box){const slot=document.createElement('span');slot.className='emote-slot';slot.style.width=slot.style.height=box+'px';const im=document.createElement('img');im.src=emojiURL(id);im.alt=emoteLabel(id);im.decoding='async';const L=R.EMOTE_LAYOUT?.[id];if(L){im.style.width=(L.w*L.s)+'px';im.style.height=(L.h*L.s)+'px';im.style.left=(box/2-L.cx*L.s)+'px';im.style.top=(box/2-L.cy*L.s)+'px'}slot.append(im);return slot}
+// PR #269 added 14 emotions whose art is not generated yet. Until the PNG exists the label is
+// shown in place of the art - never a substitute picture, and never a broken-image glyph.
+const emojiAlt=id=>String(R.EMOTE_NAMES?.[id]||id);
+function emoteSlot(id,box,face){const slot=document.createElement('span');slot.className='emote-slot';slot.style.width=slot.style.height=box+'px';const im=document.createElement('img');im.src=emojiURL(id,face);im.alt=emojiAlt(id);im.decoding='async';im.onerror=()=>{if(slot.dataset.noart)return;slot.dataset.noart='1';slot.textContent=emojiAlt(id);slot.classList.add('emote-slot-noart')};const L=R.EMOTE_LAYOUT?.[id];if(L){im.style.width=(L.w*L.s)+'px';im.style.height=(L.h*L.s)+'px';im.style.left=(box/2-L.cx*L.s)+'px';im.style.top=(box/2-L.cy*L.s)+'px'}slot.append(im);return slot}
 // World is public and may be cached per account. Never put whispers or Local messages in storage.
 const CHAT_MAX=400,WORLD_CACHE_MAX=200,POKER_LEDGER_IDS_MAX=512;
 const pokerLedgerIdValid=id=>typeof id==='string'&&/^[A-Za-z0-9:_-]{1,100}$/.test(id);
@@ -61,11 +66,11 @@ function recallLocal(room){
 }
 function cleanChatMessage(m){
  if(!m||!['world','whisper','local'].includes(m.channel)||!Number.isFinite(m.at)||!Number.isInteger(m.from)||typeof m.name!=='string'||typeof m.body!=='string'||m.body.length>300||(m.emotion&&!R.EMOTIONS.includes(m.emotion)))return null;
- return {type:'message',id:typeof m.id==='number'||typeof m.id==='string'?m.id:'',at:m.at,from:m.from,name:m.name.slice(0,32),gm:m.gm===true,channel:m.channel,body:m.body,...(m.channel==='local'&&m.sys===true?{sys:true}:{}),room:Number.isInteger(m.room)?m.room:0,...(m.emotion?{emotion:m.emotion}:{}),...(Number.isInteger(m.to)?{to:m.to}:{}),...(typeof m.toName==='string'?{toName:m.toName.slice(0,32)}:{})};
+ return {type:'message',id:typeof m.id==='number'||typeof m.id==='string'?m.id:'',at:m.at,from:m.from,name:m.name.slice(0,32),gm:m.gm===true,channel:m.channel,body:m.body,...(m.channel==='local'&&m.sys===true?{sys:true}:{}),room:Number.isInteger(m.room)?m.room:0,...(m.emotion?{emotion:m.emotion}:{}),...(m.emotion==='dice'&&Number.isInteger(m.face)&&m.face>=1&&m.face<=6?{face:m.face}:{}),...(Number.isInteger(m.to)?{to:m.to}:{}),...(typeof m.toName==='string'?{toName:m.toName.slice(0,32)}:{})};
 }
 function mergeChatMessages(...lists){
  const unique=new Map();
- for(const list of lists)if(Array.isArray(list))for(const raw of list){const m=cleanChatMessage(raw);if(!m)continue;const key=[m.channel,m.room,m.from,m.at,m.id,m.emotion||m.body].join(':');unique.set(key,m)}
+ for(const list of lists)if(Array.isArray(list))for(const raw of list){const m=cleanChatMessage(raw);if(!m)continue;const key=[m.channel,m.room,m.from,m.at,m.id,m.emotion||m.body,m.face||''].join(':');unique.set(key,m)}
  return [...unique.values()].sort((a,b)=>a.at-b.at).slice(-CHAT_MAX);
 }
 function readWorldHistory(){
@@ -254,7 +259,7 @@ function playerMenu(name,id){const menu=$id('socialPeople');menu.replaceChildren
 }
 function messageNode(m){const p=document.createElement('div');p.className='social-line';p.dataset.channel=m.channel;const t=document.createElement('time');t.textContent=new Date(m.at).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});p.append(t);
  // v297: pond announcements are system lines, not something a player typed.
- if(m.sys){p.classList.add('social-line-sys');const span=document.createElement('span');span.className='social-sys-text';span.textContent=m.body;p.append(span);return p}const b=document.createElement('button');b.type='button';b.textContent=(m.gm?'🛠 ':'')+(app.friends.has(m.from)?'★ ':'')+m.name+(m.channel==='whisper'?' → '+m.toName:'');b.title=(m.gm?'Game Master':'')+(m.gm&&app.friends.has(m.from)?' · ':'')+(app.friends.has(m.from)?'Friend':'');b.classList.toggle('social-gm',!!m.gm);b.onclick=()=>{if(Number.isInteger(app.id)&&m.from===app.id)return;playerMenu(m.name,m.from)};p.append(b,document.createTextNode(': '));if(m.emotion){const im=document.createElement('img');im.src=emojiURL(m.emotion);im.alt='/'+m.emotion;im.title='/'+m.emotion;p.append(im)}else p.append(document.createTextNode(m.body));return p}
+ if(m.sys){p.classList.add('social-line-sys');const span=document.createElement('span');span.className='social-sys-text';span.textContent=m.body;p.append(span);return p}const b=document.createElement('button');b.type='button';b.textContent=(m.gm?'🛠 ':'')+(app.friends.has(m.from)?'★ ':'')+m.name+(m.channel==='whisper'?' → '+m.toName:'');b.title=(m.gm?'Game Master':'')+(m.gm&&app.friends.has(m.from)?' · ':'')+(app.friends.has(m.from)?'Friend':'');b.classList.toggle('social-gm',!!m.gm);b.onclick=()=>{if(Number.isInteger(app.id)&&m.from===app.id)return;playerMenu(m.name,m.from)};p.append(b,document.createTextNode(': '));if(m.emotion){const im=document.createElement('img');im.src=emojiURL(m.emotion,m.face);im.alt=emojiAlt(m.emotion);im.title=emojiAlt(m.emotion);im.onerror=()=>{if(im.dataset.noart)return;im.dataset.noart='1';const t=document.createElement('span');t.className='social-line-noart';t.textContent=emojiAlt(m.emotion);im.replaceWith(t)};p.append(im)}else p.append(document.createTextNode(m.body));return p}
 function renderMessages(preserve=false){const box=$id('socialLines'),bottom=box.scrollHeight-box.scrollTop-box.clientHeight<35,top=box.scrollTop;box.replaceChildren();if(app.channel==='log'){for(const l of logShown()){const p=document.createElement('div');p.className='social-line '+(l.cls||'');p.textContent=l.m;box.append(p)}const b=document.createElement('button');b.textContent='Log filters';b.onclick=()=>openTab('log');box.append(b)}else for(const m of app.messages.filter(m=>m.channel===app.channel&&!app.muted.has(m.from)))box.append(messageNode(m));if(!box.childNodes.length)notice(app.channel==='local'?'Messages here are visible only to this plaza.':'No messages yet.');if(!preserve||bottom){box.scrollTop=box.scrollHeight;$id('socialNew').hidden=true}else {box.scrollTop=top;$id('socialNew').hidden=false}}
 $id('socialNew').onclick=()=>{$id('socialLines').scrollTop=$id('socialLines').scrollHeight;$id('socialNew').hidden=true};
 let lastCooldownKey='';
@@ -264,7 +269,11 @@ let lastCooldownKey='';
 // room to be local to) has nothing to send to.
 function emoteChannel(){const c=app.channel;if(c==='local'&&!app.room)return null;return ['world','whisper','local'].includes(c)?c:null}
 function renderEmoji(){const box=$id('socialEmoji');box.replaceChildren();const channel=emoteChannel();if(!channel){const p=document.createElement('p');p.textContent=app.channel==='log'?'Pick World, Whisper or Local to send an emotion.':'Enter the Social Hub to use Local emotions.';p.style.gridColumn='1 / -1';box.append(p);return}
- for(const id of R.EMOTIONS){const b=document.createElement('button');b.type='button';b.title=emoteLabel(id);b.append(emoteSlot(id,40),document.createTextNode(emoteLabel(id)));b.onclick=()=>{const m={type:'emotion',emotion:id,channel};if(channel==='whisper'){const to=$id('socialTo').value.trim();if(!to){status('Whisper an emotion to whom? Type a name in the To field first.');$id('socialTo').focus();return}m.to=to}if(send(m))toggleEmoji(false)};box.append(b)}lastCooldownKey='';cooldownUI()}
+ for(const id of R.EMOTIONS){const b=document.createElement('button');b.type='button';b.title=id==='dice'?'/dice - roll 1 to 6':emoteLabel(id);
+  // The tray is a menu, and /dice is not "the one face": a fresh face each time the tray opens
+  // says "this rolls" before anyone presses it.
+  const tileFace=id==='dice'?1+Math.floor(Math.random()*6):undefined;
+  b.append(emoteSlot(id,40,tileFace),document.createTextNode(id==='dice'?'/dice (roll)':emoteLabel(id)));b.onclick=()=>{const m={type:'emotion',emotion:id,channel};if(channel==='whisper'){const to=$id('socialTo').value.trim();if(!to){status('Whisper an emotion to whom? Type a name in the To field first.');$id('socialTo').focus();return}m.to=to}if(send(m))toggleEmoji(false)};box.append(b)}lastCooldownKey='';cooldownUI()}
 function cooldownUI(){const seconds=Math.max(0,Math.ceil((app.nextChat-Date.now())/1000)),key=seconds+':'+app.channel+':'+$id('socialEmoji').hidden;if(key===lastCooldownKey)return;lastCooldownKey=key;$id('socialSend').disabled=seconds>0||app.channel==='log';$id('socialSend').textContent=seconds?'Wait '+seconds+'s':'Send';chat.querySelectorAll('#socialEmoji button').forEach(b=>b.disabled=seconds>0)}
 setInterval(cooldownUI,200);
 function send(m){if(!app.connected||app.socket?.readyState!==1){
@@ -792,7 +801,7 @@ function syncPokerTableChat(){
   if(node&&Number(node.dataset.serial)!==e.serial){node.remove();node=null}
   if(!node){
    node=document.createElement('div');node.className='poker-table-bubble';node.dataset.key=key;node.dataset.serial=String(e.serial);node.setAttribute('aria-hidden','true');
-   if(e.emotion){node.classList.add('is-emotion');const slot=emoteSlot(e.emotion,36);slot.title=emoteLabel(e.emotion);node.append(slot)}
+   if(e.emotion){node.classList.add('is-emotion');const slot=emoteSlot(e.emotion,36,e.face);slot.title=emoteLabel(e.emotion);node.append(slot)}
    else node.textContent=e.body;
    if(now-e.startedAt<300)node.classList.add('is-fresh');
    cell.append(node);
