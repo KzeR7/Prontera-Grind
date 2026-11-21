@@ -6,10 +6,16 @@ param(
 
 # Owner-run Windows handoff for the Rift player-character raid build (haven-v451).
 #
-# Run it from anywhere with -Repo pointing at your checkout:
+# Run it from anywhere with -Repo pointing at your checkout. Fetch it OUTSIDE the repo: this file is
+# tracked on the handoff branch, but a checkout whose HEAD predates it sees the fetched copy as an
+# untracked change, and step 1/7 then refuses to run on its own guard. A temp copy leaves the
+# checkout clean.
 #
-#   powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\staging\update-and-stage.ps1 \
-#     -Repo C:\path\to\Prontera-Grind -BuildTag haven-v451
+#   $repo  = 'C:\path\to\Prontera-Grind'
+#   $stage = Join-Path $env:TEMP 'pg-stage.ps1'
+#   git -C $repo fetch origin arena/bfc7d4d1-prontera-grind
+#   git -C $repo show FETCH_HEAD:tools/staging/update-and-stage.ps1 | Set-Content -Encoding ascii $stage
+#   powershell -NoProfile -ExecutionPolicy Bypass -File $stage -Repo $repo
 #
 #   1/7 Refuses a dirty checkout, then fast-forwards local main from GitHub.
 #   2/7 Fetches this branch into a throw-away git worktree.
@@ -87,8 +93,17 @@ if (-not (Test-Path (Join-Path $repoFull '.git'))) { Fail "Not a git checkout: $
 
 Write-Host "1/7 Fetching GitHub and updating local main in $repoFull"
 $dirty = Invoke-Git @('status', '--porcelain')
+# The one exception: a hand-fetched copy of this very script. A checkout whose HEAD predates the file
+# reports the copy the owner just wrote as untracked, and failing there punished the owner for
+# following the handoff instructions. Nothing else is excused.
 if ($dirty) {
-  Fail "Your checkout has local changes. Commit or stash them first; this handoff will not discard them.`n$dirty"
+  $remaining = @($dirty -split "`n" | Where-Object {
+    $_.Trim() -and -not ($_ -match '^\?\?\s+tools/staging/update-and-stage\.ps1$')
+  })
+  if ($remaining.Count -gt 0) {
+    Fail "Your checkout has local changes. Commit or stash them first; this handoff will not discard them.`n$($remaining -join "`n")"
+  }
+  Write-Host '    (ignoring an untracked tools/staging/update-and-stage.ps1 - the handoff fetch)'
 }
 Invoke-Git @('fetch', 'origin', '--prune') | Out-Null
 Invoke-Git @('switch', 'main') | Out-Null
