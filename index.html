@@ -916,8 +916,8 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="preload" href="assets/ui/fonts/font-5.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-6.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-7.ttf" as="font" type="font/ttf" crossorigin>
-<link rel="stylesheet" href="assets/ui/eclipse.css?v=450">
-<link rel="stylesheet" href="assets/ui/mobile.css?v=450">
+<link rel="stylesheet" href="assets/ui/eclipse.css?v=451">
+<link rel="stylesheet" href="assets/ui/mobile.css?v=451">
 <style>
 /* Rift Aura: the one earned-only cosmetic. It is tied to the account's first qualifying clear,
    never sold and never removable from the save once the account earns it. */
@@ -930,9 +930,9 @@ body.has-rift-aura #heroTitle{filter:drop-shadow(0 0 6px #79e4ff88)}
 <link rel="stylesheet" href="assets/ui/mastery-titles.css?v=446">
 <script src="assets/ui/mobile.js?v=274"></script>
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
-<link rel="stylesheet" href="assets/social.css?v=450">
+<link rel="stylesheet" href="assets/social.css?v=451">
 <link rel="stylesheet" href="assets/social-battle.css?v=393">
-  <link rel="stylesheet" href="assets/social-fishing.css?v=450"><link rel="stylesheet" href="assets/friends.css?v=273">
+  <link rel="stylesheet" href="assets/social-fishing.css?v=451"><link rel="stylesheet" href="assets/friends.css?v=273">
 <link rel="stylesheet" href="assets/adventure-guide.css?v=446">
 </head>
 <body>
@@ -1063,10 +1063,10 @@ body.has-rift-aura #heroTitle{filter:drop-shadow(0 0 6px #79e4ff88)}
 <div id="tooltip"></div>
 <link rel="stylesheet" href="assets/wardrobe.css?v=138">
 <link rel="stylesheet" href="assets/shop.css?v=318">
-<script src="assets/wardrobe.js?v=450"></script>
+<script src="assets/wardrobe.js?v=451"></script>
 <script src="assets/shop-catalog.js?v=321"></script>
 <script src="assets/fourth-jobs.js?v=179"></script>
-<script src="assets/expanded-jobs.js?v=450"></script>
+<script src="assets/expanded-jobs.js?v=451"></script>
 <script src="assets/ascension.js?v=156"></script>
 <script src="assets/native-mob-heights.js?v=153"></script>
 <script src="assets/native-fields.js?v=197"></script>
@@ -1363,7 +1363,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-20 haven-v450 Astral dungeon raid';
+const BUILD='2026-11-20 haven-v451 Raid hub, bigger astral halls';
 // v364: this write used to sit AFTER the `//` on the BUILD line, so it was part of the comment and
 // never ran - the login card showed an empty #buildTag and there was no way to confirm which file
 // the browser had loaded. It also has to survive the script running before the login card exists.
@@ -11787,7 +11787,13 @@ function escapeUI(){
   if(sideOpen||!$('screenOptions').hidden){sideOpen=false;$('screenOptions').hidden=true;$('screenBtn').setAttribute('aria-expanded','false');renderQ();return}
   ask('Log out of Horizon Haven? Your progress will be saved.',()=>logout(),{yes:'Log out',no:'Stay'});
 }
-addEventListener('keydown',e=>{if(!S||e.ctrlKey||e.metaKey||e.altKey)return;const k=e.key.toUpperCase();
+addEventListener('keydown',e=>{if(!S||e.ctrlKey||e.metaKey||e.altKey)return;
+  // A raid fight owns the keyboard. This handler maps letters to field tabs (W opens Wardrobe,
+  // S opens Status, ...), so without this guard WASD opened two panels per step and the raid's
+  // own movement could not be used at all. Escape still works: it is handled above this guard
+  // by its own branch, which is what a player expects to close an overlay.
+  if(document.body&&document.body.classList&&document.body.classList.contains('raid-fighting'))return;
+  const k=e.key.toUpperCase();
   if(k==='F12'){e.preventDefault();if(e.repeat)return;toggleFullscreen();return}
   if(k==='ESCAPE'){e.preventDefault();escapeUI();return}if(/INPUT|TEXTAREA|SELECT/.test(e.target.tagName))return;if(k==='Q'){qOpen=!qOpen;renderQ();return}
   // v2 (owner): the C key used to jump to Cards, where it fought the Cards tab at the loadout card.
@@ -16099,7 +16105,13 @@ function draw(){
         // Local raid space is offset onto its own stretch of the plane; the field's player and its
         // camera have to sit on the same stretch or the dungeon is drawn off screen.
         const hp=rd.heroPos?rd.heroPos():null;if(hp){const ro=rd.origin||0;pl.x=hp.x;pl.z=hp.z+ro;P.position.set(pl.x,0,pl.z)}
-        cameraFollow(.9,2.6,0.92);  // the same drag/zoom camera, framed for a boss arena
+        // The same drag/zoom camera, but framed for a hall rather than the field's lane. The old
+        // distScale of 0.92 pulled the camera IN (a smaller distance means a closer view), which is
+        // the single biggest reason the arena read as a cramped box: the fight filled the screen
+        // edge to edge and nothing could be seen around it. 1.85 stands back far enough to show
+        // the floor, the packs and the exits at once, and it still answers to the player's pinch
+        // and wheel because `zoom` divides it.
+        cameraFollow(1.05,3.4,1.85);
         R.render(scene,cam);
         return;
       }
@@ -16556,27 +16568,27 @@ setInterval(updateWatch,60000);
 // be hours old while the player was on another tab, and the check is a 60-byte text file.
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&(pendingUpdateBuild||Date.now()-PAGE_STARTED_AT>30000))updateWatch()});
 </script>
-<script src="assets/wardrobe-ui.js?v=450"></script>
+<script src="assets/wardrobe-ui.js?v=451"></script>
 <script src="assets/shop.js?v=321"></script>
 <script src="assets/friends.js?v=273"></script>
-<script src="assets/digimon/roster.js?v=450"></script>
-<script src="assets/digimon/base-stats.js?v=450"></script>
-<script src="assets/social-rules.js?v=450"></script>
-<script src="assets/social-poker.js?v=450"></script>
-<script src="assets/digimon-sanctuary.js?v=450"></script>
+<script src="assets/digimon/roster.js?v=451"></script>
+<script src="assets/digimon/base-stats.js?v=451"></script>
+<script src="assets/social-rules.js?v=451"></script>
+<script src="assets/social-poker.js?v=451"></script>
+<script src="assets/digimon-sanctuary.js?v=451"></script>
 <script src="assets/digimon-battle.js?v=393"></script>
-<script src="assets/social-digimon.js?v=450"></script>
+<script src="assets/social-digimon.js?v=451"></script>
 <script src="assets/social-gym-redesign.js?v=393"></script>
 <script src="assets/social-pond-design.js?v=393"></script>
 <script src="assets/social-title-art.js?v=446"></script>
-<script src="assets/social-scene.js?v=450"></script>
-<script src="assets/social-fishing.js?v=450"></script>
-<script src="assets/plaza-bots.js?v=450"></script>
+<script src="assets/social-scene.js?v=451"></script>
+<script src="assets/social-fishing.js?v=451"></script>
+<script src="assets/plaza-bots.js?v=451"></script>
 <script src="assets/adventure-guide.js?v=446"></script>
-<script src="assets/social.js?v=450"></script>
-<script src="assets/astral-raid-scenes.js?v=450"></script>
-<script src="assets/raid-dungeon.js?v=450"></script>
-<script src="assets/raid-solo.js?v=450"></script>
-<script src="assets/rift-raid.js?v=450"></script>
+<script src="assets/social.js?v=451"></script>
+<script src="assets/astral-raid-scenes.js?v=451"></script>
+<script src="assets/raid-dungeon.js?v=451"></script>
+<script src="assets/raid-solo.js?v=451"></script>
+<script src="assets/rift-raid.js?v=451"></script>
 <div id="raidHudLayer" aria-live="polite"></div></body>
 </html>

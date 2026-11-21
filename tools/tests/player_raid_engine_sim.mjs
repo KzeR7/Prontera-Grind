@@ -459,8 +459,12 @@ t('movement is a destination, clamped to the stage, with a small server floor', 
   const from = { x: run.members[0].x, z: run.members[0].z };
   const back = applyRaidAction(run, 1, 'move', { actionId: 'move:four:1', x: 0, z: 0, at: run.members[0].lastIntentAt + RAID_RULES.moveMinIntervalMs });
   assert.equal(back.ok, true, back.error || '');
+  // The `back` action itself advances the run, so the walk is measured from where it left the
+  // member. Measuring from `from` charged this second with that slice of travel as well, which only
+  // stayed under the cap while the arena was small enough for the member to arrive and stop.
+  const walked = { x: run.members[0].x, z: run.members[0].z };
   advanceRaidRun(run, run.updatedAt + 1000);
-  const moved = Math.hypot(run.members[0].x - from.x, run.members[0].z - from.z);
+  const moved = Math.hypot(run.members[0].x - walked.x, run.members[0].z - walked.z);
   assert.ok(moved > 0 && moved <= RAID_RULES.walkSpeed + 0.001, 'one second of walking: ' + moved.toFixed(2));
   // The automatic chase never walks a member into a live telegraph, and never tunnels through one in
   // a single long step: the strip sits between the party and the only enemy they can reach.

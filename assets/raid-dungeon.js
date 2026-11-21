@@ -157,13 +157,67 @@
   }
 
   // ---------------------------------------------------------------- scene ------
+  // The Astral field draws itself from real stone and space images, loaded through
+  // PGJourneyMaterials + runtime-manifest.json. The raid asked for none of them - `scenes.build(key,
+  // {})` - so every surface fell back to flat colour while the same builder painted the field with
+  // texture. That is why the dungeon looked like untextured blocks next to the Astral map that
+  // already ships: the textures were there the whole time and were simply never handed over.
+  // Loaded once per session, guarded, and the build is retried with them the moment they arrive.
+  let surfacesPromise = null;
+  function journeySurfaces() {
+    if (surfacesPromise) return surfacesPromise;
+    surfacesPromise = (async () => {
+      try {
+        const load = root.PGJourneyMaterials
+          || await new Promise((resolve, reject) => {
+            const tag = document.createElement('script');
+            tag.src = 'assets/endgame/journey-materials.js';
+            tag.onload = () => resolve(root.PGJourneyMaterials);
+            tag.onerror = () => reject(new Error('journey-materials.js did not load'));
+            document.head.appendChild(tag);
+          });
+        if (!load || typeof load.create !== 'function') return null;
+        let manifest = null;
+        try {
+          const response = await fetch('assets/endgame/textures/runtime-manifest.json');
+          if (response.ok) manifest = await response.json();
+        } catch { /* the materials factory copes without a manifest */ }
+        const materials = load.create(manifest, url => new Promise((resolve, reject) => {
+          const image = new Image();
+          image.onload = () => resolve(image);
+          image.onerror = reject;
+          image.src = url;
+        }));
+        const ready = await materials.ensure('astral');
+        return (ready && ready.images) || null;
+      } catch (error) {
+        console.warn('Raid textures unavailable, using flat materials', error);
+        return null;
+      }
+    })();
+    return surfacesPromise;
+  }
+
+  let texturedRetry = false;
+  let loadedSurfaces = null;
   function ensureWorld(stageKey) {
     if (D.world && D.stageKey === stageKey) return D.world;
     disposeWorld();
     const scenes = root.PGAstralRaidScenes;
     if (!scenes) return null;
     let world;
-    try { world = scenes.build(stageKey, {}); } catch (error) { console.error('Raid scenery failed', error); return null; }
+    const surfaces = loadedSurfaces;
+    try { world = scenes.build(stageKey, surfaces ? { surfaces } : {}); } catch (error) { console.error('Raid scenery failed', error); return null; }
+    // The first build happens before the images finish loading; rebuild once, when they land, so
+    // the player's first run is not the flat-colour version.
+    if (!surfaces && !texturedRetry) {
+      texturedRetry = true;
+      journeySurfaces().then(loaded => {
+        if (!loaded) return;
+        loadedSurfaces = loaded;
+        if (D.on) { D.world = null; /* rebuild on the next frame with textures */ }
+      });
+    }
     D.world = world;
     D.stageKey = stageKey;
     D.mount = new THREE.Group();
@@ -754,8 +808,21 @@
     <div class="raid-hud-bar"><i id="raidHudBossBar"></i></div>
   </div>
   <div class="raid-hud-party" id="raidHudParty"></div>
-  <div class="raid-hud-tip" id="raidHudTip">Tap the ground to move · tap an enemy to focus</div>
+  <div class="raid-hud-tip" id="raidHudTip">WASD walk · tap the ground to move · tap an enemy to focus</div>
+  <button type="button" class="raid-hud-exit" id="raidHudExit" aria-label="Leave the fight view">Leave</button>
 </div>`;
+
+  // The field's own controls are hidden for the duration of a fight, so the arena has to offer its
+  // own way out. "Leave" only closes the fight *view* - it never settles or abandons a run, because a
+  // solo run lives in this tab and closing the view is what parks it on its checkpoint.
+  function bindHudExit() {
+    const btn = document.getElementById('raidHudExit');
+    if (!btn || btn.dataset.bound === '1') return;
+    btn.dataset.bound = '1';
+    btn.addEventListener('click', () => {
+      try { if (root.PGRaid && typeof root.PGRaid.close === 'function') root.PGRaid.close(); } catch { /* already closed */ }
+    });
+  }
 
   function hudVisible(on) {
     let el = $('raidHud');
@@ -767,6 +834,7 @@
       layer.appendChild(el);
     }
     if (el) el.hidden = !on;
+    if (on) bindHudExit();
   }
   function hudTip(text) {
     const tip = $('raidHudTip');

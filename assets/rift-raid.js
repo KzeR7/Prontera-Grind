@@ -25,6 +25,8 @@
 
   const R = {
     open: false, busy: '', error: '', view: 'lobby', account: null, party: null, eligibility: null,
+    // Entry-screen state: which rift map is selected, and whether the party seats are showing.
+    entryRaid: 'thanatos', entryMode: 'solo',
     activeRun: null, run: null, result: null, rewardRows: [], targetId: '',
     // A solo run is executed locally and is NOT the same thing as `run` (which is a public snapshot
     // the renderer reads). `solo` is the live engine object; `soloRunning` keeps a lobby refresh from
@@ -100,7 +102,7 @@
     document.body.insertAdjacentHTML('beforeend', `
 <div id="raidOverlay" hidden role="dialog" aria-modal="true" aria-labelledby="raidTitle">
   <style>
-    #raidOverlay{position:fixed;inset:0;z-index:260;display:flex;align-items:stretch;justify-content:center;background:radial-gradient(circle at 50% 0%,#20343a 0,#091113 58%,#040809 100%);color:#f0e8d2;overflow:auto}
+    #raidOverlay{position:fixed;inset:0;z-index:260;display:flex;align-items:flex-start;justify-content:center;background:radial-gradient(circle at 50% 0%,#20343a 0,#091113 58%,#040809 100%);color:#f0e8d2;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch}
     #raidOverlay[hidden]{display:none}
     .raid-shell{width:min(1080px,100%);min-height:100%;padding:14px 14px 22px;display:flex;flex-direction:column;gap:12px}
     .raid-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
@@ -111,6 +113,107 @@
     .raid-tag.hot{border-color:#9a6c3a;color:#f0c27a;background:#2a1b0c}
     .raid-panel{background:linear-gradient(180deg,#132524,#0d1819);border:1px solid #3d554f;border-radius:14px;padding:14px;box-shadow:0 12px 40px #0008}
     .raid-grid{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:12px}
+    /* ---------------------------------------------------------------- entry screen ----
+       Ragnarok Origin's dungeon window, and every mobile MMO of its shape, reads the same way:
+       a column of destinations on the left, the selected destination's detail (what you will
+       fight, what it does, what you get) on the right, and the actions that start it pinned to
+       the bottom. The old screen was two prose columns with the map names as four square chips
+       and the start buttons buried under a paragraph. This is that layout done properly:
+       three zones, one visual hierarchy, and the start buttons always at the bottom edge. */
+    .raid-entry{display:grid;grid-template-columns:minmax(214px,268px) minmax(0,1fr);grid-template-rows:minmax(0,1fr) auto;gap:10px;min-height:0;flex:1}
+    .raid-maps{grid-row:1;display:flex;flex-direction:column;gap:7px;min-height:0}
+    .raid-maps-head{display:flex;align-items:baseline;gap:8px;padding:0 2px 4px}
+    .raid-maps-head b{font:700 12px/1 ui-monospace,monospace;letter-spacing:.16em;text-transform:uppercase;color:#8fb0aa}
+    .raid-map-list{display:flex;flex-direction:column;gap:7px;overflow:auto;padding-right:2px;min-height:0}
+    .raid-map{display:grid;grid-template-columns:44px minmax(0,1fr);gap:10px;align-items:center;padding:9px 10px;
+      border:1px solid #33504a;border-radius:11px;background:linear-gradient(180deg,#132523,#0c1718);cursor:pointer;
+      text-align:left;color:inherit;font:inherit;transition:border-color .14s,transform .14s,background .14s}
+    .raid-map:hover{border-color:#5c8f84}
+    .raid-map:focus-visible{outline:2px solid var(--focus,#e9d39a);outline-offset:2px}
+    .raid-map[aria-pressed="true"]{border-color:#d5b06e;background:linear-gradient(180deg,#23322c,#15201d);box-shadow:0 0 0 1px #d5b06e55 inset}
+    .raid-map .ico{width:44px;height:44px;border-radius:9px;display:grid;place-items:center;font-size:19px;
+      background:radial-gradient(circle at 50% 30%,#3b5a63,#101d22);border:1px solid #3f5f58;color:#cfe6df}
+    .raid-map .txt{min-width:0;display:flex;flex-direction:column;gap:2px;align-items:flex-start}
+    .raid-map .no{font:700 10px/1 ui-monospace,monospace;color:#8fb0aa;letter-spacing:.14em;white-space:nowrap}
+    .raid-map .nm{font:700 13px/1.25 Georgia,serif;color:#f2e6c4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+    .raid-map .ob{font-size:11px;color:#9db6b1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+    .raid-map[data-locked="1"]{opacity:.55;cursor:not-allowed}
+
+    .raid-detail{grid-row:1;display:flex;flex-direction:column;gap:9px;min-height:0;overflow:auto;padding-right:2px}
+    .raid-hero{position:relative;border-radius:14px;overflow:hidden;border:1px solid #3d5a53;background:
+      radial-gradient(120% 100% at 78% 18%,#2c4a52 0,#101d24 46%,#080f13 100%);padding:14px 15px 13px}
+    .raid-hero::after{content:"";position:absolute;inset:0;background:
+      repeating-linear-gradient(115deg,#ffffff05 0 2px,transparent 2px 7px);pointer-events:none}
+    .raid-hero .kicker{font:700 10px/1 ui-monospace,monospace;letter-spacing:.2em;text-transform:uppercase;color:#8fb0aa}
+    .raid-hero h3{margin:5px 0 4px;font:700 clamp(19px,3.4vw,25px)/1.1 Georgia,serif;color:#f6e7c0}
+    .raid-hero p{margin:0;font-size:12.5px;line-height:1.5;color:#b9cec9;max-width:62ch}
+    .raid-hero .mech{margin-top:9px;display:flex;flex-wrap:wrap;gap:6px}
+    .raid-chip{font-size:11px;padding:4px 9px;border-radius:99px;border:1px solid #3b5a66;background:#0d1b22;color:#a9c6d2}
+    .raid-chip.bad{border-color:#8d4a44;background:#1e0d0e;color:#f0b7ac}
+    .raid-chip.warn{border-color:#9a6c3a;background:#241a0c;color:#f0c27a}
+
+    .raid-foes{display:grid;grid-template-columns:repeat(auto-fill,minmax(186px,1fr));gap:7px;align-items:start}
+    .raid-foe{display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:10px;border:1px solid #2f4b47;background:#0b1517;min-width:0}
+    .raid-foe.boss{border-color:#9a6c3a;background:linear-gradient(180deg,#241a0c,#160f07);grid-column:span 2}
+    /* The sheets are not a sprite grid the way the dungeon's atlas reader assumed: each 512x512 file
+       holds one ~76x128 monster at roughly x224-300 / y281-410, not a 64x32 cell at the origin.
+       Cropping that box (scale 512/78 vertically keeps it undistorted) is what makes the portrait
+       show the actual mob instead of an empty square. */
+    .raid-foe .port{width:38px;height:64px;flex:none;image-rendering:pixelated;background-repeat:no-repeat;
+      background-size:249.4px 249.4px;background-position:-109.1px -136.9px;border-radius:5px;background-color:#0a1216}
+    .raid-foe .foe-txt{min-width:0;flex:1 1 auto}
+    .raid-foe .fn{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .raid-foe .fn{font-size:11.5px;font-weight:700;color:#e7efe9;line-height:1.2}
+    .raid-foe .fk{font:700 9px/1.3 ui-monospace,monospace;letter-spacing:.12em;text-transform:uppercase;color:#8fb0aa}
+    .raid-foe.boss .fk{color:#f0c27a}
+    .raid-foe .fh{margin-top:3px;height:3px;border-radius:2px;background:#20302f;overflow:hidden}
+    .raid-foe .fh i{display:block;height:100%;background:#c9593f}
+
+    .raid-legend{display:flex;flex-wrap:wrap;gap:10px;font-size:11.5px;color:#9db6b1}
+    .raid-legend div{display:flex;align-items:center;gap:5px}
+    .raid-legend kbd{font:700 10px/1 ui-monospace,monospace;background:#152a2a;border:1px solid #3d5f58;border-bottom-width:2px;
+      border-radius:5px;padding:3px 5px;color:#dfeee8}
+
+    /* The bottom bar: the two ways into the dungeon, and the party preview when party is chosen. */
+    .raid-launch{grid-column:1/-1;grid-row:2;display:flex;flex-direction:column;gap:8px;
+      border-top:1px solid #2f4a45;padding-top:10px}
+    .raid-slots{display:none;gap:8px;align-items:stretch}
+    .raid-slots[data-on="1"]{display:flex}
+    .raid-slot{flex:1 1 0;min-width:0;display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:11px;
+      border:1px dashed #40615a;background:#0a1416}
+    .raid-slot.filled{border-style:solid;border-color:#d5b06e55;background:linear-gradient(180deg,#1a2823,#101a18)}
+    .raid-slot .av{width:38px;height:43px;border-radius:8px;display:grid;place-items:center;flex:none;
+      background:radial-gradient(circle at 50% 35%,#2e4a52,#0d181b);border:1px solid #3d5a53;font-size:15px;color:#8fb0aa}
+    .raid-slot .nm{font-size:12px;font-weight:700;color:#eee6d0;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .raid-slot .sub{font:700 9.5px/1.3 ui-monospace,monospace;letter-spacing:.1em;text-transform:uppercase;color:#8fb0aa}
+    .raid-slot .sub.ok{color:#9adaa8}
+    .raid-slot .sub.hot{color:#f0c27a}
+    .raid-slot .st{margin-left:auto;font:700 9.5px/1.2 ui-monospace,monospace;letter-spacing:.1em;text-transform:uppercase;color:#8fb0aa;text-align:right}
+    .raid-launch-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+    .raid-launch-row .raid-btn{min-height:46px;font-size:13.5px;padding:0 18px}
+    .raid-launch-note{font-size:11.5px;color:#9db6b1;margin-left:auto}
+    /* Phone: the three zones stack and each one sizes to its content. Naming the rows explicitly is
+       what was missing - with only 'auto auto auto' the detail panel (row 1 in the desktop grid)
+       collapsed and the whole screen went blank below the map strip. */
+    @media(max-width:760px){
+      .raid-entry{display:flex;flex-direction:column;flex:0 0 auto;gap:9px}
+      .raid-maps,.raid-detail{display:flex;flex-direction:column;gap:8px;overflow:visible}
+      .raid-map-list{flex-direction:row;overflow-x:auto;overflow-y:hidden;padding-bottom:4px}
+      .raid-map{min-width:196px;flex:none}
+      .raid-hero{padding:12px}
+      .raid-hero p{font-size:12px}
+      .raid-legend{display:none}
+      .raid-launch{display:block}
+      .raid-launch-row{flex-direction:column;align-items:stretch}
+      .raid-launch-row .raid-btn{width:100%;flex:none}
+      .raid-launch-note{margin-left:0;order:9;text-align:center}
+      .raid-slots{flex-direction:column}
+      .raid-foes{grid-template-columns:repeat(2,minmax(0,1fr))}
+      .raid-foe.boss{grid-column:span 2}
+    }
+    @media(max-width:520px){
+      .raid-slots{flex-direction:column}
+    }
     @media(max-width:720px){.raid-grid{grid-template-columns:1fr}.raid-shell{padding:9px 9px 18px}.raid-panel{padding:11px}}
     .raid-eyebrow{font-size:10px;text-transform:uppercase;letter-spacing:.16em;color:#8fb0a9;margin-bottom:4px}
     .raid-h{font:700 18px/1.2 Georgia,serif;color:#f4dfaa;margin:0 0 6px}
@@ -209,9 +312,27 @@
        dungeon: the arena was squeezed into the gap between them and read as a broken field rather
        than a fight. The raid draws its own stage/timer header, its own party rows and its own
        objective line, and its exit is the panel's close button, so none of this is needed here. */
+    /* The brief: during a raid, nothing but the raid. Every field layer that can paint over the
+       dungeon is listed here rather than discovered one at a time, so a future field panel is only
+       a problem if someone adds it without reading this rule. */
     body.raid-fighting #eclipseHeader,body.raid-fighting #hud,body.raid-fighting #dock,
     body.raid-fighting #xp-dock,body.raid-fighting #hudBuffs,body.raid-fighting #heroTitle,
-    body.raid-fighting #comboFieldStatus{display:none!important}
+    body.raid-fighting #comboFieldStatus,body.raid-fighting #tag,body.raid-fighting #prog,
+    body.raid-fighting #tooltip,body.raid-fighting #toast,body.raid-fighting #xp-dock,
+    body.raid-fighting #wins,body.raid-fighting #welcomePanel,body.raid-fighting #offlineCard,
+    body.raid-fighting #adventureGuide,body.raid-fighting #eventBanner,body.raid-fighting #guildBar,
+    body.raid-fighting #socialDock,body.raid-fighting #pgDock,body.raid-fighting .eclipse-toast,
+    body.raid-fighting #activityTicker,body.raid-fighting #pgQuest,body.raid-fighting #dailyCard,
+    body.raid-fighting #mailCard,body.raid-fighting #rouletteCard{display:none!important}
+    /* Whatever is left of the field's own chrome must not sit on top of the arena: the raid layer
+       is above it, and the canvas keeps pointer events for movement. */
+    body.raid-fighting #raidHudLayer{pointer-events:none}
+    body.raid-fighting #raidHudLayer .raid-hud-exit{position:absolute;right:10px;top:12px;min-width:56px;min-height:40px;
+      border-radius:10px;border:1px solid #6d7e6b;background:#132422dd;color:#f0e8d2;font:700 12px/1 system-ui,sans-serif;
+      letter-spacing:.06em;cursor:pointer;pointer-events:auto}
+    body.raid-fighting #raidHudLayer .raid-hud-exit:hover{border-color:#d5b06e;color:#f6e7c0}
+    body.raid-fighting #raidHudLayer .raid-hud-exit,
+    body.raid-fighting #raidHudLayer [data-raid-action]{pointer-events:auto}
     /* With the field chrome gone the arena owns the whole viewport, and the raid HUD hangs from the
        top edge instead of the 64px the field header used to occupy. */
     body.raid-fighting #raidHudLayer .raid-hud-top{top:14px}
@@ -270,6 +391,14 @@
 </div>`);
     $('raidClose').addEventListener('click', close);
     $('raidOverlay').addEventListener('click', event => {
+      const map = event.target.closest('button[data-raid-map]');
+      if (map && !map.disabled) {
+        // The map list is a local choice: it changes what the right-hand panel describes, not what
+        // the server holds, so it repaints from state instead of refetching the lobby.
+        R.entryRaid = map.dataset.raidMap;
+        render();
+        return;
+      }
       const button = event.target.closest('button[data-raid-action]');
       if (button && !button.disabled) handle(button.dataset.raidAction, button.dataset.raidValue || '');
     });
@@ -773,6 +902,7 @@
     R.error = '';
     try {
       if (action === 'solo') {
+        R.entryMode = 'solo';
         R.busy = 'start';
         await startSoloRun();
       } else if (action === 'start') {
@@ -781,6 +911,10 @@
         R.activeRun = data.run; adoptRun(data.run); R.view = 'arena'; R.result = null; R.lastResultId = '';
         if (data.run && ['cleared', 'failed'].includes(data.run.state)) await settle(data.run.id);
       } else if (action === 'party') {
+        // Pressing Party first reveals the seats (you + two empty slots) so a player can see who is
+        // already waiting before joining anything. Pressing it again when a party exists refreshes
+        // the roster rather than silently leaving and rejoining.
+        R.entryMode = 'party';
         R.busy = 'party';
         const data = await api('', { action: 'party', partyAction: 'join' });
         R.party = data.party; R.view = 'lobby';
@@ -789,7 +923,7 @@
         if (typeof PGSocial !== 'undefined' && typeof PGSocial.enter === 'function') { try { PGSocial.enter(); } catch {} }
       } else if (action === 'leaveparty') {
         const data = await api('', { action: 'party', partyAction: 'leave' });
-        R.party = data.party; R.view = 'lobby';
+        R.party = data.party; R.view = 'lobby'; R.entryMode = 'solo';
       } else if (action === 'ready') {
         const ready = value !== 'off';
         const data = await api('', { action: 'ready', ready });
@@ -994,52 +1128,160 @@
     </section>`;
   }
 
+  // ---------------------------------------------------------------- entry screen data ----
+  // Every destination the raid will grow into. Only VARKAS'S RIFT is open today; the rest are shown
+  // so the map list reads as a raid browser rather than a single button, and each says plainly that
+  // it is not open yet. Nothing here can be started: `open === false` disables the card.
+  const RAIDS = Object.freeze([
+    Object.freeze({
+      key: 'thanatos', no: 'I', name: "Thanatos's Rift", open: true,
+      objective: 'Clear the packs', tag: 'OPEN',
+      blurb: 'The Astral bridge held by Thanatos. Four stages along one causeway: the Starlit Approach, '
+        + 'the Fallen Arcade, the Runic Observatory, then the Sanctuary itself.',
+      mechs: [['Sweep', 'warn'], ['Cone', 'bad'], ['Ward', 'warn'], ['Ritual', 'bad']],
+      foes: [
+        { id: 1702, n: 'Retribution Angel', k: 'Melee', hp: 1 },
+        { id: 1705, n: 'Despair Phantom', k: 'Melee', hp: 1 },
+        { id: 1700, n: 'Tower Watcher', k: 'Ranged', hp: 1 },
+        { id: 1706, n: 'Death Whisperer', k: 'Melee', hp: 1 },
+        { id: 1707, n: 'Agony Demon', k: 'Melee', hp: 1 },
+        { id: 1708, n: 'Thanatos', k: 'Boss', hp: 1, boss: true },
+      ],
+      stages: ['Starlit Approach', 'Fallen Arcade', 'Runic Observatory', "Thanatos's Sanctuary"],
+    }),
+    Object.freeze({ key: 'valkyrie', no: 'II', name: "Valkyrie's Descent", open: false, tag: 'SOON',
+      objective: 'Not open yet', blurb: 'A second rift, behind the same two daily entries. Not part of this update.' }),
+    Object.freeze({ key: 'abyss', no: 'III', name: 'The Sunken Abyss', open: false, tag: 'SOON',
+      objective: 'Not open yet', blurb: 'Drowned halls under the Astral sea. Not part of this update.' }),
+  ]);
+
+  function selectedRaid() {
+    const want = R.entryRaid || (RAIDS.find(r => r.open) || RAIDS[0]).key;
+    return RAIDS.find(r => r.key === want) || RAIDS[0];
+  }
+
+  // One enemy portrait per row, using the same mob art the dungeon draws. It is the sprite the
+  // player will actually meet, so the preview is the thing itself rather than a stand-in icon.
+  function foeRow(foe) {
+    // The mob art is a 512x512 sheet: 8 columns of directions by 16 rows of actions, so one pose is a
+    // 64x32 cell. Rendering the sheet whole is what made the previews look like coloured smears, so
+    // the cell is cropped here and drawn at 2x. Same source the dungeon itself uses.
+    return `<div class="raid-foe${foe.boss ? ' boss' : ''}">
+      <span class="port" role="img" aria-label="${esc(foe.n)}"
+            style="background-image:url(assets/mobs/v1/${num(foe.id)}-0.png)"></span>
+      <div class="foe-txt">
+        <div class="fk">${esc(foe.k)}</div>
+        <div class="fn">${esc(foe.n)}</div>
+        <div class="fh"><i style="width:${Math.round(num(foe.hp, 1) * 100)}%"></i></div>
+      </div></div>`;
+  }
+
+  // The party preview: the player's own slot, then the two empty seats a party raid fills. This is
+  // the shape the brief asked for - press Party and you see who is already in and where the others
+  // will sit, before anything starts.
+  function slotRail(party, members) {
+    // You are always the first seat, even before a party exists. Keying purely off the party roster
+    // meant pressing Party with no room yet rendered three anonymous "Empty slot" cards - no "you",
+    // which is the one thing the preview has to show. When the room does list you, its entry wins
+    // (it carries ready/eligible state); otherwise a local stand-in is built from your own save.
+    const mine = members.find(m => m.id === myId()) || null;
+    const others = members.filter(m => m.id !== myId());
+    const you = mine || {
+      id: myId(), name: soloMemberName(null), cls: typeof S === 'object' && S ? (S.cls || '') : '',
+      ready: false, eligible: R.eligibility ? R.eligibility.eligible !== false : true,
+      entriesLeft: R.eligibility?.entriesLeft, _local: true,
+    };
+    const seats = [you, ...others];
+    while (seats.length < 3) seats.push(null);
+    return seats.slice(0, 3).map((m, i) => {
+      if (!m) {
+        return `<div class="raid-slot" aria-label="Empty slot">
+          <div class="av" aria-hidden="true">+</div>
+          <div style="min-width:0"><div class="nm">Empty slot</div>
+          <div class="sub">${party ? 'Waiting for a friend' : 'Form a party to invite'}</div></div>
+        </div>`;
+      }
+      const you = m.id === myId();
+      const status = m.ready ? ['Ready', 'ok'] : m.eligible === false ? [esc(m.reason || 'Not eligible'), 'hot'] : ['Not ready', ''];
+      return `<div class="raid-slot filled">
+        <div class="av" aria-hidden="true">${you ? '★' : '⚔'}</div>
+        <div style="min-width:0">
+          <div class="nm">${esc(m.name)}${you ? ' · you' : ''}</div>
+          <div class="sub">${esc(m.cls || 'No cloud save')}${m.magic ? ' · magic' : ''}</div>
+        </div>
+        <div class="st"><span class="sub ${status[1]}">${status[0]}</span><br>${m.eligible && m.entriesLeft != null ? num(m.entriesLeft) + ' ent' : ''}</div>
+      </div>`;
+    }).join('');
+  }
+
+  function renderEntryBar(raid, eligible, active) {
+    const party = R.party;
+    const members = party?.members || [];
+    const shown = R.entryMode === 'party';
+    const canSolo = raid.open && !active && (R.eligibility ? R.eligibility.eligible === true : true);
+    const note = active ? 'You already have an active raid — resume it first.'
+      : !raid.open ? 'This rift is not open yet.'
+        : !canSolo ? esc(R.eligibility?.reason || 'Both entries for today are used. Reset is 00:00 Malaysia time.')
+          : '';
+    return `<div class="raid-launch">
+      <div class="raid-slots" data-on="${shown ? 1 : 0}" id="raidSlots">${slotRail(party, members)}</div>
+      <div class="raid-launch-row">
+        <button class="raid-btn primary" data-raid-action="solo" ${canSolo ? '' : 'disabled'}>
+          Solo · 1 character</button>
+        <button class="raid-btn ${shown ? 'primary' : ''}" data-raid-action="party" ${raid.open && !active ? '' : 'disabled'}>
+          ${party ? 'Party · ' + members.length + '/3 ready up' : 'Party · 2–3 players'}</button>
+        ${party ? `<button class="raid-btn small" data-raid-action="ready" data-raid-value="${members.some(m => m.id === myId() && m.ready) ? 'off' : 'on'}">
+            ${members.some(m => m.id === myId() && m.ready) ? 'Unready' : 'Ready'}</button>
+          ${party.isLeader ? `<button class="raid-btn primary small" data-raid-action="start" ${party.canStart ? '' : 'disabled'}>Start dive</button>` : '<span class="raid-tag">Waiting for leader</span>'}
+          <button class="raid-btn danger small" data-raid-action="leaveparty">Leave</button>` : ''}
+        ${active ? '<button class="raid-btn small primary" data-raid-action="refresh">Resume run</button>' : ''}
+        <span class="raid-launch-note">${note}</span>
+      </div>
+    </div>`;
+  }
+
   function renderLobby() {
     const a = R.account || {};
     const party = R.party;
-    const active = R.activeRun;
     const members = party?.members || [];
+    const active = R.activeRun;
+    const raid = selectedRaid();
     const eligible = active ? false : (R.eligibility ? R.eligibility.eligible === true : a.entriesLeft > 0);
     return `${errorBox()}
-      <div class="raid-grid">
-        <section class="raid-panel">
-          <div class="raid-eyebrow">Four stages · one dungeon</div>
-          <h3 class="raid-h">Walk to Thanatos.</h3>
-          <p class="raid-muted">The Starlit Approach, the Fallen Arcade, the Runic Observatory, then Thanatos's Sanctuary. Your character keeps their real gear, class skills and automatic combat: you choose where to stand and what to hit. Every stage has one telegraphed mechanic, and the boss has three — a cone you step out of, a cataclysm you shelter from in the marked ward, and a ritual you interrupt by killing its sources. A full run takes about seven minutes.</p>
-          <div class="raid-stages">${['Starlit Approach','Fallen Arcade','Runic Observatory',"Thanatos's Sanctuary"].map((name, i) => `<div class="raid-stage"><span>${i + 1}</span><b>${name}</b><small>${['Clear the packs', 'Break the rift anchors', 'Stop the ritual', 'Defeat Thanatos'][i]}</small></div>`).join('')}</div>
-          <div class="raid-note" style="margin-top:10px">Solo or with two or three adventurers. Enemy health is scaled from the party's measured damage, and incoming damage is never multiplied by party size, so a solo run needs no second player, no simultaneous switches and no dedicated healer.</div>
-          <div class="raid-stats">
-            <div class="raid-stat"><small>Entries left</small><b>${num(a.entriesLeft)} / 2</b></div>
-            <div class="raid-stat"><small>Rift shards available</small><b>${fmt(shardBalance())}</b></div>
-            <div class="raid-stat"><small>Pity / fractured</small><b>${num(a.chestsToday?.pity)} / ${num(a.chestsToday?.fractured)}</b></div>
+      <div class="raid-entry">
+        <section class="raid-maps" aria-label="Raid destinations">
+          <div class="raid-maps-head"><b>Rift maps</b><span class="raid-tag">${num(a.entriesLeft)}/2 entries</span></div>
+          <div class="raid-map-list">
+            ${RAIDS.map(r => `<button class="raid-map" type="button" data-raid-map="${esc(r.key)}"
+                aria-pressed="${r.key === raid.key ? 'true' : 'false'}" data-locked="${r.open ? 0 : 1}"
+                ${r.open ? '' : 'disabled'}>
+              <span class="ico" aria-hidden="true">${r.open ? '◈' : '⌛'}</span>
+              <span class="txt"><span class="no">${esc(r.no)} · ${esc(r.tag)}</span>
+                <span class="nm">${esc(r.name)}</span><span class="ob">${esc(r.objective)}</span></span>
+            </button>`).join('')}
           </div>
-          ${active ? `<div class="raid-error">You already have an active raid. <button class="raid-btn small primary" data-raid-action="refresh">Resume</button></div>` : ''}
-          ${eligible ? `<div class="raid-row"><button class="raid-btn primary" data-raid-action="solo">Solo raid · 1 character</button><button class="raid-btn" data-raid-action="party">Form / join party</button></div>`
-            : `<div class="raid-note">${active ? 'Resolve the active run before opening another.' : esc(R.eligibility?.reason || (a.entriesLeft > 0 ? 'Sync a cloud save before joining.' : 'Both entries for today are used. The daily reset is 00:00 Malaysia time.'))}</div>`}
         </section>
-        <section class="raid-panel">
-          <div class="raid-eyebrow">Party lobby</div>
-          <h3 class="raid-h">${party ? 'Ready check' : 'Two or three adventurers'}</h3>
-          ${party ? `<div class="raid-row" style="margin-bottom:8px"><span class="raid-code">${esc(party.id)}</span><span class="raid-tag">${party.open ? 'Open' : 'Locked'}</span><span class="raid-tag">${party.isLeader ? 'You lead' : 'Member'}</span></div>` : `<p class="raid-muted">Form a party here, or open the same lobby from the Social Hub. The first player hosts the world lobby; a friend opens Rift Raid and presses Form / join party.</p>`}
-          ${members.length ? members.map((m, i) => `
-            <div class="raid-member">
-              <canvas id="raidAv${i}" class="raid-avatar" width="42" height="48" data-class="${esc(m.cls || 'Novice')}" data-sex="${esc(m.sex || 'm')}"></canvas>
-              <div><div class="nm">${esc(m.name)}${m.id === myId() ? ' · you' : ''}</div><div class="cls">${esc(m.cls || 'No cloud save')}${m.magic ? ' · magic' : ''}</div></div>
-              <div class="tags"><span class="${m.ready ? 'raid-ready' : 'raid-notready'}">${m.ready ? 'Ready' : m.readyStored ? 'Ready stale' : 'Not ready'}</span><br>${m.eligible ? num(m.entriesLeft) + ' entries' : esc(m.reason || 'Not eligible')}</div>
-            </div>`).join('') : '<div class="raid-note">No party yet. Form/join creates the lobby used by the Social Hub too.</div>'}
-          ${party ? `<div class="raid-row" style="margin-top:8px">
-            <button class="raid-btn ${members.some(m => m.id === myId() && m.ready) ? 'ghost' : 'primary'}" data-raid-action="ready" data-raid-value="${members.some(m => m.id === myId() && m.ready) ? 'off' : 'on'}">${members.some(m => m.id === myId() && m.ready) ? 'Unready' : 'Ready'}</button>
-            ${party.isLeader ? `<button class="raid-btn primary" data-raid-action="start" ${party.canStart ? '' : 'disabled'}>Start raid</button>` : '<span class="raid-tag">Waiting for leader</span>'}
-            <button class="raid-btn danger small" data-raid-action="leaveparty">Leave party</button>
-          </div><div class="raid-note" style="margin-top:6px">${party.allReady ? 'All ready. The leader can start.' : 'Every member must ready. A roster or loadout change clears readiness.'}</div>` : ''}
+
+        <section class="raid-detail" aria-label="Selected raid">
+          <div class="raid-hero">
+            <div class="kicker">${esc(raid.no)} · ${esc(raid.tag)}</div>
+            <h3>${esc(raid.name)}</h3>
+            <p>${esc(raid.blurb)}</p>
+            ${raid.open ? `<div class="mech">${raid.mechs.map(([m, k]) => `<span class="raid-chip ${k}">${esc(m)}</span>`).join('')}
+              <span class="raid-chip">~7 min</span><span class="raid-chip">2 entries / day</span></div>` : ''}
+          </div>
+          ${raid.open ? `<div class="raid-foes">${raid.foes.map(foeRow).join('')}</div>
+          <div class="raid-legend">
+            <div><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> walk</div>
+            <div>tap a mob to focus · automatic attacks</div>
+            <div>step out of red, into amber</div>
+          </div>` : `<p class="raid-muted">${esc(raid.blurb)}</p>`}
         </section>
+
+        ${renderEntryBar(raid, eligible, active)}
       </div>
       ${renderForge()}
-      ${renderCards()}
-      <section class="raid-panel" style="margin-top:12px">
-        <div class="raid-eyebrow">Earned, never sold · unchanged rules</div>
-        <p class="raid-note">Rewards are settled on the server and applied to your save through the existing grant queue: a full clear pays its own ledger row plus a fractured chest, and a failed run still pays a pity chest. Your first clear unlocks the Rift Aura, and qualifying clears unlock four Rift titles in the Mastery Index (filter: Rift Raid). Entries stay at two per day (00:00 Malaysia time). No Cash Shop item is involved, and this update does not change the economy, the card collection or the forge.</p>
-      </section>`;
+      ${renderCards()}`;
   }
 
   function hpBar(hp, max) {

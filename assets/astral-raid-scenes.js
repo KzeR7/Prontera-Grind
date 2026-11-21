@@ -37,10 +37,10 @@
 
   // Mirrors STAGE_BOUNDS in the engine. A mismatch is a client bug, not a gameplay choice.
   const BOUNDS = Object.freeze({
-    approach: Object.freeze({ kind: 'rect', minX: -10.5, maxX: 10.5, minZ: -20, maxZ: 11 }),
-    arcade: Object.freeze({ kind: 'rect', minX: -12, maxX: 12, minZ: -21, maxZ: 11 }),
-    observatory: Object.freeze({ kind: 'circle', x: 0, z: 0, r: 12.5 }),
-    sanctuary: Object.freeze({ kind: 'rect', minX: -14, maxX: 14, minZ: -14, maxZ: 13 }),
+    approach: Object.freeze({ kind: 'rect', minX: -19, maxX: 19, minZ: -34, maxZ: 17 }),
+    arcade: Object.freeze({ kind: 'rect', minX: -22, maxX: 22, minZ: -36, maxZ: 17 }),
+    observatory: Object.freeze({ kind: 'circle', x: 0, z: 0, r: 21 }),
+    sanctuary: Object.freeze({ kind: 'rect', minX: -24, maxX: 24, minZ: -26, maxZ: 22 }),
   });
 
   function random(seed) { return () => ((seed = seed * 16807 % 2147483647) - 1) / 2147483646; }
@@ -58,7 +58,9 @@
     const surfaces = options.surfaces || {};
 
     scene.background = new THREE.Color(PALETTE.space);
-    scene.fog = new THREE.FogExp2(PALETTE.fog, 0.011);
+    // Was 0.011, tuned for a 31-deep arena. At that density the far half of a 78-deep hall is
+    // more than half haze, which is exactly why the bigger map still felt small and grey.
+    scene.fog = new THREE.FogExp2(PALETTE.fog, 0.0052);
 
     function textured(image) {
       if (!image) return null;
@@ -244,17 +246,19 @@
       scene.updateMatrixWorld(true);
       scene.add(new THREE.HemisphereLight(0xc8ddff, 0x2a2e4a, 0.55));
       const sun = new THREE.DirectionalLight(0xded7ff, 0.8);
-      sun.position.set(-28, 70, centerZ + 26);
+      sun.position.set(-40, 96, centerZ + 34);
       sun.target.position.set(0, 0, centerZ);
       sun.castShadow = true;
       sun.shadow.mapSize.set(1024, 1024);
-      const span = 42;
-      Object.assign(sun.shadow.camera, { left: -span, right: span, top: span, bottom: -span, far: 190 });
+      // The shadow camera has to cover the whole hall. It was a 42-unit square, which suited the
+      // first-pass arena and left the far half of the enlarged one with no shadows at all.
+      const span = 74;
+      Object.assign(sun.shadow.camera, { left: -span, right: span, top: span, bottom: -span, far: 260 });
       sun.shadow.bias = -0.001;
       sun.shadow.normalBias = 0.16;
       scene.add(sun, sun.target);
-      const light = new THREE.PointLight(tint, 0.5, 46, 2);
-      light.position.set(0, 8, centerZ + 4);
+      const light = new THREE.PointLight(tint, 0.55, 92, 2);
+      light.position.set(0, 12, centerZ + 4);
       scene.add(light);
       const starRnd = random(1247);
       const stars = new Float32Array(360 * 3);
@@ -300,10 +304,15 @@
 
   // ---------------------------------------------------------------- layouts ----
   function layoutApproach(s) {
-    const rect = { minX: -10.5, maxX: 10.5, minZ: -21, maxZ: 12 };
+    // Derive the deck from BOUNDS instead of repeating the numbers. The two used to disagree: the
+    // walkable rect grew while the floor stayed at its first-pass size, so the party could walk past
+    // the edge of the bridge into empty space. One source now feeds both, and the taper below is a
+    // ratio of the hall rather than a literal.
+    const rect = { minX: BOUNDS.approach.minX, maxX: BOUNDS.approach.maxX, minZ: BOUNDS.approach.minZ, maxZ: BOUNDS.approach.maxZ };
+    const width = rect.maxX - rect.minX, depth = rect.maxZ - rect.minZ;
     const paving = s.layer(), mosaic = s.layer(), inlay = s.layer(), runes = s.layer();
-    // The bridge narrows toward Thanatos's sanctuary: 21 units at the entrance, 18 at the gate.
-    const halfAt = z => 10.5 - clamp((12 - z) / 33, 0, 1) * 1.6;
+    // The bridge narrows toward Thanatos's sanctuary: full width at the entrance, 88% at the gate.
+    const halfAt = z => (width / 2) - clamp((rect.maxZ - z) / depth, 0, 1) * (width * 0.062);
     for (let z = rect.maxZ; z > rect.minZ;) {
       const len = Math.min(2.6 + s.rnd() * 0.9, z - rect.minZ), next = z - len;
       const half = Math.min(halfAt(z), halfAt(next)) - 0.1;
@@ -342,8 +351,8 @@
       }
     }
     // Rubble along the margins keeps the fighting lane open but reads as collapse.
-    for (let i = 0; i < 120; i++) {
-      const z = 11 - s.rnd() * 32, side = i % 2 ? 1 : -1;
+    for (let i = 0; i < 220; i++) {
+      const z = (rect.maxZ - 1) - s.rnd() * (depth - 2), side = i % 2 ? 1 : -1;
       const x = side * (halfAt(z) - 0.5 - s.rnd() * 0.7);
       const h = 0.08 + s.rnd() * 0.26;
       s.add(i % 4 ? 'chip' : 'box', i % 3 ? PALETTE.stone : PALETTE.trim, x, h * 0.5 + 0.08, z, 0.14 + s.rnd() * 0.4, h, 0.2 + s.rnd() * 0.4, [s.rnd() * 0.3, s.rnd() * 6, s.rnd() * 0.2], false, 'rubble');
@@ -358,33 +367,36 @@
     s.finish(inlay, 'engraving');
     s.finish(runes, 'rune', false, true);
     s.lights(-4, PALETTE.cyan);
-    return { bounds: BOUNDS.approach, entrance: { x: 0, z: 9.6 }, exit: { x: 0, z: -18.8 } };
+    return { bounds: BOUNDS.approach, entrance: { x: 0, z: 14.4 }, exit: { x: 0, z: -31.6 } };
   }
 
   function layoutArcade(s) {
-    const rect = { minX: -12, maxX: 12, minZ: -21, maxZ: 12 };
+    const rect = { minX: BOUNDS.arcade.minX, maxX: BOUNDS.arcade.maxX, minZ: BOUNDS.arcade.minZ, maxZ: BOUNDS.arcade.maxZ };
     const paving = s.layer(), mosaic = s.layer(), inlay = s.layer(), runes = s.layer();
     s.deck(paving, rect, 2.5);
     // Two islands of ruin: this is a platform, not a corridor. Landmarks at the far corners.
     for (const side of [-1, 1]) {
       for (let row = 0; row < 3; row++) {
         for (let i = 0; i < 4 - row; i++) {
-          s.add('box', row % 2 ? PALETTE.stone : PALETTE.trim, side * (14.6 + i * 0.9), 0.4 + row * 0.62, -16.4 + (i % 2) * 0.2, 1.2, 0.6, 1.3, 0.04);
+          s.add('box', row % 2 ? PALETTE.stone : PALETTE.trim, side * (rect.maxX + 2.6 + i * 0.9), 0.4 + row * 0.62, rect.minZ + 4.6 + (i % 2) * 0.2, 1.2, 0.6, 1.3, 0.04);
         }
       }
-      // A colonnade stumps out at the platform edge; the play area stays clear.
-      for (const z of [7.4, 1.2, -5, -11.2, -17.4]) s.pillar(side * 14.2, z, 2.4 + (Math.abs(z) % 3), z !== 1.2);
-      s.add('column', 0x929baa, side * 13.9, 0.86, 3.4, 1.4, 3.5, 1.4, [Math.PI / 2, 0, 0.13], false, 'rubble');
-      s.add('chip', PALETTE.stone, side * 13.6, 0.3, 5.6, 0.95, 0.5, 0.85, [0.3, 0.6, 0.2], false, 'rubble');
+      // A colonnade stumps out at the platform edge; the play area stays clear. The edge is derived
+      // from the deck, so widening the hall moves the ruins out with it instead of leaving them
+      // standing in the middle of the walkable floor.
+      const edge = rect.maxX + 2.4;
+      for (const z of [rect.maxZ - 8, 1.2, -5, -11.2, rect.minZ + 9]) s.pillar(side * edge, z, 2.4 + (Math.abs(z) % 3), z !== 1.2);
+      s.add('column', 0x929baa, side * (edge - 0.3), 0.86, 3.4, 1.4, 3.5, 1.4, [Math.PI / 2, 0, 0.13], false, 'rubble');
+      s.add('chip', PALETTE.stone, side * (edge - 0.6), 0.3, 5.6, 0.95, 0.5, 0.85, [0.3, 0.6, 0.2], false, 'rubble');
     }
     // Central aisle: two long inlaid bands pointing at the anchor plinths.
     for (const side of [-1, 1]) {
-      s.stroke(inlay, [[side * 1.7, 9], [side * 1.7, -19]], 0.3, 0x59677e);
-      s.stroke(inlay, [[side * 1.7, 9], [side * 1.7, -19]], 0.08, 0x98a0ae);
+      s.stroke(inlay, [[side * 1.7, rect.maxZ - 3], [side * 1.7, rect.minZ + 2]], 0.3, 0x59677e);
+      s.stroke(inlay, [[side * 1.7, rect.maxZ - 3], [side * 1.7, rect.minZ + 2]], 0.08, 0x98a0ae);
     }
-    for (let z = 8; z > -19; z -= 2.6) {
-      s.stroke(inlay, [[-11.6, z], [-10.4, z]], 0.14, 0x8b8f99);
-      s.stroke(inlay, [[10.4, z], [11.6, z]], 0.14, 0x8b8f99);
+    for (let z = rect.maxZ - 4; z > rect.minZ + 2; z -= 2.6) {
+      s.stroke(inlay, [[-rect.maxX + 0.9, z], [-rect.maxX + 2.1, z]], 0.14, 0x8b8f99);
+      s.stroke(inlay, [[rect.maxX - 2.1, z], [rect.maxX - 0.9, z]], 0.14, 0x8b8f99);
     }
     // Rift anchor plinths sit exactly where the engine spawns the two anchors.
     for (const side of [-1, 1]) {
@@ -411,20 +423,21 @@
     s.finish(inlay, 'engraving');
     s.finish(runes, 'rune', false, true);
     s.lights(-6, PALETTE.violet);
-    return { bounds: BOUNDS.arcade, entrance: { x: 0, z: 9.4 }, exit: { x: 0, z: -19.2 }, anchors: [{ x: -6.6, z: -15.4 }, { x: 6.6, z: -15.4 }] };
+    return { bounds: BOUNDS.arcade, entrance: { x: 0, z: 14.2 }, exit: { x: 0, z: -33.4 }, anchors: [{ x: -11.4, z: -26.2 }, { x: 11.4, z: -26.2 }] };
   }
 
   function layoutObservatory(s) {
-    const rect = { minX: -12.5, maxX: 12.5, minZ: -12.5, maxZ: 12.5 };
+    const R = BOUNDS.observatory.r;
+    const rect = { minX: -R, maxX: R, minZ: -R, maxZ: R };
     const paving = s.layer(), mosaic = s.layer(), inlay = s.layer(), runes = s.layer();
-    s.disc(paving, 0, 0, 13.4, 11);
+    s.disc(paving, 0, 0, R + 0.9, 11);
     // The astronomical instrument: rings, radial ticks and a ritual circle at the centre.
-    s.ringStrip(inlay, 0, 0, 12.6, 0.22, 0x59677e);
-    s.ringStrip(inlay, 0, 0, 12.0, 0.07, 0xb5a88e);
-    s.ringStrip(mosaic, 0, 0, 9.4, 0.36, 0x4c627d);
-    s.ringStrip(mosaic, 0, 0, 5.6, 0.3, 0x79879b);
+    s.ringStrip(inlay, 0, 0, R + 0.1, 0.22, 0x59677e);
+    s.ringStrip(inlay, 0, 0, R - 0.5, 0.07, 0xb5a88e);
+    s.ringStrip(mosaic, 0, 0, R * 0.752, 0.36, 0x4c627d);
+    s.ringStrip(mosaic, 0, 0, R * 0.448, 0.3, 0x79879b);
     for (let i = 0; i < 24; i++) {
-      const a = i / 24 * Math.PI * 2, r0 = 6.2, r1 = i % 3 ? 8.6 : 9.2;
+      const a = i / 24 * Math.PI * 2, r0 = R * 0.496, r1 = i % 3 ? R * 0.688 : R * 0.736;
       s.stroke(inlay, [[Math.cos(a) * r0, Math.sin(a) * r0], [Math.cos(a) * r1, Math.sin(a) * r1]], 0.09, 0x9aa2b4);
       if (i % 2 === 0) s.stroke(runes, [[Math.cos(a) * 4.6, Math.sin(a) * 4.6], [Math.cos(a) * 5.2, Math.sin(a) * 5.2]], 0.1, 0x8fd7e0);
     }
@@ -463,13 +476,13 @@
     s.finish(runes, 'rune', false, true);
     s.lights(0, PALETTE.cyan);
     return {
-      bounds: BOUNDS.observatory, entrance: { x: 0, z: 10.6 }, exit: { x: 0, z: -10.6 },
+      bounds: BOUNDS.observatory, entrance: { x: 0, z: 18.2 }, exit: { x: 0, z: -18.2 },
       armillary: [armillary, armillary2],
     };
   }
 
   function layoutSanctuary(s) {
-    const rect = { minX: -14, maxX: 14, minZ: -14, maxZ: 13 };
+    const rect = { minX: BOUNDS.sanctuary.minX, maxX: BOUNDS.sanctuary.maxX, minZ: BOUNDS.sanctuary.minZ, maxZ: BOUNDS.sanctuary.maxZ };
     const paving = s.layer(), mosaic = s.layer(), inlay = s.layer(), runes = s.layer();
     s.deck(paving, rect, 2.6);
     // The boss dais and its seal: broad, flat, and completely walkable.
@@ -511,7 +524,7 @@
     s.finish(runes, 'rune', false, true);
     s.lights(-4, PALETTE.violet);
     const seal = s.glowPlane(0, -8.4, 15, 15, PALETTE.violet);
-    return { bounds: BOUNDS.sanctuary, entrance: { x: 0, z: 10.4 }, exit: { x: 0, z: -12 }, seal };
+    return { bounds: BOUNDS.sanctuary, entrance: { x: 0, z: 19.2 }, exit: { x: 0, z: -22.8 }, seal };
   }
 
   const LAYOUTS = { approach: layoutApproach, arcade: layoutArcade, observatory: layoutObservatory, sanctuary: layoutSanctuary };

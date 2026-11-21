@@ -125,18 +125,32 @@ function account(overrides = {}) {
   w.eval(fs.readFileSync(path.join(ROOT, 'assets/rift-raid.js'), 'utf8'));
   assert.ok(w.PGRaid, 'PGRaid is exported');
 
-  await t('the lobby shows entries, eligibility and the four stages before readiness', async () => {
+  // The entry screen is the hub the brief asked for: rift maps on the left, the selected rift's
+  // mobs and boss on the right, Solo / Party and the Start control along the bottom.
+  await t('the lobby is a hub: rift list, the rift\'s foes, and a Solo / Party footer', async () => {
     await w.PGRaid.open();
     const overlay = w.document.getElementById('raidOverlay');
     assert.ok(overlay && !overlay.hidden, 'the overlay opens');
     const text = overlay.textContent;
     assert.match(text, /2 \/ 2 entries/);
-    assert.match(text, /Solo raid/);
-    assert.match(text, /Form \/ join party/);
-    for (const stage of ['Starlit Approach', 'Fallen Arcade', 'Runic Observatory', "Thanatos's Sanctuary"]) {
-      assert.match(text, new RegExp(stage.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')), 'the lobby lists ' + stage);
+    assert.match(text, /Solo/);
+    assert.match(text, /Party/);
+    assert.match(text, /Rift maps/i, 'the map list is labelled');
+    assert.ok(overlay.querySelectorAll('[data-raid-map]').length >= 3, 'the map list offers every rift');
+    assert.equal(overlay.querySelectorAll('[data-raid-map][aria-pressed="true"]').length, 1,
+      'exactly one rift is selected at a time');
+    // The four stages of the open rift are what a player is choosing between.
+    assert.match(text, /Thanatos/, 'the open rift names its boss');
+    for (const foe of ['Retribution Angel', 'Despair Phantom', 'Tower Watcher']) {
+      assert.match(text, new RegExp(foe), 'the rift lists ' + foe);
     }
-    assert.match(text, /Two or three adventurers/);
+    // Party is a preview of seats, not a promise: you plus two empty slots.
+    overlay.querySelector('[data-raid-action="party"]').dispatchEvent(new w.Event('click', { bubbles: true }));
+    await new Promise(r => setTimeout(r, 40));
+    const slots = overlay.querySelectorAll('.raid-slot');
+    assert.equal(slots.length, 3, 'party shows you and two empty seats');
+    assert.equal(overlay.querySelectorAll('.raid-slot:not(.filled)').length, 2, 'two seats are open');
+    assert.match(overlay.textContent, /Empty slot/, 'the open seats are labelled');
     w.PGRaid.close();
     assert.equal(overlay.hidden, true, 'closing hides the overlay');
   });
@@ -585,11 +599,23 @@ function account(overrides = {}) {
       assert.ok(new RegExp(key).test(scenery), 'a layout exists for ' + key);
     }
     assert.match(scenery, /STAGE_BOUNDS|BOUNDS/, 'the layouts mirror the engine bounds');
-    // The engine and the client agree on the playable rectangles.
+    // The engine and the client must agree on the playable rectangles. Asserting the literal numbers
+    // here only ever tested that nobody resized the map: it broke the moment the halls were made
+    // bigger, while the real requirement - that both sides say the same thing - still held. Parse
+    // both and compare.
     const rules = fs.readFileSync(path.join(ROOT, 'functions/_lib/raid-engine.js'), 'utf8');
-    for (const [key, rect] of [['approach', '10.5'], ['arcade', '12'], ['sanctuary', '14']]) {
-      assert.ok(scenery.includes(rect), 'client bounds carry ' + key);
-      assert.ok(rules.includes(rect), 'engine bounds carry ' + key);
+    const rectOf = (src, key) => {
+      const at = src.indexOf(key + ':');
+      assert.ok(at > 0, 'a layout exists for ' + key);
+      const slice = src.slice(at, at + 240);
+      const nums = [...slice.matchAll(/(-?\d+(?:\.\d+)?)/g)].map(m => Number(m[1])).slice(0, 4);
+      return nums;
+    };
+    for (const key of ['approach', 'arcade', 'sanctuary']) {
+      const engine = rectOf(rules, key);
+      const client = rectOf(scenery, key);
+      assert.equal(engine.length, 4, 'engine rect for ' + key + ' has four numbers');
+      assert.deepEqual(client, engine, 'client and engine agree on ' + key);
     }
   });
 

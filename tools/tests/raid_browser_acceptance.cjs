@@ -133,6 +133,60 @@ const PLAY_BUDGET_MS = Number(process.env.PG_PLAY_BUDGET_MS || 1_020_000);
     if (soloStart.error) H.fail('the solo button starts a run in the browser', soloStart.error);
     else H.ok('the solo button starts a run in the browser', 'runId=' + soloStart.runId);
 
+    // --- The brief's field rules, checked in the running game -------------------------------
+    // 1. WASD moves the hero. The field's shortcut handler used to turn W and S into the Wardrobe
+    //    and Status panels, so a player could not walk at all. This presses the real keys on the
+    //    real page and reads the hero's own position from the renderer.
+    await page.evaluate(() => { document.body.classList.add('raid-fighting'); });
+    const wasd = await page.evaluate(async () => {
+      const D = globalThis.PGRaidDungeon;
+      // heroPos() is the renderer's own public accessor for the hero's raid-space position.
+      const pos = () => {
+        const h = D && typeof D.heroPos === 'function' ? D.heroPos() : null;
+        return h ? { x: h.x, z: h.z } : null;
+      };
+      const start = pos();
+      if (!start) return { ok: false, why: 'the renderer exposes no hero position' };
+      // Dispatch on <body>, which is where a real key press lands and what the listeners see as
+      // e.target. Dispatching on window instead made every handler that reads e.target.matches()
+      // throw, because a window has no .matches - a synthetic-event artifact, not a real key path.
+      const target = document.body;
+      const key = (type) => target.dispatchEvent(new KeyboardEvent(type, { key: 'w', code: 'KeyW', bubbles: true, cancelable: true }));
+      // Hold W for a moment, then release.
+      key('keydown');
+      await new Promise(r => setTimeout(r, 700));
+      key('keyup');
+      await new Promise(r => setTimeout(r, 400));
+      const moved = pos();
+      // A field tab (Wardrobe, Status, ...) opens by pushing into `tabs` and painting #wins. If the
+      // raid's keyboard guard failed, pressing W would have opened one, so count the open tabs.
+      const openTabs = (typeof tabs !== 'undefined' && Array.isArray(tabs)) ? tabs.slice() : [];
+      return { ok: true, start, moved, panelsOpened: openTabs.length, openTabs };
+    });
+    if (!wasd.ok) H.fail('WASD moves the hero during a raid', wasd.why);
+    else if (!wasd.moved || (Math.abs(wasd.moved.x - wasd.start.x) + Math.abs(wasd.moved.z - wasd.start.z)) < 0.05) {
+      H.fail('WASD moves the hero during a raid', 'the hero did not move (' + JSON.stringify(wasd.start) + ' -> ' + JSON.stringify(wasd.moved) + ')');
+    } else H.ok('WASD moves the hero during a raid', 'moved from z=' + wasd.start.z.toFixed(2) + ' to z=' + wasd.moved.z.toFixed(2));
+    if (wasd.ok) {
+      if (wasd.panelsOpened === 0) H.ok('W and S do not open field panels mid-raid', 'no equipment/status panel opened');
+      else H.fail('W and S do not open field panels mid-raid', wasd.panelsOpened + ' field panel(s) opened');
+    }
+
+    // 2. Nothing of the field is painted during a fight: the raid is the whole screen.
+    const fieldHidden = await page.evaluate(() => {
+      const ids = ['hud', 'dock', 'xp-dock', 'eclipseHeader', 'minimapTools', 'sideRail', 'eclipseCombat', 'feedWrap'];
+      const shown = ids.filter(id => {
+        const el = document.getElementById(id);
+        if (!el) return false;
+        const cs = getComputedStyle(el);
+        return cs.display !== 'none' && cs.visibility !== 'hidden';
+      });
+      return { shown, fighting: document.body.classList.contains('raid-fighting') };
+    });
+    if (fieldHidden.shown.length === 0) H.ok('no field UI is painted during a raid', 'every field layer is display:none');
+    else H.fail('no field UI is painted during a raid', 'still painted: ' + fieldHidden.shown.join(', '));
+    await page.evaluate(() => { document.body.classList.remove('raid-fighting'); });
+
     const storage = await page.evaluate(() => {
       const st = globalThis.PGRaidSolo && globalThis.PGRaidSolo.storageStatus();
       return st ? { ok: st.ok, why: st.why } : { ok: false, why: 'runner missing' };

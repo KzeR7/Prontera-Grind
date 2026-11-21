@@ -43,11 +43,16 @@ const ACTIONS = new Set([...INTENTS, ...PAID_ACTIONS]);
 // Stage bounds are world units on the client's map plane: x across the map, z up the map (a smaller
 // z is "deeper" in the dungeon). The client draws exactly these bounds, so the server can validate a
 // destination against the same numbers the player sees.
+// The arena these numbers describe is the Astral causeway: a long, wide bridge between islands. The
+// first pass used a narrow strip (21 wide by 31 deep), which framed the fight as a corridor - the
+// camera had to sit close, the packs filled the screen, and there was nowhere to walk. Each stage is
+// now a hall worth the name, and STAGE_BOUNDS is the single source of truth: the engine clamps
+// movement to it, and assets/astral-raid-scenes.js draws exactly this footprint.
 export const STAGE_BOUNDS = Object.freeze({
-  approach: Object.freeze({ minX: -10.5, maxX: 10.5, minZ: -20, maxZ: 11 }),
-  arcade: Object.freeze({ minX: -12, maxX: 12, minZ: -21, maxZ: 11 }),
-  observatory: Object.freeze({ minX: -12.5, maxX: 12.5, minZ: -12.5, maxZ: 12.5 }),
-  sanctuary: Object.freeze({ minX: -14, maxX: 14, minZ: -14, maxZ: 13 }),
+  approach: Object.freeze({ minX: -19, maxX: 19, minZ: -34, maxZ: 17 }),
+  arcade: Object.freeze({ minX: -22, maxX: 22, minZ: -36, maxZ: 17 }),
+  observatory: Object.freeze({ minX: -21, maxX: 21, minZ: -21, maxZ: 21 }),
+  sanctuary: Object.freeze({ minX: -24, maxX: 24, minZ: -26, maxZ: 22 }),
 });
 
 export function stageBounds(stageKey) {
@@ -215,14 +220,14 @@ const ENEMY_LAYOUT = Object.freeze({
     Object.freeze({ id: 'b1-g3', name: 'Agony Demon', spriteId: 1707, shape: 'demon', x: 7.8, z: -4.4, pack: 0 }),
     Object.freeze({ id: 'b1-g4', name: 'Despair Phantom', spriteId: 1705, shape: 'demon', x: 8.2, z: -8.8, pack: 0 }),
     Object.freeze({ id: 'b1-g5', name: 'Tower Watcher', spriteId: 1700, shape: 'demon', x: 0.2, z: -10.6, pack: 0, ranged: true }),
-    Object.freeze({ id: 'b-anchor-l', kind: 'anchor', name: 'Rift Anchor', spriteId: 1708, shape: 'demon', x: -6.6, z: -15.4, pack: 1, label: 'Shield anchor' }),
-    Object.freeze({ id: 'b-anchor-r', kind: 'anchor', name: 'Rift Anchor', spriteId: 1708, shape: 'demon', x: 6.6, z: -15.4, pack: 1, label: 'Shield anchor' }),
+    Object.freeze({ id: 'b-anchor-l', kind: 'anchor', name: 'Rift Anchor', spriteId: 1708, shape: 'demon', x: -11.4, z: -26.2, pack: 1, label: 'Shield anchor' }),
+    Object.freeze({ id: 'b-anchor-r', kind: 'anchor', name: 'Rift Anchor', spriteId: 1708, shape: 'demon', x: 11.4, z: -26.2, pack: 1, label: 'Shield anchor' }),
     Object.freeze({ id: 'b1-g6', name: 'Death Whisperer', spriteId: 1706, shape: 'demon', x: -2.4, z: -18.2, pack: 2 }),
     Object.freeze({ id: 'b1-g7', name: 'Agony Demon', spriteId: 1707, shape: 'demon', x: 2.6, z: -18.4, pack: 2 }),
   ]),
   observatory: Object.freeze([
-    Object.freeze({ id: 'c-ritual-1', kind: 'ritual-source', name: 'Ritual Adept', spriteId: 1639, shape: 'demon', x: -6.4, z: -5.2, pack: 0, label: 'Ritual source' }),
-    Object.freeze({ id: 'c-ritual-2', kind: 'ritual-source', name: 'Ritual Adept', spriteId: 1637, shape: 'demon', x: 6.2, z: -5.6, pack: 0, label: 'Ritual source' }),
+    Object.freeze({ id: 'c-ritual-1', kind: 'ritual-source', name: 'Ritual Adept', spriteId: 1639, shape: 'demon', x: -10.8, z: -9.6, pack: 0, label: 'Ritual source' }),
+    Object.freeze({ id: 'c-ritual-2', kind: 'ritual-source', name: 'Ritual Adept', spriteId: 1637, shape: 'demon', x: 10.4, z: -10.2, pack: 0, label: 'Ritual source' }),
     Object.freeze({ id: 'c-wave-1a', name: 'Astral Sentry', spriteId: 1836, shape: 'demon', x: -3.4, z: -9.8, pack: 1 }),
     Object.freeze({ id: 'c-wave-1b', name: 'Astral Sentry', spriteId: 1837, shape: 'demon', x: 3.6, z: -9.6, pack: 1 }),
     Object.freeze({ id: 'c-wave-2a', name: 'Tower Watcher', spriteId: 1700, shape: 'demon', x: 0, z: -2.4, pack: 2, ranged: true }),
@@ -230,18 +235,54 @@ const ENEMY_LAYOUT = Object.freeze({
     Object.freeze({ id: 'c-wave-2c', name: 'Despair Phantom', spriteId: 1705, shape: 'demon', x: 8.2, z: 2.4, pack: 2 }),
   ]),
   sanctuary: Object.freeze([
-    Object.freeze({ id: 'thanatos', kind: 'boss', name: 'Thanatos', spriteId: 1708, shape: 'demon', x: 0, z: -8.4, magic: true, label: 'The named boss' }),
+    Object.freeze({ id: 'thanatos', kind: 'boss', name: 'Thanatos', spriteId: 1708, shape: 'demon', x: 0, z: -14.2, magic: true, label: 'The named boss' }),
   ]),
 });
+
+// Where a batch may stand. The named layout above is the *roster* (what, how many, which pack); the
+// positions are re-rolled per run from the run's own seed, so two runs of the same stage are not the
+// same picture and a player cannot pre-learn one safe corner. Bosses, anchors and ritual sources keep
+// their authored posts: they are stage furniture with mechanics attached, not filler.
+const SCATTER_MARGIN = 2.2;
+function scatterSpots(stageKey, layout, seed) {
+  const b = stageBounds(stageKey);
+  const rng = mulberry32((seed ^ 0x9e3779b9) >>> 0);
+  // Batches own a band of the hall so a pack reads as a pack: pack 0 in the near third, pack 1 in the
+  // middle, pack 2 in the far third. Within its band each spawn lands anywhere, which is enough
+  // variety without ever spawning a mob on top of the entrance.
+  const packs = [...new Set(layout.map(e => (e.pack || 0)))].sort((a, b2) => a - b2);
+  const zTop = b.minZ + SCATTER_MARGIN, zBottom = b.maxZ - SCATTER_MARGIN - 4;
+  const bandCount = Math.max(1, packs.length);
+  const bandSize = (zBottom - zTop) / bandCount;
+  const used = [];
+  return layout.map(e => {
+    if (e.kind === 'boss' || e.kind === 'anchor' || e.kind === 'ritual-source') return { x: e.x, z: e.z };
+    const band = Math.max(0, packs.indexOf(e.pack || 0));
+    const zMin = zTop + band * bandSize + 1.2;
+    const zMax = zTop + (band + 1) * bandSize - 1.2;
+    // Rejection-sample a few times so two mobs of a batch do not stack on one point.
+    for (let attempt = 0; attempt < 12; attempt++) {
+      const x = b.minX + SCATTER_MARGIN + rng() * (b.maxX - b.minX - SCATTER_MARGIN * 2);
+      const z = zMin + rng() * Math.max(0.5, zMax - zMin);
+      if (used.every(u => Math.hypot(u.x - x, u.z - z) > 2.6)) { used.push({ x, z }); return { x, z }; }
+    }
+    const x = b.minX + SCATTER_MARGIN + rng() * (b.maxX - b.minX - SCATTER_MARGIN * 2);
+    const z = zMin + rng() * Math.max(0.5, zMax - zMin);
+    used.push({ x, z });
+    return { x, z };
+  });
+}
 
 function stageEnemies(stage, partyDps, options = {}) {
   const layout = ENEMY_LAYOUT[stage.key] || [];
   const total = stageEnemyHp(stage.id, partyDps, options);
   const weights = layout.map(e => (e.kind === 'boss' ? 0 : e.kind === 'anchor' || e.kind === 'ritual-source' ? 1.35 : 1));
   const weightSum = weights.reduce((a, b) => a + b, 0) || 1;
+  const spots = options.scatter === false ? null : scatterSpots(stage.key, layout, int(options.seed, 1) || 1);
   return layout.map((e, i) => {
     const share = e.kind === 'boss' ? 1 : weights[i] / weightSum;
     const maxHp = Math.max(1, Math.round(total * share));
+    const spot = spots ? spots[i] : { x: e.x, z: e.z };
     return {
       id: e.id,
       kind: e.kind || 'mob',
@@ -252,8 +293,8 @@ function stageEnemies(stage, partyDps, options = {}) {
       ranged: e.ranged === true,
       maxHp,
       hp: maxHp,
-      x: e.x, z: e.z,
-      homeX: e.x, homeZ: e.z,
+      x: spot.x, z: spot.z,
+      homeX: spot.x, homeZ: spot.z,
       required: e.required !== false,
       marked: false,
       deadAt: 0,
@@ -320,7 +361,7 @@ export function createRaidRun(input = {}) {
   const stage = RAID_STAGES[0];
   const partyDps = party.reduce((sum, m) => sum + clamp(finite(m.profile.dps, 0), 0, RAID_RULES.dpsMax), 0)
     * clamp(finite(input.dpsScale, 1), 0.5, 2);
-  const enemies = stageEnemies(stage, partyDps);
+  const enemies = stageEnemies(stage, partyDps, { seed });
   const entrance = stageBounds(stage.key);
   party.forEach((m, i) => {
     m.x = clamp((i - (party.length - 1) / 2) * 2.2, entrance.minX + 1, entrance.maxX - 1);
@@ -954,7 +995,7 @@ function advanceStage(run, at) {
   const boss = stage.key === 'sanctuary';
   const dps = run.partyDps || RAID_RULES.dpsMin;
   const total = stageEnemyHp(stage.id, dps, boss ? { boss: true, seconds: 240 } : {});
-  const fresh = stageEnemies(stage, dps, boss ? { boss: true, seconds: 240 } : {});
+  const fresh = stageEnemies(stage, dps, { ...(boss ? { boss: true, seconds: 240 } : {}), seed: (int(run.seed, 1) || 1) + stage.id * 7919 });
   // Re-scale the stage's enemies to that stage's own budget, then place the party at the entrance.
   const scale = total / Math.max(1, fresh.reduce((s, e) => s + e.maxHp, 0));
   run.enemies = fresh.map(e => ({ ...e, maxHp: Math.max(1, Math.round(e.maxHp * scale)), hp: Math.max(1, Math.round(e.maxHp * scale)) }));
