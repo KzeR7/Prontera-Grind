@@ -26,7 +26,13 @@
   const ORIGIN = -320;              // raid space sits away from the field's 0..-245 route
   const MODE_MONSTERS = 88;         // a map id that has no native field, so nothing else loads
   const VISUAL = { member: 2.1, mob: 2.7, boss: 5.0, anchor: 2.9 };
-  const WALK_SPEED = 9.6;           // matches the engine's raid walk speed
+  // Must equal RAID_RULES.walkSpeed (9.6). It was 10.5, so the client's own walk outran the engine's
+  // and every snapshot dragged the hero backwards - visible as a stutter while holding a key.
+  const WALK_SPEED = 9.6;
+  const EDGE_PAD = 0.6;             // how far from the deck edge the hero may stand
+  // The engine refuses a move closer than 220 ms to the previous one (`moveMinIntervalMs`). Pacing
+  // below that number is what made movement feel broken: half the intents were 429s.
+  const MOVE_INTERVAL = 240;
   const TELEGRAPH = { fill: 0xff7a4a, edge: 0xffd9a0, ward: 0x8ff0a0 };
 
   const D = {
@@ -44,6 +50,7 @@
     clockOffset: 0,
     myId: 0,
     targetId: '',
+    facing: 0,
     lastMoveAt: 0,
     pendingMove: null,
     inputBound: false,
@@ -454,7 +461,9 @@
       if (!D.on) return;
       if (event.target && /input|textarea|select/i.test(event.target.tagName || '')) return;
       const key = String(event.key || '').toLowerCase();
-      if (!'wasd'.startsWith(key[0] || 'x') && !key.startsWith('arrow')) return;
+      // `'wasd'.startsWith(key[0])` was true only for W: 'wasd'.startsWith('a') is false, so A, S
+      // and D were never recorded and only W ever moved the hero. Test membership, not a prefix.
+      if (!'wasd'.includes(key) && !key.startsWith('arrow')) return;
       D.keys.add(key);
       event.preventDefault();
     });
@@ -481,6 +490,17 @@
     return best;
   }
 
+  // The playable rectangle for a stage, straight from the scenery module so the client and the deck
+  // cannot disagree. The observatory is a disc, so it is reported as its bounding square and the
+  // circular deck is what actually bounds it; the pad keeps the hero off the rim either way.
+  function boundsOf(stageKey) {
+    const scenes = root.PGAstralRaidScenes;
+    const b = (scenes && scenes.BOUNDS && (scenes.BOUNDS[stageKey] || scenes.BOUNDS.approach)) || null;
+    if (!b) return { minX: -19, maxX: 19, minZ: -34, maxZ: 17 };
+    if (b.kind === 'circle') return { minX: -b.r, maxX: b.r, minZ: -b.r, maxZ: b.r };
+    return b;
+  }
+
   function keyVector() {
     let x = 0, z = 0;
     if (D.keys.has('a') || D.keys.has('arrowleft')) x -= 1;
@@ -494,7 +514,7 @@
     const mine = me();
     if (!D.on || !mine || mine.downed || mine.hp <= 0) return;
     const now = performance.now();
-    if (now - D.lastMoveAt < 180) { D.pendingMove = { x, z }; return; }
+    if (now - D.lastMoveAt < MOVE_INTERVAL) { D.pendingMove = { x, z }; return; }
     D.lastMoveAt = now;
     D.stats.moves++;
     // The destination is recorded, not teleported to: the hero walks there at the raid's own speed,
@@ -548,8 +568,26 @@
     ring.rotation.x = -Math.PI / 2;
     ring.position.y = 0.05;
     group.add(ring);
+    // A health bar over the head, the way an MMO reads a fight. There was no per-enemy bar at all
+    // before - only a boss bar in the HUD - so the player could not tell whether an attack was doing
+    // anything, or whether a mob that vanished had actually been killed.
+    let bar = null;
+    if (kind !== 'member') {
+      const canvas = document.createElement('canvas');
+      canvas.width = 128; canvas.height = 20;
+      const texture = new THREE.CanvasTexture(canvas);
+      texture.minFilter = THREE.LinearFilter; texture.magFilter = THREE.LinearFilter;
+      const material = new THREE.SpriteMaterial({ map: texture, transparent: true, depthTest: false, depthWrite: false });
+      bar = new THREE.Sprite(material);
+      bar.center.set(0.5, 0.5);
+      bar.scale.set(kind === 'boss' ? 3.4 : 2.1, kind === 'boss' ? 0.42 : 0.26, 1);
+      bar.position.y = kind === 'boss' ? 4.6 : kind === 'anchor' ? 3.1 : 2.35;
+      bar.renderOrder = 12;
+      group.add(bar);
+      bar.userData = { canvas, texture, shownHp: -1, shownMax: -1, shownDead: null };
+    }
     const ent = {
-      key, kind, group, sprite, shadow, ring, ringMat,
+      key, kind, group, sprite, shadow, ring, ringMat, bar,
       id: '', name: '', cls: '', x: 0, z: 0, tx: 0, tz: 0,
       hp: 1, maxHp: 1, lastHp: 1, hitAt: 0, downed: false, dead: false,
       casting: null, face: 1, appearedAt: performance.now(),
@@ -562,6 +600,9 @@
   function dropEntity(key) {
     const ent = D.entities.get(key);
     if (!ent) return;
+    if (ent.bar) {
+      if (ent.bar.material) { if (ent.bar.material.map) ent.bar.material.map.dispose(); ent.bar.material.dispose(); }
+    }
     if (ent.group.parent) ent.group.parent.remove(ent.group);
     ent.group.traverse(o => {
       if (o.geometry) o.geometry.dispose();
@@ -578,6 +619,22 @@
       const key = 'm' + m.id;
       members.add(key);
       const ent = entityFor(key, 'member', m);
+      // Your own seat is drawn by the field's hero sprite, so the engine's position for you is the
+      // one thing this panel must feed back: the engine walks the member, resolves the damage and
+      // decides what is in reach. The client used to keep its own private `heroPos` with no one
+      // reconciling the two, so on screen the hero stood at the entrance while the engine had it
+      // killing packs - mobs died out of reach and vanished. Adopt the authoritative position
+      // (plus the intent the client is already walking toward) and let the field's sprite follow.
+      if (m.id === D.myId && Number.isFinite(Number(m.x)) && Number.isFinite(Number(m.z))) {
+        // Correct, never snap: the local walk in tick() is the thing the player sees move, and the
+        // engine's figure is the truth to converge on. A hard assignment stuttered on every snapshot;
+        // taking the error out over a few frames keeps the sprite smooth while staying honest. A gap
+        // larger than a body length is a real desync (a resume, a stage change), so that one is taken
+        // whole rather than slid through the scenery.
+        const ex = num(m.x) - D.heroPos.x, ez = num(m.z) - D.heroPos.z;
+        if (Math.hypot(ex, ez) > 4) { D.heroPos.x = num(m.x); D.heroPos.z = num(m.z); D.dest = null; }
+        else { D.heroPos.x += ex * 0.35; D.heroPos.z += ez * 0.35; }
+      }
       ent.id = m.id;
       ent.name = m.name || '';
       ent.x = num(m.x); ent.z = num(m.z);
@@ -609,9 +666,28 @@
         if (tex && ent.sprite.material) { ent.sprite.material.map = tex; ent.sprite.material.needsUpdate = true; ent.sprite.userData.spriteId = e.spriteId; }
       }
     }
+    // A mob that leaves the snapshot has just died - the run only removes a cleared enemy. Dropping
+    // it on the same frame is why every kill read as "it disappeared": no death beat, no chance to
+    // see the last hit land. Dead enemies stay as inert corpses (dimmed, no bar) for a moment so the
+    // kill is legible, then go.
+    const nowMs = performance.now();
     for (const key of [...D.entities.keys()]) {
-      if (key[0] === 'm' && !members.has(key)) dropEntity(key);
-      if (key[0] === 'e' && !enemies.has(key)) dropEntity(key);
+      if (key[0] === 'm' && !members.has(key)) { dropEntity(key); continue; }
+      if (key[0] !== 'e' || enemies.has(key)) continue;
+      const ent = D.entities.get(key);
+      if (!ent) continue;
+      if (!ent.goneAt) {
+        ent.goneAt = nowMs;
+        ent.dead = true;
+        ent.deathAt = nowMs;
+        if (ent.bar) ent.bar.visible = false;
+        if (ent.sprite && ent.sprite.material) { ent.sprite.material.opacity = 0.55; ent.sprite.material.transparent = true; }
+      }
+      const age = (nowMs - ent.goneAt) / 1000;
+      if (age > 1.1) { dropEntity(key); continue; }
+      // Sink and fade: a small, unmistakable "that one is dead".
+      ent.group.position.y = -age * 0.55;
+      if (ent.sprite && ent.sprite.material) ent.sprite.material.opacity = Math.max(0, 0.55 * (1 - age / 1.1));
     }
     syncTelegraphs(run);
     syncPortal(run);
@@ -709,6 +785,38 @@
     for (const [key, te] of [...D.telegraphs]) if (!live.has(key)) dropTelegraph(key);
   }
 
+  // ---------------------------------------------------------------- bars --------
+  // Redrawn only when the numbers move: a canvas upload per enemy per frame is the kind of thing that
+  // is invisible on a desktop and painful on a phone. The bar hides itself once the mob is dead, which
+  // is also the answer to "why did that walk off the screen" - it died, and now it says so.
+  function drawBar(ent, focused) {
+    const bar = ent.bar, u = bar.userData;
+    const hp = Math.max(0, ent.hp), maxHp = Math.max(1, ent.maxHp);
+    if (u.shownHp === hp && u.shownMax === maxHp && u.shownDead === ent.dead && u.shownFocus === focused) return;
+    u.shownHp = hp; u.shownMax = maxHp; u.shownDead = ent.dead; u.shownFocus = focused;
+    const c = u.canvas, ctx = c.getContext('2d');
+    ctx.clearRect(0, 0, c.width, c.height);
+    const w = c.width, h = c.height;
+    // Frame
+    ctx.fillStyle = 'rgba(6,10,14,0.82)';
+    ctx.fillRect(0, 0, w, h);
+    ctx.strokeStyle = focused ? 'rgba(255,217,160,0.95)' : 'rgba(140,168,170,0.55)';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(1, 1, w - 2, h - 2);
+    // Fill
+    const frac = Math.max(0, Math.min(1, hp / maxHp));
+    ctx.fillStyle = ent.kind === 'boss' ? '#d8693f' : frac > 0.5 ? '#7ed08a' : frac > 0.22 ? '#e0bb62' : '#d4564a';
+    ctx.fillRect(3, 3, Math.max(0, (w - 6) * frac), h - 6);
+    bar.material.map.needsUpdate = true;
+    bar.visible = true;
+    if (!ent.dead) {
+      const dist = D.heroPos ? Math.hypot(ent.x - D.heroPos.x, ent.z - D.heroPos.z) : 0;
+      // Fade a bar that is genuinely far away so a crowded hall stays readable, but never hide one
+      // the player is fighting.
+      bar.material.opacity = focused || ent.kind === 'boss' ? 1 : dist > 26 ? 0.28 : 1;
+    }
+  }
+
   // ---------------------------------------------------------------- frame -------
   // Called from the game's own draw(): interpolation, health rings, hit flash, ward pulse.
   function tick(dt) {
@@ -730,6 +838,16 @@
         D.heroPos.x += dx / dist * step;
         D.heroPos.z += dz / dist * step;
         D.walking = true;
+        // The engine clamps every destination to the stage, but the client interpolated to whatever
+        // point it was given - so a tap outside the deck walked the hero off the platform into empty
+        // space. Clamp here too, and drop the destination once it is pinned to the edge.
+        const b = boundsOf(D.stageKey);
+        const cx = clamp(D.heroPos.x, b.minX + EDGE_PAD, b.maxX - EDGE_PAD);
+        const cz = clamp(D.heroPos.z, b.minZ + EDGE_PAD, b.maxZ - EDGE_PAD);
+        if (cx !== D.heroPos.x || cz !== D.heroPos.z) {
+          D.heroPos.x = cx; D.heroPos.z = cz; D.dest = null; D.walking = false;
+        }
+        D.facing = Math.atan2(dx, dz);   // the field reads this for the sprite's 8-way facing
       }
     }
     if (!D.dest) D.walking = false;
@@ -751,6 +869,7 @@
       ent.ringMat.opacity = focused ? 0.9 : ent.downed ? 0.5 : 0;
       ent.ringMat.color.setHex(ent.downed ? 0xff6a6a : focused ? 0xffd9a0 : 0x67dce5);
       ent.ring.scale.setScalar(ent.kind === 'boss' ? 1.9 : 1.05);
+      if (ent.bar) drawBar(ent, focused);
       if (ent.kind === 'boss' || ent.kind === 'anchor') {
         ent.group.position.y = Math.sin(now / 900 + ent.x) * 0.05;
       }
@@ -784,11 +903,13 @@
     if (D.world) D.world.update(now / 1000);
     D.hudAt = D.hudAt || 0;
     if (D.run && now - D.hudAt > 180) { D.hudAt = now; hudUpdate(D.run); }
-    // Keyboard: one intent every 180 ms while a key is held, never one per frame.
+    // Keyboard: one intent per MOVE_INTERVAL while a key is held, never one per frame. This used to
+    // be 180 ms against the engine's 220 ms floor, so every second intent was refused with "You are
+    // already moving" - the hero stuttered and, worse, never quite reached a pack to fight it.
     const vec = keyVector();
-    if (vec && D.heroPos && now - D.lastMoveAt >= 180) {
+    if (vec && D.heroPos && now - D.lastMoveAt >= MOVE_INTERVAL) {
       requestMove(D.heroPos.x + vec.x, D.heroPos.z + vec.z);
-    } else if (D.pendingMove && now - D.lastMoveAt >= 180) {
+    } else if (D.pendingMove && now - D.lastMoveAt >= MOVE_INTERVAL) {
       const p = D.pendingMove;
       D.pendingMove = null;
       requestMove(p.x, p.z);
@@ -897,6 +1018,11 @@
     // local + origin.
     origin: ORIGIN,
     heroPos: () => D.heroPos,
+    // The field turns the hero sprite toward this angle. Without it the raid left `pl.run` set and
+    // nothing else, so the sprite walked in place facing one way for the whole fight.
+    facing: () => D.facing,
+    // Whether the hero is mid-step, so the field plays a walk cycle instead of a frozen idle.
+    walking: () => !!D.walking,
     get active() { return D.on; },
     get stageKey() { return D.stageKey; },
     get targetId() { return D.targetId; },

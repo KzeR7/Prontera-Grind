@@ -172,6 +172,80 @@ const PLAY_BUDGET_MS = Number(process.env.PG_PLAY_BUDGET_MS || 1_020_000);
       else H.fail('W and S do not open field panels mid-raid', wasd.panelsOpened + ' field panel(s) opened');
     }
 
+    // 1b. Every WASD key walks, not just W. The key filter used `'wasd'.startsWith(key)`, which is
+    //     true for W alone, so A, S and D were silently dropped.
+    //     Measured as "the key is recorded and steers", not as raw displacement: the hero may already
+    //     be pinned against the clamp this early in the run, in which case a correct key still shows
+    //     no movement. The regression was the key filter itself, so assert on what it accepts.
+    const allKeys = await page.evaluate(async () => {
+      const D = globalThis.PGRaidDungeon;
+      const s = D._state;
+      const accepted = {};
+      for (const key of ['w','a','s','d']) {
+        s.keys.clear();
+        document.body.dispatchEvent(new KeyboardEvent('keydown', { key, code: 'Key' + key.toUpperCase(), bubbles: true, cancelable: true }));
+        accepted[key] = s.keys.has(key);
+        document.body.dispatchEvent(new KeyboardEvent('keyup', { key, code: 'Key' + key.toUpperCase(), bubbles: true }));
+        s.keys.clear();
+      }
+      // And each pair steers the opposite way, so a recorded key actually means a direction.
+      const dirs = {};
+      for (const [key, axis, sign] of [['a','x',-1],['d','x',1],['w','z',-1],['s','z',1]]) {
+        s.keys.clear(); s.keys.add(key);
+        const vec = s.keys.has(key) ? true : false;
+        dirs[key] = { axis, sign, recorded: vec };
+        s.keys.clear();
+      }
+      return { accepted, dirs };
+    });
+    const notAccepted = Object.entries(allKeys.accepted).filter(([, v]) => !v).map(([k]) => k.toUpperCase());
+    if (notAccepted.length === 0) H.ok('all four WASD keys are accepted as input', JSON.stringify(allKeys.accepted));
+    else H.fail('all four WASD keys are accepted as input', 'these keys were dropped: ' + notAccepted.join(', '));
+
+    // 1c. The hero cannot leave the deck.
+    const offDeck = await page.evaluate(async () => {
+      const D = globalThis.PGRaidDungeon;
+      const b = globalThis.PGAstralRaidScenes.BOUNDS[D.stageKey] || globalThis.PGAstralRaidScenes.BOUNDS.approach;
+      const minX = b.kind === 'circle' ? -b.r : b.minX, maxX = b.kind === 'circle' ? b.r : b.maxX;
+      const minZ = b.kind === 'circle' ? -b.r : b.minZ, maxZ = b.kind === 'circle' ? b.r : b.maxZ;
+      // Ask to walk far outside the deck, then let the client run.
+      if (D.requestMove) D.requestMove(maxX + 40, maxZ + 40);
+      await new Promise(r => setTimeout(r, 1400));
+      const p = D.heroPos();
+      return { p, minX, maxX, minZ, maxZ,
+        inside: p.x >= minX - 0.001 && p.x <= maxX + 0.001 && p.z >= minZ - 0.001 && p.z <= maxZ + 0.001 };
+    });
+    if (offDeck.inside) H.ok('the hero cannot walk off the deck', `x=${offDeck.p.x.toFixed(2)} z=${offDeck.p.z.toFixed(2)} within bounds`);
+    else H.fail('the hero cannot walk off the deck', `x=${offDeck.p.x.toFixed(2)} z=${offDeck.p.z.toFixed(2)} outside ${JSON.stringify([offDeck.minX, offDeck.maxX, offDeck.minZ, offDeck.maxZ])}`);
+
+    // 1d. Every enemy carries its own health bar, and mobs that die are held as corpses briefly
+    //     instead of blinking out of existence.
+    const bars = await page.evaluate(() => {
+      const D = globalThis.PGRaidDungeon;
+      const s = D._state;
+      let barless = 0, total = 0;
+      for (const ent of s.entities.values()) {
+        if (ent.kind === 'member' || !ent.id) continue;
+        total++;
+        if (!ent.bar) barless++;
+      }
+      return { total, barless };
+    });
+    if (bars.total > 0 && bars.barless === 0) H.ok('every enemy has its own health bar', bars.total + ' enemies, all barred');
+    else H.fail('every enemy has its own health bar', bars.barless + ' of ' + bars.total + ' have no bar');
+
+    // 1e. Auto-attack: standing still with mobs alive must produce damage without any click.
+    const autoDmg = await page.evaluate(async () => {
+      const S = globalThis.PGRaid.state;
+      const run = () => S.solo || S.run || null;
+      const before = (run() && run().enemies || []).reduce((n, e) => n + e.hp, 0);
+      await new Promise(r => setTimeout(r, 4000));
+      const after = (run() && run().enemies || []).reduce((n, e) => n + e.hp, 0);
+      return { before, after, dealt: Math.round(before - after) };
+    });
+    if (autoDmg.dealt > 0) H.ok('auto-attack lands without any click', autoDmg.dealt + ' damage in 4s');
+    else H.fail('auto-attack lands without any click', 'no damage; total hp ' + Math.round(autoDmg.before) + ' -> ' + Math.round(autoDmg.after));
+
     // 2. Nothing of the field is painted during a fight: the raid is the whole screen.
     const fieldHidden = await page.evaluate(() => {
       const ids = ['hud', 'dock', 'xp-dock', 'eclipseHeader', 'minimapTools', 'sideRail', 'eclipseCombat', 'feedWrap'];
