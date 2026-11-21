@@ -76,6 +76,8 @@ export class Social {
    const clean=cleanMvpState(saved),now=this.now();
    this.room.mvpActive.clear();
    this.room.mvpNextAt.clear();
+   this.room.mvpLastSp=new Map(clean.lastSp);
+   this.room.mvpDecks=new Map(clean.decks);
    this.mvpLoaded=true;
    this.mvpLoadFailed=false;
    if(!this.mvpSaveFailed)this.mvpRetryAt=0;
@@ -214,7 +216,7 @@ export class Social {
   this.mvpWrites=(async ()=>{
    while(this.mvpSaveNeeded){
     this.mvpSaveNeeded=false;
-    const snapshot={active:[...this.room.mvpActive.entries()],nextAt:[...this.room.mvpNextAt.entries()]};
+    const snapshot={active:[...this.room.mvpActive.entries()],nextAt:[...this.room.mvpNextAt.entries()],lastSp:[...this.room.mvpLastSp.entries()],decks:[...this.room.mvpDecks.entries()]};
     try{
      await this.ctx.storage.put(MVP_KEY,snapshot);
      this.mvpSaveFailed=false;
