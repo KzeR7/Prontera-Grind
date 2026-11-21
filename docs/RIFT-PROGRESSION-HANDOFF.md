@@ -1,4 +1,4 @@
-# Rift progression + Astral dungeon handoff (haven-v449)
+# Rift progression + Astral dungeon handoff (haven-v450)
 
 This is the owner-run step for the layer that was deferred from v446 — **weapon stars, raid cards,
 the Rift Aura and four earned titles** — plus the v449 **four-stage Astral dungeon** (Thanatos) that
@@ -103,7 +103,7 @@ git fetch origin arena/bfc7d4d1-prontera-grind
 $stageScript = Join-Path $env:TEMP 'pg-update-and-stage.ps1'
 git show FETCH_HEAD:tools/staging/update-and-stage.ps1 |
   Set-Content -Encoding ascii $stageScript
-powershell -ExecutionPolicy Bypass -File $stageScript -Repo $repo
+powershell -ExecutionPolicy Bypass -File $stageScript -Repo $repo -BuildTag haven-v450
 ```
 
 `C:\path\to\Prontera-Grind` in earlier examples was a placeholder; the actual folder on this PC is
@@ -118,7 +118,7 @@ What the script does, in order:
 2. Fetches `arena/bfc7d4d1-prontera-grind`, creates a temporary detached git worktree, and merges
    the latest `origin/main` into it. If that merge conflicts, it stops and changes nothing remote.
 3. Builds `dist` from that worktree with `tools/build_site.sh` and requires `version.txt` to equal
-   the `index.html` BUILD label (`haven-v449`).
+   the `index.html` BUILD label (`haven-v450`).
 4. Generates throw-away Wrangler configs for **only**:
    - Pages `prontera-grind-staging`
    - Worker `prontera-social-staging`

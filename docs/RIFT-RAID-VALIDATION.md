@@ -372,9 +372,24 @@ checkpoint when reopened, because the engine resolves the elapsed cells on the n
 
 ## 5. Staging steps (separate reviewable step — not performed)
 
-The PowerShell handoff for a Windows machine is in `docs/RIFT-PROGRESSION-HANDOFF.md`. Migrations
-already present on staging: `0022_player_character_raid.sql`, `0023_raid_cards.sql`. v449 adds no
-migration.
+The owner-run PowerShell handoff is `tools/staging/update-and-stage.ps1`; the walkthrough for a
+Windows machine is `docs/RIFT-PROGRESSION-HANDOFF.md`. Migrations already present on staging:
+`0022_player_character_raid.sql`, `0023_raid_cards.sql`. **v450 adds no migration** — the script
+applies those two only if `pg-staging` is missing them.
+
+The branch already contains the latest `main` (merged at `f648eab`), so the script's step-3 merge is
+a no-op. Run it from the checkout, in PowerShell:
+
+```powershell
+cd C:\path\to\Prontera-Grind
+git status --porcelain                  # must print nothing
+npx --yes wrangler@4.154.0 whoami       # must print an account
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\staging\update-and-stage.ps1 -BuildTag haven-v450
+```
+
+Needs Git for Windows (`bash.exe`) and node on PATH. It touches only `prontera-grind-staging`,
+`prontera-social-staging` and `pg-staging`, and refuses any production name or ID. It also refuses a
+dirty checkout, which is why the acceptance driver's PNG captures are now git-ignored.
 
 1. Back up staging D1 and record `BASE_SCHEMA`.
 2. Deploy `workers/social` and the Pages Functions to staging with `RAID_ENABLED=true`
