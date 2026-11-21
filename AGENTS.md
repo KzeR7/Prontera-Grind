@@ -61,6 +61,14 @@ There is no root package manifest and no JavaScript bundler.
   handoff if a green row turned red. A skip is not a pass.
 - Do not put secrets in the repo or change the shared GM password for a preview.
   Use the disposable local server described in Testing.
+- **Every update ends with the staging PowerShell prompt — no need to be asked.**
+  Because the owner cannot run bash or the Cloudflare CLI in this environment, each
+  update ships with a copy-paste prompt that redeploys the new build to the three
+  staging resources only (`prontera-grind-staging`, `prontera-social-staging`,
+  `pg-staging`). Bump `-BuildTag` in `tools/staging/update-and-stage.ps1` to the
+  build's tag first, then hand over the prompt. Never point it at production
+  (`horizonhaven`, `pg`, `prontera-social`, `prontera-gate`), and never ask for a
+  password, token or 2FA code: Cloudflare auth stays with the owner.
 - Respect the user's delivery instructions and the environment's permitted branch.
   Do not push to or merge `main`, deploy, or message other tasks just because an
   older handover tells you to. Report only actions and results actually verified.

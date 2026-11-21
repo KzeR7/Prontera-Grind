@@ -1,15 +1,15 @@
 param(
   [string]$Repo = (Get-Location).Path,
   [string]$Branch = 'arena/bfc7d4d1-prontera-grind',
-  [string]$BuildTag = 'haven-v450'
+  [string]$BuildTag = 'haven-v451'
 )
 
-# Owner-run Windows handoff for the Rift player-character raid build (haven-v450).
+# Owner-run Windows handoff for the Rift player-character raid build (haven-v451).
 #
 # Run it from anywhere with -Repo pointing at your checkout:
 #
 #   powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\staging\update-and-stage.ps1 \
-#     -Repo C:\path\to\Prontera-Grind -BuildTag haven-v450
+#     -Repo C:\path\to\Prontera-Grind -BuildTag haven-v451
 #
 #   1/7 Refuses a dirty checkout, then fast-forwards local main from GitHub.
 #   2/7 Fetches this branch into a throw-away git worktree.
@@ -18,7 +18,7 @@ param(
 #   4/7 Writes an isolated staging config and refuses any production name or ID in it.
 #   5/7 Builds the site with tools/build_site.sh (needs bash.exe from Git for Windows and node).
 #   6/7 Applies only the migrations pg-staging is missing: 0022 then 0023, or the in-place v411
-#       raid-schema upgrade. haven-v450 itself adds no migration.
+#       raid-schema upgrade. haven-v451 itself adds no migration.
 #   7/7 Deploys the Worker, then Pages, and verifies the deployed version.txt.
 #        Pages:  prontera-grind-staging
 #        Worker: prontera-social-staging
