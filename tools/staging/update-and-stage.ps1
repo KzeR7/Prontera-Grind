@@ -1,22 +1,32 @@
 param(
   [string]$Repo = (Get-Location).Path,
   [string]$Branch = 'arena/bfc7d4d1-prontera-grind',
-  [string]$BuildTag = 'haven-v449'
+  [string]$BuildTag = 'haven-v450'
 )
 
-# Owner-run Windows handoff for the Rift stars/cards/cosmetics build.
+# Owner-run Windows handoff for the Rift player-character raid build (haven-v450).
 #
-#   1. Updates the local checkout to the latest GitHub main.
-#   2. Materialises this feature branch in a throw-away git worktree and merges latest main into it.
-#   3. Builds the site and deploys ONLY the isolated staging targets:
+# Run it from anywhere with -Repo pointing at your checkout:
+#
+#   powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\staging\update-and-stage.ps1 \
+#     -Repo C:\path\to\Prontera-Grind -BuildTag haven-v450
+#
+#   1/7 Refuses a dirty checkout, then fast-forwards local main from GitHub.
+#   2/7 Fetches this branch into a throw-away git worktree.
+#   3/7 Merges latest origin/main there and fails hard on a conflict. It is already merged on the
+#       branch, so this is normally a no-op - if it conflicts, the branch needs fixing on GitHub.
+#   4/7 Writes an isolated staging config and refuses any production name or ID in it.
+#   5/7 Builds the site with tools/build_site.sh (needs bash.exe from Git for Windows and node).
+#   6/7 Applies only the migrations pg-staging is missing: 0022 then 0023, or the in-place v411
+#       raid-schema upgrade. haven-v450 itself adds no migration.
+#   7/7 Deploys the Worker, then Pages, and verifies the deployed version.txt.
 #        Pages:  prontera-grind-staging
 #        Worker: prontera-social-staging
 #        D1:     pg-staging (3a38c6fc-96a8-491d-b97b-fd536e575ca4)
-#   4. Applies 0022 then 0023 to pg-staging, or upgrades the older v411 raid schema in place.
-#   5. Verifies the deployed version.txt reports this build.
 #
 # It never deploys horizonhaven, pg, prontera-social or prontera-gate. It refuses to continue if a
-# production name/ID reaches the generated staging config. Wrangler must already be authenticated.
+# production name/ID reaches the generated staging config. Wrangler must already be authenticated
+# (`npx --yes wrangler@4.154.0 whoami` must print an account).
 
 $ErrorActionPreference = 'Stop'
 $PSNativeCommandUseErrorActionPreference = $false
