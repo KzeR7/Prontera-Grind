@@ -1271,12 +1271,12 @@ check('Round-8: GIF-extracted 5-color lightning title FX, textured Volcano Raid 
     });
     world.dispose();
 
-    // 4. Fast initial cast (< 1.0s), fog-immune materials, 3D volcanic eruption meshes, and tickBossSkill guard
+    // 4. Balanced initial cast (1.6s Stage 1, 3.8s Boss), fog-immune materials, 3D volcanic eruption meshes, and tickBossSkill guard
     S.gm = true;
     PGRaid.startDirectSolo('thor');
     const stage1InitialDelay = PGRaid.raid.nextCastIn;
-    // Step 8 x 0.1s (0.8s) -> Stage 1 volcanic hazard should already be active and visible!
-    for (let i = 0; i < 8; i++) PGRaid.tick(0.1);
+    // Step 17 x 0.1s (1.7s > 1.6s) -> Stage 1 mob-originated volcanic skill is active and visible!
+    for (let i = 0; i < 17; i++) PGRaid.tick(0.1);
     const stage1HazardActive = Boolean(PGRaid.raid.telegraph && PGRaid.raid.telegraph.volcanic);
     // Verify tickBossSkill never wipes bossCast while Raid is active
     bossCast = { id: 'ifr_eruption', start: t, age: 0, life: 3.2, x: 0, z: 0, seed: 7 };
@@ -1293,7 +1293,7 @@ check('Round-8: GIF-extracted 5-color lightning title FX, textured Volcano Raid 
       }
     }
     const bossInitialDelay = PGRaid.raid.nextCastIn;
-    for (let i = 0; i < 11; i++) PGRaid.tick(0.1);
+    for (let i = 0; i < 39; i++) PGRaid.tick(0.1);
     const bossTg = PGRaid.raid.telegraph;
     const bossFxId = bossTg ? bossTg.fx : '';
     let allFogFalse = true;
@@ -1334,11 +1334,131 @@ check('Round-8: GIF-extracted 5-color lightning title FX, textured Volcano Raid 
   assert.equal(r8.uvChanged, true, 'animateRaidElectricAura steps 4x4 UV flipbook frames over time');
   assert.ok(r8.meshCount >= 220, `Volcano Raid world populates rich Ascension basalt/rubble/pool/caldera detail (${r8.meshCount} meshes)`);
   assert.ok(Math.abs(r8.deckY - 0.02) < 0.01, `Volcano causeway deck sits at y=0.02 (${r8.deckY}) cleanly below hazard telegraphs`);
-  assert.ok(r8.stage1InitialDelay <= 0.85 && r8.stage1HazardActive, 'Thor Stage 1 volcanic hazard casts within 0.8s of entry');
+  assert.ok(Math.abs(r8.stage1InitialDelay - 1.6) < 0.05 && r8.stage1HazardActive, 'Thor Stage 1 volcanic mob skill casts cleanly after 1.6s entry window');
   assert.equal(r8.bossCastPreservedDuringRaid, true, 'tickBossSkill preserves Raid bossCast without wiping Stage 1-4 FX');
-  assert.ok(r8.bossInitialDelay <= 1.05 && /^(ifr_|dl_|ed_)/.test(r8.bossFxId), `Ifrit casts within 1.0s using volcanic PGBossFx (${r8.bossFxId})`);
+  assert.ok(Math.abs(r8.bossInitialDelay - 3.8) < 0.05 && /^(ifr_|dl_|ed_)/.test(r8.bossFxId), `Ifrit casts after 3.8s opening window using volcanic PGBossFx (${r8.bossFxId})`);
   assert.ok(Math.abs(r8.hazardGroupY - 0.14) < 0.01 && r8.allFogFalse, 'Raid hazardGroup sits at y=0.14 with fog:false on every hazard mesh');
   assert.equal(r8.impactSpawned, true, 'Detonating volcanic skill spawns 3D magma geyser impact burst');
+});
+
+// 24. Round-9 (haven-v461): Neck-Height Slower Title FX + Slower Boss Cadence (Both Boss Maps) + Volcano Stage 1-3 Monster-Originated Skills
+check('Round-9: Title lightning aura stops at neck with calm ~4s cycle, both Raid Bosses use relaxed 4.8s-6.2s skill intervals, and Volcano Stage 1-3 skills originate from & interrupt with live mobs', () => {
+  const r9 = g.ev(`(() => {
+    // 1. Title FX neck-height cap (hero height = 2.16, chin/face = 1.38..2.16 -> all bolt planes must stay <= 1.26)
+    const aura = buildRaidElectricAura('#00eaff');
+    const outer = aura.userData.outerBolts;
+    const core = aura.userData.coreBolts;
+    const shadow = aura.userData.shadowBolts;
+    const topOuter = outer.position.y + outer.geometry.parameters.height * 0.5;
+    const topCore = core.position.y + core.geometry.parameters.height * 0.5;
+    const topShadow = shadow.position.y + shadow.geometry.parameters.height * 0.5;
+    // Calm ~4.0s cycle: active surge at t=300ms, calm rest phase at t=2600ms (slot ~27 in 42-slot cycle)
+    animateRaidElectricAura(aura, 300, 0, 0, 0, 1);
+    const activeOp = outer.material.opacity;
+    // Verify 95ms frame pacing: t=10ms and t=75ms stay on frame 0 (would have jumped on old 44ms timer!)
+    animateRaidElectricAura(aura, 10, 0, 0, 0, 1);
+    const snapAt10 = aura.userData.cellSnaps[0];
+    animateRaidElectricAura(aura, 75, 0, 0, 0, 1);
+    const snapAt75 = aura.userData.cellSnaps[0];
+    animateRaidElectricAura(aura, 2600, 0, 0, 0, 1);
+    const restOuterOp = outer.material.opacity;
+    const restCoreOp = core.material.opacity;
+    disposeThreeGroup(aura);
+
+    // 2. Volcano Stage 1-3 skills originate directly from a live Stage 1-3 mob & interrupt if that mob is slain!
+    S.gm = true;
+    PGRaid.startDirectSolo('thor');
+    const seenMobSkills = new Set();
+    let allAnchoredToMob = true;
+    for (let c = 0; c < 3; c++) {
+      PGRaid.raid.telegraph = null;
+      PGRaid.raid.nextCastIn = 0.05;
+      PGRaid.tick(0.1);
+      const tg = PGRaid.raid.telegraph;
+      if (!tg || !tg.casterRef || tg.casterRef.boss || mobs.indexOf(tg.casterRef) === -1) {
+        allAnchoredToMob = false;
+        break;
+      }
+      seenMobSkills.add(tg.name);
+      const cx = tg.casterRef.x, cz = tg.casterRef.z;
+      if (tg.name === 'Flame Breath') {
+        if (Math.hypot(tg.x - cx, tg.z - cz) > 0.01) allAnchoredToMob = false;
+      } else if (tg.name === 'Magma Fissure') {
+        // Beam starts at (cx, cz) and extends len along (ang - PI/2) -> distance from center (tg.x, tg.z) to (cx, cz) === len * 0.5
+        const distCenter = Math.hypot(tg.x - cx, tg.z - cz);
+        if (Math.abs(distCenter - tg.len * 0.5) > 0.05 || !tg.growFromCaster) allAnchoredToMob = false;
+      } else if (tg.name === 'Magma Bomb') {
+        if (!tg.lobFrom || Math.hypot(tg.lobFrom.x - cx, tg.lobFrom.z - cz) > 0.01) allAnchoredToMob = false;
+      } else {
+        allAnchoredToMob = false;
+      }
+    }
+    const thorStage1Gap = PGRaid.raid.nextCastIn;
+    // Slaying the casting monster mid-cast must immediately cancel raid.telegraph!
+    const liveCaster = PGRaid.raid.telegraph && PGRaid.raid.telegraph.casterRef;
+    if (liveCaster) kill(liveCaster);
+    PGRaid.tick(0.1);
+    const interruptedOnCasterDeath = PGRaid.raid.telegraph === null;
+    PGRaid.leave(true);
+
+    // 3. Both Boss Maps (Astral Thanatos & Thor Ifrit) use relaxed 6.2s normal / 4.8s enraged intervals!
+    function measureBossGaps(dungeonId) {
+      PGRaid.startDirectSolo(dungeonId);
+      for (let s = 0; s < 3; s++) {
+        while (mobs.length) kill(mobs[0]);
+        PGRaid.tick(0.05);
+        for (let wStep = 0; wStep < 120 && PGRaid.raid.stage === s; wStep++) {
+          if (!tickAstralJourney(1 / 30)) update(1 / 30);
+          t += 1 / 30;
+        }
+      }
+      const openDelay = PGRaid.raid.nextCastIn;
+      const boss = mobs.find(m => m && m.boss);
+      boss.hp = boss.max; // >= 50% HP
+      PGRaid.raid.pillarCastDone = true;
+      PGRaid.raid.castSeq = 0;
+      PGRaid.raid.lastSkillKey = '';
+      PGRaid.raid.telegraph = null;
+      PGRaid.raid.nextCastIn = 0.05;
+      PGRaid.tick(0.1);
+      const normalGap = PGRaid.raid.nextCastIn;
+      boss.hp = Math.floor(boss.max * 0.35); // < 50% HP enraged
+      PGRaid.raid.castSeq = 0;
+      PGRaid.raid.lastSkillKey = '';
+      PGRaid.raid.telegraph = null;
+      PGRaid.raid.nextCastIn = 0.05;
+      PGRaid.tick(0.1);
+      const enragedGap = PGRaid.raid.nextCastIn;
+      PGRaid.leave(true);
+      return { openDelay, normalGap, enragedGap };
+    }
+    const astralGaps = measureBossGaps('astral');
+    const thorGaps = measureBossGaps('thor');
+
+    return {
+      topOuter, topCore, topShadow,
+      activeOp, snapAt10, snapAt75, restOuterOp, restCoreOp,
+      seenMobSkills: Array.from(seenMobSkills).sort(),
+      allAnchoredToMob, thorStage1Gap, interruptedOnCasterDeath,
+      astralGaps, thorGaps
+    };
+  })()`);
+
+  assert.ok(r9.topOuter <= 1.26 && r9.topCore <= 1.22 && r9.topShadow <= 1.0,
+    `Title lightning bolts stop cleanly at character neck (${r9.topOuter.toFixed(2)} <= 1.26, face 1.38..2.16 stays completely clear)`);
+  assert.equal(r9.snapAt10, 0, 'Title FX starts on frame 0 at t=10ms');
+  assert.equal(r9.snapAt75, 0, 'Title FX uses relaxed 95ms/frame step (still frame 0 at t=75ms)');
+  assert.ok(r9.activeOp > 0.8 && r9.restOuterOp === 0 && r9.restCoreOp === 0,
+    'Title FX includes a calm ~1.8s rest window between lightning discharges');
+  assert.equal(r9.seenMobSkills.join(','), 'Flame Breath,Magma Bomb,Magma Fissure',
+    'Volcano Stage 1-3 rotates all 3 monster-originated volcanic skills');
+  assert.equal(r9.allAnchoredToMob, true, 'Every Volcano Stage 1-3 skill originates geometrically from its live casting mob');
+  assert.ok(r9.thorStage1Gap >= 4.2, `Volcano Stage 1 mob cast cooldown is relaxed (${r9.thorStage1Gap}s)`);
+  assert.equal(r9.interruptedOnCasterDeath, true, 'Killing the casting Volcano mob mid-cast immediately interrupts & cancels its telegraph');
+  assert.ok(Math.abs(r9.astralGaps.openDelay - 3.8) < 0.05 && Math.abs(r9.astralGaps.normalGap - 6.2) < 0.05 && Math.abs(r9.astralGaps.enragedGap - 4.8) < 0.05,
+    `Astral Boss (Memory of Thanatos) uses relaxed intervals: open=${r9.astralGaps.openDelay}s, normal=${r9.astralGaps.normalGap}s, enraged=${r9.astralGaps.enragedGap}s`);
+  assert.ok(Math.abs(r9.thorGaps.openDelay - 3.8) < 0.05 && Math.abs(r9.thorGaps.normalGap - 6.2) < 0.05 && Math.abs(r9.thorGaps.enragedGap - 4.8) < 0.05,
+    `Volcano Boss (Ifrit) uses relaxed intervals: open=${r9.thorGaps.openDelay}s, normal=${r9.thorGaps.normalGap}s, enraged=${r9.thorGaps.enragedGap}s`);
 });
 
 g.close();

@@ -196,6 +196,7 @@
   var impactNodes = [];
   var pillarArenaNode = null;
   var pillarNodes = [];
+  var casterNode = null;
   var moveRing = null;
 
   // Offscreen scratch canvas + gentle idle timer for character previews
@@ -424,11 +425,32 @@
   function releaseBossAnchor() {
     if (typeof mobs === 'undefined' || !Array.isArray(mobs)) return;
     for (var i = 0; i < mobs.length; i++) {
-      if (mobs[i] && mobs[i]._raidPillarRoot) {
+      if (mobs[i] && (mobs[i]._raidPillarRoot || mobs[i]._raidCasterRoot)) {
         mobs[i].fixed = false;
         mobs[i]._raidPillarRoot = false;
+        mobs[i]._raidCasterRoot = false;
       }
     }
+  }
+
+  function pickStageCaster(targetX, targetZ) {
+    if (typeof mobs === 'undefined' || !Array.isArray(mobs) || !mobs.length) return null;
+    var best = null;
+    var bestScore = -1e9;
+    for (var i = 0; i < mobs.length; i++) {
+      var m = mobs[i];
+      if (!m || m.hp <= 0 || m.boss) continue;
+      var d = Math.hypot((targetX || 0) - m.x, (targetZ || 0) - m.z);
+      var hpFrac = m.max > 0 ? (m.hp / m.max) : 1;
+      // Prefer healthy, heavy volcanic/astral casters within clear line-of-sight range
+      var weight = (m.max || 100) * 0.002 + hpFrac * 3.0 - Math.abs(d - 5.5) * 0.35;
+      if (/Golem|Kasa|Salamander|Baron|Executor|Dame|Mistress/i.test(m.n || '')) weight += 2.5;
+      if (weight > bestScore) {
+        bestScore = weight;
+        best = m;
+      }
+    }
+    return best;
   }
 
   function fieldBounds() {
@@ -713,7 +735,37 @@
     g.add(meteor);
 
     applyHazardRenderOrder(g, 15);
-    return { group: g, fill: fill, border: border, inner: inner, meteor: meteor, core: core };
+    return { group: g, fill: fill, border: border, inner: inner, meteor: meteor, core: core, aura: aura, tail: tail };
+  }
+
+  function makeCasterNode(THREE) {
+    var g = new THREE.Group();
+    g.visible = false;
+    var outerRing = new THREE.Mesh(
+      new THREE.RingGeometry(0.95, 1.32, 36),
+      hazardBasicMat(THREE, 0xff9426, 0.94)
+    );
+    outerRing.rotation.x = -Math.PI / 2;
+    outerRing.position.y = 0.03;
+    g.add(outerRing);
+
+    var innerSeal = new THREE.Mesh(
+      new THREE.RingGeometry(0.46, 0.68, 8),
+      hazardBasicMat(THREE, 0xffe680, 0.92)
+    );
+    innerSeal.rotation.x = -Math.PI / 2;
+    innerSeal.position.y = 0.04;
+    g.add(innerSeal);
+
+    var chargeCol = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.92, 1.18, 1.65, 16, 1, true),
+      hazardBasicMat(THREE, 0xff5a14, 0.42)
+    );
+    chargeCol.position.y = 0.84;
+    g.add(chargeCol);
+
+    applyHazardRenderOrder(g, 17);
+    return { group: g, outerRing: outerRing, innerSeal: innerSeal, chargeCol: chargeCol };
   }
 
   function makeBeamNode(THREE) {
@@ -1195,6 +1247,9 @@
         hazardGroup.add(pkNode.group);
         pillarNodes.push(pkNode);
       }
+
+      casterNode = makeCasterNode(THREE);
+      hazardGroup.add(casterNode.group);
     }
     if (!hazardGroup.parent) scene.add(hazardGroup);
 
@@ -1229,6 +1284,7 @@
     for (var im = 0; im < impactNodes.length; im++) impactNodes[im].group.visible = false;
     if (pillarArenaNode) pillarArenaNode.group.visible = false;
     for (var k = 0; k < pillarNodes.length; k++) pillarNodes[k].group.visible = false;
+    if (casterNode) casterNode.group.visible = false;
   }
 
   function floorYAt(x, z) {
@@ -1312,6 +1368,22 @@
       var pct = Math.max(0.06, Math.min(1, tg.age / tg.life));
       var pulse = 0.38 + 0.24 * pct + 0.08 * Math.sin(tg.age * 16);
       var shape = tg.shape || 'circle';
+
+      if (casterNode && tg.casterRef && tg.casterRef.hp > 0) {
+        var cx0 = tg.casterRef.x, cz0 = tg.casterRef.z;
+        var isVolcCast = Boolean(tg.volcanic || isThor);
+        casterNode.outerRing.material.color.setHex(isVolcCast ? 0xff9426 : 0x62e8ff);
+        casterNode.innerSeal.material.color.setHex(isVolcCast ? 0xffe680 : 0xc084fc);
+        casterNode.chargeCol.material.color.setHex(isVolcCast ? 0xff5a14 : 0x7c3aed);
+        casterNode.group.visible = true;
+        casterNode.group.position.set(cx0, floorYAt(cx0, cz0) - 0.06, cz0);
+        var cScale = 0.92 + 0.32 * pct + 0.06 * Math.sin(tg.age * 14);
+        casterNode.outerRing.scale.set(cScale, cScale, 1);
+        casterNode.innerSeal.rotation.z = tg.age * 4.2;
+        casterNode.innerSeal.scale.set(0.85 + 0.45 * pct, 0.85 + 0.45 * pct, 1);
+        casterNode.chargeCol.scale.set(0.85 + 0.25 * pct, 0.45 + 0.85 * pct, 0.85 + 0.25 * pct);
+        casterNode.chargeCol.material.opacity = 0.26 + 0.30 * pct;
+      }
 
       if (shape === 'pillars' && pillarArenaNode) {
         var isVolcSpire = Boolean(tg.volcanicSpires);
@@ -1482,9 +1554,14 @@
         var zones = shape === 'multi' && Array.isArray(tg.zones)
           ? tg.zones
           : [{ x: tg.x, z: tg.z, r: tg.r || 4.0 }];
+        var isVolcCrater = Boolean(tg.volcanic);
         for (var i = 0; i < zones.length && i < craterNodes.length; i++) {
           var zc = zones[i];
           var cn = craterNodes[i];
+          cn.fill.material.color.setHex(isVolcCrater ? 0xff3b0d : 0xff2448);
+          cn.border.material.color.setHex(isVolcCrater ? 0xffcf5c : 0xff8ea2);
+          if (cn.aura) cn.aura.material.color.setHex(isVolcCrater ? 0xff5a14 : 0xff4668);
+          if (cn.tail) cn.tail.material.color.setHex(isVolcCrater ? 0xffaa2b : 0xff854a);
           cn.group.visible = true;
           cn.group.position.set(zc.x, floorYAt(zc.x, zc.z) - 0.08, zc.z);
           cn.fill.scale.set(zc.r, zc.r, 1);
@@ -1496,9 +1573,40 @@
           if (tg.meteors) {
             cn.meteor.visible = true;
             var fall = 1 - pct;
-            var h = 15.5 * fall;
-            cn.meteor.position.set(-fall * 3.2, h + 0.35, -fall * 2.4);
-            cn.meteor.rotation.z = -0.22;
+            if (tg.lobFrom) {
+              // Monster-lobbed parabolic magma bomb arcing directly from the casting mob into the impact crater!
+              var ox = tg.lobFrom.x - zc.x;
+              var oz = tg.lobFrom.z - zc.z;
+              var arcPeak = 4.6;
+              var curX = ox * fall;
+              var curZ = oz * fall;
+              var curY = fall * 1.85 + 4 * pct * fall * arcPeak + 0.28;
+              cn.meteor.position.set(curX, curY, curZ);
+              var vx = -ox;
+              var vz = -oz;
+              var vy = -1.85 + 4 * (1 - 2 * pct) * arcPeak;
+              var vLen = Math.hypot(vx, vy, vz) || 1;
+              if (typeof THREE !== 'undefined' && THREE.Vector3 && cn.meteor.quaternion && cn.meteor.quaternion.setFromUnitVectors) {
+                cn.meteor.quaternion.setFromUnitVectors(
+                  new THREE.Vector3(0, 1, 0),
+                  new THREE.Vector3(-vx / vLen, -vy / vLen, -vz / vLen)
+                );
+              } else {
+                cn.meteor.rotation.set(0, 0, -0.22);
+              }
+              if (cn.tail) {
+                cn.tail.scale.set(0.85, 0.52, 0.85);
+                cn.tail.position.set(0, 1.15, 0);
+              }
+            } else {
+              var h = 15.5 * fall;
+              cn.meteor.position.set(-fall * 3.2, h + 0.35, -fall * 2.4);
+              cn.meteor.rotation.set(0, 0, -0.22);
+              if (cn.tail) {
+                cn.tail.scale.set(1, 1, 1);
+                cn.tail.position.set(0, 2.2, 0);
+              }
+            }
             cn.core.rotation.y = tg.age * 8;
             cn.core.rotation.x = tg.age * 6;
           } else {
@@ -1519,10 +1627,19 @@
           var ang = (tg.ang || 0) + (b === 1 ? Math.PI / 2 : 0);
           var w = tg.width || 3.0;
           var len = tg.len || 24;
-          styleBeamNode(bn, Boolean(tg.volcanic), pct, len);
+          var waveLen = tg.growFromCaster ? Math.max(1.4, len * pct) : len;
+          styleBeamNode(bn, Boolean(tg.volcanic), pct, waveLen);
           bn.group.visible = true;
           bn.group.position.set(tg.x, floorYAt(tg.x, tg.z) - 0.08, tg.z);
           bn.group.rotation.y = -ang;
+          if (tg.growFromCaster && bn.fireWall && bn.fireCrest) {
+            var zShift = -(len - waveLen) * 0.5;
+            bn.fireWall.position.z = zShift;
+            bn.fireCrest.position.z = zShift;
+          } else if (bn.fireWall && bn.fireCrest) {
+            bn.fireWall.position.z = 0;
+            bn.fireCrest.position.z = 0;
+          }
           bn.fill.scale.set(w, len, 1);
           bn.fill.material.opacity = pulse;
           bn.core.scale.set(Math.max(0.1, w * pct), len, 1);
@@ -1648,7 +1765,7 @@
     raid.telegraph = null;
     raid.voidPools = [];
     raid.impacts = [];
-    raid.nextCastIn = st.boss ? 0.95 : 0.65;
+    raid.nextCastIn = st.boss ? 3.8 : 1.6;
     raid.bossCleaveIn = BOSS_CLEAVE_INTERVAL_S;
     raid.pillarCastDone = false;
     raid.transition = null;
@@ -2032,88 +2149,114 @@
     return true;
   }
 
-  // ---------- Stage 1–3 Bombardments & Stage 4 Boss Mechanics (Including Pillar Wipe!) ----------
+  // ---------- Stage 1–3 Monster-Cast Skills & Stage 4 Boss Mechanics (Including Pillar Wipe!) ----------
   function spawnBridgeHazard(dt) {
     if (typeof mobs === 'undefined' || !mobs.length || typeof pl === 'undefined' || !pl) return;
     raid.nextCastIn -= dt;
     if (raid.nextCastIn > 0) return;
 
+    var caster = pickStageCaster(pl.x, pl.z);
+    if (!caster) return;
+
     raid.castSeq++;
     var b = fieldBounds();
     var isThor = raid.dungeonId === 'thor';
     var pick = raid.castSeq % 3;
-    var stageGap = raid.stage === 0 ? 0.65 : (raid.stage === 1 ? 0.55 : 0.45);
+    var stageGap = raid.stage === 0 ? 4.4 : (raid.stage === 1 ? 3.9 : 3.5);
+
+    caster.fixed = true;
+    caster._raidCasterRoot = true;
+    caster.run = false;
+    caster.atkAnim = 1;
+    caster.ry = Math.atan2(pl.z - caster.z, caster.x - pl.x);
+
+    var anchor = clampToBridge(pl.x, pl.z);
+    var distToPl = Math.hypot(anchor.x - caster.x, anchor.z - caster.z);
+    var aimDir = distToPl > 0.2 ? Math.atan2(anchor.z - caster.z, anchor.x - caster.x) : (Math.PI * 0.5);
 
     if (isThor) {
-      // Thor Volcano Stages 1–3: distinct volcanic causeway hazards (Fault Trenches, Magma Surge Wall, Caldera Vent)
-      var anchor = clampToBridge(pl.x, pl.z);
+      // Thor Volcano Stages 1–3: every hazard visibly originates & animates directly out of the casting Volcano mob!
       if (pick === 1) {
-        var faultAng = (raid.castSeq % 2 === 0) ? (Math.PI / 2) : 0;
-        var fnx = Math.cos(faultAng), fnz = Math.sin(faultAng);
+        var fissureLen = Math.max(12.5, Math.min(16.5, distToPl + 5.2));
+        var fCx = caster.x + Math.cos(aimDir) * fissureLen * 0.5;
+        var fCz = caster.z + Math.sin(aimDir) * fissureLen * 0.5;
         raid.telegraph = {
-          name: 'Tectonic Faults',
-          hint: 'TECTONIC FAULTS — Stand on the safe basalt ridge between magma trenches!',
-          shape: 'fissure_lanes',
+          name: 'Magma Fissure',
+          hint: caster.n.toUpperCase() + ' SLAMS A MAGMA FISSURE — Sidestep off the fault line!',
+          shape: 'beam',
           volcanic: true,
-          x: anchor.x,
-          z: anchor.z,
-          beams: [
-            { x: anchor.x - fnx * 2.8, z: anchor.z - fnz * 2.8, ang: faultAng, width: 2.55, len: 24 },
-            { x: anchor.x + fnx * 2.8, z: anchor.z + fnz * 2.8, ang: faultAng, width: 2.55, len: 24 }
-          ],
+          growFromCaster: true,
+          casterRef: caster,
+          casterX: caster.x,
+          casterZ: caster.z,
+          x: fCx,
+          z: fCz,
+          ang: aimDir + Math.PI * 0.5,
+          width: 2.75,
+          len: fissureLen,
           dmgPct: 0.33,
           age: 0,
-          life: 1.95
+          life: 2.2
         };
       } else if (pick === 2) {
-        var gapChoices = [-5.2, 0, 5.2];
-        var gapX = gapChoices[raid.castSeq % gapChoices.length];
-        if (Math.abs(anchor.x - gapX) < 1.6) {
-          gapX = gapChoices[(raid.castSeq + 1) % gapChoices.length];
+        var bombZones = [{ x: anchor.x, z: anchor.z, r: 3.05 }];
+        if (raid.stage >= 1) {
+          var sideAng = aimDir + ((raid.castSeq % 2 === 0) ? 0.65 : -0.65);
+          var secondPt = clampToBridge(
+            caster.x + Math.cos(sideAng) * Math.max(4.5, distToPl * 0.85),
+            caster.z + Math.sin(sideAng) * Math.max(4.5, distToPl * 0.85)
+          );
+          bombZones.push({ x: secondPt.x, z: secondPt.z, r: 2.85 });
         }
         raid.telegraph = {
-          name: 'Magma Surge',
-          hint: 'MAGMA SURGE — Move into the glowing green Safe Breach!',
-          shape: 'lava_wall',
+          name: 'Magma Bomb',
+          hint: caster.n.toUpperCase() + ' HURLS MAGMA BOMBS — Move out of the impact craters!',
+          shape: 'multi',
           volcanic: true,
-          x: gapX,
-          z: anchor.z,
-          gapX: gapX,
-          gapHalfW: 2.65,
-          depth: 6.6,
-          dmgPct: 0.34,
-          age: 0,
-          life: 2.0
-        };
-      } else {
-        var ventOriginX = (raid.castSeq % 2 === 0 ? -1 : 1) * (b.bx - 1.2);
-        var ventOriginZ = Math.max(b.z0 + 2.5, Math.min(b.z1 - 2.5, anchor.z - 1.5));
-        var ventAng = Math.atan2(anchor.z - ventOriginZ, anchor.x - ventOriginX);
-        raid.telegraph = {
-          name: 'Caldera Vent Blast',
-          hint: 'CALDERA VENT — Sidestep the magma fan & burning lava pool!',
-          shape: 'cone',
-          volcanic: true,
+          meteors: true,
           leavesPool: true,
+          lobFrom: { x: caster.x, z: caster.z },
+          casterRef: caster,
+          casterX: caster.x,
+          casterZ: caster.z,
           poolSpot: { x: anchor.x, z: anchor.z },
-          x: ventOriginX,
-          z: ventOriginZ,
-          ang: ventAng,
-          halfArc: CONE_HALF_ARC,
-          r: 13.5,
+          zones: bombZones,
+          x: anchor.x,
+          z: anchor.z,
           dmgPct: 0.32,
           age: 0,
-          life: 1.95
+          life: 2.25
+        };
+      } else {
+        raid.telegraph = {
+          name: 'Flame Breath',
+          hint: caster.n.toUpperCase() + ' INHALES FLAME BREATH — Step outside its frontal cone!',
+          shape: 'cone',
+          volcanic: true,
+          casterRef: caster,
+          casterX: caster.x,
+          casterZ: caster.z,
+          x: caster.x,
+          z: caster.z,
+          ang: aimDir,
+          halfArc: 0.72,
+          r: Math.max(9.6, Math.min(12.2, distToPl + 3.8)),
+          dmgPct: 0.31,
+          age: 0,
+          life: 2.2
         };
       }
       raid.nextCastIn = stageGap;
+      if (typeof addFloat === 'function') {
+        addFloat(caster.x, 2.35, caster.z, caster.n + ' · ' + raid.telegraph.name + '!', '#ffb35c', true, 'skill');
+      }
       if (typeof skillNameFloat === 'function') skillNameFloat(raid.telegraph.name);
       return;
     }
 
     if (pick === 1) {
       var count = raid.stage >= 2 ? 4 : 3;
-      var zones = [{ x: clampToBridge(pl.x, pl.z).x, z: clampToBridge(pl.x, pl.z).z, r: 3.1 }];
+      var zones = [{ x: anchor.x, z: anchor.z, r: 3.1 }];
       for (var i = 1; i < count; i++) {
         var ox = ((i % 2 === 0 ? 1 : -1) * (2.6 + (i * 1.5) % 4.5));
         var oz = Math.max(b.z0 + 2, Math.min(b.z1 - 2, pl.z - 3.5 + (i - 1.5) * 4.2));
@@ -2125,38 +2268,49 @@
         hint: 'FALLING METEORS — Move or DODGE out of craters!',
         shape: 'multi',
         meteors: true,
+        casterRef: caster,
+        casterX: caster.x,
+        casterZ: caster.z,
         zones: zones,
         x: zones[0].x,
         z: zones[0].z,
         dmgPct: 0.32,
         age: 0,
-        life: 2.2
+        life: 2.25
       };
     } else if (pick === 2) {
-      var crossBridge = (raid.castSeq % 2 === 0);
-      var ang = crossBridge ? (Math.PI / 2 + (raid.stage === 2 ? 0.28 : 0)) : 0;
+      var lanceLen = Math.max(13.0, Math.min(18.0, distToPl + 5.5));
+      var lCx = caster.x + Math.cos(aimDir) * lanceLen * 0.5;
+      var lCz = caster.z + Math.sin(aimDir) * lanceLen * 0.5;
       raid.telegraph = {
         name: 'Sanctuary Lance',
-        hint: 'ENERGY BEAM — Sidestep off the laser lane!',
+        hint: 'ENERGY BEAM — Sidestep off ' + caster.n + '\'s laser lane!',
         shape: 'beam',
-        x: clampToBridge(pl.x, pl.z).x,
-        z: clampToBridge(pl.x, pl.z).z,
-        ang: ang,
-        width: 3.1,
-        len: 24,
+        casterRef: caster,
+        casterX: caster.x,
+        casterZ: caster.z,
+        x: lCx,
+        z: lCz,
+        ang: aimDir + Math.PI * 0.5,
+        width: 2.95,
+        len: lanceLen,
         dmgPct: 0.34,
         age: 0,
-        life: 2.1
+        life: 2.2
       };
     } else {
-      var p1 = clampToBridge(pl.x, pl.z);
+      var p1 = anchor;
       var p2 = clampToBridge(-pl.x * 0.6, pl.z - 3.2);
       raid.telegraph = {
         name: 'Void Comet',
-        hint: 'COMET STRIKE — Leaves a burning pool, reposition!',
+        hint: 'COMET STRIKE — Hurled by ' + caster.n + ', reposition!',
         shape: 'multi',
         meteors: true,
         leavesPool: true,
+        lobFrom: { x: caster.x, z: caster.z },
+        casterRef: caster,
+        casterX: caster.x,
+        casterZ: caster.z,
         zones: [
           { x: p1.x, z: p1.z, r: 3.2 },
           { x: p2.x, z: p2.z, r: 3.0 }
@@ -2165,10 +2319,13 @@
         z: p1.z,
         dmgPct: 0.30,
         age: 0,
-        life: 2.15
+        life: 2.25
       };
     }
     raid.nextCastIn = stageGap;
+    if (typeof addFloat === 'function') {
+      addFloat(caster.x, 2.35, caster.z, caster.n + ' · ' + raid.telegraph.name + '!', '#93e6ff', true, 'skill');
+    }
     if (typeof skillNameFloat === 'function') skillNameFloat(raid.telegraph.name);
   }
 
@@ -2220,10 +2377,12 @@
 
     var key = chooseBossSkill(boss);
     var hpRatio = boss.max > 0 ? boss.hp / boss.max : 1;
-    var gap = hpRatio < 0.5 ? 0.85 : 1.15;
+    // Balanced raid boss cadence on BOTH Astral & Thor Volcano (~6.2s rest normal, ~4.8s enraged below 50% HP)
+    var gap = hpRatio < 0.5 ? 4.8 : 6.2;
     var px = (typeof pl !== 'undefined' && pl) ? pl.x : 0;
     var pz = (typeof pl !== 'undefined' && pl) ? pl.z : 2;
     var dist = Math.hypot(px - boss.x, pz - boss.z);
+    boss.atkAnim = 1;
 
     if (key === 'obsidian_spires') {
       var bSp = fieldBounds();
@@ -2249,7 +2408,7 @@
         age: 0,
         life: 4.4
       };
-      gap = hpRatio < 0.5 ? 3.2 : 3.9;
+      gap = hpRatio < 0.5 ? 5.8 : 7.2;
       pushSystemChat('⚠ ' + boss.n + ' unleashes Supernova Cataclysm! Resist the pull & hide behind an Obsidian Spire!');
     } else if (key === 'cone') {
       boss.fixed = true;
@@ -2375,7 +2534,7 @@
         age: 0,
         life: 4.2
       };
-      gap = hpRatio < 0.5 ? 3.4 : 4.2;
+      gap = hpRatio < 0.5 ? 5.8 : 7.2;
       pushSystemChat('⚠ ' + boss.n + ' charges ' + wipeName + '! Hide in a Pillar shadow!');
     } else if (key === 'donut') {
       raid.telegraph = {
@@ -2590,6 +2749,26 @@
     }
 
     var tg = raid.telegraph;
+    if (!st.boss && tg.casterRef) {
+      var casterAlive = tg.casterRef.hp > 0 && typeof mobs !== 'undefined' && Array.isArray(mobs) && mobs.indexOf(tg.casterRef) !== -1;
+      if (!casterAlive) {
+        releaseBossAnchor();
+        raid.telegraph = null;
+        if (typeof addFloat === 'function') {
+          addFloat(tg.casterX || tg.x, 2.2, tg.casterZ || tg.z, 'CAST INTERRUPTED!', '#7ef7c4', true, 'evade');
+        }
+        updateMeshes();
+        return;
+      }
+      tg.casterRef.run = false;
+      if (typeof pl !== 'undefined' && pl) {
+        tg.casterRef.ry = Math.atan2(pl.z - tg.casterRef.z, tg.casterRef.x - pl.x);
+      }
+      if (!tg._releaseAnimPlayed && tg.age >= tg.life * 0.78) {
+        tg._releaseAnimPlayed = true;
+        tg.casterRef.atkAnim = 1;
+      }
+    }
     tg.age += dt;
     if (st.boss && liveBoss && (tg.shape === 'circle' || tg.shape === 'donut' || tg.shape === 'cross' || tg.shape === 'ringwaves' || tg.shape === 'triskelion')) {
       tg.x = liveBoss.x;
