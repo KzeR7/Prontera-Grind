@@ -253,11 +253,48 @@ check('SocialRoom relays party raid events ONLY to party members with zero setAl
   assert.equal(alarms, 0, 'zero DO alarms scheduled by party raid');
 });
 
-// 8. CSS sanity check
-check('raid.css hides normal UI clutter during body.raid-open', () => {
-  for (const sel of ['#dock', '#sideRail', '#xp-dock', '#hud', '#socialChat']) {
+// 8. GM unlimited tries, Stage 1-3 bridge bombardments, 5-shape boss geometry, anti-ranged donut/pools, WASD facing, and UI/BGM rules
+check('GM unlimited tries, bridge bombardments, 5-shape boss mechanics, anti-ranged donut/pools, WASD facing & CSS line-height', () => {
+  // GM account gets unlimited tries even when S.gm 100x toggle is off
+  g.ev(`S.gm = false; CLOUD.on = true; CLOUD.gm = true; S.raid = { day: trialDay(), used: 99 };`);
+  assert.equal(g.ev(`PGRaid.raidLeftToday()`), Infinity, 'CLOUD.gm account has Infinity raid tries');
+  assert.equal(g.ev(`PGRaid.canEnter('solo').ok`), true, 'CLOUD.gm account bypasses daily cap');
+  g.ev(`PGRaid.showLobby('solo');`);
+  assert.match(g.ev(`document.getElementById('raidLobbyBody').innerHTML`), /Unlimited \(GM\)/);
+
+  // Start Solo Raid and verify Stage 1 spawns bridge bombardment hazards & WASD rotates pl.ry
+  assert.equal(g.ev(`PGRaid.start('solo')`), true);
+  g.ev(`for(let i=0;i<36;i++) PGRaid.tick(0.1);`);
+  assert.ok(g.ev(`!!PGRaid.raid.telegraph`), 'Stage 1 spawns active bridge bombardment hazard');
+  assert.match(g.ev(`PGRaid.raid.telegraph.name`), /Starfall|Lance|Comet/);
+
+  // WASD walking away from mobs faces the walking direction (+Z), not backwards toward mob (-Z)
+  g.ev(`pl.x = 0; pl.z = 0; az = 0; mobs[0].x = 0; mobs[0].z = -6; mob = mobs[0]; PGRaid.onKey('s', true);`);
+  for (let i = 0; i < 6; i++) g.ev(`mobs.forEach(m => m.at = 999); update(1/30); t += 1/30;`);
+  const ryWalkingSouth = g.ev(`pl.ry`);
+  g.ev(`PGRaid.onKey('s', false);`);
+  assert.ok(Math.abs(ryWalkingSouth - (-Math.PI / 2)) < 0.25, 'WASD walking rotates pl.ry to face walk direction (+Z)');
+
+  // 5-shape hitByTelegraph geometry + Anti-Ranged Donut + Void Pool burn
+  // Donut (Eye of Abyss): melee (<3.7) is SAFE, ranged (e.g. dist 7) is HIT!
+  assert.equal(g.ev(`PGRaid.hitByTelegraph({shape:'donut',x:0,z:0,innerR:3.7,outerR:16}, 0, 2.0)`), false, 'melee inside donut blue ring is safe');
+  assert.equal(g.ev(`PGRaid.hitByTelegraph({shape:'donut',x:0,z:0,innerR:3.7,outerR:16}, 0, 7.5)`), true, 'ranged player outside donut ring is hit');
+  // Cross (+): axes are hit, diagonal quadrant is safe
+  assert.equal(g.ev(`PGRaid.hitByTelegraph({shape:'cross',x:0,z:0,ang:0,width:2.8,len:26}, 0, 6)`), true, 'cross axis hit');
+  assert.equal(g.ev(`PGRaid.hitByTelegraph({shape:'cross',x:0,z:0,ang:0,width:2.8,len:26}, 5, 5)`), false, 'cross diagonal quadrant safe');
+
+  // Void Pool anti-ranged DoT ticks down player HP when standing inside
+  g.ev(`S.hp = maxHp(); pl.x = 4; pl.z = 4; PGRaid.raid.iframes = 0; PGRaid.raid.voidPools = [{x:4,z:4,r:3.4,left:3.0,tick:0.1}];`);
+  const hpPrePool = g.ev(`S.hp`);
+  g.ev(`PGRaid.tick(0.2);`);
+  assert.ok(g.ev(`S.hp`) < hpPrePool, 'standing in anti-ranged Void Pool deals burn damage');
+  g.ev(`PGRaid.leave(); PGRaid.hideResult(); CLOUD.gm = false;`);
+
+  // CSS rules: hides #bgmPlayer and resets #view's line-height: 0
+  for (const sel of ['#dock', '#sideRail', '#xp-dock', '#hud', '#socialChat', '#bgmPlayer']) {
     assert.ok(raidCss.includes('body.raid-open ' + sel), 'raid.css hides ' + sel);
   }
+  assert.match(raidCss, /#raidLobby,\s*#raidHud,\s*#raidResult\s*\{[^}]*line-height:\s*1\.45/, 'raid.css resets #view line-height: 0');
 });
 
 g.close();

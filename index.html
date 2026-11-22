@@ -916,15 +916,15 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="preload" href="assets/ui/fonts/font-5.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-6.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-7.ttf" as="font" type="font/ttf" crossorigin>
-<link rel="stylesheet" href="assets/ui/eclipse.css?v=452">
-<link rel="stylesheet" href="assets/ui/mobile.css?v=452">
+<link rel="stylesheet" href="assets/ui/eclipse.css?v=453">
+<link rel="stylesheet" href="assets/ui/mobile.css?v=453">
 <link rel="stylesheet" href="assets/ui/mastery-titles.css?v=450">
 <script src="assets/ui/mobile.js?v=274"></script>
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
-<link rel="stylesheet" href="assets/social.css?v=452">
-<link rel="stylesheet" href="assets/raid.css?v=452">
+<link rel="stylesheet" href="assets/social.css?v=453">
+<link rel="stylesheet" href="assets/raid.css?v=453">
 <link rel="stylesheet" href="assets/social-battle.css?v=393">
-  <link rel="stylesheet" href="assets/social-fishing.css?v=452"><link rel="stylesheet" href="assets/friends.css?v=273">
+  <link rel="stylesheet" href="assets/social-fishing.css?v=453"><link rel="stylesheet" href="assets/friends.css?v=273">
 <link rel="stylesheet" href="assets/adventure-guide.css?v=450">
 </head>
 <body>
@@ -1055,10 +1055,10 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <div id="tooltip"></div>
 <link rel="stylesheet" href="assets/wardrobe.css?v=138">
 <link rel="stylesheet" href="assets/shop.css?v=318">
-<script src="assets/wardrobe.js?v=452"></script>
+<script src="assets/wardrobe.js?v=453"></script>
 <script src="assets/shop-catalog.js?v=321"></script>
 <script src="assets/fourth-jobs.js?v=179"></script>
-<script src="assets/expanded-jobs.js?v=452"></script>
+<script src="assets/expanded-jobs.js?v=453"></script>
 <script src="assets/ascension.js?v=156"></script>
 <script src="assets/native-mob-heights.js?v=153"></script>
 <script src="assets/native-fields.js?v=197"></script>
@@ -1084,7 +1084,7 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <script src="assets/expanded-fx/approved.js?v=450"></script>
 <script src="assets/skill-afterglow.js?v=450"></script>
 <script src="assets/boss-fx.js?v=249"></script>
-<script src="assets/raid.js?v=452"></script>
+<script src="assets/raid.js?v=453"></script>
 <script src="assets/pets.js?v=130"></script>
 <script src="assets/bgm-tracks.js?v=206"></script>
 <script src="assets/bgm.js?v=207"></script>
@@ -1359,7 +1359,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-22 haven-v452 Astral Raid: 3 stages + Thanatos, DODGE + party revive';
+const BUILD='2026-11-22 haven-v453 Astral Raid: bridge meteors, 5-shape boss kit, anti-ranged & UI polish';
 // v364: this write used to sit AFTER the `//` on the BUILD line, so it was part of the comment and
 // never ran - the login card showed an empty #buildTag and there was no way to confirm which file
 // the browser had loaded. It also has to survive the script running before the login card exists.
@@ -12051,7 +12051,7 @@ function update(dt){
   if(pv('hpreg')&&S.hp<maxHp())S.hp=Math.min(maxHp(),S.hp+dt*maxHp()*pv('hpreg')/100);
   shots.forEach(s=>s.t+=dt*7);shots=shots.filter(s=>{if(s.t<1)return true;if(s.m)scene.remove(s.m);return false});
   tickSkillFx(dt);
-  tickBossSkill();
+  if(!(typeof PGRaid!=='undefined'&&PGRaid.raid&&PGRaid.raid.on))tickBossSkill();
   if(typeof PGRaid!=='undefined'&&PGRaid.raid&&PGRaid.raid.on){
     PGRaid.tick(dt);
     if(!PGRaid.raid.on)return;
@@ -12154,7 +12154,7 @@ if(S.hp<=0){if(typeof JOB_RITE!=='undefined'&&JOB_RITE.on){showJobRiteResult(fal
         if(dd>.001&&dd<1.1){const push=(1.1-dd)*dt*1.6;m.x+=dx/dd*push;m.z+=dz/dd*push}}
     }
     if(!mob||!mobs.includes(mob)||!isEngaged(mob))mob=mobs.find(m=>m.boss)||packMob();
-    if(mob){reach=heroStandoff(mob);
+    if(mob&&!(typeof PGRaid!=='undefined'&&PGRaid.raid&&PGRaid.raid.on&&PGRaid.isManualMove&&PGRaid.isManualMove())){reach=heroStandoff(mob);
       let dist=Math.hypot(mob.x-pl.x,mob.z-pl.z)||.01;
       const dashReady=comboConfig().enabled&&t>=skillState().recoverUntil&&rotationSkills().some(s=>s.dash&&(skCd[s.id]||0)<=0&&dist<=s.dash+.6);
       if(!swing&&pAtkT<=0&&dist>2.3&&dashReady)playerAttack();
@@ -12188,7 +12188,7 @@ if(S.hp<=0){if(typeof JOB_RITE!=='undefined'&&JOB_RITE.on){showJobRiteResult(fal
     if(pd>.05&&!TRIAL.on){const s=Math.min(pd,spd*dt);pl.x+=px/pd*s;pl.z+=pz/pd*s}
   }
   pl.x=cl(pl.x,-BX_,BX_);pl.z=cl(pl.z,Z0,Z1);
-  if(mob)pl.ry=-Math.atan2(mob.z-pl.z,mob.x-pl.x);else if(pl.run)pl.ry=-Math.atan2(pz,px);
+  if(raidMv&&pl.run)pl.ry=-Math.atan2(pz,px);else if(mob)pl.ry=-Math.atan2(mob.z-pl.z,mob.x-pl.x);else if(pl.run)pl.ry=-Math.atan2(pz,px);
   if(S.hp<maxHp()&&Math.floor(t*2)!==Math.floor((t-dt)*2))S.hp=Math.min(maxHp(),S.hp+Math.ceil(maxHp()*.008));
   barT-=dt;if(barT<=0){barT=.15;for(const el of document.querySelectorAll('[data-combo-status]'))el.textContent=comboStatus();bars()}
   floats.forEach(f=>{f.life-=dt*(f.rate||1.1);if(f.kind!=='skill')f.y+=dt*(f.rate?0:(['incoming','miss','evade'].includes(f.kind)?.3:.8))});floats=floats.filter(f=>{if(f.life>0)return true;if(f.el)f.el.remove();return false});
@@ -15961,17 +15961,27 @@ function castBossSkill(boss,list){
   if(typeof CombatAudio!=='undefined'&&CombatAudio.hit)CombatAudio.hit(true,S.sfx!==false,'axe','skill');
   if(skill)skillNameFloat(skill.name);
 }
+function triggerRaidBossFx(id,x,z,title){
+  if(typeof simVisualsOff==='function'&&simVisualsOff())return;
+  if(!getBossSkillLayer()||typeof PGBossFx!=='object'||!PGBossFx.has(id))return;
+  const life=PGBossFx.life(id)||1.8;
+  bossCast={id,start:t,age:0,life,x,z,fixed:true,raid:true,seed:Math.floor(Math.random()*99991)};
+  const power=PGBossFx.shake(id);
+  if(power>0&&S.cameraShake!==false)shake=Math.max(shake,power);
+  if(typeof CombatAudio!=='undefined'&&CombatAudio.hit)CombatAudio.hit(true,S.sfx!==false,'axe','skill');
+  if(title&&typeof skillNameFloat==='function')skillNameFloat(title);
+}
 function syncBossSkillFx(){
   const layer=bossSkillLayer;if(!layer)return;
   const boss=bossSkillTarget();
   const casts=[];
-  if(bossCast&&boss&&casts.length<1){
+  if(bossCast&&(boss||bossCast.raid)&&casts.length<1){
     const age=t-bossCast.start;
     if(age>=0&&age<bossCast.life){
       bossCast.age=age;
-      bossCast.x=boss.x;bossCast.z=boss.z;
+      if(boss&&!bossCast.fixed){bossCast.x=boss.x;bossCast.z=boss.z}
       casts.push({id:bossCast.id,age,x:bossCast.x,z:bossCast.z,seed:bossCast.seed,
-        scale:typeof mobVisualScale==='function'?cl(mobVisualScale(boss)/1.4,.75,1.6):1});
+        scale:boss&&typeof mobVisualScale==='function'?cl(mobVisualScale(boss)/1.4,.75,1.6):1.15});
     }else if(age>=bossCast.life){bossCast=null}
   }
   const floor=(x,z)=>typeof KIT!=='undefined'&&KIT.nativeWorld?actorFloorY(x,z)-.035:0;
@@ -16538,22 +16548,22 @@ setInterval(updateWatch,60000);
 // be hours old while the player was on another tab, and the check is a 60-byte text file.
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&(pendingUpdateBuild||Date.now()-PAGE_STARTED_AT>30000))updateWatch()});
 </script>
-<script src="assets/wardrobe-ui.js?v=452"></script>
+<script src="assets/wardrobe-ui.js?v=453"></script>
 <script src="assets/shop.js?v=321"></script>
 <script src="assets/friends.js?v=273"></script>
-<script src="assets/digimon/roster.js?v=452"></script>
-<script src="assets/digimon/base-stats.js?v=452"></script>
-<script src="assets/social-rules.js?v=452"></script>
-<script src="assets/social-poker.js?v=452"></script>
-<script src="assets/digimon-sanctuary.js?v=452"></script>
+<script src="assets/digimon/roster.js?v=453"></script>
+<script src="assets/digimon/base-stats.js?v=453"></script>
+<script src="assets/social-rules.js?v=453"></script>
+<script src="assets/social-poker.js?v=453"></script>
+<script src="assets/digimon-sanctuary.js?v=453"></script>
 <script src="assets/digimon-battle.js?v=393"></script>
-<script src="assets/social-digimon.js?v=452"></script>
+<script src="assets/social-digimon.js?v=453"></script>
 <script src="assets/social-gym-redesign.js?v=393"></script>
 <script src="assets/social-pond-design.js?v=393"></script>
 <script src="assets/social-title-art.js?v=450"></script>
-<script src="assets/social-scene.js?v=452"></script>
-<script src="assets/social-fishing.js?v=452"></script>
-<script src="assets/plaza-bots.js?v=452"></script>
+<script src="assets/social-scene.js?v=453"></script>
+<script src="assets/social-fishing.js?v=453"></script>
+<script src="assets/plaza-bots.js?v=453"></script>
 <script src="assets/adventure-guide.js?v=450"></script>
-<script src="assets/social.js?v=452"></script></body>
+<script src="assets/social.js?v=453"></script></body>
 </html>
