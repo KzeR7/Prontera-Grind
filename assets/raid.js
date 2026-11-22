@@ -157,7 +157,8 @@
     reviving: null,        // { targetId, targetName, left }
     telegraph: null,       // active boss or bridge hazard
     voidPools: [],         // [{ x, z, r, left, tick }] lingering anti-ranged burn zones
-    nextCastIn: 3.4,
+    impacts: [],           // [{ x, z, r, age, life, volcanic }] 3D impact eruption bursts
+    nextCastIn: 0.75,
     bossCleaveIn: 2.5,
     castSeq: 0,
     lastSkillKey: '',
@@ -192,6 +193,7 @@
   var ringWavesNode = null;
   var lavaWallNode = null;
   var poolNodes = [];
+  var impactNodes = [];
   var pillarArenaNode = null;
   var pillarNodes = [];
   var moveRing = null;
@@ -640,54 +642,77 @@
     }
   }
 
-  // ---------- Reusable Three.js Hazard & Pillar Visuals ----------
+  // ---------- Reusable Three.js Hazard & Pillar Visuals (Fog-Immune + 3D Volcanic Eruptions) ----------
+  function hazardBasicMat(THREE, hex, op) {
+    return new THREE.MeshBasicMaterial({
+      color: hex,
+      transparent: op < 1,
+      opacity: op,
+      side: THREE.DoubleSide,
+      depthWrite: op >= 1,
+      fog: false,
+      toneMapped: false
+    });
+  }
+
+  function applyHazardRenderOrder(rootObj, order) {
+    if (!rootObj || !rootObj.traverse) return;
+    rootObj.traverse(function (o) {
+      if (o.isMesh) {
+        o.renderOrder = order;
+        o.frustumCulled = false;
+      }
+    });
+  }
+
   function makeCraterNode(THREE) {
     var g = new THREE.Group();
     g.visible = false;
 
     var fill = new THREE.Mesh(
       new THREE.CircleGeometry(1, 40),
-      new THREE.MeshBasicMaterial({ color: 0xff2448, transparent: true, opacity: 0.24, side: THREE.DoubleSide, depthWrite: false })
+      hazardBasicMat(THREE, 0xff2448, 0.36)
     );
     fill.rotation.x = -Math.PI / 2;
     g.add(fill);
 
     var border = new THREE.Mesh(
-      new THREE.RingGeometry(0.93, 1.0, 44),
-      new THREE.MeshBasicMaterial({ color: 0xff6e86, transparent: true, opacity: 0.92, side: THREE.DoubleSide, depthWrite: false })
+      new THREE.RingGeometry(0.91, 1.0, 44),
+      hazardBasicMat(THREE, 0xff8ea2, 0.96)
     );
     border.rotation.x = -Math.PI / 2;
-    border.position.y = 0.01;
+    border.position.y = 0.012;
     g.add(border);
 
     var inner = new THREE.Mesh(
-      new THREE.RingGeometry(0.02, 0.14, 40),
-      new THREE.MeshBasicMaterial({ color: 0xffd27d, transparent: true, opacity: 0.72, side: THREE.DoubleSide, depthWrite: false })
+      new THREE.RingGeometry(0.02, 0.16, 40),
+      hazardBasicMat(THREE, 0xffe28a, 0.84)
     );
     inner.rotation.x = -Math.PI / 2;
-    inner.position.y = 0.015;
+    inner.position.y = 0.018;
     g.add(inner);
 
     var meteor = new THREE.Group();
     meteor.visible = false;
     var core = new THREE.Mesh(
-      new THREE.OctahedronGeometry(0.52, 1),
-      new THREE.MeshBasicMaterial({ color: 0xfff0b8 })
+      new THREE.OctahedronGeometry(0.56, 1),
+      hazardBasicMat(THREE, 0xfff3c4, 1)
     );
     meteor.add(core);
     var aura = new THREE.Mesh(
-      new THREE.SphereGeometry(0.74, 12, 10),
-      new THREE.MeshBasicMaterial({ color: 0xff4668, transparent: true, opacity: 0.58, depthWrite: false })
+      new THREE.SphereGeometry(0.78, 12, 10),
+      hazardBasicMat(THREE, 0xff4668, 0.65)
     );
     meteor.add(aura);
     var tail = new THREE.Mesh(
-      new THREE.ConeGeometry(0.55, 4.2, 12, 1, true),
-      new THREE.MeshBasicMaterial({ color: 0xff7b4a, transparent: true, opacity: 0.45, side: THREE.DoubleSide, depthWrite: false })
+      new THREE.ConeGeometry(0.58, 4.4, 12, 1, true),
+      hazardBasicMat(THREE, 0xff854a, 0.55)
     );
-    tail.position.set(0, 2.1, 0);
+    tail.position.set(0, 2.2, 0);
     meteor.add(tail);
     g.add(meteor);
 
+    applyHazardRenderOrder(g, 15);
     return { group: g, fill: fill, border: border, inner: inner, meteor: meteor, core: core };
   }
 
@@ -697,31 +722,51 @@
 
     var fill = new THREE.Mesh(
       new THREE.PlaneGeometry(1, 1),
-      new THREE.MeshBasicMaterial({ color: 0xff244c, transparent: true, opacity: 0.25, side: THREE.DoubleSide, depthWrite: false })
+      hazardBasicMat(THREE, 0xff244c, 0.42)
     );
     fill.rotation.x = -Math.PI / 2;
     g.add(fill);
 
     var core = new THREE.Mesh(
       new THREE.PlaneGeometry(1, 1),
-      new THREE.MeshBasicMaterial({ color: 0xffcf7c, transparent: true, opacity: 0.55, side: THREE.DoubleSide, depthWrite: false })
+      hazardBasicMat(THREE, 0xffe38a, 0.78)
     );
     core.rotation.x = -Math.PI / 2;
-    core.position.y = 0.012;
+    core.position.y = 0.014;
     g.add(core);
 
     var railL = new THREE.Mesh(
-      new THREE.PlaneGeometry(0.08, 1),
-      new THREE.MeshBasicMaterial({ color: 0xff8599, transparent: true, opacity: 0.95, side: THREE.DoubleSide, depthWrite: false })
+      new THREE.PlaneGeometry(0.12, 1),
+      hazardBasicMat(THREE, 0xffb45c, 0.98)
     );
     railL.rotation.x = -Math.PI / 2;
-    railL.position.y = 0.015;
+    railL.position.y = 0.02;
     g.add(railL);
 
     var railR = railL.clone();
     g.add(railR);
 
-    return { group: g, fill: fill, core: core, railL: railL, railR: railR };
+    // 3D Vertical Erupting Magma Fire-Curtain along volcanic fault trenches & rotating pinwheel spokes!
+    var fireWall = new THREE.Mesh(
+      new THREE.PlaneGeometry(1, 1.85),
+      hazardBasicMat(THREE, 0xff5a14, 0.58)
+    );
+    fireWall.rotation.y = Math.PI / 2;
+    fireWall.position.y = 0.92;
+    fireWall.visible = false;
+    g.add(fireWall);
+
+    var fireCrest = new THREE.Mesh(
+      new THREE.PlaneGeometry(1, 0.62),
+      hazardBasicMat(THREE, 0xfff09e, 0.85)
+    );
+    fireCrest.rotation.y = Math.PI / 2;
+    fireCrest.position.y = 0.34;
+    fireCrest.visible = false;
+    g.add(fireCrest);
+
+    applyHazardRenderOrder(g, 15);
+    return { group: g, fill: fill, core: core, railL: railL, railR: railR, fireWall: fireWall, fireCrest: fireCrest };
   }
 
   function makeDonutNode(THREE) {
@@ -730,27 +775,28 @@
 
     var danger = new THREE.Mesh(
       new THREE.RingGeometry(1, 4.0, 56),
-      new THREE.MeshBasicMaterial({ color: 0xff2248, transparent: true, opacity: 0.28, side: THREE.DoubleSide, depthWrite: false })
+      hazardBasicMat(THREE, 0xff2248, 0.38)
     );
     danger.rotation.x = -Math.PI / 2;
     g.add(danger);
 
     var safeRing = new THREE.Mesh(
-      new THREE.RingGeometry(0.9, 1.0, 48),
-      new THREE.MeshBasicMaterial({ color: 0x5cf2ff, transparent: true, opacity: 0.95, side: THREE.DoubleSide, depthWrite: false })
+      new THREE.RingGeometry(0.89, 1.0, 48),
+      hazardBasicMat(THREE, 0x5cf2ff, 0.98)
     );
     safeRing.rotation.x = -Math.PI / 2;
-    safeRing.position.y = 0.018;
+    safeRing.position.y = 0.02;
     g.add(safeRing);
 
     var safeFill = new THREE.Mesh(
       new THREE.CircleGeometry(0.95, 44),
-      new THREE.MeshBasicMaterial({ color: 0x3ce8b5, transparent: true, opacity: 0.14, side: THREE.DoubleSide, depthWrite: false })
+      hazardBasicMat(THREE, 0x3ce8b5, 0.20)
     );
     safeFill.rotation.x = -Math.PI / 2;
     safeFill.position.y = 0.01;
     g.add(safeFill);
 
+    applyHazardRenderOrder(g, 15);
     return { group: g, danger: danger, safeRing: safeRing, safeFill: safeFill };
   }
 
@@ -759,100 +805,141 @@
     g.visible = false;
     var fill = new THREE.Mesh(
       new THREE.CircleGeometry(1, 36),
-      new THREE.MeshBasicMaterial({ color: 0x9c2cff, transparent: true, opacity: 0.34, side: THREE.DoubleSide, depthWrite: false })
+      hazardBasicMat(THREE, 0x9c2cff, 0.50)
     );
     fill.rotation.x = -Math.PI / 2;
     g.add(fill);
     var ring = new THREE.Mesh(
-      new THREE.RingGeometry(0.88, 1.0, 36),
-      new THREE.MeshBasicMaterial({ color: 0xff5492, transparent: true, opacity: 0.85, side: THREE.DoubleSide, depthWrite: false })
+      new THREE.RingGeometry(0.86, 1.0, 36),
+      hazardBasicMat(THREE, 0xff5492, 0.96)
     );
     ring.rotation.x = -Math.PI / 2;
-    ring.position.y = 0.012;
+    ring.position.y = 0.015;
     g.add(ring);
-    return { group: g, fill: fill, ring: ring };
+    var plume = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.55, 0.88, 1.15, 18, 1, true),
+      hazardBasicMat(THREE, 0xff8a24, 0.42)
+    );
+    plume.position.y = 0.58;
+    g.add(plume);
+    applyHazardRenderOrder(g, 14);
+    return { group: g, fill: fill, ring: ring, plume: plume };
+  }
+
+  function makeImpactNode(THREE) {
+    var g = new THREE.Group();
+    g.visible = false;
+    var geyser = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.28, 1.05, 4.6, 16, 1, true),
+      hazardBasicMat(THREE, 0xff7b1f, 0.85)
+    );
+    geyser.position.y = 2.3;
+    g.add(geyser);
+    var core = new THREE.Mesh(
+      new THREE.ConeGeometry(0.58, 5.2, 12),
+      hazardBasicMat(THREE, 0xfff2a8, 0.92)
+    );
+    core.position.y = 2.6;
+    g.add(core);
+    var ring = new THREE.Mesh(
+      new THREE.RingGeometry(0.76, 1.0, 40),
+      hazardBasicMat(THREE, 0xffcf66, 0.96)
+    );
+    ring.rotation.x = -Math.PI / 2;
+    ring.position.y = 0.03;
+    g.add(ring);
+    applyHazardRenderOrder(g, 17);
+    return { group: g, geyser: geyser, core: core, ring: ring };
   }
 
   function makePillarArenaNode(THREE) {
     var g = new THREE.Group();
     g.visible = false;
     var floorFill = new THREE.Mesh(
-      new THREE.CircleGeometry(22, 56),
-      new THREE.MeshBasicMaterial({ color: 0xff163c, transparent: true, opacity: 0.26, side: THREE.DoubleSide, depthWrite: false })
+      new THREE.CircleGeometry(24, 56),
+      hazardBasicMat(THREE, 0xff163c, 0.36)
     );
     floorFill.rotation.x = -Math.PI / 2;
     g.add(floorFill);
 
     var shockWave = new THREE.Mesh(
-      new THREE.RingGeometry(0.85, 1.0, 52),
-      new THREE.MeshBasicMaterial({ color: 0xffcf6e, transparent: true, opacity: 0.9, side: THREE.DoubleSide, depthWrite: false })
+      new THREE.RingGeometry(0.86, 1.0, 52),
+      hazardBasicMat(THREE, 0xffe07d, 0.96)
     );
     shockWave.rotation.x = -Math.PI / 2;
-    shockWave.position.y = 0.014;
+    shockWave.position.y = 0.018;
     g.add(shockWave);
 
-    return { group: g, floorFill: floorFill, shockWave: shockWave };
+    var vortexFunnel = new THREE.Mesh(
+      new THREE.CylinderGeometry(3.4, 0.7, 3.2, 20, 1, true),
+      hazardBasicMat(THREE, 0xff6e1a, 0.44)
+    );
+    vortexFunnel.position.y = 1.6;
+    vortexFunnel.visible = false;
+    g.add(vortexFunnel);
+
+    applyHazardRenderOrder(g, 14);
+    return { group: g, floorFill: floorFill, shockWave: shockWave, vortexFunnel: vortexFunnel };
   }
 
   function makePillarNode(THREE) {
     var g = new THREE.Group();
     g.visible = false;
 
-    // Falling 3D Runic Stone Monolith
     var columnWrap = new THREE.Group();
     var shaft = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.72, 0.92, 3.8, 8),
-      new THREE.MeshBasicMaterial({ color: 0x6f7a9f })
+      new THREE.CylinderGeometry(0.76, 0.98, 4.1, 8),
+      hazardBasicMat(THREE, 0x6f7a9f, 1)
     );
-    shaft.position.y = 1.9;
+    shaft.position.y = 2.05;
     columnWrap.add(shaft);
 
     var runeBand = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.8, 0.8, 0.42, 8),
-      new THREE.MeshBasicMaterial({ color: 0x6af7d0 })
+      new THREE.CylinderGeometry(0.86, 0.86, 0.48, 8),
+      hazardBasicMat(THREE, 0x6af7d0, 1)
     );
-    runeBand.position.y = 2.15;
+    runeBand.position.y = 2.25;
     columnWrap.add(runeBand);
 
     var crown = new THREE.Mesh(
-      new THREE.OctahedronGeometry(0.56, 0),
-      new THREE.MeshBasicMaterial({ color: 0xfff0a8 })
+      new THREE.OctahedronGeometry(0.62, 0),
+      hazardBasicMat(THREE, 0xfff0a8, 1)
     );
-    crown.position.y = 4.25;
+    crown.position.y = 4.55;
     columnWrap.add(crown);
     g.add(columnWrap);
 
     var baseRing = new THREE.Mesh(
-      new THREE.RingGeometry(0.95, 1.18, 32),
-      new THREE.MeshBasicMaterial({ color: 0x76ffd8, transparent: true, opacity: 0.95, side: THREE.DoubleSide, depthWrite: false })
+      new THREE.RingGeometry(0.96, 1.24, 32),
+      hazardBasicMat(THREE, 0x76ffd8, 0.98)
     );
     baseRing.rotation.x = -Math.PI / 2;
-    baseRing.position.y = 0.02;
+    baseRing.position.y = 0.025;
     g.add(baseRing);
 
-    // Directional Safe Shadow Lane extending behind the pillar away from the Boss!
     var shadowPivot = new THREE.Group();
     var shadowFill = new THREE.Mesh(
       new THREE.PlaneGeometry(5.4, 3.1),
-      new THREE.MeshBasicMaterial({ color: 0x28f0a8, transparent: true, opacity: 0.34, side: THREE.DoubleSide, depthWrite: false })
+      hazardBasicMat(THREE, 0x28f0a8, 0.44)
     );
     shadowFill.rotation.x = -Math.PI / 2;
-    shadowFill.position.set(2.85, 0.018, 0);
+    shadowFill.position.set(2.85, 0.022, 0);
     shadowPivot.add(shadowFill);
 
     var shadowEdgeL = new THREE.Mesh(
-      new THREE.PlaneGeometry(5.4, 0.12),
-      new THREE.MeshBasicMaterial({ color: 0x8effdf, transparent: true, opacity: 0.92, side: THREE.DoubleSide, depthWrite: false })
+      new THREE.PlaneGeometry(5.4, 0.15),
+      hazardBasicMat(THREE, 0x9effe4, 0.98)
     );
     shadowEdgeL.rotation.x = -Math.PI / 2;
-    shadowEdgeL.position.set(2.85, 0.024, -1.55);
+    shadowEdgeL.position.set(2.85, 0.028, -1.55);
     shadowPivot.add(shadowEdgeL);
 
     var shadowEdgeR = shadowEdgeL.clone();
-    shadowEdgeR.position.set(2.85, 0.024, 1.55);
+    shadowEdgeR.position.set(2.85, 0.028, 1.55);
     shadowPivot.add(shadowEdgeR);
 
     g.add(shadowPivot);
+    applyHazardRenderOrder(g, 16);
 
     return { group: g, columnWrap: columnWrap, shaft: shaft, runeBand: runeBand, crown: crown, baseRing: baseRing, shadowPivot: shadowPivot, shadowFill: shadowFill };
   }
@@ -864,43 +951,57 @@
 
     var fill = new THREE.Mesh(
       new THREE.CircleGeometry(1, 48, -CONE_HALF_ARC, arc),
-      new THREE.MeshBasicMaterial({ color: 0xff4a14, transparent: true, opacity: 0.28, side: THREE.DoubleSide, depthWrite: false })
+      hazardBasicMat(THREE, 0xff3b0d, 0.48)
     );
     fill.rotation.x = -Math.PI / 2;
     g.add(fill);
 
     var rim = new THREE.Mesh(
-      new THREE.RingGeometry(0.94, 1.0, 48, 1, -CONE_HALF_ARC, arc),
-      new THREE.MeshBasicMaterial({ color: 0xffb347, transparent: true, opacity: 0.94, side: THREE.DoubleSide, depthWrite: false })
+      new THREE.RingGeometry(0.92, 1.0, 48, 1, -CONE_HALF_ARC, arc),
+      hazardBasicMat(THREE, 0xffe47a, 0.98)
     );
     rim.rotation.x = -Math.PI / 2;
-    rim.position.y = 0.012;
+    rim.position.y = 0.016;
     g.add(rim);
 
     var wave = new THREE.Mesh(
-      new THREE.RingGeometry(0.84, 1.0, 48, 1, -CONE_HALF_ARC, arc),
-      new THREE.MeshBasicMaterial({ color: 0xffe07d, transparent: true, opacity: 0.78, side: THREE.DoubleSide, depthWrite: false })
+      new THREE.RingGeometry(0.80, 1.0, 48, 1, -CONE_HALF_ARC, arc),
+      hazardBasicMat(THREE, 0xfff3ad, 0.88)
     );
     wave.rotation.x = -Math.PI / 2;
-    wave.position.y = 0.016;
+    wave.position.y = 0.022;
     g.add(wave);
 
     function makeFlank(sign) {
       var piv = new THREE.Group();
       piv.rotation.y = sign * CONE_HALF_ARC;
       var bar = new THREE.Mesh(
-        new THREE.PlaneGeometry(1, 0.022),
-        new THREE.MeshBasicMaterial({ color: 0xffca63, transparent: true, opacity: 0.95, side: THREE.DoubleSide, depthWrite: false })
+        new THREE.PlaneGeometry(1, 0.032),
+        hazardBasicMat(THREE, 0xffe47a, 0.98)
       );
       bar.rotation.x = -Math.PI / 2;
-      bar.position.set(0.5, 0.018, 0);
+      bar.position.set(0.5, 0.024, 0);
       piv.add(bar);
       return piv;
     }
     g.add(makeFlank(-1));
     g.add(makeFlank(1));
 
-    return { group: g, fill: fill, rim: rim, wave: wave };
+    // 3D Surging Flame Plumes inside the magma cone!
+    var plumes = [];
+    for (var fp = -1; fp <= 1; fp++) {
+      var pCone = new THREE.Mesh(
+        new THREE.ConeGeometry(0.055, 0.24, 10, 1, true),
+        hazardBasicMat(THREE, fp === 0 ? 0xffe57f : 0xff6e1c, 0.72)
+      );
+      pCone.rotation.z = -Math.PI * 0.42;
+      pCone.userData.angOff = fp * 0.48;
+      g.add(pCone);
+      plumes.push(pCone);
+    }
+
+    applyHazardRenderOrder(g, 15);
+    return { group: g, fill: fill, rim: rim, wave: wave, plumes: plumes };
   }
 
   function makeRingWavesNode(THREE) {
@@ -909,51 +1010,66 @@
 
     var innerCore = new THREE.Mesh(
       new THREE.CircleGeometry(4.3, 48),
-      new THREE.MeshBasicMaterial({ color: 0xff3d12, transparent: true, opacity: 0.30, side: THREE.DoubleSide, depthWrite: false })
+      hazardBasicMat(THREE, 0xff330a, 0.50)
     );
     innerCore.rotation.x = -Math.PI / 2;
     g.add(innerCore);
 
     var innerRim = new THREE.Mesh(
-      new THREE.RingGeometry(4.08, 4.3, 48),
-      new THREE.MeshBasicMaterial({ color: 0xffc452, transparent: true, opacity: 0.95, side: THREE.DoubleSide, depthWrite: false })
+      new THREE.RingGeometry(4.02, 4.3, 48),
+      hazardBasicMat(THREE, 0xffe27a, 0.98)
     );
     innerRim.rotation.x = -Math.PI / 2;
-    innerRim.position.y = 0.014;
+    innerRim.position.y = 0.018;
     g.add(innerRim);
 
     var safeBand = new THREE.Mesh(
       new THREE.RingGeometry(4.32, 8.28, 52),
-      new THREE.MeshBasicMaterial({ color: 0x38f2b4, transparent: true, opacity: 0.16, side: THREE.DoubleSide, depthWrite: false })
+      hazardBasicMat(THREE, 0x2df5b4, 0.28)
     );
     safeBand.rotation.x = -Math.PI / 2;
-    safeBand.position.y = 0.008;
+    safeBand.position.y = 0.01;
     g.add(safeBand);
 
     var outerCaldera = new THREE.Mesh(
       new THREE.RingGeometry(8.3, 18.0, 56),
-      new THREE.MeshBasicMaterial({ color: 0xff3510, transparent: true, opacity: 0.28, side: THREE.DoubleSide, depthWrite: false })
+      hazardBasicMat(THREE, 0xff2b08, 0.46)
     );
     outerCaldera.rotation.x = -Math.PI / 2;
     g.add(outerCaldera);
 
     var outerRim = new THREE.Mesh(
-      new THREE.RingGeometry(8.3, 8.54, 52),
-      new THREE.MeshBasicMaterial({ color: 0xffc452, transparent: true, opacity: 0.95, side: THREE.DoubleSide, depthWrite: false })
+      new THREE.RingGeometry(8.3, 8.62, 52),
+      hazardBasicMat(THREE, 0xffe27a, 0.98)
     );
     outerRim.rotation.x = -Math.PI / 2;
-    outerRim.position.y = 0.014;
+    outerRim.position.y = 0.018;
     g.add(outerRim);
 
     var pulseInner = new THREE.Mesh(
       new THREE.RingGeometry(0.86, 1.0, 44),
-      new THREE.MeshBasicMaterial({ color: 0xffe28a, transparent: true, opacity: 0.75, side: THREE.DoubleSide, depthWrite: false })
+      hazardBasicMat(THREE, 0xfff0a3, 0.88)
     );
     pulseInner.rotation.x = -Math.PI / 2;
-    pulseInner.position.y = 0.018;
+    pulseInner.position.y = 0.024;
     g.add(pulseInner);
 
-    return { group: g, innerCore: innerCore, safeBand: safeBand, outerCaldera: outerCaldera, pulseInner: pulseInner };
+    // 8 Erupting 3D Magma Geyser Cones ringing the inner & outer danger zones!
+    var geysers = [];
+    for (var gi = 0; gi < 8; gi++) {
+      var gy = new THREE.Mesh(
+        new THREE.ConeGeometry(0.68, 2.6, 8, 1, true),
+        hazardBasicMat(THREE, gi % 2 === 0 ? 0xff781f : 0xffd86e, 0.72)
+      );
+      var gang = (gi / 8) * Math.PI * 2;
+      var grad = gi % 2 === 0 ? 2.6 : 10.6;
+      gy.position.set(Math.cos(gang) * grad, 1.3, Math.sin(gang) * grad);
+      g.add(gy);
+      geysers.push(gy);
+    }
+
+    applyHazardRenderOrder(g, 15);
+    return { group: g, innerCore: innerCore, safeBand: safeBand, outerCaldera: outerCaldera, pulseInner: pulseInner, geysers: geysers };
   }
 
   function makeLavaWallNode(THREE) {
@@ -964,27 +1080,42 @@
       var wrap = new THREE.Group();
       var fill = new THREE.Mesh(
         new THREE.PlaneGeometry(1, 1),
-        new THREE.MeshBasicMaterial({ color: 0xff4210, transparent: true, opacity: 0.30, side: THREE.DoubleSide, depthWrite: false })
+        hazardBasicMat(THREE, 0xff380c, 0.48)
       );
       fill.rotation.x = -Math.PI / 2;
       wrap.add(fill);
       var crest = new THREE.Mesh(
         new THREE.PlaneGeometry(1, 1),
-        new THREE.MeshBasicMaterial({ color: 0xffcf66, transparent: true, opacity: 0.65, side: THREE.DoubleSide, depthWrite: false })
+        hazardBasicMat(THREE, 0xffe07d, 0.82)
       );
       crest.rotation.x = -Math.PI / 2;
-      crest.position.y = 0.014;
+      crest.position.y = 0.018;
       wrap.add(crest);
       var borderF = new THREE.Mesh(
-        new THREE.PlaneGeometry(1, 0.11),
-        new THREE.MeshBasicMaterial({ color: 0xff9e3d, transparent: true, opacity: 0.95, side: THREE.DoubleSide, depthWrite: false })
+        new THREE.PlaneGeometry(1, 0.16),
+        hazardBasicMat(THREE, 0xffcb63, 0.98)
       );
       borderF.rotation.x = -Math.PI / 2;
-      borderF.position.y = 0.018;
+      borderF.position.y = 0.024;
       wrap.add(borderF);
       var borderB = borderF.clone();
       wrap.add(borderB);
-      return { wrap: wrap, fill: fill, crest: crest, borderF: borderF, borderB: borderB };
+
+      // Towering 3D Rolling Tsunami Magma Wave Wall!
+      var waveBody = new THREE.Mesh(
+        new THREE.BoxGeometry(1, 2.15, 0.85),
+        hazardBasicMat(THREE, 0xff5414, 0.68)
+      );
+      waveBody.position.y = 1.08;
+      wrap.add(waveBody);
+      var waveFoam = new THREE.Mesh(
+        new THREE.BoxGeometry(1, 0.42, 1.02),
+        hazardBasicMat(THREE, 0xfff09e, 0.90)
+      );
+      waveFoam.position.y = 2.08;
+      wrap.add(waveFoam);
+
+      return { wrap: wrap, fill: fill, crest: crest, borderF: borderF, borderB: borderB, waveBody: waveBody, waveFoam: waveFoam };
     }
 
     var left = makeSlab();
@@ -995,23 +1126,24 @@
     var safeGate = new THREE.Group();
     var gateFill = new THREE.Mesh(
       new THREE.PlaneGeometry(1, 1),
-      new THREE.MeshBasicMaterial({ color: 0x38f2b4, transparent: true, opacity: 0.20, side: THREE.DoubleSide, depthWrite: false })
+      hazardBasicMat(THREE, 0x2df5b4, 0.30)
     );
     gateFill.rotation.x = -Math.PI / 2;
-    gateFill.position.y = 0.01;
+    gateFill.position.y = 0.012;
     safeGate.add(gateFill);
 
     var gateRailL = new THREE.Mesh(
-      new THREE.PlaneGeometry(0.11, 1),
-      new THREE.MeshBasicMaterial({ color: 0x8effdf, transparent: true, opacity: 0.95, side: THREE.DoubleSide, depthWrite: false })
+      new THREE.PlaneGeometry(0.16, 1),
+      hazardBasicMat(THREE, 0x9effe4, 0.98)
     );
     gateRailL.rotation.x = -Math.PI / 2;
-    gateRailL.position.y = 0.02;
+    gateRailL.position.y = 0.026;
     safeGate.add(gateRailL);
     var gateRailR = gateRailL.clone();
     safeGate.add(gateRailR);
     g.add(safeGate);
 
+    applyHazardRenderOrder(g, 15);
     return { group: g, left: left, right: right, safeGate: safeGate, gateFill: gateFill, gateRailL: gateRailL, gateRailR: gateRailR };
   }
 
@@ -1019,7 +1151,7 @@
     if (typeof THREE === 'undefined' || typeof scene === 'undefined' || !scene) return false;
     if (!hazardGroup) {
       hazardGroup = new THREE.Group();
-      hazardGroup.position.y = 0.09;
+      hazardGroup.position.y = 0.14;
       craterNodes = [];
       for (var i = 0; i < 5; i++) {
         var c = makeCraterNode(THREE);
@@ -1048,6 +1180,13 @@
         poolNodes.push(plNode);
       }
 
+      impactNodes = [];
+      for (var im = 0; im < 4; im++) {
+        var impNode = makeImpactNode(THREE);
+        hazardGroup.add(impNode.group);
+        impactNodes.push(impNode);
+      }
+
       pillarArenaNode = makePillarArenaNode(THREE);
       hazardGroup.add(pillarArenaNode.group);
       pillarNodes = [];
@@ -1062,9 +1201,10 @@
     if (!moveRing) {
       moveRing = new THREE.Mesh(
         new THREE.RingGeometry(0.42, 0.58, 28),
-        new THREE.MeshBasicMaterial({ color: 0x6ce8ff, transparent: true, opacity: 0.85, side: THREE.DoubleSide, depthWrite: false })
+        hazardBasicMat(THREE, 0x6ce8ff, 0.90)
       );
       moveRing.rotation.x = -Math.PI / 2;
+      moveRing.renderOrder = 18;
       moveRing.visible = false;
     }
     if (!moveRing.parent) scene.add(moveRing);
@@ -1076,12 +1216,17 @@
       craterNodes[i].group.visible = false;
       craterNodes[i].meteor.visible = false;
     }
-    for (var b = 0; b < beamNodes.length; b++) beamNodes[b].group.visible = false;
+    for (var b = 0; b < beamNodes.length; b++) {
+      beamNodes[b].group.visible = false;
+      if (beamNodes[b].fireWall) beamNodes[b].fireWall.visible = false;
+      if (beamNodes[b].fireCrest) beamNodes[b].fireCrest.visible = false;
+    }
     if (donutNode) donutNode.group.visible = false;
     if (coneNode) coneNode.group.visible = false;
     if (ringWavesNode) ringWavesNode.group.visible = false;
     if (lavaWallNode) lavaWallNode.group.visible = false;
     for (var p = 0; p < poolNodes.length; p++) poolNodes[p].group.visible = false;
+    for (var im = 0; im < impactNodes.length; im++) impactNodes[im].group.visible = false;
     if (pillarArenaNode) pillarArenaNode.group.visible = false;
     for (var k = 0; k < pillarNodes.length; k++) pillarNodes[k].group.visible = false;
   }
@@ -1090,7 +1235,7 @@
     if (typeof actorFloorY === 'function') {
       try { return actorFloorY(x, z) + 0.08; } catch (_) {}
     }
-    return 0.09;
+    return 0.08;
   }
 
   function wrapAngle(a) {
@@ -1099,11 +1244,23 @@
     return a;
   }
 
-  function styleBeamNode(bn, volcanic) {
-    bn.fill.material.color.setHex(volcanic ? 0xff4612 : 0xff244c);
-    bn.core.material.color.setHex(volcanic ? 0xffdb70 : 0xffcf7c);
-    bn.railL.material.color.setHex(volcanic ? 0xffa83f : 0xff8599);
-    bn.railR.material.color.setHex(volcanic ? 0xffa83f : 0xff8599);
+  function styleBeamNode(bn, volcanic, pct, len) {
+    bn.fill.material.color.setHex(volcanic ? 0xff3b0d : 0xff244c);
+    bn.core.material.color.setHex(volcanic ? 0xffe885 : 0xffcf7c);
+    bn.railL.material.color.setHex(volcanic ? 0xffcf5c : 0xff8599);
+    bn.railR.material.color.setHex(volcanic ? 0xffcf5c : 0xff8599);
+    if (bn.fireWall && bn.fireCrest) {
+      bn.fireWall.visible = Boolean(volcanic);
+      bn.fireCrest.visible = Boolean(volcanic);
+      if (volcanic) {
+        var hScale = 0.45 + 0.95 * (pct || 0.5);
+        bn.fireWall.scale.set(len || 24, hScale, 1);
+        bn.fireWall.position.y = 0.92 * hScale;
+        bn.fireWall.material.opacity = 0.42 + 0.32 * (pct || 0.5);
+        bn.fireCrest.scale.set(len || 24, 0.8 + 0.6 * (pct || 0.5), 1);
+        bn.fireCrest.position.y = 0.28 + 0.25 * (pct || 0.5);
+      }
+    }
   }
 
   function updateMeshes() {
@@ -1115,31 +1272,61 @@
       var vp = raid.voidPools[p];
       var pn = poolNodes[p];
       var magmaPool = Boolean(vp.volcanic || isThor);
-      pn.fill.material.color.setHex(magmaPool ? 0xff4a10 : 0x9c2cff);
-      pn.ring.material.color.setHex(magmaPool ? 0xffbe42 : 0xff5492);
+      pn.fill.material.color.setHex(magmaPool ? 0xff4610 : 0x9c2cff);
+      pn.ring.material.color.setHex(magmaPool ? 0xffe066 : 0xff5492);
+      if (pn.plume) pn.plume.material.color.setHex(magmaPool ? 0xff7b1c : 0xb254ff);
       pn.group.visible = true;
-      pn.group.position.set(vp.x, floorYAt(vp.x, vp.z) - 0.07, vp.z);
+      pn.group.position.set(vp.x, floorYAt(vp.x, vp.z) - 0.06, vp.z);
       pn.group.scale.set(vp.r, 1, vp.r);
       var fade = Math.min(1, vp.left / 0.8);
-      pn.fill.material.opacity = (0.30 + 0.1 * Math.sin(vp.left * 7)) * fade;
-      pn.ring.material.opacity = 0.88 * fade;
+      pn.fill.material.opacity = (0.46 + 0.12 * Math.sin(vp.left * 8)) * fade;
+      pn.ring.material.opacity = 0.95 * fade;
+      if (pn.plume) {
+        pn.plume.scale.set(1, 0.8 + 0.35 * Math.sin(vp.left * 9), 1);
+        pn.plume.material.opacity = 0.38 * fade;
+      }
+    }
+
+    for (var im = 0; im < raid.impacts.length && im < impactNodes.length; im++) {
+      var imp = raid.impacts[im];
+      var inod = impactNodes[im];
+      var ik = Math.max(0, Math.min(1, imp.age / Math.max(0.1, imp.life)));
+      var isVolcImp = Boolean(imp.volcanic || isThor);
+      inod.geyser.material.color.setHex(isVolcImp ? 0xff6e18 : 0xd946ff);
+      inod.core.material.color.setHex(isVolcImp ? 0xfff3ad : 0x9ef4ff);
+      inod.ring.material.color.setHex(isVolcImp ? 0xffd666 : 0xff80b5);
+      inod.group.visible = true;
+      inod.group.position.set(imp.x, floorYAt(imp.x, imp.z) - 0.06, imp.z);
+      var rGrow = imp.r * (0.45 + 0.75 * ik);
+      var yFade = 1 - ik;
+      inod.geyser.scale.set(Math.max(0.4, imp.r * 0.32), 0.55 + 1.15 * Math.sin(ik * Math.PI), Math.max(0.4, imp.r * 0.32));
+      inod.geyser.material.opacity = 0.86 * yFade;
+      inod.core.scale.set(Math.max(0.4, imp.r * 0.26), 0.65 + 1.25 * Math.sin(ik * Math.PI), Math.max(0.4, imp.r * 0.26));
+      inod.core.material.opacity = 0.94 * yFade;
+      inod.ring.scale.set(rGrow, rGrow, 1);
+      inod.ring.material.opacity = 0.95 * yFade;
     }
 
     var tg = raid.telegraph;
     if (tg) {
-      var pct = Math.max(0.05, Math.min(1, tg.age / tg.life));
-      var pulse = 0.22 + 0.24 * pct + 0.07 * Math.sin(tg.age * 16);
+      var pct = Math.max(0.06, Math.min(1, tg.age / tg.life));
+      var pulse = 0.38 + 0.24 * pct + 0.08 * Math.sin(tg.age * 16);
       var shape = tg.shape || 'circle';
 
       if (shape === 'pillars' && pillarArenaNode) {
         var isVolcSpire = Boolean(tg.volcanicSpires);
-        pillarArenaNode.floorFill.material.color.setHex(isVolcSpire ? 0xff3b0d : 0xff163c);
-        pillarArenaNode.shockWave.material.color.setHex(isVolcSpire ? 0xffd463 : 0xffcf6e);
+        pillarArenaNode.floorFill.material.color.setHex(isVolcSpire ? 0xff330a : 0xff163c);
+        pillarArenaNode.shockWave.material.color.setHex(isVolcSpire ? 0xffe278 : 0xffcf6e);
         pillarArenaNode.group.visible = true;
         pillarArenaNode.group.position.set(tg.x, floorYAt(tg.x, tg.z) - 0.08, tg.z);
-        pillarArenaNode.floorFill.material.opacity = 0.18 + 0.22 * pct + 0.06 * Math.sin(tg.age * 18);
+        pillarArenaNode.floorFill.material.opacity = 0.30 + 0.24 * pct + 0.07 * Math.sin(tg.age * 18);
         var waveR = Math.max(0.6, pct * 20.0);
         pillarArenaNode.shockWave.scale.set(waveR, waveR, 1);
+        if (pillarArenaNode.vortexFunnel) {
+          pillarArenaNode.vortexFunnel.visible = isVolcSpire;
+          pillarArenaNode.vortexFunnel.rotation.y = tg.age * 4.5;
+          pillarArenaNode.vortexFunnel.material.opacity = 0.34 + 0.22 * pct;
+        }
 
         var pList = Array.isArray(tg.pillars) ? tg.pillars : [];
         var dropT = Math.min(1, tg.age / 0.55);
@@ -1147,10 +1334,10 @@
         for (var pk = 0; pk < pList.length && pk < pillarNodes.length; pk++) {
           var pd = pList[pk];
           var pNode = pillarNodes[pk];
-          pNode.shaft.material.color.setHex(isVolcSpire ? 0x26181a : 0x6f7a9f);
-          pNode.runeBand.material.color.setHex(isVolcSpire ? 0xff8c24 : 0x6af7d0);
-          pNode.crown.material.color.setHex(isVolcSpire ? 0xffd257 : 0xfff0a8);
-          pNode.baseRing.material.color.setHex(isVolcSpire ? 0xffa63b : 0x76ffd8);
+          pNode.shaft.material.color.setHex(isVolcSpire ? 0x2c1718 : 0x6f7a9f);
+          pNode.runeBand.material.color.setHex(isVolcSpire ? 0xff9426 : 0x6af7d0);
+          pNode.crown.material.color.setHex(isVolcSpire ? 0xffe06e : 0xfff0a8);
+          pNode.baseRing.material.color.setHex(isVolcSpire ? 0xffbe4a : 0x76ffd8);
           pNode.group.visible = true;
           pNode.group.position.set(pd.x, floorYAt(pd.x, pd.z) - 0.08, pd.z);
           pNode.columnWrap.position.y = colY;
@@ -1158,32 +1345,51 @@
           var rayAng = Math.atan2(pd.z - tg.z, pd.x - tg.x);
           pNode.shadowPivot.rotation.y = -rayAng;
           pNode.shadowPivot.visible = dropT >= 0.35;
-          pNode.shadowFill.material.opacity = 0.28 + 0.14 * Math.sin(tg.age * 10);
+          pNode.shadowFill.material.opacity = 0.38 + 0.14 * Math.sin(tg.age * 10);
         }
       } else if (shape === 'cone' && coneNode) {
         var cr = tg.r || 15.0;
         coneNode.group.visible = true;
         coneNode.group.position.set(tg.x, floorYAt(tg.x, tg.z) - 0.08, tg.z);
         coneNode.group.rotation.y = -(tg.ang || 0);
-        coneNode.group.scale.set(cr, 1, cr);
-        coneNode.fill.material.opacity = pulse + 0.06;
-        var wFrac = Math.max(0.12, pct);
+        coneNode.group.scale.set(cr, cr * 0.42, cr);
+        coneNode.fill.material.opacity = pulse + 0.08;
+        var wFrac = Math.max(0.14, pct);
         coneNode.wave.scale.set(wFrac, wFrac, 1);
+        if (coneNode.plumes) {
+          for (var cp = 0; cp < coneNode.plumes.length; cp++) {
+            var plm = coneNode.plumes[cp];
+            var pr = 0.14 + ((pct + cp * 0.28) % 0.82);
+            var pa = plm.userData.angOff;
+            plm.position.set(Math.cos(pa) * pr, 0.09 + 0.06 * Math.sin(tg.age * 14 + cp), Math.sin(pa) * pr);
+            plm.rotation.y = -pa;
+            plm.material.opacity = 0.55 + 0.30 * pct;
+          }
+        }
       } else if (shape === 'ringwaves' && ringWavesNode) {
         ringWavesNode.group.visible = true;
         ringWavesNode.group.position.set(tg.x, floorYAt(tg.x, tg.z) - 0.08, tg.z);
-        ringWavesNode.innerCore.material.opacity = pulse + 0.06;
-        ringWavesNode.outerCaldera.material.opacity = pulse + 0.04;
-        ringWavesNode.safeBand.material.opacity = 0.15 + 0.07 * Math.sin(tg.age * 10);
+        ringWavesNode.innerCore.material.opacity = pulse + 0.08;
+        ringWavesNode.outerCaldera.material.opacity = pulse + 0.06;
+        ringWavesNode.safeBand.material.opacity = 0.24 + 0.08 * Math.sin(tg.age * 10);
         var pScale = pct < 0.5 ? (0.4 + (pct * 2) * 3.9) : (8.3 + ((pct - 0.5) * 2) * 9.5);
         ringWavesNode.pulseInner.scale.set(pScale, pScale, 1);
+        if (ringWavesNode.geysers) {
+          for (var rg = 0; rg < ringWavesNode.geysers.length; rg++) {
+            var gyM = ringWavesNode.geysers[rg];
+            var gh = 0.45 + 1.15 * pct + 0.22 * Math.sin(tg.age * 14 + rg);
+            gyM.scale.set(1, gh, 1);
+            gyM.position.y = 1.3 * gh;
+            gyM.material.opacity = 0.48 + 0.36 * pct;
+          }
+        }
       } else if (shape === 'triskelion') {
         var curAng = (tg.ang || 0) + (tg.rotSpeed || 0.68) * (tg.age || 0);
         var sLen = tg.len || 15.6;
         var sW = tg.width || 2.55;
         for (var s = 0; s < 3 && s < beamNodes.length; s++) {
           var sNode = beamNodes[s];
-          styleBeamNode(sNode, true);
+          styleBeamNode(sNode, true, pct, sLen);
           var spokeAng = curAng + s * (Math.PI * 2 / 3);
           var cx = tg.x + Math.cos(spokeAng) * sLen * 0.5;
           var cz = tg.z + Math.sin(spokeAng) * sLen * 0.5;
@@ -1192,9 +1398,9 @@
           sNode.group.position.set(cx, floorYAt(cx, cz) - 0.08, cz);
           sNode.group.rotation.y = -beamAng;
           sNode.fill.scale.set(sW, sLen, 1);
-          sNode.fill.material.opacity = pulse + 0.05;
-          sNode.core.scale.set(Math.max(0.12, sW * pct), sLen, 1);
-          sNode.core.material.opacity = 0.45 + 0.32 * pct;
+          sNode.fill.material.opacity = pulse + 0.08;
+          sNode.core.scale.set(Math.max(0.14, sW * pct), sLen, 1);
+          sNode.core.material.opacity = 0.58 + 0.34 * pct;
           sNode.railL.position.x = -sW * 0.5;
           sNode.railL.scale.set(1, sLen, 1);
           sNode.railR.position.x = sW * 0.5;
@@ -1206,6 +1412,8 @@
         var gapX = tg.gapX || 0;
         var gapHW = tg.gapHalfW || 2.6;
         var wy = floorYAt(0, tg.z) - 0.08;
+        var waveZ = (-0.42 + 0.84 * pct) * depth;
+        var waveH = 0.55 + 0.75 * pct;
         lavaWallNode.group.visible = true;
         lavaWallNode.group.position.set(0, wy, tg.z);
 
@@ -1215,12 +1423,16 @@
         if (leftW > 0.15) {
           lavaWallNode.left.wrap.position.set(-halfW + leftW * 0.5, 0, 0);
           lavaWallNode.left.fill.scale.set(leftW, depth, 1);
-          lavaWallNode.left.fill.material.opacity = pulse + 0.06;
-          lavaWallNode.left.crest.scale.set(leftW, Math.max(0.18, depth * pct), 1);
+          lavaWallNode.left.fill.material.opacity = pulse + 0.08;
+          lavaWallNode.left.crest.scale.set(leftW, Math.max(0.22, depth * pct), 1);
           lavaWallNode.left.borderF.position.z = depth * 0.5;
           lavaWallNode.left.borderF.scale.set(leftW, 1, 1);
           lavaWallNode.left.borderB.position.z = -depth * 0.5;
           lavaWallNode.left.borderB.scale.set(leftW, 1, 1);
+          lavaWallNode.left.waveBody.scale.set(leftW, waveH, 1);
+          lavaWallNode.left.waveBody.position.set(0, 1.08 * waveH, waveZ);
+          lavaWallNode.left.waveFoam.scale.set(leftW, 1, 1);
+          lavaWallNode.left.waveFoam.position.set(0, 2.08 * waveH, waveZ);
         }
 
         var rightEdge = gapX + gapHW;
@@ -1229,18 +1441,22 @@
         if (rightW > 0.15) {
           lavaWallNode.right.wrap.position.set(rightEdge + rightW * 0.5, 0, 0);
           lavaWallNode.right.fill.scale.set(rightW, depth, 1);
-          lavaWallNode.right.fill.material.opacity = pulse + 0.06;
-          lavaWallNode.right.crest.scale.set(rightW, Math.max(0.18, depth * pct), 1);
+          lavaWallNode.right.fill.material.opacity = pulse + 0.08;
+          lavaWallNode.right.crest.scale.set(rightW, Math.max(0.22, depth * pct), 1);
           lavaWallNode.right.borderF.position.z = depth * 0.5;
           lavaWallNode.right.borderF.scale.set(rightW, 1, 1);
           lavaWallNode.right.borderB.position.z = -depth * 0.5;
           lavaWallNode.right.borderB.scale.set(rightW, 1, 1);
+          lavaWallNode.right.waveBody.scale.set(rightW, waveH, 1);
+          lavaWallNode.right.waveBody.position.set(0, 1.08 * waveH, waveZ);
+          lavaWallNode.right.waveFoam.scale.set(rightW, 1, 1);
+          lavaWallNode.right.waveFoam.position.set(0, 2.08 * waveH, waveZ);
         }
 
         var gateW = gapHW * 2;
         lavaWallNode.safeGate.position.set(gapX, 0, 0);
         lavaWallNode.gateFill.scale.set(gateW, depth, 1);
-        lavaWallNode.gateFill.material.opacity = 0.16 + 0.08 * Math.sin(tg.age * 10);
+        lavaWallNode.gateFill.material.opacity = 0.26 + 0.10 * Math.sin(tg.age * 10);
         lavaWallNode.gateRailL.position.x = -gapHW;
         lavaWallNode.gateRailL.scale.set(1, depth, 1);
         lavaWallNode.gateRailR.position.x = gapHW;
@@ -1249,14 +1465,14 @@
         for (var fl = 0; fl < tg.beams.length && fl < beamNodes.length; fl++) {
           var lane = tg.beams[fl];
           var lNode = beamNodes[fl];
-          styleBeamNode(lNode, true);
+          styleBeamNode(lNode, true, pct, lane.len);
           lNode.group.visible = true;
           lNode.group.position.set(lane.x, floorYAt(lane.x, lane.z) - 0.08, lane.z);
           lNode.group.rotation.y = -(lane.ang || 0);
           lNode.fill.scale.set(lane.width, lane.len, 1);
-          lNode.fill.material.opacity = pulse + 0.05;
-          lNode.core.scale.set(Math.max(0.1, lane.width * pct), lane.len, 1);
-          lNode.core.material.opacity = 0.45 + 0.3 * pct;
+          lNode.fill.material.opacity = pulse + 0.08;
+          lNode.core.scale.set(Math.max(0.14, lane.width * pct), lane.len, 1);
+          lNode.core.material.opacity = 0.58 + 0.34 * pct;
           lNode.railL.position.x = -lane.width * 0.5;
           lNode.railL.scale.set(1, lane.len, 1);
           lNode.railR.position.x = lane.width * 0.5;
@@ -1294,23 +1510,23 @@
         donutNode.group.position.set(tg.x, floorYAt(tg.x, tg.z) - 0.08, tg.z);
         var ir = tg.innerR || 3.7;
         donutNode.group.scale.set(ir, 1, ir);
-        donutNode.danger.material.opacity = pulse + 0.05;
-        donutNode.safeFill.material.opacity = 0.14 + 0.06 * Math.sin(tg.age * 10);
+        donutNode.danger.material.opacity = pulse + 0.06;
+        donutNode.safeFill.material.opacity = 0.20 + 0.06 * Math.sin(tg.age * 10);
       } else if (shape === 'beam' || shape === 'cross') {
         var count = shape === 'cross' ? 2 : 1;
         for (var b = 0; b < count && b < beamNodes.length; b++) {
           var bn = beamNodes[b];
-          styleBeamNode(bn, Boolean(tg.volcanic));
           var ang = (tg.ang || 0) + (b === 1 ? Math.PI / 2 : 0);
           var w = tg.width || 3.0;
           var len = tg.len || 24;
+          styleBeamNode(bn, Boolean(tg.volcanic), pct, len);
           bn.group.visible = true;
           bn.group.position.set(tg.x, floorYAt(tg.x, tg.z) - 0.08, tg.z);
           bn.group.rotation.y = -ang;
           bn.fill.scale.set(w, len, 1);
           bn.fill.material.opacity = pulse;
-          bn.core.scale.set(Math.max(0.08, w * pct), len, 1);
-          bn.core.material.opacity = 0.42 + 0.3 * pct;
+          bn.core.scale.set(Math.max(0.1, w * pct), len, 1);
+          bn.core.material.opacity = 0.52 + 0.32 * pct;
           bn.railL.position.x = -w * 0.5;
           bn.railL.scale.set(1, len, 1);
           bn.railR.position.x = w * 0.5;
@@ -1322,7 +1538,7 @@
     if (raid.moveTarget && raid.moveTarget.left > 0 && !raid.moveTarget.holdOnly) {
       moveRing.visible = true;
       moveRing.position.set(raid.moveTarget.x, floorYAt(raid.moveTarget.x, raid.moveTarget.z), raid.moveTarget.z);
-      moveRing.material.opacity = Math.min(0.9, raid.moveTarget.left * 1.4);
+      moveRing.material.opacity = Math.min(0.92, raid.moveTarget.left * 1.4);
     } else if (moveRing) {
       moveRing.visible = false;
     }
@@ -1431,7 +1647,8 @@
     raid.stage = stageIdx;
     raid.telegraph = null;
     raid.voidPools = [];
-    raid.nextCastIn = st.boss ? 2.4 : 3.2;
+    raid.impacts = [];
+    raid.nextCastIn = st.boss ? 0.95 : 0.65;
     raid.bossCleaveIn = BOSS_CLEAVE_INTERVAL_S;
     raid.pillarCastDone = false;
     raid.transition = null;
@@ -1825,7 +2042,7 @@
     var b = fieldBounds();
     var isThor = raid.dungeonId === 'thor';
     var pick = raid.castSeq % 3;
-    var stageGap = raid.stage === 0 ? 4.6 : (raid.stage === 1 ? 4.1 : 3.7);
+    var stageGap = raid.stage === 0 ? 0.65 : (raid.stage === 1 ? 0.55 : 0.45);
 
     if (isThor) {
       // Thor Volcano Stages 1–3: distinct volcanic causeway hazards (Fault Trenches, Magma Surge Wall, Caldera Vent)
@@ -1846,7 +2063,7 @@
           ],
           dmgPct: 0.33,
           age: 0,
-          life: 2.2
+          life: 1.95
         };
       } else if (pick === 2) {
         var gapChoices = [-5.2, 0, 5.2];
@@ -1858,6 +2075,7 @@
           name: 'Magma Surge',
           hint: 'MAGMA SURGE — Move into the glowing green Safe Breach!',
           shape: 'lava_wall',
+          volcanic: true,
           x: gapX,
           z: anchor.z,
           gapX: gapX,
@@ -1865,7 +2083,7 @@
           depth: 6.6,
           dmgPct: 0.34,
           age: 0,
-          life: 2.25
+          life: 2.0
         };
       } else {
         var ventOriginX = (raid.castSeq % 2 === 0 ? -1 : 1) * (b.bx - 1.2);
@@ -1875,6 +2093,7 @@
           name: 'Caldera Vent Blast',
           hint: 'CALDERA VENT — Sidestep the magma fan & burning lava pool!',
           shape: 'cone',
+          volcanic: true,
           leavesPool: true,
           poolSpot: { x: anchor.x, z: anchor.z },
           x: ventOriginX,
@@ -1884,7 +2103,7 @@
           r: 13.5,
           dmgPct: 0.32,
           age: 0,
-          life: 2.2
+          life: 1.95
         };
       }
       raid.nextCastIn = stageGap;
@@ -2001,7 +2220,7 @@
 
     var key = chooseBossSkill(boss);
     var hpRatio = boss.max > 0 ? boss.hp / boss.max : 1;
-    var gap = hpRatio < 0.5 ? 2.8 : 3.6;
+    var gap = hpRatio < 0.5 ? 0.85 : 1.15;
     var px = (typeof pl !== 'undefined' && pl) ? pl.x : 0;
     var pz = (typeof pl !== 'undefined' && pl) ? pl.z : 2;
     var dist = Math.hypot(px - boss.x, pz - boss.z);
@@ -2017,6 +2236,7 @@
         name: 'Supernova Cataclysm',
         hint: 'SUPERNOVA CATACLYSM — Magma vortex pulls you in! HIDE BEHIND AN OBSIDIAN SPIRE!',
         shape: 'pillars',
+        volcanic: true,
         volcanicSpires: true,
         pullSpeed: 1.28,
         pillars: spires,
@@ -2025,11 +2245,11 @@
         dmgPct: 0.90,
         bypassShield: true,
         mustHideBehindPillar: true,
-        fx: 'abyss_requiem',
+        fx: 'ifr_eruption',
         age: 0,
         life: 4.4
       };
-      gap = hpRatio < 0.5 ? 3.5 : 4.3;
+      gap = hpRatio < 0.5 ? 3.2 : 3.9;
       pushSystemChat('⚠ ' + boss.n + ' unleashes Supernova Cataclysm! Resist the pull & hide behind an Obsidian Spire!');
     } else if (key === 'cone') {
       boss.fixed = true;
@@ -2039,30 +2259,32 @@
         name: 'Molten Breath',
         hint: 'MOLTEN BREATH — 110° frontal magma cone! Dash behind ' + boss.n + '\'s flank!',
         shape: 'cone',
+        volcanic: true,
         x: boss.x,
         z: boss.z,
         ang: aimAng,
         halfArc: CONE_HALF_ARC,
         r: 15.2,
         dmgPct: 0.52,
-        fx: 'tnt_judge',
+        fx: 'ifr_blaze',
         age: 0,
-        life: 2.25
+        life: 2.15
       };
     } else if (key === 'ringwaves') {
       raid.telegraph = {
         name: 'Tectonic Ring Surge',
         hint: 'TECTONIC RING SURGE — Core & outer rim erupt! Stand in the GREEN MID-RING (4–8m)!',
         shape: 'ringwaves',
+        volcanic: true,
         x: boss.x,
         z: boss.z,
         innerSafeR: 4.3,
         outerSafeR: 8.3,
         r: 18.0,
         dmgPct: 0.50,
-        fx: 'abyss_requiem',
+        fx: 'ifr_eruption',
         age: 0,
-        life: 2.45
+        life: 2.35
       };
     } else if (key === 'triskelion') {
       var spinSign = (raid.castSeq % 2 === 0) ? 1 : -1;
@@ -2071,6 +2293,7 @@
         name: 'Hellfire Pinwheel',
         hint: 'HELLFIRE PINWHEEL — Rotating 3-spoke lava wheel! Rotate with the safe slice!',
         shape: 'triskelion',
+        volcanic: true,
         x: boss.x,
         z: boss.z,
         ang: startSpokeAng,
@@ -2078,9 +2301,9 @@
         width: 2.55,
         len: 15.6,
         dmgPct: 0.50,
-        fx: 'abyss_cross',
+        fx: 'ifr_blaze',
         age: 0,
-        life: 2.55
+        life: 2.45
       };
     } else if (key === 'lava_wall') {
       var bWall = fieldBounds();
@@ -2094,15 +2317,16 @@
         name: 'Pyroclastic Tsunami',
         hint: 'PYROCLASTIC TSUNAMI — Align with the glowing green Safe Breach!',
         shape: 'lava_wall',
+        volcanic: true,
         x: breachX,
         z: wallZ,
         gapX: breachX,
         gapHalfW: 2.6,
         depth: 7.4,
         dmgPct: 0.52,
-        fx: 'lod_verdict',
+        fx: 'dl_skyfall',
         age: 0,
-        life: 2.45
+        life: 2.35
       };
     } else if (key === 'fissure_lanes') {
       var laneAng = (raid.castSeq % 2 === 0) ? 0 : (Math.PI / 2);
@@ -2124,9 +2348,9 @@
           { x: centerPt.x + lnx * 5.6, z: centerPt.z + lnz * 5.6, ang: laneAng, width: 2.65, len: 26 }
         ],
         dmgPct: 0.48,
-        fx: 'lod_harvest',
+        fx: 'ed_quake',
         age: 0,
-        life: 2.30
+        life: 2.20
       };
     } else if (key === 'pillars') {
       // Anchor boss at the epicenter while channeling the whole-floor blast so pillar shadows stay rock-solid!
@@ -2308,8 +2532,45 @@
     }
   }
 
+  function pushImpactBurst(tg) {
+    if (!tg) return;
+    var volc = Boolean(tg.volcanic || raid.dungeonId === 'thor');
+    var pts = [];
+    if (tg.shape === 'multi' && Array.isArray(tg.zones) && tg.zones.length) {
+      for (var i = 0; i < Math.min(2, tg.zones.length); i++) {
+        pts.push({ x: tg.zones[i].x, z: tg.zones[i].z, r: tg.zones[i].r || 3.2 });
+      }
+    } else if (tg.shape === 'cone') {
+      var ca = tg.ang || 0, cr = (tg.r || 13.5) * 0.55;
+      pts.push({ x: tg.x + Math.cos(ca) * cr, z: tg.z + Math.sin(ca) * cr, r: 4.4 });
+    } else if (tg.shape === 'lava_wall') {
+      pts.push({ x: -7.5, z: tg.z, r: 4.0 });
+      pts.push({ x: 7.5, z: tg.z, r: 4.0 });
+    } else if (tg.shape === 'fissure_lanes' && Array.isArray(tg.beams) && tg.beams.length) {
+      pts.push({ x: tg.beams[0].x, z: tg.beams[0].z, r: 3.8 });
+      if (tg.beams.length > 1) pts.push({ x: tg.beams[tg.beams.length - 1].x, z: tg.beams[tg.beams.length - 1].z, r: 3.8 });
+    } else {
+      pts.push({ x: tg.x || 0, z: tg.z || 0, r: tg.r ? Math.min(7.5, tg.r) : 5.2 });
+    }
+    for (var k = 0; k < pts.length; k++) {
+      raid.impacts.push({ x: pts[k].x, z: pts[k].z, r: pts[k].r, age: 0, life: 0.58, volcanic: volc });
+    }
+    while (raid.impacts.length > 4) raid.impacts.shift();
+  }
+
+  function tickImpacts(dt) {
+    if (!raid.impacts.length) return;
+    for (var i = raid.impacts.length - 1; i >= 0; i--) {
+      raid.impacts[i].age += dt;
+      if (raid.impacts[i].age >= raid.impacts[i].life) {
+        raid.impacts.splice(i, 1);
+      }
+    }
+  }
+
   function tickHazards(dt) {
     tickVoidPools(dt);
+    tickImpacts(dt);
 
     var stages = activeStages();
     var st = stages[raid.stage];
@@ -2350,6 +2611,7 @@
     if (tg.age >= tg.life) {
       raid.telegraph = null;
       releaseBossAnchor();
+      pushImpactBurst(tg);
 
       // Only Stage 4 Boss triggers PGBossFx ("BOSS SKILL" banner); Stages 1–3 use clean impact shake/audio!
       if (st.boss && tg.fx && typeof triggerRaidBossFx === 'function') {
@@ -2766,7 +3028,8 @@
     raid.reviving = null;
     raid.telegraph = null;
     raid.voidPools = [];
-    raid.nextCastIn = 3.2;
+    raid.impacts = [];
+    raid.nextCastIn = 0.75;
     raid.bossCleaveIn = BOSS_CLEAVE_INTERVAL_S;
     raid.castSeq = 0;
     raid.lastSkillKey = '';
@@ -3117,6 +3380,7 @@
     var toAstral = stages[nextIdx].astralStage;
     raid.telegraph = null;
     raid.voidPools = [];
+    raid.impacts = [];
     raid.moveTarget = null;
     releaseBossAnchor();
     updateMeshes();
@@ -3980,6 +4244,154 @@
     VOLCANO_RIGHT.slice(0, -1).reverse().map(function (pt) { return [-pt[0], pt[1]]; })
   );
 
+  var volcanoEndgameImgs = { stone: null, lava: null, started: false, callbacks: [] };
+  function ensureVolcanoEndgameImgs(cb) {
+    if (cb) volcanoEndgameImgs.callbacks.push(cb);
+    if (volcanoEndgameImgs.started || typeof Image === 'undefined') return;
+    volcanoEndgameImgs.started = true;
+    function loadOne(key, url) {
+      var img = new Image();
+      img.decoding = 'async';
+      img.onload = function () {
+        volcanoEndgameImgs[key] = img;
+        for (var i = 0; i < volcanoEndgameImgs.callbacks.length; i++) {
+          try { volcanoEndgameImgs.callbacks[i](); } catch (_) {}
+        }
+      };
+      img.src = url;
+    }
+    loadOne('stone', 'assets/endgame/textures/weathered-stone-b2af8375d71a.webp');
+    loadOne('lava', 'assets/endgame/textures/molten-basalt-33dab0df2735.webp');
+  }
+
+  function volcHash(n) {
+    var s = Math.sin(n * 127.1 + 311.7) * 43758.5453123;
+    return s - Math.floor(s);
+  }
+
+  function normalizePlanarUvs(geo, tileMeters) {
+    if (!geo || !geo.attributes || !geo.attributes.position) return;
+    var pos = geo.attributes.position;
+    var uv = geo.attributes.uv;
+    if (!uv || uv.count !== pos.count) return;
+    var scale = 1 / Math.max(1, tileMeters || 12);
+    for (var i = 0; i < pos.count; i++) {
+      var x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i);
+      uv.setXY(i, (x + y * 0.35) * scale, (z + y * 0.35) * scale);
+    }
+    uv.needsUpdate = true;
+  }
+
+  function paintVolcanicStoneCanvas(cv, stoneImg) {
+    var ctx = cv && cv.getContext ? cv.getContext('2d') : null;
+    if (!ctx) return;
+    var w = cv.width, h = cv.height;
+    ctx.fillStyle = '#3b251c';
+    ctx.fillRect(0, 0, w, h);
+
+    if (stoneImg) {
+      ctx.globalAlpha = 0.88;
+      ctx.drawImage(stoneImg, 0, 0, w * 0.5, h * 0.5);
+      ctx.drawImage(stoneImg, w * 0.5, 0, w * 0.5, h * 0.5);
+      ctx.drawImage(stoneImg, 0, h * 0.5, w * 0.5, h * 0.5);
+      ctx.drawImage(stoneImg, w * 0.5, h * 0.5, w * 0.5, h * 0.5);
+      ctx.globalAlpha = 1;
+      // Warm volcanic basalt grade over the weathered stone photo grain
+      ctx.fillStyle = 'rgba(42, 18, 12, 0.44)';
+      ctx.fillRect(0, 0, w, h);
+    } else {
+      // Crisp procedural volcanic slag & basalt blocks before WebP finishes decoding
+      for (var p = 0; p < 240; p++) {
+        var px = volcHash(p * 3 + 1) * w;
+        var py = volcHash(p * 3 + 2) * h;
+        var pr = 8 + volcHash(p * 3 + 3) * 34;
+        var sh = 30 + Math.floor(volcHash(p * 7) * 32);
+        ctx.fillStyle = 'rgba(' + (sh + 16) + ',' + sh + ',' + Math.max(14, sh - 6) + ',0.55)';
+        ctx.beginPath();
+        ctx.arc(px, py, pr, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    // Dark fractured basalt joint lines across the stone surface
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    for (var c = 0; c < 26; c++) {
+      var cx = volcHash(c * 11 + 5) * w;
+      var cy = volcHash(c * 11 + 9) * h;
+      var ang = volcHash(c * 13) * Math.PI * 2;
+      ctx.strokeStyle = 'rgba(14, 7, 6, 0.68)';
+      ctx.lineWidth = 2.6 + (c % 3) * 1.1;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      for (var s = 1; s <= 5; s++) {
+        ang += (volcHash(c * 19 + s) - 0.5) * 1.1;
+        cx += Math.cos(ang) * (w * 0.08);
+        cy += Math.sin(ang) * (h * 0.08);
+        ctx.lineTo(cx, cy);
+      }
+      ctx.stroke();
+
+      // Subtle glowing ember veins inside every third deep fracture (like Ascension Thor Volcano!)
+      if (c % 3 === 0) {
+        ctx.strokeStyle = 'rgba(255, 106, 24, 0.52)';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+      }
+    }
+
+    // Ash & scorched pumice grit speckles for sharp close-up ground detail
+    for (var g = 0; g < 420; g++) {
+      var gx = volcHash(g * 5 + 17) * w;
+      var gy = volcHash(g * 5 + 23) * h;
+      var gs = 1.2 + volcHash(g * 5 + 29) * 3.2;
+      ctx.fillStyle = g % 5 === 0 ? 'rgba(130, 88, 68, 0.32)' : 'rgba(18, 10, 9, 0.38)';
+      ctx.fillRect(gx, gy, gs, gs);
+    }
+  }
+
+  function paintMoltenLavaCanvas(cv, lavaImg) {
+    var ctx = cv && cv.getContext ? cv.getContext('2d') : null;
+    if (!ctx) return;
+    var w = cv.width, h = cv.height;
+    var bg = ctx.createLinearGradient(0, 0, w, h);
+    bg.addColorStop(0, '#621404');
+    bg.addColorStop(0.5, '#b82e08');
+    bg.addColorStop(1, '#581003');
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, w, h);
+
+    if (lavaImg) {
+      ctx.globalAlpha = 0.86;
+      ctx.drawImage(lavaImg, 0, 0, w, h);
+      ctx.globalAlpha = 1;
+    } else {
+      for (var i = 0; i < 48; i++) {
+        var x = volcHash(i * 7 + 1) * w;
+        var y = volcHash(i * 7 + 2) * h;
+        var r = 16 + (i % 5) * 11;
+        var rg = ctx.createRadialGradient(x, y, 2, x, y, r);
+        rg.addColorStop(0, i % 3 === 0 ? '#ffe484' : '#ff8c1f');
+        rg.addColorStop(0.55, '#d9380a');
+        rg.addColorStop(1, 'rgba(65,10,3,0)');
+        ctx.fillStyle = rg;
+        ctx.fillRect(0, 0, w, h);
+      }
+    }
+
+    ctx.strokeStyle = 'rgba(255, 218, 106, 0.62)';
+    ctx.lineWidth = 2.6;
+    for (var v = 0; v < 12; v++) {
+      ctx.beginPath();
+      var sy = (v / 12) * h;
+      ctx.moveTo(0, sy);
+      for (var sx = 0; sx <= w; sx += 32) {
+        ctx.lineTo(sx, sy + Math.sin((sx / w) * Math.PI * 2 + v) * 10);
+      }
+      ctx.stroke();
+    }
+  }
+
   function makeVolcanoCanvasTex(THREE, w, h, painter, repeatX, repeatY) {
     if (typeof document === 'undefined' || !document.createElement) return null;
     var cv = document.createElement('canvas');
@@ -3987,11 +4399,12 @@
     cv.height = h;
     var ctx = cv.getContext && cv.getContext('2d');
     if (!ctx) return null;
-    painter(ctx, w, h);
+    painter(cv);
     var tex = new THREE.CanvasTexture(cv);
     tex.wrapS = THREE.RepeatWrapping;
     tex.wrapT = THREE.RepeatWrapping;
     if (repeatX || repeatY) tex.repeat.set(repeatX || 1, repeatY || 1);
+    tex.userData = { canvas: cv };
     return tex;
   }
 
@@ -3999,97 +4412,84 @@
     if (typeof THREE === 'undefined') return null;
     var stNum = Math.max(1, Math.min(5, Number(stage) || 1));
     var worldScene = new THREE.Scene();
-    var skyCol = new THREE.Color(0x1c0805);
+    var skyCol = new THREE.Color(0x1f0a06);
     worldScene.background = skyCol;
-    worldScene.fog = new THREE.FogExp2(0x2a0f08, 0.0022);
+    worldScene.fog = new THREE.FogExp2(0x2d1109, 0.0020);
 
     var scenery = new THREE.Group();
     scenery.name = 'thor-raid-causeway';
     worldScene.add(scenery);
 
-    // Rich volcanic lighting: warm magma underglow + overhead caldera key light
-    var hemiLight = new THREE.HemisphereLight(0xffb17a, 0x5c1a08, 0.78);
+    // Ascension Thor Volcano warm directional + caldera rim bounce lighting
+    var hemiLight = new THREE.HemisphereLight(0xffb882, 0x5c1a08, 0.86);
     worldScene.add(hemiLight);
-    var keyLight = new THREE.DirectionalLight(0xffcf96, 1.05);
-    keyLight.position.set(28, 52, 22);
+    var keyLight = new THREE.DirectionalLight(0xffd49e, 1.12);
+    keyLight.position.set(28, 54, 24);
     worldScene.add(keyLight);
-    var lavaBounce = new THREE.DirectionalLight(0xff5414, 0.65);
+    var lavaBounce = new THREE.DirectionalLight(0xff5c18, 0.68);
     lavaBounce.position.set(-18, -14, -90);
     worldScene.add(lavaBounce);
 
     var ownedTextures = [];
+    var disposed = false;
 
-    // 1. Procedural Scrolling Subterranean Molten Lava Ocean
-    var lavaTex = makeVolcanoCanvasTex(THREE, 256, 256, function (ctx, w, h) {
-      var bg = ctx.createLinearGradient(0, 0, w, h);
-      bg.addColorStop(0, '#5a1104');
-      bg.addColorStop(0.5, '#9e2608');
-      bg.addColorStop(1, '#520f03');
-      ctx.fillStyle = bg;
-      ctx.fillRect(0, 0, w, h);
-      for (var i = 0; i < 46; i++) {
-        var x = ((i * 73) % w);
-        var y = ((i * 139) % h);
-        var r = 16 + (i % 5) * 9;
-        var rg = ctx.createRadialGradient(x, y, 2, x, y, r);
-        rg.addColorStop(0, i % 3 === 0 ? '#ffe07d' : '#ff881f');
-        rg.addColorStop(0.55, '#d9380a');
-        rg.addColorStop(1, 'rgba(70,12,4,0)');
-        ctx.fillStyle = rg;
-        ctx.fillRect(0, 0, w, h);
-      }
-      ctx.strokeStyle = 'rgba(255, 212, 102, 0.55)';
-      ctx.lineWidth = 2.4;
-      for (var v = 0; v < 14; v++) {
-        ctx.beginPath();
-        var sy = (v / 14) * h;
-        ctx.moveTo(0, sy);
-        for (var sx = 0; sx <= w; sx += 32) {
-          ctx.lineTo(sx, sy + Math.sin((sx / w) * Math.PI * 2 + v) * 9);
-        }
-        ctx.stroke();
-      }
-    }, 9, 11);
+    // 1. Real Molten-Basalt WebP + Flowing Magma Veins Texture (Sea, Floor Pools & Spills)
+    var lavaTex = makeVolcanoCanvasTex(THREE, 512, 512, function (cv) {
+      paintMoltenLavaCanvas(cv, volcanoEndgameImgs.lava);
+    }, 8, 10);
     if (lavaTex) ownedTextures.push(lavaTex);
+
+    var poolLavaTex = makeVolcanoCanvasTex(THREE, 512, 512, function (cv) {
+      paintMoltenLavaCanvas(cv, volcanoEndgameImgs.lava);
+    }, 1, 1);
+    if (poolLavaTex) ownedTextures.push(poolLavaTex);
+
+    // 2. Real Weathered-Stone WebP + Fractured Volcanic Basalt & Ember-Seam Floor Texture
+    var deckTex = makeVolcanoCanvasTex(THREE, 512, 512, function (cv) {
+      paintVolcanicStoneCanvas(cv, volcanoEndgameImgs.stone);
+    }, 1, 1);
+    if (deckTex) ownedTextures.push(deckTex);
+
+    var rockWallTex = makeVolcanoCanvasTex(THREE, 512, 512, function (cv) {
+      paintVolcanicStoneCanvas(cv, volcanoEndgameImgs.stone);
+    }, 2, 2);
+    if (rockWallTex) ownedTextures.push(rockWallTex);
+
+    var onEndgameImgReady = function () {
+      if (disposed) return;
+      if (volcanoEndgameImgs.lava) {
+        if (lavaTex && lavaTex.userData.canvas) {
+          paintMoltenLavaCanvas(lavaTex.userData.canvas, volcanoEndgameImgs.lava);
+          lavaTex.needsUpdate = true;
+        }
+        if (poolLavaTex && poolLavaTex.userData.canvas) {
+          paintMoltenLavaCanvas(poolLavaTex.userData.canvas, volcanoEndgameImgs.lava);
+          poolLavaTex.needsUpdate = true;
+        }
+      }
+      if (volcanoEndgameImgs.stone) {
+        if (deckTex && deckTex.userData.canvas) {
+          paintVolcanicStoneCanvas(deckTex.userData.canvas, volcanoEndgameImgs.stone);
+          deckTex.needsUpdate = true;
+        }
+        if (rockWallTex && rockWallTex.userData.canvas) {
+          paintVolcanicStoneCanvas(rockWallTex.userData.canvas, volcanoEndgameImgs.stone);
+          rockWallTex.needsUpdate = true;
+        }
+      }
+    };
+    ensureVolcanoEndgameImgs(onEndgameImgReady);
 
     var lavaSeaMat = new THREE.MeshBasicMaterial({
       color: lavaTex ? 0xffffff : 0xc8370c,
       map: lavaTex || null
     });
-    var lavaSea = new THREE.Mesh(new THREE.PlaneGeometry(250, 260), lavaSeaMat);
+    var lavaSea = new THREE.Mesh(new THREE.PlaneGeometry(260, 270), lavaSeaMat);
     lavaSea.rotation.x = -Math.PI / 2;
-    lavaSea.position.set(0, -2.35, -78);
+    lavaSea.position.set(0, -2.4, -78);
     scenery.add(lavaSea);
 
-    // 2. Procedural Cracked Obsidian & Magma-Vein Causeway Deck + Extruded Basalt Cliff Base
-    var deckTex = makeVolcanoCanvasTex(THREE, 256, 256, function (ctx, w, h) {
-      ctx.fillStyle = '#251c1e';
-      ctx.fillRect(0, 0, w, h);
-      // Carved volcanic basalt flagstones
-      var rows = 8, cols = 6;
-      var cw = w / cols, ch = h / rows;
-      for (var r = 0; r < rows; r++) {
-        var off = (r % 2) * (cw * 0.5);
-        for (var c = -1; c <= cols; c++) {
-          var shade = 28 + ((r * 7 + c * 13) & 15);
-          ctx.fillStyle = 'rgb(' + (shade + 8) + ',' + shade + ',' + (shade + 2) + ')';
-          ctx.fillRect(c * cw + off + 2, r * ch + 2, cw - 4, ch - 4);
-        }
-      }
-      // Subtle glowing ember seams between flagstones
-      ctx.strokeStyle = 'rgba(255, 104, 28, 0.34)';
-      ctx.lineWidth = 1.6;
-      for (var f = 0; f < 8; f++) {
-        ctx.beginPath();
-        var fx = ((f * 59) % w);
-        ctx.moveTo(fx, 0);
-        ctx.lineTo((fx + 42) % w, h * 0.5);
-        ctx.lineTo((fx + 14) % w, h);
-        ctx.stroke();
-      }
-    }, 0.09, 0.09);
-    if (deckTex) ownedTextures.push(deckTex);
-
+    // 3. Textured Volcanic Causeway Deck (y = 0.02 so hazardGroup at y = 0.14 is 100% unoccluded!) + Extruded Cliff
     var routeShape = new THREE.Shape();
     routeShape.moveTo(VOLCANO_OUTLINE[0][0], -VOLCANO_OUTLINE[0][1]);
     for (var oi = 1; oi < VOLCANO_OUTLINE.length; oi++) {
@@ -4100,115 +4500,306 @@
     var cliffGeo = new THREE.ExtrudeGeometry(routeShape, {
       depth: 2.65,
       bevelEnabled: true,
-      bevelThickness: 0.22,
-      bevelSize: 0.35,
+      bevelThickness: 0.24,
+      bevelSize: 0.38,
       bevelSegments: 2,
       curveSegments: 8
     });
     cliffGeo.rotateX(-Math.PI / 2);
-    var cliffMesh = new THREE.Mesh(
-      cliffGeo,
-      new THREE.MeshStandardMaterial({ color: 0x1b1214, roughness: 0.92, metalness: 0.08 })
-    );
-    cliffMesh.position.y = -2.62;
+    normalizePlanarUvs(cliffGeo, 11);
+    var cliffMat = new THREE.MeshStandardMaterial({
+      color: rockWallTex ? 0x8a6456 : 0x261816,
+      map: rockWallTex || null,
+      bumpMap: rockWallTex || null,
+      bumpScale: 0.35,
+      roughness: 0.92,
+      metalness: 0.08
+    });
+    var cliffMesh = new THREE.Mesh(cliffGeo, cliffMat);
+    cliffMesh.position.y = -2.68;
     cliffMesh.userData.outline = VOLCANO_OUTLINE;
     scenery.add(cliffMesh);
 
     var deckGeo = new THREE.ShapeGeometry(routeShape, 8);
     deckGeo.rotateX(-Math.PI / 2);
-    var deckMesh = new THREE.Mesh(
-      deckGeo,
-      new THREE.MeshStandardMaterial({
-        color: deckTex ? 0xd8c7c0 : 0x322628,
-        map: deckTex || null,
-        roughness: 0.84,
-        metalness: 0.12
-      })
-    );
-    deckMesh.position.y = 0.085;
+    normalizePlanarUvs(deckGeo, 13);
+    var deckMat = new THREE.MeshStandardMaterial({
+      color: deckTex ? 0xdcc6bc : 0x452d26,
+      map: deckTex || null,
+      bumpMap: deckTex || null,
+      bumpScale: 0.36,
+      roughness: 0.86,
+      metalness: 0.10
+    });
+    var deckMesh = new THREE.Mesh(deckGeo, deckMat);
+    deckMesh.position.y = 0.02;
     scenery.add(deckMesh);
 
-    // 3. Batched Volcanic Architecture (Hexagonal Basalt Columns, Glowing Magma Curbs, Gateway Ribs, Crown Spikes)
-    var rockMat = new THREE.MeshStandardMaterial({ color: 0x24191b, roughness: 0.88, metalness: 0.14 });
-    var obsidianMat = new THREE.MeshStandardMaterial({ color: 0x181218, roughness: 0.48, metalness: 0.38 });
-    var magmaGlowMat = new THREE.MeshBasicMaterial({ color: 0xff6a1a });
-    var goldSealMat = new THREE.MeshBasicMaterial({ color: 0xffb845, transparent: true, opacity: 0.82, side: THREE.DoubleSide, depthWrite: false });
+    // Shared Materials for Ascension Thor Volcano Small Details (Basalt Strata, Rubble, Lava Pools, Spills, Calderas)
+    var rockMat = new THREE.MeshStandardMaterial({
+      color: rockWallTex ? 0x9c7464 : 0x3b2620,
+      map: rockWallTex || null,
+      bumpMap: rockWallTex || null,
+      bumpScale: 0.30,
+      roughness: 0.90,
+      metalness: 0.10
+    });
+    var strataDarkMat = new THREE.MeshStandardMaterial({
+      color: rockWallTex ? 0x563932 : 0x211514,
+      map: rockWallTex || null,
+      roughness: 0.92,
+      metalness: 0.12
+    });
+    var strataRustMat = new THREE.MeshStandardMaterial({
+      color: rockWallTex ? 0xb56d4f : 0x5c3222,
+      map: rockWallTex || null,
+      roughness: 0.88,
+      metalness: 0.08
+    });
+    var obsidianMat = new THREE.MeshStandardMaterial({
+      color: 0x1c141c,
+      bumpMap: rockWallTex || null,
+      bumpScale: 0.16,
+      roughness: 0.44,
+      metalness: 0.42
+    });
+    var poolLavaMat = new THREE.MeshBasicMaterial({
+      color: poolLavaTex ? 0xffffff : 0xff6e18,
+      map: poolLavaTex || null
+    });
+    var crustRimMat = new THREE.MeshStandardMaterial({
+      color: 0x1e1110,
+      roughness: 0.95,
+      metalness: 0.06
+    });
+    var magmaGlowMat = new THREE.MeshBasicMaterial({ color: 0xff761c });
+    var goldSealMat = new THREE.MeshBasicMaterial({
+      color: 0xffb845,
+      transparent: true,
+      opacity: 0.62,
+      side: THREE.DoubleSide,
+      depthWrite: false
+    });
 
-    // Glowing magma-channel spine leading straight down the causeway & across the connecting bridge into Ifrit's Sanctum!
-    var spineA = new THREE.Mesh(new THREE.PlaneGeometry(1.15, 136), new THREE.MeshBasicMaterial({ color: 0xff5a14, transparent: true, opacity: 0.52, depthWrite: false }));
+    // Subtle recessed glowing magma-vein guide down the causeway (y = 0.026 so hazards at y = 0.14 sit cleanly above!)
+    var spineA = new THREE.Mesh(
+      new THREE.PlaneGeometry(0.92, 136),
+      new THREE.MeshBasicMaterial({ color: 0xff5a14, transparent: true, opacity: 0.44, depthWrite: false })
+    );
     spineA.rotation.x = -Math.PI / 2;
-    spineA.position.set(0, 0.095, -52);
+    spineA.position.set(0, 0.025, -52);
     scenery.add(spineA);
 
-    var spineCore = new THREE.Mesh(new THREE.PlaneGeometry(0.38, 136), new THREE.MeshBasicMaterial({ color: 0xffd269, transparent: true, opacity: 0.78, depthWrite: false }));
+    var spineCore = new THREE.Mesh(
+      new THREE.PlaneGeometry(0.28, 136),
+      new THREE.MeshBasicMaterial({ color: 0xffd269, transparent: true, opacity: 0.68, depthWrite: false })
+    );
     spineCore.rotation.x = -Math.PI / 2;
-    spineCore.position.set(0, 0.10, -52);
+    spineCore.position.set(0, 0.028, -52);
     scenery.add(spineCore);
 
-    // Hexagonal basalt monoliths & glowing ember braziers along Stages 1–3 + Connecting Bridge
-    var colGeo = new THREE.CylinderGeometry(0.85, 1.08, 1, 6);
-    var capGeo = new THREE.OctahedronGeometry(0.55, 0);
-    var pillarSpots = [
-      // Stage 1: Molten Approach
-      [-13.4, 14, 5.2, true], [13.4, 14, 5.2, true],
-      [-14.0, 0, 6.4, false], [14.0, 0, 6.4, false],
-      [-13.6, -14, 5.8, true], [13.6, -14, 5.8, true],
-      // Bridge 1 Gate (-29)
-      [-12.2, -29, 8.2, true], [12.2, -29, 8.2, true],
-      // Stage 2: Basalt Forge
-      [-14.2, -42, 6.6, false], [14.2, -42, 6.6, false],
-      [-13.8, -55, 6.0, true], [13.8, -55, 6.0, true],
-      // Bridge 2 Gate (-67)
-      [-12.2, -67, 8.6, true], [12.2, -67, 8.6, true],
-      // Stage 3: Magma Conduit
-      [-14.4, -80, 6.8, false], [14.4, -80, 6.8, false],
-      [-13.6, -96, 6.4, true], [13.6, -96, 6.4, true],
-      // Connecting Boss Bridge Sanctum Gate Towers (-107 & -119)
-      [-8.3, -107, 9.8, true], [8.3, -107, 9.8, true],
-      [-7.9, -113.5, 6.2, false], [7.9, -113.5, 6.2, false],
-      [-8.6, -119, 10.6, true], [8.6, -119, 10.6, true]
-    ];
+    // 4. Ascension Detail Helper A: Hexagonal Layered Basalt Column Clusters with Geological Strata Bands!
+    var hexShaftGeo = new THREE.CylinderGeometry(1, 1.06, 1, 6);
+    var hexBandGeo = new THREE.CylinderGeometry(1.05, 1.07, 1, 6);
+    var emberCapGeo = new THREE.OctahedronGeometry(0.48, 0);
+    function addBasaltCluster(cx, cz, radius, height, seed, withEmber) {
+      var grp = new THREE.Group();
+      grp.position.set(cx, -0.25, cz);
+      for (var n = 0; n < 4; n++) {
+        var ang = n * 1.7 + seed;
+        var dist = n === 0 ? 0 : radius * (0.58 + volcHash(seed * 7 + n) * 0.28);
+        var cr = radius * (n === 0 ? 0.56 : 0.34 + volcHash(seed * 11 + n) * 0.16);
+        var ch = height * (n === 0 ? 1.0 : 0.46 + volcHash(seed * 13 + n) * 0.44);
+        var ox = Math.cos(ang) * dist, oz = Math.sin(ang) * dist;
+        var shaft = new THREE.Mesh(hexShaftGeo, n === 0 ? rockMat : strataDarkMat);
+        shaft.scale.set(cr, ch, cr);
+        shaft.position.set(ox, ch * 0.5, oz);
+        shaft.rotation.y = ang * 0.5;
+        grp.add(shaft);
 
-    for (var pi = 0; pi < pillarSpots.length; pi++) {
-      var ps = pillarSpots[pi];
-      var col = new THREE.Mesh(colGeo, pi % 2 === 0 ? obsidianMat : rockMat);
-      col.scale.set(1, ps[2], 1);
-      col.position.set(ps[0], ps[2] * 0.5 - 0.3, ps[1]);
-      scenery.add(col);
-      if (ps[3]) {
-        var flame = new THREE.Mesh(capGeo, magmaGlowMat);
-        flame.position.set(ps[0], ps[2] + 0.25, ps[1]);
-        scenery.add(flame);
+        // Ascension geological strata rings along the hexagonal shaft
+        for (var b = 1; b <= 2; b++) {
+          var bh = ch * (0.12 + b * 0.02);
+          var band = new THREE.Mesh(hexBandGeo, b === 1 ? strataDarkMat : strataRustMat);
+          band.scale.set(cr, bh, cr);
+          band.position.set(ox, ch * (0.28 * b + 0.14), oz);
+          band.rotation.y = shaft.rotation.y;
+          grp.add(band);
+        }
       }
+      if (withEmber) {
+        var flame = new THREE.Mesh(emberCapGeo, magmaGlowMat);
+        flame.position.set(0, height + 0.38, 0);
+        grp.add(flame);
+      }
+      scenery.add(grp);
+    }
+
+    var basaltSpecs = [
+      // Stage 1: Molten Approach
+      [-13.4, 15, 1.55, 4.8, true], [13.4, 15, 1.55, 4.8, true],
+      [-14.1, 2, 1.75, 5.8, false], [14.1, 2, 1.75, 5.8, false],
+      [-13.6, -13, 1.60, 5.2, true], [13.6, -13, 1.60, 5.2, true],
+      // Bridge 1 Gate (-29)
+      [-12.3, -29, 1.65, 7.8, true], [12.3, -29, 1.65, 7.8, true],
+      // Stage 2: Basalt Forge
+      [-14.2, -41, 1.80, 6.2, false], [14.2, -41, 1.80, 6.2, false],
+      [-13.8, -55, 1.65, 5.6, true], [13.8, -55, 1.65, 5.6, true],
+      // Bridge 2 Gate (-67)
+      [-12.3, -67, 1.70, 8.2, true], [12.3, -67, 1.70, 8.2, true],
+      // Stage 3: Magma Conduit
+      [-14.4, -79, 1.85, 6.5, false], [14.4, -79, 1.85, 6.5, false],
+      [-13.7, -95, 1.70, 6.0, true], [13.7, -95, 1.70, 6.0, true],
+      // Connecting Boss Bridge Sanctum Gate Towers (-107 & -119)
+      [-8.4, -107, 1.55, 9.2, true], [8.4, -107, 1.55, 9.2, true],
+      [-8.0, -113.5, 1.35, 5.8, false], [8.0, -113.5, 1.35, 5.8, false],
+      [-8.7, -119, 1.65, 10.2, true], [8.7, -119, 1.65, 10.2, true],
+      // Stage 4: Outer Sanctum Basalt Sentinels
+      [-21.5, -128, 2.1, 7.6, true], [21.5, -128, 2.1, 7.6, true],
+      [-24.6, -142, 2.3, 8.8, false], [24.6, -142, 2.3, 8.8, false],
+      [-20.8, -157, 2.2, 8.4, true], [20.8, -157, 2.2, 8.4, true]
+    ];
+    for (var bi = 0; bi < basaltSpecs.length; bi++) {
+      var bs = basaltSpecs[bi];
+      addBasaltCluster(bs[0], bs[1], bs[2], bs[3], bi * 1.37 + 0.5, bs[4]);
+    }
+
+    // 5. Ascension Detail Helper B: Scattered Volcanic Rubble & Slag Boulders along Curbs & Sanctum!
+    var rubbleStoneGeo = new THREE.DodecahedronGeometry(1, 0);
+    function addRubblePile(cx, cz, count, spread, scaleBase, seed) {
+      var grp = new THREE.Group();
+      grp.position.set(cx, 0.03, cz);
+      for (var r = 0; r < count; r++) {
+        var ang = volcHash(seed * 11 + r) * Math.PI * 2;
+        var dist = volcHash(seed * 17 + r) * spread;
+        var sx = scaleBase * (0.45 + volcHash(seed * 23 + r) * 0.72);
+        var sy = sx * (0.42 + volcHash(seed * 29 + r) * 0.36);
+        var sz = sx * (0.72 + volcHash(seed * 31 + r) * 0.45);
+        var stone = new THREE.Mesh(rubbleStoneGeo, r % 3 === 0 ? strataRustMat : (r % 2 === 0 ? rockMat : strataDarkMat));
+        stone.scale.set(sx, sy, sz);
+        stone.position.set(Math.cos(ang) * dist, sy * 0.36, Math.sin(ang) * dist);
+        stone.rotation.set(volcHash(seed + r) * 0.6, volcHash(seed * 3 + r) * 3.1, volcHash(seed * 5 + r) * 0.6);
+        grp.add(stone);
+      }
+      scenery.add(grp);
+    }
+
+    var rubbleSpots = [
+      [-12.2, 19, 6, 1.8, 0.68], [12.4, 8, 5, 1.6, 0.62],
+      [-12.6, -6, 6, 1.9, 0.72], [12.3, -21, 6, 1.7, 0.66],
+      [-12.5, -35, 5, 1.7, 0.65], [12.8, -48, 7, 2.1, 0.74],
+      [-12.4, -61, 6, 1.8, 0.68], [12.6, -74, 6, 1.9, 0.70],
+      [-12.8, -88, 7, 2.1, 0.75], [12.2, -101, 5, 1.6, 0.64],
+      [-16.8, -125, 7, 2.3, 0.82], [17.2, -125, 7, 2.3, 0.82],
+      [-22.4, -135, 8, 2.5, 0.88], [22.4, -149, 8, 2.5, 0.88],
+      [-15.5, -163, 7, 2.4, 0.85], [15.5, -163, 7, 2.4, 0.85]
+    ];
+    for (var ri = 0; ri < rubbleSpots.length; ri++) {
+      var rs = rubbleSpots[ri];
+      addRubblePile(rs[0], rs[1], rs[2], rs[3], rs[4], ri * 2.1 + 1.3);
+    }
+
+    // 6. Ascension Detail Helper C: Hand-Shaped Irregular Bubbling Lava Pools with Cooling Basalt Crusts!
+    function addLavaPool(cx, cz, rx, rz, rot, seed) {
+      var pts = [];
+      for (var i = 0; i < 18; i++) {
+        var a = (i / 18) * Math.PI * 2;
+        var wob = 0.76 + volcHash(seed * 13 + i) * 0.34;
+        pts.push(new THREE.Vector2(Math.cos(a) * rx * wob, Math.sin(a) * rz * wob));
+      }
+      var pShape = new THREE.Shape(pts);
+      pShape.closePath();
+
+      var rimGeo = new THREE.ExtrudeGeometry(pShape, {
+        depth: 0.11,
+        bevelEnabled: true,
+        bevelThickness: 0.05,
+        bevelSize: 0.22,
+        bevelSegments: 1,
+        curveSegments: 6
+      });
+      rimGeo.rotateX(-Math.PI / 2);
+      var rim = new THREE.Mesh(rimGeo, crustRimMat);
+      rim.position.set(cx, -0.02, cz);
+      rim.rotation.y = rot;
+      scenery.add(rim);
+
+      var surfGeo = new THREE.ShapeGeometry(pShape, 6);
+      surfGeo.rotateX(-Math.PI / 2);
+      normalizePlanarUvs(surfGeo, 7);
+      var surf = new THREE.Mesh(surfGeo, poolLavaMat);
+      surf.position.set(cx, 0.032, cz);
+      surf.rotation.y = rot;
+      scenery.add(surf);
+    }
+
+    // Tucked onto the outer shoulders so the central combat lane & hazard telegraphs stay crystal-clear!
+    var poolSpecs = [
+      [-11.2, 6, 2.4, 1.5, 0.25], [11.4, -17, 2.3, 1.4, -0.30],
+      [-11.6, -46, 2.6, 1.6, 0.18], [11.5, -58, 2.2, 1.4, -0.22],
+      [-11.6, -84, 2.7, 1.6, 0.32], [11.6, -92, 2.3, 1.5, -0.28],
+      [-18.6, -134, 3.2, 2.0, 0.40], [18.8, -137, 3.1, 1.9, -0.35],
+      [-17.2, -153, 3.0, 1.9, -0.25], [17.4, -154, 3.2, 2.0, 0.30]
+    ];
+    for (var pli = 0; pli < poolSpecs.length; pli++) {
+      var psp = poolSpecs[pli];
+      addLavaPool(psp[0], psp[1], psp[2], psp[3], psp[4], pli * 3.7 + 0.9);
+    }
+
+    // 7. Ascension Detail Helper D: Pouring Molten Lava Spills over Causeway Cliff Edges!
+    function addLavaSpill(cx, cz, width, dropH, rotY) {
+      var spShape = new THREE.Shape();
+      spShape.moveTo(-width * 0.42, 0);
+      spShape.quadraticCurveTo(-width * 0.56, -dropH * 0.48, -width * 0.32, -dropH);
+      spShape.lineTo(width * 0.34, -dropH);
+      spShape.quadraticCurveTo(width * 0.58, -dropH * 0.44, width * 0.40, 0);
+      spShape.closePath();
+      var spGeo = new THREE.ExtrudeGeometry(spShape, {
+        depth: 0.22,
+        bevelEnabled: true,
+        bevelThickness: 0.06,
+        bevelSize: 0.06,
+        bevelSegments: 1
+      });
+      normalizePlanarUvs(spGeo, 6);
+      var spMesh = new THREE.Mesh(spGeo, poolLavaMat);
+      spMesh.position.set(cx, 0.01, cz);
+      spMesh.rotation.y = rotY;
+      scenery.add(spMesh);
+    }
+
+    var spillSpecs = [
+      [-14.7, -4, 2.1, 2.6, -Math.PI * 0.5], [14.7, -11, 2.2, 2.6, Math.PI * 0.5],
+      [-15.1, -44, 2.6, 2.7, -Math.PI * 0.5], [15.1, -51, 2.5, 2.7, Math.PI * 0.5],
+      [-15.2, -83, 2.6, 2.7, -Math.PI * 0.5], [15.2, -89, 2.4, 2.7, Math.PI * 0.5],
+      [-25.4, -140, 3.0, 2.8, -Math.PI * 0.5], [25.4, -145, 3.0, 2.8, Math.PI * 0.5]
+    ];
+    for (var spi = 0; spi < spillSpecs.length; spi++) {
+      var sps = spillSpecs[spi];
+      addLavaSpill(sps[0], sps[1], sps[2], sps[3], sps[4]);
     }
 
     // Overhead Volcanic Obsidian Gateway Lintels at the 3 Connecting Bridges (-29, -67, -119)
     var gateZs = [
-      [-29, 26.2, 8.2],
-      [-67, 26.2, 8.6],
-      [-119, 19.2, 10.6]
+      [-29, 25.8, 7.8],
+      [-67, 25.8, 8.2],
+      [-119, 18.8, 10.2]
     ];
-    var lintelGeo = new THREE.BoxGeometry(1, 0.95, 1.35);
+    var lintelGeo = new THREE.BoxGeometry(1, 0.92, 1.35);
     for (var gi = 0; gi < gateZs.length; gi++) {
       var gz = gateZs[gi];
       var lintel = new THREE.Mesh(lintelGeo, obsidianMat);
       lintel.scale.set(gz[1], 1, 1);
       lintel.position.set(0, gz[2] + 0.15, gz[0]);
       scenery.add(lintel);
-      var trim = new THREE.Mesh(new THREE.BoxGeometry(gz[1] * 0.82, 0.22, 1.48), magmaGlowMat);
+      var trim = new THREE.Mesh(new THREE.BoxGeometry(gz[1] * 0.80, 0.22, 1.48), magmaGlowMat);
       trim.position.set(0, gz[2] - 0.22, gz[0]);
       scenery.add(trim);
     }
 
-    // 4. Stage 2 Landmark: Twin Pouring Molten Lava Cascades & Basalt Cliffs (z = -40 & -52)
-    var cascadeTex = makeVolcanoCanvasTex(THREE, 128, 256, function (ctx, w, h) {
-      ctx.fillStyle = '#a82808';
-      ctx.fillRect(0, 0, w, h);
-      for (var s = 0; s < 10; s++) {
-        var sx = (s / 10) * w;
-        ctx.fillStyle = s % 2 === 0 ? '#ff9824' : '#ffe074';
-        ctx.fillRect(sx + 2, 0, w * 0.055, h);
-      }
+    // 8. Stage 2 Landmark: Twin Pouring Molten Lava Cascades & Sculpted Basalt Cliffs (z = -39 & -52)
+    var cascadeTex = makeVolcanoCanvasTex(THREE, 128, 256, function (cv) {
+      paintMoltenLavaCanvas(cv, volcanoEndgameImgs.lava);
     }, 1, 2);
     if (cascadeTex) ownedTextures.push(cascadeTex);
     var cascadeMat = new THREE.MeshBasicMaterial({
@@ -4216,81 +4807,110 @@
       map: cascadeTex || null,
       side: THREE.DoubleSide
     });
-    var cliffBlockGeo = new THREE.ConeGeometry(6.5, 18, 6);
-    var fallGeo = new THREE.PlaneGeometry(3.4, 15.5);
+    var cliffBlockGeo = new THREE.ConeGeometry(6.8, 18.5, 7);
+    normalizePlanarUvs(cliffBlockGeo, 9);
+    var fallGeo = new THREE.PlaneGeometry(3.5, 15.8);
     var cascadeZs = [-39, -52];
     for (var ci = 0; ci < cascadeZs.length; ci++) {
       for (var sgn = -1; sgn <= 1; sgn += 2) {
         var cliff = new THREE.Mesh(cliffBlockGeo, rockMat);
-        cliff.position.set(sgn * 25.5, 6.2, cascadeZs[ci]);
+        cliff.position.set(sgn * 26.0, 6.3, cascadeZs[ci]);
         scenery.add(cliff);
         var fall = new THREE.Mesh(fallGeo, cascadeMat);
-        fall.position.set(sgn * 21.2, 5.0, cascadeZs[ci]);
+        fall.position.set(sgn * 21.4, 5.0, cascadeZs[ci]);
         fall.rotation.y = sgn < 0 ? (Math.PI * 0.42) : (-Math.PI * 0.42);
         scenery.add(fall);
       }
     }
 
-    // 5. Stage 3 Landmark: Twin Active Smoking Mini-Volcano Calderas (z = -84)
-    var coneVolcGeo = new THREE.CylinderGeometry(3.2, 8.4, 9.5, 10, 1, false);
-    var craterPoolGeo = new THREE.CircleGeometry(2.9, 20);
-    for (var vs = -1; vs <= 1; vs += 2) {
-      var miniVolc = new THREE.Mesh(coneVolcGeo, rockMat);
-      miniVolc.position.set(vs * 26.5, 2.4, -85);
-      scenery.add(miniVolc);
-      var topLava = new THREE.Mesh(craterPoolGeo, magmaGlowMat);
-      topLava.rotation.x = -Math.PI / 2;
-      topLava.position.set(vs * 26.5, 7.22, -85);
-      scenery.add(topLava);
+    // 9. Ascension Detail Helper E: Sculpted Ribbed Volcano Caldera Cones with Glowing Magma Craters!
+    function addSculptedVolcano(vx, vz, rTop, rBot, h, seed) {
+      var grp = new THREE.Group();
+      grp.position.set(vx, -2.2, vz);
+      var coneG = new THREE.CylinderGeometry(rTop, rBot, h, 20, 6, true);
+      var pos = coneG.attributes.position;
+      for (var i = 0; i < pos.count; i++) {
+        var x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i);
+        var u = (y + h * 0.5) / h;
+        var ang = Math.atan2(z, x);
+        var ridge = 1 + Math.sin(ang * 6 + seed) * 0.08 * (1 - u * 0.4) + Math.cos(ang * 11 - u * 5) * 0.05;
+        pos.setXYZ(i, x * ridge, y, z * ridge);
+      }
+      coneG.computeVertexNormals();
+      normalizePlanarUvs(coneG, 12);
+      var body = new THREE.Mesh(coneG, rockMat);
+      body.position.y = h * 0.5;
+      grp.add(body);
+
+      var rimTorus = new THREE.Mesh(new THREE.TorusGeometry(rTop * 0.96, rTop * 0.16, 8, 20), crustRimMat);
+      rimTorus.rotation.x = Math.PI * 0.5;
+      rimTorus.position.y = h - 0.12;
+      grp.add(rimTorus);
+
+      var lake = new THREE.Mesh(new THREE.CircleGeometry(rTop * 0.84, 20), poolLavaMat);
+      lake.rotation.x = -Math.PI * 0.5;
+      lake.position.y = h - 0.25;
+      grp.add(lake);
+      scenery.add(grp);
     }
 
-    // 6. Stage 4 Terminus: Sanctum of Ifrit (z = -142) — 3-Ring Molten Seal, Crown Spikes & Colossal Volcano Backdrop
+    addSculptedVolcano(-33, -14, 2.8, 8.6, 10.5, 1.1);
+    addSculptedVolcano(33, -18, 2.6, 8.2, 9.8, 2.4);
+    addSculptedVolcano(-29, -85, 3.2, 9.4, 12.2, 3.7);
+    addSculptedVolcano(29, -85, 3.2, 9.4, 12.2, 5.1);
+    addSculptedVolcano(-40, -138, 4.2, 12.5, 16.5, 6.3);
+    addSculptedVolcano(40, -138, 4.2, 12.5, 16.5, 7.9);
+    // Colossal Titan Volcano behind Ifrit's Sanctum (z = -194)
+    addSculptedVolcano(0, -194, 10.8, 38.0, 36.0, 9.2);
+
+    // 10. Stage 4 Terminus: Sanctum of Ifrit (z = -142) — Broken Basalt Rim Wall, Rib Spikes & Recessed Seal
     var sealGroup = new THREE.Group();
-    sealGroup.position.set(0, 0.105, -142);
-    var outerSeal = new THREE.Mesh(new THREE.RingGeometry(18.2, 19.3, 56), goldSealMat);
+    sealGroup.position.set(0, 0.028, -142);
+    var outerSeal = new THREE.Mesh(new THREE.RingGeometry(17.8, 18.6, 56), goldSealMat);
     outerSeal.rotation.x = -Math.PI / 2;
     sealGroup.add(outerSeal);
-    var midSeal = new THREE.Mesh(new THREE.RingGeometry(11.2, 11.9, 48), goldSealMat);
+    var midSeal = new THREE.Mesh(new THREE.RingGeometry(10.8, 11.35, 48), goldSealMat);
     midSeal.rotation.x = -Math.PI / 2;
     sealGroup.add(midSeal);
-    var coreSeal = new THREE.Mesh(new THREE.RingGeometry(4.2, 4.75, 40), magmaGlowMat);
+    var coreSeal = new THREE.Mesh(new THREE.RingGeometry(4.0, 4.45, 40), goldSealMat);
     coreSeal.rotation.x = -Math.PI / 2;
     sealGroup.add(coreSeal);
     scenery.add(sealGroup);
 
-    // Jagged Obsidian Crown Spikes encircling the Sanctum rim
-    var spikeGeo = new THREE.ConeGeometry(1.45, 9.5, 5);
-    for (var sk = 0; sk < 12; sk++) {
-      var sang = -Math.PI * 0.15 + (sk / 11) * (Math.PI * 1.3);
-      // Place spikes around the northern & side arc (-Z and +/-X) leaving the +Z bridge entrance wide open!
-      var rad = 25.4;
+    // Ascension-style Broken Basalt Caldera Rim Segments framing Stage 4 (leaving +Z bridge entrance wide open!)
+    var rimBlockGeo = new THREE.BoxGeometry(2.3, 1, 1.65);
+    for (var rb = 0; rb < 44; rb++) {
+      var rAng = (rb / 44) * Math.PI * 2;
+      var rx = Math.cos(rAng) * 25.6;
+      var rz = -142 + Math.sin(rAng) * 25.6;
+      // Leave wide open gateway where the connecting bridge meets the Sanctum (+Z around z = -117..-124, |x| < 11)
+      if (rz > -124.5 && Math.abs(rx) < 11.8) continue;
+      if (rb % 7 === 3) continue; // natural broken volcanic gaps!
+      var rh = 1.4 + volcHash(rb * 13 + 7) * 2.6;
+      var seg = new THREE.Mesh(rimBlockGeo, rb % 3 === 0 ? strataDarkMat : rockMat);
+      seg.scale.set(1, rh, 1);
+      seg.position.set(rx, rh * 0.5 - 0.15, rz);
+      seg.rotation.y = -rAng + Math.PI * 0.5;
+      scenery.add(seg);
+    }
+
+    // Jagged Obsidian Crown Spikes leaning inward over the northern & side Sanctum rim
+    var spikeGeo = new THREE.ConeGeometry(1.38, 9.2, 5);
+    for (var sk = 0; sk < 10; sk++) {
+      var sang = -Math.PI * 0.12 + (sk / 9) * (Math.PI * 1.24);
+      var rad = 25.8;
       var sx = Math.cos(sang) * rad;
       var sz = -142 - Math.sin(sang) * rad;
-      if (sz > -123 && Math.abs(sx) < 12) continue;
+      if (sz > -124 && Math.abs(sx) < 12) continue;
       var spike = new THREE.Mesh(spikeGeo, obsidianMat);
-      spike.position.set(sx, 3.6, sz);
-      spike.rotation.z = (sx > 0 ? -0.18 : 0.18);
-      spike.rotation.x = 0.14;
+      spike.position.set(sx, 3.5, sz);
+      spike.rotation.z = (sx > 0 ? -0.20 : 0.20);
+      spike.rotation.x = 0.15;
       scenery.add(spike);
     }
 
-    // Colossal Erupting Caldera Mountain behind Ifrit's Sanctum (z = -188)
-    var titanVolcano = new THREE.Mesh(
-      new THREE.CylinderGeometry(11, 38, 34, 14),
-      rockMat
-    );
-    titanVolcano.position.set(0, 14.5, -190);
-    scenery.add(titanVolcano);
-    var titanCrater = new THREE.Mesh(
-      new THREE.CircleGeometry(10.4, 28),
-      magmaGlowMat
-    );
-    titanCrater.rotation.x = -Math.PI / 2;
-    titanCrater.position.set(0, 31.6, -190);
-    scenery.add(titanCrater);
-
-    // 7. Rising Volcanic Ember Particles along the entire causeway -> Sanctum
-    var emberCount = 160;
+    // 11. Rising Volcanic Ember Particles along the entire causeway -> Sanctum
+    var emberCount = 180;
     var emberPos = new Float32Array(emberCount * 3);
     var emberSeeds = new Float32Array(emberCount);
     for (var ei = 0; ei < emberCount; ei++) {
@@ -4302,10 +4922,10 @@
     var emberGeo = new THREE.BufferGeometry();
     emberGeo.setAttribute('position', new THREE.BufferAttribute(emberPos, 3));
     var emberMat = new THREE.PointsMaterial({
-      color: 0xffa638,
+      color: 0xffad3d,
       size: 0.42,
       transparent: true,
-      opacity: 0.85,
+      opacity: 0.86,
       depthWrite: false
     });
     var embers = new THREE.Points(emberGeo, emberMat);
@@ -4329,13 +4949,17 @@
         if (motion === false) return;
         var s = Number(seconds) || 0;
         if (lavaTex) {
-          lavaTex.offset.y = (s * 0.032) % 1;
+          lavaTex.offset.y = (s * 0.030) % 1;
           lavaTex.offset.x = Math.sin(s * 0.22) * 0.04;
+        }
+        if (poolLavaTex) {
+          poolLavaTex.offset.x = Math.sin(s * 0.35) * 0.05;
+          poolLavaTex.offset.y = (s * 0.018) % 1;
         }
         if (cascadeTex) {
           cascadeTex.offset.y = -(s * 0.42) % 1;
         }
-        sealGroup.rotation.y = s * 0.12;
+        sealGroup.rotation.y = s * 0.10;
         var arr = emberGeo.attributes.position.array;
         for (var k = 0; k < emberCount; k++) {
           var idx = k * 3;
@@ -4346,6 +4970,9 @@
         emberGeo.attributes.position.needsUpdate = true;
       },
       dispose: function () {
+        disposed = true;
+        var cbIdx = volcanoEndgameImgs.callbacks.indexOf(onEndgameImgReady);
+        if (cbIdx >= 0) volcanoEndgameImgs.callbacks.splice(cbIdx, 1);
         worldScene.traverse(function (obj) {
           if (obj.geometry && typeof obj.geometry.dispose === 'function') obj.geometry.dispose();
           if (obj.material) {

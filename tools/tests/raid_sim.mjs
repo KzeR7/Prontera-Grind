@@ -1227,5 +1227,119 @@ check('Round-7: Thor Volcano Raid walks continuously along connected 3D causeway
   assert.equal(skillRes.cleanedUpWorld, true, 'leaving Thor Volcano Raid disposes thor-raid scenery cleanly');
 });
 
+check('Round-8: GIF-extracted 5-color lightning title FX, textured Volcano Raid world, cropped Raid UI & fog-immune 3D volcanic skills', () => {
+  const sheetPath = path.resolve(path.dirname(new URL(import.meta.url).pathname), '../../assets/refine-fx/title-lightning.webp');
+  assert.equal(fs.existsSync(sheetPath), true, 'assets/refine-fx/title-lightning.webp spritesheet exists on disk');
+  const raidCss = fs.readFileSync(path.resolve(path.dirname(new URL(import.meta.url).pathname), '../../assets/raid.css'), 'utf8');
+  assert.equal(raidCss.includes('overflow-x: hidden'), true, '.star-rate-table-wrap suppresses horizontal scrollbar');
+
+  const r8 = g.ev(`(() => {
+    // 1. Raid Dungeons cropped portraits + 4-stage route strip + status pills + compact Star Rate Table
+    raidDungeonPick = 'thor';
+    dungeonMode = 'raid';
+    mapSeason = 'endgame';
+    const dngHtml = renderDungeonsPanel();
+    const tmp = document.createElement('div');
+    tmp.innerHTML = dngHtml;
+    const bossImg = tmp.querySelector('.raid-mvp-header[data-theme="thor"] .raid-boss-stage img');
+    const bossCropStyle = bossImg ? (bossImg.getAttribute('style') || '') : '';
+    const routeSteps = tmp.querySelectorAll('.raid-route-step').length;
+    const mobPortraits = tmp.querySelectorAll('.raid-mob-chip .raid-mob-ico img').length;
+    const statPills = tmp.querySelectorAll('.dungeons-stat-pill').length;
+
+    // 2. 5-Color GIF-extracted lightning flipbook aura
+    const colors = ['#00eaff', '#00ff7b', '#ffc800', '#c44dff', '#ff2442'];
+    const auras = colors.map(c => buildRaidElectricAura(c));
+    const distinctMaps = new Set(auras.map(a => a.userData.outerBolts.material.map)).size;
+    animateRaidElectricAura(auras[0], 0, 0, 0, 0, 1);
+    const uv0 = auras[0].userData.outerBolts.geometry.attributes.uv.getX(0);
+    animateRaidElectricAura(auras[0], 220, 0, 0, 0, 1);
+    const uv1 = auras[0].userData.outerBolts.geometry.attributes.uv.getX(0);
+    // Disposing one instance must not corrupt another instance of the same color
+    const dupCyan = buildRaidElectricAura('#00eaff');
+    disposeThreeGroup(dupCyan);
+
+    // 3. Textured & detailed Thor Volcano Raid world + unoccluded hazard elevation + fog-immune 3D skills
+    const world = PGRaid.buildVolcanoRaidWorld(1);
+    let meshCount = 0;
+    let deckY = null;
+    world.scenery.traverse(o => {
+      if (o.isMesh) {
+        meshCount++;
+        if (o.geometry && o.geometry.type === 'ShapeGeometry' && deckY === null) deckY = o.position.y;
+      }
+    });
+    world.dispose();
+
+    // 4. Fast initial cast (< 1.0s), fog-immune materials, 3D volcanic eruption meshes, and tickBossSkill guard
+    S.gm = true;
+    PGRaid.startDirectSolo('thor');
+    const stage1InitialDelay = PGRaid.raid.nextCastIn;
+    // Step 8 x 0.1s (0.8s) -> Stage 1 volcanic hazard should already be active and visible!
+    for (let i = 0; i < 8; i++) PGRaid.tick(0.1);
+    const stage1HazardActive = Boolean(PGRaid.raid.telegraph && PGRaid.raid.telegraph.volcanic);
+    // Verify tickBossSkill never wipes bossCast while Raid is active
+    bossCast = { id: 'ifr_eruption', start: t, age: 0, life: 3.2, x: 0, z: 0, seed: 7 };
+    tickBossSkill();
+    const bossCastPreservedDuringRaid = Boolean(bossCast && bossCast.id === 'ifr_eruption');
+    bossCast = null;
+    // Advance to Stage 4 Boss and trigger detonation to verify 3D impact geyser burst + volcanic PGBossFx ID
+    for (let s = 0; s < 3; s++) {
+      while (mobs.length) kill(mobs[0]);
+      PGRaid.tick(0.05);
+      for (let wStep = 0; wStep < 120 && PGRaid.raid.stage === s; wStep++) {
+        if (!tickAstralJourney(1 / 30)) update(1 / 30);
+        t += 1 / 30;
+      }
+    }
+    const bossInitialDelay = PGRaid.raid.nextCastIn;
+    for (let i = 0; i < 11; i++) PGRaid.tick(0.1);
+    const bossTg = PGRaid.raid.telegraph;
+    const bossFxId = bossTg ? bossTg.fx : '';
+    let allFogFalse = true;
+    let hazardGroupY = 0;
+    scene.traverse(o => {
+      if (o.parent === scene && o.type === 'Group' && Math.abs(o.position.y - 0.14) < 0.005) {
+        hazardGroupY = o.position.y;
+        o.traverse(m => {
+          if (m.isMesh && m.material && m.material.fog !== false) allFogFalse = false;
+        });
+      }
+    });
+    // Finish cast to spawn 3D volcanic impact geyser burst!
+    PGRaid.raid.iframes = 5;
+    for (let i = 0; i < 50 && PGRaid.raid.telegraph; i++) PGRaid.tick(0.1);
+    const impactSpawned = PGRaid.raid.impacts.length > 0;
+    PGRaid.leave(true);
+
+    return {
+      bossCropStyle, routeSteps, mobPortraits, statPills,
+      sheetUrl: auras[0].userData.sheetUrl,
+      distinctMaps,
+      uvChanged: Math.abs(uv1 - uv0) > 0.01,
+      meshCount, deckY,
+      stage1InitialDelay, stage1HazardActive,
+      bossCastPreservedDuringRaid,
+      bossInitialDelay, bossFxId,
+      hazardGroupY, allFogFalse, impactSpawned
+    };
+  })()`);
+
+  assert.equal(r8.bossCropStyle.includes('--bsz:') && r8.bossCropStyle.includes('--bx:'), true, 'Thor boss stage portrait applies exact crop CSS variables');
+  assert.equal(r8.routeSteps, 4, 'Raid detail header renders 4-stage route strip');
+  assert.equal(r8.mobPortraits, 6, 'Thor encounter roster renders cropped sprite portraits for all 5 monsters + Ifrit');
+  assert.equal(r8.statPills, 2, 'Dungeons topbar renders Raid Clears & Weapon ★ Pen status pills');
+  assert.equal(r8.sheetUrl, 'assets/refine-fx/title-lightning.webp', 'Electric aura binds GIF-extracted title-lightning.webp spritesheet');
+  assert.equal(r8.distinctMaps, 5, 'All 5 electric title colors create independent CanvasTexture instances');
+  assert.equal(r8.uvChanged, true, 'animateRaidElectricAura steps 4x4 UV flipbook frames over time');
+  assert.ok(r8.meshCount >= 220, `Volcano Raid world populates rich Ascension basalt/rubble/pool/caldera detail (${r8.meshCount} meshes)`);
+  assert.ok(Math.abs(r8.deckY - 0.02) < 0.01, `Volcano causeway deck sits at y=0.02 (${r8.deckY}) cleanly below hazard telegraphs`);
+  assert.ok(r8.stage1InitialDelay <= 0.85 && r8.stage1HazardActive, 'Thor Stage 1 volcanic hazard casts within 0.8s of entry');
+  assert.equal(r8.bossCastPreservedDuringRaid, true, 'tickBossSkill preserves Raid bossCast without wiping Stage 1-4 FX');
+  assert.ok(r8.bossInitialDelay <= 1.05 && /^(ifr_|dl_|ed_)/.test(r8.bossFxId), `Ifrit casts within 1.0s using volcanic PGBossFx (${r8.bossFxId})`);
+  assert.ok(Math.abs(r8.hazardGroupY - 0.14) < 0.01 && r8.allFogFalse, 'Raid hazardGroup sits at y=0.14 with fog:false on every hazard mesh');
+  assert.equal(r8.impactSpawned, true, 'Detonating volcanic skill spawns 3D magma geyser impact burst');
+});
+
 g.close();
 console.log(`\nPASS: ${pass}/${pass} Astral Raid checks passed`);
