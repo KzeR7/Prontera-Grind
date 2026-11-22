@@ -2457,11 +2457,13 @@ function receive(m){
  if(m.type==='battle_result'){receiveBattleResult(m);return}
  if(m.type==='battle_error'){app.battleIntent=null;battleOffer=null;renderPvpDialog();worldNotice(m.message||'DigiPet battle action failed.');return}
  if(m.type==='pve_end'){app.battleIntent=null;worldNotice(m.reason==='defeat'?(m.mode==='boss'?'The raid boss won this time. Train up and challenge it again.':'Your partner fainted. Feed it and try grinding again.'):m.reason==='exhausted'?'Grinding stopped.':m.reason==='complete'?(m.mode==='boss'?'Boss raid cleared! Loot paid out.':'Field run complete! A very strong partner.'):'Grinding stopped.');renderBattleHUD();renderActivityPanel(true);/* v384: a run the player stopped by hand does not start again by itself (v371 intent; only local practice honoured it) */if(m.reason!=='stopped')repeatPveRun();return}
- if(m.type==='party'){const p=m.party;if(!p||p.members.some(x=>x.id===(app.room?app.id:SOLO_ID))){app.party=p;if(p)app.partyInvite=null;syncPartyChrome();renderPartyPanel();if(globalThis.PGRaid&&!$id('raidLobby')?.hidden)globalThis.PGRaid.renderLobby()}return}
+ if(m.type==='party'){const p=m.party;if(!p||p.members.some(x=>x.id===(app.room?app.id:SOLO_ID))){app.party=p;if(p){app.partyInvite=null;if(typeof S==='object'&&S)send({type:'raid_ready',cls:S.cls||'Adventurer',lv:S.lv||150,sex:S.sex==='f'?'f':'m'})}syncPartyChrome();renderPartyPanel();if(globalThis.PGRaid&&!$id('raidLobby')?.hidden)globalThis.PGRaid.renderLobby()}return}
  if(m.type==='party_roster'){app.partyRoster=Array.isArray(m.parties)?m.parties:[];return}
  if(m.type==='party_invite'){if(partyMuteOn()){send({type:'party_decline'});return}app.partyInvite=m;worldNotice((m.from?.name||'A trainer')+' invites you to a party.');syncPartyChrome();if(!$id('socialPartyPanel').hidden)renderPartyPanel();return}
  if(m.type==='party_error'){worldNotice(m.message||'Party action failed.');return}
  if(m.type==='party_notice'){worldNotice(m.message||'');return}
+ if(m.type==='raid_lobby'){if(globalThis.PGRaid)globalThis.PGRaid.onLobby(m);return}
+ if(m.type==='raid_chat'){if(globalThis.PGRaid)globalThis.PGRaid.onChat(m);return}
  if(m.type==='raid_started'){if(globalThis.PGRaid)globalThis.PGRaid.onStarted(m);return}
  if(m.type==='raid_sync'){if(globalThis.PGRaid)globalThis.PGRaid.onSync(m);return}
  if(m.type==='raid_revive'){if(globalThis.PGRaid)globalThis.PGRaid.onRevive(m);return}

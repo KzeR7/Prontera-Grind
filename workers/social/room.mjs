@@ -679,7 +679,9 @@ export class SocialRoom {
   if(party.members.length>=3)return this.partyError(c,request,'The party filled up while you decided.');
   if(c.pve||c.pvp)return this.partyError(c,request,'Finish the current DigiPet activity first.');
   party.members.push({id:c.id,name:c.name});
+  party.raidReady=new Set();
   this.partySync(party);
+  this.raidLobbySync(party,false);
  }
  partyDecline(c,now){
   const invite=this.partyInvites.get(c.id);this.partyInvites.delete(c.id);
@@ -690,14 +692,61 @@ export class SocialRoom {
   const party=this.partyOf(c);if(!party)return;
   const activeRaid=party.raid;
   party.members=party.members.filter(m=>m.id!==c.id);
+  party.raidReady=new Set();
   if(activeRaid&&party.members.length){
    this.partyBroadcast(party,{type:'raid_end',raidId:activeRaid.id,fromId:c.id,cleared:false,reason:reason==='left'?'left':'disconnect'});
   }
   if(!party.members.length){party.raid=null;this.parties.delete(party.id);this.partySync(party);return}
   if(party.leader===c.id)party.leader=party.members[0].id;
   this.partySync(party);
+  this.raidLobbySync(party,false);
   const leader=this.clients.get(party.leader);
   if(leader)this.send(leader,{type:'party_notice',message:reason==='left'?(c.name+' left the party.'):('The party leader is now '+party.members[0].name+'.')});
+ }
+ raidMemberInfo(party,mem){
+  const peer=this.clients.get(mem.id),meta=peer?.raidMeta||null,look=peer?.look||null;
+  return {
+   id:mem.id,
+   name:mem.name,
+   cls:(meta&&meta.cls)||(look&&look.cls)||'Adventurer',
+   lv:(meta&&meta.lv)||150,
+   sex:(meta&&meta.sex)||(look&&look.appearance&&look.appearance.sex)==='f'?'f':'m',
+   appearance:(look&&look.appearance)||null,
+   ready:mem.id===party.leader?true:Boolean(party.raidReady&&party.raidReady.has(mem.id))
+  };
+ }
+ raidLobbySync(party,summon=false){
+  if(!party||!party.members.length)return;
+  this.partyBroadcast(party,{
+   type:'raid_lobby',
+   partyId:party.id,
+   leader:party.leader,
+   summon:Boolean(summon),
+   members:party.members.map(mem=>this.raidMemberInfo(party,mem))
+  });
+ }
+ raidReady(c,m,now){
+  const party=this.partyOf(c);if(!party)return;
+  if(now-(c.raidReadyAt||0)<120)return;
+  c.raidReadyAt=now;
+  c.raidMeta={
+   cls:typeof m.cls==='string'?m.cls.slice(0,32):(c.look?.cls||'Adventurer'),
+   lv:Math.max(1,Math.min(999,Math.floor(Number(m.lv)||150))),
+   sex:m.sex==='f'?'f':'m'
+  };
+  if(typeof m.ready==='boolean'&&c.id!==party.leader){
+   party.raidReady=party.raidReady||new Set();
+   if(m.ready)party.raidReady.add(c.id);else party.raidReady.delete(c.id);
+  }
+  this.raidLobbySync(party,m.summon===true&&c.id===party.leader);
+ }
+ raidChat(c,m,now){
+  const party=this.partyOf(c);if(!party)return;
+  if(now-(c.raidChatAt||0)<400)return;
+  const text=typeof m.text==='string'?m.text.replace(/[\u0000-\u001f\u007f]/g,'').trim().slice(0,160):'';
+  if(!text)return;
+  c.raidChatAt=now;
+  this.partyBroadcast(party,{type:'raid_chat',id:++this.serial,at:now,fromId:c.id,name:c.name,text});
  }
  raidStart(c,m,now){
   const party=this.partyOf(c);
@@ -706,15 +755,34 @@ export class SocialRoom {
   const members=party.members.map(mem=>this.clients.get(mem.id));
   if(members.some(mem=>!mem))return this.send(c,{type:'raid_error',message:'Every party member must be online.'});
   if(members.some(mem=>mem.pve||mem.pvp))return this.send(c,{type:'raid_error',message:'Finish the current DigiPet activity before entering Astral Raid.'});
+  const unready=party.members.find(mem=>mem.id!==party.leader&&!(party.raidReady&&party.raidReady.has(mem.id)));
+  if(unready)return this.send(c,{type:'raid_error',message:'Waiting for '+unready.name+' to press Ready.'});
   const seed=(now^((c.id||1)*2654435761))>>>0,id='raid:'+this.battleId('raid');
+  const roster=party.members.map(mem=>this.raidMemberInfo(party,mem));
+  party.raidReady=new Set();
   party.raid={id,seed,leader:c.id,startedAt:now};
-  this.partyBroadcast(party,{type:'raid_started',raidId:id,seed,leader:c.id,members:party.members.map(x=>({id:x.id,name:x.name}))});
+  this.partyBroadcast(party,{type:'raid_started',raidId:id,seed,leader:c.id,members:roster});
  }
  raidSync(c,m,now){
   const party=this.partyOf(c);if(!party||!party.raid)return;
   if(!m.force&&now-(c.raidSyncAt||0)<1500)return;
   c.raidSyncAt=now;
-  const payload={type:'raid_sync',raidId:party.raid.id,fromId:c.id,name:c.name,cls:typeof m.cls==='string'?m.cls.slice(0,32):'',hp:Math.max(0,Math.floor(Number(m.hp)||0)),maxHp:Math.max(1,Math.floor(Number(m.maxHp)||1)),dps:Math.max(0,Math.floor(Number(m.dps)||0)),stage:Math.max(0,Math.min(3,Math.floor(Number(m.stage)||0))),dead:!!m.dead};
+  const payload={
+   type:'raid_sync',
+   raidId:party.raid.id,
+   fromId:c.id,
+   name:c.name,
+   cls:typeof m.cls==='string'?m.cls.slice(0,32):'',
+   sex:m.sex==='f'?'f':'m',
+   hp:Math.max(0,Math.floor(Number(m.hp)||0)),
+   maxHp:Math.max(1,Math.floor(Number(m.maxHp)||1)),
+   dps:Math.max(0,Math.floor(Number(m.dps)||0)),
+   dmgTaken:Math.max(0,Math.floor(Number(m.dmgTaken)||0)),
+   support:Math.max(0,Math.floor(Number(m.support)||0)),
+   revives:Math.max(0,Math.floor(Number(m.revives)||0)),
+   stage:Math.max(0,Math.min(3,Math.floor(Number(m.stage)||0))),
+   dead:!!m.dead
+  };
   for(const mem of party.members){if(mem.id===c.id)continue;const peer=this.clients.get(mem.id);if(peer)this.send(peer,payload)}
  }
  raidRevive(c,m,now){
@@ -729,7 +797,18 @@ export class SocialRoom {
   const party=this.partyOf(c);if(!party||!party.raid)return;
   const rid=party.raid.id,cleared=m.cleared===true,reason=typeof m.reason==='string'?m.reason.slice(0,32):'';
   if(cleared||reason.includes('wipe'))party.raid=null;
-  const payload={type:'raid_end',raidId:rid,fromId:c.id,cleared,reason,secs:Math.max(0,Math.floor(Number(m.secs)||0)),dps:Math.max(0,Math.floor(Number(m.dps)||0))};
+  const payload={
+   type:'raid_end',
+   raidId:rid,
+   fromId:c.id,
+   cleared,
+   reason,
+   secs:Math.max(0,Math.floor(Number(m.secs)||0)),
+   dps:Math.max(0,Math.floor(Number(m.dps)||0)),
+   dmgTaken:Math.max(0,Math.floor(Number(m.dmgTaken)||0)),
+   support:Math.max(0,Math.floor(Number(m.support)||0)),
+   revives:Math.max(0,Math.floor(Number(m.revives)||0))
+  };
   for(const mem of party.members){if(mem.id===c.id)continue;const peer=this.clients.get(mem.id);if(peer)this.send(peer,payload)}
  }
  // Leaving a party run removes only that trainer's partner; the field stays alive for the rest.
@@ -984,6 +1063,8 @@ export class SocialRoom {
   if(m.type==='party_leave')return this.partyRemove(c,'left');
   if(m.type==='party_start')return this.startPartyPve(c,m,now);
   if(m.type==='party_profile'){const p=this.battleProfile(c,m.profile);if(p)c.partyProfile=p;return}
+  if(m.type==='raid_ready')return this.raidReady(c,m,now);
+  if(m.type==='raid_chat')return this.raidChat(c,m,now);
   if(m.type==='raid_start')return this.raidStart(c,m,now);
   if(m.type==='raid_sync')return this.raidSync(c,m,now);
   if(m.type==='raid_revive')return this.raidRevive(c,m,now);

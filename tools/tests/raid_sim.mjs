@@ -157,19 +157,27 @@ check('Solo death ends the run immediately with 5 consolation Astral Shards', ()
   g.ev(`PGRaid.hideResult()`);
 });
 
-// 6. Party Mode: Downed freeze, Teammate Revive (3s channel), and Party Wipe
-check('Party mode: downed state freezes hero, 3s REVIVE restores ally at 30% HP, all-dead triggers party wipe', () => {
+// 6. Party Mode: Ready Check, Downed freeze, Teammate Revive (3s channel), and Party Wipe
+check('Party mode: requires Ready check, downed state freezes hero, 3s REVIVE restores ally at 30% HP, all-dead triggers party wipe', () => {
   const sent = [];
   g.window.PGSocial = {
-    app: { id: 10, room: 1, party: { id: 'party:1', leader: 10, members: [{ id: 10, name: 'Alice' }, { id: 20, name: 'Bob' }] } },
+    app: { id: 10, room: 1, connected: true, party: { id: 'party:1', leader: 10, members: [{ id: 10, name: 'Alice' }, { id: 20, name: 'Bob' }] } },
     send: msg => { sent.push(msg); return true; },
     setRaidSuspend: () => {},
   };
   g.ev(`S.raid={day:trialDay(),used:0};`);
-  assert.equal(g.ev(`PGRaid.start('party')`), 'waiting', 'leader sends raid_start and waits for broadcast');
-  assert.equal(sent[0].type, 'raid_start');
+  // Before Bob presses Ready, leader cannot start!
+  g.ev(`PGRaid.onLobby({partyId:'party:1',leader:10,members:[{id:10,name:'Alice',cls:'Rune Knight',lv:160,ready:true},{id:20,name:'Bob',cls:'Ranger',lv:155,ready:false}]})`);
+  assert.equal(g.ev(`PGRaid.canEnter('party').ok`), false, 'leader blocked until Bob presses Ready');
+  assert.equal(g.ev(`PGRaid.start('party')`), false, 'start("party") blocked before Ready');
 
-  g.ev(`PGRaid.onStarted({raidId:'raid:99',seed:777,leader:10,members:[{id:10,name:'Alice'},{id:20,name:'Bob'}]})`);
+  // Bob presses Ready -> leader can now launch!
+  g.ev(`PGRaid.onLobby({partyId:'party:1',leader:10,members:[{id:10,name:'Alice',cls:'Rune Knight',lv:160,ready:true},{id:20,name:'Bob',cls:'Ranger',lv:155,ready:true}]})`);
+  assert.equal(g.ev(`PGRaid.canEnter('party').ok`), true, 'leader unlocked once all members press Ready');
+  assert.equal(g.ev(`PGRaid.start('party')`), 'waiting', 'leader sends raid_start and waits for broadcast');
+  assert.equal(sent.at(-1).type, 'raid_start');
+
+  g.ev(`PGRaid.onStarted({raidId:'raid:99',seed:777,leader:10,members:[{id:10,name:'Alice',cls:'Rune Knight'},{id:20,name:'Bob',cls:'Ranger'}]})`);
   assert.equal(g.ev(`PGRaid.raid.on && PGRaid.raid.mode === 'party'`), true);
   assert.equal(g.ev(`document.getElementById('raidReviveBtn').hidden`), false, 'Revive button shown in Party mode');
 
@@ -200,8 +208,8 @@ check('Party mode: downed state freezes hero, 3s REVIVE restores ally at 30% HP,
   g.ev(`PGRaid.hideResult()`);
 });
 
-// 7. SocialRoom (workers/social/room.mjs) Party Relay & DO Budget Verification
-check('SocialRoom relays party raid events ONLY to party members with zero setAlarm calls', () => {
+// 7. SocialRoom (workers/social/room.mjs) Party Ready, Raid Chat, Relay & DO Budget Verification
+check('SocialRoom enforces raid_ready before raid_start, relays raid_chat & raid events ONLY to party, with zero setAlarm calls', () => {
   let now = 1_700_000_000_000;
   let alarms = 0;
   const room = new SocialRoom({
@@ -209,15 +217,15 @@ check('SocialRoom relays party raid events ONLY to party members with zero setAl
     random: () => 0.42,
     onSetAlarm: () => { alarms++; },
   });
-  const makeClient = (id, name) => {
+  const makeClient = (id, name, cls = 'Rune Knight') => {
     const inbox = [];
     const c = room.connect({ id, username: name }, raw => inbox.push(JSON.parse(raw)), () => {});
-    room.receive(c, JSON.stringify({ type: 'join', look: { cls: 'Novice', appearance: { version: 1, sex: 'm' } } }));
+    room.receive(c, JSON.stringify({ type: 'join', look: { cls, appearance: { version: 1, sex: 'm', headTop: 'crown' } } }));
     return { c, inbox };
   };
-  const alice = makeClient(1, 'Alice');
-  const bob = makeClient(2, 'Bob');
-  const bystander = makeClient(3, 'Bystander'); // in same plaza room, NOT in party!
+  const alice = makeClient(1, 'Alice', 'Rune Knight');
+  const bob = makeClient(2, 'Bob', 'Arch Bishop');
+  const bystander = makeClient(3, 'Bystander', 'Ranger'); // in same plaza room, NOT in party!
 
   room.receive(alice.c, JSON.stringify({ type: 'party_invite', targetId: 2 }));
   room.receive(bob.c, JSON.stringify({ type: 'party_accept' }));
@@ -229,26 +237,53 @@ check('SocialRoom relays party raid events ONLY to party members with zero setAl
   room.receive(bob.c, JSON.stringify({ type: 'raid_start' }));
   assert.equal(bob.inbox.at(-1)?.type, 'raid_error', 'non-leader rejected');
 
-  // Leader starts raid -> Alice & Bob get raid_started, Bystander gets NOTHING
+  // Leader cannot start raid while Bob is NOT Ready!
+  room.receive(alice.c, JSON.stringify({ type: 'raid_start' }));
+  assert.equal(alice.inbox.at(-1)?.type, 'raid_error', 'leader rejected before Bob presses Ready');
+  assert.match(alice.inbox.at(-1)?.message || '', /Bob.*Ready/i);
+
+  // Bob presses Ready -> both Alice & Bob receive raid_lobby with character appearance & ready=true!
+  now += 500;
+  room.receive(bob.c, JSON.stringify({ type: 'raid_ready', ready: true, cls: 'Arch Bishop', lv: 175, sex: 'f' }));
+  const lobbyMsg = alice.inbox.findLast(m => m.type === 'raid_lobby');
+  assert.ok(lobbyMsg, 'leader received raid_lobby update');
+  assert.equal(lobbyMsg.members.find(m => m.id === 2)?.ready, true, 'Bob marked ready');
+  assert.equal(lobbyMsg.members.find(m => m.id === 2)?.cls, 'Arch Bishop', 'Bob class relayed');
+  assert.equal(bystander.inbox.length, 0, 'raid_lobby not sent to plaza bystander');
+
+  // Leader starts raid -> Alice & Bob get raid_started with character roster, Bystander gets NOTHING
+  alice.inbox.length = 0;
+  bob.inbox.length = 0;
   room.receive(alice.c, JSON.stringify({ type: 'raid_start' }));
   assert.equal(alice.inbox.some(m => m.type === 'raid_started'), true);
   assert.equal(bob.inbox.some(m => m.type === 'raid_started'), true);
   assert.equal(bystander.inbox.length, 0, 'zero broadcast to non-party players in plaza');
 
-  // raid_sync rate-limited inside 1500ms unless force:true
+  // Raid Chat relays to both Alice & Bob, NOT Bystander
+  now += 600;
+  room.receive(bob.c, JSON.stringify({ type: 'raid_chat', text: 'Stack inside Eye of Abyss!' }));
+  assert.equal(alice.inbox.some(m => m.type === 'raid_chat' && m.name === 'Bob' && m.text === 'Stack inside Eye of Abyss!'), true);
+  assert.equal(bob.inbox.some(m => m.type === 'raid_chat' && m.text === 'Stack inside Eye of Abyss!'), true);
+  assert.equal(bystander.inbox.length, 0, 'raid_chat never leaks to plaza bystander');
+
+  // raid_sync carries dmgTaken, support & revives and is rate-limited inside 1500ms unless force:true
   bob.inbox.length = 0;
-  room.receive(alice.c, JSON.stringify({ type: 'raid_sync', hp: 800, maxHp: 1000, dps: 4500000, stage: 1, dead: false }));
-  room.receive(alice.c, JSON.stringify({ type: 'raid_sync', hp: 750, maxHp: 1000, dps: 4600000, stage: 1, dead: false }));
-  assert.equal(bob.inbox.filter(m => m.type === 'raid_sync').length, 1, 'rapid unforced raid_sync throttled on DO');
+  room.receive(alice.c, JSON.stringify({ type: 'raid_sync', hp: 800, maxHp: 1000, dps: 4500000, dmgTaken: 120000, support: 15000, revives: 0, stage: 1, dead: false }));
+  room.receive(alice.c, JSON.stringify({ type: 'raid_sync', hp: 750, maxHp: 1000, dps: 4600000, dmgTaken: 130000, support: 15000, revives: 0, stage: 1, dead: false }));
+  const syncs1 = bob.inbox.filter(m => m.type === 'raid_sync');
+  assert.equal(syncs1.length, 1, 'rapid unforced raid_sync throttled on DO');
+  assert.equal(syncs1[0].dmgTaken, 120000, 'dmgTaken relayed on raid_sync');
+  assert.equal(syncs1[0].support, 15000, 'support relayed on raid_sync');
   now += 2000;
-  room.receive(alice.c, JSON.stringify({ type: 'raid_sync', hp: 700, maxHp: 1000, dps: 4700000, stage: 1, dead: false }));
+  room.receive(alice.c, JSON.stringify({ type: 'raid_sync', hp: 700, maxHp: 1000, dps: 4700000, dmgTaken: 150000, support: 20000, revives: 1, stage: 1, dead: false }));
   assert.equal(bob.inbox.filter(m => m.type === 'raid_sync').length, 2, 'sync passes after rate window');
 
   // raid_revive & raid_end
   room.receive(bob.c, JSON.stringify({ type: 'raid_revive', target: 1 }));
   assert.equal(alice.inbox.some(m => m.type === 'raid_revive' && m.target === 1 && m.fromName === 'Bob'), true);
-  room.receive(alice.c, JSON.stringify({ type: 'raid_end', cleared: true, reason: 'boss_down', secs: 420, dps: 5100000 }));
-  assert.equal(bob.inbox.some(m => m.type === 'raid_end' && m.cleared === true), true);
+  room.receive(alice.c, JSON.stringify({ type: 'raid_end', cleared: true, reason: 'boss_down', secs: 420, dps: 5100000, dmgTaken: 185000, support: 25000, revives: 0 }));
+  const endMsg = bob.inbox.find(m => m.type === 'raid_end');
+  assert.ok(endMsg && endMsg.cleared === true && endMsg.dmgTaken === 185000, 'raid_end relays final stats');
   assert.equal(bystander.inbox.length, 0, 'still zero messages sent to plaza bystander');
   assert.equal(alarms, 0, 'zero DO alarms scheduled by party raid');
 });
@@ -295,6 +330,129 @@ check('GM unlimited tries, bridge bombardments, 5-shape boss mechanics, anti-ran
     assert.ok(raidCss.includes('body.raid-open ' + sel), 'raid.css hides ' + sel);
   }
   assert.match(raidCss, /#raidLobby,\s*#raidHud,\s*#raidResult\s*\{[^}]*line-height:\s*1\.45/, 'raid.css resets #view line-height: 0');
+});
+
+// 9. Party Ready Room UI: Character Preview Canvases, Member Ready Toggle, and Leader Start Gate
+check('Party Ready Room renders character preview canvases, member Ready button, and gates Leader Start', () => {
+  const sent = [];
+  // Test as non-leader member (Bob, id=20)
+  g.window.PGSocial = {
+    app: {
+      id: 20,
+      room: 1,
+      connected: true,
+      party: { id: 'party:77', leader: 10, members: [{ id: 10, name: 'Alice' }, { id: 20, name: 'Bob' }, { id: 30, name: 'Cara' }] }
+    },
+    send: msg => { sent.push(msg); return true; },
+    setRaidSuspend: () => {},
+  };
+  g.ev(`S.raid={day:trialDay(),used:0}; PGRaid.showLobby('party');`);
+  let htmlBody = g.ev(`document.getElementById('raidLobbyBody').innerHTML`);
+  assert.equal(g.ev(`document.querySelectorAll('#raidLobbyBody canvas.raid-portrait-canvas').length`), 3, 'renders 3 character preview canvases for 3-player party');
+  assert.match(htmlBody, /data-raid-act="toggle-ready"/, 'non-leader sees Press Ready button');
+  assert.equal(g.ev(`PGRaid.toggleReady()`), true, 'Bob toggles Ready ON');
+  assert.equal(sent.at(-1)?.type, 'raid_ready');
+  assert.equal(sent.at(-1)?.ready, true);
+
+  // Switch perspective to Party Leader (Alice, id=10)
+  g.window.PGSocial.app.id = 10;
+  g.ev(`PGRaid.onLobby({partyId:'party:77',leader:10,members:[
+    {id:10,name:'Alice',cls:'Rune Knight',lv:180,ready:true},
+    {id:20,name:'Bob',cls:'Arch Bishop',lv:175,ready:true},
+    {id:30,name:'Cara',cls:'Warlock',lv:178,ready:false}
+  ]})`);
+  assert.equal(g.ev(`document.querySelector('#raidLobbyBody [data-raid-act="start"]').disabled`), true, 'Leader Start button disabled while Cara is Not Ready');
+
+  // Cara presses Ready -> Leader Start button unlocks!
+  g.ev(`PGRaid.onLobby({partyId:'party:77',leader:10,members:[
+    {id:10,name:'Alice',cls:'Rune Knight',lv:180,ready:true},
+    {id:20,name:'Bob',cls:'Arch Bishop',lv:175,ready:true},
+    {id:30,name:'Cara',cls:'Warlock',lv:178,ready:true}
+  ]})`);
+  assert.equal(g.ev(`document.querySelector('#raidLobbyBody [data-raid-act="start"]').disabled`), false, 'Leader Start button enabled once all party members press Ready');
+  g.ev(`PGRaid.hideLobby()`);
+});
+
+// 10. Raid Chat Box + End-of-Raid Commendation Badges & Loot Showcase Popup (Fail AND Complete)
+check('Raid Chat Box works in raid & Commendation Popup renders character previews, High DPS / Taken Highest Damage / Best Support badges, Items Received & Leave Raid on both Fail and Complete', () => {
+  const sent = [];
+  g.window.PGSocial = {
+    app: {
+      id: 10,
+      room: 1,
+      connected: true,
+      party: { id: 'party:88', leader: 10, members: [{ id: 10, name: 'Alice' }, { id: 20, name: 'Bob' }, { id: 30, name: 'Cara' }] }
+    },
+    send: msg => { sent.push(msg); return true; },
+    setRaidSuspend: () => {},
+  };
+  g.ev(`S.raid={day:trialDay(),used:0};`);
+  g.ev(`PGRaid.onStarted({raidId:'raid:88',seed:1234,leader:10,members:[
+    {id:10,name:'Alice',cls:'Rune Knight',sex:'f'},
+    {id:20,name:'Bob',cls:'Arch Bishop',sex:'m'},
+    {id:30,name:'Cara',cls:'Warlock',sex:'f'}
+  ]})`);
+
+  // Raid Chat Box present in HUD, Enter focuses input, Escape blurs input without leaving raid
+  assert.ok(g.ev(`!!document.getElementById('raidChatBox') && !!document.getElementById('raidChatInput')`), 'Raid Chat box rendered in #raidHud');
+  g.ev(`PGRaid.onKey('Enter', true);`);
+  assert.equal(g.ev(`document.activeElement.id`), 'raidChatInput', 'Enter focuses #raidChatInput');
+  g.ev(`escapeUI();`);
+  assert.notEqual(g.ev(`document.activeElement?.id`), 'raidChatInput', 'Escape blurs #raidChatInput cleanly');
+  assert.equal(g.ev(`PGRaid.raid.on`), true, 'Escape while focused on chat does not exit raid');
+
+  // Send & receive Raid Chat
+  g.ev(`PGRaid.sendChat('Watch Eye of Abyss!');`);
+  assert.equal(sent.at(-1)?.type, 'raid_chat');
+  assert.equal(sent.at(-1)?.text, 'Watch Eye of Abyss!');
+  g.ev(`PGRaid.onChat({id:501,fromId:20,name:'Bob',text:'Got Sanctuary ready!'});`);
+  assert.match(g.ev(`document.getElementById('raidChatFeed').textContent`), /Bob:Got Sanctuary ready!/);
+
+  // Simulate distinct roles across the 3 party members:
+  // - Alice (self, Rune Knight): Tanked highest damage (420,000 dmgTaken)
+  // - Bob (Arch Bishop): Best Support (1 revive + 310,000 support)
+  // - Cara (Warlock): High DPS (9,800,000 DPS)
+  g.ev(`S.dmg += 12000000; PGRaid.raid.elapsed = 10; PGRaid.raid.dmgTaken = 420000; PGRaid.raid.supportScore = 12000;`);
+  g.ev(`PGRaid.onSync({fromId:20,name:'Bob',cls:'Arch Bishop',hp:400000,maxHp:420000,dps:850000,dmgTaken:65000,support:310000,revives:1,stage:3,dead:false});`);
+  g.ev(`PGRaid.onSync({fromId:30,name:'Cara',cls:'Warlock',hp:310000,maxHp:350000,dps:9800000,dmgTaken:95000,support:5000,revives:0,stage:3,dead:false});`);
+
+  // Case A: COMPLETE Raid -> Commendation Popup + Party Loot + Leave Raid
+  g.ev(`PGRaid.finish(true, 'Memory of Thanatos defeated!', false);`);
+  assert.equal(g.ev(`document.getElementById('raidResult').hidden`), false, '#raidResult opens on Complete');
+  assert.equal(g.ev(`document.querySelectorAll('#raidResult canvas.raid-portrait-canvas').length`), 3, 'renders 3 character preview canvases on Complete');
+  const winComms = g.ev(`({
+    dps: PGRaid.raid.result.commendations.highDps.name,
+    tank: PGRaid.raid.result.commendations.highestDamageTaken.name,
+    sup: PGRaid.raid.result.commendations.bestSupport.name
+  })`);
+  assert.equal(winComms.dps, 'Cara', 'Cara awarded High DPS badge');
+  assert.equal(winComms.tank, 'Alice', 'Alice awarded Taken Highest Damage badge');
+  assert.equal(winComms.sup, 'Bob', 'Bob awarded Best Support badge');
+  const winHtml = g.ev(`document.getElementById('raidResult').innerHTML`);
+  assert.match(winHtml, /High DPS/);
+  assert.match(winHtml, /Taken Highest Damage/);
+  assert.match(winHtml, /Best Support/);
+  assert.match(winHtml, /Items Received/);
+  assert.match(winHtml, /\+30 Astral Shards/);
+  assert.match(winHtml, /\+750,000 Zeny/);
+  assert.match(winHtml, /\+150 Echo Shards/);
+  assert.match(winHtml, />Leave Raid</);
+  g.ev(`document.querySelector('#raidResult [data-raid-act="close-result"]').click();`);
+  assert.equal(g.ev(`document.getElementById('raidResult').hidden`), true, 'Leave Raid button closes popup');
+
+  // Case B: FAIL Raid -> Commendation Popup + Consolation Items Received + Leave Raid
+  g.ev(`S.raid={day:trialDay(),used:0}; PGRaid.start('solo'); S.hp = Math.floor(maxHp() * 0.4); PGRaid.tick(0.2); S.hp = 0; PGRaid.tick(0.05);`);
+  assert.equal(g.ev(`document.getElementById('raidResult').hidden`), false, '#raidResult opens on Fail');
+  assert.equal(g.ev(`document.querySelectorAll('#raidResult canvas.raid-portrait-canvas').length`), 1, 'renders player character preview canvas on Solo Fail');
+  const failHtml = g.ev(`document.getElementById('raidResult').innerHTML`);
+  assert.match(failHtml, /Raid Failed/);
+  assert.match(failHtml, /High DPS/);
+  assert.match(failHtml, /Taken Highest Damage/);
+  assert.match(failHtml, /Best Support/);
+  assert.match(failHtml, /Items Received/);
+  assert.match(failHtml, /\+5 Astral Shards/);
+  assert.match(failHtml, />Leave Raid</);
+  g.ev(`PGRaid.hideResult();`);
 });
 
 g.close();
