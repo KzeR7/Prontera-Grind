@@ -54,7 +54,7 @@ no-double-pay coverage without using response delay or its own wall clock to reb
 The only added schema check occurs when a qualifying interval would issue a new claim; normal syncs add
 neither an unconditional D1 read nor Social Durable Object traffic.
 
-The player-visible build label is **`2026-11-22 haven-v457 Star rate rebalance, RO 1s forge FX & SFX, 5 Raid electric titles, Boss Acc cards & GM Raid tools`**.
+The player-visible build label is **`2026-11-22 haven-v459 Connected Thor Volcano Raid causeway & distinct Ifrit volcanic boss mechanics`**.
 Every coordinated asset query in `index.html` carries the same number (`?v=448` for this label):
 v423 changed the Social/Fishing runtime as well as the inline client, so retaining an old query
 would permit a stale cached runtime. Confirm `version.txt`, `index.html`, and the two
@@ -190,7 +190,7 @@ Open the `*.pages.dev` address Cloudflare gives the project, and walk this list:
 | Check | Expected |
 |---|---|
 | The login card | says **“☁ Cloud accounts are on — register or sign in…”** |
-| Build tag at the bottom of the card | `2026-11-22 haven-v457 Star rate rebalance, RO 1s forge FX & SFX, 5 Raid electric titles, Boss Acc cards & GM Raid tools` |
+| Build tag at the bottom of the card | `2026-11-22 haven-v459 Connected Thor Volcano Raid causeway & distinct Ifrit volcanic boss mechanics` |
 | `<your-site>/api/me` while signed out | `{"err":"Not logged in."}` with HTTP 401 — JSON, not an HTML page |
 
 That second-browser line is the entire point of the shift: it is progress following the player

@@ -916,15 +916,15 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="preload" href="assets/ui/fonts/font-5.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-6.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-7.ttf" as="font" type="font/ttf" crossorigin>
-<link rel="stylesheet" href="assets/ui/eclipse.css?v=458">
-<link rel="stylesheet" href="assets/ui/mobile.css?v=458">
-<link rel="stylesheet" href="assets/ui/mastery-titles.css?v=458">
+<link rel="stylesheet" href="assets/ui/eclipse.css?v=459">
+<link rel="stylesheet" href="assets/ui/mobile.css?v=459">
+<link rel="stylesheet" href="assets/ui/mastery-titles.css?v=459">
 <script src="assets/ui/mobile.js?v=274"></script>
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
-<link rel="stylesheet" href="assets/social.css?v=458">
-<link rel="stylesheet" href="assets/raid.css?v=458">
+<link rel="stylesheet" href="assets/social.css?v=459">
+<link rel="stylesheet" href="assets/raid.css?v=459">
 <link rel="stylesheet" href="assets/social-battle.css?v=393">
-  <link rel="stylesheet" href="assets/social-fishing.css?v=458"><link rel="stylesheet" href="assets/friends.css?v=273">
+  <link rel="stylesheet" href="assets/social-fishing.css?v=459"><link rel="stylesheet" href="assets/friends.css?v=273">
 <link rel="stylesheet" href="assets/adventure-guide.css?v=450">
 </head>
 <body>
@@ -1055,10 +1055,10 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <div id="tooltip"></div>
 <link rel="stylesheet" href="assets/wardrobe.css?v=138">
 <link rel="stylesheet" href="assets/shop.css?v=318">
-<script src="assets/wardrobe.js?v=458"></script>
+<script src="assets/wardrobe.js?v=459"></script>
 <script src="assets/shop-catalog.js?v=321"></script>
 <script src="assets/fourth-jobs.js?v=179"></script>
-<script src="assets/expanded-jobs.js?v=458"></script>
+<script src="assets/expanded-jobs.js?v=459"></script>
 <script src="assets/ascension.js?v=156"></script>
 <script src="assets/native-mob-heights.js?v=153"></script>
 <script src="assets/native-fields.js?v=197"></script>
@@ -1066,7 +1066,7 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <script src="assets/skill-icons.js?v=130"></script>
 <script src="assets/skill-icons-extra.js?v=207"></script>
 <script src="assets/skill-icons-expanded.js?v=450"></script>
-<script src="assets/mastery-titles.js?v=458"></script>
+<script src="assets/mastery-titles.js?v=459"></script>
 <script src="assets/player-buffs.js?v=450"></script>
 <script src="assets/skill-materials.js?v=220"></script>
 <script src="assets/afterglow-animations.js?v=151"></script>
@@ -1084,11 +1084,11 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <script src="assets/expanded-fx/approved.js?v=450"></script>
 <script src="assets/skill-afterglow.js?v=450"></script>
 <script src="assets/boss-fx.js?v=249"></script>
-<script src="assets/raid.js?v=458"></script>
+<script src="assets/raid.js?v=459"></script>
 <script src="assets/pets.js?v=130"></script>
 <script src="assets/bgm-tracks.js?v=206"></script>
 <script src="assets/bgm.js?v=207"></script>
-<script src="assets/combat-audio.js?v=458"></script>
+<script src="assets/combat-audio.js?v=459"></script>
 <script src="assets/class_skins_data.js?v=2"></script>
 <script src="assets/weapon_joints_data.js?v=2"></script>
 <script src="assets/weapons_data.js?v=2"></script>
@@ -1359,7 +1359,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-22 haven-v458 Authentic RO forge SFX/sprites, minimal 3D static FX, Raid UI & Boss/Star rebalance';
+const BUILD='2026-11-22 haven-v459 Connected Thor Volcano Raid causeway & distinct Ifrit volcanic boss mechanics';
 // v364: this write used to sit AFTER the `//` on the BUILD line, so it was part of the comment and
 // never ran - the login card showed an empty #buildTag and there was no way to confirm which file
 // the browser had loaded. It also has to survive the script running before the login card exists.
@@ -9585,7 +9585,7 @@ let mapSeason='atlas',dungeonMode='raid',raidDungeonPick='astral';
 function mapCollectionTabs(){const active=mapSeason==='echo'?'dungeons':mapSeason;return `<div class="atabs map-season-tabs" role="tablist" aria-label="Map collections">${[['atlas','World Atlas'],['ascension','Ascension Map'],['dungeons','Dungeons'],['social','Social Hub']].map(([id,label])=>`<button type="button" id="map-tab-${id}" role="tab" aria-selected="${active===id}" aria-controls="map-panel-${id}" tabindex="${active===id?0:-1}" class="${active===id?'on':''}" data-a="mapseason" data-v="${id}">${label}</button>`).join('')}</div>`;}
 const RAID_DUNGEON_CARDS=[
   {id:'astral',name:'Astral Citadel',tier:'Lv 150 · 4th Job',img:'assets/atlas/astral-citadel.png?v=156',boss:'Memory of Thanatos',bossRole:'Sanctum Sovereign · Stage 4',bossSprite:'assets/mobs/v1/1708-0.png',bossFallback:'assets/mobs/v1/1708-0.png',bossSummary:'3 Starlight Bridge stages + Stage 4 Boss · Soul Brand, Searing Cross & Cataclysmic Judgment (hide behind Pillars).',bossTags:[['🛡 50% Raid Armor',true],['⚔ Solo ~28M DPS (@★0)',false],['👥 2p ×2.25 · 3p ×3.45 HP',false]],subtitle:'3 Starlight Bridge stages + Memory of Thanatos (6 mechanics + Pillar Wipe)',mobs:['Retribution Angel','Despair Phantom','Tower Watcher','Death Whisperer','Agony Demon'],drops:[['Solo Clear','20 Astral Shards · 500k z · 100 Echo'],['Party Clear','30 Shards · 1 Sigil · 750k z · 150 Echo'],['10% Boss Cards','Primordial Ifrit (+15% ATK) · Sovereign Thanatos (+15% MATK)'],['Raid Titles','Stormbringer / Overlord (10% drop) · 10/20/30 Clears']],comingSoon:false},
-  {id:'thor',name:'Thor Volcano',tier:'Lv 150 · 4th Job',img:'assets/atlas/thor-volcano.png?v=162',boss:'Ifrit, Volcano Lord',bossRole:'Caldera Tyrant · Stage 4',bossSprite:'assets/mobs/v1/1832-0.png',bossFallback:'assets/mobs/v1/1832-0.png',bossSummary:'3 Molten Caldera stages + Stage 4 Boss · Meteor Slam, Caldera Eruption, Molten Cross & Hellfire Cataclysm.',bossTags:[['🛡 50% Raid Armor',true],['⚔ Solo ~32M DPS (@★0)',false],['👥 2p ×2.25 · 3p ×3.45 HP',false]],subtitle:'3 Molten Caldera stages + Ifrit, Volcano Lord (6 mechanics + Pillar Wipe)',mobs:['Magma Slag','Fire Imp','Kasa','Salamander','Obsidian Golem'],drops:[['Solo Clear','20 Primal Catalysts · 500k z · 100 Echo'],['Party Clear','30 Catalysts · 1 Sigil · 750k z · 150 Echo'],['10% Boss Cards','Primordial Ifrit (+15% ATK) · Sovereign Thanatos (+15% MATK)'],['Raid Titles','Overlord / Stormbringer (10% drop) · 10/20/30 Clears']],comingSoon:false},
+  {id:'thor',name:'Thor Volcano',tier:'Lv 150 · 4th Job',img:'assets/atlas/thor-volcano.png?v=162',boss:'Ifrit, Volcano Lord',bossRole:'Caldera Tyrant · Stage 4',bossSprite:'assets/mobs/v1/1832-0.png',bossFallback:'assets/mobs/v1/1832-0.png',bossSummary:'3 Connected Volcanic Causeway stages + Stage 4 Sanctum · Molten Breath, Tectonic Ring Surge, Hellfire Pinwheel, Pyroclastic Tsunami & Supernova Spires.',bossTags:[['🛡 50% Raid Armor',true],['⚔ Solo ~32M DPS (@★0)',false],['👥 2p ×2.25 · 3p ×3.45 HP',false]],subtitle:'3 Connected Volcanic Causeway stages + Ifrit, Volcano Lord (6 volcanic mechanics + Obsidian Spires)',mobs:['Magma Slag','Fire Imp','Kasa','Salamander','Obsidian Golem'],drops:[['Solo Clear','20 Primal Catalysts · 500k z · 100 Echo'],['Party Clear','30 Catalysts · 1 Sigil · 750k z · 150 Echo'],['10% Boss Cards','Primordial Ifrit (+15% ATK) · Sovereign Thanatos (+15% MATK)'],['Raid Titles','Overlord / Stormbringer (10% drop) · 10/20/30 Clears']],comingSoon:false},
   {id:'abyss',name:'Niflheim Abyssal Sanctum',tier:'Lv 160 · Future Raid',img:'assets/world-map/cutout/niflheim.png?v=283',boss:'Lord of Death',bossRole:'Underworld Monarch · Planned',bossSprite:1373,bossFallback:'assets/mobs/v1/1706-0.png',bossSummary:'Frozen underworld catacombs & Throne of the Dead — arriving in a future raid expansion.',bossTags:[['🛡 High Raid Armor',true],['🔒 Upcoming Tier',false]],subtitle:'Frozen underworld catacombs & Throne of the Dead — arriving in a future update',mobs:['Ghost Hound','Banshee','Death Knight','Soul Eater','Abyss Knight'],drops:[['Planned Clear','Abyssal Relics · Valkyrie\'s Sigils · Echo Shards'],['Planned Loot','Mythic Protection Scroll · Lord of Death Card']],comingSoon:true}
 ];
 function renderDungeonsPanel(){
@@ -11011,10 +11011,10 @@ function eclipseDrawMinimap(){
   if(S.mp>=10){
     // Project the active Ascension floor instead of the hidden original-map terrain.
     g.fillStyle=S.mp===10?'#0c1230':'#52200f';g.fillRect(0,0,w,h);
-    const world=ascensionWorld,span=S.mp===10?64:90,scale=w/span,center=(Z0+Z1)/2,point=(x,z)=>[(x+span/2)*scale,(z-center)*scale+h/2];
+    const world=ascensionWorld,isRoute=Boolean(world?.route?.outline||S.mp===10),span=isRoute?64:90,scale=w/span,center=(Z0+Z1)/2,point=(x,z)=>[(x+span/2)*scale,(z-center)*scale+h/2];
     if(world){const outline=world.route?.outline||world.scenery.children.find(o=>o.userData.outline)?.userData.outline;
       g.fillStyle=S.mp===10?'#78829e':'#342b2c';g.strokeStyle=S.mp===10?'#67dce5':'#db8246';g.lineWidth=2;g.beginPath();
-      if(outline){const offset=S.mp===10?(typeof ascensionRoot!=='undefined'&&ascensionRoot?ascensionRoot.position.z:center-world.view.focus):0;outline.forEach(([x,z],i)=>{const [px,py]=point(x,z+offset);i?g.lineTo(px,py):g.moveTo(px,py)});g.closePath();}
+      if(outline){const offset=isRoute?(typeof ascensionRoot!=='undefined'&&ascensionRoot?ascensionRoot.position.z:center-world.view.focus):0;outline.forEach(([x,z],i)=>{const [px,py]=point(x,z+offset);i?g.lineTo(px,py):g.moveTo(px,py)});g.closePath();}
       else{const [x,z]=point(0,-8);g.arc(x,z,27*scale,0,Math.PI*2);}
       g.fill();g.stroke();
     }
@@ -11162,35 +11162,40 @@ const SINGLE_PANEL=true;const openTab=k=>{if(k==='raid'){openDungeonsTab('raid')
   // Reopening a window starts at its first sub-tab: Status shows Stats, Inventory shows Bag.
   if(k==='pet')sub.pet='party';if(k==='job'){eclipseJobsBrowse=false;jobBranch=null;selK=null;jobLineTab=null;}if(k==='status')sub.status='stats';if(k==='skills')sub.skills='skilllist';if(k==='bag')sub.bag='bag';if(k==='equip')sub.equip='equip0';
   if(k==='map'){mapSeason=S.mp>=10?'ascension':'atlas';mapM=S.mp;mapL=S.lvl}}renderWin();if(k==='board'&&tabs.includes('board'))boardRefresh(boardPeriod)};
-// Astral is one continuous bridge. Combat uses local field coordinates; after
-// walking we shift scenery, actors and camera together, preserving the visible world.
-const ASTRAL_FOCUS=[-8,-40,-74,-140,-208];
+// Astral (and Thor Volcano Raid) uses one continuous bridge/causeway. Combat uses local field
+// coordinates; after walking we shift scenery, actors and camera together, preserving the visible world.
+const ASTRAL_FOCUS=[-8,-40,-74,-140,-208],THOR_RAID_FOCUS=[-8,-46,-86,-132,-142];
+function isContinuousBridgeMap(m=S&&S.mp){return m===10||(m===11&&typeof PGRaid!=='undefined'&&PGRaid.raid&&PGRaid.raid.on);}
+function bridgeFocusOf(m=S&&S.mp){return m===11?THOR_RAID_FOCUS:ASTRAL_FOCUS;}
 let astralOriginStage=0,astralJourney=null;
 function startAstralJourney(from,to){
-  if(S.mp!==10||from===to)return false;
+  if(!isContinuousBridgeMap()||from===to)return false;
   if(!astralOriginStage)astralOriginStage=from;
-  const target=ASTRAL_FOCUS[to-1]-ASTRAL_FOCUS[astralOriginStage-1]+Z1-5;
-  astralJourney={owner:S,user:currentUser,cls:S.cls,to,target,elapsed:0};
+  const focus=bridgeFocusOf(),dur=S.mp===11&&to===5?2.35:2;
+  const target=focus[to-1]-focus[astralOriginStage-1]+Z1-5;
+  astralJourney={owner:S,user:currentUser,cls:S.cls,mp:S.mp,to,target,dur,elapsed:0};
   mobs=[];mob=null;camps=[];engageTgt=null;activePack=0;respawn=.3;swing=null;atkAnim=0;
   resetSkillRuntime();pl.wx=null;pl.wt=0;pl.run=true;
   return true;
 }
 function cancelAstralJourney(){
   if(!astralJourney)return;
-  astralJourney=null;astralOriginStage=S.mp===10?S.lvl:0;
-  if(ascensionRoot&&S.mp===10)ascensionRoot.position.z=(Z0+Z1)/2-ASTRAL_FOCUS[S.lvl-1];
+  const onBridge=isContinuousBridgeMap(),focus=bridgeFocusOf();
+  astralJourney=null;astralOriginStage=onBridge?S.lvl:0;
+  if(ascensionRoot&&onBridge)ascensionRoot.position.z=(Z0+Z1)/2-focus[(S.lvl||1)-1];
   pl.x=0;pl.z=Z1-5;pl.wz=pl.z;pl.wx=null;pl.run=false;ct.z=pl.z;
   for(const pet of Object.values(petR)){pet.x=pl.x;pet.z=pl.z;pet.run=false;}
 }
 function tickAstralJourney(dt){
   const journey=astralJourney;if(!journey)return false;
-  if(S!==journey.owner||currentUser!==journey.user||S.cls!==journey.cls||S.mp!==10||TRIAL.on||JOB_RITE.on){cancelAstralJourney();return false}
-  journey.elapsed=Math.min(2,journey.elapsed+Math.max(0,dt));
-  const dx=-pl.x,dz=journey.target-pl.z,distance=Math.hypot(dx,dz),remaining=Math.max(0,2-journey.elapsed),step=remaining===0?distance:distance*Math.max(0,dt)/(remaining+Math.max(0,dt));
+  if(S!==journey.owner||currentUser!==journey.user||S.cls!==journey.cls||S.mp!==journey.mp||!isContinuousBridgeMap()||TRIAL.on||JOB_RITE.on){cancelAstralJourney();return false}
+  const dur=journey.dur||2,focus=bridgeFocusOf();
+  journey.elapsed=Math.min(dur,journey.elapsed+Math.max(0,dt));
+  const dx=-pl.x,dz=journey.target-pl.z,distance=Math.hypot(dx,dz),remaining=Math.max(0,dur-journey.elapsed),step=remaining===0?distance:distance*Math.max(0,dt)/(remaining+Math.max(0,dt));
   if(distance>.001){pl.x+=dx/distance*step;pl.z+=dz/distance*step;pl.ry=-Math.atan2(dz,dx);pl.run=true}
   for(const [i,pet] of Object.values(petR).entries()){const x=pl.x-1+(i%3),z=pl.z+1.3,px=x-pet.x,pz=z-pet.z,d=Math.hypot(px,pz),v=Math.min(d,Math.max(moveSpd(true)*dt,step));if(d>.01){pet.x+=px/d*v;pet.z+=pz/d*v;pet.face=Math.atan2(pz,px)}pet.run=d>.15;pet.lunge=0}
   if(distance<=step+.001){
-    const shift=ASTRAL_FOCUS[astralOriginStage-1]-ASTRAL_FOCUS[journey.to-1];
+    const shift=focus[astralOriginStage-1]-focus[journey.to-1];
     pl.z+=shift;pl.wz=pl.z;ct.z+=shift;
     if(ascensionRoot)ascensionRoot.position.z+=shift;
     for(const pet of Object.values(petR))pet.z+=shift;
@@ -12689,8 +12694,18 @@ function landmark(G,k,c1,c2,r){
 let ascensionWorld=null,ascensionRoot=null,ascensionEpoch=0;
 function clearAscension(){clearNativeField();ascensionEpoch++;if(ascensionRoot)scene.remove(ascensionRoot);ascensionRoot=null;if(ascensionWorld)ascensionWorld.dispose();ascensionWorld=null;ground.visible=true;hemi.intensity=.8;sun.intensity=.9;}
 function buildAscension(m,stage){
-  if(m===10&&!astralJourney)astralOriginStage=stage;
+  const thorRaid=m===11&&typeof PGRaid!=='undefined'&&PGRaid.raid&&PGRaid.raid.on&&typeof PGRaid.buildVolcanoRaidWorld==='function';
+  if((m===10||thorRaid)&&!astralJourney)astralOriginStage=stage;
   const epoch=ascensionEpoch;townObjs.forEach(o=>o.visible=false);road.visible=false;if(KIT.ground)KIT.ground.visible=false;
+  if(thorRaid){
+    const world=PGRaid.buildVolcanoRaidWorld(stage);
+    if(!world)return;
+    world.kind='thor-raid';ascensionWorld=world;ascensionRoot=new THREE.Group();
+    ascensionRoot.position.z=(Z0+Z1)/2-THOR_RAID_FOCUS[(astralOriginStage||stage)-1];
+    for(const child of [...world.scene.children])ascensionRoot.add(child);
+    scene.add(ascensionRoot);scene.background=world.scene.background;scene.fog=world.scene.fog;ground.visible=false;hemi.intensity=0;sun.intensity=0;
+    return;
+  }
   if(!window.PGAscension)return;
   PGAscension.build(m,stage).then(world=>{
     if(epoch!==ascensionEpoch||!S||S.mp!==m||(m!==10&&S.lvl!==stage)||TRIAL.on||JOB_RITE.on){world.dispose();return}
@@ -12700,7 +12715,7 @@ function buildAscension(m,stage){
     scene.add(ascensionRoot);scene.background=world.scene.background;scene.fog=world.scene.fog;ground.visible=false;hemi.intensity=0;sun.intensity=0;
   }).catch(()=>{if(epoch===ascensionEpoch)log('Scenery could not load. Travel again to retry.','r0');});
 }
-function buildDeco(m){if(JOB_RITE.on)return jobRiteArena();if(m===10&&ascensionWorld?.kind==='astral'&&ascensionRoot){scene.background=ascensionWorld.scene.background;scene.fog=ascensionWorld.scene.fog;ground.visible=false;hemi.intensity=0;sun.intensity=0;return}clearAscension();while(deco.children.length)deco.remove(deco.children[0]);
+function buildDeco(m){if(JOB_RITE.on)return jobRiteArena();const thorRaid=m===11&&typeof PGRaid!=='undefined'&&PGRaid.raid&&PGRaid.raid.on;if(((m===10&&ascensionWorld?.kind==='astral')||(thorRaid&&ascensionWorld?.kind==='thor-raid'))&&ascensionRoot){scene.background=ascensionWorld.scene.background;scene.fog=ascensionWorld.scene.fog;ground.visible=false;hemi.intensity=0;sun.intensity=0;return}clearAscension();while(deco.children.length)deco.remove(deco.children[0]);
   if(m>=10){buildAscension(m,S.lvl);return}
   // v231: hold the field until the native version exists. Painting the procedural town or the kit
   // map first and swapping it a moment later is the "old map then new map" the owner saw; a short
@@ -16545,7 +16560,7 @@ dom?.addEventListener('wheel',e=>{e.preventDefault();zoom=Math.min(2,Math.max(zo
 // pushed the avatar down into the lower third of the view.
 const CAMERA_FOCUS_Y=.28,CAMERA_LEAD_Z=.25,ct=new THREE.Vector3(0,CAMERA_FOCUS_Y,0);let lastKey='';
 // Astral paving reaches 0.091; other fields sit just above zero. Keep native sprite pivots intact.
-function actorFloorY(x=pl.x,z=pl.z){if(!TRIAL.on&&!JOB_RITE.on&&KIT.nativeWorld)return PGNativeFields.heightAt(S.mp,x,z,S.lvl)+.035;return !TRIAL.on&&!JOB_RITE.on&&S.mp===10?.12:.035;}
+function actorFloorY(x=pl.x,z=pl.z){if(!TRIAL.on&&!JOB_RITE.on&&KIT.nativeWorld)return PGNativeFields.heightAt(S.mp,x,z,S.lvl)+.035;return !TRIAL.on&&!JOB_RITE.on&&isContinuousBridgeMap()?.12:.035;}
 function draw(){
   if(!S)return;
   if(document.body&&document.body.classList&&document.body.classList.contains('social-open')){
@@ -16553,7 +16568,7 @@ function draw(){
     return;
   }
   if(!R)return;
-  const bn=isBoss(),key=(JOB_RITE.on?'rite:':TRIAL.on?'trial:':'field:')+S.mp+':'+S.lvl+':'+bn,c=C(),mp=MAPS[S.mp];
+  const bn=isBoss(),raidOn=Boolean(typeof PGRaid!=='undefined'&&PGRaid.raid&&PGRaid.raid.on),key=(JOB_RITE.on?'rite:':TRIAL.on?'trial:':raidOn?'raid:':'field:')+S.mp+':'+S.lvl+':'+bn,c=C(),mp=MAPS[S.mp];
   if(key!==lastKey){lastKey=key;
     // v77: the trial is a scene of its own. Entering and leaving changes the key, so the arena is
     // built on the way in and the real field is rebuilt on the way out - exactly like a map move.
@@ -16662,7 +16677,7 @@ function draw(){
       f.el.style.transform='translate(-50%,-50%) translate('+dxx.toFixed(1)+'px,'+dy.toFixed(1)+'px) scale('+sc.toFixed(3)+')';
       f.el.style.opacity=Math.min(1,Math.max(0,r/.25))}
     else f.el.style.opacity=Math.max(0,f.life)});
-  const pt=astralJourney?'Walking to Astral Stage '+astralJourney.to:JOB_RITE.on?`Crucible · ${Math.ceil(jobRiteLeft())}s left`:hudTrial?`🏛 ${trialClock()} left · ${Math.round(Math.max(0,(S.dmg||0)-TRIAL.dmg0)).toLocaleString()} damage`:bn?`MVP FIGHT · ${mobs.filter(m=>!m.boss).length} minions`:`Monsters ${Math.min(S.kl,MPS)}/${MPS}`;if(pt!==lastProg){lastProg=pt;prog.textContent=pt}
+  const pt=astralJourney?'Walking to '+(S.mp===11?'Volcano':'Astral')+' Stage '+(S.mp===11&&astralJourney.to===5?4:astralJourney.to):JOB_RITE.on?`Crucible · ${Math.ceil(jobRiteLeft())}s left`:hudTrial?`🏛 ${trialClock()} left · ${Math.round(Math.max(0,(S.dmg||0)-TRIAL.dmg0)).toLocaleString()} damage`:bn?`MVP FIGHT · ${mobs.filter(m=>!m.boss).length} minions`:`Monsters ${Math.min(S.kl,MPS)}/${MPS}`;if(pt!==lastProg){lastProg=pt;prog.textContent=pt}
 }
 // ---------- the clock: one simulation, driven by frames or by timers ----------
 // A browser stops calling requestAnimationFrame the moment its tab is not the one on screen, which
@@ -17006,22 +17021,22 @@ setInterval(updateWatch,60000);
 // be hours old while the player was on another tab, and the check is a 60-byte text file.
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&(pendingUpdateBuild||Date.now()-PAGE_STARTED_AT>30000))updateWatch()});
 </script>
-<script src="assets/wardrobe-ui.js?v=458"></script>
+<script src="assets/wardrobe-ui.js?v=459"></script>
 <script src="assets/shop.js?v=321"></script>
 <script src="assets/friends.js?v=273"></script>
-<script src="assets/digimon/roster.js?v=458"></script>
-<script src="assets/digimon/base-stats.js?v=458"></script>
-<script src="assets/social-rules.js?v=458"></script>
-<script src="assets/social-poker.js?v=458"></script>
-<script src="assets/digimon-sanctuary.js?v=458"></script>
+<script src="assets/digimon/roster.js?v=459"></script>
+<script src="assets/digimon/base-stats.js?v=459"></script>
+<script src="assets/social-rules.js?v=459"></script>
+<script src="assets/social-poker.js?v=459"></script>
+<script src="assets/digimon-sanctuary.js?v=459"></script>
 <script src="assets/digimon-battle.js?v=393"></script>
-<script src="assets/social-digimon.js?v=458"></script>
+<script src="assets/social-digimon.js?v=459"></script>
 <script src="assets/social-gym-redesign.js?v=393"></script>
 <script src="assets/social-pond-design.js?v=393"></script>
 <script src="assets/social-title-art.js?v=450"></script>
-<script src="assets/social-scene.js?v=458"></script>
-<script src="assets/social-fishing.js?v=458"></script>
-<script src="assets/plaza-bots.js?v=458"></script>
+<script src="assets/social-scene.js?v=459"></script>
+<script src="assets/social-fishing.js?v=459"></script>
+<script src="assets/plaza-bots.js?v=459"></script>
 <script src="assets/adventure-guide.js?v=450"></script>
-<script src="assets/social.js?v=458"></script></body>
+<script src="assets/social.js?v=459"></script></body>
 </html>

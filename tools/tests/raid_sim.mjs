@@ -526,11 +526,11 @@ check('Thor Volcano Raid rewards Primal Catalysts & Pillar Line-of-Sight Whole-F
   g.ev(`S.raid={day:trialDay(),used:0}; PGRaid.startDirectSolo('thor');`);
   assert.equal(g.ev(`PGRaid.raid.on && PGRaid.raid.dungeonId === 'thor' && S.mp === 11`), true, 'entered Thor Volcano Raid on Map 11');
 
-  // Advance through Stages 1-3 into Stage 4 Sanctum of Ifrit
+  // Advance through Stages 1-3 into Stage 4 Sanctum of Ifrit (walking continuously along the volcanic causeway!)
   for (let s = 0; s < 3; s++) {
     g.ev(`while(mobs.length) kill(mobs[0]);`);
-    for (let i = 0; i < 30 && g.ev(`PGRaid.raid.stage === ${s}`); i++) {
-      g.ev(`PGRaid.tick(0.1);`);
+    for (let i = 0; i < 110 && g.ev(`PGRaid.raid.stage === ${s}`); i++) {
+      g.ev(`if(!tickAstralJourney(1/30))update(1/30);t+=1/30;`);
     }
   }
   assert.equal(g.ev(`PGRaid.raid.stage`), 3, 'reached Stage 4 Sanctum of Ifrit');
@@ -1077,6 +1077,154 @@ check('Round-6: <aside class="ro-forge-fx"> uses official RO sprites, 3D electri
   assert.equal(r6.isRibbonMesh, true, 'raidElectricAura renders minimal 3-arc 3D contrast-backed ribbon Meshes + colored ground rim');
   assert.equal(r6.leftHasOnlyCards, true, 'left Raid column holds only Raid option map cards');
   assert.equal(r6.rightHasMvpHeader, true, 'right Raid detail pane replaces duplicate map banner with MVP Boss Preview & Info header');
+});
+
+// 22. Round-7: Continuous Thor Volcano Causeway Walking Journey + 6 Distinct Ifrit Boss Skills
+check('Round-7: Thor Volcano Raid walks continuously along connected 3D causeway into Sanctum of Ifrit, and Ifrit uses 6 distinct volcanic boss mechanics', () => {
+  // Part A: Verify continuous 3D Volcano Causeway persistence & stage-to-stage walking rebase
+  const walkRes = g.ev(`(() => {
+    S.raid = { day: trialDay(), used: 0 };
+    PGRaid.startDirectSolo('thor');
+    buildDeco(11);
+    const initialWorld = ascensionWorld;
+    const initialRoot = ascensionRoot;
+    const rootZByStage = [ascensionRoot ? ascensionRoot.position.z : null];
+    const walkedFlags = [];
+    for (let s = 0; s < 3; s++) {
+      while (mobs.length) kill(mobs[0]);
+      PGRaid.tick(0.05);
+      walkedFlags.push(Boolean(astralJourney && pl.run));
+      for (let step = 0; step < 110 && PGRaid.raid.stage === s; step++) {
+        if (!tickAstralJourney(1 / 30)) update(1 / 30);
+        t += 1 / 30;
+      }
+      buildDeco(11);
+      rootZByStage.push(ascensionRoot ? ascensionRoot.position.z : null);
+    }
+    const preservedSameRoot = (ascensionWorld === initialWorld && ascensionRoot === initialRoot && initialWorld?.kind === 'thor-raid');
+    if (ascensionWorld) ascensionWorld.update(2.5, true);
+    return {
+      preservedSameRoot,
+      outlinePts: initialWorld?.route?.outline?.length || 0,
+      walkedFlags,
+      rootZByStage,
+      finalStage: PGRaid.raid.stage,
+      hasIfrit: mobs.some(m => m.boss && m.n === 'Ifrit')
+    };
+  })()`);
+  assert.equal(walkRes.preservedSameRoot, true, 'Thor Volcano Raid preserves one continuous 3D thor-raid causeway across Stages 1 -> 4 without rebuilding');
+  assert.ok(walkRes.outlinePts > 20, 'Volcano causeway defines continuous route outline for 3D deck & minimap');
+  assert.deepEqual([...walkRes.walkedFlags], [true, true, true], 'All 3 stage transitions start continuous on-foot bridge walking');
+  assert.deepEqual([...walkRes.rootZByStage], [0, 38, 78, 134], 'ascensionRoot Z shifts continuously (-8 -> -46 -> -86 -> -142) into Sanctum of Ifrit');
+  assert.equal(walkRes.finalStage, 3, 'arrived on Stage 4 Sanctum of Ifrit');
+  assert.equal(walkRes.hasIfrit, true, 'Ifrit boss awaits on the Sanctum terminus');
+
+  // Part B: Verify 0% overlap between Thor Volcano Boss Skills and Astral Citadel Boss Skills + exact geometry of all 6 Ifrit skills!
+  const skillRes = g.ev(`(() => {
+    const boss = mobs.find(m => m.boss);
+    boss.x = 0; boss.z = -4; boss.hp = boss.max * 0.72;
+    PGRaid.raid.pillarCastDone = false;
+    PGRaid.raid.castSeq = 0;
+    PGRaid.raid.lastSkillKey = '';
+    const thorNames = new Set();
+    const thorShapes = new Set();
+    for (let i = 0; i < 10; i++) {
+      PGRaid.raid.telegraph = null;
+      PGRaid.raid.nextCastIn = 0.01;
+      pl.x = (i % 2 === 0) ? 0 : 6;
+      pl.z = (i % 2 === 0) ? -2 : 4;
+      PGRaid.tick(0.05);
+      if (PGRaid.raid.telegraph) {
+        thorNames.add(PGRaid.raid.telegraph.name);
+        thorShapes.add(PGRaid.raid.telegraph.shape);
+      }
+    }
+
+    // 1. Cone (Molten Breath): pointing +Z (ang = Math.PI/2) from (0, -4)
+    const coneTg = { name: 'Molten Breath', shape: 'cone', x: 0, z: -4, ang: Math.PI / 2, halfArc: 0.96, r: 15.2, age: 1.0, life: 2.25 };
+    const coneFrontHit = PGRaid.hitByTelegraph(coneTg, 0, 2.0);
+    const coneBackSafe = !PGRaid.hitByTelegraph(coneTg, 0, -8.0);
+    const coneFlankSafe = !PGRaid.hitByTelegraph(coneTg, 8.0, -4.5);
+
+    // 2. Ringwaves (Tectonic Ring Surge): inner < 4.3 HIT, mid [4.3..8.3] SAFE, outer [8.3..18] HIT
+    const ringTg = { name: 'Tectonic Ring Surge', shape: 'ringwaves', x: 0, z: -4, innerSafeR: 4.3, outerSafeR: 8.3, r: 18.0, age: 1.0, life: 2.45 };
+    const ringCoreHit = PGRaid.hitByTelegraph(ringTg, 0, -2.0);     // dist 2.0 -> HIT
+    const ringMidSafe = !PGRaid.hitByTelegraph(ringTg, 0, 2.2);     // dist 6.2 -> SAFE!
+    const ringOuterHit = PGRaid.hitByTelegraph(ringTg, 0, 6.8);     // dist 10.8 -> HIT
+    PGRaid.raid.telegraph = ringTg; PGRaid.raid.dodgeCd = 0; pl.x = 0; pl.z = -2.0;
+    PGRaid.dodge();
+    const ringDodgeSafe = !PGRaid.hitByTelegraph(ringTg, pl.x, pl.z);
+
+    // 3. Triskelion (Hellfire Pinwheel): 3 spokes at 0, 120, 240 deg rotating over time
+    const pinTg0 = { name: 'Hellfire Pinwheel', shape: 'triskelion', x: 0, z: -4, ang: 0, rotSpeed: 1.0, width: 2.55, len: 15.6, age: 0, life: 2.55 };
+    const pinHitAt0 = PGRaid.hitByTelegraph(pinTg0, 6.0, -4.0);     // directly on spoke 0 (+X) at age=0 -> HIT
+    const pinSafeSliceAt0 = !PGRaid.hitByTelegraph(pinTg0, 3.0, 1.2); // 60 deg slice -> SAFE at age=0
+    pinTg0.age = 1.05; // ~60 deg rotation moves spoke onto 60 deg point & clears 0 deg!
+    const pinMovedOff0 = !PGRaid.hitByTelegraph(pinTg0, 6.0, -4.0);
+
+    // 4. Lava Wall (Pyroclastic Tsunami): wall at z=0, depth=7.4, safe breach at gapX=5.4 (+/-2.6)
+    const wallTg = { name: 'Pyroclastic Tsunami', shape: 'lava_wall', x: 5.4, z: 0, gapX: 5.4, gapHalfW: 2.6, depth: 7.4, age: 1.0, life: 2.45 };
+    const wallSlabHit = PGRaid.hitByTelegraph(wallTg, -2.0, 0.5);
+    const wallBreachSafe = !PGRaid.hitByTelegraph(wallTg, 5.4, 0.5);
+    PGRaid.raid.telegraph = wallTg; PGRaid.raid.dodgeCd = 0; pl.x = 1.2; pl.z = 0.5;
+    PGRaid.dodge();
+    const wallDodgeSafe = !PGRaid.hitByTelegraph(wallTg, pl.x, pl.z);
+
+    // 5. Fissure Lanes (Caldera Fault Lines): 3 parallel Z-lanes at x = -5.6, 0, +5.6; ridges at x = +/-2.8 SAFE
+    const faultTg = {
+      name: 'Caldera Fault Lines', shape: 'fissure_lanes', volcanic: true, x: 0, z: 0,
+      beams: [
+        { x: -5.6, z: 0, ang: 0, width: 2.65, len: 26 },
+        { x: 0, z: 0, ang: 0, width: 2.65, len: 26 },
+        { x: 5.6, z: 0, ang: 0, width: 2.65, len: 26 }
+      ],
+      age: 1.0, life: 2.3
+    };
+    const faultHitCenter = PGRaid.hitByTelegraph(faultTg, 0, 2.0);
+    const faultRidgeSafe = !PGRaid.hitByTelegraph(faultTg, 2.8, 2.0);
+
+    // 6. Obsidian Spires (Supernova Cataclysm): 2 spires + inward Magma Vortex pull!
+    const spireTg = {
+      name: 'Supernova Cataclysm', shape: 'pillars', volcanicSpires: true, pullSpeed: 1.28,
+      pillars: PGRaid.spawnSanctuaryPillars(0, -4, 2),
+      x: 0, z: -4, dmgPct: 0.90, bypassShield: true, mustHideBehindPillar: true, age: 0.5, life: 4.4
+    };
+    PGRaid.raid.telegraph = spireTg; pl.x = 0; pl.z = 4.0;
+    const zBeforePull = pl.z;
+    PGRaid.tick(0.25);
+    const pulledCloser = pl.z < zBeforePull;
+
+    PGRaid.leave();
+    buildDeco(S.mp);
+    const cleanedUpWorld = (!ascensionWorld || ascensionWorld.kind !== 'thor-raid');
+
+    return {
+      thorNames: [...thorNames],
+      thorShapes: [...thorShapes],
+      coneFrontHit, coneBackSafe, coneFlankSafe,
+      ringCoreHit, ringMidSafe, ringOuterHit, ringDodgeSafe,
+      pinHitAt0, pinSafeSliceAt0, pinMovedOff0,
+      wallSlabHit, wallBreachSafe, wallDodgeSafe,
+      faultHitCenter, faultRidgeSafe,
+      spireCount: spireTg.pillars.length,
+      pulledCloser,
+      cleanedUpWorld
+    };
+  })()`);
+
+  const astralBossSkills = ['Crimson Judgment', 'Eye of Abyss', 'Horizon Volley', 'Abyssal Cross', 'Starfall Cataclysm', 'Oblivion Extinction'];
+  for (const an of astralBossSkills) {
+    assert.equal(skillRes.thorNames.includes(an), false, `Thor Volcano boss does not reuse Astral skill "${an}"`);
+  }
+  assert.ok(skillRes.thorNames.length >= 5, `Ifrit cycles rich distinct volcanic kit (${skillRes.thorNames.join(', ')})`);
+  assert.equal(skillRes.coneFrontHit && skillRes.coneBackSafe && skillRes.coneFlankSafe, true, 'Molten Breath 110° cone hits front and spares flanks/rear');
+  assert.equal(skillRes.ringCoreHit && skillRes.ringMidSafe && skillRes.ringOuterHit && skillRes.ringDodgeSafe, true, 'Tectonic Ring Surge hits core & outer rim, spares 4.3-8.3m ring, and DODGE lands in safe band');
+  assert.equal(skillRes.pinHitAt0 && skillRes.pinSafeSliceAt0 && skillRes.pinMovedOff0, true, 'Hellfire Pinwheel rotates 3 lava spokes continuously over cast time');
+  assert.equal(skillRes.wallSlabHit && skillRes.wallBreachSafe && skillRes.wallDodgeSafe, true, 'Pyroclastic Tsunami hits wall slabs, spares Safe Breach, and DODGE enters breach');
+  assert.equal(skillRes.faultHitCenter && skillRes.faultRidgeSafe, true, 'Caldera Fault Lines hit parallel magma trenches and spare safe basalt ridges');
+  assert.equal(skillRes.spireCount, 2, 'Supernova Cataclysm erupts 2 volcanic Obsidian Spires');
+  assert.equal(skillRes.pulledCloser, true, 'Supernova Cataclysm magma vortex pulls exposed player toward Ifrit');
+  assert.equal(skillRes.cleanedUpWorld, true, 'leaving Thor Volcano Raid disposes thor-raid scenery cleanly');
 });
 
 g.close();
