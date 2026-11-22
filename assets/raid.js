@@ -1,4 +1,4 @@
-/* Raid Dungeons — Solo (<10m) & Real-Player Party (<15m) Co-op Raid Mode
+/* Raid Dungeons — Solo (<20m) & Real-Player Party (<25m) Co-op Raid Mode
  * Supports Astral Citadel (Map 10, Memory of Thanatos) & Thor Volcano (Map 11, Ifrit),
  * plus previewing future Raid Dungeons inside Map -> Dungeons.
  * Features active stage bombardments, 6-shape boss mechanics including the whole-floor
@@ -69,8 +69,9 @@
 
   var STAGES = DUNGEONS.astral.stages;
 
-  var SOLO_LIMIT_S = 600;     // 10 minutes
-  var PARTY_LIMIT_S = 900;    // 15 minutes
+  var SOLO_LIMIT_S = 1200;    // 20 minutes
+  var PARTY_LIMIT_S = 1500;   // 25 minutes
+  var SOLO_GRACE_LEAVE_S = 10; // Solo voluntary exit within 10s (except death) keeps daily entry
   var DAILY_LIMIT = 2;
   var MAX_PARTY_REVIVES = 3;
   var REVIVE_CHANNEL_S = 3.0;
@@ -80,7 +81,7 @@
   var SYNC_INTERVAL_S = 2.0;
 
   // Stage 1-3 mobs: v455 baseline + 120% buff (Astral 2.2x; Thor 1.1x normalized to 1.25x Astral curve).
-  // Stage 4 Bosses & escorts: reduced 30% from v456 (x0.70), retaining 50% Raid Boss Armor (-2%/star).
+  // Stage 4 Bosses & escorts: reduced 30% HP from v456, with softened Boss ATK/cleave/telegraph damage (v462).
   var TRASH_CAMP_LIMIT = 8;
   var RAID_BOSS_ARMOR = 0.50;
   var TRASH_HP_MULT_ASTRAL = 2.2;
@@ -89,10 +90,10 @@
   var BOSS_HP_MULT_THOR = 2.8;
   var ESCORT_HP_MULT_ASTRAL = 4.2;
   var ESCORT_HP_MULT_THOR = 2.52;
-  var BOSS_ATK_MULT = 1.785;
-  var ESCORT_ATK_MULT = 1.225;
-  var BOSS_CLEAVE_INTERVAL_S = 2.5;
-  var BOSS_CLEAVE_PCT = 0.16;
+  var BOSS_ATK_MULT = 1.12;
+  var ESCORT_ATK_MULT = 0.85;
+  var BOSS_CLEAVE_INTERVAL_S = 4.2;
+  var BOSS_CLEAVE_PCT = 0.09;
 
   var REWARDS = {
     solo:  { shards: 20, sigils: 0, zeny: 500000, echo: 100 },
@@ -167,7 +168,9 @@
     hudTimer: 0,
     transition: null,      // { nextIdx, fallbackLeft }
     home: null,
-    party: [],             // [{ id, name, cls, sex, appearance, hp, maxHp, dps, dmgTaken, support, revives, stage, dead, self }]
+    entryConsumed: false,
+    activePartyScaleCount: 1,
+    party: [],             // [{ id, name, cls, sex, appearance, hp, maxHp, dps, dmgTaken, support, revives, stage, dead, disconnected, self }]
     keys: { w: false, a: false, s: false, d: false },
     moveTarget: null,      // { x, z, left, holdOnly }
     lobbyMode: 'party',
@@ -412,6 +415,28 @@
     if (count <= 1) return 1;
     if (count === 2) return 1.32;
     return 1.58;
+  }
+
+  function activePartyCount() {
+    if (!Array.isArray(raid.party) || !raid.party.length) return 1;
+    var cnt = 0;
+    for (var i = 0; i < raid.party.length; i++) {
+      if (raid.party[i] && !raid.party[i].disconnected) cnt++;
+    }
+    return Math.max(1, cnt);
+  }
+
+  function rescaleActiveRaidMobs(oldCount, newCount) {
+    if (oldCount === newCount || typeof mobs === 'undefined' || !Array.isArray(mobs)) return;
+    var hpRatio = partyHpScale(newCount) / Math.max(0.01, partyHpScale(oldCount));
+    var atkRatio = partyAtkScale(newCount) / Math.max(0.01, partyAtkScale(oldCount));
+    for (var i = 0; i < mobs.length; i++) {
+      var m = mobs[i];
+      if (!m || m.hp <= 0) continue;
+      m.max = Math.max(1, Math.floor((m.max || m.hp) * hpRatio));
+      m.hp = Math.max(1, Math.min(m.max, Math.floor(m.hp * hpRatio)));
+      m.atk = Math.max(1, Math.floor((m.atk || 100) * atkRatio));
+    }
   }
 
   function findBoss() {
@@ -1803,7 +1828,8 @@
       if (typeof camps !== 'undefined') camps = [];
       if (typeof respawn !== 'undefined') respawn = 999;
 
-      var pCount = Math.max(1, raid.party.length);
+      var pCount = activePartyCount();
+      raid.activePartyScaleCount = pCount;
       var scale = partyHpScale(pCount);
       var atkParty = partyAtkScale(pCount);
       var nowT = (typeof t === 'number' && Number.isFinite(t)) ? t : 0;
@@ -2194,7 +2220,7 @@
           ang: aimDir + Math.PI * 0.5,
           width: 2.75,
           len: fissureLen,
-          dmgPct: 0.33,
+          dmgPct: 0.24,
           age: 0,
           life: 2.2
         };
@@ -2223,7 +2249,7 @@
           zones: bombZones,
           x: anchor.x,
           z: anchor.z,
-          dmgPct: 0.32,
+          dmgPct: 0.23,
           age: 0,
           life: 2.25
         };
@@ -2241,7 +2267,7 @@
           ang: aimDir,
           halfArc: 0.72,
           r: Math.max(9.6, Math.min(12.2, distToPl + 3.8)),
-          dmgPct: 0.31,
+          dmgPct: 0.22,
           age: 0,
           life: 2.2
         };
@@ -2274,7 +2300,7 @@
         zones: zones,
         x: zones[0].x,
         z: zones[0].z,
-        dmgPct: 0.32,
+        dmgPct: 0.23,
         age: 0,
         life: 2.25
       };
@@ -2294,7 +2320,7 @@
         ang: aimDir + Math.PI * 0.5,
         width: 2.95,
         len: lanceLen,
-        dmgPct: 0.34,
+        dmgPct: 0.25,
         age: 0,
         life: 2.2
       };
@@ -2317,7 +2343,7 @@
         ],
         x: p1.x,
         z: p1.z,
-        dmgPct: 0.30,
+        dmgPct: 0.22,
         age: 0,
         life: 2.25
       };
@@ -2401,7 +2427,7 @@
         pillars: spires,
         x: boss.x,
         z: boss.z,
-        dmgPct: 0.90,
+        dmgPct: 0.68,
         bypassShield: true,
         mustHideBehindPillar: true,
         fx: 'ifr_eruption',
@@ -2424,7 +2450,7 @@
         ang: aimAng,
         halfArc: CONE_HALF_ARC,
         r: 15.2,
-        dmgPct: 0.52,
+        dmgPct: 0.34,
         fx: 'ifr_blaze',
         age: 0,
         life: 2.15
@@ -2440,7 +2466,7 @@
         innerSafeR: 4.3,
         outerSafeR: 8.3,
         r: 18.0,
-        dmgPct: 0.50,
+        dmgPct: 0.32,
         fx: 'ifr_eruption',
         age: 0,
         life: 2.35
@@ -2459,7 +2485,7 @@
         rotSpeed: 0.68 * spinSign,
         width: 2.55,
         len: 15.6,
-        dmgPct: 0.50,
+        dmgPct: 0.32,
         fx: 'ifr_blaze',
         age: 0,
         life: 2.45
@@ -2482,7 +2508,7 @@
         gapX: breachX,
         gapHalfW: 2.6,
         depth: 7.4,
-        dmgPct: 0.52,
+        dmgPct: 0.34,
         fx: 'dl_skyfall',
         age: 0,
         life: 2.35
@@ -2506,7 +2532,7 @@
           { x: centerPt.x, z: centerPt.z, ang: laneAng, width: 2.65, len: 26 },
           { x: centerPt.x + lnx * 5.6, z: centerPt.z + lnz * 5.6, ang: laneAng, width: 2.65, len: 26 }
         ],
-        dmgPct: 0.48,
+        dmgPct: 0.30,
         fx: 'ed_quake',
         age: 0,
         life: 2.20
@@ -2527,7 +2553,7 @@
         pillars: pillars,
         x: boss.x,
         z: boss.z,
-        dmgPct: 0.88,
+        dmgPct: 0.68,
         bypassShield: true,
         mustHideBehindPillar: true,
         fx: 'abyss_requiem',
@@ -2546,7 +2572,7 @@
         z: boss.z,
         innerR: 3.7,
         outerR: 16.0,
-        dmgPct: 0.50,
+        dmgPct: 0.32,
         fx: 'abyss_requiem',
         age: 0,
         life: 2.45
@@ -2570,7 +2596,7 @@
         ],
         x: targetPt.x,
         z: targetPt.z,
-        dmgPct: 0.45,
+        dmgPct: 0.28,
         fx: 'lod_harvest',
         age: 0,
         life: 2.15
@@ -2586,7 +2612,7 @@
         ang: baseAng,
         width: 2.8,
         len: 26,
-        dmgPct: 0.50,
+        dmgPct: 0.32,
         fx: 'abyss_cross',
         age: 0,
         life: 2.25
@@ -2607,7 +2633,7 @@
         zones: zones,
         x: boss.x,
         z: boss.z,
-        dmgPct: 0.46,
+        dmgPct: 0.30,
         fx: 'lod_verdict',
         age: 0,
         life: 2.35
@@ -2620,7 +2646,7 @@
         x: boss.x,
         z: boss.z,
         r: 5.5,
-        dmgPct: 0.52,
+        dmgPct: 0.34,
         fx: 'tnt_judge',
         age: 0,
         life: 2.35
@@ -2664,8 +2690,8 @@
     if (raid.bossCleaveIn > 0) return;
     raid.bossCleaveIn = BOSS_CLEAVE_INTERVAL_S;
     var dist = Math.hypot(pl.x - boss.x, pl.z - boss.z);
-    var pScale = partyAtkScale(Math.max(1, raid.party.length));
-    var basePct = Math.min(0.28, BOSS_CLEAVE_PCT * pScale);
+    var pScale = partyAtkScale(activePartyCount());
+    var basePct = Math.min(0.16, BOSS_CLEAVE_PCT * pScale);
     var pct = dist <= 4.2 ? basePct : (basePct * 0.72);
     var isThor = raid.dungeonId === 'thor';
     var label = dist <= 4.2 ? (isThor ? 'MOLTEN CLEAVE' : 'BOSS CLEAVE') : (isThor ? 'CALDERA HEATWAVE' : 'ASTRAL PULSE');
@@ -2685,7 +2711,7 @@
       if (vp.tick <= 0) {
         vp.tick = 0.5;
         if (!raid.dead && typeof pl !== 'undefined' && pl && Math.hypot(pl.x - vp.x, pl.z - vp.z) <= vp.r) {
-          applyRaidHazardDamage(0.08, (vp.volcanic || raid.dungeonId === 'thor') ? 'MAGMA BURN' : 'VOID BURN');
+          applyRaidHazardDamage(0.05, (vp.volcanic || raid.dungeonId === 'thor') ? 'MAGMA BURN' : 'VOID BURN');
         }
       }
     }
@@ -2819,7 +2845,7 @@
 
       if (!raid.dead && typeof pl !== 'undefined' && pl) {
         if (hitByTelegraph(tg, pl.x, pl.z)) {
-          applyRaidHazardDamage(tg.dmgPct || 0.45, tg.name.toUpperCase() + '!', {
+          applyRaidHazardDamage(tg.dmgPct || 0.32, tg.name.toUpperCase() + '!', {
             bypassShield: Boolean(tg.bypassShield),
             ignoreIframes: Boolean(tg.mustHideBehindPillar)
           });
@@ -3009,7 +3035,7 @@
     if (raid.mode !== 'party') return null;
     for (var i = 0; i < raid.party.length; i++) {
       var m = raid.party[i];
-      if (!m.self && m.dead) return m;
+      if (!m.self && m.dead && !m.disconnected) return m;
     }
     return null;
   }
@@ -3034,7 +3060,7 @@
     for (var i = 0; i < raid.party.length; i++) {
       if (raid.party[i].id === raid.reviving.targetId) { target = raid.party[i]; break; }
     }
-    if (!target || !target.dead) {
+    if (!target || !target.dead || target.disconnected) {
       raid.reviving = null;
       return;
     }
@@ -3162,9 +3188,21 @@
   }
 
   function consumeDailyEntry() {
-    if (isGm()) return;
+    if (isGm()) {
+      raid.entryConsumed = false;
+      return;
+    }
     var st = raidSaveState();
     st.used = (Number(st.used) || 0) + 1;
+    raid.entryConsumed = true;
+  }
+
+  function refundDailyEntry() {
+    if (!raid.entryConsumed || isGm()) return false;
+    var st = raidSaveState();
+    st.used = Math.max(0, (Number(st.used) || 0) - 1);
+    raid.entryConsumed = false;
+    return true;
   }
 
   function beginRun(mode, opts) {
@@ -3243,6 +3281,7 @@
           revives: 0,
           stage: 0,
           dead: false,
+          disconnected: false,
           self: isMe
         };
       });
@@ -3326,9 +3365,11 @@
     showLobby('party', 'astral');
   }
 
-  function awardRewards(cleared) {
+  function awardRewards(cleared, skipFailRewards) {
     var dng = activeDungeon();
-    if (typeof S === 'undefined' || !S) return { shards: 0, sigils: 0, matName: dng.matName, zeny: 0, echo: 0 };
+    if (typeof S === 'undefined' || !S || (!cleared && skipFailRewards)) {
+      return { shards: 0, sigils: 0, matName: dng.matName, zeny: 0, echo: 0 };
+    }
     var r = cleared ? (raid.mode === 'party' ? REWARDS.party : REWARDS.solo) : REWARDS.fail;
     if (!Array.isArray(S.ascensionMat)) S.ascensionMat = [0, 0, 0];
     var mIdx = dng.matIdx === 1 ? 1 : 0;
@@ -3451,8 +3492,9 @@
     };
   }
 
-  function finish(cleared, reason, fromNetwork) {
+  function finish(cleared, reason, fromNetwork, finishOpts) {
     if (!raid.on) return;
+    finishOpts = finishOpts || {};
     var dng = activeDungeon();
     refreshSelfStats();
     var elapsed = Math.max(1, Math.round(raid.elapsed));
@@ -3461,9 +3503,11 @@
     var partySnap = raid.party.map(function (p) { return Object.assign({}, p); });
     var mode = raid.mode;
     var rid = raid.raidId;
+    var refundedEntry = Boolean(finishOpts.refundedEntry);
 
     raid.on = false;
     raid.dead = false;
+    raid.entryConsumed = false;
     raid.reviving = null;
     raid.telegraph = null;
     raid.voidPools = [];
@@ -3477,7 +3521,7 @@
         type: 'raid_end',
         raidId: rid,
         cleared: Boolean(cleared),
-        reason: reason || (cleared ? 'boss_down' : 'failed'),
+        reason: finishOpts.networkReason || reason || (cleared ? 'boss_down' : 'failed'),
         secs: elapsed,
         dps: myFinalDps,
         dmgTaken: me ? me.dmgTaken : raid.dmgTaken,
@@ -3486,7 +3530,7 @@
       });
     }
 
-    var paid = awardRewards(Boolean(cleared));
+    var paid = awardRewards(Boolean(cleared), Boolean(finishOpts.skipFailRewards));
     restoreHome();
     if (root.PGSocial && typeof root.PGSocial.setRaidSuspend === 'function') {
       root.PGSocial.setRaidSuspend(false);
@@ -3500,6 +3544,7 @@
       dungeonName: dng.name,
       bossName: dng.bossName,
       cleared: Boolean(cleared),
+      refundedEntry: refundedEntry,
       reason: reason || (cleared ? (dng.bossName + ' defeated!') : 'Raid failed'),
       mode: mode,
       secs: elapsed,
@@ -3508,21 +3553,42 @@
       commendations: comms,
       rewards: paid
     };
-    showResult(raid.result);
+    if (!finishOpts.silentResult) {
+      showResult(raid.result);
+    }
     if (typeof ui === 'function') ui();
     if (typeof save === 'function') save();
   }
 
-  function leave() {
+  function leave(opts) {
     if (!raid.on) return;
-    finish(false, 'Left the raid.', false);
+    var silent = (opts === true) || Boolean(opts && opts.silent);
+    var graceLock = Boolean(opts && typeof opts === 'object' && opts.graceLock);
+    var aliveNow = !raid.dead && (typeof S === 'undefined' || !S || (Number(S.hp) || 0) > 0);
+    var inSoloGrace = raid.mode === 'solo' && aliveNow && (raid.elapsed <= SOLO_GRACE_LEAVE_S || graceLock);
+    if (inSoloGrace) {
+      var refunded = refundDailyEntry();
+      if (typeof log === 'function') {
+        log('↩ Exited Solo Raid within 10s — daily Raid entry kept!', 'r2', 'misc');
+      }
+      finish(false, 'Left within 10s — daily Raid entry kept!', false, {
+        skipFailRewards: true,
+        refundedEntry: refunded,
+        silentResult: silent
+      });
+      return;
+    }
+    finish(false, 'Left the raid.', false, {
+      networkReason: 'left',
+      silentResult: silent
+    });
   }
 
   function checkPartyWipe() {
     if (!raid.on || raid.mode !== 'party') return;
     var anyAlive = false;
     for (var i = 0; i < raid.party.length; i++) {
-      if (!raid.party[i].dead) { anyAlive = true; break; }
+      if (!raid.party[i].disconnected && !raid.party[i].dead) { anyAlive = true; break; }
     }
     if (!anyAlive) {
       finish(false, 'All party members fell — party wipe!', false);
@@ -3706,6 +3772,7 @@
     if (msg.revives != null) slot.revives = Math.max(0, Number(msg.revives) || 0);
     slot.stage = Math.max(0, Math.min(3, Number(msg.stage) || 0));
     slot.dead = Boolean(msg.dead);
+    slot.disconnected = false;
 
     if (slot.stage > raid.stage && !raid.transition) {
       spawnRaidStage(slot.stage);
@@ -3746,6 +3813,36 @@
 
   function onEnded(msg) {
     if (!raid.on || raid.mode !== 'party' || !msg) return;
+    var rStr = String(msg.reason || '');
+    var isPeerExit = !msg.cleared && msg.fromId != null && msg.fromId !== myId() &&
+      (rStr === 'disconnect' || rStr === 'left' || /^left/i.test(rStr));
+
+    if (isPeerExit) {
+      var prevScaleCnt = raid.activePartyScaleCount || activePartyCount();
+      var peerName = msg.name || 'Teammate';
+      for (var k = 0; k < raid.party.length; k++) {
+        if (raid.party[k].id === msg.fromId && !raid.party[k].self) {
+          peerName = raid.party[k].name || peerName;
+          if (msg.dps != null) raid.party[k].dps = 0;
+          else raid.party[k].dps = 0;
+          if (msg.dmgTaken != null) raid.party[k].dmgTaken = Math.max(0, Number(msg.dmgTaken) || 0);
+          if (msg.support != null) raid.party[k].support = Math.max(0, Number(msg.support) || 0);
+          if (msg.revives != null) raid.party[k].revives = Math.max(0, Number(msg.revives) || 0);
+          raid.party[k].hp = 0;
+          raid.party[k].dead = true;
+          raid.party[k].disconnected = true;
+        }
+      }
+      var newScaleCnt = activePartyCount();
+      rescaleActiveRaidMobs(prevScaleCnt, newScaleCnt);
+      raid.activePartyScaleCount = newScaleCnt;
+      var verb = rStr === 'disconnect' ? 'disconnected' : 'left the raid';
+      pushSystemChat('⚠ ' + peerName + ' ' + verb + ' — remaining party continues! Monster HP & ATK rescaled for ' + newScaleCnt + ' player(s).');
+      updateHud();
+      checkPartyWipe();
+      return;
+    }
+
     if (msg.fromId != null) {
       for (var i = 0; i < raid.party.length; i++) {
         if (raid.party[i].id === msg.fromId && !raid.party[i].self) {
@@ -3940,7 +4037,7 @@
         '<div class="raid-banner-copy">' +
           '<span class="raid-eyebrow">PARTY RAID READY ROOM · ' + escHtml(dng.name.toUpperCase()) + '</span>' +
           '<h2>' + escHtml(dng.name) + ' — Party Preview</h2>' +
-          '<p>Everyone presses Ready · Party Leader presses Start · 15:00 limit · 3 shared revives</p>' +
+          '<p>Everyone presses Ready · Party Leader presses Start · 25:00 limit · 3 shared revives</p>' +
         '</div>' +
         '<button type="button" class="raid-close-x" data-raid-act="close" aria-label="Close">×</button>' +
       '</div>' +
@@ -4100,21 +4197,24 @@
       }
     }
 
-    var aliveCnt = raid.party.filter(function (p) { return !p.dead; }).length;
+    var aliveCnt = raid.party.filter(function (p) { return !p.disconnected && !p.dead; }).length;
+    var connCnt = raid.party.filter(function (p) { return !p.disconnected; }).length || raid.party.length;
     var aliveEl = $('raidPartyAlive');
-    if (aliveEl) aliveEl.textContent = aliveCnt + '/' + raid.party.length + ' ALIVE';
+    if (aliveEl) aliveEl.textContent = aliveCnt + '/' + connCnt + ' ALIVE';
 
     var partyRowsEl = $('raidPartyRows');
     if (partyRowsEl) {
       partyRowsEl.innerHTML = raid.party.map(function (p) {
-        var pct = p.dead ? 0 : Math.max(0, Math.min(100, Math.round((p.hp / Math.max(1, p.maxHp)) * 100)));
-        return '<div class="raid-member' + (p.dead ? ' dead' : (pct < 35 ? ' low' : '')) + '">' +
+        var isOff = Boolean(p.disconnected);
+        var pct = (isOff || p.dead) ? 0 : Math.max(0, Math.min(100, Math.round((p.hp / Math.max(1, p.maxHp)) * 100)));
+        var subLabel = isOff ? '⚡ OFFLINE' : (p.dead ? '☠ DOWNED' : (fmtNum(p.hp) + ' / ' + fmtNum(p.maxHp)));
+        return '<div class="raid-member' + ((isOff || p.dead) ? ' dead' : (pct < 35 ? ' low' : '')) + '">' +
           '<div class="raid-member-top">' +
             '<b>' + escHtml(p.name) + (p.self ? ' (You)' : '') + '</b>' +
             '<small>' + escHtml(p.cls || '') + '</small>' +
           '</div>' +
           '<div class="raid-hp-bar"><i style="width:' + pct + '%"></i></div>' +
-          '<div class="raid-member-sub"><span>' + (p.dead ? '☠ DOWNED' : (fmtNum(p.hp) + ' / ' + fmtNum(p.maxHp))) + '</span><span>' + pct + '%</span></div>' +
+          '<div class="raid-member-sub"><span>' + subLabel + '</span><span>' + (isOff ? 'DISC' : (pct + '%')) + '</span></div>' +
         '</div>';
       }).join('');
     }
@@ -4269,8 +4369,8 @@
     if (!lootTiles.length) {
       lootTiles.push(
         '<div class="raid-loot-item">' +
-          '<span class="raid-loot-icon">—</span>' +
-          '<div class="raid-loot-meta"><b>No Items Received</b><small>Run ended early</small></div>' +
+          '<span class="raid-loot-icon">' + (res.refundedEntry ? '↩' : '—') + '</span>' +
+          '<div class="raid-loot-meta"><b>' + (res.refundedEntry ? 'Daily Raid Entry Kept' : 'No Items Received') + '</b><small>' + (res.refundedEntry ? 'Exited Solo within 10s (no attempt spent)' : 'Run ended early') + '</small></div>' +
         '</div>'
       );
     }
@@ -4280,9 +4380,9 @@
         '<div class="raid-result-head">' +
           '<span class="raid-eyebrow">' +
             escHtml(dngTitle) + (res.mode === 'party' ? ' · PARTY ' : ' · SOLO ') +
-            (res.cleared ? 'COMPLETE' : 'FAILED') +
+            (res.cleared ? 'COMPLETE' : (res.refundedEntry ? 'EARLY EXIT' : 'FAILED')) +
           '</span>' +
-          '<h2>' + (res.cleared ? ('🏆 Raid Complete — ' + escHtml(bossTitle) + ' Defeated!') : '☠ Raid Failed') + '</h2>' +
+          '<h2>' + (res.cleared ? ('🏆 Raid Complete — ' + escHtml(bossTitle) + ' Defeated!') : (res.refundedEntry ? '↩ Raid Exited — Entry Kept!' : '☠ Raid Failed')) + '</h2>' +
           '<p class="raid-result-sub">' + escHtml(res.reason) + ' · Duration: <b>' + fmtClock(res.secs) + '</b></p>' +
         '</div>' +
         '<div class="raid-showcase-grid">' + showcaseHtml + '</div>' +
@@ -4375,10 +4475,18 @@
       else if (act === 'dodge') dodge();
       else if (act === 'revive') revive();
       else if (act === 'leave') {
+        var graceEligible = raid.mode === 'solo' && !raid.dead &&
+          (typeof S === 'undefined' || !S || (Number(S.hp) || 0) > 0) &&
+          raid.elapsed <= SOLO_GRACE_LEAVE_S;
         if (typeof ask === 'function') {
-          ask('Leave the Raid? Your current run will end.', function () { leave(); }, { yes: 'Leave Raid', no: 'Stay' });
+          var promptMsg = graceEligible
+            ? 'Leave Solo Raid within 10s? Your daily Raid entry will be KEPT (no consolation rewards).'
+            : (raid.mode === 'party'
+              ? 'Leave the Party Raid? Your run will end, while remaining teammates can continue.'
+              : 'Leave the Raid? Your current run will end and use 1 daily entry.');
+          ask(promptMsg, function () { leave({ graceLock: graceEligible }); }, { yes: 'Leave Raid', no: 'Stay' });
         } else {
-          leave();
+          leave({ graceLock: graceEligible });
         }
       } else if (act === 'plaza') {
         hideLobby();
@@ -5177,6 +5285,7 @@
     STAGES: STAGES,
     SOLO_LIMIT_S: SOLO_LIMIT_S,
     PARTY_LIMIT_S: PARTY_LIMIT_S,
+    SOLO_GRACE_LEAVE_S: SOLO_GRACE_LEAVE_S,
     DAILY_LIMIT: DAILY_LIMIT,
     raid: raid,
     isGm: isGm,

@@ -694,7 +694,7 @@ export class SocialRoom {
   party.members=party.members.filter(m=>m.id!==c.id);
   party.raidReady=new Set();
   if(activeRaid&&party.members.length){
-   this.partyBroadcast(party,{type:'raid_end',raidId:activeRaid.id,fromId:c.id,cleared:false,reason:reason==='left'?'left':'disconnect'});
+   this.partyBroadcast(party,{type:'raid_end',raidId:activeRaid.id,fromId:c.id,name:c.name,cleared:false,reason:reason==='left'?'left':'disconnect'});
   }
   if(!party.members.length){party.raid=null;this.parties.delete(party.id);this.partySync(party);return}
   if(party.leader===c.id)party.leader=party.members[0].id;

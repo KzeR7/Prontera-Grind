@@ -916,15 +916,15 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="preload" href="assets/ui/fonts/font-5.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-6.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-7.ttf" as="font" type="font/ttf" crossorigin>
-<link rel="stylesheet" href="assets/ui/eclipse.css?v=461">
-<link rel="stylesheet" href="assets/ui/mobile.css?v=461">
-<link rel="stylesheet" href="assets/ui/mastery-titles.css?v=461">
+<link rel="stylesheet" href="assets/ui/eclipse.css?v=462">
+<link rel="stylesheet" href="assets/ui/mobile.css?v=462">
+<link rel="stylesheet" href="assets/ui/mastery-titles.css?v=462">
 <script src="assets/ui/mobile.js?v=274"></script>
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
-<link rel="stylesheet" href="assets/social.css?v=461">
-<link rel="stylesheet" href="assets/raid.css?v=461">
+<link rel="stylesheet" href="assets/social.css?v=462">
+<link rel="stylesheet" href="assets/raid.css?v=462">
 <link rel="stylesheet" href="assets/social-battle.css?v=393">
-  <link rel="stylesheet" href="assets/social-fishing.css?v=461"><link rel="stylesheet" href="assets/friends.css?v=273">
+  <link rel="stylesheet" href="assets/social-fishing.css?v=462"><link rel="stylesheet" href="assets/friends.css?v=273">
 <link rel="stylesheet" href="assets/adventure-guide.css?v=450">
 </head>
 <body>
@@ -1055,10 +1055,10 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <div id="tooltip"></div>
 <link rel="stylesheet" href="assets/wardrobe.css?v=138">
 <link rel="stylesheet" href="assets/shop.css?v=318">
-<script src="assets/wardrobe.js?v=461"></script>
+<script src="assets/wardrobe.js?v=462"></script>
 <script src="assets/shop-catalog.js?v=321"></script>
 <script src="assets/fourth-jobs.js?v=179"></script>
-<script src="assets/expanded-jobs.js?v=461"></script>
+<script src="assets/expanded-jobs.js?v=462"></script>
 <script src="assets/ascension.js?v=156"></script>
 <script src="assets/native-mob-heights.js?v=153"></script>
 <script src="assets/native-fields.js?v=197"></script>
@@ -1066,7 +1066,7 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <script src="assets/skill-icons.js?v=130"></script>
 <script src="assets/skill-icons-extra.js?v=207"></script>
 <script src="assets/skill-icons-expanded.js?v=450"></script>
-<script src="assets/mastery-titles.js?v=461"></script>
+<script src="assets/mastery-titles.js?v=462"></script>
 <script src="assets/player-buffs.js?v=450"></script>
 <script src="assets/skill-materials.js?v=220"></script>
 <script src="assets/afterglow-animations.js?v=151"></script>
@@ -1084,11 +1084,11 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <script src="assets/expanded-fx/approved.js?v=450"></script>
 <script src="assets/skill-afterglow.js?v=450"></script>
 <script src="assets/boss-fx.js?v=249"></script>
-<script src="assets/raid.js?v=461"></script>
+<script src="assets/raid.js?v=462"></script>
 <script src="assets/pets.js?v=130"></script>
 <script src="assets/bgm-tracks.js?v=206"></script>
 <script src="assets/bgm.js?v=207"></script>
-<script src="assets/combat-audio.js?v=461"></script>
+<script src="assets/combat-audio.js?v=462"></script>
 <script src="assets/class_skins_data.js?v=2"></script>
 <script src="assets/weapon_joints_data.js?v=2"></script>
 <script src="assets/weapons_data.js?v=2"></script>
@@ -1359,7 +1359,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-22 haven-v461 Neck-height title FX, relaxed Raid Boss cadence & mob-cast Volcano skills';
+const BUILD='2026-11-22 haven-v462 Clean title FX, 20m/25m Raid timers, softer Boss damage, disconnect scaling & 10s Solo refund';
 // v364: this write used to sit AFTER the `//` on the BUILD line, so it was part of the comment and
 // never ran - the login card showed an empty #buildTag and there was no way to confirm which file
 // the browser had loaded. It also has to survive the script running before the login card exists.
@@ -9621,7 +9621,7 @@ function renderDungeonsPanel(){
   const usedToday=(S&&S.raid&&typeof trialState==='function'&&S.raid.day===trialState().day)?(+S.raid.used||0):0;
   const leftToday=isGmAcc?'∞ Unlimited (GM)':`${Math.max(0,2-usedToday)}/2 entries left today`;
   const canTry=isGmAcc||Math.max(0,2-usedToday)>0;
-  const gateMsg=!unlocked?'Requires Base Lv 150 & a 4th-Job class':(!canTry?'Daily Raid limit reached (2/2 today)':'Solo <10:00 (direct entry, no revive) · Party <15:00 (Ready Room, live Raid Chat & 3 shared revives)');
+  const gateMsg=!unlocked?'Requires Base Lv 150 & a 4th-Job class':(!canTry?'Daily Raid limit reached (2/2 today)':'Solo <20:00 (direct entry, 10s early-exit refund) · Party <25:00 (Ready Room, live Raid Chat & 3 shared revives)');
   const cardsHtml=RAID_DUNGEON_CARDS.map(x=>`<button type="button" class="raid-dungeon-card${x.id===d.id?' on':''}${x.comingSoon?' soon':''}" data-a="raiddungeon" data-v="${x.id}" aria-pressed="${x.id===d.id}"><div class="raid-dungeon-thumb"><img src="${x.img}" alt="${esc(x.name)}"><span class="raid-dungeon-badge${x.comingSoon?' soon':''}">${x.comingSoon?'Soon':'Open'}</span></div><div class="raid-dungeon-card-meta"><b>${esc(x.name)}</b><small>${esc(x.tier)} · ${esc(x.boss)}</small><div class="raid-card-subchips">${(x.cardChips||[]).map(([lbl,isMat])=>`<span class="${isMat?'mat':''}">${esc(lbl)}</span>`).join('')}</div></div></button>`).join('');
   const bossSpriteSrc=typeof d.bossSprite==='number'?d.bossFallback:d.bossSprite;
   const effArmorNote=!d.comingSoon&&penNow>0?`<span class="armor">★ Pen: ${Math.max(0,50-penNow)}% Eff. Armor</span>`:'';
@@ -15083,7 +15083,7 @@ function ensureRaidLightningSheet(){
     for(const tex of raidLightningSheetState.liveTextures)tex.needsUpdate=true;
   };
   img.onerror=()=>{raidLightningSheetState.loading=false;};
-  img.src='assets/refine-fx/title-lightning.webp?v=461';
+  img.src='assets/refine-fx/title-lightning.webp?v=462';
 }
 function makeRaidLightningTexture(colorHex){
   ensureRaidLightningSheet();
@@ -15117,7 +15117,6 @@ function setRaidLightningCellUv(geo,slot,mirrorX){
 }
 function buildRaidElectricAura(colorHex){
   const col=new THREE.Color(colorHex||'#00eaff');
-  const shadowCol=new THREE.Color(0x070510).lerp(col,.24);
   const group=new THREE.Group();
   group.userData.color=colorHex;
   group.userData.sheetUrl='assets/refine-fx/title-lightning.webp';
@@ -15144,7 +15143,7 @@ function buildRaidElectricAura(colorHex){
     return m;
   };
 
-  // Capped strictly at character neck/collarbone (top y <= 1.24 vs hero height 2.16) so face & headgear stay 100% clear!
+  // Capped strictly at character neck/collarbone (top y <= 1.24 vs hero height 2.16) with no bottom ground ring!
   const outerBolts=mkBoltPlane(1.58,1.22,.94,.04,false,11);
   outerBolts.position.set(-.04,.63,.08);
   const coreBolts=mkBoltPlane(1.48,1.16,.84,-.06,true,9);
@@ -15152,27 +15151,14 @@ function buildRaidElectricAura(colorHex){
   const shadowBolts=mkBoltPlane(1.34,.92,.76,.12,false,10);
   shadowBolts.position.set(.02,.48,.06);
 
-  const groundBack=new THREE.Mesh(
-    new THREE.RingGeometry(.58,.72,40),
-    new THREE.MeshBasicMaterial({color:shadowCol,transparent:true,opacity:.38,side:THREE.DoubleSide,depthWrite:false,fog:false})
-  );
-  groundBack.rotation.x=-Math.PI/2;groundBack.position.y=.03;groundBack.renderOrder=6;
-  const groundRing=new THREE.Mesh(
-    new THREE.RingGeometry(.61,.69,40),
-    new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:.82,side:THREE.DoubleSide,depthWrite:false,fog:false,toneMapped:false})
-  );
-  groundRing.rotation.x=-Math.PI/2;groundRing.position.y=.035;groundRing.renderOrder=7;
-
   const soft=auraTexture();
   const corona=new THREE.Sprite(new THREE.SpriteMaterial({color:col,map:soft,transparent:true,opacity:.14,depthWrite:false,fog:false,blending:THREE.AdditiveBlending}));
   corona.position.y=.60;corona.scale.set(1.48,1.18,1);corona.renderOrder=5;
 
-  group.add(corona,groundBack,groundRing,coreBolts,shadowBolts,outerBolts);
+  group.add(corona,coreBolts,shadowBolts,outerBolts);
   group.userData.shadowBolts=shadowBolts;
   group.userData.outerBolts=outerBolts;
   group.userData.coreBolts=coreBolts;
-  group.userData.groundRing=groundRing;
-  group.userData.groundBack=groundBack;
   group.userData.corona=corona;
   return group;
 }
@@ -15209,8 +15195,7 @@ function animateRaidElectricAura(group,nowMs,x,y,z,scale=1){
   group.userData.outerBolts.material.opacity=.94*envA;
   group.userData.coreBolts.material.opacity=.82*envB;
   group.userData.shadowBolts.material.opacity=.74*envC;
-  group.userData.groundRing.material.opacity=.70+Math.sin(nowMs*.0035)*.12;
-  group.userData.corona.material.opacity=.09+.06*Math.max(envA,envB);
+  group.userData.corona.material.opacity=.06+.08*Math.max(envA,envB);
 }
 function syncRaidElectricAura(){
   const eq=S.auraShow===false||S.hideUI?null:equippedMasteryTitle();
@@ -17103,22 +17088,22 @@ setInterval(updateWatch,60000);
 // be hours old while the player was on another tab, and the check is a 60-byte text file.
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&(pendingUpdateBuild||Date.now()-PAGE_STARTED_AT>30000))updateWatch()});
 </script>
-<script src="assets/wardrobe-ui.js?v=461"></script>
+<script src="assets/wardrobe-ui.js?v=462"></script>
 <script src="assets/shop.js?v=321"></script>
 <script src="assets/friends.js?v=273"></script>
-<script src="assets/digimon/roster.js?v=461"></script>
-<script src="assets/digimon/base-stats.js?v=461"></script>
-<script src="assets/social-rules.js?v=461"></script>
-<script src="assets/social-poker.js?v=461"></script>
-<script src="assets/digimon-sanctuary.js?v=461"></script>
+<script src="assets/digimon/roster.js?v=462"></script>
+<script src="assets/digimon/base-stats.js?v=462"></script>
+<script src="assets/social-rules.js?v=462"></script>
+<script src="assets/social-poker.js?v=462"></script>
+<script src="assets/digimon-sanctuary.js?v=462"></script>
 <script src="assets/digimon-battle.js?v=393"></script>
-<script src="assets/social-digimon.js?v=461"></script>
+<script src="assets/social-digimon.js?v=462"></script>
 <script src="assets/social-gym-redesign.js?v=393"></script>
 <script src="assets/social-pond-design.js?v=393"></script>
 <script src="assets/social-title-art.js?v=450"></script>
-<script src="assets/social-scene.js?v=461"></script>
-<script src="assets/social-fishing.js?v=461"></script>
-<script src="assets/plaza-bots.js?v=461"></script>
+<script src="assets/social-scene.js?v=462"></script>
+<script src="assets/social-fishing.js?v=462"></script>
+<script src="assets/plaza-bots.js?v=462"></script>
 <script src="assets/adventure-guide.js?v=450"></script>
-<script src="assets/social.js?v=461"></script></body>
+<script src="assets/social.js?v=462"></script></body>
 </html>

@@ -130,19 +130,19 @@ check('Clearing Stages 1-3 walks down Astral bridge and spawns Memory of Thanato
   assert.ok(g.ev(`PGRaid.raid.party[0].dps > 0`), 'DPS meter tracks run damage (not lifetime S.dmg)');
 });
 
-// 4. Both Evasion Mechanics + Elevated Boss Threat: Red Telegraph hit (45% HP) + Periodic Boss Cleave vs Walk-Out vs DODGE button
-check('Evasion & Elevated Boss Threat: standing in red telegraph deals 45% HP, periodic boss cleave deals 16% HP, and walking out OR pressing DODGE evades cleanly', () => {
+// 4. Both Evasion Mechanics + Balanced Boss Threat: Red Telegraph hit (32% HP) + Periodic Boss Cleave (9% HP) vs Walk-Out vs DODGE button
+check('Evasion & Balanced Boss Threat: standing in red telegraph deals 32% HP, periodic boss cleave deals 9% HP, and walking out OR pressing DODGE evades cleanly', () => {
   // Trigger a telegraph and stand inside it without dodging (pause periodic cleave so we measure telegraph impact cleanly)
   g.ev(`S.hp = maxHp(); pl.x = 0; pl.z = -4; PGRaid.raid.bossCleaveIn = 10; mobs.forEach(m => { m.at = 999; if(m.boss){m.x=0;m.z=-4;} });`);
   g.ev(`PGRaid.raid.telegraph = { name:'Soul Brand', kind:'brand', x:0, z:-4, r:3.8, age:2.35, life:2.4 }; PGRaid.raid.iframes = 0;`);
   const hpFull = g.ev(`S.hp`);
   g.ev(`PGRaid.tick(0.1)`);
   const hpAfterHit = g.ev(`S.hp`);
-  assert.equal(hpFull - hpAfterHit, Math.floor(hpFull * 0.45), 'standing inside red telegraph deals elevated 45% maxHp');
+  assert.equal(hpFull - hpAfterHit, Math.floor(hpFull * 0.32), 'standing inside red telegraph deals balanced 32% maxHp');
 
-  // Verify periodic Boss Cleave deals ~16% maxHp pressure on its own
+  // Verify periodic Boss Cleave deals ~9% maxHp pressure on its own
   g.ev(`S.hp = maxHp(); PGRaid.raid.iframes = 0; PGRaid.raid.telegraph = null; PGRaid.raid.bossCleaveIn = 0.05; PGRaid.tick(0.1);`);
-  assert.equal(hpFull - g.ev(`S.hp`), Math.max(1, Math.floor(hpFull * 0.16)), 'boss periodic cleave deals 16% maxHp');
+  assert.equal(hpFull - g.ev(`S.hp`), Math.max(1, Math.floor(hpFull * 0.09)), 'boss periodic cleave deals 9% maxHp');
 
   // Evasion A: Walk out via ground click / WASD overrideMove
   g.ev(`S.hp = maxHp(); pl.x = 0; pl.z = -4; PGRaid.raid.bossCleaveIn = 99; PGRaid.raid.telegraph = { name:'Soul Brand', kind:'brand', x:0, z:-4, r:3.8, age:0.2, life:2.4 };`);
@@ -1063,7 +1063,7 @@ check('Round-6: <aside class="ro-forge-fx"> uses official RO sprites, 3D electri
     );
     const aura = buildRaidElectricAura('#ff2442');
     animateRaidElectricAura(aura, 500, 0, 0, 0, 1);
-    const isRibbonMesh = Boolean(aura.userData.shadowBolts?.isMesh && aura.userData.outerBolts?.isMesh && aura.userData.coreBolts?.isMesh && aura.userData.groundRing?.isMesh);
+    const isRibbonMesh = Boolean(aura.userData.shadowBolts?.isMesh && aura.userData.outerBolts?.isMesh && aura.userData.coreBolts?.isMesh && !aura.userData.groundRing);
     // Check Raid Dungeon tab DOM
     mapSeason = 'dungeons'; dungeonMode = 'raid'; raidDungeonPick = 'astral';
     const html = renderDungeonsPanel();
@@ -1459,6 +1459,163 @@ check('Round-9: Title lightning aura stops at neck with calm ~4s cycle, both Rai
     `Astral Boss (Memory of Thanatos) uses relaxed intervals: open=${r9.astralGaps.openDelay}s, normal=${r9.astralGaps.normalGap}s, enraged=${r9.astralGaps.enragedGap}s`);
   assert.ok(Math.abs(r9.thorGaps.openDelay - 3.8) < 0.05 && Math.abs(r9.thorGaps.normalGap - 6.2) < 0.05 && Math.abs(r9.thorGaps.enragedGap - 4.8) < 0.05,
     `Volcano Boss (Ifrit) uses relaxed intervals: open=${r9.thorGaps.openDelay}s, normal=${r9.thorGaps.normalGap}s, enraged=${r9.thorGaps.enragedGap}s`);
+});
+
+// 25. Round-10 (haven-v462): No Bottom Title Ring + 20m/25m Raid Timers + Reduced Boss Damage + Party Disconnect Continuation + Solo <=10s Leave Refund (Except Death)
+check('Round-10: Title FX removes bottom ground ring, Raid timers are 20m/25m, Boss damage is softened, Party disconnect rescales & continues, and Solo <=10s leave keeps entry (except death)', () => {
+  // Verify SocialRoom relays disconnect name cleanly on active party raid
+  let now = 1_700_000_500_000;
+  const room = new SocialRoom({ now: () => now, random: () => 0.5, onSetAlarm: () => {} });
+  const mk = (id, name) => {
+    const inbox = [];
+    const c = room.connect({ id, username: name }, raw => inbox.push(JSON.parse(raw)), () => {});
+    room.receive(c, JSON.stringify({ type: 'join', look: { cls: 'Rune Knight', appearance: { version: 1, sex: 'm', headTop: 'crown' } } }));
+    return { c, inbox };
+  };
+  const pA = mk(101, 'Alice');
+  const pB = mk(102, 'Bob');
+  const pC = mk(103, 'Cara');
+  room.receive(pA.c, JSON.stringify({ type: 'party_invite', targetId: 102 }));
+  room.receive(pB.c, JSON.stringify({ type: 'party_accept' }));
+  room.receive(pA.c, JSON.stringify({ type: 'party_invite', targetId: 103 }));
+  room.receive(pC.c, JSON.stringify({ type: 'party_accept' }));
+  now += 500;
+  room.receive(pB.c, JSON.stringify({ type: 'raid_ready', ready: true }));
+  room.receive(pC.c, JSON.stringify({ type: 'raid_ready', ready: true }));
+  room.receive(pA.c, JSON.stringify({ type: 'raid_start', dungeonId: 'thor' }));
+  pA.inbox.length = 0;
+  // Cara disconnects mid-raid!
+  room.disconnect(pC.c);
+  const discRelay = pA.inbox.find(m => m.type === 'raid_end' && m.reason === 'disconnect');
+  assert.ok(discRelay && discRelay.fromId === 103 && discRelay.name === 'Cara', 'SocialRoom relays disconnecting member id & name to surviving party');
+
+  const r10 = g.ev(`(() => {
+    // 1. Title FX has ZERO RingGeometry / ground ring meshes below character
+    const aura = buildRaidElectricAura('#00eaff');
+    let ringGeos = 0;
+    aura.traverse(o => {
+      if (o.isMesh && o.geometry && o.geometry.type === 'RingGeometry') ringGeos++;
+    });
+    const noGroundRingRefs = !aura.userData.groundRing && !aura.userData.groundBack;
+    animateRaidElectricAura(aura, 500, 0, 0, 0, 1);
+    disposeThreeGroup(aura);
+
+    // 2. Time limits: Solo 20:00 (1200s), Party 25:00 (1500s)
+    const soloLimit = PGRaid.SOLO_LIMIT_S;
+    const partyLimit = PGRaid.PARTY_LIMIT_S;
+
+    // 3. Softened Boss Damage check (normal skill <= 0.34, pillar/spire <= 0.68)
+    S.gm = true;
+    PGRaid.startDirectSolo('thor');
+    for (let s = 0; s < 3; s++) {
+      while (mobs.length) kill(mobs[0]);
+      PGRaid.tick(0.05);
+      for (let w = 0; w < 120 && PGRaid.raid.stage === s; w++) {
+        if (!tickAstralJourney(1 / 30)) update(1 / 30);
+        t += 1 / 30;
+      }
+    }
+    // Force Spire cast first
+    PGRaid.raid.pillarCastDone = false;
+    PGRaid.raid.castSeq = 2;
+    PGRaid.raid.telegraph = null;
+    PGRaid.raid.nextCastIn = 0.05;
+    PGRaid.tick(0.1);
+    const spireDmgPct = PGRaid.raid.telegraph ? PGRaid.raid.telegraph.dmgPct : 1;
+    // Force normal boss skill next
+    PGRaid.raid.telegraph = null;
+    PGRaid.raid.nextCastIn = 0.05;
+    PGRaid.tick(0.1);
+    const normalSkillDmgPct = PGRaid.raid.telegraph ? PGRaid.raid.telegraph.dmgPct : 1;
+    PGRaid.leave(true);
+
+    // 4. Party Disconnect: 3p -> 2p keeps raid running & rescales Boss/mob HP down!
+    window.PGSocial = {
+      app: { id: 101, room: 1, connected: true, party: { id: 'party:5', leader: 101, members: [{ id: 101, name: 'Alice' }, { id: 102, name: 'Bob' }, { id: 103, name: 'Cara' }] } },
+      send: () => true,
+      setRaidSuspend: () => {}
+    };
+    PGRaid.onStarted({
+      raidId: 'raid:500',
+      seed: 42,
+      dungeonId: 'astral',
+      leader: 101,
+      members: [{ id: 101, name: 'Alice', cls: 'Rune Knight' }, { id: 102, name: 'Bob', cls: 'Arch Bishop' }, { id: 103, name: 'Cara', cls: 'Warlock' }]
+    });
+    const hpBefore3p = mobs[0].max;
+    PGRaid.onEnded({ raidId: 'raid:500', fromId: 103, name: 'Cara', cleared: false, reason: 'disconnect' });
+    const staysInRaidAfterPeerDisc = PGRaid.raid.on === true;
+    const hpAfter2p = mobs[0].max;
+    const caraSlot = PGRaid.raid.party.find(p => p.id === 103);
+    const hudHtml = document.getElementById('raidPartyRows').innerHTML;
+    PGRaid.leave(true);
+
+    // 5. Solo <=10s Leave Refund (Except Death!) for real non-GM player
+    S.gm = false;
+    CLOUD.gm = false;
+    S.lv = 175;
+    S.raid = { day: trialDay(), used: 0, clears: 0, bestSolo: 0, bestParty: 0 };
+    const shardsStart = S.ascensionMat[0] || 0;
+
+    // Case A: Leave voluntarily at 4.0s (<= 10s) -> entry refunded (used === 0) & 0 free shards!
+    PGRaid.startDirectSolo('astral');
+    const usedRightAfterStart = S.raid.used;
+    for (let i = 0; i < 40; i++) PGRaid.tick(0.1); // 4.0s
+    PGRaid.leave();
+    const refundedFlag = Boolean(PGRaid.raid.result && PGRaid.raid.result.refundedEntry);
+    PGRaid.hideResult();
+    const usedAfterEarlyLeave = S.raid.used;
+    const shardsAfterEarlyLeave = S.ascensionMat[0] || 0;
+
+    // Case B: Die at 3.0s (<= 10s, but DEATH!) -> entry NOT refunded (used === 1) & +5 consolation shards!
+    PGRaid.startDirectSolo('astral');
+    for (let i = 0; i < 30; i++) PGRaid.tick(0.1); // 3.0s
+    S.hp = 0;
+    PGRaid.tick(0.1);
+    PGRaid.hideResult();
+    const usedAfterEarlyDeath = S.raid.used;
+    const shardsAfterEarlyDeath = S.ascensionMat[0] || 0;
+
+    // Case C: Leave voluntarily at 12.0s (> 10s) -> entry NOT refunded (used === 2)!
+    PGRaid.startDirectSolo('astral');
+    for (let i = 0; i < 120; i++) { S.hp = maxHp(); PGRaid.tick(0.1); } // 12.0s
+    PGRaid.leave();
+    PGRaid.hideResult();
+    const usedAfterLateLeave = S.raid.used;
+
+    S.gm = true;
+    return {
+      ringGeos, noGroundRingRefs,
+      soloLimit, partyLimit,
+      spireDmgPct, normalSkillDmgPct,
+      staysInRaidAfterPeerDisc,
+      hpRatio3to2: hpAfter2p / hpBefore3p,
+      caraDisc: Boolean(caraSlot && caraSlot.disconnected),
+      hudHasOffline: hudHtml.includes('OFFLINE'),
+      usedRightAfterStart, usedAfterEarlyLeave, refundedFlag,
+      noFreeShardsOnGraceLeave: (shardsAfterEarlyLeave - shardsStart) === 0,
+      usedAfterEarlyDeath,
+      deathConsolationShards: shardsAfterEarlyDeath - shardsAfterEarlyLeave,
+      usedAfterLateLeave
+    };
+  })()`);
+
+  assert.equal(r10.ringGeos, 0, 'Title FX creates zero RingGeometry ground rings beneath character');
+  assert.equal(r10.noGroundRingRefs, true, 'Title FX userData has no groundRing/groundBack meshes');
+  assert.equal(r10.soloLimit, 1200, 'Solo Raid time limit increased to 20:00 (1200s)');
+  assert.equal(r10.partyLimit, 1500, 'Party Raid time limit increased to 25:00 (1500s)');
+  assert.ok(r10.spireDmgPct <= 0.68 && r10.normalSkillDmgPct <= 0.34,
+    `Boss telegraph damage softened (Spire=${r10.spireDmgPct}, Normal=${r10.normalSkillDmgPct})`);
+  assert.equal(r10.staysInRaidAfterPeerDisc, true, 'Remaining party members stay in Raid when a teammate disconnects');
+  assert.ok(Math.abs(r10.hpRatio3to2 - (2.25 / 3.45)) < 0.02,
+    `Disconnecting 3rd teammate dynamically rescales mob HP from 3p (3.45x) to 2p (2.25x): got ${r10.hpRatio3to2.toFixed(3)}`);
+  assert.equal(r10.caraDisc && r10.hudHasOffline, true, 'Disconnected teammate shows OFFLINE status in Party HUD');
+  assert.equal(r10.usedRightAfterStart, 1, 'Starting Solo consumes 1 entry initially');
+  assert.equal(r10.usedAfterEarlyLeave, 0, 'Leaving Solo within 10s refunds daily entry back to 0 used');
+  assert.equal(r10.refundedFlag && r10.noFreeShardsOnGraceLeave, true, 'Early <=10s Solo leave marks refundedEntry and grants 0 consolation shards');
+  assert.equal(r10.usedAfterEarlyDeath, 1, 'Dying in Solo within 10s does NOT refund entry (1 used)');
+  assert.equal(r10.deathConsolationShards, 5, 'Dying in Solo still awards +5 consolation shards');
+  assert.equal(r10.usedAfterLateLeave, 2, 'Leaving Solo after 10s consumes entry normally (2 used)');
 });
 
 g.close();
