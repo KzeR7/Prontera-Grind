@@ -146,7 +146,7 @@ t('dev-only art does not ride along in the publish tree', () => {
   assert.ok(!fs.existsSync(path.join(out,'assets/expanded-skill-icons/catalog.json'))&&!fs.existsSync(path.join(out,'assets/title-symbols/catalog.json')),'art audit catalogs remain source-only');
   // The game reads generated registries and the v3 roster, not these reference/build manifests.
   // Keep their complete source copies for audits and future work, but don't publish redundant data.
-  for(const rel of ['assets/skill-icons/catalog.json','assets/digimon/index.json','assets/digimon/digidex-portraits.json','assets/equipment-icons/manifest.json','assets/equipment-icons/mythic-manifest.json']){
+  for(const rel of ['assets/skill-icons/catalog.json','assets/digimon/index.json','assets/digimon/digidex-portraits.json','assets/equipment-icons/manifest.json','assets/equipment-icons/mythic-manifest.json','assets/audio/hits/manifest.json','assets/audio/attacks/manifest.json','assets/audio/refine/manifest.json']){
     assert.ok(fs.existsSync(path.join(root,rel)),'source metadata retained: '+rel);
     assert.ok(!fs.existsSync(path.join(out,rel)),'source-only metadata omitted: '+rel);
   }
@@ -188,9 +188,9 @@ t('the published tree is small enough to stay honest', () => {
   // The 56 new, demand-loaded plaza title crops are bounded separately; source sheets stay in tools/.
   const socialTitleBytes=walk(path.join(out,'assets/social-title-icons'));
   assert.ok(socialTitleBytes>0&&socialTitleBytes/1048576<0.3,'plaza title artwork exceeds its separate 0.3 MiB budget');
-  // haven-v458..v460: official RO blacksmith refine WAVs + .str sprites + lossless 4x4 title-lightning.webp.
+  // haven-v458..v463: official RO blacksmith refine WAVs + losslessly re-encoded .str PNGs + 4x4 title-lightning.webp (0.2275 MiB measured).
   const refineFxBytes=walk(path.join(out,'assets/refine-fx'))+walk(path.join(out,'assets/audio/refine'));
-  assert.ok(refineFxBytes>0&&refineFxBytes/1048576<0.35,'refine audio/FX & lightning title spritesheet exceed 0.35 MiB');
+  assert.ok(refineFxBytes>0&&refineFxBytes/1048576<0.25,'refine audio/FX & lightning title spritesheet exceed 0.25 MiB');
   // Illustrated Rune-Midgard World Atlas pack (v314): only requested when the player opens the
   // World Map window, budgeted separately at < 3.5 MiB (2.69 MiB measured) while still covered by
   // the combined runtime ceiling below.
@@ -242,8 +242,8 @@ t('the published tree is small enough to stay honest', () => {
   // haven-v432: 60.32, not 60.31. Main with haven-v427's guided first adventure measured 60.3085 MiB;
   // adding the Ascension N+/Forge work (PR #257) and the zero-ATK repair measured 60.3109 MiB. The same
   // measured source-byte step as haven-v424; no asset group grew (the RO-look icons are not shipped).
-  // haven-v434..v460: Mythic equipment icons (#260) + Astral/Thor Raid client (raid.js, raid.css) -> 60.53 MiB measured.
-  assert.ok((bytes-nativeBytes-socialBytes-endgameBytes-worldMapBytes-digimonBytes-fountainBytes-expandedBytes-expandedWardrobeBytes-roFxBytes-classIconBytes-masteryArtBytes-socialTitleBytes-refineFxBytes)/1048576 < 60.62, 'existing classic runtime assets exceed their 60.62 MiB budget');
+  // haven-v434..v463: Mythic equipment icons (#260) + Astral/Thor Raid client (raid.js, raid.css comment-stripped) -> 60.5276 MiB measured.
+  assert.ok((bytes-nativeBytes-socialBytes-endgameBytes-worldMapBytes-digimonBytes-fountainBytes-expandedBytes-expandedWardrobeBytes-roFxBytes-classIconBytes-masteryArtBytes-socialTitleBytes-refineFxBytes)/1048576 < 60.56, 'existing classic runtime assets exceed their 60.56 MiB budget');
   assert.ok(expandedWardrobeBytes > 0 && expandedWardrobeBytes/1048576 < 4.5, 'lazy expanded-roster Wardrobe bodies exceed their separate 4.5 MiB budget (4.31 measured 2026-11-15)');
   assert.ok(expandedBytes > 0 && expandedBytes/1048576 < 3, 'lazy expanded-roster bodies exceed their separate 3 MiB budget (2.86 measured 2026-11-15, 44 bodies)');
   assert.ok(digimonBytes/1048576 < 40, 'lazy Digimon roster exceeds its separate 40 MiB budget');
@@ -255,8 +255,8 @@ t('the published tree is small enough to stay honest', () => {
   // They are lazy - a player downloads one ~100 KiB atlas per class and gender actually worn - and
   // have their own 4.5 MiB ceiling above. NOT yet owner-approved: flagged in UPDATE-LOG and PR #234.
   // haven-v412: 185 -> 187.5 for the original RO skill-effect flipbooks (1.7 MiB) and the new weapon layers.
-  // haven-v434..v460: 187.5 -> 188.5 for social emotes, Mythic icons, Raid & refine/lightning FX (188.14 measured).
-  assert.ok(mb < 188.5, 'combined runtime delivery exceeds the 188.5 MiB ceiling (was '+mb.toFixed(2)+')');
+  // haven-v434..v463: 187.5 -> 188.25 for social emotes, Mythic icons, Raid & losslessly compressed refine/lightning FX (188.12 measured).
+  assert.ok(mb < 188.25, 'combined runtime delivery exceeds the 188.25 MiB ceiling (was '+mb.toFixed(2)+')');
   const fourth=path.join(out,'assets/wardrobe/fourth/v1');assert.ok(walk(fourth)<6.25*1048576,'six fourth jobs share hair and accessory pixels');
   const wardrobe=path.join(out,'assets/wardrobe/v5');assert.ok(walk(wardrobe)<13.5*1048576,'nineteen classes and fifty-two accessories must share sprites');
   const catalog=JSON.parse(fs.readFileSync(path.join(wardrobe,'catalog.json'),'utf8'));

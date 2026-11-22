@@ -12416,4 +12416,13 @@ re-recording them here would have written wrong numbers into the repository.
 * **Checks:** `raid_sim.mjs` (25/25), `stage_raid_sim.mjs` (5/5), `update_watch_sim.js` (23/23), `publish_sim.js` (23/23), `starter_sim.js`, `eclipse_ui_sim.js`, `combat_audio_sim.js`, `card_star_balance_sim.js`, `astral_journey_sim.js`, `ascension_scene_sim.js`, `map_scene_review_sim.js`, `social_worker_sim.mjs`, and `social_disconnect_sim.mjs` all passed; `bash tools/build_site.sh` succeeded cleanly (`haven-v462`).
 * **Delivery:** Pushed on branch `arena/a976c1b9-prontera-grind` for isolated staging via `stage_raid.mjs`; no merge or production deployment.
 
+### 2026-11-22 — `haven-v463 Raid Dungeons, Weapon Stars, RO Forge, Lightning Titles & lossless delivery compression`
+* **Changed:** Pre-PR lossless compression & dead-code cleanup across the `haven-v452`..`haven-v462` Raid expansion with zero visual, audio, or functional regression:
+  1. **Lossless Image Re-Encoding (`assets/refine-fx/*.png`, `assets/refine-fx/title-lightning.webp`):** Re-encoded all 9 RO refine sprites (`png:compression-level=9`, `strategy=1`, 100% RGBA bit-identical, `31,335 B` → `20,722 B`, `-33.9%`) and `title-lightning.webp` (`webp:lossless=true`, `method=6`, 100% visible RGBA pixel-identical across all `589,824` pixels, `112,264 B` → `108,366 B`).
+  2. **Dead CSS Removal & Delivery Comment Stripping (`assets/raid.css`, `tools/optimize_delivery.js`):** Pruned unreferenced early-draft `.raid-mode-tabs`/`.raid-mode-tab`, `.raid-rules-row`/`.raid-rule-card`, and `.star-boost-btn.span2` rules from `assets/raid.css`, and registered `assets/raid.css`, `assets/raid.js`, `assets/combat-audio.js`, and `assets/mastery-titles.js` in `tools/optimize_delivery.js` (verified by `CSSStyleSheet` parsed-rule equality and Acorn JS token-stream equality in `publish_sim.js`).
+  3. **Source-Only Audio Manifest Hygiene (`tools/build_site.sh`, `tools/tests/publish_sim.js`):** Excluded build/test-only `assets/audio/{hits,attacks,refine}/manifest.json` from published `dist/` while keeping source manifests and SHA-256-locked WAVs intact in the repository, and tightened `publish_sim.js` delivery budgets.
+* **Checks:** `publish_sim.js` (23/23), `update_watch_sim.js` (23/23), `raid_sim.mjs` (25/25), `stage_raid_sim.mjs` (5/5), `combat_audio_sim.js`, `starter_sim.js`, `eclipse_ui_sim.js`, `card_star_balance_sim.js`, `astral_journey_sim.js`, `ascension_scene_sim.js`, `map_scene_review_sim.js`, `social_worker_sim.mjs`, and `social_disconnect_sim.mjs` all passed; `bash tools/build_site.sh` succeeded cleanly (`haven-v463`).
+* **Delivery:** Pushed on branch `arena/a976c1b9-prontera-grind` and opened PR targeting `main` (verified fast-forwardable with zero conflicts against `origin/main`).
+
+
 
