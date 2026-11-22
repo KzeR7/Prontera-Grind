@@ -18,6 +18,7 @@ const { fourthSetup, progressSetup } = require('./helpers/endgame.js');
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), '../..');
 const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
 const raidJs = fs.readFileSync(path.join(ROOT, 'assets/raid.js'), 'utf8');
+const combatAudioJs = fs.readFileSync(path.join(ROOT, 'assets/combat-audio.js'), 'utf8');
 const raidCss = fs.readFileSync(path.join(ROOT, 'assets/raid.css'), 'utf8');
 
 let pass = 0;
@@ -30,6 +31,7 @@ function check(name, fn) {
 console.log('Astral Raid simulation & DO budget verification\n');
 
 const g = createGame(html);
+g.ev(combatAudioJs);
 g.ev(raidJs);
 
 // 1. Map -> Dungeons Subtab (Raid Dungeons + Endless Echo) & Gate checks
@@ -754,10 +756,10 @@ check('40M DPS @ ★0 Boss HP + 50% Raid Armor, 2p/3p Party HP+ATK buffs, and �
   g.ev(`ACT.refinemode('star');`);
   assert.ok(g.ev(`!!document.querySelector('.star-boost-card') && !!document.querySelector('[data-a="starup"]') && document.querySelectorAll('.star-rate-table tbody tr').length === 20`), 'Mode 2 renders Star Workshop, Shard Boost selector & 20-row table');
 
-  // Test +25% Boost (tier 4) at ★0 -> ★1 (95% + 25% capped at 100%, spends 3 base + 4 boost = 7 Astral Shards & 2M Zeny)
+  // Test +25% Boost (tier 4) at ★0 -> ★1 (70% + 25% = 95%, spends 3 base + 4 boost = 7 Astral Shards & 2M Zeny)
   g.ev(`ACT.starboost('4');`);
   const shBefore = g.ev(`S.ascensionMat[0]`), zBefore = g.ev(`S.zeny`);
-  g.ev(`ACT.starup('weapon');`);
+  g.ev(`{ const oldR = Math.random; Math.random = () => 0.10; ACT.starup('weapon'); Math.random = oldR; }`);
   assert.equal(g.ev(`S.eq.weapon.stars`), 1, 'weapon upgraded to ★1');
   assert.equal(g.ev(`${shBefore} - S.ascensionMat[0]`), 7, 'spent 3 base + 4 boost = 7 Astral Shards');
   assert.equal(g.ev(`${zBefore} - S.zeny`), 2000000, 'spent 2,000,000 Zeny');
@@ -784,6 +786,260 @@ check('40M DPS @ ★0 Boss HP + 50% Raid Armor, 2p/3p Party HP+ATK buffs, and �
   assert.equal(preserved.evolvedStars, 12, 'evolving N+ weapon to Mythic preserves ★12');
   assert.equal(preserved.savedWeaponStars, 15, 'packSave/unpackSave preserves weapon stars');
   g.ev(`ACT.refinemode('refine'); ACT.starboost('0');`);
+});
+
+// 16. Round-5: Weapon Star Base Success Rate Readjustment (★1–★3 = 70%, ★4–★7 = 60%, ★8–★20 unchanged)
+check('Round-5: WEAPON_STAR_TABLE sets ★1-★3 to 70%, ★4-★7 to 60%, and keeps ★8-★20 intact', () => {
+  const rates = g.ev(`WEAPON_STAR_TABLE.map(r => r[1])`);
+  assert.deepEqual(
+    [...rates],
+    [70, 70, 70, 60, 60, 60, 60, 55, 50, 45, 40, 35, 30, 26, 22, 20, 17, 14, 12, 10],
+    'exact 20-tier base success rate curve matches owner specification'
+  );
+});
+
+// 17. Round-5: 1-Second RO Blacksmith Forge Delay, Hammer/Anvil FX, Success/Failure FX & CombatAudio SFX
+check('Round-5: 1.0s RO Forge delay runs Hammer/Anvil strike, CombatAudio ting-ting + result fanfare/shatter, and Workshop + 3D FX for both Refine and Star Refine', () => {
+  const res = g.ev(`(() => {
+    const origSetTimeout = window.setTimeout;
+    let queued = [];
+    window.setTimeout = (fn, ms) => { const id = queued.length + 1; queued.push({ id, fn, ms }); return id; };
+    window.__PG_FORGE_DELAY_MS = 1000;
+    try {
+      S.zeny = 9e9; S.ore.ori = 1000; S.ascensionMat = [500, 500, 100]; S.sfx = true;
+      S.eq.weapon = { id: 99501, name: 'Starfall Katar', slot: 'weapon', wt: 'katar', sec: 6, ascSet: 'starfall', val: 420, r: 5, stars: 2, aff: [], cards: [], slots: 4 };
+      selE = 'weapon';
+      if (!tabs.includes('equip')) openTab('equip');
+      sub.equip = 'refine';
+      refineMode = 'refine';
+      renderWin();
+
+      const oldR = Math.random;
+      Math.random = () => 0.01;
+      ACT.refine('weapon');
+      const midRefineRank = S.eq.weapon.r;
+      const midRefineAudio = CombatAudio.lastForgeEvent?.kind;
+      const refineDelayMs = queued.find(q => q.ms === 1000)?.ms;
+      const midRefineHasForging = Boolean(document.querySelector('#eclipseRefineResult.refine-forging .ro-forge-fx.is-forging .ro-forge-hammer'));
+      const midRefineBtnDisabled = Boolean(document.querySelector('[data-a="refine"]')?.disabled);
+      // Duplicate clicks during the 1s strike must be ignored
+      ACT.refine('weapon');
+      const refineTimerFn = queued.find(q => q.ms === 1000).fn;
+      queued = [];
+      refineTimerFn();
+      const afterRefineRank = S.eq.weapon.r;
+      const afterRefineAudio = CombatAudio.lastForgeEvent?.kind;
+      const afterRefineSuccessFx = Boolean(document.querySelector('#eclipseRefineResult.refine-success .ro-forge-fx.is-success .ro-success-starburst'));
+      const fieldFxSuccess = Boolean(roForgeFieldFx && roForgeFieldFx.userData.succeeded === true);
+
+      // Now test Star Refine 1.0s delay + Failure FX & Shatter Audio
+      ACT.refinemode('star');
+      Math.random = () => 0.999;
+      queued = [];
+      ACT.starup('weapon');
+      const midStarCount = S.eq.weapon.stars;
+      const midStarAudio = CombatAudio.lastForgeEvent?.kind;
+      const midStarIsStar = CombatAudio.lastForgeEvent?.isStar;
+      const starDelayMs = queued.find(q => q.ms === 1000)?.ms;
+      const midStarHasForging = Boolean(document.querySelector('#eclipseRefineResult.refine-forging .ro-forge-fx.is-forging .ro-forge-hammer'));
+      const midStarBtnDisabled = Boolean(document.querySelector('[data-a="starup"]')?.disabled);
+      const starTimerFn = queued.find(q => q.ms === 1000).fn;
+      queued = [];
+      starTimerFn();
+      const afterStarCount = S.eq.weapon.stars;
+      const afterStarAudio = CombatAudio.lastForgeEvent?.kind;
+      const afterStarFailFx = Boolean(document.querySelector('#eclipseRefineResult.refine-failure .ro-forge-fx.is-failure .ro-fail-cracks'));
+      const fieldFxFail = Boolean(roForgeFieldFx && roForgeFieldFx.userData.succeeded === false);
+
+      Math.random = oldR;
+      return {
+        midRefineRank, midRefineAudio, refineDelayMs, midRefineHasForging, midRefineBtnDisabled,
+        afterRefineRank, afterRefineAudio, afterRefineSuccessFx, fieldFxSuccess,
+        midStarCount, midStarAudio, midStarIsStar, starDelayMs, midStarHasForging, midStarBtnDisabled,
+        afterStarCount, afterStarAudio, afterStarFailFx, fieldFxFail
+      };
+    } finally {
+      delete window.__PG_FORGE_DELAY_MS;
+      forgePending = null;
+      window.setTimeout = origSetTimeout;
+    }
+  })()`);
+  assert.equal(res.midRefineRank, 5, 'rank unchanged during 1.0s anvil strike');
+  assert.equal(res.refineDelayMs, 1000, 'Refine schedules exact 1000ms delay');
+  assert.equal(res.midRefineAudio, 'start', 'CombatAudio.forgeStart fires on Refine click');
+  assert.equal(res.midRefineHasForging, true, 'RO Hammer & Anvil SVG overlay renders during 1s Refine delay');
+  assert.equal(res.midRefineBtnDisabled, true, 'Refine button disabled during 1s strike');
+  assert.equal(res.afterRefineRank, 6, 'rank advances +5 -> +6 at 1.0s reveal');
+  assert.equal(res.afterRefineAudio, 'success', 'CombatAudio.forgeResult(true) plays RO success fanfare');
+  assert.equal(res.afterRefineSuccessFx, true, 'RO Golden Starburst & Light Pillar render on Refine success');
+  assert.equal(res.fieldFxSuccess, true, '3D hero golden refine pillar spawns on field');
+
+  assert.equal(res.midStarCount, 2, 'star count unchanged during 1.0s anvil strike');
+  assert.equal(res.starDelayMs, 1000, 'Star Refine schedules exact 1000ms delay');
+  assert.equal(res.midStarAudio, 'start', 'CombatAudio.forgeStart fires on Star Refine click');
+  assert.equal(res.midStarIsStar, true, 'Star Refine passes isStar=true to CombatAudio');
+  assert.equal(res.midStarHasForging, true, 'RO Hammer & Anvil SVG overlay renders during 1s Star delay');
+  assert.equal(res.midStarBtnDisabled, true, 'Star Upgrade button disabled during 1s strike');
+  assert.equal(res.afterStarCount, 2, 'failed Star Refine keeps ★2 safely at 1.0s reveal');
+  assert.equal(res.afterStarAudio, 'failure', 'CombatAudio.forgeResult(false) plays RO failure shatter');
+  assert.equal(res.afterStarFailFx, true, 'RO Crimson Cracks & Smoke render on Star Refine failure');
+  assert.equal(res.fieldFxFail, true, '3D hero crimson shatter burst spawns on field');
+});
+
+// 18. Round-5: 5 Exclusive Cosmetic Raid Titles (10/20/30 Clears + 2x 10% Raid Drops) & 5-Color 3D Static Electric FX
+check('Round-5: 5 Exclusive Raid Titles unlock via 10/20/30 clears and 10% Raid Boss drops, stay purely cosmetic, and render 5 distinct 3D static electric colors', () => {
+  const out = g.ev(`(() => {
+    S.titleAwards = []; S.equippedTitle = null;
+    S.raid = { day: trialDay(), used: 0, clears: 0, bestSolo: 0, bestParty: 0 };
+    const raidTitles = PGTitles.RAID_TITLES;
+    const colors = raidTitles.map(t => t.electricColor);
+    const critBefore = indexCrit();
+
+    // 10 clears -> Raid Vanguard only
+    S.raid.clears = 10; PGTitles.sync(S, CLASSES);
+    const at10 = S.titleAwards.filter(id => raidTitles.some(t => t.id === id));
+    // 20 clears -> Raid Vanguard + Citadel Breaker
+    S.raid.clears = 20; PGTitles.sync(S, CLASSES);
+    const at20 = S.titleAwards.filter(id => raidTitles.some(t => t.id === id));
+    // 30 clears -> all 3 milestone titles, still NOT the 2 drop-only titles!
+    S.raid.clears = 30; PGTitles.sync(S, CLASSES);
+    const at30 = S.titleAwards.filter(id => raidTitles.some(t => t.id === id));
+
+    // Simulate 10% Raid Boss drops by forcing Math.random = 0.05 across two Raid clears
+    const oldR = Math.random;
+    Math.random = () => 0.05;
+    PGRaid.start('solo', 'astral'); PGRaid.finish(true, 'Thanatos defeated!', false);
+    PGRaid.start('solo', 'thor'); PGRaid.finish(true, 'Ifrit defeated!', false);
+    Math.random = oldR;
+    const afterDrops = S.titleAwards.filter(id => raidTitles.some(t => t.id === id));
+
+    // Equip each of the 5 Raid Titles and verify 3D raidElectricAura builds with its distinct color & zero stat mutation
+    if (!heroSpr) heroSpr = { visible: true, userData: {} };
+    heroSpr.visible = true;
+    const auraColors = [];
+    for (const rt of raidTitles) {
+      ACT.titleequip(rt.id);
+      syncRaidElectricAura();
+      auraColors.push({
+        id: rt.id,
+        visible: Boolean(raidElectricAura && raidElectricAura.visible),
+        color: raidElectricAura?.userData?.color || null,
+        hasBolts: Boolean(raidElectricAura?.userData?.outerBolts && raidElectricAura?.userData?.coreBolts),
+        critUnchanged: indexCrit() === critBefore
+      });
+    }
+    ACT.titleequip('none');
+    syncRaidElectricAura();
+    const hiddenWhenUnequipped = !raidElectricAura || raidElectricAura.visible === false;
+    return { count: raidTitles.length, uniqueColors: new Set(colors).size, at10, at20, at30, afterDrops, auraColors, hiddenWhenUnequipped };
+  })()`);
+  assert.equal(out.count, 5, '5 Exclusive Raid Titles defined');
+  assert.equal(out.uniqueColors, 5, '5 distinct static electric colors');
+  assert.deepEqual([...out.at10], ['raid-vanguard'], '10 Raid clears unlocks Raid Vanguard');
+  assert.deepEqual([...out.at20], ['raid-vanguard', 'citadel-breaker'], '20 Raid clears unlocks Citadel Breaker');
+  assert.deepEqual([...out.at30], ['raid-vanguard', 'citadel-breaker', 'sovereign-conqueror'], '30 Raid clears unlocks Sovereign Conqueror without granting drop-only titles');
+  assert.equal(out.afterDrops.length, 5, 'both 10% Raid Boss drop titles (Astral Stormbringer & Volcanic Overlord) drop on Raid clears');
+  assert.ok(out.auraColors.every(a => a.visible && a.hasBolts && a.critUnchanged), 'all 5 Raid Titles activate 3D static lightning bolts and remain purely cosmetic');
+  assert.equal(new Set(out.auraColors.map(a => a.color)).size, 5, 'each Raid Title switches raidElectricAura to its unique color');
+  assert.equal(out.hiddenWhenUnequipped, true, 'removing Raid Title hides 3D static electric FX');
+});
+
+// 19. Round-5: 2 Mergeable Raid Boss Accessory Cards (ATK +15% & MATK +15%, 10% Drop, Cloud Save Safe)
+check('Round-5: Primordial Ifrit Card (ATK +15%) & Sovereign Thanatos Card (MATK +15%) fit Accessories, merge up to ★★★, drop at 10%, and survive cloud saves', () => {
+  const cardRes = g.ev(`(() => {
+    S.cards = [];
+    S.eq.acc1 = { id: 99601, name: 'Starfall Ring', slot: 'acc', sec: 6, ascSet: 'starfall', val: 180, r: 10, aff: [], cards: [], slots: 2 };
+    S.eq.acc2 = { id: 99602, name: 'Zenith Ring', slot: 'acc', sec: 6, ascSet: 'zenith', val: 180, r: 10, aff: [], cards: [], slots: 2 };
+    const baseAtk = atk(), baseMatk = matk();
+
+    // Verify 10% Raid Boss drop adds a Raid Boss Accessory Card
+    const oldR = Math.random;
+    Math.random = () => 0.04; // < 0.10 triggers drop, 0.04 * 2 -> index 0 (Primordial Ifrit Card)
+    PGRaid.start('solo', 'thor');
+    PGRaid.finish(true, 'Ifrit defeated!', false);
+    Math.random = oldR;
+    const droppedName = PGRaid.raid.result.rewards.bossCardDrop;
+    const droppedInBag = S.cards.some(c => c.cardKey === 'raid:atk');
+
+    // Grant 9 more copies of raid:atk (total 10 = 1 base + 1 + 3 + 5 donors) and merge 0 -> ★ -> ★★ -> ★★★
+    const atkDef = RAID_BOSS_CARDS.find(c => c.cardKey === 'raid:atk');
+    const matkDef = RAID_BOSS_CARDS.find(c => c.cardKey === 'raid:matk');
+    for (let i = 0; i < 9; i++) addCard(newCard(atkDef), { quiet: true });
+    const mainAtk = S.cards.find(c => c.cardKey === 'raid:atk');
+    for (let step = 0; step < 3; step++) {
+      mergeCard(mainAtk.id);
+      if (typeof modalYes === 'function') modalYes();
+      else document.getElementById('my')?.click();
+    }
+    const mergedStars = mainAtk.stars;
+    const mergedEffect = cardEffects(mainAtk)[0].v; // 15 * 1.15 = 17.25
+
+    // Socket ★★★ Primordial Ifrit Card into acc1 and Sovereign Thanatos Card into acc2
+    const mainMatk = newCard(matkDef);
+    addCard(mainMatk, { quiet: true });
+    const fitsWeapon = cardFits(mainAtk, S.eq.weapon);
+    const fitsAcc = cardFits(mainAtk, S.eq.acc1) && cardFits(mainMatk, S.eq.acc2);
+    ACT.sock(mainAtk.id + ':acc1');
+    ACT.sock(mainMatk.id + ':acc2');
+    const boostedAtk = atk(), boostedMatk = matk();
+
+    // Verify loose Raid Boss Cards are protected from sellallcards & Card Mastery consumption, and survive packSave/unpackSave + repairProgression
+    const extraLoose = newCard(matkDef);
+    addCard(extraLoose, { quiet: true });
+    const cannotDonate = donateCardToMastery(extraLoose.id) === null;
+    const unpacked = repairProgression(unpackSave(packSave(S)), PROGRESSION_VERSION);
+    const savedSocketAtk = unpacked.eq.acc1.cards[0];
+    const savedLooseMatk = unpacked.cards.find(c => c.cardKey === 'raid:matk');
+
+    return {
+      droppedName, droppedInBag, mergedStars, mergedEffect,
+      fitsWeapon, fitsAcc, atkGrew: boostedAtk > baseAtk, matkGrew: boostedMatk > baseMatk,
+      cannotDonate,
+      savedSocketStars: savedSocketAtk?.stars,
+      savedSocketKey: savedSocketAtk?.cardKey,
+      savedLooseNotLegacy: Boolean(savedLooseMatk && !savedLooseMatk.legacy && savedLooseMatk.fit.includes('acc'))
+    };
+  })()`);
+  assert.equal(cardRes.droppedName, 'Primordial Ifrit Card', '10% Raid Boss drop awards Raid Boss Accessory Card');
+  assert.equal(cardRes.droppedInBag, true, 'dropped Raid Boss Card stored in S.cards');
+  assert.equal(cardRes.mergedStars, 3, 'Raid Boss Card merges cleanly through ★ -> ★★ -> ★★★ (consuming 1+3+5 = 9 copies)');
+  assert.equal(cardRes.mergedEffect, 17.25, '★★★ Primordial Ifrit Card scales 15% * 1.15 = 17.25% ATK');
+  assert.equal(cardRes.fitsWeapon, false, 'Raid Boss Accessory Card does not fit weapons');
+  assert.equal(cardRes.fitsAcc, true, 'both Raid Boss Cards fit Accessories');
+  assert.equal(cardRes.atkGrew, true, 'socketing Primordial Ifrit Card increases ATK');
+  assert.equal(cardRes.matkGrew, true, 'socketing Sovereign Thanatos Card increases MATK');
+  assert.equal(cardRes.cannotDonate, true, 'Raid Boss Cards cannot be accidentally consumed in Card Mastery');
+  assert.equal(cardRes.savedSocketStars, 3, 'socketed ★★★ Raid Boss Card survives cloud save codec');
+  assert.equal(cardRes.savedSocketKey, 'raid:atk', 'socketed Raid Boss Card retains cardKey across cloud save codec');
+  assert.equal(cardRes.savedLooseNotLegacy, true, 'loose Raid Boss Card stays valid & non-legacy across repairProgression');
+});
+
+// 20. Round-5: GM Tools Raid Controls (Materials, Stars, Raid Boss Cards, Clears & 5-Color Electric Title Equip)
+check('Round-5: GM Tools grant Raid materials, Weapon Stars, Raid Boss Accessory Cards, Raid clears, and one-click 5-color Raid Titles', () => {
+  const gmOut = g.ev(`(() => {
+    S.gm = true; S.cards = []; S.ascensionMat = [0, 0, 0]; S.titleAwards = []; S.equippedTitle = null;
+    ACT.gmraidmat('0:1000'); ACT.gmraidmat('1:100'); ACT.gmraidmat('2:100');
+    ACT.gmstars('7');
+    ACT.gmraidcard('raid:atk:10');
+    ACT.gmraidcard('raid:matk:max');
+    ACT.gmraidtitle('volcanic-overlord');
+    const equippedId = S.equippedTitle;
+    const panelHtml = gmToolsPanel();
+    return {
+      mats: [...S.ascensionMat],
+      stars: S.eq.weapon.stars,
+      atkCards: S.cards.filter(c => c.cardKey === 'raid:atk').length,
+      maxMatk: S.cards.some(c => c.cardKey === 'raid:matk' && c.stars === 3),
+      equippedId,
+      hasButtons: panelHtml.includes('gmraidtitle') && panelHtml.includes('gmraidcard') && panelHtml.includes('gmraidmat')
+    };
+  })()`);
+  assert.deepEqual([...gmOut.mats], [1000, 100, 100], 'GM Raid material buttons grant Astral Shards, Primal Catalysts & Sigils');
+  assert.equal(gmOut.stars, 7, 'GM Weapon ★7 button sets weapon stars');
+  assert.equal(gmOut.atkCards, 10, 'GM +10 Primordial Ifrit Cards button grants full merge set');
+  assert.equal(gmOut.maxMatk, true, 'GM +1 ★★★ Sovereign Thanatos Card button grants maxed card');
+  assert.equal(gmOut.equippedId, 'volcanic-overlord', 'GM Raid Title button unlocks and equips Volcanic Overlord immediately');
+  assert.equal(gmOut.hasButtons, true, 'gmToolsPanel renders all Raid testing controls');
 });
 
 g.close();

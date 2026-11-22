@@ -916,15 +916,15 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="preload" href="assets/ui/fonts/font-5.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-6.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-7.ttf" as="font" type="font/ttf" crossorigin>
-<link rel="stylesheet" href="assets/ui/eclipse.css?v=456">
-<link rel="stylesheet" href="assets/ui/mobile.css?v=456">
-<link rel="stylesheet" href="assets/ui/mastery-titles.css?v=450">
+<link rel="stylesheet" href="assets/ui/eclipse.css?v=457">
+<link rel="stylesheet" href="assets/ui/mobile.css?v=457">
+<link rel="stylesheet" href="assets/ui/mastery-titles.css?v=457">
 <script src="assets/ui/mobile.js?v=274"></script>
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
-<link rel="stylesheet" href="assets/social.css?v=456">
-<link rel="stylesheet" href="assets/raid.css?v=456">
+<link rel="stylesheet" href="assets/social.css?v=457">
+<link rel="stylesheet" href="assets/raid.css?v=457">
 <link rel="stylesheet" href="assets/social-battle.css?v=393">
-  <link rel="stylesheet" href="assets/social-fishing.css?v=456"><link rel="stylesheet" href="assets/friends.css?v=273">
+  <link rel="stylesheet" href="assets/social-fishing.css?v=457"><link rel="stylesheet" href="assets/friends.css?v=273">
 <link rel="stylesheet" href="assets/adventure-guide.css?v=450">
 </head>
 <body>
@@ -1055,10 +1055,10 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <div id="tooltip"></div>
 <link rel="stylesheet" href="assets/wardrobe.css?v=138">
 <link rel="stylesheet" href="assets/shop.css?v=318">
-<script src="assets/wardrobe.js?v=456"></script>
+<script src="assets/wardrobe.js?v=457"></script>
 <script src="assets/shop-catalog.js?v=321"></script>
 <script src="assets/fourth-jobs.js?v=179"></script>
-<script src="assets/expanded-jobs.js?v=456"></script>
+<script src="assets/expanded-jobs.js?v=457"></script>
 <script src="assets/ascension.js?v=156"></script>
 <script src="assets/native-mob-heights.js?v=153"></script>
 <script src="assets/native-fields.js?v=197"></script>
@@ -1066,7 +1066,7 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <script src="assets/skill-icons.js?v=130"></script>
 <script src="assets/skill-icons-extra.js?v=207"></script>
 <script src="assets/skill-icons-expanded.js?v=450"></script>
-<script src="assets/mastery-titles.js?v=450"></script>
+<script src="assets/mastery-titles.js?v=457"></script>
 <script src="assets/player-buffs.js?v=450"></script>
 <script src="assets/skill-materials.js?v=220"></script>
 <script src="assets/afterglow-animations.js?v=151"></script>
@@ -1084,11 +1084,11 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <script src="assets/expanded-fx/approved.js?v=450"></script>
 <script src="assets/skill-afterglow.js?v=450"></script>
 <script src="assets/boss-fx.js?v=249"></script>
-<script src="assets/raid.js?v=456"></script>
+<script src="assets/raid.js?v=457"></script>
 <script src="assets/pets.js?v=130"></script>
 <script src="assets/bgm-tracks.js?v=206"></script>
 <script src="assets/bgm.js?v=207"></script>
-<script src="assets/combat-audio.js?v=354"></script>
+<script src="assets/combat-audio.js?v=457"></script>
 <script src="assets/class_skins_data.js?v=2"></script>
 <script src="assets/weapon_joints_data.js?v=2"></script>
 <script src="assets/weapons_data.js?v=2"></script>
@@ -1359,7 +1359,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-22 haven-v456 Weapon Star System, 40M DPS Raid Boss Armor, Dungeons Boss Preview & Stage 2 fix';
+const BUILD='2026-11-22 haven-v457 Star rate rebalance, RO 1s forge FX & SFX, 5 Raid electric titles, Boss Acc cards & GM Raid tools';
 // v364: this write used to sit AFTER the `//` on the BUILD line, so it was part of the comment and
 // never ran - the login card showed an empty #buildTag and there was no way to confirm which file
 // the browser had loaded. It also has to survive the script running before the login card exists.
@@ -3103,6 +3103,10 @@ function cardDefinition(m,j,nm=false){
  return{card:1,cardVersion:PROGRESSION_VERSION,cardKey:m+':'+j+':'+Number(nm),family,n:(nm?'Nightmare ':'')+family,stat,v,effects,fit:fit.slice(),g:boss?3:Math.min(2,band),bossCard:boss,map:m,nightmare:nm};
 }
 const CARD_CATALOG=MAPS.flatMap((mp,m)=>(m<10?[false,true]:[false]).flatMap(nm=>Array.from({length:mp.mobs.length+1},(_,j)=>cardDefinition(m,j,nm))));
+const RAID_BOSS_CARDS=[
+ {card:1,cardVersion:PROGRESSION_VERSION,cardKey:'raid:atk',family:'Primordial Ifrit Card',n:'Primordial Ifrit Card',stat:'atk',v:15,effects:[{k:'atk',v:15}],fit:['acc'],g:3,bossCard:true,raidCard:true,map:11,nightmare:false},
+ {card:1,cardVersion:PROGRESSION_VERSION,cardKey:'raid:matk',family:'Sovereign Thanatos Card',n:'Sovereign Thanatos Card',stat:'matk',v:15,effects:[{k:'matk',v:15}],fit:['acc'],g:3,bossCard:true,raidCard:true,map:10,nightmare:false}
+];
 const newCard=d=>({...d,card:1,id:uid(),v:d.v??cardVal(d.g,d.stat),...(d.effects?{effects:d.effects.map(x=>({...x}))}:{}),...(d.fit?{fit:d.fit.slice()}:{})});
 const cardFits=(c,it)=>(c.fit||CARD_FITS[c.stat]||[]).includes(it.slot==='off'&&it.wt==='dagger'?'weapon':it.slot);
 const cardEffectText=e=>e.k==='cdm'?`Crit DMG +${(e.v/100).toFixed(2)}×`:`${({hpPct:'Max HP',matk:'Magic Power',field:'Ordinary monster damage',move:'Movement',def:'DEF',mdef:'MDEF'})[e.k]||AL[e.k]||SU(e.k)} +${e.v}${['hpPct','matk','field','move'].includes(e.k)?'%':''}`;
@@ -3159,7 +3163,7 @@ function repairProgression(f,oldVersion){
   f.pts=Math.max(0,points(f.lv)-spent(f.st));for(const b of Object.values(f.base||{}))b.pts=Math.max(0,points(b.lv)-spent(b.st));
   f.freeCardRemoval=true;
  }
- const fix=c=>{if(c.cardVersion===PROGRESSION_VERSION){const d=CARD_CATALOG.find(x=>x.cardKey===c.cardKey);if(d)Object.assign(c,d);}else{c.legacy=true;c.family=cardFamily(c);c.bossCard=MAPS.some(m=>m.boss.n+' Card'===c.family);}};
+ const fix=c=>{if(c.cardVersion===PROGRESSION_VERSION){const d=CARD_CATALOG.find(x=>x.cardKey===c.cardKey)||RAID_BOSS_CARDS.find(x=>x.cardKey===c.cardKey);if(d)Object.assign(c,d);else{c.legacy=true;c.family=cardFamily(c);c.bossCard=MAPS.some(m=>m.boss.n+' Card'===c.family);}}else{c.legacy=true;c.family=cardFamily(c);c.bossCard=MAPS.some(m=>m.boss.n+' Card'===c.family);}};
  for(const c of f.cards||[])fix(c);for(const it of [...Object.values(f.eq||{}),...(f.inv||[])])if(it)for(const c of it.cards||[])fix(c);
  if(f.reforgePending&&!validReforgeOffer(f))delete f.reforgePending;
  repairEquippedCards(f);f.progressionVersion=PROGRESSION_VERSION;return f;
@@ -6390,8 +6394,8 @@ const pv=k=>SKILLS.reduce((a,s)=>a+(skillOn(s.id)?(s.type==='pas'&&s.key===k?s.f
 // atk(): it reads the left hand as eqv('off'), which is only non-zero for a dagger. A shield
 // still reads as its own DEF, which is why def() keeps its slot==='off' guard.
 const WEAPON_STAR_TABLE=[
-  [1,95,3,2,[1,2,3,4]],[2,90,3,3,[1,2,3,4]],[3,85,4,4,[2,3,4,5]],[4,80,4,5,[2,3,4,5]],[5,75,5,6,[2,3,5,6]],
-  [6,65,6,8,[3,4,6,8]],[7,60,6,10,[3,5,7,9]],[8,55,7,12,[4,6,8,10]],[9,50,8,15,[4,6,9,11]],[10,45,9,18,[5,7,10,13]],
+  [1,70,3,2,[1,2,3,4]],[2,70,3,3,[1,2,3,4]],[3,70,4,4,[2,3,4,5]],[4,60,4,5,[2,3,4,5]],[5,60,5,6,[2,3,5,6]],
+  [6,60,6,8,[3,4,6,8]],[7,60,6,10,[3,5,7,9]],[8,55,7,12,[4,6,8,10]],[9,50,8,15,[4,6,9,11]],[10,45,9,18,[5,7,10,13]],
   [11,40,10,22,[5,8,11,14]],[12,35,11,26,[6,9,12,16]],[13,30,12,30,[7,10,14,18]],[14,26,13,35,[8,12,16,20]],[15,22,14,40,[9,13,18,23]],
   [16,20,15,48,[10,15,20,25]],[17,17,16,56,[11,16,22,28]],[18,14,17,65,[12,18,24,30]],[19,12,18,75,[13,20,26,33]],[20,10,20,90,[15,22,30,38]]
 ];
@@ -8366,7 +8370,26 @@ function refineProtectionUI(){return `<div class="sec">Refine Protection Scrolls
 // in six places, which is why moving a family meant editing six expressions and missing one.
 const ORI_SLOTS=['weapon','acc'];
 function refineOreKey(it){return (it&&ORI_SLOTS.includes(it.slot))?'ori':'elu'}
-function refine(sl){const it=S.eq[sl];const maxRef=it?.sec===6?15:10;if(!it||(it.r||0)>=maxRef)return;const o=refineOreKey(it),c=refCost(it),need=refOre(it);
+var forgePending=null;
+function forgeDelayMs(){
+  if(typeof window!=='undefined'&&window.__PG_FORGE_DELAY_MS!=null)return Math.max(0,Number(window.__PG_FORGE_DELAY_MS)||0);
+  if(typeof navigator!=='undefined'&&/jsdom/i.test(navigator.userAgent||''))return 0;
+  return 1000;
+}
+function roForgeFxElement(kind){
+  const wrap=document.createElement('div');
+  wrap.className='ro-forge-fx is-'+kind;
+  wrap.setAttribute('aria-hidden','true');
+  if(kind==='forging'){
+    wrap.innerHTML='<div class="ro-forge-hearth"></div><svg class="ro-forge-anvil" viewBox="0 0 64 26"><path d="M6 10h52l-7 8H13z" fill="#7c8b9e" stroke="#232b36" stroke-width="2"/><path d="M18 18h28l5 6H13z" fill="#4f5c6e" stroke="#232b36" stroke-width="2"/></svg><svg class="ro-forge-hammer" viewBox="0 0 64 64"><path d="M30 30L54 54" stroke="#9e6b3b" stroke-width="6" stroke-linecap="round"/><rect x="10" y="10" width="28" height="16" rx="3" transform="rotate(-35 24 18)" fill="#ffd36b" stroke="#6b4a16" stroke-width="2.4"/><rect x="14" y="12" width="20" height="5" rx="1.5" transform="rotate(-35 24 18)" fill="#fff5cc"/></svg><div class="ro-forge-sparks"><i></i><i></i><i></i><i></i><i></i><i></i></div>';
+  }else if(kind==='success'){
+    wrap.innerHTML='<div class="ro-success-pillar"></div><div class="ro-success-ring"></div><svg class="ro-success-starburst" viewBox="0 0 120 120"><polygon points="60,4 70,44 110,34 80,60 110,86 70,76 60,116 50,76 10,86 40,60 10,34 50,44" fill="#ffe98a" fill-opacity=".46" stroke="#fff9d6" stroke-width="1.8"/><polygon points="60,18 66,50 98,60 66,70 60,102 54,70 22,60 54,50" fill="#fffdf0" fill-opacity=".85"/></svg><div class="ro-success-glints"><span>✦</span><span>✦</span><span>★</span></div>';
+  }else if(kind==='failure'){
+    wrap.innerHTML='<div class="ro-fail-flash"></div><svg class="ro-fail-cracks" viewBox="0 0 120 120"><path d="M60 58L32 22M60 58L88 26M60 58L22 72M60 58L96 78M60 58L52 98M46 40L28 46M74 42L94 48" stroke="#ff5e5e" stroke-width="2.6" stroke-linecap="round" fill="none"/></svg><div class="ro-fail-smoke"><i></i><i></i><i></i></div>';
+  }
+  return wrap;
+}
+function refine(sl){if(forgePending)return;const it=S.eq[sl];const maxRef=it?.sec===6?15:10;if(!it||(it.r||0)>=maxRef)return;const o=refineOreKey(it),c=refCost(it),need=refOre(it);
   // The shortfall is priced up front so the attempt can refuse before it asks anything, but the
   // ore is only bought once the attempt is certain to happen - a cancelled protection-scroll
   // confirmation must not have spent Zeny on supplies first.
@@ -8380,7 +8403,7 @@ function refine(sl){const it=S.eq[sl];const maxRef=it?.sec===6?15:10;if(!it||(it
   // finish all the zeny"). The purchase is now a question, not a side effect: it names the count,
   // the unit price, the total for the attempt and what the purse would be left with. `answered`
   // carries what has already been agreed to, so a second question never re-asks the first.
-  const answered=arguments[1],buyAnswered=answered===it||!!(answered&&answered.buy),scrollAnswered=answered===it;
+  const answered=arguments[1],buyAnswered=answered===it||!!(answered&&answered.buy),scrollAnswered=answered===it||!!(answered&&answered.scroll),commitNow=!!(answered&&answered.commitNow);
   // v399 (owner: "+10 is safe, nothing wrong... +10 above only use mythic protection scroll").
   // At +10 on mythic gear a failed attempt cannot drop the rank, so there is nothing for a scroll to
   // protect and NEITHER kind should be demanded. Before this, +10 fell on the mythic side of the
@@ -8404,8 +8427,22 @@ function refine(sl){const it=S.eq[sl];const maxRef=it?.sec===6?15:10;if(!it||(it
     ask((it.sec===6?'This Mythic equipment is +'+previousRank+', so failure cannot drop its rank. Use one '+(needsMythicScroll?'Mythic ':'')+'Refine Protection Scroll anyway?':'This equipment is below +5, so failure cannot drop its rank. Use one Refine Protection Scroll anyway?')+' This attempt also costs '+c.toLocaleString()+'z and '+need+' '+ORE[o]+'.',()=>{
       if(!pending)return;pending=false;
       if(S!==owner||S.eq[sl]!==it||(it.r||0)!==previousRank||!S.useRefineScroll)return;
-      refine(sl,it);
+      refine(sl,{buy:buyAnswered,scroll:true});
     },{yes:'Use scroll & refine',no:'Cancel'});return;
+  }
+  const delay=commitNow?0:forgeDelayMs();
+  if(delay>0){
+    const owner=S;
+    clearTimeout(eclipseRefineTimer);eclipseRefineOutcome=null;
+    if(typeof CombatAudio!=='undefined'&&CombatAudio.forgeStart)CombatAudio.forgeStart(S.sfx!==false,false);
+    const timer=setTimeout(()=>{
+      forgePending=null;
+      if(S!==owner||S.eq[sl]!==it||(it.r||0)!==previousRank){renderWin();return;}
+      refine(sl,{buy:buyAnswered,scroll:scrollAnswered,commitNow:true});
+    },delay);
+    forgePending={owner:S,mode:'refine',slot:sl,id:it.id,statusText:`⚒ Blacksmith forging +${previousRank} → +${previousRank+1}…`,timer};
+    renderWin();
+    return;
   }
   if(protectedAttempt&&!safeRank){if(needsMythicScroll)S.mythicScrolls--;else S.refineScrolls--;}
   const buy=refineOreShortfall(it);
@@ -8415,7 +8452,10 @@ function refine(sl){const it=S.eq[sl];const maxRef=it?.sec===6?15:10;if(!it||(it
     else if(it.r>=5&&(it.sec!==6||it.r<10)){it.r--;log(`Refine failed... dropped to +${it.r}.`,'r0','gear')}
     else if(it.sec===6&&it.r>=11){it.r--;log(`Refine failed... dropped to +${it.r}.`,'r0','gear')}
     else if(it.r>=10&&it.sec===6){log(`Refine failed, but +10 is safe on Mythic gear. Kept +${it.r}.`,'r3','gear')}
-    else log('Refine failed.','r0','gear');addFloat(pl.x,3,pl.z,'Failed','#ff6b6b')}ui();save();if(typeof eclipseRefineFeedback==='function')eclipseRefineFeedback(it,previousRank,succeeded)}
+    else log('Refine failed.','r0','gear');addFloat(pl.x,3,pl.z,'Failed','#ff6b6b')}
+  if(typeof CombatAudio!=='undefined'&&CombatAudio.forgeResult)CombatAudio.forgeResult(succeeded,S.sfx!==false,false);
+  if(typeof spawnRoForgeFieldFx==='function')spawnRoForgeFieldFx(succeeded,false);
+  ui();save();if(typeof eclipseRefineFeedback==='function')eclipseRefineFeedback(it,previousRank,succeeded)}
 // v311 (owner: "when materials are short it must auto purchase them, I shouldn't have to go shop").
 // Refine buys the shortfall itself at the Black Market ore price, straight from the attempt, and
 // says so in the feed. The splurge never happens silently: the line names the count and the Zeny.
@@ -8426,7 +8466,7 @@ function eclipseRefineFeedback(it,previousRank,succeeded){
   clearTimeout(eclipseRefineTimer);
   eclipseRefineOutcome={owner:S,id:it.id,previousRank,rank:it.r||0,succeeded};
   renderWin();
-  const result=$('eclipseRefineResult');if(result){result.classList.remove('refine-success','refine-failure');void result.offsetWidth;result.classList.add(succeeded?'refine-success':'refine-failure')}
+  const result=$('eclipseRefineResult');if(result){result.classList.remove('refine-forging','refine-success','refine-failure');void result.offsetWidth;result.classList.add(succeeded?'refine-success':'refine-failure')}
   eclipseRefineTimer=setTimeout(()=>{eclipseRefineOutcome=null;renderWin()},3600);
 }
 var refineMode='refine',starBoostTier=0,eclipseStarTimer=null,eclipseStarOutcome=null;
@@ -8459,19 +8499,35 @@ function eclipseStarFeedback(it,previousStar,succeeded){
   clearTimeout(eclipseStarTimer);
   eclipseStarOutcome={owner:S,id:it.id,previousStar,star:starCount(it),succeeded};
   renderWin();
-  const result=$('eclipseRefineResult');if(result){result.classList.remove('refine-success','refine-failure');void result.offsetWidth;result.classList.add(succeeded?'refine-success':'refine-failure')}
+  const result=$('eclipseRefineResult');if(result){result.classList.remove('refine-forging','refine-success','refine-failure');void result.offsetWidth;result.classList.add(succeeded?'refine-success':'refine-failure')}
   eclipseStarTimer=setTimeout(()=>{eclipseStarOutcome=null;renderWin()},3600);
 }
-function starUpgrade(sl){
+function starUpgrade(sl,opts){
+  if(forgePending&&!(opts&&opts.commitNow))return false;
   if(!S||!S.eq)return false;
   const slot=sl==='off'?'off':'weapon',it=S.eq[slot];
   if(!canStarWeapon(it)){log('Only Mythic and N+ weapons can be upgraded with Weapon Stars.','r0','gear');return false;}
-  const q=weaponStarQuote(it,starBoostTier);
+  const chosenBoost=(opts&&opts.boostIdx!=null)?opts.boostIdx:starBoostTier;
+  const q=weaponStarQuote(it,chosenBoost);
   if(!q||q.maxed){log('This weapon has already reached maximum ★20!','r4','gear');return false;}
   if(!q.zenyOk){log(`Need ${(q.zeny-safeCount(S.zeny)).toLocaleString()}z more for ★${q.next}.`,'r0','zeny');return false;}
   if(!q.baseOk||!q.boostOk){
     const msg=q.matIdx===0?`Need ${q.needAstralTotal} Astral Shards (have ${q.haveAstral}).`:`Need ${q.baseMat} ${q.matName} (have ${q.haveBase})${q.boostShards?` and ${q.boostShards} Astral Shards (have ${q.haveAstral})`:''}.`;
     log(msg,'r0','gear');return false;
+  }
+  const delay=(opts&&opts.commitNow)?0:forgeDelayMs();
+  if(delay>0){
+    const owner=S,prevStar=q.cur,bIdx=q.boostIdx;
+    clearTimeout(eclipseStarTimer);eclipseStarOutcome=null;
+    if(typeof CombatAudio!=='undefined'&&CombatAudio.forgeStart)CombatAudio.forgeStart(S.sfx!==false,true);
+    const timer=setTimeout(()=>{
+      forgePending=null;
+      if(S!==owner||S.eq[slot]!==it||starCount(it)!==prevStar){renderWin();return;}
+      starUpgrade(slot,{commitNow:true,boostIdx:bIdx});
+    },delay);
+    forgePending={owner:S,mode:'star',slot,id:it.id,statusText:`⚒ Star forging ★${prevStar} → ★${prevStar+1}…`,timer};
+    renderWin();
+    return true;
   }
   if(!Array.isArray(S.ascensionMat))S.ascensionMat=[0,0,0];
   S.zeny-=q.zeny;
@@ -8486,6 +8542,8 @@ function starUpgrade(sl){
     log(`Weapon Star failed (${q.finalRate}% chance) — kept ★${prev} safely (never downgrades).`,'r0','gear');
     if(typeof pl!=='undefined'&&pl)addFloat(pl.x,3.0,pl.z,`Failed · Kept ★${prev}`,'#ff8f8f');
   }
+  if(typeof CombatAudio!=='undefined'&&CombatAudio.forgeResult)CombatAudio.forgeResult(succeeded,S.sfx!==false,true);
+  if(typeof spawnRoForgeFieldFx==='function')spawnRoForgeFieldFx(succeeded,true);
   ui();save();eclipseStarFeedback(it,prev,succeeded);
   return succeeded;
 }
@@ -9340,7 +9398,7 @@ const overflowNotice=(Math.floor(Number(S.cardOverflowCount)||0)>0)
  const donors=selected&&!selected.legacy&&selected.cardKey&&cardStars(selected)<3?S.cards.filter(c=>c!==selected&&!c.legacy&&c.cardKey===selected.cardKey&&!cardStars(c)).length:0;
  const fits=(selected?.fit||CARD_FITS[selected?.stat]||[]).map(x=>({weapon:'Weapon',head:'Head',armor:'Armor',off:'Off-hand',leg:'Footwear',acc:'Accessory'})[x]||x);
  const selectedHead=selected?`<div class="eclipse-selected-card-heading"><span class="eclipse-card-large-icon grade-${selected.g}">${uiIcon('cards')}</span><div><small>${selectedLoose?'SELECTED LOOSE CARD':selectedEntry.location==='Stored in bag'?'CARD ON STORED GEAR':'SOCKETED CARD'}</small><h3>${esc(cardName(selected))}</h3><p>Monster family · ${esc(familyName(selected))}</p><small>${selectedLoose?'Loose copy · '+(selectedGroup?.loose.length||1)+' identical loose':'Owned · '+(selectedGroup?.entries.length||1)+' identical copy/copies'}</small></div><span class="eclipse-card-grade-pill grade-${selected.g}">${esc((GRADE[selected.g]||'Mythic'))}</span></div>`:'<div class="eclipse-card-empty">No cards match these filters. Cards remain in your collection; change the grade, location or search.</div>';
- const actionButtons=selected?`<div class="eclipse-card-actions">${insertSlots.map(([slot,label],i)=>`<button type="button" data-a="sock" data-v="${esc(selected.id)}:${slot}" class="${slot===activeSlot?'eclipse-primary':''}">Insert into ${esc(label)}</button>`).join('')}${selectedLoose&&!insertSlots.length?`<p class="eclipse-card-action-note">${focusReason?esc(focusReason):'No currently equipped item has a compatible empty socket.'}</p>`:''}${!selected.legacy&&selected.cardKey&&cardStars(selected)<3?`<button type="button" data-a="mergecard" data-v="${esc(selected.id)}" ${donors<mergeCost?'disabled':''}>Merge to ${'★'.repeat(cardStars(selected)+1)} · ${mergeCost} extra ${mergeCost===1?'copy':'copies'}${donors<mergeCost?' · '+donors+' available':''}</button>`:''}${selectedLoose?`<button type="button" data-a="sellcard" data-v="${esc(selected.id)}" class="eclipse-card-sell">Sell 1 · ${(selected.v*150).toLocaleString()} Zeny</button>`:''}${(S.cards||[]).length>1?`<button type="button" data-a="sellallcards" class="eclipse-card-sell">Sell all loose · ${(S.cards||[]).filter(c=>c&&!c.legacy&&!cardStars(c)).length}</button>`:''}</div>`:'';
+ const actionButtons=selected?`<div class="eclipse-card-actions">${insertSlots.map(([slot,label],i)=>`<button type="button" data-a="sock" data-v="${esc(selected.id)}:${slot}" class="${slot===activeSlot?'eclipse-primary':''}">Insert into ${esc(label)}</button>`).join('')}${selectedLoose&&!insertSlots.length?`<p class="eclipse-card-action-note">${focusReason?esc(focusReason):'No currently equipped item has a compatible empty socket.'}</p>`:''}${!selected.legacy&&selected.cardKey&&cardStars(selected)<3?`<button type="button" data-a="mergecard" data-v="${esc(selected.id)}" ${donors<mergeCost?'disabled':''}>Merge to ${'★'.repeat(cardStars(selected)+1)} · ${mergeCost} extra ${mergeCost===1?'copy':'copies'}${donors<mergeCost?' · '+donors+' available':''}</button>`:''}${selectedLoose?`<button type="button" data-a="sellcard" data-v="${esc(selected.id)}" class="eclipse-card-sell">Sell 1 · ${(selected.v*150).toLocaleString()} Zeny</button>`:''}${(S.cards||[]).filter(c=>c&&!c.legacy&&!cardStars(c)&&!c.raidCard).length>1?`<button type="button" data-a="sellallcards" class="eclipse-card-sell">Sell all loose · ${(S.cards||[]).filter(c=>c&&!c.legacy&&!cardStars(c)&&!c.raidCard).length}</button>`:''}</div>`:'';
  const socketRows=activeItem?Array.from({length:activeItem.slots||0},(_,i)=>{
   const card=(activeItem.cards||[])[i],cost=card?(S.freeCardRemoval?0:200*(card.g+1)):0;
   if(card)return `<article class="eclipse-card-socket filled"><span class="eclipse-socket-card-icon grade-${card.g}">${uiIcon('cards')}</span><span><b>${esc(cardName(card))}</b><small>${esc(cardEffects(card).map(cardEffectText).join(' · '))} · ${esc((GRADE[card.g]||'Mythic'))}</small></span><button type="button" data-a="unsock" data-v="${activeSlot}:${i}" aria-label="Remove ${esc(cardName(card))} for ${cost} Zeny">Remove · ${cost.toLocaleString()} Zeny</button></article>`;
@@ -9525,8 +9583,8 @@ function eclipseInventoryTools(){const known=new Set(eclipseInventoryState?.owne
 let mapSeason='atlas',dungeonMode='raid',raidDungeonPick='astral';
 function mapCollectionTabs(){const active=mapSeason==='echo'?'dungeons':mapSeason;return `<div class="atabs map-season-tabs" role="tablist" aria-label="Map collections">${[['atlas','World Atlas'],['ascension','Ascension Map'],['dungeons','Dungeons'],['social','Social Hub']].map(([id,label])=>`<button type="button" id="map-tab-${id}" role="tab" aria-selected="${active===id}" aria-controls="map-panel-${id}" tabindex="${active===id?0:-1}" class="${active===id?'on':''}" data-a="mapseason" data-v="${id}">${label}</button>`).join('')}</div>`;}
 const RAID_DUNGEON_CARDS=[
-  {id:'astral',name:'Astral Citadel',tier:'Lv 150 · 4th Job',img:'assets/atlas/astral-citadel.png?v=156',boss:'Memory of Thanatos',bossRole:'Sanctum Sovereign · Stage 4',bossSprite:'assets/mobs/v1/1708-0.png',bossFallback:'assets/mobs/v1/1708-0.png',bossSummary:'Commands Soul Brand, Abyssal Annihilation, Searing Cross & Cataclysmic Judgment (hide behind Sanctum Pillars).',bossTags:[['🛡 50% Raid Armor',true],['⚔ Solo ~40M DPS (@★0)',false],['👥 2p ×2.25 · 3p ×3.45 HP',false]],subtitle:'3 Starlight Bridge stages + Memory of Thanatos (6 mechanics + Pillar Wipe)',mobs:['Retribution Angel','Despair Phantom','Tower Watcher','Death Whisperer','Agony Demon'],drops:[['Solo Clear','20 Astral Shards · 500,000z · 100 Echo Shards'],['Party Clear','30 Astral Shards · 1 Valkyrie\'s Sigil · 750,000z · 150 Echo Shards'],['Dungeon Drops','Starfall & Zenith N+ Weapons · Thanatos Card']],comingSoon:false},
-  {id:'thor',name:'Thor Volcano',tier:'Lv 150 · 4th Job',img:'assets/atlas/thor-volcano.png?v=162',boss:'Ifrit, Volcano Lord',bossRole:'Caldera Tyrant · Stage 4',bossSprite:'assets/mobs/v1/1832-0.png',bossFallback:'assets/mobs/v1/1832-0.png',bossSummary:'Unleashes Meteor Slam, Caldera Eruption, Molten Cross & Hellfire Cataclysm across the volcanic forge.',bossTags:[['🛡 50% Raid Armor',true],['⚔ Solo ~40M+ DPS (@★0)',false],['👥 2p ×2.25 · 3p ×3.45 HP',false]],subtitle:'3 Molten Caldera stages + Ifrit, Volcano Lord (6 mechanics + Pillar Wipe)',mobs:['Magma Slag','Fire Imp','Kasa','Salamander','Obsidian Golem'],drops:[['Solo Clear','20 Primal Catalysts · 500,000z · 100 Echo Shards'],['Party Clear','30 Primal Catalysts · 1 Valkyrie\'s Sigil · 750,000z · 150 Echo Shards'],['Dungeon Drops','Primal & Cataclysm N+ Weapons · Ifrit Card']],comingSoon:false},
+  {id:'astral',name:'Astral Citadel',tier:'Lv 150 · 4th Job',img:'assets/atlas/astral-citadel.png?v=156',boss:'Memory of Thanatos',bossRole:'Sanctum Sovereign · Stage 4',bossSprite:'assets/mobs/v1/1708-0.png',bossFallback:'assets/mobs/v1/1708-0.png',bossSummary:'Commands Soul Brand, Abyssal Annihilation, Searing Cross & Cataclysmic Judgment (hide behind Sanctum Pillars).',bossTags:[['🛡 50% Raid Armor',true],['⚔ Solo ~40M DPS (@★0)',false],['👥 2p ×2.25 · 3p ×3.45 HP',false]],subtitle:'3 Starlight Bridge stages + Memory of Thanatos (6 mechanics + Pillar Wipe)',mobs:['Retribution Angel','Despair Phantom','Tower Watcher','Death Whisperer','Agony Demon'],drops:[['Solo Clear','20 Astral Shards · 500,000z · 100 Echo Shards'],['Party Clear','30 Astral Shards · 1 Valkyrie\'s Sigil · 750,000z · 150 Echo Shards'],['10% Boss Acc Cards','Primordial Ifrit Card (ATK +15%) · Sovereign Thanatos Card (MATK +15%)'],['Exclusive Raid Titles','Astral Stormbringer / Volcanic Overlord (10% drop) · 10 / 20 / 30 Clear Titles']],comingSoon:false},
+  {id:'thor',name:'Thor Volcano',tier:'Lv 150 · 4th Job',img:'assets/atlas/thor-volcano.png?v=162',boss:'Ifrit, Volcano Lord',bossRole:'Caldera Tyrant · Stage 4',bossSprite:'assets/mobs/v1/1832-0.png',bossFallback:'assets/mobs/v1/1832-0.png',bossSummary:'Unleashes Meteor Slam, Caldera Eruption, Molten Cross & Hellfire Cataclysm across the volcanic forge.',bossTags:[['🛡 50% Raid Armor',true],['⚔ Solo ~40M+ DPS (@★0)',false],['👥 2p ×2.25 · 3p ×3.45 HP',false]],subtitle:'3 Molten Caldera stages + Ifrit, Volcano Lord (6 mechanics + Pillar Wipe)',mobs:['Magma Slag','Fire Imp','Kasa','Salamander','Obsidian Golem'],drops:[['Solo Clear','20 Primal Catalysts · 500,000z · 100 Echo Shards'],['Party Clear','30 Primal Catalysts · 1 Valkyrie\'s Sigil · 750,000z · 150 Echo Shards'],['10% Boss Acc Cards','Primordial Ifrit Card (ATK +15%) · Sovereign Thanatos Card (MATK +15%)'],['Exclusive Raid Titles','Volcanic Overlord / Astral Stormbringer (10% drop) · 10 / 20 / 30 Clear Titles']],comingSoon:false},
   {id:'abyss',name:'Niflheim Abyssal Sanctum',tier:'Lv 160 · Future Raid',img:'assets/world-map/cutout/niflheim.png?v=283',boss:'Lord of Death',bossRole:'Underworld Monarch · Planned',bossSprite:1373,bossFallback:'assets/mobs/v1/1706-0.png',bossSummary:'Rules the Throne of the Dead in the frozen abyssal sanctum — arriving in a future raid expansion.',bossTags:[['🛡 High Raid Armor',true],['🔒 Upcoming Tier',false]],subtitle:'Frozen underworld catacombs & Throne of the Dead — arriving in a future update',mobs:['Ghost Hound','Banshee','Death Knight','Soul Eater','Abyss Knight'],drops:[['Planned Clear','Abyssal Relics · Valkyrie\'s Sigils · Echo Shards'],['Planned Boss Loot','Mythic Protection Scroll · Lord of Death Card']],comingSoon:true}
 ];
 function renderDungeonsPanel(){
@@ -9823,9 +9881,18 @@ function gmUnlockAll(){
  S.nmMat=(Array.isArray(S.nmMat)?S.nmMat:[0]).map(v=>Math.max(safeCount(v),100000));
  // Ascension tracks: stat ranks are account-wide, so they can be maxed from any class.
  const a=ascState();a.level=50;a.xp=0;
+ // Raid testing: unlock all 5 exclusive Raid titles + add copies of both Raid Boss Accessory Cards.
+ if(!S.raid||typeof S.raid!=='object')S.raid={day:trialDay(),used:0,clears:30,bestSolo:0,bestParty:0};
+ else S.raid.clears=Math.max(safeCount(S.raid.clears),30);
+ if(typeof PGTitles!=='undefined'){
+  if(!Array.isArray(S.titleAwards))S.titleAwards=[];
+  for(const rt of (PGTitles.RAID_TITLES||[]))if(!S.titleAwards.includes(rt.id))S.titleAwards.push(rt.id);
+  PGTitles.sync(S,CLASSES);
+ }
+ if(typeof RAID_BOSS_CARDS!=='undefined')for(const rc of RAID_BOSS_CARDS)addCard(newCard(rc),{quiet:true,label:rc.n});
  S.hp=maxHp();
  ui();save();
- log('⚡ GM: every class and job maxed, all maps unlocked, Base Lv 150, and a testing fortune added (1,000,000,000 Zeny, 100,000 ore/shards, 100,000 Ascension materials).','r1','misc');
+ log('⚡ GM: every class and job maxed, all maps unlocked, Base Lv 150, all 5 Raid Titles, Raid Boss Accessory Cards, and a testing fortune added.','r1','misc');
  log('Was Base Lv '+before.lv+' '+before.cls+' with '+Math.round(before.zeny).toLocaleString()+' Zeny. Open Class Path to switch into any class - the Crucible is skipped.','','misc');
  return true;
 }
@@ -9841,7 +9908,10 @@ function gmToolsPanel(){
    <div class="row">${[1,10,100,1000].map(x=>`<button data-a="gmx" data-v="${x}" ${S.gmx===x?'style="background:#ffe08a"':''}>x${x}</button>`).join('')}</div>
    <div class="hd" style="margin-top:10px">Auras &amp; weapon glow</div>
    <small>Auras: Base 50 / 99 / 150. Weapon glow: +7 / +9 / +10. Mythic glow lives in Gear &amp; supplies.</small>
-   <div class="row"><button data-a="gmaura" data-v="50">Test Lv50 aura</button><button data-a="gmaura" data-v="99">Test Lv99 aura</button><button data-a="gmaura" data-v="150">Test Lv150 aura</button><button data-a="gmglow" data-v="7">Weapon +7</button><button data-a="gmglow" data-v="9">Weapon +9</button><button data-a="gmglow" data-v="10">Weapon +10</button></div>`;
+   <div class="row"><button data-a="gmaura" data-v="50">Test Lv50 aura</button><button data-a="gmaura" data-v="99">Test Lv99 aura</button><button data-a="gmaura" data-v="150">Test Lv150 aura</button><button data-a="gmglow" data-v="7">Weapon +7</button><button data-a="gmglow" data-v="9">Weapon +9</button><button data-a="gmglow" data-v="10">Weapon +10</button></div>
+   <div class="hd" style="margin-top:10px">Exclusive Raid Titles &amp; 5-Color Static Electric FX</div>
+   <small>One click unlocks and equips any of the 5 Raid Titles so you can preview its crackling 3D static lightning FX on your character immediately.</small>
+   <div class="row"><button data-a="gmraidtitle" data-v="raid-vanguard">⚡ Cyan · Raid Vanguard</button><button data-a="gmraidtitle" data-v="citadel-breaker">⚡ Green · Citadel Breaker</button><button data-a="gmraidtitle" data-v="sovereign-conqueror">⚡ Gold · Sovereign Conqueror</button><button data-a="gmraidtitle" data-v="astral-stormbringer">⚡ Purple · Astral Stormbringer</button><button data-a="gmraidtitle" data-v="volcanic-overlord">⚡ Red · Volcanic Overlord</button><button data-a="gmraidtitle" data-v="unlockall">Unlock all 5 Raid Titles</button><button data-a="gmraidtitle" data-v="none">Clear equipped title</button></div>`;
  }if(1){bodies.level=`<div class="hd">Base level</div><small>Set Base level and clear Base EXP. Unspent points are recalculated; allocated stats, gear and jobs stay untouched.</small>
    <div class="row">${[1,99,120].map(n=>`<button data-a="gmresetlv" data-v="${n}">Reset Base Lv → ${n}</button>`).join('')}<button data-a="gml">+10 Base Levels</button><button data-a="gmnm">Unlock Nightmare (Base Lv 150)</button></div>
    <div class="hd" style="margin-top:10px">Jobs &amp; map levels</div><small>Jobs are per class; the one-click button on ⚡ Unlock all maxes every class at once.</small>
@@ -9854,13 +9924,18 @@ function gmToolsPanel(){
    <button data-a="gmendgame">Base 150 + crafting/refine supplies</button>
    <div class="row">${Object.entries(ASC_SETS).map(([k,v])=>`<button data-a="gmset" data-v="${k}">${v.name}</button>`).join('')}</div>
    <div class="row">${[11,12,13,14,15].map(n=>`<button data-a="gmglow" data-v="${n}">Mythic weapon +${n}</button>`).join('')}</div>
-   <div class="row">${[0,5,10,15,20].map(n=>`<button data-a="gmstars" data-v="${n}">Weapon ★${n}</button>`).join('')}</div>
+   <div class="row">${[0,3,7,10,15,20].map(n=>`<button data-a="gmstars" data-v="${n}">Weapon ★${n}</button>`).join('')}</div>
+   <div class="hd" style="margin-top:10px">Raid &amp; Star Forging Materials</div><small>Grant Astral Shards, Primal Catalysts and Valkyrie's Sigils for Weapon Star upgrades and Mythic evolution.</small>
+   <div class="row"><button data-a="gmraidmat" data-v="0:100">+100 Astral Shards</button><button data-a="gmraidmat" data-v="0:1000">+1,000 Astral Shards</button><button data-a="gmraidmat" data-v="1:100">+100 Primal Catalysts</button><button data-a="gmraidmat" data-v="1:1000">+1,000 Primal Catalysts</button><button data-a="gmraidmat" data-v="2:100">+100 Valkyrie's Sigils</button></div>
    <div class="hd" style="margin-top:10px">Maxed Ascension equipment by class</div><p>Grant to bag: +15 Mythic gear, maximum base values and four maximum affix rolls per item. Includes each class weapon option and a second dagger for Guillotine Cross. Cards are empty; equip after reaching the matching fourth job.</p>
    <div class="row">${Object.entries(GM_ASC_PRESETS).map(([cls,p])=>`<button data-a="gmmaxset" data-v="${cls}">${cls} · ${ASC_SETS[p.set].name} +15</button>`).join('')}</div>`;
  }if(1){bodies.test=`<div class="hd">Index mastery</div><small>These use the real per-species ledger and the 10 / 250 / 5,000 / 50,000 kill ladder. Clear before trying another scenario.</small>
    <div class="row"><button data-a="gmindex" data-v="one">+1 Poring kill</button><button data-a="gmindex" data-v="all1">1 kill every species</button><button data-a="gmindex" data-v="all100">100 kills every species</button><button data-a="gmindex" data-v="all1000">1,000 kills every species</button><button data-a="gmindex" data-v="all5000">5,000 kills every species</button><button data-a="gmindex" data-v="all50000">50,000 kills every species</button><button data-a="gmindex" data-v="xp10000">Set 10,000 XP title test</button><button data-a="gmindex" data-v="xp1000000">Set the final title</button><button data-a="gmindex" data-v="clear">Clear Index</button></div>
    <div class="hd" style="margin-top:10px">Card mastery</div><small>Loose cards can be dedicated through the Card Mastery tab; every mastery rank is one gacha token. Roll every token fills the stat caps the slow way (one random roll at a time). Socketed cards stay untouched.</small>
-   <div class="row"><button data-a="gmcard" data-v="poring1">+1 Poring Card</button><button data-a="gmcard" data-v="poring5">+5 Poring Cards</button><button data-a="gmcard" data-v="poringMax">Max Poring 5/5</button><button data-a="gmcard" data-v="allMax">Max all cards 5/5</button><button data-a="gmcard" data-v="rollAll">Roll every token</button><button data-a="gmcard" data-v="clear">Reset card mastery</button></div>`;
+   <div class="row"><button data-a="gmcard" data-v="poring1">+1 Poring Card</button><button data-a="gmcard" data-v="poring5">+5 Poring Cards</button><button data-a="gmcard" data-v="poringMax">Max Poring 5/5</button><button data-a="gmcard" data-v="allMax">Max all cards 5/5</button><button data-a="gmcard" data-v="rollAll">Roll every token</button><button data-a="gmcard" data-v="clear">Reset card mastery</button></div>
+   <div class="hd" style="margin-top:10px">Raid Boss Accessory Cards &amp; Raid Clears</div><small>Grant loose or ★★★ merged copies of Primordial Ifrit Card (ATK % +15 · Accessory) and Sovereign Thanatos Card (Magic Power +15% · Accessory), or test 10 / 20 / 30 Raid clear milestones.</small>
+   <div class="row"><button data-a="gmraidcard" data-v="raid:atk:1">+1 Primordial Ifrit Card (ATK)</button><button data-a="gmraidcard" data-v="raid:atk:10">+10 Ifrit Cards (merge set)</button><button data-a="gmraidcard" data-v="raid:atk:max">+1 ★★★ Ifrit Card</button><button data-a="gmraidcard" data-v="raid:matk:1">+1 Sovereign Thanatos Card (MATK)</button><button data-a="gmraidcard" data-v="raid:matk:10">+10 Thanatos Cards (merge set)</button><button data-a="gmraidcard" data-v="raid:matk:max">+1 ★★★ Thanatos Card</button></div>
+   <div class="row" style="margin-top:6px"><button data-a="gmraidclears" data-v="10">Set 10 Raid Clears</button><button data-a="gmraidclears" data-v="20">Set 20 Raid Clears</button><button data-a="gmraidclears" data-v="30">Set 30 Raid Clears</button><button data-a="gmraidclears" data-v="reset">Reset Raid Clears &amp; Titles</button></div>`;
  }if(1){bodies.world=`<div class="hd">Ascension tracks</div><small>Stats levels are account-wide; skill levels belong to the current class. Spend the points in Character → Ascension stats and Skills → Ascension.</small>
    <div class="row"><button data-a="gmascstats" data-v="max">Max Stats Ascension 50</button><button data-a="gmascstats" data-v="reset">Reset Stats Ascension</button><button data-a="gmascskills" data-v="max">Max Skill Ascension</button><button data-a="gmascskills" data-v="reset">Reset Skill Ascension</button></div>
    <div class="hd" style="margin-top:10px">Pets</div>
@@ -10304,7 +10379,7 @@ function cardGachaPanel(){
 }
 function renderCardIndex(){
   const ci=S.cardIndex||emptyCardIndex(),byName=ci.byName||{},donated=safeCount(ci.donated),total=cardMasteryTotal(),available=cardMasteryAvailable(),rolled=cardMasteryRolled(),album=[...CARD_NAMES],max=album.length*CARD_MASTERY_PER_CARD,registered=album.filter(name=>cardMasteryLevel(name)>0).length,bar=max?Math.min(100,total/max*100):0;
-  const groups=new Map();for(const c of (S.cards||[]).filter(c=>!c.stars)){const key=`${c.n}|${c.g}|${c.stat}`;if(!groups.has(key))groups.set(key,{card:c,cards:[]});groups.get(key).cards.push(c)}
+  const groups=new Map();for(const c of (S.cards||[]).filter(c=>!c.stars&&CARD_NAMES.has(cardFamily(c)))){const key=`${c.n}|${c.g}|${c.stat}`;if(!groups.has(key))groups.set(key,{card:c,cards:[]});groups.get(key).cards.push(c)}
   const inventory=[...groups.values()].sort((a,b)=>b.card.g-a.card.g||a.card.n.localeCompare(b.card.n));
   // v57: the un-tabbed list was too long - default to the rarest loose rarity, keep All one tap away.
   const rarest=inventory.length?Math.max(...inventory.map(x=>x.card.g)):-1;
@@ -10697,12 +10772,17 @@ function arrangePanel(k,root){
       if(mode==='refine'){
         hero.id='eclipseRefineResult';hero.setAttribute('role','status');hero.setAttribute('aria-live','polite');hero.firstElementChild.classList.add('eclipse-result-art');
         const status=make('p','eclipse-refine-status');
-        if(isStarMode){
+        const forgingHere=Boolean(forgePending&&forgePending.owner===S&&forgePending.id===it.id);
+        if(forgingHere){
+          hero.classList.add('refine-forging');
+          status.textContent=forgePending.statusText||'⚒ Blacksmith forging…';
+          hero.append(roForgeFxElement('forging'));
+        }else if(isStarMode){
           const outcome=eclipseStarOutcome,active=outcome&&outcome.owner===S&&outcome.id===it.id;
-          if(active){const {previousStar,star,succeeded}=outcome;hero.classList.add(succeeded?'refine-success':'refine-failure');status.textContent=succeeded?`Success: ★${previousStar} → ★${star} (+${star*WEAPON_STAR_DMG_PER}% DMG & Pen)`:`Failed · Safely kept at ★${star} (never downgrades)`}
+          if(active){const {previousStar,star,succeeded}=outcome;hero.classList.add(succeeded?'refine-success':'refine-failure');status.textContent=succeeded?`Success: ★${previousStar} → ★${star} (+${star*WEAPON_STAR_DMG_PER}% DMG & Pen)`:`Failed · Safely kept at ★${star} (never downgrades)`;hero.append(roForgeFxElement(succeeded?'success':'failure'))}
         }else{
           const outcome=eclipseRefineOutcome,active=outcome&&outcome.owner===S&&outcome.id===it.id;
-          if(active){const {previousRank,rank,succeeded}=outcome;hero.classList.add(succeeded?'refine-success':'refine-failure');status.textContent=(succeeded?'Success: +'+previousRank+' → +'+rank:rank===previousRank?'Failed · Rank kept at +'+rank:'Failed · Rank reduced: +'+previousRank+' → +'+rank)}
+          if(active){const {previousRank,rank,succeeded}=outcome;hero.classList.add(succeeded?'refine-success':'refine-failure');status.textContent=(succeeded?'Success: +'+previousRank+' → +'+rank:rank===previousRank?'Failed · Rank kept at +'+rank:'Failed · Rank reduced: +'+previousRank+' → +'+rank);hero.append(roForgeFxElement(succeeded?'success':'failure'))}
         }
         put(hero,status);
       }
@@ -10744,7 +10824,8 @@ function arrangePanel(k,root){
           chosen.replaceChildren(preview);
           const starBtn=make('button','eclipse-primary');
           starBtn.type='button';starBtn.dataset.a='starup';starBtn.dataset.v=chosenSlot;
-          if(qStar.maxed){starBtn.disabled=true;starBtn.textContent='Maximum ★20 Weapon Star';}
+          if(forgePending&&forgePending.owner===S){starBtn.disabled=true;starBtn.textContent='⚒ Forging…';}
+          else if(qStar.maxed){starBtn.disabled=true;starBtn.textContent='Maximum ★20 Weapon Star';}
           else if(!qStar.zenyOk){starBtn.disabled=true;starBtn.textContent=`Need ${(qStar.zeny-safeCount(S.zeny)).toLocaleString()}z more`;}
           else if(!qStar.baseOk||!qStar.boostOk){starBtn.disabled=true;starBtn.textContent=qStar.matIdx===0?`Need ${qStar.needAstralTotal-qStar.haveAstral} more Astral Shards`:(!qStar.baseOk?`Need ${qStar.baseMat-qStar.haveBase} more ${qStar.matName}`:`Need ${qStar.boostShards-qStar.haveAstral} more Astral Shards`);}
           else{starBtn.disabled=false;starBtn.textContent=`★ Upgrade to ★${qStar.next} (${qStar.finalRate}%) · ${(qStar.zeny/1000000)}M z`;}
@@ -10768,7 +10849,7 @@ function arrangePanel(k,root){
         const button=chosen.querySelector('[data-a=refine]'),preview=make('div','eclipse-refine-preview'),rank=it.r||0,ore=refineOreKey(it),oreShort=refineOreShortfall(it),total=refCost(it)+oreShort.cost,maxed=rank>=(it.sec===6?15:10),afford=S.zeny>=total;preview.innerHTML='<div class="eclipse-rank-preview"><b>+'+rank+'</b><span>→</span><b>+'+Math.min(it.sec===6?15:10,rank+1)+'</b></div><div><span>'+SLOTS[it.slot].stat+'</span><b>'+ev(it)+' → '+(rank>=(it.sec===6?15:10)?ev(it):Math.round(it.val*(1+(rank+1)*.15)))+'</b></div><div><span>Success chance</span><b>'+(rank>=(it.sec===6?15:10)?'Maximum refinement':refCh(it)+'%')+'</b></div><div><span>Required Zeny</span><b>'+refCost(it).toLocaleString()+'z</b></div><div><span>'+ORE[ore]+'</span><b>'+refOre(it)+' / '+safeCount(S.ore[ore])+' owned</b></div>'+(oreShort.miss>0?'<div><span>'+ORE[ore]+' short</span><b>'+oreShort.miss+' · buy for '+oreShort.cost.toLocaleString()+'z on confirm</b></div>':'')+'<div><span>Total</span><b>'+total.toLocaleString()+'z</b></div>'+(afford?'':'<div class="is-short"><span>Zeny short</span><b>'+(total-S.zeny).toLocaleString()+'z</b></div>');chosen.replaceChildren(preview);
         // v312: the button carries the same price gate the row used, and names the number it wants, so
         // "unclickable" always has a reason written next to it.
-        button.disabled=maxed||!afford||!Number.isSafeInteger(oreShort.cost);button.textContent=maxed?'Maximum refinement':afford?'Refine \u00b7 '+total.toLocaleString()+'z':'Need '+(total-S.zeny).toLocaleString()+'z more';put(stage,chosen,put(make('div','eclipse-workshop-action'),button));const reserve=make('div','refine-reserve');reserve.textContent='Oridecon: '+safeCount(S.ore.ori)+' · Elunium: '+safeCount(S.ore.elu);stage.prepend(reserve);put(aside,protection,fold('Resources, rates & damage',notes,'workshop-notes'));
+        button.disabled=Boolean(forgePending&&forgePending.owner===S)||maxed||!afford||!Number.isSafeInteger(oreShort.cost);button.textContent=(forgePending&&forgePending.owner===S)?'⚒ Forging…':maxed?'Maximum refinement':afford?'Refine \u00b7 '+total.toLocaleString()+'z':'Need '+(total-S.zeny).toLocaleString()+'z more';put(stage,chosen,put(make('div','eclipse-workshop-action'),button));const reserve=make('div','refine-reserve');reserve.textContent='Oridecon: '+safeCount(S.ore.ori)+' · Elunium: '+safeCount(S.ore.elu);stage.prepend(reserve);put(aside,protection,fold('Resources, rates & damage',notes,'workshop-notes'));
       }
       body.replaceChildren(put(make('div','eclipse-workshop'),menu,stage,aside));
     }
@@ -11009,7 +11090,7 @@ function renderWin(anchor){
     close.innerHTML=uiIcon('close');
     expand.dataset.uiExpand=k;expand.innerHTML=uiIcon(expandedPanels.has(k)?'compact':'expand');expand.setAttribute('aria-label',(expandedPanels.has(k)?'Restore shared layout for ':'Focus ')+name);expand.setAttribute('aria-pressed',String(expandedPanels.has(k)));expand.title=expandedPanels.has(k)?'Restore all open panels':'Focus this panel using the available screen space';
     close.dataset.x=k;close.setAttribute('aria-label','Close '+name);
-    const body=win.querySelector('.wbody'),source=V[k](),viewKey=k==='map'?[worldAtlasFullscreen?1:0,worldAtlasDrawerHidden?1:0].join(':'):k==='equip'&&['refine','reforge'].includes(sub.equip)?[selE,refineMode,starBoostTier,safeCount(S.ascensionMat?.[0]),safeCount(S.ascensionMat?.[1]),JSON.stringify(eclipseRefineOutcome&&eclipseRefineOutcome.owner===S?{id:eclipseRefineOutcome.id,rank:eclipseRefineOutcome.rank,from:eclipseRefineOutcome.previousRank,success:eclipseRefineOutcome.succeeded}:null),JSON.stringify(eclipseStarOutcome&&eclipseStarOutcome.owner===S?{id:eclipseStarOutcome.id,star:eclipseStarOutcome.star,from:eclipseStarOutcome.previousStar,success:eclipseStarOutcome.succeeded}:null)].join(':'):k==='job'?String(eclipseJobsBrowse):k==='pet'?sub.pet:k==='market'&&sub.market!=='echo'?[S.ore.ori,S.ore.elu,S.refineScrolls,S.shards].join(':'):'';
+    const body=win.querySelector('.wbody'),source=V[k](),viewKey=k==='map'?[worldAtlasFullscreen?1:0,worldAtlasDrawerHidden?1:0].join(':'):k==='equip'&&['refine','reforge'].includes(sub.equip)?[selE,refineMode,starBoostTier,safeCount(S.ascensionMat?.[0]),safeCount(S.ascensionMat?.[1]),forgePending&&forgePending.owner===S?forgePending.mode+':'+forgePending.id:'',JSON.stringify(eclipseRefineOutcome&&eclipseRefineOutcome.owner===S?{id:eclipseRefineOutcome.id,rank:eclipseRefineOutcome.rank,from:eclipseRefineOutcome.previousRank,success:eclipseRefineOutcome.succeeded}:null),JSON.stringify(eclipseStarOutcome&&eclipseStarOutcome.owner===S?{id:eclipseStarOutcome.id,star:eclipseStarOutcome.star,from:eclipseStarOutcome.previousStar,success:eclipseStarOutcome.succeeded}:null)].join(':'):k==='job'?String(eclipseJobsBrowse):k==='pet'?sub.pet:k==='market'&&sub.market!=='echo'?[S.ore.ori,S.ore.elu,S.refineScrolls,S.shards].join(':'):'';
     if((body._panelSource!==source||body._panelViewKey!==viewKey)&&!body.querySelector('.autosell-editor input[type=number]:focus,.autosell-editor textarea:focus,[data-autosell-workspace] [data-sell-min]:focus,[data-autosell-workspace] [data-autosell-affix-stat]:focus,.ore-quantity:focus')){
       const fresh=document.createElement('div');fresh.className=body.className;fresh.innerHTML=source;arrangePanel(k,fresh);polishIcons(fresh);
       eclipsePatch(body,fresh);body.className=fresh.className;body.dataset.layout=fresh.dataset.layout;body.dataset.view=fresh.dataset.view;
@@ -11796,10 +11877,10 @@ const ACT={
   cardoverflowack:()=>{S.cardOverflowCount=0;S.cardOverflowPaid=0;ui();save()},
   bagoverflowack:()=>{S.bagOverflowCount=0;S.bagOverflowPaid=0;ui();save()},
   sellallcards:()=>{
-    const loose=(S.cards||[]).filter(c=>c&&!c.legacy&&!cardStars(c));
-    if(!loose.length)return log('There are no plain loose cards to sell. Starred and legacy cards are left alone.','r0','card');
+    const loose=(S.cards||[]).filter(c=>c&&!c.legacy&&!cardStars(c)&&!c.raidCard);
+    if(!loose.length)return log('There are no plain loose cards to sell. Starred, Raid Boss and legacy cards are left alone.','r0','card');
     const value=loose.reduce((n,c)=>n+Math.max(0,Math.floor(Number(c.v)||0))*150,0);
-    if(!confirm(`Sell ${loose.length} loose card${loose.length===1?'':'s'} for ${value.toLocaleString()} Zeny?\n\nMerged (★) and legacy cards are kept.`))return;
+    if(!confirm(`Sell ${loose.length} loose card${loose.length===1?'':'s'} for ${value.toLocaleString()} Zeny?\n\nMerged (★), Raid Boss and legacy cards are kept.`))return;
     const ids=new Set(loose.map(c=>String(c.id)));
     S.cards=S.cards.filter(c=>!ids.has(String(c&&c.id)));
     earnZeny(value);log(`Sold ${loose.length} loose card${loose.length===1?'':'s'} for ${value.toLocaleString()} Zeny.`,'r3','card');
@@ -11829,7 +11910,11 @@ const ACT={
   refinemode:v=>{if(v==='refine'||v==='star'){refineMode=v;if(v==='star'&&selE!=='weapon'&&!(selE==='off'&&S.eq?.off?.wt==='dagger')&&S.eq?.weapon)selE='weapon';renderWin()}},
   starboost:v=>{const n=Number(v);if(Number.isInteger(n)&&n>=0&&n<=4){starBoostTier=n;renderWin()}},
   starup:k=>starUpgrade(k),
-  gmstars:v=>{if(!S.gm||!S.eq.weapon||!canStarWeapon(S.eq.weapon)||!Number.isInteger(+v)||+v<0||+v>WEAPON_STAR_MAX)return;if(+v===0)delete S.eq.weapon.stars;else S.eq.weapon.stars=+v;ui();save()},
+  gmstars:v=>{if(!S||!S.gm||!S.eq.weapon||!Number.isInteger(+v)||+v<0||+v>WEAPON_STAR_MAX)return;if((S.eq.weapon.sec|0)<5)S.eq.weapon.sec=5;if(+v===0)delete S.eq.weapon.stars;else S.eq.weapon.stars=+v;log(`GM: ${iname(S.eq.weapon)} set to ★${+v}.`,'r4','gear');ui();save()},
+  gmraidmat:v=>{if(!S||!S.gm)return;const [idx,amt]=String(v||'').split(':').map(Number);if(!Number.isInteger(idx)||idx<0||idx>2||!Number.isFinite(amt)||amt<=0)return;if(!Array.isArray(S.ascensionMat))S.ascensionMat=[0,0,0];S.ascensionMat[idx]=safeCount(S.ascensionMat[idx])+Math.floor(amt);log(`GM: +${Math.floor(amt).toLocaleString()} ${ASCENSION_MATERIALS[idx]}.`,'r3','gear');ui();save()},
+  gmraidcard:v=>{if(!S||!S.gm||typeof RAID_BOSS_CARDS==='undefined')return;const parts=String(v||'').split(':'),ck=parts[0]+':'+parts[1],qtyRaw=parts[2];const def=RAID_BOSS_CARDS.find(c=>c.cardKey===ck);if(!def)return;if(qtyRaw==='max'){const c=newCard(def);c.stars=3;if(addCard(c,{label:def.n}))log(`GM: Granted ★★★ ${def.n}.`,'r4','card');}else{const n=Math.max(1,Math.min(50,Number(qtyRaw)||1));let added=0;for(let i=0;i<n;i++)if(addCard(newCard(def),{quiet:i>0,label:def.n}))added++;if(added)log(`GM: Granted ×${added} ${def.n}.`,'r4','card');}ui();save()},
+  gmraidtitle:v=>{if(!S||!S.gm||typeof PGTitles==='undefined')return;if(!Array.isArray(S.titleAwards))S.titleAwards=[];const rlist=PGTitles.RAID_TITLES||[];if(v==='none'){S.equippedTitle=null;log('GM: Cleared equipped title.','','misc');}else if(v==='unlockall'){for(const rt of rlist)if(!S.titleAwards.includes(rt.id))S.titleAwards.push(rt.id);log('GM: Unlocked all 5 Exclusive Raid Titles!','r4','misc');}else{const rt=rlist.find(t=>t.id===v);if(!rt)return;if(!S.titleAwards.includes(rt.id))S.titleAwards.push(rt.id);S.equippedTitle=rt.id;log(`GM: Unlocked & equipped "${rt.name}" (${rt.electricName} FX).`,'r4','misc');}if(typeof syncRaidElectricAura==='function')syncRaidElectricAura();ui();save()},
+  gmraidclears:v=>{if(!S||!S.gm)return;if(!S.raid||typeof S.raid!=='object')S.raid={day:trialDay(),used:0,clears:0,bestSolo:0,bestParty:0};if(v==='reset'){S.raid.clears=0;const raidIds=new Set((typeof PGTitles!=='undefined'&&PGTitles.RAID_TITLES||[]).map(t=>t.id));S.titleAwards=(Array.isArray(S.titleAwards)?S.titleAwards:[]).filter(id=>!raidIds.has(id));if(raidIds.has(S.equippedTitle))S.equippedTitle=null;log('GM: Reset Raid clears and Raid titles.','','misc');}else{const n=Math.max(0,Math.floor(Number(v)||0));S.raid.clears=n;if(typeof PGTitles!=='undefined')PGTitles.sync(S,CLASSES);log(`GM: Raid clears set to ${n}.`,'r3','misc');}if(typeof syncRaidElectricAura==='function')syncRaidElectricAura();ui();save()},
   refprotect:v=>{const n=Number(v);if(![0,1].includes(n))return;S.useRefineScroll=n===1;ui();save()},buyscroll:()=>buyRefineScroll(),buymythicscroll:()=>buyMythicScroll(),refine:k=>refine(k),craftdps:()=>craftDps(),craftasc:v=>ACT.transformasc(v),bmmat:o=>buyMat(+o),bmore:o=>buyOre(o,$('oreQty-'+o)?.value??1),bmref:v=>{const[k,mode]=v.split(':');reforge(k,mode==='all')},refpool:v=>{reforgePoolOpen=reforgePoolOpen===v?null:v;renderWin()},refpick:v=>{const[k,i]=v.split(':'),it=S.eq[k];if(!it)return;const a=reforgeSelection[it.id]||(reforgeSelection[it.id]=[]),n=+i,j=a.indexOf(n);j<0?a.push(n):a.splice(j,1);renderWin()},refagain:()=>keepAndReforge(),refaccept:v=>resolveReforge(v==='yes'),mergecard:id=>mergeCard(id),convertcard:id=>convertCard(id),guideforge:v=>{if(!ASC_SETS[v])return;ascensionSetPick=v;if(!tabs.includes('equip'))openTab('equip');sub.equip='ascension';renderWin()},guidepage:v=>{if(['beginner','leveling','build','cards','ascension'].includes(v)){guidePage=v;tourMarkSeen();guideTour=null;}renderWin()},guidestep:v=>guideStep(v),guidereplay:v=>{if(!GUIDE_LESSONS[v])return;guideTour=v;guidePage=v;S.handbook={...guideProgress(),[v+'Step']:0};renderWin()},guidemode:v=>{if(['farm','boss','survive'].includes(v))guideMode=v;renderWin()},guidetier:v=>{if(['current','normal','nightmare','ascension'].includes(v))guideTier=v;renderWin()},guidemap:v=>{const[m,l]=v.split(':').map(Number);if(!Number.isInteger(m)||m<0||m>=MAPS.length||!Number.isInteger(l)||l<1||l>(m>=10?5:15))return;if(!tabs.includes('map'))openTab('map');mapSeason=m>=10?'ascension':'atlas';mapM=m;mapL=l;renderWin()},sub:v=>{const[t,k]=v.split(':');sub[t]=k;if(t==='bag'&&k!=='bag')eqPick=null;renderWin()},selp:v=>{selP=+v;petPreviewStance='idle';sub.pet='manage';renderWin()},
   petmotion:v=>{if(['idle','walk','attack'].includes(v)){petPreviewStance=v;renderWin()}},
   petretry:()=>{const p=gp(selP);if(p&&petSpriteStore){const id=petSpecies(p.sp).spriteId;petSpriteStore.retry(petAssetKey(id,petPreviewStance,0)).catch(()=>{})}},
@@ -14899,6 +14984,182 @@ function syncLevelAura(){
   }
   positions.needsUpdate=colors.needsUpdate=true;
 }
+let raidElectricAura=null,roForgeFieldFx=null;
+function disposeThreeGroup(g){
+  if(!g)return;
+  const textures=new Set();
+  g.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material){if(o.material.map)textures.add(o.material.map);o.material.dispose();}});
+  textures.forEach(tex=>tex.dispose());
+}
+function buildRaidElectricAura(colorHex){
+  const col=new THREE.Color(colorHex||'#3be8ff');
+  const coreCol=new THREE.Color(0xffffff).lerp(col,.22);
+  const group=new THREE.Group();
+  group.userData.color=colorHex;
+  group.userData.lastSnap=-1;
+
+  const mkBoltLines=(segCount,c,op)=>{
+    const geo=new THREE.BufferGeometry();
+    geo.setAttribute('position',new THREE.Float32BufferAttribute(new Float32Array(segCount*2*3),3));
+    const mat=new THREE.LineBasicMaterial({color:c,transparent:true,opacity:op,depthWrite:false,blending:THREE.AdditiveBlending});
+    return new THREE.LineSegments(geo,mat);
+  };
+  // 8 outer colored static bolts (7 segments each = 56) + 5 white-hot inner bolts (6 segments = 30) + 16 ground arcs
+  const outerBolts=mkBoltLines(56,col,.96);
+  const coreBolts=mkBoltLines(30,coreCol,.92);
+  const groundBolts=mkBoltLines(16,col,.84);
+  const soft=auraTexture();
+  const corona=new THREE.Sprite(new THREE.SpriteMaterial({color:col,map:soft,transparent:true,opacity:.18,depthWrite:false,blending:THREE.AdditiveBlending}));
+  corona.position.y=1.1;corona.scale.set(2.35,2.65,1);corona.renderOrder=-1;
+
+  const sparkGeo=new THREE.BufferGeometry();
+  sparkGeo.setAttribute('position',new THREE.Float32BufferAttribute(new Float32Array(16*3),3));
+  const sparks=new THREE.Points(sparkGeo,new THREE.PointsMaterial({color:coreCol,map:soft,size:.15,transparent:true,opacity:.92,depthWrite:false,blending:THREE.AdditiveBlending}));
+
+  group.add(outerBolts,coreBolts,groundBolts,corona,sparks);
+  group.userData.outerBolts=outerBolts;
+  group.userData.coreBolts=coreBolts;
+  group.userData.groundBolts=groundBolts;
+  group.userData.corona=corona;
+  group.userData.sparks=sparks;
+  return group;
+}
+function animateRaidElectricAura(group,nowMs,x,y,z,scale=1){
+  if(!group)return;
+  group.position.set(x,y,z);
+  group.scale.setScalar(scale);
+  const snap=Math.floor(nowMs/55);
+  const hash=n=>{let h=(n^0x9e3779b9)>>>0;h=Math.imul(h^(h>>>16),0x85ebca6b)>>>0;h=Math.imul(h^(h>>>13),0xc2b2ae35)>>>0;return((h^(h>>>16))>>>0)/4294967296;};
+  if(group.userData.lastSnap!==snap){
+    group.userData.lastSnap=snap;
+    // Outer jagged static lightning arcs wrapping from boots to above shoulders/head
+    const outArr=group.userData.outerBolts.geometry.attributes.position.array;
+    let w=0;
+    for(let b=0;b<8;b++){
+      const active=hash(snap*31+b*17)>.14;
+      const baseA=(b/8)*Math.PI*2+snap*.29+(hash(snap*13+b)-.5)*.65;
+      const rBase=.52+hash(snap*19+b*7)*.34;
+      const y0=.12+hash(snap*23+b*11)*.35,ySpan=1.45+hash(snap*29+b*5)*.68;
+      let px=Math.cos(baseA)*rBase,py=y0,pz=Math.sin(baseA)*rBase;
+      for(let s=1;s<=7;s++){
+        const u=s/7;
+        const ang=baseA+(u-.5)*1.25+(hash(snap*41+b*13+s)-.5)*.78;
+        const rad=active?rBase+Math.sin(u*Math.PI)*.16+(hash(snap*47+b*19+s)-.5)*.34:0;
+        const nx=active?Math.cos(ang)*rad:0,ny=active?y0+ySpan*u+(hash(snap*53+b*23+s)-.5)*.14:0,nz=active?Math.sin(ang)*rad:0;
+        outArr[w++]=px;outArr[w++]=py;outArr[w++]=pz;
+        outArr[w++]=nx;outArr[w++]=ny;outArr[w++]=nz;
+        px=nx;py=ny;pz=nz;
+      }
+    }
+    group.userData.outerBolts.geometry.attributes.position.needsUpdate=true;
+
+    // White-hot inner core arcs
+    const coreArr=group.userData.coreBolts.geometry.attributes.position.array;
+    w=0;
+    for(let b=0;b<5;b++){
+      const active=hash(snap*59+b*29)>.2;
+      const baseA=(b/5)*Math.PI*2-snap*.37;
+      const rBase=.42+hash(snap*61+b*31)*.26;
+      const y0=.24+hash(snap*67+b*37)*.4,ySpan=1.25+hash(snap*71+b*41)*.55;
+      let px=Math.cos(baseA)*rBase,py=y0,pz=Math.sin(baseA)*rBase;
+      for(let s=1;s<=6;s++){
+        const u=s/6;
+        const ang=baseA+(u-.5)*.95+(hash(snap*73+b*43+s)-.5)*.68;
+        const rad=active?rBase+(hash(snap*79+b*47+s)-.5)*.28:0;
+        const nx=active?Math.cos(ang)*rad:0,ny=active?y0+ySpan*u:0,nz=active?Math.sin(ang)*rad:0;
+        coreArr[w++]=px;coreArr[w++]=py;coreArr[w++]=pz;
+        coreArr[w++]=nx;coreArr[w++]=ny;coreArr[w++]=nz;
+        px=nx;py=ny;pz=nz;
+      }
+    }
+    group.userData.coreBolts.geometry.attributes.position.needsUpdate=true;
+
+    // Ground skittering static ring
+    const grdArr=group.userData.groundBolts.geometry.attributes.position.array;
+    w=0;
+    for(let s=0;s<16;s++){
+      const a0=(s/16)*Math.PI*2+snap*.11,a1=((s+1)/16)*Math.PI*2+snap*.11;
+      const r0=.84+(hash(snap*83+s*7)-.5)*.32,r1=.84+(hash(snap*83+((s+1)%16)*7)-.5)*.32;
+      const show=hash(snap*89+s*13)>.28;
+      grdArr[w++]=show?Math.cos(a0)*r0:0;grdArr[w++]=.045;grdArr[w++]=show?Math.sin(a0)*r0:0;
+      grdArr[w++]=show?Math.cos(a1)*r1:0;grdArr[w++]=.045;grdArr[w++]=show?Math.sin(a1)*r1:0;
+    }
+    group.userData.groundBolts.geometry.attributes.position.needsUpdate=true;
+
+    // High-voltage discharge spark motes
+    const spArr=group.userData.sparks.geometry.attributes.position.array;
+    for(let i=0;i<16;i++){
+      const a=hash(snap*97+i*17)*Math.PI*2,r=.38+hash(snap*101+i*23)*.68,sy=.18+hash(snap*103+i*29)*2.1;
+      spArr[i*3]=Math.cos(a)*r;spArr[i*3+1]=sy;spArr[i*3+2]=Math.sin(a)*r;
+    }
+    group.userData.sparks.geometry.attributes.position.needsUpdate=true;
+  }
+  const flicker=.82+Math.sin(nowMs*.037)*.14;
+  group.userData.outerBolts.material.opacity=Math.min(1,flicker+.06);
+  group.userData.coreBolts.material.opacity=flicker;
+  group.userData.corona.material.opacity=.14+Math.sin(nowMs*.021)*.05;
+}
+function syncRaidElectricAura(){
+  const eq=S.auraShow===false||S.hideUI?null:equippedMasteryTitle();
+  const color=eq&&eq.electricColor?eq.electricColor:null;
+  if(!color){if(raidElectricAura)raidElectricAura.visible=false;return;}
+  if(!raidElectricAura||raidElectricAura.userData.color!==color){
+    if(raidElectricAura){scene.remove(raidElectricAura);disposeThreeGroup(raidElectricAura);raidElectricAura=null;}
+    raidElectricAura=buildRaidElectricAura(color);
+    scene.add(raidElectricAura);
+  }
+  raidElectricAura.visible=!!heroSpr&&heroSpr.visible;
+  if(raidElectricAura.visible)animateRaidElectricAura(raidElectricAura,skinNow(),pl.x,actorFloorY()+.02,pl.z,1);
+}
+const roForgeFieldPool=(()=>{
+  if(typeof THREE==='undefined'||typeof scene==='undefined'||!scene)return null;
+  const g=new THREE.Group();
+  const beamGeo=new THREE.CylinderGeometry(.46,.88,1,18,1,true);
+  const beamMat=new THREE.MeshBasicMaterial({color:0xffcf56,transparent:true,opacity:0,side:THREE.DoubleSide,depthWrite:false,blending:THREE.AdditiveBlending});
+  const beam=new THREE.Mesh(beamGeo,beamMat);
+  const ringGeo=new THREE.RingGeometry(.28,.86,24);
+  const ringMat=new THREE.MeshBasicMaterial({color:0xfff6bf,transparent:true,opacity:0,side:THREE.DoubleSide,depthWrite:false,blending:THREE.AdditiveBlending});
+  const ring=new THREE.Mesh(ringGeo,ringMat);
+  ring.rotation.x=-Math.PI/2;ring.position.y=.06;
+  g.add(beam,ring);
+  g.visible=false;
+  g.userData={born:0,dur:0,succeeded:true,beam,ring,baseH:4.4};
+  scene.add(g);
+  return g;
+})();
+function spawnRoForgeFieldFx(succeeded,isStar){
+  if(!roForgeFieldPool||S.hideUI)return;
+  const col=succeeded?(isStar?0xffe47a:0xffcf56):0xff4d4d;
+  const u=roForgeFieldPool.userData;
+  u.beam.material.color.setHex(col);
+  u.beam.material.opacity=.72;
+  u.ring.material.color.setHex(succeeded?0xfff6bf:0xff6b6b);
+  u.ring.material.opacity=.88;
+  u.baseH=succeeded?4.4:1.9;
+  u.beam.position.y=u.baseH*.5;
+  u.beam.scale.set(1,u.baseH,1);
+  u.ring.scale.setScalar(.6);
+  u.born=skinNow();
+  u.dur=succeeded?1150:780;
+  u.succeeded=Boolean(succeeded);
+  roForgeFieldPool.position.set(pl.x,actorFloorY()+.02,pl.z);
+  roForgeFieldPool.visible=true;
+  roForgeFieldFx=roForgeFieldPool;
+}
+function syncRoForgeFieldFx(){
+  if(!roForgeFieldFx||!roForgeFieldFx.visible)return;
+  const u=roForgeFieldFx.userData,age=skinNow()-u.born;
+  if(age>=u.dur){roForgeFieldFx.visible=false;roForgeFieldFx=null;return;}
+  const k=Math.max(0,Math.min(1,age/u.dur));
+  roForgeFieldFx.position.set(pl.x,actorFloorY()+.02,pl.z);
+  const wScale=u.succeeded?1.15-k*.55:.7+k*1.2;
+  const hScale=u.baseH*(u.succeeded?.6+k*.65:1-k*.4);
+  u.beam.position.y=hScale*.5;
+  u.beam.scale.set(wScale,hScale,wScale);
+  u.beam.material.opacity=(1-k)*(u.succeeded?.76:.58);
+  u.ring.scale.setScalar(.6+k*2.8);
+  u.ring.material.opacity=(1-k)*.88;
+}
 // A cached alpha silhouette forms a narrow hard edge; the original weapon is drawn over it.
 // No broad Gaussian shadow, so pointed blades retain their corners instead of a rounded halo.
 const weaponGlowMasks=new WeakMap();
@@ -16309,7 +16570,7 @@ function draw(){
   // Project the equipped name and its full logo below the hero's feet so they follow
   // movement and the camera. Eager-load this one visible image; collection art stays lazy.
   const equipped=equippedMasteryTitle();
-  if(heroTitle&&heroTitleText){if(equipped){const [txh,tyh]=scr(pl.x,.16+(KIT.nativeWorld?actorFloorY()-.035:0),pl.z);heroTitle.style.display='block';heroTitle.style.left=txh+'px';heroTitle.style.top=tyh+'px';if(heroTitleMark&&heroTitleMark.dataset.title!==equipped.id){heroTitleMark.innerHTML=titleIcon(equipped,true);heroTitleMark.dataset.title=equipped.id;}heroTitleText.textContent=equipped.name;heroTitle.title=typeof PGTitles!=='undefined'?PGTitles.requirement(equipped):'Index title · '+equipped.xp.toLocaleString()+' Index XP'}else heroTitle.style.display='none'}
+  if(heroTitle&&heroTitleText){if(equipped){const [txh,tyh]=scr(pl.x,.16+(KIT.nativeWorld?actorFloorY()-.035:0),pl.z);heroTitle.style.display='block';heroTitle.style.left=txh+'px';heroTitle.style.top=tyh+'px';if(equipped.electricColor){heroTitle.dataset.electric='1';heroTitle.style.setProperty('--raid-elec',equipped.electricColor);}else{delete heroTitle.dataset.electric;heroTitle.style.removeProperty('--raid-elec');}if(heroTitleMark&&heroTitleMark.dataset.title!==equipped.id){heroTitleMark.innerHTML=titleIcon(equipped,true);heroTitleMark.dataset.title=equipped.id;}heroTitleText.textContent=equipped.name;heroTitle.title=typeof PGTitles!=='undefined'?PGTitles.requirement(equipped):'Index title · '+equipped.xp.toLocaleString()+' Index XP'}else{heroTitle.style.display='none';delete heroTitle.dataset.electric;heroTitle.style.removeProperty('--raid-elec');}}
   const pids=new Set(S.pets.filter(p=>p.on).map(p=>p.id));petMesh.forEach((v,id)=>{if(!pids.has(id)){disposeCreatureVisual(v);petMesh.delete(id)}});
   S.pets.filter(p=>p.on).forEach(p=>{const sp=PETS[p.sp],r=petR[p.id];if(!sp||!r)return;let v=petMesh.get(p.id);
     const pet={x:r.x,z:r.z,run:r.run,a:p.id,shape:petFallbackShape(sp),c:sp.c,spriteId:sp.spriteId,pet:true,flash:0,lunge:r.lunge||0};
@@ -16338,7 +16599,7 @@ function draw(){
   for(const m of mobs){const v=mobMesh.get(m);if(v)syncMobImage(v,m,mobVisualScale(m))}
   for(const p of S.pets.filter(p=>p.on)){const v=petMesh.get(p.id),r=petR[p.id],sp=petSpecies(p.sp);
     if(v&&r&&sp)syncMobImage(v,{x:r.x,z:r.z,run:r.run,a:p.id,shape:petFallbackShape(sp),flash:0,lunge:r.lunge||0},PET_VISUAL_SCALE)}
-  syncSkillFx();syncBossSkillFx();syncWeaponSprites(pFace,c);syncLevelAura();
+  syncSkillFx();syncBossSkillFx();syncWeaponSprites(pFace,c);syncLevelAura();syncRaidElectricAura();syncRoForgeFieldFx();
   eclipseDrawMinimap();if(typeof eclipseDrawAtlas==='function')eclipseDrawAtlas();drawSkinPreview('eclipsePortrait',null,S.cls,S.sex);if(tabs.includes('equip'))drawSkinPreview('eclipseDoll',null,S.cls,S.sex);if(tabs.includes('set'))drawAppearancePreview();
   if(tabs.includes('job'))drawClassPreview();
   if(typeof wardrobePreview==='function')wardrobePreview();
@@ -16724,22 +16985,22 @@ setInterval(updateWatch,60000);
 // be hours old while the player was on another tab, and the check is a 60-byte text file.
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&(pendingUpdateBuild||Date.now()-PAGE_STARTED_AT>30000))updateWatch()});
 </script>
-<script src="assets/wardrobe-ui.js?v=456"></script>
+<script src="assets/wardrobe-ui.js?v=457"></script>
 <script src="assets/shop.js?v=321"></script>
 <script src="assets/friends.js?v=273"></script>
-<script src="assets/digimon/roster.js?v=456"></script>
-<script src="assets/digimon/base-stats.js?v=456"></script>
-<script src="assets/social-rules.js?v=456"></script>
-<script src="assets/social-poker.js?v=456"></script>
-<script src="assets/digimon-sanctuary.js?v=456"></script>
+<script src="assets/digimon/roster.js?v=457"></script>
+<script src="assets/digimon/base-stats.js?v=457"></script>
+<script src="assets/social-rules.js?v=457"></script>
+<script src="assets/social-poker.js?v=457"></script>
+<script src="assets/digimon-sanctuary.js?v=457"></script>
 <script src="assets/digimon-battle.js?v=393"></script>
-<script src="assets/social-digimon.js?v=456"></script>
+<script src="assets/social-digimon.js?v=457"></script>
 <script src="assets/social-gym-redesign.js?v=393"></script>
 <script src="assets/social-pond-design.js?v=393"></script>
 <script src="assets/social-title-art.js?v=450"></script>
-<script src="assets/social-scene.js?v=456"></script>
-<script src="assets/social-fishing.js?v=456"></script>
-<script src="assets/plaza-bots.js?v=456"></script>
+<script src="assets/social-scene.js?v=457"></script>
+<script src="assets/social-fishing.js?v=457"></script>
+<script src="assets/plaza-bots.js?v=457"></script>
 <script src="assets/adventure-guide.js?v=450"></script>
-<script src="assets/social.js?v=456"></script></body>
+<script src="assets/social.js?v=457"></script></body>
 </html>

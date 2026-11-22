@@ -1968,3 +1968,240 @@ body.raid-open #hudBuffs {
     width: 94vw;
   }
 }
+
+/* ---------- Ragnarok Online Blacksmith Forge (1s Hammer/Anvil + Success/Failure FX) ---------- */
+#eclipseRefineResult {
+  overflow: hidden;
+  transition: border-color 0.22s ease, box-shadow 0.22s ease;
+}
+#eclipseRefineResult.refine-forging {
+  --result-color: #ffbe55;
+  border-color: rgba(255, 190, 85, 0.72) !important;
+  box-shadow: 0 0 26px rgba(255, 152, 42, 0.28), inset 0 0 28px rgba(255, 156, 48, 0.16);
+}
+#eclipseRefineResult.refine-success {
+  --result-color: #ffe07d;
+  border-color: rgba(255, 222, 115, 0.88) !important;
+  box-shadow: 0 0 34px rgba(255, 210, 86, 0.42), inset 0 0 36px rgba(255, 218, 108, 0.24);
+}
+#eclipseRefineResult.refine-failure {
+  --result-color: #ff7676;
+  border-color: rgba(255, 96, 96, 0.78) !important;
+  box-shadow: 0 0 28px rgba(255, 68, 68, 0.34), inset 0 0 32px rgba(180, 26, 36, 0.26);
+  animation: ro-panel-recoil 0.42s cubic-bezier(.36,.07,.19,.97);
+}
+#eclipseRefineResult.refine-failure .eclipse-result-art {
+  animation: ro-fail-shake 0.44s ease-out;
+}
+.ro-forge-fx {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 3;
+}
+.ro-forge-fx.is-forging .ro-forge-hearth {
+  position: absolute;
+  left: 50%;
+  top: 46px;
+  width: 118px;
+  height: 118px;
+  transform: translate(-50%, -30%);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 196, 78, 0.55) 0%, rgba(255, 112, 28, 0.24) 48%, transparent 72%);
+  animation: ro-anvil-pulse 0.33s ease-out 3;
+}
+.ro-forge-hammer {
+  position: absolute;
+  left: calc(50% + 14px);
+  top: 8px;
+  width: 58px;
+  height: 58px;
+  transform-origin: 82% 84%;
+  filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.7)) drop-shadow(0 0 8px rgba(255, 196, 82, 0.7));
+  animation: ro-hammer-strike 0.33s cubic-bezier(.22,.78,.28,1) 3;
+}
+.ro-forge-anvil {
+  position: absolute;
+  left: 50%;
+  top: 56px;
+  width: 54px;
+  height: 22px;
+  transform: translateX(-50%);
+  opacity: 0.9;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.8));
+}
+.ro-forge-sparks i {
+  position: absolute;
+  left: 50%;
+  top: 48px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #fff2a6;
+  box-shadow: 0 0 8px #ff9d2e, 0 0 14px #ffd56b;
+  opacity: 0;
+  animation: ro-spark-fly 0.33s ease-out 3;
+}
+.ro-forge-sparks i:nth-child(1) { --sx: -42px; --sy: -28px; }
+.ro-forge-sparks i:nth-child(2) { --sx: 44px; --sy: -24px; animation-delay: 0.02s; }
+.ro-forge-sparks i:nth-child(3) { --sx: -28px; --sy: -46px; animation-delay: 0.01s; }
+.ro-forge-sparks i:nth-child(4) { --sx: 30px; --sy: -44px; animation-delay: 0.03s; }
+.ro-forge-sparks i:nth-child(5) { --sx: -52px; --sy: 6px; animation-delay: 0.02s; }
+.ro-forge-sparks i:nth-child(6) { --sx: 50px; --sy: 8px; animation-delay: 0.01s; }
+
+/* RO Success: Golden Light Pillar + Radiant Starburst + Chime Halos */
+.ro-forge-fx.is-success .ro-success-pillar {
+  position: absolute;
+  left: 50%;
+  top: -12%;
+  bottom: -12%;
+  width: 86px;
+  transform: translateX(-50%);
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 232, 132, 0.34) 24%, rgba(255, 252, 220, 0.88) 50%, rgba(255, 232, 132, 0.34) 76%, transparent 100%);
+  mix-blend-mode: screen;
+  animation: ro-pillar-flash 1.35s ease-out forwards;
+}
+.ro-forge-fx.is-success .ro-success-starburst {
+  position: absolute;
+  left: 50%;
+  top: 44px;
+  width: 132px;
+  height: 132px;
+  transform: translate(-50%, -36%);
+  filter: drop-shadow(0 0 14px rgba(255, 218, 98, 0.95));
+  animation: ro-starburst-spin 1.45s cubic-bezier(.16,.84,.32,1) forwards;
+}
+.ro-forge-fx.is-success .ro-success-ring {
+  position: absolute;
+  left: 50%;
+  top: 44px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 2.5px solid #fff3b0;
+  box-shadow: 0 0 16px #ffd24d;
+  transform: translate(-50%, -36%) scale(0.4);
+  animation: ro-ring-expand 0.95s ease-out forwards;
+}
+.ro-forge-fx.is-success .ro-success-glints span {
+  position: absolute;
+  color: #fff6bd;
+  font-size: 14px;
+  text-shadow: 0 0 10px #ffc93c;
+  animation: ro-glint-rise 1.2s ease-out forwards;
+}
+.ro-forge-fx.is-success .ro-success-glints span:nth-child(1) { left: 26%; top: 54px; }
+.ro-forge-fx.is-success .ro-success-glints span:nth-child(2) { left: 71%; top: 48px; animation-delay: 0.08s; }
+.ro-forge-fx.is-success .ro-success-glints span:nth-child(3) { left: 48%; top: 18px; animation-delay: 0.14s; font-size: 17px; }
+
+/* RO Failure: Crimson Shatter Cracks + Dark Rising Forge Smoke */
+.ro-forge-fx.is-failure .ro-fail-flash {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 42px, rgba(255, 68, 68, 0.52), rgba(90, 12, 18, 0.25) 55%, transparent 78%);
+  animation: ro-fail-burst 0.85s ease-out forwards;
+}
+.ro-forge-fx.is-failure .ro-fail-cracks {
+  position: absolute;
+  left: 50%;
+  top: 44px;
+  width: 118px;
+  height: 118px;
+  transform: translate(-50%, -36%);
+  filter: drop-shadow(0 0 8px rgba(255, 60, 60, 0.9));
+  animation: ro-crack-fade 1.15s ease-out forwards;
+}
+.ro-forge-fx.is-failure .ro-fail-smoke i {
+  position: absolute;
+  left: 50%;
+  top: 48px;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(58, 52, 60, 0.78) 0%, rgba(28, 24, 30, 0.45) 58%, transparent 76%);
+  animation: ro-smoke-rise 1.1s ease-out forwards;
+}
+.ro-forge-fx.is-failure .ro-fail-smoke i:nth-child(1) { --mx: -26px; --my: -38px; }
+.ro-forge-fx.is-failure .ro-fail-smoke i:nth-child(2) { --mx: 24px; --my: -44px; animation-delay: 0.06s; }
+.ro-forge-fx.is-failure .ro-fail-smoke i:nth-child(3) { --mx: -4px; --my: -56px; animation-delay: 0.12s; }
+
+@keyframes ro-hammer-strike {
+  0% { transform: rotate(36deg) translate(6px, -8px); }
+  26% { transform: rotate(-28deg) translate(-6px, 8px); }
+  44% { transform: rotate(-20deg) translate(-4px, 5px); }
+  100% { transform: rotate(36deg) translate(6px, -8px); }
+}
+@keyframes ro-anvil-pulse {
+  0%, 18% { opacity: 0.25; transform: translate(-50%, -30%) scale(0.75); }
+  28% { opacity: 1; transform: translate(-50%, -30%) scale(1.18); }
+  100% { opacity: 0.2; transform: translate(-50%, -30%) scale(0.85); }
+}
+@keyframes ro-spark-fly {
+  0%, 22% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+  28% { opacity: 1; transform: translate(-50%, -50%) scale(1.25); }
+  100% { opacity: 0; transform: translate(calc(-50% + var(--sx, 24px)), calc(-50% + var(--sy, -28px))) scale(0.2); }
+}
+@keyframes ro-pillar-flash {
+  0% { opacity: 0; transform: translateX(-50%) scaleX(0.25); }
+  16% { opacity: 1; transform: translateX(-50%) scaleX(1.18); }
+  100% { opacity: 0; transform: translateX(-50%) scaleX(0.45); }
+}
+@keyframes ro-starburst-spin {
+  0% { opacity: 0; transform: translate(-50%, -36%) scale(0.35) rotate(-25deg); }
+  20% { opacity: 1; transform: translate(-50%, -36%) scale(1.12) rotate(12deg); }
+  100% { opacity: 0; transform: translate(-50%, -36%) scale(1.42) rotate(58deg); }
+}
+@keyframes ro-ring-expand {
+  0% { opacity: 0.95; transform: translate(-50%, -36%) scale(0.45); }
+  100% { opacity: 0; transform: translate(-50%, -36%) scale(3.1); }
+}
+@keyframes ro-glint-rise {
+  0% { opacity: 0; transform: translateY(8px) scale(0.6); }
+  25% { opacity: 1; transform: translateY(-6px) scale(1.15); }
+  100% { opacity: 0; transform: translateY(-34px) scale(0.75); }
+}
+@keyframes ro-fail-burst {
+  0% { opacity: 0.95; }
+  100% { opacity: 0; }
+}
+@keyframes ro-crack-fade {
+  0% { opacity: 0; transform: translate(-50%, -36%) scale(0.65); }
+  14% { opacity: 1; transform: translate(-50%, -36%) scale(1.06); }
+  100% { opacity: 0; transform: translate(-50%, -36%) scale(1.14); }
+}
+@keyframes ro-smoke-rise {
+  0% { opacity: 0.85; transform: translate(-50%, -50%) scale(0.55); }
+  100% { opacity: 0; transform: translate(calc(-50% + var(--mx, 0px)), calc(-50% + var(--my, -40px))) scale(1.85); }
+}
+@keyframes ro-fail-shake {
+  0%, 100% { transform: translateX(0); }
+  18% { transform: translateX(-7px) rotate(-3deg); }
+  36% { transform: translateX(7px) rotate(3deg); }
+  54% { transform: translateX(-5px) rotate(-2deg); }
+  72% { transform: translateX(4px) rotate(1deg); }
+}
+@keyframes ro-panel-recoil {
+  0%, 100% { transform: translateX(0); }
+  22% { transform: translateX(-4px); }
+  46% { transform: translateX(4px); }
+  70% { transform: translateX(-2px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ro-forge-fx,
+  #eclipseRefineResult.refine-failure {
+    animation: none !important;
+  }
+}
+
+/* Raid Boss Card & Exclusive Title Victory Loot Highlights */
+.raid-loot-item.rare-card {
+  border-color: rgba(255, 206, 102, 0.78);
+  background: linear-gradient(135deg, rgba(64, 38, 18, 0.92), rgba(34, 20, 44, 0.92));
+  box-shadow: 0 0 18px rgba(255, 192, 76, 0.28);
+}
+.raid-loot-item.rare-title {
+  border-color: rgba(114, 224, 255, 0.78);
+  background: linear-gradient(135deg, rgba(16, 44, 62, 0.92), rgba(34, 22, 58, 0.92));
+  box-shadow: 0 0 18px rgba(90, 214, 255, 0.28);
+}

@@ -32,18 +32,152 @@
       .catch(() => {}) // A later interaction/contact retries failed downloads.
       .finally(() => loading.delete(file));
   }
-  function unlock() {
+  function ensureContext() {
     try {
       const AudioContext = window.AudioContext || window.webkitAudioContext;
-      if (!AudioContext) return;
+      if (!AudioContext) return null;
       context ||= new AudioContext();
       if (context.state === 'suspended') context.resume().catch(() => {});
+      return context;
+    } catch (_) {
+      return null;
+    }
+  }
+  function unlock() {
+    const ctx = ensureContext();
+    if (!ctx) return;
+    try {
       for (const [folder, files] of [['hits', hits], ['attacks', attacks]])
         for (const file of new Set(Object.values(files))) load(folder + '/' + file);
     } catch (_) { /* Audio is optional on unsupported browsers. */ }
   }
   document.addEventListener('pointerdown', unlock);
   document.addEventListener('keydown', unlock);
+
+  // Synthesize classic Ragnarok Online Hollgrehenn Blacksmith forge sounds:
+  // 1) Anvil hammer strikes ("ting! ting! ting!") during the 1.0s forging suspense
+  // 2) Crystalline ascending chime fanfare on Success
+  // 3) Metallic fracture + anvil thud + furnace steam on Failure
+  let noiseBuf = null;
+  function getNoiseBuffer(ctx) {
+    if (noiseBuf && noiseBuf.sampleRate === ctx.sampleRate) return noiseBuf;
+    const len = Math.floor(ctx.sampleRate * 0.6);
+    const buf = ctx.createBuffer(1, len, ctx.sampleRate);
+    const data = buf.getChannelData(0);
+    let seed = 0x51f3a9d7;
+    for (let i = 0; i < len; i++) {
+      seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
+      data[i] = (seed / 0x80000000) - 1;
+    }
+    noiseBuf = buf;
+    return buf;
+  }
+  function scheduleAnvilTing(ctx, at, baseFreq, volume) {
+    // High-pitched steel-on-anvil partials (RO blacksmith hammer chime)
+    const ratios = [1, 1.502, 2.248];
+    const gains = [1, 0.52, 0.28];
+    for (let i = 0; i < ratios.length; i++) {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = i === 0 ? 'triangle' : 'sine';
+      osc.frequency.setValueAtTime(baseFreq * ratios[i], at);
+      gain.gain.setValueAtTime(0.0001, at);
+      gain.gain.linearRampToValueAtTime(volume * gains[i], at + 0.004);
+      gain.gain.exponentialRampToValueAtTime(0.0001, at + (i === 0 ? 0.24 : 0.16));
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(at);
+      osc.stop(at + 0.26);
+    }
+    // Crisp metallic contact transient
+    const nSrc = ctx.createBufferSource();
+    const hp = ctx.createBiquadFilter();
+    const nGain = ctx.createGain();
+    nSrc.buffer = getNoiseBuffer(ctx);
+    hp.type = 'highpass';
+    hp.frequency.setValueAtTime(2800, at);
+    nGain.gain.setValueAtTime(volume * 0.55, at);
+    nGain.gain.exponentialRampToValueAtTime(0.0001, at + 0.032);
+    nSrc.connect(hp);
+    hp.connect(nGain);
+    nGain.connect(ctx.destination);
+    nSrc.start(at);
+    nSrc.stop(at + 0.04);
+  }
+  function playForgeStart(enabled = true, isStar = false) {
+    window.CombatAudio.lastForgeEvent = { kind: 'start', isStar: Boolean(isStar), enabled: Boolean(enabled), at: Date.now() };
+    if (!enabled || document.hidden) return;
+    const ctx = ensureContext();
+    if (!ctx) return;
+    try {
+      const now = ctx.currentTime;
+      const base = isStar ? 2093 : 1975.5; // Bright C7 for Star, classic B6 for Refine
+      // 3 crisp hammer-on-anvil "ting-ting-ting" strikes across the 1.0s forge window
+      scheduleAnvilTing(ctx, now + 0.03, base, 0.22);
+      scheduleAnvilTing(ctx, now + 0.35, base * 1.03, 0.24);
+      scheduleAnvilTing(ctx, now + 0.67, base * 1.06, 0.26);
+    } catch (_) {}
+  }
+  function playForgeResult(succeeded, enabled = true, isStar = false) {
+    window.CombatAudio.lastForgeEvent = { kind: succeeded ? 'success' : 'failure', isStar: Boolean(isStar), enabled: Boolean(enabled), at: Date.now() };
+    if (!enabled || document.hidden) return;
+    const ctx = ensureContext();
+    if (!ctx) return;
+    try {
+      const now = ctx.currentTime;
+      if (succeeded) {
+        // RO ws_refine_success: bright ascending bell fanfare ("TING-TING-TIIIING!")
+        const notes = isStar ? [1174.66, 1479.98, 1760.0, 2349.32] : [1046.5, 1318.51, 1567.98, 2093.0];
+        notes.forEach((freq, idx) => {
+          const t0 = now + idx * 0.068;
+          const dur = idx === notes.length - 1 ? 0.72 : 0.26;
+          for (const [mult, amp, type] of [[1, 0.22, 'triangle'], [2, 0.11, 'sine'], [3.01, 0.05, 'sine']]) {
+            const osc = ctx.createOscillator();
+            const g = ctx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq * mult, t0);
+            g.gain.setValueAtTime(0.0001, t0);
+            g.gain.linearRampToValueAtTime(amp, t0 + 0.006);
+            g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+            osc.connect(g);
+            g.connect(ctx.destination);
+            osc.start(t0);
+            osc.stop(t0 + dur + 0.02);
+          }
+        });
+      } else {
+        // RO ws_refine_failed: sharp metallic crack + descending dull thud + smoke hiss
+        for (const [f0, f1, amp] of [[466.16, 138.59, 0.24], [311.13, 98.0, 0.20]]) {
+          const osc = ctx.createOscillator();
+          const g = ctx.createGain();
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(f0, now);
+          osc.frequency.exponentialRampToValueAtTime(f1, now + 0.34);
+          g.gain.setValueAtTime(amp, now);
+          g.gain.exponentialRampToValueAtTime(0.0001, now + 0.38);
+          osc.connect(g);
+          g.connect(ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.40);
+        }
+        const nSrc = ctx.createBufferSource();
+        const bp = ctx.createBiquadFilter();
+        const nGain = ctx.createGain();
+        nSrc.buffer = getNoiseBuffer(ctx);
+        bp.type = 'bandpass';
+        bp.frequency.setValueAtTime(1450, now);
+        bp.frequency.exponentialRampToValueAtTime(340, now + 0.42);
+        bp.Q.setValueAtTime(1.4, now);
+        nGain.gain.setValueAtTime(0.28, now);
+        nGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.44);
+        nSrc.connect(bp);
+        bp.connect(nGain);
+        nGain.connect(ctx.destination);
+        nSrc.start(now);
+        nSrc.stop(now + 0.46);
+      }
+    } catch (_) {}
+  }
   function play(files, folder, weapon, enabled, kind, critical = false) {
     // The main-field simulation may continue behind the plaza. Its combat sounds must not
     // bleed into the Social Hub; leaving the hub removes this gate and restores them.
@@ -64,11 +198,18 @@
     source.start(now);
   }
   window.CombatAudio = {
+    lastForgeEvent: null,
     attack(enabled = true, weapon = 'fist') {
       play(attacks, 'attacks', weapon, enabled, 'attack');
     },
     hit(critical, enabled = true, weapon = 'fist', kind = 'normal') {
       play(hits, 'hits', weapon, enabled, kind === 'pet' ? 'pet' : kind === 'skill' ? 'skill' : 'normal', critical);
+    },
+    forgeStart(enabled = true, isStar = false) {
+      playForgeStart(enabled, isStar);
+    },
+    forgeResult(succeeded, enabled = true, isStar = false) {
+      playForgeResult(succeeded, enabled, isStar);
     }
   };
 })();

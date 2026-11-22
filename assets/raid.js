@@ -2267,6 +2267,9 @@
     if (r.echo > 0) S.shards = (Number(S.shards) || 0) + r.echo;
 
     var st = raidSaveState();
+    var bossCardDrop = null;
+    var titleDrop = null;
+    var milestoneTitles = [];
     if (cleared) {
       st.clears = (Number(st.clears) || 0) + 1;
       var secs = Math.max(1, Math.round(raid.elapsed));
@@ -2275,13 +2278,69 @@
       } else {
         if (!st.bestSolo || secs < st.bestSolo) st.bestSolo = secs;
       }
+
+      // 1) 10% Raid Boss Accessory Card Drop (either Primordial Ifrit Card [ATK +15%] or Sovereign Thanatos Card [MATK +15%])
+      if (typeof RAID_BOSS_CARDS !== 'undefined' && Array.isArray(RAID_BOSS_CARDS) && RAID_BOSS_CARDS.length > 0 && Math.random() < 0.10) {
+        var cardDef = RAID_BOSS_CARDS[Math.floor(Math.random() * RAID_BOSS_CARDS.length)];
+        if (cardDef && typeof newCard === 'function' && typeof addCard === 'function') {
+          var rolledCard = newCard(cardDef);
+          if (addCard(rolledCard, { label: cardDef.n })) {
+            bossCardDrop = cardDef.n;
+            if (typeof log === 'function') {
+              log('🃏 RAID BOSS CARD DROP! Obtained ' + cardDef.n + ' (Accessory · ' + (cardDef.stat === 'matk' ? 'Magic Power +15%' : 'ATK % +15') + ')!', 'r4', 'card');
+            }
+            if (typeof addFloat === 'function' && typeof pl !== 'undefined' && pl) {
+              addFloat(pl.x, 3.4, pl.z, '🃏 ' + cardDef.n + '!', '#ffd86b', true);
+            }
+          }
+        }
+      }
+
+      // 2) 10% Exclusive Raid Title Drop (Astral Stormbringer [Purple] / Volcanic Overlord [Red])
+      if (Math.random() < 0.10) {
+        if (!Array.isArray(S.titleAwards)) S.titleAwards = [];
+        var dropPool = ['astral-stormbringer', 'volcanic-overlord'];
+        var unownedDrops = dropPool.filter(function (tid) { return S.titleAwards.indexOf(tid) === -1; });
+        if (unownedDrops.length > 0) {
+          var preferred = dng.id === 'thor' ? 'volcanic-overlord' : 'astral-stormbringer';
+          var chosenTid = unownedDrops.indexOf(preferred) !== -1 && Math.random() < 0.65
+            ? preferred
+            : unownedDrops[Math.floor(Math.random() * unownedDrops.length)];
+          S.titleAwards.push(chosenTid);
+          var tMeta = (typeof PGTitles !== 'undefined' && PGTitles.find) ? PGTitles.find(chosenTid) : null;
+          titleDrop = tMeta ? tMeta.name : chosenTid;
+          if (typeof log === 'function') {
+            log('⚡ EXCLUSIVE RAID TITLE DROP! Unlocked "' + titleDrop + '"' + (tMeta && tMeta.electricName ? ' (' + tMeta.electricName + ' FX)' : '') + '!', 'r4', 'misc');
+          }
+          if (typeof addFloat === 'function' && typeof pl !== 'undefined' && pl) {
+            addFloat(pl.x, 3.8, pl.z, '⚡ TITLE: ' + titleDrop + '!', (tMeta && tMeta.electricColor) || '#c259ff', true);
+          }
+        }
+      }
+
+      // 3) Sync Raid Clear Milestone Titles (10 -> Raid Vanguard, 20 -> Citadel Breaker, 30 -> Sovereign Conqueror)
+      if (typeof PGTitles !== 'undefined' && typeof PGTitles.sync === 'function') {
+        var newlyAdded = PGTitles.sync(S, typeof CLASSES !== 'undefined' ? CLASSES : {});
+        for (var ti = 0; ti < newlyAdded.length; ti++) {
+          var mTitle = PGTitles.find ? PGTitles.find(newlyAdded[ti]) : null;
+          if (mTitle && mTitle.category === 'raid') {
+            milestoneTitles.push(mTitle.name);
+            if (typeof log === 'function') {
+              log('⚡ RAID MILESTONE TITLE UNLOCKED! "' + mTitle.name + '" (' + (mTitle.electricName || 'Static Lightning') + ' FX)!', 'r4', 'misc');
+            }
+          }
+        }
+      }
     }
     return {
       shards: r.shards,
       sigils: r.sigils || 0,
       matName: dng.matName,
       zeny: r.zeny,
-      echo: r.echo
+      echo: r.echo,
+      bossCardDrop: bossCardDrop,
+      titleDrop: titleDrop,
+      milestoneTitles: milestoneTitles
     };
   }
 
@@ -2813,7 +2872,7 @@
       partyHtml +
       '<div class="raid-stages-grid">' + stagesHtml + '</div>' +
       '<div class="raid-rewards-bar">' +
-        '<div><b>Party Clear</b><span>30 ' + escHtml(dng.matName) + ' · 1 Valkyrie\'s Sigil · 750,000 Zeny · 150 Echo Shards</span></div>' +
+        '<div><b>Party Clear</b><span>30 ' + escHtml(dng.matName) + ' · 1 Valkyrie\'s Sigil · 750,000 Zeny · 150 Echo Shards · 10% Boss Acc Card &amp; Raid Title</span></div>' +
       '</div>' +
       '<div class="raid-lobby-foot">' +
         '<div class="raid-meta-line">' +
@@ -3103,6 +3162,32 @@
           '<div class="raid-loot-meta"><b>+' + rew.echo + ' Echo Shards</b><small>Resonance Reward</small></div>' +
         '</div>'
       );
+    }
+    if (rew.bossCardDrop) {
+      lootTiles.push(
+        '<div class="raid-loot-item rare-card">' +
+          '<span class="raid-loot-icon">🃏</span>' +
+          '<div class="raid-loot-meta"><b>' + escHtml(rew.bossCardDrop) + '</b><small>10% Raid Boss Accessory Card!</small></div>' +
+        '</div>'
+      );
+    }
+    if (rew.titleDrop) {
+      lootTiles.push(
+        '<div class="raid-loot-item rare-title">' +
+          '<span class="raid-loot-icon">⚡</span>' +
+          '<div class="raid-loot-meta"><b>Title: ' + escHtml(rew.titleDrop) + '</b><small>10% Exclusive Static Lightning FX</small></div>' +
+        '</div>'
+      );
+    }
+    if (Array.isArray(rew.milestoneTitles) && rew.milestoneTitles.length > 0) {
+      for (var mti = 0; mti < rew.milestoneTitles.length; mti++) {
+        lootTiles.push(
+          '<div class="raid-loot-item rare-title">' +
+            '<span class="raid-loot-icon">⚡</span>' +
+            '<div class="raid-loot-meta"><b>Title: ' + escHtml(rew.milestoneTitles[mti]) + '</b><small>Raid Milestone Static Lightning FX</small></div>' +
+          '</div>'
+        );
+      }
     }
     if (!lootTiles.length) {
       lootTiles.push(

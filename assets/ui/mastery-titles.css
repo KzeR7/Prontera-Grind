@@ -38,3 +38,9 @@ html.pg-mobile .hero-title .ht-mark{width:21px;height:23px}
 @container(max-width:610px){.tc-list{grid-template-columns:1fr}}
 @media(max-width:650px){.tc-list{grid-template-columns:1fr}.tc-hero{grid-template-columns:minmax(0,1fr) 125px;gap:10px;padding:22px 18px}.tc-hero h2{font-size:25px}.tc-feature{padding:10px 6px}.tc-feature>.title-symbol,.tc-empty-symbol{width:48px;height:48px}.tc-feature b{font-size:13px}.tc-feature span:not(.tc-empty-symbol){font-size:9px}}
 @media(max-width:360px){.tc-hero{grid-template-columns:1fr}.tc-feature{display:grid;grid-template-columns:42px 1fr;text-align:left;justify-items:start}.tc-feature>.title-symbol,.tc-empty-symbol{grid-row:1/4;width:42px;height:42px}.tc-feature button{grid-column:2}}
+/* Exclusive Raid electric title styling */
+.raid-title-symbol{filter:drop-shadow(0 0 5px var(--raid-elec,#3be8ff))}
+.tc-card.is-raid-electric.is-earned{border-color:color-mix(in srgb,var(--raid-elec,#3be8ff) 55%,#394858);box-shadow:inset 0 1px #ffffff12,0 0 16px color-mix(in srgb,var(--raid-elec,#3be8ff) 16%,transparent)}
+.tc-card.is-raid-electric.is-equipped{border-color:var(--raid-elec,#3be8ff);box-shadow:inset 0 1px #ffffff1c,0 0 22px color-mix(in srgb,var(--raid-elec,#3be8ff) 32%,transparent)}
+.tc-kicker .tc-electric-pill{padding:1px 5px;border-radius:4px;border:1px solid color-mix(in srgb,var(--raid-elec,#3be8ff) 60%,#334);background:color-mix(in srgb,var(--raid-elec,#3be8ff) 14%,#0d1520);color:var(--raid-elec,#3be8ff);font-weight:700}
+.hero-title[data-electric]{border-color:var(--raid-elec,#3be8ff);box-shadow:0 0 12px color-mix(in srgb,var(--raid-elec,#3be8ff) 45%,#000a),inset 0 0 8px color-mix(in srgb,var(--raid-elec,#3be8ff) 22%,transparent);color:#f7fbff}
