@@ -101,8 +101,8 @@ $id('view').append(sanctuaryPanel);
 // Afterdark: keep the existing game windows and actions available inside the hub.
 const moreButton=document.createElement('button');moreButton.id='socialMore';moreButton.type='button';moreButton.textContent='More ···';moreButton.setAttribute('aria-expanded','false');moreButton.setAttribute('aria-controls','socialMorePanel');
 hub.querySelector('#socialLeave').before(moreButton);
-const raidHubButton=document.createElement('button');raidHubButton.id='socialRaidBtn';raidHubButton.type='button';raidHubButton.title='Astral Raid — Solo or 2–3 player Party Raid';raidHubButton.textContent='☠ Raid';
-raidHubButton.onclick=()=>{if(globalThis.PGRaid)globalThis.PGRaid.showLobby()};
+const raidHubButton=document.createElement('button');raidHubButton.id='socialRaidBtn';raidHubButton.type='button';raidHubButton.title='Dungeons — Raid & Endless Echo';raidHubButton.textContent='☠ Dungeons';
+raidHubButton.onclick=()=>{if(globalThis.PGRaid){if(globalThis.PGRaid.openDungeons)globalThis.PGRaid.openDungeons();else globalThis.PGRaid.showLobby();}};
 hub.querySelector('#socialPartyBtn').after(raidHubButton);
 // Reuse bundled artwork in the compact controls; the original labels stay intact.
 /* v381 (owner: "poker icon is not similar"): the Hold'em button joins the painted-art set with a

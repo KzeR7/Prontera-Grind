@@ -721,6 +721,7 @@ export class SocialRoom {
    type:'raid_lobby',
    partyId:party.id,
    leader:party.leader,
+   dungeonId:party.raidDungeon||'astral',
    summon:Boolean(summon),
    members:party.members.map(mem=>this.raidMemberInfo(party,mem))
   });
@@ -734,6 +735,9 @@ export class SocialRoom {
    lv:Math.max(1,Math.min(999,Math.floor(Number(m.lv)||150))),
    sex:m.sex==='f'?'f':'m'
   };
+  if(c.id===party.leader&&typeof m.dungeonId==='string'){
+   party.raidDungeon=m.dungeonId==='thor'?'thor':'astral';
+  }
   if(typeof m.ready==='boolean'&&c.id!==party.leader){
    party.raidReady=party.raidReady||new Set();
    if(m.ready)party.raidReady.add(c.id);else party.raidReady.delete(c.id);
@@ -754,14 +758,16 @@ export class SocialRoom {
   if(party.members.length<2||party.members.length>3)return this.send(c,{type:'raid_error',message:'Party Raid requires 2–3 party members.'});
   const members=party.members.map(mem=>this.clients.get(mem.id));
   if(members.some(mem=>!mem))return this.send(c,{type:'raid_error',message:'Every party member must be online.'});
-  if(members.some(mem=>mem.pve||mem.pvp))return this.send(c,{type:'raid_error',message:'Finish the current DigiPet activity before entering Astral Raid.'});
+  if(members.some(mem=>mem.pve||mem.pvp))return this.send(c,{type:'raid_error',message:'Finish the current DigiPet activity before entering Raid.'});
   const unready=party.members.find(mem=>mem.id!==party.leader&&!(party.raidReady&&party.raidReady.has(mem.id)));
   if(unready)return this.send(c,{type:'raid_error',message:'Waiting for '+unready.name+' to press Ready.'});
+  if(typeof m.dungeonId==='string')party.raidDungeon=m.dungeonId==='thor'?'thor':'astral';
+  const dungeonId=party.raidDungeon||'astral';
   const seed=(now^((c.id||1)*2654435761))>>>0,id='raid:'+this.battleId('raid');
   const roster=party.members.map(mem=>this.raidMemberInfo(party,mem));
   party.raidReady=new Set();
-  party.raid={id,seed,leader:c.id,startedAt:now};
-  this.partyBroadcast(party,{type:'raid_started',raidId:id,seed,leader:c.id,members:roster});
+  party.raid={id,seed,dungeonId,leader:c.id,startedAt:now};
+  this.partyBroadcast(party,{type:'raid_started',raidId:id,seed,dungeonId,leader:c.id,members:roster});
  }
  raidSync(c,m,now){
   const party=this.partyOf(c);if(!party||!party.raid)return;

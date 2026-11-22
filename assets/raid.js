@@ -1,8 +1,10 @@
-/* Astral Raid — Solo (<10m) & Real-Player Party (<15m) Raid Mode
- * Reuses the existing Astral Citadel 3D bridge scenery (PGAstralScenery), monsters,
- * and Memory of Thanatos boss with active bridge bombardments, 5-shape boss mechanics,
- * anti-ranged pressure, synchronized PGBossFx AoE detonations, WASD/click + DODGE evasion,
- * party ready room with character previews, live raid chat, party-only revive,
+/* Raid Dungeons — Solo (<10m) & Real-Player Party (<15m) Co-op Raid Mode
+ * Supports Astral Citadel (Map 10, Memory of Thanatos) & Thor Volcano (Map 11, Ifrit),
+ * plus previewing future Raid Dungeons inside Map -> Dungeons.
+ * Features active stage bombardments, 6-shape boss mechanics including the whole-floor
+ * Pillar Line-of-Sight wipe ("Oblivion Extinction" / "Cataclysmic Eruption"),
+ * elevated boss threat, WASD/click + DODGE evasion, resizable live Raid Chat,
+ * Party Ready Room with character previews, party-only revive,
  * and an End-of-Raid Commendation & Loot Showcase Popup.
  */
 (function (root, factory) {
@@ -11,13 +13,61 @@
 })(typeof globalThis !== 'undefined' ? globalThis : window, function (root) {
   'use strict';
 
-  var RAID_MAP = 10; // Astral Citadel
-  var STAGES = [
-    { idx: 0, astralStage: 1, name: 'Starlit Approach', desc: 'Retribution Angels & Despair Phantoms under Starfall bombardment', boss: false },
-    { idx: 1, astralStage: 2, name: 'Fallen Arcade', desc: 'Despair Phantoms & Tower Watchers under Oblivion Beams', boss: false },
-    { idx: 2, astralStage: 3, name: 'Runic Observatory', desc: 'Tower Watchers, Death Whisperers & Agony Demon wardens', boss: false },
-    { idx: 3, astralStage: 5, name: 'Sanctuary of Thanatos', desc: 'Memory of Thanatos — 5-mechanic raid encounter', boss: true }
-  ];
+  var DUNGEONS = {
+    astral: {
+      id: 'astral',
+      mapId: 10,
+      name: 'Astral Citadel',
+      bossName: 'Memory of Thanatos',
+      matIdx: 0,
+      matName: 'Astral Shards',
+      img: 'assets/atlas/astral-citadel.png?v=156',
+      banner: 'assets/endgame/textures/astral-sky-plate-a4db60a4cc7a.webp',
+      comingSoon: false,
+      stages: [
+        { idx: 0, astralStage: 1, name: 'Starlit Approach', desc: 'Retribution Angels & Despair Phantoms under Starfall bombardment', boss: false },
+        { idx: 1, astralStage: 2, name: 'Fallen Arcade', desc: 'Despair Phantoms & Tower Watchers under Oblivion Beams', boss: false },
+        { idx: 2, astralStage: 3, name: 'Runic Observatory', desc: 'Tower Watchers, Death Whisperers & Agony Demon wardens', boss: false },
+        { idx: 3, astralStage: 5, name: 'Sanctuary of Thanatos', desc: 'Memory of Thanatos — 6-mechanic raid encounter', boss: true }
+      ]
+    },
+    thor: {
+      id: 'thor',
+      mapId: 11,
+      name: 'Thor Volcano',
+      bossName: 'Ifrit',
+      matIdx: 1,
+      matName: 'Primal Catalysts',
+      img: 'assets/atlas/thor-volcano.png?v=162',
+      banner: 'assets/atlas/thor-volcano.png?v=162',
+      comingSoon: false,
+      stages: [
+        { idx: 0, astralStage: 1, name: 'Molten Approach', desc: 'Magma Slags & Fire Imps under Pyroclasm bombardment', boss: false },
+        { idx: 1, astralStage: 2, name: 'Basalt Forge', desc: 'Fire Imps & Kasas under Tectonic Beams', boss: false },
+        { idx: 2, astralStage: 3, name: 'Magma Conduit', desc: 'Salamanders & Obsidian Golem wardens', boss: false },
+        { idx: 3, astralStage: 5, name: 'Sanctum of Ifrit', desc: 'Ifrit, Volcano Lord — 6-mechanic raid encounter', boss: true }
+      ]
+    },
+    abyss: {
+      id: 'abyss',
+      mapId: null,
+      name: 'Niflheim Abyssal Sanctum',
+      bossName: 'Lord of Death',
+      matIdx: 2,
+      matName: 'Abyssal Relics',
+      img: 'assets/world-map/cutout/niflheim.png?v=283',
+      banner: 'assets/world-map/cutout/niflheim.png?v=283',
+      comingSoon: true,
+      stages: [
+        { idx: 0, astralStage: 1, name: 'Wailing Gates', desc: 'Ghost Hounds & Banshees in freezing mist', boss: false },
+        { idx: 1, astralStage: 2, name: 'Soul Catacombs', desc: 'Death Knights & Soul Eaters', boss: false },
+        { idx: 2, astralStage: 3, name: 'Cursed Reliquary', desc: 'Abyss Knights & Doom Wardens', boss: false },
+        { idx: 3, astralStage: 5, name: 'Throne of the Dead', desc: 'Lord of Death — Coming in a future update', boss: true }
+      ]
+    }
+  };
+
+  var STAGES = DUNGEONS.astral.stages;
 
   var SOLO_LIMIT_S = 600;     // 10 minutes
   var PARTY_LIMIT_S = 900;    // 15 minutes
@@ -26,7 +76,7 @@
   var REVIVE_CHANNEL_S = 3.0;
   var DODGE_CD_S = 3.5;
   var DODGE_IFRAME_S = 0.75;
-  var DODGE_DIST = 5.4;
+  var DODGE_DIST = 5.6;
   var SYNC_INTERVAL_S = 2.0;
 
   // Tuned from real 4th-job combat benchmarks:
@@ -34,18 +84,55 @@
   var TRASH_CAMP_LIMIT = 8;
   var BOSS_HP_MULT = 2.2;
   var ESCORT_HP_MULT = 1.4;
+  var BOSS_ATK_MULT = 2.35;
+  var ESCORT_ATK_MULT = 1.55;
+  var BOSS_CLEAVE_INTERVAL_S = 2.5;
+  var BOSS_CLEAVE_PCT = 0.16;
 
   var REWARDS = {
-    solo:  { shards: 20, zeny: 500000, echo: 100 },
-    party: { shards: 30, zeny: 750000, echo: 150 },
-    fail:  { shards: 5,  zeny: 0,      echo: 0 }
+    solo:  { shards: 20, sigils: 0, zeny: 500000, echo: 100 },
+    party: { shards: 30, sigils: 1, zeny: 750000, echo: 150 },
+    fail:  { shards: 5,  sigils: 0, zeny: 0,      echo: 0 }
   };
 
+  var CHAT_PRESETS = [
+    { label: 'S', w: 256, h: 168 },
+    { label: 'M', w: 320, h: 228 },
+    { label: 'L', w: 430, h: 326 }
+  ];
+
   var SUPPORT_CLASS_RE = /arch bishop|cardinal|royal guard|imperial guard|maestro|wanderer|troubadour|trouvere|sorcerer|elemental master|genetic|biolo|soul ascetic|priest|high priest|paladin/i;
+
+  function loadSavedChatSize() {
+    try {
+      if (typeof localStorage !== 'undefined') {
+        var raw = localStorage.getItem('pg_raid_chat_size');
+        if (raw) {
+          var parsed = JSON.parse(raw);
+          if (parsed && Number.isFinite(parsed.w) && Number.isFinite(parsed.h)) {
+            return {
+              w: Math.max(220, Math.min(580, Math.round(parsed.w))),
+              h: Math.max(148, Math.min(440, Math.round(parsed.h)))
+            };
+          }
+        }
+      }
+    } catch (_) {}
+    return { w: 310, h: 220 };
+  }
+
+  function saveChatSize(w, h) {
+    try {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('pg_raid_chat_size', JSON.stringify({ w: w, h: h }));
+      }
+    } catch (_) {}
+  }
 
   var raid = {
     on: false,
     _internalNav: false,
+    dungeonId: 'astral',   // 'astral' | 'thor'
     mode: 'solo',          // 'solo' | 'party'
     raidId: '',
     seed: 1,
@@ -66,8 +153,10 @@
     telegraph: null,       // active boss or bridge hazard
     voidPools: [],         // [{ x, z, r, left, tick }] lingering anti-ranged burn zones
     nextCastIn: 3.4,
+    bossCleaveIn: 2.5,
     castSeq: 0,
     lastSkillKey: '',
+    pillarCastDone: false,
     syncTimer: 0,
     hudTimer: 0,
     transition: null,      // { nextIdx, fallbackLeft }
@@ -75,13 +164,16 @@
     party: [],             // [{ id, name, cls, sex, appearance, hp, maxHp, dps, dmgTaken, support, revives, stage, dead, self }]
     keys: { w: false, a: false, s: false, d: false },
     moveTarget: null,      // { x, z, left, holdOnly }
-    lobbyMode: 'solo',
-    lobbyRoster: null,     // { partyId, leader, members:[{id,name,cls,lv,sex,appearance,ready}] }
+    lobbyMode: 'party',
+    lobbyDungeon: 'astral',
+    lobbyRoster: null,     // { partyId, leader, dungeonId, members:[{id,name,cls,lv,sex,appearance,ready}] }
     myReady: false,
     waitingPartyStart: false,
     hudBuilt: false,
     chatLog: [],           // [{ id, name, text, self, sys }]
     chatMinimized: false,
+    chatSize: loadSavedChatSize(),
+    chatPresetIdx: 1,
     result: null
   };
 
@@ -91,6 +183,8 @@
   var beamNodes = [];
   var donutNode = null;
   var poolNodes = [];
+  var pillarArenaNode = null;
+  var pillarNodes = [];
   var moveRing = null;
 
   // Offscreen scratch canvas + gentle idle timer for character previews
@@ -123,6 +217,18 @@
     var m = Math.floor(sec / 60);
     var s = sec % 60;
     return m + ':' + (s < 10 ? '0' : '') + s;
+  }
+
+  function dungeonDef(id) {
+    return DUNGEONS[id] || DUNGEONS.astral;
+  }
+
+  function activeDungeon() {
+    return dungeonDef(raid.dungeonId);
+  }
+
+  function activeStages() {
+    return activeDungeon().stages;
   }
 
   function isGm() {
@@ -245,14 +351,16 @@
     return null;
   }
 
-  function canBaseEnter() {
+  function canBaseEnter(dungeonId) {
+    var d = dungeonDef(dungeonId || raid.lobbyDungeon || 'astral');
+    if (d.comingSoon) return { ok: false, reason: d.name + ' is coming in a future update.' };
     if (typeof S === 'undefined' || !S) return { ok: false, reason: 'Sign in first.' };
-    if (raid.on) return { ok: false, reason: 'Already inside Astral Raid.' };
+    if (raid.on) return { ok: false, reason: 'Already inside a Raid.' };
     if ((typeof TRIAL !== 'undefined' && TRIAL.on) || (typeof JOB_RITE !== 'undefined' && JOB_RITE.on)) {
       return { ok: false, reason: 'Finish your current trial first.' };
     }
     if (!isFourthUnlocked()) {
-      return { ok: false, reason: 'Requires Base Lv 150 & a 4th-Job class (Astral Citadel tier).' };
+      return { ok: false, reason: 'Requires Base Lv 150 & a 4th-Job class (Ascension tier).' };
     }
     if (!isGm() && raidLeftToday() <= 0) {
       return { ok: false, reason: 'Daily Raid limit reached (2/2 today). Resets at 00:00 UTC+8.' };
@@ -260,8 +368,8 @@
     return { ok: true, reason: '' };
   }
 
-  function canEnter(mode) {
-    var base = canBaseEnter();
+  function canEnter(mode, dungeonId) {
+    var base = canBaseEnter(dungeonId);
     if (!base.ok) return base;
     if (mode === 'party') {
       var p = socialParty();
@@ -269,7 +377,7 @@
         return { ok: false, reason: 'Form a 2–3 player Party in the Social Hub first.' };
       }
       if (p.members.length > 3) {
-        return { ok: false, reason: 'Astral Raid supports up to 3 party members.' };
+        return { ok: false, reason: 'Raid Dungeons support up to 3 party members.' };
       }
       if (!isPartyLeader()) {
         return { ok: false, reason: 'Press Ready below — your Party Leader will start the raid.' };
@@ -296,6 +404,16 @@
     return null;
   }
 
+  function releaseBossAnchor() {
+    if (typeof mobs === 'undefined' || !Array.isArray(mobs)) return;
+    for (var i = 0; i < mobs.length; i++) {
+      if (mobs[i] && mobs[i]._raidPillarRoot) {
+        mobs[i].fixed = false;
+        mobs[i]._raidPillarRoot = false;
+      }
+    }
+  }
+
   function fieldBounds() {
     var bx = typeof BX_ === 'number' ? BX_ : 9.5;
     var z0 = typeof Z0 === 'number' ? Z0 : -11;
@@ -311,6 +429,87 @@
     };
   }
 
+  // ---------- Pillar Line-of-Sight Geometry ----------
+  function isBehindPillar(bx, bz, p, px, pz) {
+    if (!p) return false;
+    var vx = p.x - bx;
+    var vz = p.z - bz;
+    var distBP = Math.hypot(vx, vz);
+    if (distBP < 0.05) return false;
+    var ux = vx / distBP;
+    var uz = vz / distBP;
+    var dx = px - p.x;
+    var dz = pz - p.z;
+    // Distance projected behind the pillar along Boss -> Pillar ray
+    var along = dx * ux + dz * uz;
+    // Lateral offset from the pillar's shadow centerline
+    var perp = Math.abs(-dx * uz + dz * ux);
+    var halfW = (p.r || 1.05) + 0.55 + Math.max(0, along) * 0.18;
+    return along >= -0.35 && along <= 5.8 && perp <= halfW;
+  }
+
+  function isBehindAnyPillar(bx, bz, pillars, px, pz) {
+    if (!Array.isArray(pillars) || !pillars.length) return false;
+    for (var i = 0; i < pillars.length; i++) {
+      if (isBehindPillar(bx, bz, pillars[i], px, pz)) return true;
+    }
+    return false;
+  }
+
+  function pillarSafeSpot(bx, bz, p) {
+    var vx = p.x - bx;
+    var vz = p.z - bz;
+    var d = Math.hypot(vx, vz) || 1;
+    var ux = vx / d;
+    var uz = vz / d;
+    return clampToBridge(p.x + ux * 1.9, p.z + uz * 1.9);
+  }
+
+  function spawnSanctuaryPillars(bx, bz) {
+    var b = fieldBounds();
+    var minX = -b.bx + 2.0, maxX = b.bx - 2.0;
+    var minZ = b.z0 + 2.4, maxZ = b.z1 - 2.0;
+    var chosen = [];
+    var baseRot = Math.random() * Math.PI * 2;
+
+    for (var attempt = 0; attempt < 60 && chosen.length < 3; attempt++) {
+      var ang = baseRot + (attempt * 2.17) + (Math.random() - 0.5) * 0.65;
+      var dist = 4.1 + Math.random() * 2.3;
+      var ux = Math.cos(ang), uz = Math.sin(ang);
+      var kx = bx + ux * dist;
+      var kz = bz + uz * dist;
+      // Ensure BOTH the pillar AND 2.4 units of floor behind it lie inside walkable bounds!
+      var backX = kx + ux * 2.4;
+      var backZ = kz + uz * 2.4;
+      if (kx < minX || kx > maxX || kz < minZ || kz > maxZ) continue;
+      if (backX < minX + 0.4 || backX > maxX - 0.4 || backZ < minZ + 0.4 || backZ > maxZ - 0.4) continue;
+      var tooClose = false;
+      for (var c = 0; c < chosen.length; c++) {
+        if (Math.hypot(chosen[c].x - kx, chosen[c].z - kz) < 4.6) {
+          tooClose = true;
+          break;
+        }
+      }
+      if (tooClose) continue;
+      chosen.push({ x: Math.round(kx * 100) / 100, z: Math.round(kz * 100) / 100, r: 1.05 });
+    }
+
+    // Deterministic safe fallback guarantees 3 valid pillars even near arena walls
+    var fallbackAngles = [0.35, 2.42, 4.52, 1.45, 3.55, 5.45];
+    for (var f = 0; f < fallbackAngles.length && chosen.length < 3; f++) {
+      var fa = fallbackAngles[f];
+      var fx = Math.max(minX + 1.2, Math.min(maxX - 1.2, bx + Math.cos(fa) * 4.4));
+      var fz = Math.max(minZ + 1.2, Math.min(maxZ - 1.2, bz + Math.sin(fa) * 4.4));
+      if (Math.hypot(fx - bx, fz - bz) < 2.2) fz = bz + 4.2;
+      var dup = false;
+      for (var j = 0; j < chosen.length; j++) {
+        if (Math.hypot(chosen[j].x - fx, chosen[j].z - fz) < 3.2) dup = true;
+      }
+      if (!dup) chosen.push({ x: Math.round(fx * 100) / 100, z: Math.round(fz * 100) / 100, r: 1.05 });
+    }
+    return chosen;
+  }
+
   // ---------- Character Sprite Preview Renderer (Lobby & Result Popup) ----------
   function drawFallbackCrest(ctx, w, h, info) {
     ctx.clearRect(0, 0, w, h);
@@ -320,7 +519,6 @@
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, w, h);
 
-    // Stylized adventurer silhouette fallback for headless/pre-sprite frames
     ctx.fillStyle = '#dcd2ff';
     ctx.beginPath();
     ctx.arc(w * 0.5, h * 0.34, 13, 0, Math.PI * 2);
@@ -347,7 +545,6 @@
     var cls = info.cls || (typeof S !== 'undefined' && S && S.cls) || 'Rune Knight';
     var sex = info.sex === 'f' ? 'f' : 'm';
 
-    // 1. Local hero: use game's native drawSkinPreview with equipped Wardrobe/sprites
     if (info.self && typeof drawSkinPreview === 'function') {
       try {
         drawSkinPreview(target.canvasId, null, cls, sex);
@@ -355,7 +552,6 @@
       } catch (_) {}
     }
 
-    // 2. Remote party member with custom Wardrobe appearance
     if (!info.self && typeof wardrobeStore !== 'undefined' && wardrobeStore &&
         typeof PGWardrobe !== 'undefined' && PGWardrobe &&
         typeof wardrobeSupported === 'function' && wardrobeSupported(cls)) {
@@ -392,7 +588,6 @@
       } catch (_) {}
     }
 
-    // 3. Class sprite pack preview via drawSkinPreview
     if (typeof drawSkinPreview === 'function') {
       try {
         drawSkinPreview(target.canvasId, null, cls, sex);
@@ -400,7 +595,6 @@
       } catch (_) {}
     }
 
-    // 4. Crisp fallback silhouette
     try {
       var ctx2 = cv.getContext('2d');
       if (ctx2) drawFallbackCrest(ctx2, cv.width || 104, cv.height || 112, info);
@@ -430,7 +624,7 @@
     }
   }
 
-  // ---------- Reusable Three.js Hazard Visuals ----------
+  // ---------- Reusable Three.js Hazard & Pillar Visuals ----------
   function makeCraterNode(THREE) {
     var g = new THREE.Group();
     g.visible = false;
@@ -563,6 +757,90 @@
     return { group: g, fill: fill, ring: ring };
   }
 
+  function makePillarArenaNode(THREE) {
+    var g = new THREE.Group();
+    g.visible = false;
+    var floorFill = new THREE.Mesh(
+      new THREE.CircleGeometry(22, 56),
+      new THREE.MeshBasicMaterial({ color: 0xff163c, transparent: true, opacity: 0.26, side: THREE.DoubleSide, depthWrite: false })
+    );
+    floorFill.rotation.x = -Math.PI / 2;
+    g.add(floorFill);
+
+    var shockWave = new THREE.Mesh(
+      new THREE.RingGeometry(0.85, 1.0, 52),
+      new THREE.MeshBasicMaterial({ color: 0xffcf6e, transparent: true, opacity: 0.9, side: THREE.DoubleSide, depthWrite: false })
+    );
+    shockWave.rotation.x = -Math.PI / 2;
+    shockWave.position.y = 0.014;
+    g.add(shockWave);
+
+    return { group: g, floorFill: floorFill, shockWave: shockWave };
+  }
+
+  function makePillarNode(THREE) {
+    var g = new THREE.Group();
+    g.visible = false;
+
+    // Falling 3D Runic Stone Monolith
+    var columnWrap = new THREE.Group();
+    var shaft = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.72, 0.92, 3.8, 8),
+      new THREE.MeshBasicMaterial({ color: 0x6f7a9f })
+    );
+    shaft.position.y = 1.9;
+    columnWrap.add(shaft);
+
+    var runeBand = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.8, 0.8, 0.42, 8),
+      new THREE.MeshBasicMaterial({ color: 0x6af7d0 })
+    );
+    runeBand.position.y = 2.15;
+    columnWrap.add(runeBand);
+
+    var crown = new THREE.Mesh(
+      new THREE.OctahedronGeometry(0.56, 0),
+      new THREE.MeshBasicMaterial({ color: 0xfff0a8 })
+    );
+    crown.position.y = 4.25;
+    columnWrap.add(crown);
+    g.add(columnWrap);
+
+    var baseRing = new THREE.Mesh(
+      new THREE.RingGeometry(0.95, 1.18, 32),
+      new THREE.MeshBasicMaterial({ color: 0x76ffd8, transparent: true, opacity: 0.95, side: THREE.DoubleSide, depthWrite: false })
+    );
+    baseRing.rotation.x = -Math.PI / 2;
+    baseRing.position.y = 0.02;
+    g.add(baseRing);
+
+    // Directional Safe Shadow Lane extending behind the pillar away from the Boss!
+    var shadowPivot = new THREE.Group();
+    var shadowFill = new THREE.Mesh(
+      new THREE.PlaneGeometry(5.4, 3.1),
+      new THREE.MeshBasicMaterial({ color: 0x28f0a8, transparent: true, opacity: 0.34, side: THREE.DoubleSide, depthWrite: false })
+    );
+    shadowFill.rotation.x = -Math.PI / 2;
+    shadowFill.position.set(2.85, 0.018, 0);
+    shadowPivot.add(shadowFill);
+
+    var shadowEdgeL = new THREE.Mesh(
+      new THREE.PlaneGeometry(5.4, 0.12),
+      new THREE.MeshBasicMaterial({ color: 0x8effdf, transparent: true, opacity: 0.92, side: THREE.DoubleSide, depthWrite: false })
+    );
+    shadowEdgeL.rotation.x = -Math.PI / 2;
+    shadowEdgeL.position.set(2.85, 0.024, -1.55);
+    shadowPivot.add(shadowEdgeL);
+
+    var shadowEdgeR = shadowEdgeL.clone();
+    shadowEdgeR.position.set(2.85, 0.024, 1.55);
+    shadowPivot.add(shadowEdgeR);
+
+    g.add(shadowPivot);
+
+    return { group: g, columnWrap: columnWrap, crown: crown, shadowPivot: shadowPivot, shadowFill: shadowFill };
+  }
+
   function ensureMeshes() {
     if (typeof THREE === 'undefined' || typeof scene === 'undefined' || !scene) return false;
     if (!hazardGroup) {
@@ -589,6 +867,15 @@
         hazardGroup.add(plNode.group);
         poolNodes.push(plNode);
       }
+
+      pillarArenaNode = makePillarArenaNode(THREE);
+      hazardGroup.add(pillarArenaNode.group);
+      pillarNodes = [];
+      for (var k = 0; k < 3; k++) {
+        var pkNode = makePillarNode(THREE);
+        hazardGroup.add(pkNode.group);
+        pillarNodes.push(pkNode);
+      }
     }
     if (!hazardGroup.parent) scene.add(hazardGroup);
 
@@ -612,6 +899,8 @@
     for (var b = 0; b < beamNodes.length; b++) beamNodes[b].group.visible = false;
     if (donutNode) donutNode.group.visible = false;
     for (var p = 0; p < poolNodes.length; p++) poolNodes[p].group.visible = false;
+    if (pillarArenaNode) pillarArenaNode.group.visible = false;
+    for (var k = 0; k < pillarNodes.length; k++) pillarNodes[k].group.visible = false;
   }
 
   function floorYAt(x, z) {
@@ -642,7 +931,29 @@
       var pulse = 0.22 + 0.24 * pct + 0.07 * Math.sin(tg.age * 16);
       var shape = tg.shape || 'circle';
 
-      if (shape === 'circle' || shape === 'multi') {
+      if (shape === 'pillars' && pillarArenaNode) {
+        pillarArenaNode.group.visible = true;
+        pillarArenaNode.group.position.set(tg.x, floorYAt(tg.x, tg.z) - 0.08, tg.z);
+        pillarArenaNode.floorFill.material.opacity = 0.18 + 0.22 * pct + 0.06 * Math.sin(tg.age * 18);
+        var waveR = Math.max(0.6, pct * 20.0);
+        pillarArenaNode.shockWave.scale.set(waveR, waveR, 1);
+
+        var pList = Array.isArray(tg.pillars) ? tg.pillars : [];
+        var dropT = Math.min(1, tg.age / 0.55);
+        var dropY = (1 - dropT) * (1 - dropT) * 13.5;
+        for (var pk = 0; pk < pList.length && pk < pillarNodes.length; pk++) {
+          var pd = pList[pk];
+          var pNode = pillarNodes[pk];
+          pNode.group.visible = true;
+          pNode.group.position.set(pd.x, floorYAt(pd.x, pd.z) - 0.08, pd.z);
+          pNode.columnWrap.position.y = dropY;
+          pNode.crown.rotation.y = tg.age * 3.5;
+          var rayAng = Math.atan2(pd.z - tg.z, pd.x - tg.x);
+          pNode.shadowPivot.rotation.y = -rayAng;
+          pNode.shadowPivot.visible = dropT >= 0.45;
+          pNode.shadowFill.material.opacity = 0.28 + 0.14 * Math.sin(tg.age * 10);
+        }
+      } else if (shape === 'circle' || shape === 'multi') {
         var zones = shape === 'multi' && Array.isArray(tg.zones)
           ? tg.zones
           : [{ x: tg.x, z: tg.z, r: tg.r || 4.0 }];
@@ -718,7 +1029,7 @@
     }
   }
 
-  // ---------- Hit Geometry for All 5 Hazard Shapes ----------
+  // ---------- Hit Geometry for All 6 Hazard Shapes ----------
   function pointInBeam(px, pz, bx, bz, ang, width, len) {
     var dx = px - bx;
     var dz = pz - bz;
@@ -732,6 +1043,9 @@
   function hitByTelegraph(tg, px, pz) {
     if (!tg) return false;
     var shape = tg.shape || 'circle';
+    if (shape === 'pillars') {
+      return !isBehindAnyPillar(tg.x, tg.z, tg.pillars, px, pz);
+    }
     if (shape === 'circle') {
       return Math.hypot(px - tg.x, pz - tg.z) <= (tg.r || 4.0);
     }
@@ -760,20 +1074,26 @@
 
   // ---------- Spawning Raid Stages ----------
   function spawnRaidStage(stageIdx) {
-    var st = STAGES[stageIdx];
+    var dng = activeDungeon();
+    var stages = dng.stages;
+    var st = stages[stageIdx];
     if (!st) return;
+    releaseBossAnchor();
     raid.stage = stageIdx;
     raid.telegraph = null;
     raid.voidPools = [];
-    raid.nextCastIn = st.boss ? 2.8 : 3.2;
+    raid.nextCastIn = st.boss ? 2.4 : 3.2;
+    raid.bossCleaveIn = BOSS_CLEAVE_INTERVAL_S;
+    raid.pillarCastDone = false;
     raid.transition = null;
     raid.moveTarget = null;
 
+    var mapId = dng.mapId || 10;
     raid._internalNav = true;
     try {
-      S.mp = RAID_MAP;
+      S.mp = mapId;
       S.lvl = st.astralStage;
-      if (typeof astralOriginStage !== 'undefined') astralOriginStage = st.astralStage;
+      if (typeof astralOriginStage !== 'undefined') astralOriginStage = mapId === 10 ? st.astralStage : 0;
       if (typeof astralJourney !== 'undefined') astralJourney = null;
       if (typeof lastKey !== 'undefined') lastKey = '';
       if (typeof mobs !== 'undefined') mobs = [];
@@ -805,8 +1125,8 @@
           mobs = mobs.filter(function (m) { return allowedPacks.indexOf(m.pack) >= 0; });
 
           if (stageIdx === 2 && typeof fieldOf === 'function' && typeof ascensionCombatStats === 'function') {
-            var f4 = fieldOf(RAID_MAP, 4);
-            var st3 = ascensionCombatStats(RAID_MAP, 3);
+            var f4 = fieldOf(mapId, 4);
+            var st3 = ascensionCombatStats(mapId, 3);
             var tpl = f4 && f4.mobs && f4.mobs[1];
             if (tpl && st3) {
               for (var w = 0; w < 2; w++) {
@@ -814,12 +1134,12 @@
                 var wz = -6.5 - w * 2.0;
                 var hpW = Math.floor(st3.hp * 1.35);
                 mobs.push(Object.assign({}, tpl, {
-                  hp: hpW, max: hpW, atk: Math.floor(st3.atk * 1.1),
+                  hp: hpW, max: hpW, atk: Math.floor(st3.atk * 1.35),
                   exp: 0, zeny: 0, drops: [], cardCh: 0,
                   x: wx, z: wz, hx: null, hz: null,
                   a: Math.random() * 6.28, size: 0.72, pack: 90 + w, boss: false,
-                  spawn: 1, mapIndex: RAID_MAP, sec: f4.sec,
-                  lvl: typeof fieldPower === 'function' ? fieldPower(RAID_MAP, 3) : 130,
+                  spawn: 1, mapIndex: mapId, sec: f4.sec,
+                  lvl: typeof fieldPower === 'function' ? fieldPower(mapId, 3) : 130,
                   at: 1.4, stun: 0, mag: true
                 }));
               }
@@ -828,6 +1148,7 @@
           for (var k = 0; k < mobs.length; k++) {
             mobs[k].hx = null;
             mobs[k].hz = null;
+            mobs[k].atk = Math.max(1, Math.floor((mobs[k].atk || 100) * 1.25));
             if (scale > 1) {
               mobs[k].hp = Math.max(1, Math.floor(mobs[k].hp * scale));
               mobs[k].max = mobs[k].hp;
@@ -836,8 +1157,10 @@
         } else {
           for (var i = 0; i < mobs.length; i++) {
             var mult = mobs[i].boss ? (BOSS_HP_MULT * scale) : (ESCORT_HP_MULT * scale);
+            var atkMult = mobs[i].boss ? BOSS_ATK_MULT : ESCORT_ATK_MULT;
             mobs[i].hp = Math.max(1, Math.floor(mobs[i].hp * mult));
             mobs[i].max = mobs[i].hp;
+            mobs[i].atk = Math.max(1, Math.floor((mobs[i].atk || 500) * atkMult));
             mobs[i].hx = null;
             mobs[i].hz = null;
           }
@@ -946,7 +1269,17 @@
     var tg = raid.telegraph;
     if (tg) {
       var shape = tg.shape || 'circle';
-      if (shape === 'donut') {
+      if (shape === 'pillars' && Array.isArray(tg.pillars) && tg.pillars.length) {
+        var bestSpot = null, bestDist = 1e9;
+        for (var k = 0; k < tg.pillars.length; k++) {
+          var sp = pillarSafeSpot(tg.x, tg.z, tg.pillars[k]);
+          var sd = Math.hypot(sp.x - px, sp.z - pz);
+          if (sd < bestDist) { bestDist = sd; bestSpot = sp; }
+        }
+        if (bestSpot && bestDist > 0.1) {
+          return { x: (bestSpot.x - px) / bestDist, z: (bestSpot.z - pz) / bestDist };
+        }
+      } else if (shape === 'donut') {
         var dxIn = tg.x - px, dzIn = tg.z - pz;
         var dIn = Math.hypot(dxIn, dzIn);
         if (dIn >= (tg.innerR || 3.7) - 0.3 && dIn > 0.05) {
@@ -989,14 +1322,25 @@
     raid.reviving = null;
 
     var dir = keyVector() || smartEscapeDirection(pl.x, pl.z);
-    var dest = clampToBridge(pl.x + dir.x * DODGE_DIST, pl.z + dir.z * DODGE_DIST);
+    var stepDist = DODGE_DIST;
+    if (!keyVector() && raid.telegraph && raid.telegraph.shape === 'pillars' && Array.isArray(raid.telegraph.pillars) && raid.telegraph.pillars.length) {
+      var nearestSafe = null, nearestD = 1e9;
+      for (var k = 0; k < raid.telegraph.pillars.length; k++) {
+        var spt = pillarSafeSpot(raid.telegraph.x, raid.telegraph.z, raid.telegraph.pillars[k]);
+        var d0 = Math.hypot(spt.x - pl.x, spt.z - pl.z);
+        if (d0 < nearestD) { nearestD = d0; nearestSafe = spt; }
+      }
+      if (nearestSafe && nearestD <= DODGE_DIST) stepDist = nearestD;
+    }
+
+    var dest = clampToBridge(pl.x + dir.x * stepDist, pl.z + dir.z * stepDist);
     var faceDx = dest.x - pl.x, faceDz = dest.z - pl.z;
     if (Math.hypot(faceDx, faceDz) > 0.05) {
       pl.ry = -Math.atan2(faceDz, faceDx);
     }
     pl.x = dest.x;
     pl.z = dest.z;
-    raid.moveTarget = { x: dest.x, z: dest.z, left: 1.0, holdOnly: true };
+    raid.moveTarget = { x: dest.x, z: dest.z, left: 1.4, holdOnly: true };
     if (typeof engageTgt !== 'undefined') engageTgt = null;
     if (typeof swing !== 'undefined') swing = null;
     if (typeof addFloat === 'function') addFloat(pl.x, 2.5, pl.z, 'DODGE!', '#76eaff', true, 'evade');
@@ -1005,7 +1349,7 @@
     return true;
   }
 
-  // ---------- Stage 1–3 Bridge Bombardments & Stage 4 Boss Mechanics ----------
+  // ---------- Stage 1–3 Bombardments & Stage 4 Boss Mechanics (Including Pillar Wipe!) ----------
   function spawnBridgeHazard(dt) {
     if (typeof mobs === 'undefined' || !mobs.length || typeof pl === 'undefined' || !pl) return;
     raid.nextCastIn -= dt;
@@ -1013,8 +1357,9 @@
 
     raid.castSeq++;
     var b = fieldBounds();
+    var isThor = raid.dungeonId === 'thor';
     var pick = raid.castSeq % 3;
-    var stageGap = raid.stage === 0 ? 4.8 : (raid.stage === 1 ? 4.3 : 3.9);
+    var stageGap = raid.stage === 0 ? 4.6 : (raid.stage === 1 ? 4.1 : 3.7);
 
     if (pick === 1) {
       var count = raid.stage >= 2 ? 4 : 3;
@@ -1026,41 +1371,39 @@
         zones.push({ x: cz.x, z: cz.z, r: 2.9 });
       }
       raid.telegraph = {
-        name: 'Astral Starfall',
+        name: isThor ? 'Volcanic Meteor' : 'Astral Starfall',
         hint: 'FALLING METEORS — Move or DODGE out of craters!',
         shape: 'multi',
         meteors: true,
         zones: zones,
         x: zones[0].x,
         z: zones[0].z,
-        dmgPct: 0.24,
-        fx: 'lod_verdict',
+        dmgPct: 0.32,
         age: 0,
-        life: 2.25
+        life: 2.2
       };
     } else if (pick === 2) {
       var crossBridge = (raid.castSeq % 2 === 0);
       var ang = crossBridge ? (Math.PI / 2 + (raid.stage === 2 ? 0.28 : 0)) : 0;
       raid.telegraph = {
-        name: 'Sanctuary Lance',
-        hint: 'OBLIVION BEAM — Sidestep off the laser lane!',
+        name: isThor ? 'Tectonic Beam' : 'Sanctuary Lance',
+        hint: 'ENERGY BEAM — Sidestep off the laser lane!',
         shape: 'beam',
         x: clampToBridge(pl.x, pl.z).x,
         z: clampToBridge(pl.x, pl.z).z,
         ang: ang,
         width: 3.1,
         len: 24,
-        dmgPct: 0.26,
-        fx: 'tnt_fracture',
+        dmgPct: 0.34,
         age: 0,
-        life: 2.15
+        life: 2.1
       };
     } else {
       var p1 = clampToBridge(pl.x, pl.z);
       var p2 = clampToBridge(-pl.x * 0.6, pl.z - 3.2);
       raid.telegraph = {
-        name: 'Void Comet',
-        hint: 'VOID COMET — Leaves a burning pool, reposition!',
+        name: isThor ? 'Magma Comet' : 'Void Comet',
+        hint: 'COMET STRIKE — Leaves a burning pool, reposition!',
         shape: 'multi',
         meteors: true,
         leavesPool: true,
@@ -1070,10 +1413,9 @@
         ],
         x: p1.x,
         z: p1.z,
-        dmgPct: 0.22,
-        fx: 'lod_harvest',
+        dmgPct: 0.30,
         age: 0,
-        life: 2.2
+        life: 2.15
       };
     }
     raid.nextCastIn = stageGap;
@@ -1085,12 +1427,17 @@
     var isRangedPlayer = dist > 3.1 || (typeof C === 'function' && C() && C().wt && /bow|staff|book|gun|instrument|whip/i.test(C().wt.join(',')));
     var hpRatio = boss.max > 0 ? boss.hp / boss.max : 1;
 
-    var pool = isRangedPlayer
-      ? ['donut', 'seeker', 'cross', 'donut', 'seeker', 'slam', 'cataclysm']
-      : ['slam', 'donut', 'cross', 'seeker', 'cataclysm'];
-    if (hpRatio > 0.75) {
-      pool = pool.filter(function (k) { return k !== 'cataclysm'; });
+    // Guarantee the signature Pillar whole-floor wipe once below 78% HP, and regularly in rotation!
+    if (!raid.pillarCastDone && (hpRatio <= 0.78 || raid.castSeq >= 2)) {
+      raid.pillarCastDone = true;
+      raid.castSeq++;
+      raid.lastSkillKey = 'pillars';
+      return 'pillars';
     }
+
+    var pool = isRangedPlayer
+      ? ['donut', 'seeker', 'pillars', 'cross', 'donut', 'seeker', 'cataclysm']
+      : ['slam', 'donut', 'pillars', 'cross', 'seeker', 'cataclysm'];
     var candidates = pool.filter(function (k) { return k !== raid.lastSkillKey; });
     if (!candidates.length) candidates = pool;
     var key = candidates[(raid.castSeq++) % candidates.length];
@@ -1104,25 +1451,51 @@
 
     var key = chooseBossSkill(boss);
     var hpRatio = boss.max > 0 ? boss.hp / boss.max : 1;
-    var gap = hpRatio < 0.5 ? 3.8 : 4.5;
+    var gap = hpRatio < 0.5 ? 2.8 : 3.6;
     var px = (typeof pl !== 'undefined' && pl) ? pl.x : 0;
     var pz = (typeof pl !== 'undefined' && pl) ? pl.z : 2;
     var dist = Math.hypot(px - boss.x, pz - boss.z);
+    var isThor = raid.dungeonId === 'thor';
 
-    if (key === 'donut') {
+    if (key === 'pillars') {
+      // Anchor boss at the epicenter while channeling the whole-floor blast so pillar shadows stay rock-solid!
+      var b = fieldBounds();
+      boss.x = Math.max(-b.bx + 4.5, Math.min(b.bx - 4.5, boss.x));
+      boss.z = Math.max(b.z0 + 5.0, Math.min(b.z1 - 4.5, boss.z));
+      boss.fixed = true;
+      boss._raidPillarRoot = true;
+      var pillars = spawnSanctuaryPillars(boss.x, boss.z);
+      var wipeName = isThor ? 'Cataclysmic Eruption' : 'Oblivion Extinction';
       raid.telegraph = {
-        name: 'Eye of Abyss',
-        hint: 'EYE OF ABYSS — RANGED DANGER! Run INSIDE the blue ring near Thanatos!',
+        name: wipeName,
+        hint: wipeName.toUpperCase() + ' — HIDE BEHIND A PILLAR (green shadow away from Boss)!',
+        shape: 'pillars',
+        pillars: pillars,
+        x: boss.x,
+        z: boss.z,
+        dmgPct: 0.88,
+        bypassShield: true,
+        mustHideBehindPillar: true,
+        fx: 'abyss_requiem',
+        age: 0,
+        life: 4.2
+      };
+      gap = hpRatio < 0.5 ? 3.4 : 4.2;
+      pushSystemChat('⚠ ' + boss.n + ' charges ' + wipeName + '! Hide in a Pillar shadow!');
+    } else if (key === 'donut') {
+      raid.telegraph = {
+        name: isThor ? 'Caldera Ring' : 'Eye of Abyss',
+        hint: (isThor ? 'CALDERA RING' : 'EYE OF ABYSS') + ' — Run INSIDE the safe blue ring near ' + boss.n + '!',
         shape: 'donut',
         donut: true,
         x: boss.x,
         z: boss.z,
         innerR: 3.7,
         outerR: 16.0,
-        dmgPct: 0.35,
+        dmgPct: 0.50,
         fx: 'abyss_requiem',
         age: 0,
-        life: 2.5
+        life: 2.45
       };
     } else if (key === 'seeker') {
       var targetPt = dist > 2.8
@@ -1131,8 +1504,8 @@
       var flankA = clampToBridge(targetPt.x + 3.4 * Math.cos(raid.castSeq), targetPt.z - 2.8 * Math.sin(raid.castSeq));
       var flankB = clampToBridge(boss.x - (targetPt.x - boss.x) * 0.75, boss.z + 4.8);
       raid.telegraph = {
-        name: 'Horizon Volley',
-        hint: 'HORIZON VOLLEY — Hunts ranged distance & leaves Void Pool!',
+        name: isThor ? 'Pyroclasm Volley' : 'Horizon Volley',
+        hint: (isThor ? 'PYROCLASM VOLLEY' : 'HORIZON VOLLEY') + ' — Hunts ranged distance & leaves burning pool!',
         shape: 'multi',
         meteors: true,
         leavesPool: true,
@@ -1143,7 +1516,7 @@
         ],
         x: targetPt.x,
         z: targetPt.z,
-        dmgPct: 0.30,
+        dmgPct: 0.45,
         fx: 'lod_harvest',
         age: 0,
         life: 2.15
@@ -1151,18 +1524,18 @@
     } else if (key === 'cross') {
       var baseAng = (raid.castSeq % 2 === 0) ? 0 : (Math.PI / 4);
       raid.telegraph = {
-        name: 'Abyssal Cross',
-        hint: 'ABYSSAL CROSS — Step into one of the 4 safe quadrants!',
+        name: isThor ? 'Tectonic Cross' : 'Abyssal Cross',
+        hint: (isThor ? 'TECTONIC CROSS' : 'ABYSSAL CROSS') + ' — Step into one of the 4 safe quadrants!',
         shape: 'cross',
         x: boss.x,
         z: boss.z,
         ang: baseAng,
         width: 2.8,
         len: 26,
-        dmgPct: 0.35,
+        dmgPct: 0.50,
         fx: 'abyss_cross',
         age: 0,
-        life: 2.3
+        life: 2.25
       };
     } else if (key === 'cataclysm') {
       var zones = [{ x: clampToBridge(px, pz).x, z: clampToBridge(px, pz).z, r: 3.2 }];
@@ -1173,30 +1546,30 @@
         zones.push({ x: pt.x, z: pt.z, r: 3.0 });
       }
       raid.telegraph = {
-        name: 'Starfall Cataclysm',
-        hint: 'STARFALL CATACLYSM — Weave between the 5 falling meteors!',
+        name: isThor ? 'Inferno Cataclysm' : 'Starfall Cataclysm',
+        hint: (isThor ? 'INFERNO CATACLYSM' : 'STARFALL CATACLYSM') + ' — Weave between the 5 falling meteors!',
         shape: 'multi',
         meteors: true,
         zones: zones,
         x: boss.x,
         z: boss.z,
-        dmgPct: 0.28,
+        dmgPct: 0.46,
         fx: 'lod_verdict',
         age: 0,
-        life: 2.4
+        life: 2.35
       };
     } else {
       raid.telegraph = {
-        name: 'Crimson Judgment',
-        hint: 'CRIMSON JUDGMENT — Point-blank slam! Move OUT or DODGE!',
+        name: isThor ? 'Magma Judgment' : 'Crimson Judgment',
+        hint: (isThor ? 'MAGMA JUDGMENT' : 'CRIMSON JUDGMENT') + ' — Heavy point-blank slam! Move OUT or DODGE!',
         shape: 'circle',
         x: boss.x,
         z: boss.z,
-        r: 5.4,
-        dmgPct: 0.36,
+        r: 5.5,
+        dmgPct: 0.52,
         fx: 'tnt_judge',
         age: 0,
-        life: 2.4
+        life: 2.35
       };
     }
 
@@ -1204,16 +1577,17 @@
     if (typeof skillNameFloat === 'function') skillNameFloat(raid.telegraph.name);
   }
 
-  function applyRaidHazardDamage(dmgPct, label) {
+  function applyRaidHazardDamage(dmgPct, label, opts) {
+    opts = opts || {};
     if (raid.dead || typeof S === 'undefined' || !S || typeof pl === 'undefined' || !pl) return;
-    if (raid.iframes > 0) {
+    if (!opts.ignoreIframes && raid.iframes > 0) {
       if (typeof addFloat === 'function') addFloat(pl.x, 2.4, pl.z, 'EVADED!', '#76eaff', true, 'evade');
       return;
     }
     var raw = Math.max(1, Math.floor((typeof maxHp === 'function' ? maxHp() : 5000) * dmgPct));
-    var taken = typeof absorbSoak === 'function' ? absorbSoak(raw) : raw;
+    var taken = (!opts.bypassShield && typeof absorbSoak === 'function') ? absorbSoak(raw) : raw;
     if (raw > taken) {
-      raid.supportScore += (raw - taken); // Shielded damage contributes to support
+      raid.supportScore += (raw - taken);
     }
     var beforeHp = Math.max(0, Math.round(S.hp || 0));
     S.hp = Math.max(0, S.hp - taken);
@@ -1229,6 +1603,17 @@
     }
   }
 
+  function tickBossCleave(boss, dt) {
+    if (!boss || raid.dead || typeof pl === 'undefined' || !pl) return;
+    if (raid.telegraph && raid.telegraph.shape === 'pillars') return;
+    raid.bossCleaveIn -= dt;
+    if (raid.bossCleaveIn > 0) return;
+    raid.bossCleaveIn = BOSS_CLEAVE_INTERVAL_S;
+    var dist = Math.hypot(pl.x - boss.x, pl.z - boss.z);
+    var pct = dist <= 4.2 ? BOSS_CLEAVE_PCT : (BOSS_CLEAVE_PCT * 0.72);
+    applyRaidHazardDamage(pct, dist <= 4.2 ? 'BOSS CLEAVE' : 'ASTRAL PULSE', { bypassShield: false });
+  }
+
   function tickVoidPools(dt) {
     if (!raid.voidPools.length) return;
     for (var i = raid.voidPools.length - 1; i >= 0; i--) {
@@ -1242,7 +1627,7 @@
       if (vp.tick <= 0) {
         vp.tick = 0.5;
         if (!raid.dead && typeof pl !== 'undefined' && pl && Math.hypot(pl.x - vp.x, pl.z - vp.z) <= vp.r) {
-          applyRaidHazardDamage(0.05, 'VOID BURN');
+          applyRaidHazardDamage(0.08, 'VOID BURN');
         }
       }
     }
@@ -1251,13 +1636,16 @@
   function tickHazards(dt) {
     tickVoidPools(dt);
 
-    var st = STAGES[raid.stage];
+    var stages = activeStages();
+    var st = stages[raid.stage];
     if (!st) return;
+
+    var liveBoss = st.boss ? findBoss() : null;
+    if (liveBoss) tickBossCleave(liveBoss, dt);
 
     if (!raid.telegraph) {
       if (st.boss) {
-        var boss = findBoss();
-        if (boss) spawnBossSkill(boss, dt);
+        if (liveBoss) spawnBossSkill(liveBoss, dt);
       } else {
         spawnBridgeHazard(dt);
       }
@@ -1267,32 +1655,87 @@
 
     var tg = raid.telegraph;
     tg.age += dt;
-    if (st.boss && (tg.shape === 'circle' || tg.shape === 'donut' || tg.shape === 'cross')) {
-      var liveBoss = findBoss();
-      if (liveBoss) {
-        tg.x = liveBoss.x;
-        tg.z = liveBoss.z;
-      }
+    if (st.boss && liveBoss && (tg.shape === 'circle' || tg.shape === 'donut' || tg.shape === 'cross')) {
+      tg.x = liveBoss.x;
+      tg.z = liveBoss.z;
     }
 
     if (tg.age >= tg.life) {
       raid.telegraph = null;
-      if (tg.fx && typeof triggerRaidBossFx === 'function') {
+      releaseBossAnchor();
+
+      // Only Stage 4 Boss triggers PGBossFx ("BOSS SKILL" banner); Stages 1–3 use clean impact shake/audio!
+      if (st.boss && tg.fx && typeof triggerRaidBossFx === 'function') {
         triggerRaidBossFx(tg.fx, tg.x, tg.z, null);
+      } else {
+        if (typeof shake !== 'undefined' && typeof S !== 'undefined' && S && S.cameraShake !== false) {
+          shake = Math.max(shake, 0.32);
+        }
+        if (typeof CombatAudio !== 'undefined' && CombatAudio.hit && typeof S !== 'undefined' && S) {
+          CombatAudio.hit(true, S.sfx !== false, 'axe', 'skill');
+        }
       }
+
       if (tg.leavesPool) {
         var poolPt = (Array.isArray(tg.zones) && tg.zones[0]) ? tg.zones[0] : { x: tg.x, z: tg.z };
         raid.voidPools.push({ x: poolPt.x, z: poolPt.z, r: 3.4, left: 4.5, tick: 0.35 });
         if (raid.voidPools.length > 3) raid.voidPools.shift();
       }
-      if (!raid.dead && typeof pl !== 'undefined' && pl && hitByTelegraph(tg, pl.x, pl.z)) {
-        applyRaidHazardDamage(tg.dmgPct || 0.32, tg.name.toUpperCase() + '!');
+
+      if (!raid.dead && typeof pl !== 'undefined' && pl) {
+        if (hitByTelegraph(tg, pl.x, pl.z)) {
+          applyRaidHazardDamage(tg.dmgPct || 0.45, tg.name.toUpperCase() + '!', {
+            bypassShield: Boolean(tg.bypassShield),
+            ignoreIframes: Boolean(tg.mustHideBehindPillar)
+          });
+        } else if (tg.shape === 'pillars') {
+          if (typeof addFloat === 'function') {
+            addFloat(pl.x, 2.7, pl.z, 'SHIELDED BY PILLAR!', '#6effc8', true, 'evade');
+          }
+        }
       }
     }
     updateMeshes();
   }
 
-  // ---------- Raid Chat ----------
+  // ---------- Resizable Raid Chat ----------
+  function applyChatBoxSize() {
+    var box = $('raidChatBox');
+    if (!box) return;
+    var w = Math.max(220, Math.min(580, Math.round(raid.chatSize.w || 310)));
+    var h = Math.max(148, Math.min(440, Math.round(raid.chatSize.h || 220)));
+    raid.chatSize.w = w;
+    raid.chatSize.h = h;
+    box.style.width = w + 'px';
+    if (!raid.chatMinimized) {
+      box.style.height = h + 'px';
+    } else {
+      box.style.height = '';
+    }
+  }
+
+  function setChatSize(w, h) {
+    raid.chatSize = {
+      w: Math.max(220, Math.min(580, Math.round(Number(w) || 310))),
+      h: Math.max(148, Math.min(440, Math.round(Number(h) || 220)))
+    };
+    raid.chatMinimized = false;
+    var box = $('raidChatBox');
+    if (box) box.classList.remove('minimized');
+    applyChatBoxSize();
+    saveChatSize(raid.chatSize.w, raid.chatSize.h);
+    return raid.chatSize;
+  }
+
+  function cycleChatPreset() {
+    raid.chatPresetIdx = ((raid.chatPresetIdx || 0) + 1) % CHAT_PRESETS.length;
+    var p = CHAT_PRESETS[raid.chatPresetIdx];
+    setChatSize(p.w, p.h);
+    var btn = $('raidChatSizeBtn');
+    if (btn) btn.textContent = p.label;
+    return p;
+  }
+
   function appendChatEntry(entry) {
     raid.chatLog.push(entry);
     if (raid.chatLog.length > 50) raid.chatLog.shift();
@@ -1377,6 +1820,7 @@
     if (!p) return;
     var payload = {
       type: 'raid_ready',
+      dungeonId: raid.lobbyDungeon || 'astral',
       cls: (typeof S !== 'undefined' && S && S.cls) || 'Adventurer',
       lv: (typeof S !== 'undefined' && S && S.lv) || 150,
       sex: (typeof S !== 'undefined' && S && S.sex === 'f') ? 'f' : 'm',
@@ -1387,7 +1831,7 @@
   }
 
   function toggleReady() {
-    var base = canBaseEnter();
+    var base = canBaseEnter(raid.lobbyDungeon);
     if (!base.ok) return false;
     if (isPartyLeader()) return false;
     raid.myReady = !raid.myReady;
@@ -1398,9 +1842,13 @@
 
   function onLobby(msg) {
     if (!msg || !Array.isArray(msg.members)) return;
+    if (msg.dungeonId === 'thor' || msg.dungeonId === 'astral') {
+      raid.lobbyDungeon = msg.dungeonId;
+    }
     raid.lobbyRoster = {
       partyId: msg.partyId,
       leader: msg.leader,
+      dungeonId: raid.lobbyDungeon,
       members: msg.members
     };
     var selfId = myId();
@@ -1409,7 +1857,6 @@
         raid.myReady = Boolean(msg.members[i].ready);
       }
     }
-    // If leader opened the Raid Ready Room with summon=true, show the Ready Room to party members!
     if (msg.summon && !raid.on && msg.leader !== selfId) {
       var lobbyEl = $('raidLobby');
       if (lobbyEl && lobbyEl.hidden) {
@@ -1557,6 +2004,7 @@
   }
 
   function restoreHome() {
+    releaseBossAnchor();
     clearMeshes();
     raid._internalNav = true;
     try {
@@ -1588,6 +2036,9 @@
     opts = opts || {};
     if (typeof S === 'undefined' || !S) return false;
 
+    var chosenId = opts.dungeonId === 'thor' ? 'thor' : 'astral';
+    var dng = dungeonDef(chosenId);
+
     if (root.PGSocial && root.PGSocial.app && root.PGSocial.app.visible && typeof root.PGSocial.leave === 'function') {
       root.PGSocial.leave();
     }
@@ -1602,6 +2053,7 @@
     consumeDailyEntry();
     raid.home = snapshotHome();
     raid.on = true;
+    raid.dungeonId = chosenId;
     raid.mode = mode === 'party' ? 'party' : 'solo';
     raid.raidId = String(opts.raidId || ('solo-' + Date.now()));
     raid.seed = Number(opts.seed) || 1;
@@ -1621,8 +2073,10 @@
     raid.telegraph = null;
     raid.voidPools = [];
     raid.nextCastIn = 3.2;
+    raid.bossCleaveIn = BOSS_CLEAVE_INTERVAL_S;
     raid.castSeq = 0;
     raid.lastSkillKey = '';
+    raid.pillarCastDone = false;
     raid.syncTimer = 0.5;
     raid.hudTimer = 0;
     raid.transition = null;
@@ -1687,34 +2141,63 @@
     hideResult();
     if (typeof document !== 'undefined' && document.body) document.body.classList.add('raid-open');
     buildHudDom();
+    applyChatBoxSize();
     renderChatFeeds();
     spawnRaidStage(0);
     if (typeof log === 'function') {
-      log('Entered Astral Raid (' + (raid.mode === 'party' ? 'Party' : 'Solo') + ') — clear 3 stages and defeat Memory of Thanatos!', 'r4', 'misc');
+      log('Entered ' + dng.name + ' Raid (' + (raid.mode === 'party' ? 'Party' : 'Solo') + ') — clear 3 stages and defeat ' + dng.bossName + '!', 'r4', 'misc');
     }
     if (typeof save === 'function') save();
     return true;
   }
 
-  function start(mode) {
+  function start(mode, dungeonId) {
     var m = mode || raid.lobbyMode || 'solo';
-    var gate = canEnter(m);
-    if (!gate.ok) return false;
+    var dId = dungeonId || raid.lobbyDungeon || 'astral';
+    var gate = canEnter(m, dId);
+    if (!gate.ok) {
+      if (typeof log === 'function') log('Raid: ' + gate.reason, 'r0', 'misc');
+      return false;
+    }
     if (m === 'party') {
       if (!root.PGSocial || typeof root.PGSocial.send !== 'function') return false;
+      raid.lobbyDungeon = dId;
       raid.waitingPartyStart = true;
       renderLobby();
-      root.PGSocial.send({ type: 'raid_start' });
+      root.PGSocial.send({ type: 'raid_start', dungeonId: dId });
       return 'waiting';
     }
-    return beginRun('solo', {});
+    return beginRun('solo', { dungeonId: dId });
+  }
+
+  function startDirectSolo(dungeonId) {
+    var dId = dungeonId || 'astral';
+    var gate = canEnter('solo', dId);
+    if (!gate.ok) {
+      if (typeof log === 'function') log('Raid: ' + gate.reason, 'r0', 'misc');
+      if (typeof renderWin === 'function') renderWin();
+      return false;
+    }
+    return beginRun('solo', { dungeonId: dId });
+  }
+
+  function openDungeons(subMode) {
+    if (raid.on) return;
+    if (typeof openDungeonsTab === 'function') {
+      openDungeonsTab(subMode || 'raid');
+      return;
+    }
+    showLobby('party', 'astral');
   }
 
   function awardRewards(cleared) {
-    if (typeof S === 'undefined' || !S) return { shards: 0, zeny: 0, echo: 0 };
+    var dng = activeDungeon();
+    if (typeof S === 'undefined' || !S) return { shards: 0, sigils: 0, matName: dng.matName, zeny: 0, echo: 0 };
     var r = cleared ? (raid.mode === 'party' ? REWARDS.party : REWARDS.solo) : REWARDS.fail;
     if (!Array.isArray(S.ascensionMat)) S.ascensionMat = [0, 0, 0];
-    S.ascensionMat[0] = (Number(S.ascensionMat[0]) || 0) + r.shards;
+    var mIdx = dng.matIdx === 1 ? 1 : 0;
+    S.ascensionMat[mIdx] = (Number(S.ascensionMat[mIdx]) || 0) + r.shards;
+    if (r.sigils > 0) S.ascensionMat[2] = (Number(S.ascensionMat[2]) || 0) + r.sigils;
     if (r.zeny > 0) S.zeny = (Number(S.zeny) || 0) + r.zeny;
     if (r.echo > 0) S.shards = (Number(S.shards) || 0) + r.echo;
 
@@ -1728,7 +2211,13 @@
         if (!st.bestSolo || secs < st.bestSolo) st.bestSolo = secs;
       }
     }
-    return r;
+    return {
+      shards: r.shards,
+      sigils: r.sigils || 0,
+      matName: dng.matName,
+      zeny: r.zeny,
+      echo: r.echo
+    };
   }
 
   function computeCommendations(partyList) {
@@ -1769,6 +2258,7 @@
 
   function finish(cleared, reason, fromNetwork) {
     if (!raid.on) return;
+    var dng = activeDungeon();
     refreshSelfStats();
     var elapsed = Math.max(1, Math.round(raid.elapsed));
     var me = selfEntry();
@@ -1812,8 +2302,10 @@
 
     var comms = computeCommendations(partySnap);
     raid.result = {
+      dungeonName: dng.name,
+      bossName: dng.bossName,
       cleared: Boolean(cleared),
-      reason: reason || (cleared ? 'Memory of Thanatos defeated!' : 'Raid failed'),
+      reason: reason || (cleared ? (dng.bossName + ' defeated!') : 'Raid failed'),
       mode: mode,
       secs: elapsed,
       dps: myFinalDps,
@@ -1861,25 +2353,28 @@
   }
 
   function beginStageAdvance() {
+    var dng = activeDungeon();
+    var stages = dng.stages;
     var nextIdx = raid.stage + 1;
-    if (nextIdx >= STAGES.length) {
-      finish(true, 'Memory of Thanatos defeated!', false);
+    if (nextIdx >= stages.length) {
+      finish(true, dng.bossName + ' defeated!', false);
       return;
     }
-    var fromAstral = STAGES[raid.stage].astralStage;
-    var toAstral = STAGES[nextIdx].astralStage;
+    var fromAstral = stages[raid.stage].astralStage;
+    var toAstral = stages[nextIdx].astralStage;
     raid.telegraph = null;
     raid.voidPools = [];
     raid.moveTarget = null;
+    releaseBossAnchor();
     updateMeshes();
 
     var startedWalk = false;
-    if (typeof startAstralJourney === 'function') {
+    if (dng.mapId === 10 && typeof startAstralJourney === 'function') {
       startedWalk = startAstralJourney(fromAstral, toAstral);
     }
     raid.transition = {
       nextIdx: nextIdx,
-      fallbackLeft: startedWalk ? 8.0 : 0.6
+      fallbackLeft: startedWalk ? 8.0 : 0.55
     };
     renderHud();
   }
@@ -1920,7 +2415,7 @@
 
     if (raid.transition) {
       raid.transition.fallbackLeft -= step;
-      var journeyActive = typeof astralJourney !== 'undefined' && Boolean(astralJourney);
+      var journeyActive = activeDungeon().mapId === 10 && typeof astralJourney !== 'undefined' && Boolean(astralJourney);
       if (!journeyActive || raid.transition.fallbackLeft <= 0) {
         var nxt = raid.transition.nextIdx;
         raid.transition = null;
@@ -1958,6 +2453,7 @@
       return;
     }
     beginRun('party', {
+      dungeonId: msg.dungeonId || raid.lobbyDungeon || 'astral',
       raidId: msg.raidId,
       seed: msg.seed,
       members: msg.members || []
@@ -2042,7 +2538,7 @@
         }
       }
     }
-    finish(Boolean(msg.cleared), msg.reason || (msg.cleared ? 'Memory of Thanatos defeated!' : 'Raid ended by party.'), true);
+    finish(Boolean(msg.cleared), msg.reason || (msg.cleared ? (activeDungeon().bossName + ' defeated!') : 'Raid ended by party.'), true);
   }
 
   function onError(msg) {
@@ -2052,12 +2548,15 @@
     if (txt && typeof log === 'function') log('Raid: ' + txt, 'r0', 'misc');
   }
 
-  // ---------- UI: Portal Lobby & Party Ready Room ----------
-  function showLobby(preferredMode) {
+  // ---------- UI: Party Ready Room Modal ----------
+  function showLobby(preferredMode, dungeonId) {
     if (raid.on) return;
+    if (dungeonId && DUNGEONS[dungeonId] && !DUNGEONS[dungeonId].comingSoon) {
+      raid.lobbyDungeon = dungeonId;
+    }
     if (preferredMode === 'solo' || preferredMode === 'party') {
       raid.lobbyMode = preferredMode;
-    } else if (socialParty() && socialParty().members.length >= 2) {
+    } else {
       raid.lobbyMode = 'party';
     }
     var el = $('raidLobby');
@@ -2079,9 +2578,10 @@
   function renderLobby() {
     var box = $('raidLobbyBody');
     if (!box) return;
-    var mode = raid.lobbyMode;
-    var baseGate = canBaseEnter();
-    var gate = canEnter(mode);
+    var mode = raid.lobbyMode || 'party';
+    var dng = dungeonDef(raid.lobbyDungeon || 'astral');
+    var baseGate = canBaseEnter(dng.id);
+    var gate = canEnter(mode, dng.id);
     var left = raidLeftToday();
     var p = socialParty();
     var st = raidSaveState();
@@ -2125,7 +2625,7 @@
         partyHtml =
           '<div class="raid-party-box">' +
             '<div class="raid-party-head">' +
-              '<span><b>Party Ready Room</b> (' + members.length + '/3 Adventurers)</span>' +
+              '<span><b>Party Ready Room — ' + escHtml(dng.name) + '</b> (' + members.length + '/3 Adventurers)</span>' +
               '<div class="raid-party-head-actions">' +
                 (isPartyLeader() ? '<button type="button" class="raid-link-btn" data-raid-act="summon">📣 Summon Party</button>' : '') +
                 '<span class="raid-ready-count' + (allReady ? ' all' : '') + '">' + readyCnt + '/' + members.length + ' READY</span>' +
@@ -2169,20 +2669,16 @@
             '<canvas id="' + soloCid + '" class="raid-portrait-canvas" width="84" height="92" style="width:84px;height:92px;"></canvas>' +
           '</div>' +
           '<div><b>Solo Challenger: ' + escHtml(myName()) + '</b><br>' +
-          'Fight down the Starlight Bridge under live meteor &amp; beam bombardment. Solo death ends the run immediately (no revive).</div>' +
+          'Challenge ' + escHtml(dng.name) + ' (' + escHtml(dng.bossName) + '). Solo death ends the run immediately (no revive).</div>' +
         '</div>';
     }
 
-    var stagesHtml = STAGES.map(function (s, i) {
+    var stagesHtml = dng.stages.map(function (s, i) {
       return '<div class="raid-stage-item' + (s.boss ? ' boss' : '') + '">' +
         '<span class="raid-stage-num">' + (i + 1) + '</span>' +
         '<div><b>' + escHtml(s.name) + (s.boss ? ' <em>BOSS</em>' : '') + '</b><small>' + escHtml(s.desc) + '</small></div>' +
       '</div>';
     }).join('');
-
-    var bestText = mode === 'party'
-      ? (st.bestParty ? fmtClock(st.bestParty) : '—')
-      : (st.bestSolo ? fmtClock(st.bestSolo) : '—');
 
     var entriesText = isGm()
       ? '<b class="raid-gm-tag">∞ Unlimited (GM)</b>'
@@ -2221,48 +2717,28 @@
 
     box.innerHTML =
       '<div class="raid-banner">' +
-        '<img src="assets/endgame/textures/astral-sky-plate-a4db60a4cc7a.webp" alt="">' +
+        '<img src="' + escHtml(dng.banner || dng.img) + '" alt="">' +
         '<div class="raid-banner-shade"></div>' +
         '<div class="raid-banner-copy">' +
-          '<span class="raid-eyebrow">ASTRAL CITADEL · CO-OP RAID PORTAL</span>' +
-          '<h2>Astral Raid</h2>' +
-          '<p>3 bombarded bridge stages + Memory of Thanatos · Solo &lt;10m · Party &lt;15m</p>' +
+          '<span class="raid-eyebrow">PARTY RAID READY ROOM · ' + escHtml(dng.name.toUpperCase()) + '</span>' +
+          '<h2>' + escHtml(dng.name) + ' — Party Preview</h2>' +
+          '<p>Everyone presses Ready · Party Leader presses Start · 15:00 limit · 3 shared revives</p>' +
         '</div>' +
         '<button type="button" class="raid-close-x" data-raid-act="close" aria-label="Close">×</button>' +
       '</div>' +
-      '<div class="raid-mode-tabs" role="tablist">' +
-        '<button type="button" class="raid-mode-tab' + (mode === 'solo' ? ' on' : '') + '" data-raid-mode="solo">' +
-          '<strong>Solo Raid</strong><span>1 player · &lt;10 min · No revive</span>' +
-        '</button>' +
-        '<button type="button" class="raid-mode-tab' + (mode === 'party' ? ' on' : '') + '" data-raid-mode="party">' +
-          '<strong>Party Raid</strong><span>2–3 real players · Ready check &amp; Team revive</span>' +
-        '</button>' +
-      '</div>' +
       partyHtml +
       '<div class="raid-stages-grid">' + stagesHtml + '</div>' +
-      '<div class="raid-rules-row">' +
-        '<div class="raid-rule-card">' +
-          '<b>☄ Bridge &amp; Boss Mechanics</b>' +
-          '<span>Dodge falling meteors, cross beams, Eye of Abyss (get IN close!), &amp; Void Pools via WASD/click or <b>DODGE</b> (Space).</span>' +
-        '</div>' +
-        '<div class="raid-rule-card">' +
-          '<b>✚ Party Revive &amp; Raid Chat</b>' +
-          '<span>Communicate in Raid Chat; living allies channel 3s to revive a fallen teammate at 30% HP (3/run).</span>' +
-        '</div>' +
-      '</div>' +
       '<div class="raid-rewards-bar">' +
-        '<div><b>Solo Clear</b><span>20 Astral Shards · 500,000 Zeny · 100 Echo Shards</span></div>' +
-        '<div><b>Party Clear</b><span>30 Astral Shards · 750,000 Zeny · 150 Echo Shards</span></div>' +
-        '<div><b>Defeat Consolation</b><span>5 Astral Shards</span></div>' +
+        '<div><b>Party Clear</b><span>30 ' + escHtml(dng.matName) + ' · 1 Valkyrie\'s Sigil · 750,000 Zeny · 150 Echo Shards</span></div>' +
       '</div>' +
       '<div class="raid-lobby-foot">' +
         '<div class="raid-meta-line">' +
-          '<span>Entries left today: ' + entriesText + (st.clears ? ' · Total clears: <b>' + st.clears + '</b> · Best: <b>' + bestText + '</b>' : '') + '</span>' +
+          '<span>Entries left today: ' + entriesText + (st.clears ? ' · Total clears: <b>' + st.clears + '</b>' : '') + '</span>' +
           statusNote +
         '</div>' +
         '<div class="raid-foot-btns">' +
           primaryBtnHtml +
-          '<button type="button" class="raid-cancel-btn" data-raid-act="close">Close</button>' +
+          '<button type="button" class="raid-cancel-btn" data-raid-act="close">Back</button>' +
         '</div>' +
       '</div>';
 
@@ -2270,7 +2746,7 @@
     registerPortraits(portraitsToPaint);
   }
 
-  // ---------- UI: Persistent Active Raid HUD (with Raid Chat) ----------
+  // ---------- UI: Persistent Active Raid HUD (with Resizable Raid Chat & Stage-4-Only Boss HP Bar) ----------
   function buildHudDom() {
     var hud = $('raidHud');
     if (!hud) return;
@@ -2284,11 +2760,11 @@
           '<div class="raid-stage-text"><b id="raidStageName"></b><small id="raidStageSub"></small></div>' +
           '<div class="raid-clock" id="raidClock"></div>' +
         '</div>' +
-        '<div class="raid-boss-wrap" id="raidBossWrap" hidden>' +
+        '<div class="raid-boss-wrap" id="raidBossWrap" hidden style="display:none">' +
           '<div class="raid-boss-top"><b id="raidBossName"></b><span class="raid-boss-phase" id="raidBossPhase">PHASE I</span></div>' +
           '<div class="raid-boss-bar"><i id="raidBossFill"></i><span class="raid-boss-hp-num" id="raidBossHpText"></span></div>' +
         '</div>' +
-        '<div class="raid-cast-banner" id="raidCastBar" hidden><i id="raidCastFill"></i><span id="raidCastText"></span></div>' +
+        '<div class="raid-cast-banner" id="raidCastBar" hidden style="display:none"><i id="raidCastFill"></i><span id="raidCastText"></span></div>' +
       '</div>' +
       '<div class="raid-hud-left">' +
         '<div class="raid-card">' +
@@ -2303,11 +2779,15 @@
       '<div class="raid-chat-box" id="raidChatBox">' +
         '<div class="raid-chat-hd">' +
           '<span>💬 RAID CHAT</span>' +
-          '<button type="button" class="raid-chat-min-btn" data-raid-act="toggle-chat" title="Minimize/Expand Chat">–</button>' +
+          '<div class="raid-chat-hd-btns">' +
+            '<button type="button" class="raid-chat-size-btn" id="raidChatSizeBtn" data-raid-act="cycle-chat-size" title="Cycle Chat Size (S / M / L)">M</button>' +
+            '<button type="button" class="raid-chat-min-btn" data-raid-act="toggle-chat" title="Minimize/Expand Chat">–</button>' +
+            '<span class="raid-chat-resize-grip" data-raid-chat-resize="1" title="Drag to resize chat box">⤡</span>' +
+          '</div>' +
         '</div>' +
         '<div class="raid-chat-feed" id="raidChatFeed"></div>' +
         '<div class="raid-chat-quick">' +
-          '<button type="button" class="raid-quick-pill" data-raid-quick="Dodge! Watch AoE!">Dodge!</button>' +
+          '<button type="button" class="raid-quick-pill" data-raid-quick="Hide behind Pillar!">Behind Pillar!</button>' +
           '<button type="button" class="raid-quick-pill" data-raid-quick="Stack IN near boss!">Stack IN!</button>' +
           '<button type="button" class="raid-quick-pill" data-raid-quick="Need Revive please!">Help / Revive!</button>' +
           '<button type="button" class="raid-quick-pill" data-raid-quick="Nice clear! GG!">GG!</button>' +
@@ -2318,24 +2798,26 @@
         '</form>' +
       '</div>' +
       '<div class="raid-hud-bottom">' +
-        '<div class="raid-move-hint">WASD / Click bridge to move · <b>SPACE</b> to DODGE · <b>ENTER</b> to Chat</div>' +
+        '<div class="raid-move-hint">WASD / Click floor to move · <b>SPACE</b> to DODGE · <b>ENTER</b> to Chat</div>' +
         '<div class="raid-actions">' +
           '<button type="button" class="raid-revive-btn" id="raidReviveBtn" data-raid-act="revive" hidden></button>' +
           '<button type="button" class="raid-dodge-btn" id="raidDodgeBtn" data-raid-act="dodge"></button>' +
           '<button type="button" class="raid-leave-btn" data-raid-act="leave" title="Leave Raid">Leave</button>' +
         '</div>' +
       '</div>';
+    applyChatBoxSize();
   }
 
   function updateHud() {
     if (!raid.on) return;
     buildHudDom();
-    var st = STAGES[raid.stage] || STAGES[0];
+    var stages = activeStages();
+    var st = stages[raid.stage] || stages[0];
     var rem = Math.max(0, raid.limit - raid.elapsed);
 
     var pipsEl = $('raidPips');
     if (pipsEl) {
-      pipsEl.innerHTML = STAGES.map(function (s, i) {
+      pipsEl.innerHTML = stages.map(function (s, i) {
         var cls = i < raid.stage ? 'done' : (i === raid.stage ? 'now' : '');
         return '<span class="raid-pip ' + cls + '">' + (s.boss ? '☠' : (i + 1)) + '</span>';
       }).join('');
@@ -2347,8 +2829,8 @@
     var stSub = $('raidStageSub');
     if (stSub) {
       stSub.textContent = raid.transition
-        ? 'Advancing down the Starlight Bridge…'
-        : (st.boss ? 'Sanctuary Boss Encounter' : (mobsLeft + (mobsLeft === 1 ? ' enemy' : ' enemies') + ' left · Bridge under fire'));
+        ? 'Advancing to the next stage…'
+        : (st.boss ? 'Sanctum Boss Encounter' : (mobsLeft + (mobsLeft === 1 ? ' enemy' : ' enemies') + ' left · Arena under fire'));
     }
 
     var clk = $('raidClock');
@@ -2357,18 +2839,21 @@
       clk.className = 'raid-clock' + (rem < 90 ? ' warn' : '');
     }
 
+    // Show Boss HP Bar ONLY when actively fighting the Stage 4 Boss!
     var bossWrap = $('raidBossWrap');
-    var boss = st.boss ? findBoss() : null;
+    var boss = (st && st.boss && !raid.transition) ? findBoss() : null;
     if (bossWrap) {
-      if (boss) {
+      if (boss && boss.hp > 0) {
         bossWrap.hidden = false;
+        bossWrap.style.display = '';
         var bpct = Math.max(0, Math.min(100, (boss.hp / Math.max(1, boss.max)) * 100));
         $('raidBossName').textContent = '☠ ' + boss.n;
-        $('raidBossPhase').textContent = bpct <= 50 ? 'PHASE II · ENRAGED' : 'PHASE I · SANCTUARY';
+        $('raidBossPhase').textContent = bpct <= 50 ? 'PHASE II · ENRAGED' : 'PHASE I · SANCTUM';
         $('raidBossHpText').textContent = fmtNum(boss.hp) + ' / ' + fmtNum(boss.max) + '  (' + bpct.toFixed(1) + '%)';
         $('raidBossFill').style.width = bpct.toFixed(1) + '%';
       } else {
         bossWrap.hidden = true;
+        bossWrap.style.display = 'none';
       }
     }
 
@@ -2376,7 +2861,9 @@
     if (castEl) {
       if (raid.telegraph) {
         castEl.hidden = false;
-        castEl.className = 'raid-cast-banner' + (raid.telegraph.donut ? ' donut' : '');
+        castEl.style.display = '';
+        var extraCls = raid.telegraph.shape === 'pillars' ? ' pillars' : (raid.telegraph.donut ? ' donut' : '');
+        castEl.className = 'raid-cast-banner' + extraCls;
         var castLeft = Math.max(0, raid.telegraph.life - raid.telegraph.age);
         var cpct = Math.max(0, Math.min(100, (raid.telegraph.age / Math.max(0.1, raid.telegraph.life)) * 100));
         var cfill = $('raidCastFill');
@@ -2385,6 +2872,7 @@
         if (ctxt) ctxt.textContent = '⚠ ' + (raid.telegraph.hint || raid.telegraph.name) + ' (' + castLeft.toFixed(1) + 's)';
       } else {
         castEl.hidden = true;
+        castEl.style.display = 'none';
       }
     }
 
@@ -2463,7 +2951,10 @@
 
     var partyList = Array.isArray(res.party) && res.party.length ? res.party : [];
     var comms = res.commendations || computeCommendations(partyList);
-    var rew = res.rewards || { shards: 0, zeny: 0, echo: 0 };
+    var rew = res.rewards || { shards: 0, sigils: 0, matName: 'Astral Shards', zeny: 0, echo: 0 };
+    var matLabel = rew.matName || 'Astral Shards';
+    var dngTitle = (res.dungeonName || 'Astral Citadel').toUpperCase();
+    var bossTitle = res.bossName || 'Thanatos';
     var portraitsToPaint = [];
 
     var showcaseHtml = partyList.map(function (p, idx) {
@@ -2497,7 +2988,15 @@
       lootTiles.push(
         '<div class="raid-loot-item">' +
           '<span class="raid-loot-icon">✦</span>' +
-          '<div class="raid-loot-meta"><b>+' + rew.shards + ' Astral Shards</b><small>' + (res.cleared ? 'Sanctuary Trophy' : 'Consolation Drop') + '</small></div>' +
+          '<div class="raid-loot-meta"><b>+' + rew.shards + ' ' + escHtml(matLabel) + '</b><small>' + (res.cleared ? 'Sanctum Trophy' : 'Consolation Drop') + '</small></div>' +
+        '</div>'
+      );
+    }
+    if (rew.sigils > 0) {
+      lootTiles.push(
+        '<div class="raid-loot-item">' +
+          '<span class="raid-loot-icon">♛</span>' +
+          '<div class="raid-loot-meta"><b>+' + rew.sigils + ' Valkyrie\'s Sigil</b><small>Mythic Evolution</small></div>' +
         '</div>'
       );
     }
@@ -2530,10 +3029,10 @@
       '<div class="raid-result-card' + (res.cleared ? ' win' : ' fail') + '">' +
         '<div class="raid-result-head">' +
           '<span class="raid-eyebrow">' +
-            (res.mode === 'party' ? 'ASTRAL RAID · PARTY ' : 'ASTRAL RAID · SOLO ') +
+            escHtml(dngTitle) + (res.mode === 'party' ? ' · PARTY ' : ' · SOLO ') +
             (res.cleared ? 'COMPLETE' : 'FAILED') +
           '</span>' +
-          '<h2>' + (res.cleared ? '🏆 Raid Complete — Thanatos Defeated!' : '☠ Raid Failed') + '</h2>' +
+          '<h2>' + (res.cleared ? ('🏆 Raid Complete — ' + escHtml(bossTitle) + ' Defeated!') : '☠ Raid Failed') + '</h2>' +
           '<p class="raid-result-sub">' + escHtml(res.reason) + ' · Duration: <b>' + fmtClock(res.secs) + '</b></p>' +
         '</div>' +
         '<div class="raid-showcase-grid">' + showcaseHtml + '</div>' +
@@ -2553,9 +3052,43 @@
     paintActivePortraits();
   }
 
-  // ---------- Delegated UI Click & Form Binding ----------
+  // ---------- Delegated UI Click, Drag-Resize & Form Binding ----------
   function bindEvents() {
     if (typeof document === 'undefined') return;
+
+    var dragChat = null;
+
+    document.addEventListener('pointerdown', function (e) {
+      var grip = e.target && e.target.closest ? e.target.closest('[data-raid-chat-resize]') : null;
+      if (!grip) return;
+      var box = $('raidChatBox');
+      if (!box) return;
+      e.preventDefault();
+      e.stopPropagation();
+      raid.chatMinimized = false;
+      box.classList.remove('minimized');
+      var rect = box.getBoundingClientRect();
+      dragChat = {
+        startX: e.clientX,
+        startY: e.clientY,
+        startW: rect.width || raid.chatSize.w || 310,
+        startH: rect.height || raid.chatSize.h || 220
+      };
+    });
+
+    document.addEventListener('pointermove', function (e) {
+      if (!dragChat) return;
+      var nw = dragChat.startW + (e.clientX - dragChat.startX);
+      // Anchored at bottom-left, so dragging UP increases height!
+      var nh = dragChat.startH - (e.clientY - dragChat.startY);
+      setChatSize(nw, nh);
+    });
+
+    function stopChatDrag() {
+      dragChat = null;
+    }
+    document.addEventListener('pointerup', stopChatDrag);
+    document.addEventListener('pointercancel', stopChatDrag);
 
     document.addEventListener('click', function (e) {
       var modeBtn = e.target && e.target.closest ? e.target.closest('[data-raid-mode]') : null;
@@ -2578,20 +3111,22 @@
       var act = actBtn.getAttribute('data-raid-act');
       if (act === 'close') hideLobby();
       else if (act === 'close-result') hideResult();
-      else if (act === 'start') start(raid.lobbyMode);
+      else if (act === 'start') start(raid.lobbyMode, raid.lobbyDungeon);
       else if (act === 'toggle-ready') toggleReady();
       else if (act === 'summon') announceReadyState(true);
+      else if (act === 'cycle-chat-size') cycleChatPreset();
       else if (act === 'toggle-chat') {
         raid.chatMinimized = !raid.chatMinimized;
         var cb = $('raidChatBox');
         if (cb) cb.classList.toggle('minimized', raid.chatMinimized);
+        applyChatBoxSize();
         actBtn.textContent = raid.chatMinimized ? '+' : '–';
       }
       else if (act === 'dodge') dodge();
       else if (act === 'revive') revive();
       else if (act === 'leave') {
         if (typeof ask === 'function') {
-          ask('Leave the Astral Raid? Your current run will end.', function () { leave(); }, { yes: 'Leave Raid', no: 'Stay' });
+          ask('Leave the Raid? Your current run will end.', function () { leave(); }, { yes: 'Leave Raid', no: 'Stay' });
         } else {
           leave();
         }
@@ -2623,6 +3158,7 @@
   bindEvents();
 
   return {
+    DUNGEONS: DUNGEONS,
     STAGES: STAGES,
     SOLO_LIMIT_S: SOLO_LIMIT_S,
     PARTY_LIMIT_S: PARTY_LIMIT_S,
@@ -2633,8 +3169,14 @@
     allPartyMembersReady: allPartyMembersReady,
     toggleReady: toggleReady,
     sendChat: sendChat,
+    setChatSize: setChatSize,
+    cycleChatPreset: cycleChatPreset,
+    isBehindAnyPillar: isBehindAnyPillar,
+    spawnSanctuaryPillars: spawnSanctuaryPillars,
     computeCommendations: computeCommendations,
     raidLeftToday: raidLeftToday,
+    openDungeons: openDungeons,
+    startDirectSolo: startDirectSolo,
     showLobby: showLobby,
     hideLobby: hideLobby,
     renderLobby: renderLobby,

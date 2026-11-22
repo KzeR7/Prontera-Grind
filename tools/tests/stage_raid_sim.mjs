@@ -85,14 +85,15 @@ await check('missingMigrations orders additive schema steps 0009..0021 and retur
   assert.deepEqual(complete, [], 'no migrations queued when pg-staging is already up to date');
 });
 
-await check('verifyDeployment checks version.txt, raid assets (?v=454), Three.js SRI, and /api/social 401 gate', async () => {
+const vNum = STAGE.buildTag.replace(/^haven-v/, '');
+await check(`verifyDeployment checks version.txt, raid assets (?v=${vNum}), Three.js SRI, and /api/social 401 gate`, async () => {
   const threeBytes = fs.readFileSync(path.join(ROOT, 'assets/endgame/three-r128.min.js'));
   const crlfBytes = Buffer.from(threeBytes.toString('latin1').replace(/\n/g, '\r\n'), 'latin1');
   const seen = [];
   await verifyDeployment('https://a1b2c3d4.prontera-grind-staging.pages.dev', BUILD, async (url, opts) => {
     seen.push({ url, upgrade: opts?.headers?.Upgrade || null });
     if (url.endsWith('/version.txt')) return { status: 200, text: async () => BUILD + '\n' };
-    if (url.includes('/assets/raid.js?v=454') || url.includes('/assets/raid.css?v=454')) return { status: 200, text: async () => 'ok' };
+    if (url.includes(`/assets/raid.js?v=${vNum}`) || url.includes(`/assets/raid.css?v=${vNum}`)) return { status: 200, text: async () => 'ok' };
     if (url.endsWith('/assets/endgame/three-r128.min.js')) return { status: 200, arrayBuffer: async () => threeBytes };
     if (url.endsWith('/api/social')) return { status: 401, text: async () => '' };
     return { status: 404, text: async () => '' };

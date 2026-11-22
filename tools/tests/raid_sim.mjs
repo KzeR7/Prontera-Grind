@@ -32,23 +32,45 @@ console.log('Astral Raid simulation & DO budget verification\n');
 const g = createGame(html);
 g.ev(raidJs);
 
-// 1. Portal / Lobby & Gate checks
-check('Raid dock entry opens standalone #raidLobby and enforces 4th-job + 2/day gates', () => {
+// 1. Map -> Dungeons Subtab (Raid Dungeons + Endless Echo) & Gate checks
+check('Raid moved out of bottom dock into Map -> Dungeons subtab with 3 dungeons, Mobs & Drops, Solo direct entry & Party Ready Room', () => {
+  assert.equal(g.ev(`DOCK_TABS.includes('raid')`), false, 'raid removed from main bottom dock UI');
   g.ev(`S=fresh();S.cls='Lord Knight';S.lv=120;S.gm=false;`);
-  assert.equal(g.ev(`PGRaid.canEnter().ok`), false, '3rd job blocked from Astral Raid');
+  assert.equal(g.ev(`PGRaid.canEnter('solo').ok`), false, '3rd job blocked from Raid');
   fourthSetup(g, 'Rune Knight', 'sword', 101);
   progressSetup(g, 'mid');
   g.ev(`S.gm=false;S.raid={day:trialDay(),used:0};`);
-  assert.equal(g.ev(`PGRaid.canEnter().ok`), true, '4th job Lv150 allowed');
+  assert.equal(g.ev(`PGRaid.canEnter('solo').ok`), true, '4th job Lv150 allowed');
   assert.equal(g.ev(`PGRaid.raidLeftToday()`), 2, '2 entries/day');
+
+  // Opening Dungeons via openTab('raid') or Map -> Dungeons renders 3 dungeons on left & Mobs/Drops on right
   g.ev(`openTab('raid')`);
-  assert.equal(g.ev(`document.getElementById('raidLobby').hidden`), false, 'openTab("raid") opens #raidLobby');
-  assert.equal(g.ev(`tabs.includes('raid')`), false, 'raid uses standalone portal, not #wins panel');
-  const lobbyHtml = g.ev(`document.getElementById('raidLobbyBody').innerHTML`);
-  assert.match(lobbyHtml, /Starlit Approach/);
-  assert.match(lobbyHtml, /Fallen Arcade/);
-  assert.match(lobbyHtml, /Runic Observatory/);
-  assert.match(lobbyHtml, /Sanctuary of Thanatos/);
+  assert.equal(g.ev(`tabs.includes('map') && mapSeason === 'dungeons' && dungeonMode === 'raid'`), true, 'opens Map -> Dungeons -> Raid');
+  assert.equal(g.ev(`document.querySelectorAll('.raid-dungeon-card').length`), 3, '3 dungeon cards rendered on left');
+  assert.equal(g.ev(`document.querySelectorAll('.raid-dungeon-card img').length`), 3, 'all 3 dungeon cards render dungeon images');
+  const mapHtml = g.ev(`document.querySelector('[data-win="map"]').innerHTML`);
+  assert.match(mapHtml, /Astral Citadel/);
+  assert.match(mapHtml, /Thor Volcano/);
+  assert.match(mapHtml, /Niflheim Abyssal Sanctum/);
+  assert.match(mapHtml, /Monsters &amp; Boss/);
+  assert.match(mapHtml, /Drops &amp; Clear Rewards/);
+
+  // Selecting Thor Volcano updates right-side Mobs & Drops; selecting Abyss shows Coming Soon
+  g.ev(`ACT.raiddungeon('thor')`);
+  assert.match(g.ev(`document.querySelector('.raid-dungeon-detail').textContent`), /Ifrit.*Primal Catalysts/);
+  g.ev(`ACT.raiddungeon('abyss')`);
+  assert.match(g.ev(`document.querySelector('.raid-dungeon-detail').textContent`), /Coming in Future Update/);
+  g.ev(`ACT.raiddungeon('astral')`);
+
+  // Switching to Endless Echo submode inside Dungeons shows Endless Echo
+  g.ev(`ACT.dungeonmode('echo')`);
+  assert.ok(g.ev(`!!document.querySelector('[data-win="map"] [data-trial="lobby"]')`), 'Endless Echo lives inside Map -> Dungeons');
+  g.ev(`ACT.dungeonmode('raid')`);
+
+  // Clicking Party Raid opens the Party Preview Ready Room (#raidLobby)
+  g.ev(`ACT.raidparty('astral')`);
+  assert.equal(g.ev(`document.getElementById('raidLobby').hidden`), false, 'Party Raid button opens #raidLobby Party Preview');
+  g.ev(`PGRaid.hideLobby(); tabs.length = 0; renderWin();`);
 });
 
 // 2. Solo start: zero WS traffic, Astral Citadel map 10, dedicated Raid HUD
@@ -106,28 +128,32 @@ check('Clearing Stages 1-3 walks down Astral bridge and spawns Memory of Thanato
   assert.ok(g.ev(`PGRaid.raid.party[0].dps > 0`), 'DPS meter tracks run damage (not lifetime S.dmg)');
 });
 
-// 4. Both Evasion Mechanics: Red Telegraph hit vs Walk-Out vs DODGE button
-check('Evasion: standing in red telegraph deals 32% HP; walking out OR pressing DODGE evades cleanly', () => {
-  // Trigger a telegraph and stand inside it without dodging
-  g.ev(`S.hp = maxHp(); pl.x = 0; pl.z = -4; mobs.forEach(m => { m.at = 999; if(m.boss){m.x=0;m.z=-4;} });`);
+// 4. Both Evasion Mechanics + Elevated Boss Threat: Red Telegraph hit (45% HP) + Periodic Boss Cleave vs Walk-Out vs DODGE button
+check('Evasion & Elevated Boss Threat: standing in red telegraph deals 45% HP, periodic boss cleave deals 16% HP, and walking out OR pressing DODGE evades cleanly', () => {
+  // Trigger a telegraph and stand inside it without dodging (pause periodic cleave so we measure telegraph impact cleanly)
+  g.ev(`S.hp = maxHp(); pl.x = 0; pl.z = -4; PGRaid.raid.bossCleaveIn = 10; mobs.forEach(m => { m.at = 999; if(m.boss){m.x=0;m.z=-4;} });`);
   g.ev(`PGRaid.raid.telegraph = { name:'Soul Brand', kind:'brand', x:0, z:-4, r:3.8, age:2.35, life:2.4 }; PGRaid.raid.iframes = 0;`);
   const hpFull = g.ev(`S.hp`);
   g.ev(`PGRaid.tick(0.1)`);
   const hpAfterHit = g.ev(`S.hp`);
-  assert.equal(hpFull - hpAfterHit, Math.floor(hpFull * 0.32), 'standing inside red telegraph deals 32% maxHp');
+  assert.equal(hpFull - hpAfterHit, Math.floor(hpFull * 0.45), 'standing inside red telegraph deals elevated 45% maxHp');
+
+  // Verify periodic Boss Cleave deals ~16% maxHp pressure on its own
+  g.ev(`S.hp = maxHp(); PGRaid.raid.iframes = 0; PGRaid.raid.telegraph = null; PGRaid.raid.bossCleaveIn = 0.05; PGRaid.tick(0.1);`);
+  assert.equal(hpFull - g.ev(`S.hp`), Math.max(1, Math.floor(hpFull * 0.16)), 'boss periodic cleave deals 16% maxHp');
 
   // Evasion A: Walk out via ground click / WASD overrideMove
-  g.ev(`S.hp = maxHp(); pl.x = 0; pl.z = -4; PGRaid.raid.telegraph = { name:'Soul Brand', kind:'brand', x:0, z:-4, r:3.8, age:0.2, life:2.4 };`);
+  g.ev(`S.hp = maxHp(); pl.x = 0; pl.z = -4; PGRaid.raid.bossCleaveIn = 99; PGRaid.raid.telegraph = { name:'Soul Brand', kind:'brand', x:0, z:-4, r:3.8, age:0.2, life:2.4 };`);
   g.ev(`PGRaid.setGroundMove(8, 4);`);
   for (let i = 0; i < 60; i++) {
-    g.ev(`mobs.forEach(m => m.at = 999); update(1/30); t += 1/30;`);
+    g.ev(`mobs.forEach(m => m.at = 999); PGRaid.raid.bossCleaveIn = 99; update(1/30); t += 1/30;`);
   }
   assert.ok(g.ev(`Math.hypot(pl.x - 0, pl.z - (-4)) > 3.8`), 'hero walked out of red telegraph zone and held outside');
   g.ev(`if(PGRaid.raid.telegraph){ PGRaid.raid.telegraph.age = 2.38; PGRaid.tick(0.05); }`);
   assert.equal(g.ev(`S.hp`), hpFull, 'walking out of red telegraph takes 0 telegraph damage');
 
   // Evasion B: DODGE button (dash + i-frames + cooldown)
-  g.ev(`S.hp = maxHp(); pl.x = 0; pl.z = -4; PGRaid.raid.dodgeCd = 0; PGRaid.raid.telegraph = { name:'Crimson Judgment', kind:'slam', x:0, z:-4, r:5.2, age:2.3, life:2.4 };`);
+  g.ev(`S.hp = maxHp(); pl.x = 0; pl.z = -4; PGRaid.raid.bossCleaveIn = 99; PGRaid.raid.dodgeCd = 0; PGRaid.raid.telegraph = { name:'Crimson Judgment', kind:'slam', x:0, z:-4, r:5.2, age:2.3, life:2.4 };`);
   assert.equal(g.ev(`PGRaid.dodge()`), true, 'DODGE succeeds when off cooldown');
   assert.equal(g.ev(`PGRaid.dodge()`), false, 'DODGE blocked while on cooldown');
   assert.ok(g.ev(`PGRaid.raid.dodgeCd > 3.0 && PGRaid.raid.iframes > 0.5`), 'DODGE sets cooldown and i-frames');
@@ -452,6 +478,117 @@ check('Raid Chat Box works in raid & Commendation Popup renders character previe
   assert.match(failHtml, /Items Received/);
   assert.match(failHtml, /\+5 Astral Shards/);
   assert.match(failHtml, />Leave Raid</);
+  g.ev(`PGRaid.hideResult();`);
+});
+
+// 11. Boss HP Bar Stage-4-Only Visibility, Buff Icon Non-Overlap & Resizable Raid Chat Box
+check('Boss HP bar stays hidden on Stages 1-3 and shows ONLY on Stage 4 Boss, #hudBuffs sits above Dodge/Leave, and Raid Chat is resizable', () => {
+  assert.match(raidCss, /#raidHud\s+\[hidden\]/, 'raid.css enforces display:none!important on #raidHud [hidden] descendants');
+  assert.match(raidCss, /body\.raid-open\s+#hudBuffs\s*\{[^}]*bottom:\s*calc\(max\(14px,\s*env\(safe-area-inset-bottom\)\)\s*\+\s*66px\)\s*!important/, 'raid.css lifts #hudBuffs cleanly above Dodge & Leave');
+
+  g.ev(`S.raid={day:trialDay(),used:0}; openTab('raid'); ACT.raidsolo('astral');`);
+  assert.equal(g.ev(`PGRaid.raid.on`), true, 'Solo Raid button in Dungeons enters raid directly without extra modal');
+  assert.equal(g.ev(`document.getElementById('raidLobby').hidden`), true, 'no lobby modal shown on Solo Raid');
+
+  // Stage 1: Boss HP bar MUST be hidden!
+  g.ev(`PGRaid.renderHud();`);
+  assert.equal(g.ev(`document.getElementById('raidBossWrap').hidden`), true, 'Boss HP bar hidden on Stage 1');
+  assert.equal(g.ev(`document.getElementById('raidBossWrap').style.display`), 'none', 'Boss HP bar display:none on Stage 1');
+
+  // Resizable Raid Chat Box: preset cycle + custom drag dimensions
+  assert.ok(g.ev(`!!document.querySelector('[data-raid-chat-resize]')`), 'drag-resize grip rendered on Raid Chat');
+  g.ev(`PGRaid.setChatSize(440, 320);`);
+  assert.equal(g.ev(`document.getElementById('raidChatBox').style.width`), '440px', 'Raid Chat width adjusted to 440px');
+  assert.equal(g.ev(`document.getElementById('raidChatBox').style.height`), '320px', 'Raid Chat height adjusted to 320px');
+  const cycled = g.ev(`PGRaid.cycleChatPreset()`);
+  assert.equal(g.ev(`document.getElementById('raidChatBox').style.width`), cycled.w + 'px', 'preset button cycles Raid Chat size');
+
+  // Advance to Stage 4 Boss -> Boss HP bar MUST now appear!
+  for (let s = 0; s < 3; s++) {
+    g.ev(`while(mobs.length) kill(mobs[0]);`);
+    for (let i = 0; i < 90 && g.ev(`PGRaid.raid.stage === ${s}`); i++) {
+      g.ev(`if(!tickAstralJourney(1/30))update(1/30);t+=1/30;`);
+    }
+  }
+  assert.equal(g.ev(`PGRaid.raid.stage`), 3, 'reached Stage 4 Boss');
+  g.ev(`PGRaid.renderHud();`);
+  assert.equal(g.ev(`document.getElementById('raidBossWrap').hidden`), false, 'Boss HP bar visible on Stage 4 Boss');
+  assert.notEqual(g.ev(`document.getElementById('raidBossWrap').style.display`), 'none', 'Boss HP bar displayed on Stage 4 Boss');
+  g.ev(`PGRaid.leave(); PGRaid.hideResult();`);
+});
+
+// 12. Thor Volcano Raid + Higher Boss Threat + Pillar Line-of-Sight Whole-Floor Wipe Skill
+check('Thor Volcano Raid rewards Primal Catalysts & Pillar Line-of-Sight Whole-Floor Wipe requires hiding behind a pillar relative to Boss direction', () => {
+  // Launch Thor Volcano Solo Raid directly
+  const primalBefore = g.ev(`S.ascensionMat[1] || 0`);
+  g.ev(`S.raid={day:trialDay(),used:0}; PGRaid.startDirectSolo('thor');`);
+  assert.equal(g.ev(`PGRaid.raid.on && PGRaid.raid.dungeonId === 'thor' && S.mp === 11`), true, 'entered Thor Volcano Raid on Map 11');
+
+  // Advance through Stages 1-3 into Stage 4 Sanctum of Ifrit
+  for (let s = 0; s < 3; s++) {
+    g.ev(`while(mobs.length) kill(mobs[0]);`);
+    for (let i = 0; i < 30 && g.ev(`PGRaid.raid.stage === ${s}`); i++) {
+      g.ev(`PGRaid.tick(0.1);`);
+    }
+  }
+  assert.equal(g.ev(`PGRaid.raid.stage`), 3, 'reached Stage 4 Sanctum of Ifrit');
+  assert.ok(g.ev(`mobs.some(m => m.boss && m.n === 'Ifrit')`), 'Ifrit boss spawned');
+
+  // Test Pillar Line-of-Sight geometry & lethal damage:
+  // Boss at (0, -4), Pillar at (0, 1) -> Ray from Boss through Pillar points +Z (0, 1).
+  // Player at (0, 3.2) is BEHIND the pillar -> SAFE (0 damage)!
+  // Player at (5, -2) is exposed on open floor -> HIT (~88% maxHP lethal blast)!
+  g.ev(`
+    var boss = mobs.find(m => m.boss);
+    boss.x = 0; boss.z = -4;
+    PGRaid.raid.telegraph = {
+      name: 'Cataclysmic Eruption',
+      hint: 'HIDE BEHIND A PILLAR!',
+      shape: 'pillars',
+      pillars: [{ x: 0, z: 1.0, r: 1.05 }, { x: -4.5, z: -3.5, r: 1.05 }, { x: 4.5, z: -3.5, r: 1.05 }],
+      x: 0, z: -4,
+      dmgPct: 0.88,
+      bypassShield: true,
+      mustHideBehindPillar: true,
+      age: 4.15,
+      life: 4.2
+    };
+    S.hp = maxHp(); pl.x = 0; pl.z = 3.2; // Behind first pillar relative to boss (0, -4)!
+  `);
+  assert.equal(g.ev(`PGRaid.hitByTelegraph(PGRaid.raid.telegraph, 0, 3.2)`), false, 'standing in pillar shadow away from boss is SAFE');
+  assert.equal(g.ev(`PGRaid.hitByTelegraph(PGRaid.raid.telegraph, 0, -2.0)`), true, 'standing IN FRONT of pillar between boss and pillar is HIT');
+  assert.equal(g.ev(`PGRaid.hitByTelegraph(PGRaid.raid.telegraph, 5.0, 2.0)`), true, 'standing on open floor outside pillar shadow is HIT');
+
+  // Detonate while SAFE behind pillar -> 0 damage taken!
+  const hpSafeBefore = g.ev(`S.hp`);
+  g.ev(`PGRaid.raid.bossCleaveIn = 10; PGRaid.tick(0.1);`);
+  assert.equal(g.ev(`S.hp`), hpSafeBefore, 'player behind pillar takes 0 damage from whole-floor wipe');
+
+  // Detonate while EXPOSED on open floor -> takes ~88% maxHP must-avoid damage!
+  g.ev(`
+    PGRaid.raid.telegraph = {
+      name: 'Cataclysmic Eruption',
+      hint: 'HIDE BEHIND A PILLAR!',
+      shape: 'pillars',
+      pillars: [{ x: 0, z: 1.0, r: 1.05 }],
+      x: 0, z: -4,
+      dmgPct: 0.88,
+      bypassShield: true,
+      mustHideBehindPillar: true,
+      age: 4.15,
+      life: 4.2
+    };
+    S.hp = maxHp(); pl.x = 5.2; pl.z = 1.5; // Exposed!
+    PGRaid.raid.iframes = 0.7; // Even i-frames cannot ignore open-floor pillar wipe!
+    PGRaid.raid.bossCleaveIn = 10;
+    PGRaid.tick(0.1);
+  `);
+  assert.ok(g.ev(`S.hp <= Math.ceil(maxHp() * 0.14)`), 'exposed player takes massive 88% maxHP damage');
+
+  // Defeat Ifrit -> awards +20 Primal Catalysts!
+  g.ev(`S.hp = maxHp(); while(mobs.length) kill(mobs[0]); PGRaid.tick(0.1);`);
+  assert.equal(g.ev(`(S.ascensionMat[1] || 0) - ${primalBefore}`), 20, 'Thor Volcano clear awards +20 Primal Catalysts');
+  assert.match(g.ev(`document.getElementById('raidResult').innerHTML`), /Primal Catalysts/);
   g.ev(`PGRaid.hideResult();`);
 });
 
