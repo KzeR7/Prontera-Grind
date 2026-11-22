@@ -101,6 +101,9 @@ $id('view').append(sanctuaryPanel);
 // Afterdark: keep the existing game windows and actions available inside the hub.
 const moreButton=document.createElement('button');moreButton.id='socialMore';moreButton.type='button';moreButton.textContent='More ···';moreButton.setAttribute('aria-expanded','false');moreButton.setAttribute('aria-controls','socialMorePanel');
 hub.querySelector('#socialLeave').before(moreButton);
+const raidHubButton=document.createElement('button');raidHubButton.id='socialRaidBtn';raidHubButton.type='button';raidHubButton.title='Astral Raid — Solo or 2–3 player Party Raid';raidHubButton.textContent='☠ Raid';
+raidHubButton.onclick=()=>{if(globalThis.PGRaid)globalThis.PGRaid.showLobby()};
+hub.querySelector('#socialPartyBtn').after(raidHubButton);
 // Reuse bundled artwork in the compact controls; the original labels stay intact.
 /* v381 (owner: "poker icon is not similar"): the Hold'em button joins the painted-art set with a
    small SVG card fan (white card over the accent card, crimson spade) instead of the raw emoji. */
@@ -2454,11 +2457,16 @@ function receive(m){
  if(m.type==='battle_result'){receiveBattleResult(m);return}
  if(m.type==='battle_error'){app.battleIntent=null;battleOffer=null;renderPvpDialog();worldNotice(m.message||'DigiPet battle action failed.');return}
  if(m.type==='pve_end'){app.battleIntent=null;worldNotice(m.reason==='defeat'?(m.mode==='boss'?'The raid boss won this time. Train up and challenge it again.':'Your partner fainted. Feed it and try grinding again.'):m.reason==='exhausted'?'Grinding stopped.':m.reason==='complete'?(m.mode==='boss'?'Boss raid cleared! Loot paid out.':'Field run complete! A very strong partner.'):'Grinding stopped.');renderBattleHUD();renderActivityPanel(true);/* v384: a run the player stopped by hand does not start again by itself (v371 intent; only local practice honoured it) */if(m.reason!=='stopped')repeatPveRun();return}
- if(m.type==='party'){const p=m.party;if(!p||p.members.some(x=>x.id===(app.room?app.id:SOLO_ID))){app.party=p;if(p)app.partyInvite=null;syncPartyChrome();renderPartyPanel()}return}
+ if(m.type==='party'){const p=m.party;if(!p||p.members.some(x=>x.id===(app.room?app.id:SOLO_ID))){app.party=p;if(p)app.partyInvite=null;syncPartyChrome();renderPartyPanel();if(globalThis.PGRaid&&!$id('raidLobby')?.hidden)globalThis.PGRaid.renderLobby()}return}
  if(m.type==='party_roster'){app.partyRoster=Array.isArray(m.parties)?m.parties:[];return}
  if(m.type==='party_invite'){if(partyMuteOn()){send({type:'party_decline'});return}app.partyInvite=m;worldNotice((m.from?.name||'A trainer')+' invites you to a party.');syncPartyChrome();if(!$id('socialPartyPanel').hidden)renderPartyPanel();return}
  if(m.type==='party_error'){worldNotice(m.message||'Party action failed.');return}
  if(m.type==='party_notice'){worldNotice(m.message||'');return}
+ if(m.type==='raid_started'){if(globalThis.PGRaid)globalThis.PGRaid.onStarted(m);return}
+ if(m.type==='raid_sync'){if(globalThis.PGRaid)globalThis.PGRaid.onSync(m);return}
+ if(m.type==='raid_revive'){if(globalThis.PGRaid)globalThis.PGRaid.onRevive(m);return}
+ if(m.type==='raid_end'){if(globalThis.PGRaid)globalThis.PGRaid.onEnded(m);return}
+ if(m.type==='raid_error'){worldNotice(m.message||'Raid action failed.');if(globalThis.PGRaid)globalThis.PGRaid.onError(m);return}
  if(m.type==='pve_client'){beginClientPve(m);return}
  if(m.type==='pvp_client'){beginClientPvp(m);return}
  if(m.type==='pvp_offer'){battleOffer=m;renderPvpDialog();return}
@@ -2814,5 +2822,17 @@ function friendPresenceChanged(){
 // plaza's per-viewer `friend` flag follow immediately instead of at the next reconnect.
 function syncFriends(ids){const next=new Set((Array.isArray(ids)?ids:[]).filter(Number.isInteger));const changed=next.size!==app.friends.size||[...next].some(id=>!app.friends.has(id));app.friends=next;if(changed){renderMessages(true);if(app.connected&&app.socket&&app.socket.readyState===1)send({type:'friends',ids:[...next]})}}
 function whisper(name){const clean=String(name||'').trim();if(!clean)return;$id('socialTo').value=clean;select('whisper');$id('socialInput').focus()}
-window.PGSocial={enter,leave,app,receive,select,syncDisplay,fishingMvpNotice,activityLog:()=>activityLog.map(x=>({...x})),pokerOpen,minimizePokerModal,syncPokerBounds,pokerSeatAction,claimDailyPokerChips,buyPokerChipsWithZeny,syncFriends,whisper,drawPlazaMap,focusHubPanel,refreshDigimon:()=>{if(!sanctuaryPanel.hidden){sanctuarySync();sanctuaryRender()}},tickSoloMvp,readSoloMvpState,writeSoloMvpState,clearSoloMvpStorage};select('world');connect();
+function setRaidSuspend(on){
+ if(on){
+  hub.hidden=true;
+  document.body.classList.remove('social-open');
+  if(app.scene)app.scene.active=false;
+ }else if(app.wanted){
+  hub.hidden=false;
+  document.body.classList.add('social-open');
+  if(app.scene)app.scene.active=true;
+  measureHubToolbar();
+ }
+}
+window.PGSocial={enter,leave,send,setRaidSuspend,app,receive,select,syncDisplay,fishingMvpNotice,activityLog:()=>activityLog.map(x=>({...x})),pokerOpen,minimizePokerModal,syncPokerBounds,pokerSeatAction,claimDailyPokerChips,buyPokerChipsWithZeny,syncFriends,whisper,drawPlazaMap,focusHubPanel,refreshDigimon:()=>{if(!sanctuaryPanel.hidden){sanctuarySync();sanctuaryRender()}},tickSoloMvp,readSoloMvpState,writeSoloMvpState,clearSoloMvpStorage};select('world');connect();
 })();

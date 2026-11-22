@@ -916,14 +916,15 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="preload" href="assets/ui/fonts/font-5.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-6.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-7.ttf" as="font" type="font/ttf" crossorigin>
-<link rel="stylesheet" href="assets/ui/eclipse.css?v=450">
-<link rel="stylesheet" href="assets/ui/mobile.css?v=450">
+<link rel="stylesheet" href="assets/ui/eclipse.css?v=452">
+<link rel="stylesheet" href="assets/ui/mobile.css?v=452">
 <link rel="stylesheet" href="assets/ui/mastery-titles.css?v=450">
 <script src="assets/ui/mobile.js?v=274"></script>
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
-<link rel="stylesheet" href="assets/social.css?v=450">
+<link rel="stylesheet" href="assets/social.css?v=452">
+<link rel="stylesheet" href="assets/raid.css?v=452">
 <link rel="stylesheet" href="assets/social-battle.css?v=393">
-  <link rel="stylesheet" href="assets/social-fishing.css?v=450"><link rel="stylesheet" href="assets/friends.css?v=273">
+  <link rel="stylesheet" href="assets/social-fishing.css?v=452"><link rel="stylesheet" href="assets/friends.css?v=273">
 <link rel="stylesheet" href="assets/adventure-guide.css?v=450">
 </head>
 <body>
@@ -964,7 +965,7 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <div id="wrap"><div id="eclipseHeader"><span class="eclipse-wordmark">Horizon <small>HAVEN</small></span><div class="title"><span id="stageTitle">Prontera Lv 1</span><span id="grindStatus" style="font-size:12px;opacity:.85"></span></div>
 <div class="hud-zeny" id="zenyHover">&#9679; <b id="zeny">0</b> Zeny</div>
 <span class="eclipse-shards" title="Echo Shards">◇ <b id="eclipseShards">0</b><small>Shards</small></span><div style="margin-left:auto;display:flex;align-items:center;gap:8px"><span id="cloudBadge" title="Cloud save status" style="font-size:11px;opacity:.9"></span><button id="fsBtn" type="button" aria-pressed="false" aria-label="Toggle fullscreen" title="Fullscreen">⛶</button><button id="pgFocusBtn" type="button" aria-pressed="false" aria-label="Toggle field only mode" title="Hide field panels (field only)">◎</button><button id="screenBtn" type="button" aria-expanded="false" aria-controls="screenOptions" title="Screen display options">☷ Display</button><span id="userBadge" style="font-weight:bold;font-size:12px;background:#e9d39a;padding:3px 8px;border-radius:4px;border:1px solid var(--edge2)"></span><button id="gmBtn" onclick="openGmConsole()" style="display:none" title="Server-side tooling for looking after players">🛠 GM console</button><button id="logoutBtn" onclick="logout()" style="display:none">Logout</button></div></div><div id="view"><div id="ov"><div id="mobSpriteLayer" aria-hidden="true"></div><div id="fieldLoading" hidden role="status" aria-live="polite"><i></i><span>Loading field…</span></div><div id="weaponSpriteLayer" aria-hidden="true"></div><section id="eclipseCombat" class="minimized"><div><span class="eclipse-live">AUTO COMBAT</span><span id="eclipseStageLabel"></span><button id="eclipseMinimize" aria-expanded="false" aria-controls="eclipseCombatDetails" aria-label="Expand auto combat bar">+ Show</button></div><div id="eclipseCombatDetails"><div id="eclipseStagePips" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div id="prog"></div><button id="eclipseAdvance" aria-pressed="true">Auto-advance <span>●</span></button><label id="rangedMovement">Movement<select id="rangedMovementMode" aria-label="Ranged combat movement"><option value="stand">Stand still · max DPS</option><option value="kite">Kite · safer positioning</option></select></label></div></section><div id="tag"><b id="tn"></b><div class="bar"><i id="th" style="background:var(--hp)"></i></div></div><div id="heroTitle" class="hero-title" aria-live="polite"><span id="heroTitleMark" class="ht-mark" aria-hidden="true"></span><span id="heroTitleText"></span></div><button id="echoLeave" type="button" data-trial="close" hidden>Leave Endless Echo</button><section id="jobRiteHud" hidden aria-label="Job advancement trial"><small>CRUCIBLE OF THE VALKYRIE</small><b></b><span>Defeat your opponent before time runs out.</span><time aria-label="Time remaining">1:00</time><button type="button" onclick="finishJobRite(false)">Leave trial</button></section><section id="jobRiteResult" hidden role="status" aria-live="polite" aria-atomic="true"><div><strong></strong><p></p><small aria-live="off"></small></div></section><div id="hint">Drag to rotate &middot; Scroll or pinch to zoom</div><div id="feedWrap"><div id="feed"></div><div id="feedBar"><div id="feedTabs"><button id="feedTab" type="button" aria-expanded="true" aria-controls="feed" title="Minimize or show the on-screen log">📃 Logs ▾</button></div></div></div><div id="hudBuffs" role="status" aria-live="polite" aria-label="Active player skill buffs, pet buffs and daily boosts - focus or hover an icon for details"></div><div id="minimapTools" aria-label="Mail, daily rewards and Social Hub"><button id="mailBtn" type="button" data-a="openmail" class="minimap-tool-btn" title="Mail &amp; Announcements" aria-label="Mail and announcements"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M3.5 6.5L12 13l8.5-6.5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/></svg><span class="minimap-tool-label">Mail</span><b id="mailBadge" class="minimap-tool-badge" hidden>0</b></button><button id="dailyBtn" type="button" data-a="opendaily" class="minimap-tool-btn" title="Daily Reward Roulette" aria-label="Daily reward roulette"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.9"/><circle cx="12" cy="12" r="2.2" fill="currentColor"/><path d="M12 3v6.8M12 14.2V21M3 12h6.8M14.2 12H21M5.6 5.6l4.8 4.8M13.6 13.6l4.8 4.8M18.4 5.6l-4.8 4.8M10.4 13.6l-4.8 4.8" stroke="currentColor" stroke-width="1.5"/></svg><span class="minimap-tool-label">Daily</span><b id="dailyBadge" class="minimap-tool-badge is-dot" hidden>!</b></button><button id="socialHubBtn" type="button" class="minimap-tool-btn social-hub-btn" title="Fountain Plaza — Social Hub" aria-label="Social Hub, Fountain Plaza. Enter plaza"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.2" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M3.6 19.2c.6-3.1 2.7-4.7 5.4-4.7s4.8 1.6 5.4 4.7" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/><circle cx="17.2" cy="9.2" r="2.5" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M15.9 14.6c2.2.3 3.9 1.7 4.4 4.3" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg><span class="minimap-tool-label">Social</span><b id="socialHubBadge" class="minimap-tool-badge social-hub-badge" hidden>0</b></button></div><div id="sideRail"><button id="eclipseMapCard" data-t="map" aria-label="Open current map"><div class="eclipse-map-art"><canvas id="eclipseMinimap" width="448" height="192" aria-label="Live terrain map and player position"></canvas></div><span><b id="eclipseMapName">World atlas</b><small id="eclipseMapStage"></small></span><span>⛶</span></button><div id="qp"></div><nav id="sideMenu" aria-label="Index and market"></nav></div><div id="dock"></div>
-<div id="eclipseCompanions"><div id="eclipsePetStrip"></div><button data-t="pet">Companions ↗</button><button id="spd" hidden>Speed x1</button></div><div id="wins"></div></div><div id="pgScrim" hidden aria-hidden="true"></div><button id="pgQuests" type="button" aria-controls="sideRail" aria-expanded="false" title="Quests and destinations"><span aria-hidden="true">❖</span><b>Quests</b><span class="pg-q-dot" id="pgQuestDot" hidden aria-hidden="true"></span></button></div>
+<div id="eclipseCompanions"><div id="eclipsePetStrip"></div><button data-t="pet">Companions ↗</button><button id="spd" hidden>Speed x1</button></div><div id="wins"></div></div><div id="raidLobby" hidden role="dialog" aria-modal="true" aria-label="Astral Raid lobby"><div class="raid-lobby-card" id="raidLobbyBody"></div></div><div id="raidHud" hidden aria-label="Raid HUD"></div><div id="raidResult" hidden role="dialog" aria-modal="true" aria-label="Raid result"></div><div id="pgScrim" hidden aria-hidden="true"></div><button id="pgQuests" type="button" aria-controls="sideRail" aria-expanded="false" title="Quests and destinations"><span aria-hidden="true">❖</span><b>Quests</b><span class="pg-q-dot" id="pgQuestDot" hidden aria-hidden="true"></span></button></div>
 <div id="hud"><div class="eclipse-portrait-frame"><canvas id="eclipsePortrait" width="126" height="134" aria-label="Your character"></canvas></div><div class="eclipse-vitals"><div><b id="eclipsePlayerName"></b><span id="cls2"></span></div><span id="titleLabel" class="title-hud hud-title-mirror" aria-hidden="true" style="display:none"></span><div class="eclipse-levels">BASE <b id="lv">1</b> <span>JOB <b id="jl">1</b></span></div><div class="hud-health"><span>HP</span> <div class="bar" role="meter" aria-label="HP" aria-valuemin="0" aria-valuemax="100" id="hpMeter"><i id="hpb"></i></div><small id="hpPct">100%</small></div><div class="eclipse-job-line"><span>JOB</span><div><i id="eclipseJobFill"></i></div><b id="eclipseJobLevel">1</b></div>
 </div></div>
 <section id="bgmPlayer" hidden aria-label="Background music player"></section>
@@ -1054,10 +1055,10 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <div id="tooltip"></div>
 <link rel="stylesheet" href="assets/wardrobe.css?v=138">
 <link rel="stylesheet" href="assets/shop.css?v=318">
-<script src="assets/wardrobe.js?v=450"></script>
+<script src="assets/wardrobe.js?v=452"></script>
 <script src="assets/shop-catalog.js?v=321"></script>
 <script src="assets/fourth-jobs.js?v=179"></script>
-<script src="assets/expanded-jobs.js?v=450"></script>
+<script src="assets/expanded-jobs.js?v=452"></script>
 <script src="assets/ascension.js?v=156"></script>
 <script src="assets/native-mob-heights.js?v=153"></script>
 <script src="assets/native-fields.js?v=197"></script>
@@ -1083,6 +1084,7 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <script src="assets/expanded-fx/approved.js?v=450"></script>
 <script src="assets/skill-afterglow.js?v=450"></script>
 <script src="assets/boss-fx.js?v=249"></script>
+<script src="assets/raid.js?v=452"></script>
 <script src="assets/pets.js?v=130"></script>
 <script src="assets/bgm-tracks.js?v=206"></script>
 <script src="assets/bgm.js?v=207"></script>
@@ -1216,6 +1218,7 @@ const UI_ICONS={
  compact:'<path d="M3 8h5V3m8 0v5h5M8 21v-5H3m13 5v-5h5"/>',
  minus:'<path d="M5 12h14"/>',close:'<path d="m6 6 12 12M6 18 18 6"/>',chevron:'<path d="m6 9 6 6 6-6"/>',
  filter:'<path d="M3 4h18l-7 8v7l-4 2v-9Z"/>',
+ raid:'<path d="m14.5 17.5-11-11V3h3.5l11 11m-5 5 3-3m1.5 1.5L21 21M9.5 17.5l11-11V3H17l-4.5 4.5M6.5 14.5l-3 3M3 21l3.5-3.5"/>',
  friends:'<circle cx="9" cy="8" r="3.4"/><path d="M2.6 20c0-3.5 2.9-5.8 6.4-5.8s6.4 2.3 6.4 5.8"/><path d="M16.4 5.2a3.4 3.4 0 0 1 0 6.4M18 14.6c2.2.6 3.6 2.3 3.6 4.6"/>'
 };
 const uiIcon=name=>`<svg class="ui-icon" data-ui-icon="${name}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${UI_ICONS[name]||UI_ICONS.gem}</svg>`;
@@ -1356,7 +1359,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-21 haven-v451 Fish Index keeps every species incl. MVP catches across reload';
+const BUILD='2026-11-22 haven-v452 Astral Raid: 3 stages + Thanatos, DODGE + party revive';
 // v364: this write used to sit AFTER the `//` on the BUILD line, so it was part of the comment and
 // never ran - the login card showed an empty #buildTag and there was no way to confirm which file
 // the browser had loaded. It also has to survive the script running before the login card exists.
@@ -8213,6 +8216,13 @@ function kill(o){const keep=mob;if(o)mob=o;if(!mob||!mobs.includes(mob)){mob=kee
     else if(S.pets.length<40){const gifted=pickW(PET_SKILL_WEIGHTS);S.pets.push({id:ri(1e6,9e6),sp,mut:0,eq:[0,0,0],skills:[PET_SKILLS[gifted].id],on:S.pets.filter(x=>x.on).length<3});log(`A ${RN[r]} pet followed you: ${PETS[sp].n} with ${PET_SKILLS[gifted].n} - ${T.n} ${T.d(traitVal(sp))} while it fights!`,'r'+RCL[r],'pet');addFloat(mob.x,3,mob.z,'PET!','#ff9dff',true)}
     else{const z=Math.floor(EGG*(.3+r*.4));earnZeny(z);log(`A ${RN[r]} ${PETS[sp].n} appeared but your pet collection is full (+${z}z).`,'','pet,zeny')}}
   checkLevel();
+  // Astral Raid owns stage flow (PGRaid.tick). Skip the normal field auto-advance
+  // while a raid is running, or the boss kill would walk the player to Thor Volcano.
+  if(typeof PGRaid!=='undefined'&&PGRaid.raid&&PGRaid.raid.on){
+    mobs=mobs.filter(x=>x!==mob);
+    if(mobs.length&&!mobs.some(x=>x.pack===activePack))activePack=nearestPack();
+    mob=packMob();respawn=.7;save();ui();return;
+  }
   // v83: an emptied field is not thrown away any more. The 15-kill counter still opens the next
   // stage, and the boss wave still resets - the camps simply keep refilling around the player.
   if(mob.boss){
@@ -9170,7 +9180,7 @@ function jobRiteArena(){
 // Index, Black Market and Leaderboard share an independent dropdown below Quests.
 // instead of taking dock slots. The keys X and V still open them. v91: the World Map tab uses a tower icon.
 const SIDE_TABS=['index','market','board','guide','log','wardrobe','shop','friends','set','gm'];
-const TABS={map:['🗼','World Map','M'],wardrobe:['♧','Wardrobe','W'],status:['📊','Character','S'],job:['🌳','Class Tree','J'],skills:['✨','Skills','K'],equip:['🛡️','Equipment','E'],bag:['🎒','Inventory','B'],log:['📃','Log','L'],pet:['🐾','Pets','P'],index:['📚','Mastery Index','I'],board:['🏆','Leaderboard','V'],market:['🏪','Black Market','X'],guide:['📖','Build & Farming Guide','H'],shop:['💎','Cash Shop','T'],friends:['👥','Friends','Y'],set:['⚙️','Settings','O'],gm:['🛠️','GM Tools','G']};
+const TABS={map:['🗼','World Map','M'],raid:['☠','Raid','U'],wardrobe:['♧','Wardrobe','W'],status:['📊','Character','S'],job:['🌳','Class Tree','J'],skills:['✨','Skills','K'],equip:['🛡️','Equipment','E'],bag:['🎒','Inventory','B'],log:['📃','Log','L'],pet:['🐾','Pets','P'],index:['📚','Mastery Index','I'],board:['🏆','Leaderboard','V'],market:['🏪','Black Market','X'],guide:['📖','Build & Farming Guide','H'],shop:['💎','Cash Shop','T'],friends:['👥','Friends','Y'],set:['⚙️','Settings','O'],gm:['🛠️','GM Tools','G']};
 const expandedPanels=new Set();
 let collectionGrade=-1,collectionMergeOnly=false,equipmentCardSearch='',equipmentCardFilter='all',equipmentCardPickId=null;
 const dot=k=>{if(!S)return false;if(k==='friends')return typeof PGFriends==='object'&&!!PGFriends&&!!PGFriends.state&&PGFriends.state.loaded&&PGFriends.state.incoming.length>0;if(k==='status')return S.pts>0;if(k==='skills')return skpAvail()>0;if(k==='quest')return!!(S.q&&S.q.some(q=>q.prog>=q.goal));if(k==='cards')return S.cards.length>0;if(k==='index'){const rank=HUNT_TITLES.findIndex(t=>t.id===S.equippedTitle);return cardMasteryAvailable()>0||HUNT_TITLES.some((t,i)=>i>rank&&titleUnlocked(t))}return false};
@@ -10654,8 +10664,8 @@ function arrangePanel(k,root){
   }
 }
 
-const DOCK_TABS=['map','status','equip','job','skills','bag','pet'];
-const DOCK_LABEL={friends:'Friends',wardrobe:'Wardrobe',shop:'Shop',map:'Maps',guide:'Guide',status:'Character',equip:'Equipment',refine:'Refine',job:'Class Tree',skills:'Skills',bag:'Bag',pet:'Pets',index:'Mastery',market:'Market',board:'Ranks',log:'Log',set:'Settings',gm:'GM'};
+const DOCK_TABS=['map','raid','status','equip','job','skills','bag','pet'];
+const DOCK_LABEL={friends:'Friends',wardrobe:'Wardrobe',shop:'Shop',map:'Maps',raid:'Raid',guide:'Guide',status:'Character',equip:'Equipment',refine:'Refine',job:'Class Tree',skills:'Skills',bag:'Bag',pet:'Pets',index:'Mastery',market:'Market',board:'Ranks',log:'Log',set:'Settings',gm:'GM'};
 function eclipsePositionMore(){
   const menu=$('sideMenu'),button=$('dock').querySelector('.eclipse-more');if(!sideOpen||!button)return;
   const rect=$('dock').getBoundingClientRect(),width=menu.offsetWidth||225;
@@ -10898,7 +10908,7 @@ if(typeof addEventListener==='function'){addEventListener('pointerup',winUp);add
 if($('wins')&&$('wins').addEventListener)$('wins').addEventListener('pointerdown',()=>{winPress=true});
 const MAX_TABS=3;
 // v174 (owner, TEMPORARY): single-panel mode - opening a panel closes the rest. Flip to false to restore multi-tab.
-const SINGLE_PANEL=true;const openTab=k=>{if(k==='gm'&&!S.gm)return;globalThis.PGSocial?.focusHubPanel?.('field');const i=tabs.indexOf(k);if(i>=0&&expandedPanels.size&&!expandedPanels.has(k)){expandedPanels.clear();expandedPanels.add(k);renderWin();return}if(i<0)expandedPanels.clear();if(k==='skills'&&i>=0)selS=null;if(k!=='status')eqPick=null;if(i>=0)tabs.splice(i,1);else{if(SINGLE_PANEL)tabs.length=0;else if(tabs.length>=MAX_TABS)tabs.shift();tabs.push(k);
+const SINGLE_PANEL=true;const openTab=k=>{if(k==='raid'){if(typeof PGRaid!=='undefined')PGRaid.showLobby();return}if(k==='gm'&&!S.gm)return;globalThis.PGSocial?.focusHubPanel?.('field');const i=tabs.indexOf(k);if(i>=0&&expandedPanels.size&&!expandedPanels.has(k)){expandedPanels.clear();expandedPanels.add(k);renderWin();return}if(i<0)expandedPanels.clear();if(k==='skills'&&i>=0)selS=null;if(k!=='status')eqPick=null;if(i>=0)tabs.splice(i,1);else{if(SINGLE_PANEL)tabs.length=0;else if(tabs.length>=MAX_TABS)tabs.shift();tabs.push(k);
   // Reopening a window starts at its first sub-tab: Status shows Stats, Inventory shows Bag.
   if(k==='pet')sub.pet='party';if(k==='job'){eclipseJobsBrowse=false;jobBranch=null;selK=null;jobLineTab=null;}if(k==='status')sub.status='stats';if(k==='skills')sub.skills='skilllist';if(k==='bag')sub.bag='bag';if(k==='equip')sub.equip='equip0';
   if(k==='map'){mapSeason=S.mp>=10?'ascension':'atlas';mapM=S.mp;mapL=S.lvl}}renderWin();if(k==='board'&&tabs.includes('board'))boardRefresh(boardPeriod)};
@@ -10946,6 +10956,7 @@ const gotoField=(m,l)=>{
   // v77: travelling cancels a run. Leaving the arena is the same door as pressing Leave - a ranked
   // run that is abandoned is simply not paid.
   if(typeof TRIAL!=='undefined'&&TRIAL.on)trialExit();
+  if(typeof PGRaid!=='undefined'&&PGRaid.raid&&PGRaid.raid.on&&!PGRaid.raid._internalNav)PGRaid.leave();
   const walk=m===10&&S.mp===10&&S.lvl!==l,from=S.lvl;
   if(!walk){astralJourney=null;astralOriginStage=m===10?l:0;}
   lastKey='';S.mp=m;S.lvl=l;S.kl=0;mobs=[];mob=null;camps=[];respawn=.3;
@@ -11783,6 +11794,11 @@ document.addEventListener('click',e=>{
 addEventListener('pg-exploration-close',()=>{if(S)ui();});
 function escapeUI(){
   if($('modal').style.display==='flex'){$('mn').click();return}
+  if(typeof PGRaid!=='undefined'){
+    if($('raidLobby')&&!$('raidLobby').hidden){PGRaid.hideLobby();return}
+    if($('raidResult')&&!$('raidResult').hidden){PGRaid.hideResult();return}
+    if(PGRaid.raid&&PGRaid.raid.on){ask('Leave the Astral Raid? Your current run will end.',()=>PGRaid.leave(),{yes:'Leave Raid',no:'Stay'});return}
+  }
   if($('gmStudioModal')?.classList.contains('on')){closeGmStudio();return}
   if($('mailDailyModal')?.classList.contains('on')){closeMailDaily();return}
   if(worldAtlasFullscreen&&tabs.includes('map')&&mapSeason==='atlas'){setWorldAtlasFullscreen(false);return}
@@ -11793,10 +11809,13 @@ function escapeUI(){
 }
 addEventListener('keydown',e=>{if(!S||e.ctrlKey||e.metaKey||e.altKey)return;const k=e.key.toUpperCase();
   if(k==='F12'){e.preventDefault();if(e.repeat)return;toggleFullscreen();return}
-  if(k==='ESCAPE'){e.preventDefault();escapeUI();return}if(/INPUT|TEXTAREA|SELECT/.test(e.target.tagName))return;if(k==='Q'){qOpen=!qOpen;renderQ();return}
+  if(k==='ESCAPE'){e.preventDefault();escapeUI();return}if(/INPUT|TEXTAREA|SELECT/.test(e.target.tagName))return;
+  if(typeof PGRaid!=='undefined'&&PGRaid.raid&&PGRaid.raid.on){if(PGRaid.onKey(e.key,!e.repeat))e.preventDefault();return}
+  if(k==='Q'){qOpen=!qOpen;renderQ();return}
   // v2 (owner): the C key used to jump to Cards, where it fought the Cards tab at the loadout card.
   // Only R is left as a shortcut; Cards is opened by its own button.
   const X={R:['equip','refine']}[k];if(X){const same=tabs.includes(X[0])&&sub[X[0]]===X[1]&&(!expandedPanels.size||expandedPanels.has(X[0]));sub[X[0]]=X[1];if(same)openTab(X[0]);else{if(expandedPanels.size){expandedPanels.clear();expandedPanels.add(X[0])}if(!tabs.includes(X[0])){if(tabs.length>=MAX_TABS)tabs.shift();tabs.push(X[0])}renderWin()}return}const f=Object.entries(TABS).find(([,v])=>v[2]===k);if(f)openTab(f[0])});
+addEventListener('keyup',e=>{if(typeof PGRaid!=='undefined'&&PGRaid.raid&&PGRaid.raid.on)PGRaid.onKey(e.key,false)});
 
 async function toggleFullscreen(){try{if(document.fullscreenElement)await document.exitFullscreen();else await document.documentElement.requestFullscreen()}catch{log('Fullscreen is unavailable in this browser. Try the browser fullscreen control.')}}
 document.addEventListener('change',e=>{const el=e.target;if(S&&el.matches('select[data-combo-slot]'))ACT.comboassign(el.dataset.comboSlot+':'+el.value)});
@@ -12033,6 +12052,16 @@ function update(dt){
   shots.forEach(s=>s.t+=dt*7);shots=shots.filter(s=>{if(s.t<1)return true;if(s.m)scene.remove(s.m);return false});
   tickSkillFx(dt);
   tickBossSkill();
+  if(typeof PGRaid!=='undefined'&&PGRaid.raid&&PGRaid.raid.on){
+    PGRaid.tick(dt);
+    if(!PGRaid.raid.on)return;
+    if(PGRaid.raid.dead){
+      S.hp=0;swing=null;atkAnim=0;pl.run=false;
+      floats.forEach(f=>{f.life-=dt*(f.rate||1.1);if(f.kind!=='skill')f.y+=dt*(f.rate?0:(['incoming','miss','evade'].includes(f.kind)?.3:.8))});
+      floats=floats.filter(f=>{if(f.life>0)return true;if(f.el)f.el.remove();return false});
+      return;
+    }
+  }
   if(skillOn('aid')&&!skillOn('ab_highness')&&S.hp<maxHp()*.5&&(skCd.aid||0)<=0){skCd.aid=6;const h=Math.ceil(maxHp()*(.1+.05*lv('aid')));S.hp=Math.min(maxHp(),S.hp+h);playSkillFx('aid',null,'#7dff7d');skillNameFloat('First Aid');addFloat(pl.x,2.6,pl.z,'+'+h,'#7dff7d')}
   // the swing lands on the animation's contact frame (see playerAttack): the cast(s), the extra hits
   // and the normal strike all resolve here, and they print one number per monster.
@@ -12048,7 +12077,8 @@ function update(dt){
   // arena, or the walk back after a defeat). A camp field refills itself below instead - the field the
   // player walks through stays stocked, so there is no whole-field wave reset any more.
   if(!mobs.length){
-    if(!camps.length){respawn-=dt;if(respawn<=0)spawn()}
+    if(typeof PGRaid!=='undefined'&&PGRaid.raid&&PGRaid.raid.on){/* raid owns the empty-field moment: stage clear handled in PGRaid.tick */}
+    else if(!camps.length){respawn-=dt;if(respawn<=0)spawn()}
     // v86 bugfix: a WHOLE-FIELD wipe (a far-level character clearing every camp in seconds) used to
     // freeze the map for good - the per-camp refill sweep below only ran while at least one mob was
     // alive, so with mobs=[] and camps still listed neither the refill timers nor the respawn
@@ -12098,6 +12128,7 @@ function update(dt){
       }
       m.x=cl(m.x,-BX_,BX_);m.z=cl(m.z,Z0,Z1);m.ry=Math.atan2(pl.z-m.z,m.x-pl.x);
       if(wake&&Math.hypot(pl.x-m.x,pl.z-m.z)<=ms+.4&&!stn){m.at-=dt;if(m.at<=0){m.at=m.boss?1.2:1.5;
+        if(typeof PGRaid!=='undefined'&&PGRaid.raid&&PGRaid.raid.on&&PGRaid.raid.iframes>0){addFloat(pl.x,2.4,pl.z,'DODGE','#76eaff',false,'evade');continue}
         if(Math.random()*100<Math.max(5,flee()-mhOf(m))+(m.blind?m.blind.power*100:0)+skillBonus('block'))addFloat(pl.x,2.4,pl.z,'DODGE','#76eaff',false,'evade');
         // Incoming damage: a capped percentage cut, not a flat subtraction. The old line took
         // def*0.6 off every hit with a floor of 1, so a geared character took exactly 1 damage
@@ -12111,7 +12142,7 @@ function update(dt){
         else{const raw=m.mag?mdef():def(),md=raw*(1-prOf(m)),cut=Math.min(.75,md/(md+4000));
           const d=Math.max(1,Math.round(m.atk*rnd(.8,1.2)*(1-cut)*(1-petPassive('dr')/100)*(1-Math.min(.25,skillBonus('guard')/100))*(1-ascStat('guard')/100)));const dAbs=absorbSoak(d);S.hp-=dAbs;skillState().counter=2;hitAnim=1;m.atkAnim=1;damageFloat(pl.x,heroDamageY(),pl.z,dAbs,false,true);
           // Defeat is the ONE thing that puts you back at the spawn point.
-if(S.hp<=0){if(typeof JOB_RITE!=='undefined'&&JOB_RITE.on){showJobRiteResult(false,'defeat');return;}log('You were defeated... knocked back to the entrance.','r0','kills');S.hp=maxHp();S.kl=0;mobs=[];mob=null;camps=[];engageTgt=null;respawn=1.5;tb={};resetSkillRuntime(true);
+if(S.hp<=0){if(typeof JOB_RITE!=='undefined'&&JOB_RITE.on){showJobRiteResult(false,'defeat');return;}if(typeof PGRaid!=='undefined'&&PGRaid.raid&&PGRaid.raid.on){S.hp=0;return}log('You were defeated... knocked back to the entrance.','r0','kills');S.hp=maxHp();S.kl=0;mobs=[];mob=null;camps=[];engageTgt=null;respawn=1.5;tb={};resetSkillRuntime(true);
           pl.x=0;pl.z=Z1-1.5;pl.wt=0;ui();return}}}}
     }
     // Awake monsters keep their own approach angle and are pushed apart, so a camp surrounds the hero
@@ -12141,6 +12172,8 @@ if(S.hp<=0){if(typeof JOB_RITE!=='undefined'&&JOB_RITE.on){showJobRiteResult(fal
         else{engageWait+=dt;const k=reach*.85/dist;tx=mob.x+(pl.x-mob.x)*k;tz=mob.z+(pl.z-mob.z)*k}}
       else{engageWait=0;pl.orb+=dt*.8;const r=reach*.85;tx=mob.x+Math.cos(pl.orb)*r;tz=mob.z+Math.sin(pl.orb)*r}}
   }
+  const raidMv=typeof PGRaid!=='undefined'&&PGRaid.raid&&PGRaid.raid.on?PGRaid.overrideMove(dt):null;
+  if(raidMv){tx=raidMv.x;tz=raidMv.z;engageTgt=null;swing=null}
   const AP=S.pets.filter(p=>p.on);for(const p of AP){const r=petR[p.id]||(petR[p.id]={x:pl.x-1,z:pl.z+1,at:rnd(0,1)}),i=AP.indexOf(p);let o=null,bd=1e9;
     for(const m of mobs){if(!isEngaged(m))continue;const d=Math.hypot(m.x-r.x,m.z-r.z);if(d<bd){bd=d;o=m}}
     const ex=(o?o.x+(i-1)*.8:pl.x-1.2)-r.x,ez=(o?o.z+1.2:pl.z+(i-1)*1.1)-r.z,ed=Math.hypot(ex,ez);r.run=ed>.2;
@@ -16017,18 +16050,22 @@ let drag=null;const dom=R?.domElement;
 // One finger rotates exactly as before; two fingers pinch to zoom, the same clamp the wheel uses.
 // Pointers are tracked by id so the second finger never yanks the rotation, and when one of the
 // two lifts, the rotation resumes from the finger still down instead of jumping.
-const touchPts=new Map();let pinch0=0;
+const touchPts=new Map();let pinch0=0,dragOrigin=null;
 const pinchNow=()=>{const p=[...touchPts.values()];return p.length>=2?Math.hypot(p[0][0]-p[1][0],p[0][1]-p[1][1]):0};
 const zoomLo=()=>.6;                                   // the field lane's own zoom floor
 dom?.addEventListener('pointerdown',e=>{
   if(e.pointerType==='touch')touchPts.set(e.pointerId,[e.clientX,e.clientY]);
-  if(touchPts.size>=2){pinch0=pinchNow();drag=null}else drag=[e.clientX,e.clientY];
+  if(touchPts.size>=2){pinch0=pinchNow();drag=null;dragOrigin=null}else{drag=[e.clientX,e.clientY];dragOrigin=[e.clientX,e.clientY]}
   dom.setPointerCapture(e.pointerId)});
 dom?.addEventListener('pointermove',e=>{
   if(e.pointerType==='touch'&&touchPts.has(e.pointerId))touchPts.set(e.pointerId,[e.clientX,e.clientY]);
   if(touchPts.size>=2){const d=pinchNow();if(pinch0>0&&d>0){zoom=Math.min(2,Math.max(zoomLo(),zoom*d/pinch0));pinch0=d}return}
   if(!drag)return;az-=(e.clientX-drag[0])*.006;el=Math.min(1.35,Math.max(.45,el+(e.clientY-drag[1])*.005));drag=[e.clientX,e.clientY]});
 const endPointer=e=>{
+  if(e.type==='pointerup'&&dragOrigin&&typeof PGRaid!=='undefined'&&PGRaid.raid&&PGRaid.raid.on&&Math.hypot(e.clientX-dragOrigin[0],e.clientY-dragOrigin[1])<6){
+    PGRaid.handleCanvasClick(e.clientX,e.clientY);
+  }
+  dragOrigin=null;
   if(e.pointerType==='touch')touchPts.delete(e.pointerId);
   if(touchPts.size<2)pinch0=0;
   const p=[...touchPts.values()];drag=touchPts.size===1?[p[0][0],p[0][1]]:null};
@@ -16501,22 +16538,22 @@ setInterval(updateWatch,60000);
 // be hours old while the player was on another tab, and the check is a 60-byte text file.
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&(pendingUpdateBuild||Date.now()-PAGE_STARTED_AT>30000))updateWatch()});
 </script>
-<script src="assets/wardrobe-ui.js?v=450"></script>
+<script src="assets/wardrobe-ui.js?v=452"></script>
 <script src="assets/shop.js?v=321"></script>
 <script src="assets/friends.js?v=273"></script>
-<script src="assets/digimon/roster.js?v=450"></script>
-<script src="assets/digimon/base-stats.js?v=450"></script>
-<script src="assets/social-rules.js?v=450"></script>
-<script src="assets/social-poker.js?v=450"></script>
-<script src="assets/digimon-sanctuary.js?v=450"></script>
+<script src="assets/digimon/roster.js?v=452"></script>
+<script src="assets/digimon/base-stats.js?v=452"></script>
+<script src="assets/social-rules.js?v=452"></script>
+<script src="assets/social-poker.js?v=452"></script>
+<script src="assets/digimon-sanctuary.js?v=452"></script>
 <script src="assets/digimon-battle.js?v=393"></script>
-<script src="assets/social-digimon.js?v=450"></script>
+<script src="assets/social-digimon.js?v=452"></script>
 <script src="assets/social-gym-redesign.js?v=393"></script>
 <script src="assets/social-pond-design.js?v=393"></script>
 <script src="assets/social-title-art.js?v=450"></script>
-<script src="assets/social-scene.js?v=450"></script>
-<script src="assets/social-fishing.js?v=450"></script>
-<script src="assets/plaza-bots.js?v=450"></script>
+<script src="assets/social-scene.js?v=452"></script>
+<script src="assets/social-fishing.js?v=452"></script>
+<script src="assets/plaza-bots.js?v=452"></script>
 <script src="assets/adventure-guide.js?v=450"></script>
-<script src="assets/social.js?v=450"></script></body>
+<script src="assets/social.js?v=452"></script></body>
 </html>

@@ -688,12 +688,49 @@ export class SocialRoom {
  }
  partyRemove(c,reason='left'){
   const party=this.partyOf(c);if(!party)return;
+  const activeRaid=party.raid;
   party.members=party.members.filter(m=>m.id!==c.id);
-  if(!party.members.length){this.parties.delete(party.id);this.partySync(party);return}
+  if(activeRaid&&party.members.length){
+   this.partyBroadcast(party,{type:'raid_end',raidId:activeRaid.id,fromId:c.id,cleared:false,reason:reason==='left'?'left':'disconnect'});
+  }
+  if(!party.members.length){party.raid=null;this.parties.delete(party.id);this.partySync(party);return}
   if(party.leader===c.id)party.leader=party.members[0].id;
   this.partySync(party);
   const leader=this.clients.get(party.leader);
   if(leader)this.send(leader,{type:'party_notice',message:reason==='left'?(c.name+' left the party.'):('The party leader is now '+party.members[0].name+'.')});
+ }
+ raidStart(c,m,now){
+  const party=this.partyOf(c);
+  if(!party||party.leader!==c.id)return this.send(c,{type:'raid_error',message:'Only the party leader can start the Party Raid.'});
+  if(party.members.length<2||party.members.length>3)return this.send(c,{type:'raid_error',message:'Party Raid requires 2–3 party members.'});
+  const members=party.members.map(mem=>this.clients.get(mem.id));
+  if(members.some(mem=>!mem))return this.send(c,{type:'raid_error',message:'Every party member must be online.'});
+  if(members.some(mem=>mem.pve||mem.pvp))return this.send(c,{type:'raid_error',message:'Finish the current DigiPet activity before entering Astral Raid.'});
+  const seed=(now^((c.id||1)*2654435761))>>>0,id='raid:'+this.battleId('raid');
+  party.raid={id,seed,leader:c.id,startedAt:now};
+  this.partyBroadcast(party,{type:'raid_started',raidId:id,seed,leader:c.id,members:party.members.map(x=>({id:x.id,name:x.name}))});
+ }
+ raidSync(c,m,now){
+  const party=this.partyOf(c);if(!party||!party.raid)return;
+  if(!m.force&&now-(c.raidSyncAt||0)<1500)return;
+  c.raidSyncAt=now;
+  const payload={type:'raid_sync',raidId:party.raid.id,fromId:c.id,name:c.name,cls:typeof m.cls==='string'?m.cls.slice(0,32):'',hp:Math.max(0,Math.floor(Number(m.hp)||0)),maxHp:Math.max(1,Math.floor(Number(m.maxHp)||1)),dps:Math.max(0,Math.floor(Number(m.dps)||0)),stage:Math.max(0,Math.min(3,Math.floor(Number(m.stage)||0))),dead:!!m.dead};
+  for(const mem of party.members){if(mem.id===c.id)continue;const peer=this.clients.get(mem.id);if(peer)this.send(peer,payload)}
+ }
+ raidRevive(c,m,now){
+  const party=this.partyOf(c);if(!party||!party.raid)return;
+  const target=Number(m.target);
+  if(!Number.isInteger(target)||target===c.id||!party.members.some(x=>x.id===target))return;
+  if(now-(c.raidReviveAt||0)<2500)return;
+  c.raidReviveAt=now;
+  this.partyBroadcast(party,{type:'raid_revive',raidId:party.raid.id,fromId:c.id,fromName:c.name,target});
+ }
+ raidEnd(c,m){
+  const party=this.partyOf(c);if(!party||!party.raid)return;
+  const rid=party.raid.id,cleared=m.cleared===true,reason=typeof m.reason==='string'?m.reason.slice(0,32):'';
+  if(cleared||reason.includes('wipe'))party.raid=null;
+  const payload={type:'raid_end',raidId:rid,fromId:c.id,cleared,reason,secs:Math.max(0,Math.floor(Number(m.secs)||0)),dps:Math.max(0,Math.floor(Number(m.dps)||0))};
+  for(const mem of party.members){if(mem.id===c.id)continue;const peer=this.clients.get(mem.id);if(peer)this.send(peer,payload)}
  }
  // Leaving a party run removes only that trainer's partner; the field stays alive for the rest.
  leavePartyRun(c,run,reason='stopped'){
@@ -947,6 +984,10 @@ export class SocialRoom {
   if(m.type==='party_leave')return this.partyRemove(c,'left');
   if(m.type==='party_start')return this.startPartyPve(c,m,now);
   if(m.type==='party_profile'){const p=this.battleProfile(c,m.profile);if(p)c.partyProfile=p;return}
+  if(m.type==='raid_start')return this.raidStart(c,m,now);
+  if(m.type==='raid_sync')return this.raidSync(c,m,now);
+  if(m.type==='raid_revive')return this.raidRevive(c,m,now);
+  if(m.type==='raid_end')return this.raidEnd(c,m);
   if(m.type==='pvp_client_end'){
    const match=c.pvp?.matchId&&this.pvpMatches.get(c.pvp.matchId);if(!match||!match.clientSim)return;
    match.reports=match.reports||{};match.reports[c.id]={winnerId:Number.isInteger(m.winnerId)?m.winnerId:null,reason:String(m.reason||'knockout').slice(0,24)};
