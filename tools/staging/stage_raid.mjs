@@ -21,7 +21,7 @@ export const THREE_SRI = 'CI3ELBVUz9XQO+97x6nwMDPosPR5XvsxW2ua7N1Xeygeh1IxtgqtCk
 
 export const STAGE = Object.freeze({
   branch: 'arena/a976c1b9-prontera-grind',
-  buildTag: 'haven-v455',
+  buildTag: 'haven-v456',
   pagesProject: 'prontera-grind-staging',
   branchUrl: 'https://main.prontera-grind-staging.pages.dev',
   socialProject: 'prontera-social-staging',

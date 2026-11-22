@@ -592,5 +592,199 @@ check('Thor Volcano Raid rewards Primal Catalysts & Pillar Line-of-Sight Whole-F
   g.ev(`PGRaid.hideResult();`);
 });
 
+// 13. Map -> Dungeons Full-Width Layout, Left Boss Preview & Party Banner Image Existence
+check('Map -> Dungeons overrides 220px grid with flex layout, renders Left Boss Preview, and all Party/Dungeon banners exist locally', () => {
+  assert.match(raidCss, /#wins\s+\.ui-panel\[data-layout="map"\]\s+\.dungeons-panel[\s\S]*?display:\s*flex\s*!important/, 'raid.css overrides Map .ui-content 220px grid on .dungeons-panel');
+
+  // Verify every dungeon banner & thumb in PGRaid.DUNGEONS and RAID_DUNGEON_CARDS exists on disk
+  const pathsToVerify = g.ev(`[
+    ...Object.values(PGRaid.DUNGEONS).flatMap(d => [d.img, d.banner]),
+    ...RAID_DUNGEON_CARDS.flatMap(d => [d.img, typeof d.bossSprite === 'string' ? d.bossSprite : null, d.bossFallback])
+  ].filter(Boolean)`);
+  for (const rel of pathsToVerify) {
+    const cleanPath = String(rel).split('?')[0];
+    assert.ok(fs.existsSync(path.join(ROOT, cleanPath)), `dungeon/boss asset exists on disk: ${cleanPath}`);
+  }
+
+  // Open Map -> Dungeons and check .raid-left-col + .raid-boss-preview-card for all 3 dungeons
+  g.ev(`if (!tabs.includes('map')) openTab('map'); ACT.mapseason('dungeons'); ACT.dungeonmode('raid');`);
+  for (const id of ['astral', 'thor', 'abyss']) {
+    g.ev(`ACT.raiddungeon('${id}');`);
+    const previewInfo = g.ev(`({
+      hasLeftCol: !!document.querySelector('.dungeons-panel .raid-left-col'),
+      hasListInLeft: !!document.querySelector('.dungeons-panel .raid-left-col .raid-dungeon-list'),
+      hasBossPreview: !!document.querySelector('.dungeons-panel .raid-left-col .raid-boss-preview-card'),
+      bossTitle: document.querySelector('.raid-boss-preview-card h4')?.textContent || '',
+      imgSrc: document.querySelector('.raid-boss-stage img')?.getAttribute('src') || ''
+    })`);
+    assert.equal(previewInfo.hasLeftCol, true, `${id}: .raid-left-col rendered`);
+    assert.equal(previewInfo.hasListInLeft, true, `${id}: dungeon list inside .raid-left-col`);
+    assert.equal(previewInfo.hasBossPreview, true, `${id}: Boss Preview rendered on the left`);
+    assert.ok(previewInfo.bossTitle.length > 3 && previewInfo.imgSrc.length > 3, `${id}: Boss Preview displays boss title & sprite`);
+  }
+
+  // Verify Party Ready Room banner img src resolves to an existing local asset
+  g.ev(`ACT.raidparty('astral');`);
+  const lobbyBanner = g.ev(`document.querySelector('#raidLobby .raid-party-banner img, #raidLobby img')?.getAttribute('src') || ''`).split('?')[0];
+  assert.ok(lobbyBanner && fs.existsSync(path.join(ROOT, lobbyBanner)), `Party Ready Room banner exists: ${lobbyBanner}`);
+  g.ev(`PGRaid.hideLobby();`);
+});
+
+// 14. Stage 2 Stuck-Mobs & Pull-Back Fix + Instant Post-Dodge Auto-Attack + Movement-Direction Facing
+check('Stage 2 Fallen Arcade keeps all mobs provoked without pull-back, Dodge attacks immediately, and hero faces movement direction', () => {
+  g.ev(`S.gm = true; S.raid = { day: trialDay(), used: 0 }; PGRaid.startDirectSolo('astral');`);
+  // Clear Stage 1 -> advance to Stage 2 (Fallen Arcade)
+  g.ev(`while(mobs.length) kill(mobs[0]);`);
+  for (let i = 0; i < 90 && g.ev(`PGRaid.raid.stage === 0`); i++) {
+    g.ev(`if(!tickAstralJourney(1/30))update(1/30);t+=1/30;`);
+  }
+  assert.equal(g.ev(`PGRaid.raid.stage`), 1, 'entered Stage 2 (2/4 · Fallen Arcade)');
+  assert.ok(g.ev(`mobs.length >= 6 && mobs.every(m => m.provokeUntil > t)`), 'all Stage 2 mobs spawn permanently provoked');
+
+  // Kill the initial pack and move hero deep into the arcade (z = -4), then release WASD:
+  // Remaining Stage 2 packs MUST stay provoked & engaged, and hero MUST NOT get pulled back to z = 10.5!
+  g.ev(`
+    const firstPack = activePack;
+    for (const m of mobs.slice()) { if (m.pack === firstPack && mobs.length > 3) kill(m); }
+    pl.x = 0; pl.z = -4.0;
+    PGRaid.raid.keys.w = true; update(0.1); t += 0.1;
+    PGRaid.raid.keys.w = false;
+  `);
+  for (let i = 0; i < 30; i++) {
+    g.ev(`S.hp = maxHp(); update(0.1); t += 0.1;`);
+  }
+  const st2After = g.ev(`({
+    alive: mobs.length,
+    allProvoked: mobs.every(m => m.provokeUntil > t),
+    hasTarget: !!mob,
+    plZ: pl.z
+  })`);
+  assert.equal(st2After.allProvoked, true, 'remaining Stage 2 mobs stay provoked across ticks');
+  assert.equal(st2After.hasTarget, true, 'hero automatically acquires next Stage 2 pack without stalling');
+  assert.ok(st2After.plZ < 8.5, `hero was NOT pulled back to spawn (pl.z=${st2After.plZ.toFixed(2)})`);
+
+  // Test instant post-dodge auto-attack when no telegraph is active:
+  g.ev(`
+    PGRaid.raid.telegraph = null;
+    PGRaid.raid.dodgeCd = 0;
+    const nearMob = mobs[0];
+    nearMob.x = 0; nearMob.z = -2.0;
+    pl.x = 0; pl.z = 3.6;
+    PGRaid.raid.keys.w = true;
+    PGRaid.dodge();
+    PGRaid.raid.keys.w = false;
+  `);
+  assert.equal(g.ev(`PGRaid.raid.moveTarget`), null, 'Dodge outside telegraph does not lock moveTarget for 1.4s');
+  assert.ok(g.ev(`!!mob && pAtkT <= 0.05`), 'Dodge immediately primes nearest mob & attack timer');
+
+  // Test movement-direction sprite facing even while a mob is targeted behind the hero:
+  g.ev(`
+    mobs[0].x = 0; mobs[0].z = -6; mob = mobs[0]; // Mob is North (-Z)
+    pl.x = 0; pl.z = 0;
+    PGRaid.raid.keys.s = true; // Player runs South (+Z -> atan2(+1, 0) = +PI/2)
+    update(0.1); t += 0.1;
+  `);
+  const runFace = g.ev(`({ run: pl.run, pFace: pl.run ? -pl.ry : Math.atan2(mob.z - pl.z, mob.x - pl.x) })`);
+  assert.equal(runFace.run, true, 'hero is running South while repositioning');
+  assert.ok(Math.abs(runFace.pFace - Math.PI / 2) < 0.25, `hero sprite faces South movement direction (+PI/2), got ${runFace.pFace.toFixed(2)}`);
+  g.ev(`PGRaid.raid.keys.s = false; PGRaid.leave(); PGRaid.hideResult();`);
+});
+
+// 15. 40M DPS @ ★0 Raid Scaling, 50% Boss Armor, 2p/3p Party Buff & ★0-★20 Weapon Star System
+check('40M DPS @ ★0 Boss HP + 50% Raid Armor, 2p/3p Party HP+ATK buffs, and ★0-★20 Weapon Star Workshop + Shard Boosts', () => {
+  // Verify 1p vs 2p vs 3p HP & ATK scaling on Astral Raid
+  const scaling = g.ev(`(() => {
+    const measure = (members) => {
+      if (members.length === 1) PGRaid.startDirectSolo('astral');
+      else PGRaid.onStarted({ dungeonId: 'astral', raidId: 'scale_' + members.length, seed: 77, members });
+      const st1Hp = mobs[0].max, st1Atk = mobs[0].atk;
+      PGRaid.raid.stage = 2; while (mobs.length) kill(mobs[0]);
+      for (let i = 0; i < 90 && PGRaid.raid.stage === 2; i++) { if (!tickAstralJourney(1/30)) update(1/30); t += 1/30; }
+      const boss = mobs.find(m => m.boss), esc = mobs.find(m => !m.boss);
+      const res = { st1Hp, st1Atk, bossHp: boss.max, bossAtk: boss.atk, bossArmor: boss.raidArmor, escHp: esc.max };
+      PGRaid.leave(); PGRaid.hideResult();
+      return res;
+    };
+    const p1 = measure([{ id: 'self1', name: 'A' }]);
+    PGRaid.startDirectSolo('astral'); const selfId = PGRaid.raid.party[0].id; PGRaid.leave(); PGRaid.hideResult();
+    const p2 = measure([{ id: selfId, name: 'A' }, { id: 'u2', name: 'B' }]);
+    const p3 = measure([{ id: selfId, name: 'A' }, { id: 'u2', name: 'B' }, { id: 'u3', name: 'C' }]);
+    return { p1, p2, p3 };
+  })()`);
+  assert.equal(scaling.p1.bossArmor, 0.50, 'Stage 4 Raid Boss carries 50% Raid Armor (0.50)');
+  assert.ok(scaling.p1.bossHp > 1.1e9 && scaling.p1.bossHp < 1.6e9, `Solo Astral Boss raw HP tuned for 40M DPS @ ★0 w/ 50% Armor (~1.30B, got ${scaling.p1.bossHp})`);
+  assert.ok(Math.abs(scaling.p2.bossHp / scaling.p1.bossHp - 2.25) < 0.02, '2p Party buffs Boss HP by 2.25x');
+  assert.ok(Math.abs(scaling.p3.bossHp / scaling.p1.bossHp - 3.45) < 0.02, '3p Party buffs Boss HP by 3.45x');
+  assert.ok(Math.abs(scaling.p2.st1Hp / scaling.p1.st1Hp - 2.25) < 0.02, '2p Party buffs Stage 1-3 mob HP by 2.25x');
+  assert.ok(Math.abs(scaling.p2.bossAtk / scaling.p1.bossAtk - 1.32) < 0.02 && Math.abs(scaling.p3.bossAtk / scaling.p1.bossAtk - 1.58) < 0.02, '2p/3p Party buffs Boss & mob ATK (1.32x / 1.58x)');
+
+  // Verify 20-row WEAPON_STAR_TABLE ~20-day pacing (48 shards/day -> ~941 unboosted / ~894 optimal)
+  const expShards = g.ev(`WEAPON_STAR_TABLE.reduce((sum, r) => sum + r[2] / (r[1] / 100), 0)`);
+  assert.equal(g.ev(`WEAPON_STAR_TABLE.length`), 20, '20 Weapon Star tiers defined');
+  assert.ok(expShards >= 880 && expShards <= 1020, `expected unboosted ★0->★20 shards=${Math.round(expShards)} (~19.6 days @ 48/day)`);
+
+  // Verify applyStarAndBossArmor math at ★0, ★10, ★20 vs Normal Mob and 50%-Armor Raid Boss
+  const dmgChecks = g.ev(`(() => {
+    S.eq.weapon = { id: 99100, name: 'Starfall Katar', slot: 'weapon', wt: 'katar', sec: 6, ascSet: 'starfall', val: 420, r: 15, aff: [], cards: [], slots: 4 };
+    if (S.eq.off) S.eq.off = null;
+    const normalMob = { hp: 1e9, max: 1e9 };
+    const raidBoss = { hp: 1e9, max: 1e9, raidArmor: 0.50 };
+    const at0 = [applyStarAndBossArmor(normalMob, 1000), applyStarAndBossArmor(raidBoss, 1000)];
+    S.eq.weapon.stars = 10;
+    const at10 = [applyStarAndBossArmor(normalMob, 1000), applyStarAndBossArmor(raidBoss, 1000)];
+    S.eq.weapon.stars = 20;
+    const at20 = [applyStarAndBossArmor(normalMob, 1000), applyStarAndBossArmor(raidBoss, 1000)];
+    delete S.eq.weapon.stars;
+    return { at0, at10, at20 };
+  })()`);
+  assert.deepEqual([...dmgChecks.at0], [1000, 500], '★0: 1000 vs normal mob, 500 vs 50%-Armor Raid Boss');
+  assert.deepEqual([...dmgChecks.at10], [1200, 840], '★10 (+20% DMG, +20% Pen -> 30% Armor): 1200 normal, 840 Raid Boss (1.68x vs ★0)');
+  assert.deepEqual([...dmgChecks.at20], [1400, 1260], '★20 (+40% DMG, +40% Pen -> 10% Armor): 1400 normal, 1260 Raid Boss (2.52x vs ★0)');
+
+  // Verify [ 1 | 2 ] Refine Workshop toggle, +10/+15/+20/+25% Astral Shard boosts, Never-Downgrades & N+ -> Mythic evolution preservation
+  g.ev(`
+    S.zeny = 500000000;
+    S.ascensionMat = [200, 200, 50];
+    selE = 'weapon';
+    if (!tabs.includes('equip')) openTab('equip');
+    sub.equip = 'refine';
+    renderWin();
+  `);
+  assert.equal(g.ev(`document.querySelectorAll('.eclipse-refine-mode-switch [data-a="refinemode"]').length`), 2, '1 | 2 mode toggle buttons rendered above #eclipseRefineResult');
+  g.ev(`ACT.refinemode('star');`);
+  assert.ok(g.ev(`!!document.querySelector('.star-boost-card') && !!document.querySelector('[data-a="starup"]') && document.querySelectorAll('.star-rate-table tbody tr').length === 20`), 'Mode 2 renders Star Workshop, Shard Boost selector & 20-row table');
+
+  // Test +25% Boost (tier 4) at ★0 -> ★1 (95% + 25% capped at 100%, spends 3 base + 4 boost = 7 Astral Shards & 2M Zeny)
+  g.ev(`ACT.starboost('4');`);
+  const shBefore = g.ev(`S.ascensionMat[0]`), zBefore = g.ev(`S.zeny`);
+  g.ev(`ACT.starup('weapon');`);
+  assert.equal(g.ev(`S.eq.weapon.stars`), 1, 'weapon upgraded to ★1');
+  assert.equal(g.ev(`${shBefore} - S.ascensionMat[0]`), 7, 'spent 3 base + 4 boost = 7 Astral Shards');
+  assert.equal(g.ev(`${zBefore} - S.zeny`), 2000000, 'spent 2,000,000 Zeny');
+  assert.match(g.ev(`iname(S.eq.weapon)`), /★1$/, 'iname appends ★1');
+  assert.equal(g.ev(`autoSellReason({ ...S.eq.weapon, id: 999888 })`), 'Starred weapon', 'auto-sell protects starred weapons when unequipped');
+  assert.match(g.ev(`V.stats()`), /Overall DMG <b>\+2%<\/b>[\s\S]*Armor Pen <b>\+2%<\/b>/, 'Stats sheet displays Overall DMG & Armor Pen');
+
+  // Test Failure NEVER downgrades stars!
+  g.ev(`S.eq.weapon.stars = 15; ACT.starboost('0'); const oldRnd = Math.random; Math.random = () => 0.9999; ACT.starup('weapon'); Math.random = oldRnd;`);
+  assert.equal(g.ev(`S.eq.weapon.stars`), 15, 'failed ★15 -> ★16 attempt NEVER downgrades ★15');
+
+  // Test N+ weapon evolving to Mythic preserves .stars AND cloud save pack/unpack preserves .stars!
+  const preserved = g.ev(`(() => {
+    S.zeny = 9e9; S.ascensionMat = [500, 500, 500]; S.ore.ori = 500; S.ore.elu = 500;
+    const wt = (C().wt || [])[0] || 'katar';
+    const nPlus = { id: 99101, name: 'Nightmare+ Weapon', slot: 'weapon', wt, sec: 5, mp: 10, tier: 4, val: 350, r: 10, stars: 12, aff: [{ k: 'str', v: 10 }, { k: 'crit', v: 8 }, { k: 'atk', v: 12 }], cards: [], slots: 3 };
+    S.inv.push(nPlus);
+    const res = transformToMythic(nPlus, Object.keys(ASC_SETS)[0]);
+    const roundTrip = unpackSave(packSave(S));
+    return { err: res?.error || '', evolvedStars: nPlus.stars, evolvedSec: nPlus.sec, savedWeaponStars: roundTrip.eq.weapon.stars };
+  })()`);
+  assert.equal(preserved.err, '', 'transformToMythic succeeded cleanly');
+  assert.equal(preserved.evolvedSec, 6, 'N+ weapon evolved to sec=6 Mythic');
+  assert.equal(preserved.evolvedStars, 12, 'evolving N+ weapon to Mythic preserves ★12');
+  assert.equal(preserved.savedWeaponStars, 15, 'packSave/unpackSave preserves weapon stars');
+  g.ev(`ACT.refinemode('refine'); ACT.starboost('0');`);
+});
+
 g.close();
 console.log(`\nPASS: ${pass}/${pass} Astral Raid checks passed`);

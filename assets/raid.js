@@ -22,7 +22,7 @@
       matIdx: 0,
       matName: 'Astral Shards',
       img: 'assets/atlas/astral-citadel.png?v=156',
-      banner: 'assets/endgame/textures/astral-sky-plate-a4db60a4cc7a.webp',
+      banner: 'assets/atlas/astral-citadel.png?v=156',
       comingSoon: false,
       stages: [
         { idx: 0, astralStage: 1, name: 'Starlit Approach', desc: 'Retribution Angels & Despair Phantoms under Starfall bombardment', boss: false },
@@ -79,13 +79,18 @@
   var DODGE_DIST = 5.6;
   var SYNC_INTERVAL_S = 2.0;
 
-  // Tuned from real 4th-job combat benchmarks:
-  // Solo clears in ~4m10s–9m35s (<10m); 2-3p Party clears in ~7m–11m (<15m).
+  // Tuned to 40M DPS @ ★0 (excluding Weapon Star +DMG & Armor Pen):
+  // Raid Bosses carry 50% Raid Armor (pierced -2%/star up to -40% at ★20), so higher ★ makes raids markedly faster.
   var TRASH_CAMP_LIMIT = 8;
-  var BOSS_HP_MULT = 2.2;
-  var ESCORT_HP_MULT = 1.4;
-  var BOSS_ATK_MULT = 2.35;
-  var ESCORT_ATK_MULT = 1.55;
+  var RAID_BOSS_ARMOR = 0.50;
+  var TRASH_HP_MULT_ASTRAL = 5.6;
+  var TRASH_HP_MULT_THOR = 2.2;
+  var BOSS_HP_MULT_ASTRAL = 6.4;
+  var BOSS_HP_MULT_THOR = 4.0;
+  var ESCORT_HP_MULT_ASTRAL = 6.0;
+  var ESCORT_HP_MULT_THOR = 3.6;
+  var BOSS_ATK_MULT = 2.55;
+  var ESCORT_ATK_MULT = 1.75;
   var BOSS_CLEAVE_INTERVAL_S = 2.5;
   var BOSS_CLEAVE_PCT = 0.16;
 
@@ -392,8 +397,14 @@
 
   function partyHpScale(count) {
     if (count <= 1) return 1;
-    if (count === 2) return 2.2;
-    return 3.2;
+    if (count === 2) return 2.25;
+    return 3.45;
+  }
+
+  function partyAtkScale(count) {
+    if (count <= 1) return 1;
+    if (count === 2) return 1.32;
+    return 1.58;
   }
 
   function findBoss() {
@@ -1112,8 +1123,15 @@
       }
       if (typeof spawn === 'function') spawn();
       if (typeof camps !== 'undefined') camps = [];
+      if (typeof respawn !== 'undefined') respawn = 999;
 
-      var scale = partyHpScale(Math.max(1, raid.party.length));
+      var pCount = Math.max(1, raid.party.length);
+      var scale = partyHpScale(pCount);
+      var atkParty = partyAtkScale(pCount);
+      var nowT = (typeof t === 'number' && Number.isFinite(t)) ? t : 0;
+      var trashHpMult = mapId === 11 ? TRASH_HP_MULT_THOR : TRASH_HP_MULT_ASTRAL;
+      var bossHpMult = mapId === 11 ? BOSS_HP_MULT_THOR : BOSS_HP_MULT_ASTRAL;
+      var escortHpMult = mapId === 11 ? ESCORT_HP_MULT_THOR : ESCORT_HP_MULT_ASTRAL;
       if (typeof mobs !== 'undefined' && Array.isArray(mobs)) {
         if (!st.boss) {
           var allowedPacks = [];
@@ -1148,22 +1166,28 @@
           for (var k = 0; k < mobs.length; k++) {
             mobs[k].hx = null;
             mobs[k].hz = null;
-            mobs[k].atk = Math.max(1, Math.floor((mobs[k].atk || 100) * 1.25));
-            if (scale > 1) {
-              mobs[k].hp = Math.max(1, Math.floor(mobs[k].hp * scale));
-              mobs[k].max = mobs[k].hp;
-            }
+            mobs[k].provokeUntil = nowT + 86400;
+            mobs[k].hp = Math.max(1, Math.floor(mobs[k].hp * trashHpMult * scale));
+            mobs[k].max = mobs[k].hp;
+            mobs[k].atk = Math.max(1, Math.floor((mobs[k].atk || 100) * 1.35 * atkParty));
           }
         } else {
           for (var i = 0; i < mobs.length; i++) {
-            var mult = mobs[i].boss ? (BOSS_HP_MULT * scale) : (ESCORT_HP_MULT * scale);
-            var atkMult = mobs[i].boss ? BOSS_ATK_MULT : ESCORT_ATK_MULT;
+            var mult = mobs[i].boss ? (bossHpMult * scale) : (escortHpMult * scale);
+            var atkMult = (mobs[i].boss ? BOSS_ATK_MULT : ESCORT_ATK_MULT) * atkParty;
             mobs[i].hp = Math.max(1, Math.floor(mobs[i].hp * mult));
             mobs[i].max = mobs[i].hp;
             mobs[i].atk = Math.max(1, Math.floor((mobs[i].atk || 500) * atkMult));
             mobs[i].hx = null;
             mobs[i].hz = null;
+            mobs[i].provokeUntil = nowT + 86400;
+            if (mobs[i].boss) {
+              mobs[i].raidArmor = RAID_BOSS_ARMOR;
+            }
           }
+        }
+        if (typeof nearestPack === 'function' && typeof activePack !== 'undefined') {
+          activePack = nearestPack();
         }
       }
       if (typeof respawn !== 'undefined') respawn = 1e9;
@@ -1234,11 +1258,30 @@
     return { x: wx / len, z: wz / len };
   }
 
+  function snapToCombat() {
+    if (typeof mobs === 'undefined' || !Array.isArray(mobs) || !mobs.length || typeof pl === 'undefined' || !pl) return;
+    var best = null, bestD = 1e9;
+    for (var i = 0; i < mobs.length; i++) {
+      var m = mobs[i];
+      if (!m || m.hp <= 0) continue;
+      var d = Math.hypot(m.x - pl.x, m.z - pl.z);
+      if (m.boss) d -= 0.8;
+      if (d < bestD) { bestD = d; best = m; }
+    }
+    if (best) {
+      if (typeof mob !== 'undefined') mob = best;
+      if (typeof engageTgt !== 'undefined') engageTgt = best;
+      if (typeof engageWait !== 'undefined') engageWait = 0;
+      if (typeof activePack !== 'undefined') activePack = best.pack;
+      if (typeof pAtkT === 'number') pAtkT = Math.min(pAtkT, 0.02);
+    }
+  }
+
   function isManualMove() {
     if (!raid.on || raid.dead) return false;
     if (raid.keys.w || raid.keys.a || raid.keys.s || raid.keys.d) return true;
     if (raid.moveTarget && raid.moveTarget.left > 0 && typeof pl !== 'undefined' && pl) {
-      if (Math.hypot(raid.moveTarget.x - pl.x, raid.moveTarget.z - pl.z) > 0.22) return true;
+      if (Math.hypot(raid.moveTarget.x - pl.x, raid.moveTarget.z - pl.z) > 0.25) return true;
     }
     return false;
   }
@@ -1248,19 +1291,34 @@
     var kv = keyVector();
     if (kv) {
       raid.moveTarget = null;
-      return clampToBridge(pl.x + kv.x * 4.5, pl.z + kv.z * 4.5);
+      raid._wasManualMoving = true;
+      return { x: clampToBridge(pl.x + kv.x * 4.5, pl.z + kv.z * 4.5).x, z: clampToBridge(pl.x + kv.x * 4.5, pl.z + kv.z * 4.5).z, moving: true };
     }
     if (raid.moveTarget) {
       raid.moveTarget.left -= dt;
       var d = Math.hypot(raid.moveTarget.x - pl.x, raid.moveTarget.z - pl.z);
       if (raid.moveTarget.left <= 0) {
         raid.moveTarget = null;
+        raid._wasManualMoving = false;
+        snapToCombat();
         return null;
       }
-      if (d <= 0.22) {
+      if (d <= 0.28) {
+        if (!raid.telegraph) {
+          raid.moveTarget = null;
+          raid._wasManualMoving = false;
+          snapToCombat();
+          return null;
+        }
         raid.moveTarget.holdOnly = true;
+        return { x: raid.moveTarget.x, z: raid.moveTarget.z, moving: false };
       }
-      return { x: raid.moveTarget.x, z: raid.moveTarget.z };
+      raid._wasManualMoving = true;
+      return { x: raid.moveTarget.x, z: raid.moveTarget.z, moving: true };
+    }
+    if (raid._wasManualMoving) {
+      raid._wasManualMoving = false;
+      snapToCombat();
     }
     return null;
   }
@@ -1340,9 +1398,14 @@
     }
     pl.x = dest.x;
     pl.z = dest.z;
-    raid.moveTarget = { x: dest.x, z: dest.z, left: 1.4, holdOnly: true };
-    if (typeof engageTgt !== 'undefined') engageTgt = null;
+    if (raid.telegraph) {
+      var holdRem = Math.max(0.25, Math.min(1.6, (raid.telegraph.life - raid.telegraph.age) + 0.1));
+      raid.moveTarget = { x: dest.x, z: dest.z, left: holdRem, holdOnly: true };
+    } else {
+      raid.moveTarget = null;
+    }
     if (typeof swing !== 'undefined') swing = null;
+    snapToCombat();
     if (typeof addFloat === 'function') addFloat(pl.x, 2.5, pl.z, 'DODGE!', '#76eaff', true, 'evade');
     updateMeshes();
     renderHud();
@@ -1610,7 +1673,9 @@
     if (raid.bossCleaveIn > 0) return;
     raid.bossCleaveIn = BOSS_CLEAVE_INTERVAL_S;
     var dist = Math.hypot(pl.x - boss.x, pl.z - boss.z);
-    var pct = dist <= 4.2 ? BOSS_CLEAVE_PCT : (BOSS_CLEAVE_PCT * 0.72);
+    var pScale = partyAtkScale(Math.max(1, raid.party.length));
+    var basePct = Math.min(0.28, BOSS_CLEAVE_PCT * pScale);
+    var pct = dist <= 4.2 ? basePct : (basePct * 0.72);
     applyRaidHazardDamage(pct, dist <= 4.2 ? 'BOSS CLEAVE' : 'ASTRAL PULSE', { bypassShield: false });
   }
 
@@ -2396,6 +2461,7 @@
 
   function tick(dt) {
     if (!raid.on) return;
+    if (typeof respawn !== 'undefined') respawn = 999;
     var step = Math.max(0, Math.min(0.25, Number(dt) || 0));
     raid.elapsed += step;
     if (raid.dodgeCd > 0) raid.dodgeCd = Math.max(0, raid.dodgeCd - step);
@@ -2422,6 +2488,24 @@
         spawnRaidStage(nxt);
       }
       return;
+    }
+
+    if (typeof mobs !== 'undefined' && Array.isArray(mobs) && mobs.length > 0) {
+      var curT = (typeof t === 'number' && Number.isFinite(t)) ? t : 0;
+      for (var mi = 0; mi < mobs.length; mi++) {
+        if (mobs[mi] && mobs[mi].hp > 0) {
+          mobs[mi].hx = null;
+          mobs[mi].hz = null;
+          mobs[mi].provokeUntil = curT + 86400;
+        }
+      }
+      if (typeof nearestPack === 'function' && typeof activePack !== 'undefined') {
+        var hasPack = false;
+        for (var pk = 0; pk < mobs.length; pk++) {
+          if (mobs[pk] && mobs[pk].hp > 0 && mobs[pk].pack === activePack) { hasPack = true; break; }
+        }
+        if (!hasPack) activePack = nearestPack();
+      }
     }
 
     tickHazards(step);
@@ -2847,8 +2931,12 @@
         bossWrap.hidden = false;
         bossWrap.style.display = '';
         var bpct = Math.max(0, Math.min(100, (boss.hp / Math.max(1, boss.max)) * 100));
+        var baseArmor = typeof boss.raidArmor === 'number' ? boss.raidArmor : 0;
+        var penPct = typeof starArmorPenPct === 'function' ? starArmorPenPct() : 0;
+        var effArmorPct = Math.round(Math.max(0, baseArmor * 100 - penPct));
+        var armorTag = baseArmor > 0 ? (' · 🛡 ' + effArmorPct + '% ARMOR') : '';
         $('raidBossName').textContent = '☠ ' + boss.n;
-        $('raidBossPhase').textContent = bpct <= 50 ? 'PHASE II · ENRAGED' : 'PHASE I · SANCTUM';
+        $('raidBossPhase').textContent = (bpct <= 50 ? 'PHASE II · ENRAGED' : 'PHASE I · SANCTUM') + armorTag;
         $('raidBossHpText').textContent = fmtNum(boss.hp) + ' / ' + fmtNum(boss.max) + '  (' + bpct.toFixed(1) + '%)';
         $('raidBossFill').style.width = bpct.toFixed(1) + '%';
       } else {
