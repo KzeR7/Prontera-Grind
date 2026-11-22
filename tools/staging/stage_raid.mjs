@@ -8,6 +8,7 @@
 //   cmd /c "git show FETCH_HEAD:tools/staging/stage_raid.mjs > %TEMP%\stage_raid.mjs"
 //   node $env:TEMP\stage_raid.mjs
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import http from 'node:http';
@@ -15,6 +16,8 @@ import https from 'node:https';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+
+export const THREE_SRI = 'CI3ELBVUz9XQO+97x6nwMDPosPR5XvsxW2ua7N1Xeygeh1IxtgqtCkGfQY9WWdHu';
 
 export const STAGE = Object.freeze({
   branch: 'arena/a976c1b9-prontera-grind',
@@ -112,6 +115,13 @@ export async function verifyDeployment(url, expectedBuild, getImpl = defaultGet)
     assert.equal(res.status, 200, `Staging ${asset} returned HTTP ${res.status}`);
   }
 
+  // Verify the deployed Three.js bundle matches index.html's Subresource Integrity (no Windows CRLF drift).
+  const threeRes = await get('/assets/endgame/three-r128.min.js', { cache: 'no-store' });
+  assert.equal(threeRes.status, 200, 'Staging /assets/endgame/three-r128.min.js returned HTTP ' + threeRes.status);
+  const threeBuf = Buffer.from(await (threeRes.arrayBuffer ? threeRes.arrayBuffer() : Buffer.from(await threeRes.text(), 'utf8')));
+  const remoteSri = createHash('sha384').update(threeBuf).digest('base64');
+  assert.equal(remoteSri, THREE_SRI, `Deployed three-r128.min.js SHA-384 (${remoteSri}) != expected SRI (${THREE_SRI})`);
+
   // With no session, /api/social must reach authentication (401), not missing-binding (503).
   const social = await get('/api/social', { headers: { Origin: url, Upgrade: 'websocket' }, redirect: 'manual' });
   assert.equal(social.status, 401, 'Staging /api/social returned HTTP ' + social.status + '; expected 401 with SOCIAL binding active');
@@ -184,7 +194,8 @@ async function main() {
   const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'pg-stage-raid-'));
   try {
     const archive = path.join(temp, 'tree.tar');
-    run('git', ['-C', repo, 'archive', '--format=tar', `--output=${archive}`, sha]);
+    // Force core.autocrlf=false so Windows Git never converts LF -> CRLF and breaks Subresource Integrity.
+    run('git', ['-C', repo, '-c', 'core.autocrlf=false', 'archive', '--format=tar', `--output=${archive}`, sha]);
     run('tar.exe', ['-xf', archive, '-C', temp]);
     fs.unlinkSync(archive);
 
@@ -202,6 +213,8 @@ async function main() {
     assert.equal(fs.readFileSync(path.join(temp, 'dist', 'version.txt'), 'utf8').trim(), build, 'The built site is not the expected build. Stopped.');
     assert(fs.existsSync(path.join(temp, 'dist', 'assets', 'raid.js')), 'dist/assets/raid.js is missing from the build. Stopped.');
     assert(fs.existsSync(path.join(temp, 'dist', 'assets', 'raid.css')), 'dist/assets/raid.css is missing from the build. Stopped.');
+    const localSri = createHash('sha384').update(fs.readFileSync(path.join(temp, 'dist', 'assets', 'endgame', 'three-r128.min.js'))).digest('base64');
+    assert.equal(localSri, THREE_SRI, `Built three-r128.min.js SHA-384 (${localSri}) != expected SRI (${THREE_SRI}). Stopped.`);
 
     console.log(`3/6 Verifying the remote database is ${STAGE.dbName} (${STAGE.dbId})...`);
     const db = json(temp, ['d1', 'info', 'DB', '--json']);
