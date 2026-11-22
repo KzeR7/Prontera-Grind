@@ -1618,5 +1618,113 @@ check('Round-10: Title FX removes bottom ground ring, Raid timers are 20m/25m, B
   assert.equal(r10.usedAfterLateLeave, 2, 'Leaving Solo after 10s consumes entry normally (2 used)');
 });
 
+// 26. v464 DO hardening & mid-raid save / mode-isolation regressions
+await check('v464 DO relay hardening, reauth party hold, final stats grace, and mid-raid save/mode isolation', async () => {
+  let now = 2_000_000;
+  let alarms = 0;
+  const room = new SocialRoom({
+    now: () => now,
+    onOccupancyChange: () => { if (room.hasActiveBattles()) alarms++; }
+  });
+  const mk = (id, name) => {
+    const inbox = [];
+    const c = room.connect({ id, username: name, gm: false, friends: [] }, raw => { inbox.push(typeof raw === 'string' ? JSON.parse(raw) : raw); return true; }, () => {});
+    room.receive(c, JSON.stringify({ type: 'join', room: 1, look: { cls: 'Rune Knight', lv: 150, appearance: { sex: 'm' } } }));
+    inbox.length = 0;
+    return { c, inbox };
+  };
+  const a = mk(201, 'Ares');
+  const b = mk(202, 'Bryn');
+  const d = mk(203, 'Cora');
+  room.receive(a.c, JSON.stringify({ type: 'party_invite', targetId: 202 }));
+  room.receive(b.c, JSON.stringify({ type: 'party_accept' }));
+  room.receive(a.c, JSON.stringify({ type: 'party_invite', targetId: 203 }));
+  room.receive(d.c, JSON.stringify({ type: 'party_accept' }));
+  now += 500;
+  room.receive(b.c, JSON.stringify({ type: 'raid_ready', ready: true }));
+  room.receive(d.c, JSON.stringify({ type: 'raid_ready', ready: true }));
+  room.receive(a.c, JSON.stringify({ type: 'raid_start', dungeonId: 'astral' }));
+  assert.ok(room.partyOf(a.c)?.raid, 'Party raid started cleanly');
+
+  // 1. Duplicate raid_start while raid active is rejected
+  a.inbox.length = 0;
+  room.receive(a.c, JSON.stringify({ type: 'raid_start', dungeonId: 'thor' }));
+  assert.ok(a.inbox.some(m => m.type === 'raid_error'), 'Duplicate raid_start rejected while party.raid active');
+
+  // 2. force:true raid_sync obeys 250ms floor
+  b.inbox.length = 0;
+  room.receive(a.c, JSON.stringify({ type: 'raid_sync', force: true, hp: 500, maxHp: 1000, dps: 100000, stage: 0 }));
+  now += 50;
+  room.receive(a.c, JSON.stringify({ type: 'raid_sync', force: true, hp: 400, maxHp: 1000, dps: 110000, stage: 0 }));
+  assert.equal(b.inbox.filter(m => m.type === 'raid_sync').length, 1, 'Rapid force:true raid_sync throttled inside 250ms');
+  now += 260;
+  room.receive(a.c, JSON.stringify({ type: 'raid_sync', force: true, hp: 300, maxHp: 1000, dps: 120000, stage: 0 }));
+  assert.equal(b.inbox.filter(m => m.type === 'raid_sync').length, 2, 'force:true raid_sync passes after 250ms floor');
+
+  // 3. Planned 30-min reauth refresh preserves party & raid across quick reconnect
+  d.inbox.length = 0;
+  b.c.reauthAt = now - 1;
+  room.sweep(); // triggers refresh(b.c) -> c.refreshing = true -> partyHoldUntil
+  assert.equal(d.inbox.some(m => m.type === 'raid_end' && m.reason === 'disconnect'), false, 'Planned reauth does not drop member from Party Raid');
+  now += 150;
+  const bRe = room.connect({ id: 202, username: 'Bryn', gm: false, friends: [] }, raw => { b.inbox.push(typeof raw === 'string' ? JSON.parse(raw) : raw); return true; }, () => {});
+  assert.ok(bRe && room.partyOf(bRe)?.raid, 'Reconnecting within 15s reauth hold preserves Party Raid membership');
+
+  // 4. Multi-member final raid_end stats relay after leader clears
+  a.inbox.length = 0;
+  b.inbox.length = 0;
+  const rid = room.partyOf(a.c).raid.id;
+  room.receive(a.c, JSON.stringify({ type: 'raid_end', raidId: rid, cleared: true, reason: 'boss_down', secs: 300, dps: 9000000, dmgTaken: 200000, support: 50000, revives: 1 }));
+  assert.equal(room.partyOf(a.c).raid, null, 'party.raid closed on clear');
+  now += 40;
+  room.receive(d.c, JSON.stringify({ type: 'raid_end', raidId: rid, cleared: true, reason: 'boss_down', secs: 300, dps: 7500000, dmgTaken: 640000, support: 410000, revives: 2 }));
+  const trailing = a.inbox.find(m => m.type === 'raid_end' && m.fromId === 203);
+  assert.ok(trailing && trailing.dmgTaken === 640000 && trailing.support === 410000, 'Trailing teammate final Commendation stats relay cleanly via 10s grace window');
+  assert.equal(alarms, 0, 'Still 0 DO alarms scheduled');
+
+  // 5. Mid-raid saveableState, farmSamplingPaused, and mode-isolation guards
+  const iso = g.ev(`(() => {
+    S.gm = true;
+    S.cls = 'Rune Knight';
+    S.mp = 4;
+    S.lvl = 3;
+    S.hp = maxHp();
+    PGRaid.startDirectSolo('thor');
+    const raidMapDuringRun = S.mp;
+    S.hp = 0; // simulate downed state before save
+    const rawSaved = JSON.parse(JSON.stringify(saveableState(S)));
+    const packed = packSave(S);
+    const unpacked = unpackSave(packed);
+    const farmPaused = farmSamplingPaused();
+    const clsBlocked = classBlock('Novice');
+    trialEnter('echo');
+    const echoBlocked = !TRIAL.on;
+    PGRaid.leave({ silent: true });
+    PGRaid.hideResult();
+    return {
+      raidMapDuringRun,
+      savedMp: rawSaved.mp,
+      savedLvl: rawSaved.lvl,
+      savedHpPositive: rawSaved.hp >= 1,
+      unpackedMp: unpacked.mp,
+      unpackedLvl: unpacked.lvl,
+      farmPaused,
+      clsBlocked,
+      echoBlocked,
+      restoredMp: S.mp,
+      restoredLvl: S.lvl
+    };
+  })()`);
+  assert.equal(iso.raidMapDuringRun, 11, 'Thor Raid runs on map 11 in memory');
+  assert.equal(iso.savedMp, 4, 'Mid-raid localStorage save preserves real home map (4) instead of Raid map (11)');
+  assert.equal(iso.savedLvl, 3, 'Mid-raid localStorage save preserves real home stage (3)');
+  assert.equal(iso.savedHpPositive, true, 'Mid-raid save never persists 0 HP');
+  assert.equal(iso.unpackedMp === 4 && iso.unpackedLvl === 3, true, 'Mid-raid cloud packSave preserves real home map & stage');
+  assert.equal(iso.farmPaused, true, 'Offline farm income sampling is paused during Raid');
+  assert.equal(iso.clsBlocked, 'Leave the Raid first', 'Class switching is blocked during Raid');
+  assert.equal(iso.echoBlocked, true, 'Endless Echo entry is blocked during Raid');
+  assert.equal(iso.restoredMp === 4 && iso.restoredLvl === 3, true, 'Leaving Raid restores home map & stage');
+});
+
 g.close();
 console.log(`\nPASS: ${pass}/${pass} Astral Raid checks passed`);

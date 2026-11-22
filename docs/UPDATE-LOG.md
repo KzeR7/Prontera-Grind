@@ -12424,5 +12424,14 @@ re-recording them here would have written wrong numbers into the repository.
 * **Checks:** `publish_sim.js` (23/23), `update_watch_sim.js` (23/23), `raid_sim.mjs` (25/25), `stage_raid_sim.mjs` (5/5), `combat_audio_sim.js`, `starter_sim.js`, `eclipse_ui_sim.js`, `card_star_balance_sim.js`, `astral_journey_sim.js`, `ascension_scene_sim.js`, `map_scene_review_sim.js`, `social_worker_sim.mjs`, and `social_disconnect_sim.mjs` all passed; `bash tools/build_site.sh` succeeded cleanly (`haven-v463`).
 * **Delivery:** Pushed on branch `arena/a976c1b9-prontera-grind` and opened PR targeting `main` (verified fast-forwardable with zero conflicts against `origin/main`).
 
+### 2026-11-22 — `haven-v464 Raid Dungeons, Weapon Stars, RO Forge, Lightning Titles & DO/save hardening`
+* **Changed:** Pre-merge Durable Object relay hardening & mid-raid save/mode-isolation safeguards:
+  1. **Durable Object Relay Rate Floors & Final-Stats Grace (`workers/social/room.mjs`, `assets/raid.js`):** Added a `250ms` floor on `force: true` `raid_sync` packets (preserving `1500ms` unforced gating, `0` DO storage ops, and `0` DO alarms), blocked duplicate `raid_start` / cross-mode DigiPet PvE/PvP/invite collisions while `party.raid` is active, cleaned up `party.raid` on timeout or all-member retreat, and added a bounded `10s` one-shot `lastEndedRaid` grace window so trailing teammates' final `dps / dmgTaken / support / revives` always reach every party member's Commendation Popup.
+  2. **Planned 30-Minute `reauth` Party Raid Hold (`workers/social/room.mjs`):** Preserved party & active Party Raid membership across planned `REAUTH_MS` socket refreshes (`c.refreshing === true`) via a `15s` `partyHoldUntil` grace (re-syncing `party` on reconnect and cleaning up via `partyRemove` if unclaimed), while keeping unplanned disconnects immediate.
+  3. **Mid-Raid Save, Offline-Income & Mode-Switch Isolation (`index.html`, `assets/raid.js`, `assets/social.js`):** Added `saveableState(sv)` inside `save()` and `packSave()` so local/cloud saves during a Raid always persist the player's real home `mp`/`lvl` and `hp >= 1` while preserving consumed daily entries; paused `farmSamplingPaused()` / `plazaFarmIncome()` during Raid; blocked `classBlock()`, `trialEnter()`, `startJobRite()`, and `PGSocial.enter()` during Raid; and cleanly exited Raid before `logout()`.
+* **Checks:** `raid_sim.mjs` (26/26), `stage_raid_sim.mjs` (5/5), `publish_sim.js` (23/23), `update_watch_sim.js` (23/23), `social_sim.js`, `social_worker_sim.mjs`, `social_disconnect_sim.mjs`, `social_handshake_sim.mjs`, `combat_audio_sim.js`, `starter_sim.js`, `eclipse_ui_sim.js`, `card_star_balance_sim.js`, `astral_journey_sim.js`, `ascension_scene_sim.js`, and `map_scene_review_sim.js` all passed; `bash tools/build_site.sh` succeeded cleanly (`haven-v464`).
+* **Delivery:** Pushed on branch `arena/a976c1b9-prontera-grind` updating PR #276 targeting `main`.
+
+
 
 

@@ -3207,14 +3207,12 @@
 
   function beginRun(mode, opts) {
     opts = opts || {};
+    if (raid.on) return false;
     if (typeof S === 'undefined' || !S) return false;
 
     var chosenId = opts.dungeonId === 'thor' ? 'thor' : 'astral';
     var dng = dungeonDef(chosenId);
 
-    if (root.PGSocial && root.PGSocial.app && root.PGSocial.app.visible && typeof root.PGSocial.leave === 'function') {
-      root.PGSocial.leave();
-    }
     if (root.PGSocial && typeof root.PGSocial.setRaidSuspend === 'function') {
       root.PGSocial.setRaidSuspend(true);
     }
@@ -3506,6 +3504,7 @@
     var refundedEntry = Boolean(finishOpts.refundedEntry);
 
     raid.on = false;
+    raid.lastFinishedRaidId = rid;
     raid.dead = false;
     raid.entryConsumed = false;
     raid.reviving = null;
@@ -3516,7 +3515,7 @@
     raid.myReady = false;
     raid.keys = { w: false, a: false, s: false, d: false };
 
-    if (!fromNetwork && mode === 'party' && root.PGSocial && typeof root.PGSocial.send === 'function') {
+    if (mode === 'party' && !finishOpts.skipNetworkEnd && root.PGSocial && typeof root.PGSocial.send === 'function') {
       root.PGSocial.send({
         type: 'raid_end',
         raidId: rid,
@@ -3730,7 +3729,7 @@
 
   // ---------- Multiplayer Event Handlers ----------
   function onStarted(msg) {
-    if (!msg) return;
+    if (!msg || raid.on) return;
     if (!isFourthUnlocked() || (!isGm() && raidLeftToday() <= 0)) {
       raid.waitingPartyStart = false;
       renderLobby();
@@ -3746,6 +3745,7 @@
 
   function onSync(msg) {
     if (!raid.on || raid.mode !== 'party' || !msg) return;
+    if (msg.raidId && raid.raidId && msg.raidId !== raid.raidId) return;
     var sender = msg.fromId;
     if (sender === myId()) return;
     var slot = null;
@@ -3783,6 +3783,7 @@
 
   function onRevive(msg) {
     if (!raid.on || raid.mode !== 'party' || !msg) return;
+    if (msg.raidId && raid.raidId && msg.raidId !== raid.raidId) return;
     raid.revivesLeft = Math.max(0, raid.revivesLeft - 1);
     var selfId = myId();
     for (var i = 0; i < raid.party.length; i++) {
@@ -3812,7 +3813,31 @@
   }
 
   function onEnded(msg) {
-    if (!raid.on || raid.mode !== 'party' || !msg) return;
+    if (!msg) return;
+    if (!raid.on) {
+      if (raid.result && raid.result.mode === 'party' && msg.fromId != null &&
+          (!msg.raidId || !raid.lastFinishedRaidId || msg.raidId === raid.lastFinishedRaidId)) {
+        var updated = false;
+        for (var u = 0; u < raid.result.party.length; u++) {
+          var rp = raid.result.party[u];
+          if (rp.id === msg.fromId && !rp.self) {
+            if (msg.dps != null) rp.dps = Math.max(0, Number(msg.dps) || 0);
+            if (msg.dmgTaken != null) rp.dmgTaken = Math.max(0, Number(msg.dmgTaken) || 0);
+            if (msg.support != null) rp.support = Math.max(0, Number(msg.support) || 0);
+            if (msg.revives != null) rp.revives = Math.max(0, Number(msg.revives) || 0);
+            updated = true;
+          }
+        }
+        if (updated) {
+          raid.result.commendations = computeCommendations(raid.result.party);
+          var resEl = $('raidResult');
+          if (resEl && !resEl.hidden) showResult(raid.result);
+        }
+      }
+      return;
+    }
+    if (raid.mode !== 'party') return;
+    if (msg.raidId && raid.raidId && msg.raidId !== raid.raidId) return;
     var rStr = String(msg.reason || '');
     var isPeerExit = !msg.cleared && msg.fromId != null && msg.fromId !== myId() &&
       (rStr === 'disconnect' || rStr === 'left' || /^left/i.test(rStr));

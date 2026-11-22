@@ -916,15 +916,15 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="preload" href="assets/ui/fonts/font-5.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-6.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-7.ttf" as="font" type="font/ttf" crossorigin>
-<link rel="stylesheet" href="assets/ui/eclipse.css?v=463">
-<link rel="stylesheet" href="assets/ui/mobile.css?v=463">
-<link rel="stylesheet" href="assets/ui/mastery-titles.css?v=463">
+<link rel="stylesheet" href="assets/ui/eclipse.css?v=464">
+<link rel="stylesheet" href="assets/ui/mobile.css?v=464">
+<link rel="stylesheet" href="assets/ui/mastery-titles.css?v=464">
 <script src="assets/ui/mobile.js?v=274"></script>
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
-<link rel="stylesheet" href="assets/social.css?v=463">
-<link rel="stylesheet" href="assets/raid.css?v=463">
+<link rel="stylesheet" href="assets/social.css?v=464">
+<link rel="stylesheet" href="assets/raid.css?v=464">
 <link rel="stylesheet" href="assets/social-battle.css?v=393">
-  <link rel="stylesheet" href="assets/social-fishing.css?v=463"><link rel="stylesheet" href="assets/friends.css?v=273">
+  <link rel="stylesheet" href="assets/social-fishing.css?v=464"><link rel="stylesheet" href="assets/friends.css?v=273">
 <link rel="stylesheet" href="assets/adventure-guide.css?v=450">
 </head>
 <body>
@@ -1055,10 +1055,10 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <div id="tooltip"></div>
 <link rel="stylesheet" href="assets/wardrobe.css?v=138">
 <link rel="stylesheet" href="assets/shop.css?v=318">
-<script src="assets/wardrobe.js?v=463"></script>
+<script src="assets/wardrobe.js?v=464"></script>
 <script src="assets/shop-catalog.js?v=321"></script>
 <script src="assets/fourth-jobs.js?v=179"></script>
-<script src="assets/expanded-jobs.js?v=463"></script>
+<script src="assets/expanded-jobs.js?v=464"></script>
 <script src="assets/ascension.js?v=156"></script>
 <script src="assets/native-mob-heights.js?v=153"></script>
 <script src="assets/native-fields.js?v=197"></script>
@@ -1066,7 +1066,7 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <script src="assets/skill-icons.js?v=130"></script>
 <script src="assets/skill-icons-extra.js?v=207"></script>
 <script src="assets/skill-icons-expanded.js?v=450"></script>
-<script src="assets/mastery-titles.js?v=463"></script>
+<script src="assets/mastery-titles.js?v=464"></script>
 <script src="assets/player-buffs.js?v=450"></script>
 <script src="assets/skill-materials.js?v=220"></script>
 <script src="assets/afterglow-animations.js?v=151"></script>
@@ -1084,11 +1084,11 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <script src="assets/expanded-fx/approved.js?v=450"></script>
 <script src="assets/skill-afterglow.js?v=450"></script>
 <script src="assets/boss-fx.js?v=249"></script>
-<script src="assets/raid.js?v=463"></script>
+<script src="assets/raid.js?v=464"></script>
 <script src="assets/pets.js?v=130"></script>
 <script src="assets/bgm-tracks.js?v=206"></script>
 <script src="assets/bgm.js?v=207"></script>
-<script src="assets/combat-audio.js?v=463"></script>
+<script src="assets/combat-audio.js?v=464"></script>
 <script src="assets/class_skins_data.js?v=2"></script>
 <script src="assets/weapon_joints_data.js?v=2"></script>
 <script src="assets/weapons_data.js?v=2"></script>
@@ -1359,7 +1359,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-22 haven-v463 Raid Dungeons, Weapon Stars, RO Forge, Lightning Titles & lossless delivery compression';
+const BUILD='2026-11-22 haven-v464 Raid Dungeons, Weapon Stars, RO Forge, Lightning Titles & DO/save hardening';
 // v364: this write used to sit AFTER the `//` on the BUILD line, so it was part of the comment and
 // never ran - the login card showed an empty #buildTag and there was no way to confirm which file
 // the browser had loaded. It also has to survive the script running before the login card exists.
@@ -2923,7 +2923,7 @@ function trialArena(){
 }
 // ---------------------------------------------------------------- the run ----
 function trialEnter(mode){
-  if(typeof JOB_RITE!=='undefined'&&JOB_RITE.on)return;
+  if((typeof JOB_RITE!=='undefined'&&JOB_RITE.on)||(typeof PGRaid!=='undefined'&&PGRaid.raid&&PGRaid.raid.on))return;
   const st=trialState();
   if(mode==='ranked'&&!trialLeftToday()){log('No ranked runs left today - practice is always open.','r0','trial');ui();return}
   cancelAstralJourney();
@@ -4078,7 +4078,16 @@ function cNewestFishAt(sv){
   if(sv.fishing&&typeof sv.fishing==='object')scan(sv.fishing.bag);
   if(Array.isArray(sv.fishs))scan(sv.fishs);
   return max}
+function saveableState(sv){
+  if(!sv||typeof sv!=='object'||Array.isArray(sv))return sv;
+  if(typeof S!=='undefined'&&sv===S&&typeof PGRaid!=='undefined'&&PGRaid.raid&&PGRaid.raid.on&&PGRaid.raid.home){
+    const h=PGRaid.raid.home;
+    return Object.assign({},sv,{mp:h.mp,lvl:h.lvl,hp:Math.max(1,Number(sv.hp)>0?sv.hp:(Number(h.hp)||1))});
+  }
+  return sv;
+}
 function packSave(sv){
+  sv=saveableState(sv);
   if(!sv||typeof sv!=='object'||Array.isArray(sv))return sv;
   const o=Object.assign({},sv,{__v:SAVE_CODEC_VERSION});
   if(Array.isArray(sv.inv))o.inv=sv.inv.map(cPackItem);
@@ -4419,7 +4428,7 @@ function farmSamplingPaused(){
  return (typeof simPending==='number'&&simPending>FARM_CATCHUP_PAUSE)||
   (typeof document!=='undefined'&&document.body?.classList.contains('social-open'))||
   (typeof hubFirstPending!=='undefined'&&hubFirstPending)||
-  (typeof JOB_RITE!=='undefined'&&JOB_RITE.on)||(typeof TRIAL!=='undefined'&&TRIAL.on)||
+  (typeof JOB_RITE!=='undefined'&&JOB_RITE.on)||(typeof TRIAL!=='undefined'&&TRIAL.on)||(typeof PGRaid!=='undefined'&&PGRaid.raid&&PGRaid.raid.on)||
   (typeof CLOUD!=='undefined'&&(CLOUD.lost||CLOUD.gate||CLOUD.paused||CLOUD.updating));
 }
 // v422: reward ownership = stable account id + class + progression-run generation, never the class
@@ -4451,7 +4460,7 @@ function recordFarmIncome(xp,zeny,job,kills=1,now=Date.now()){
 }
 // Last 60s of *field* combat. Plaza AFK pays this and must not rewrite it (no mobs, no loot).
 function plazaFarmIncome(){
-  if(!S||typeof JOB_RITE!=='undefined'&&JOB_RITE.on||typeof TRIAL!=='undefined'&&TRIAL.on)return null;
+  if(!S||typeof JOB_RITE!=='undefined'&&JOB_RITE.on||typeof TRIAL!=='undefined'&&TRIAL.on||typeof PGRaid!=='undefined'&&PGRaid.raid&&PGRaid.raid.on)return null;
   // v392: CLOUD.lost no longer stops the plaza paying. The rate was measured before the drop and is
   // capped by that measurement, so "awaiting connection" is not a reason to stop earning - it is only a
   // reason to stop UPLOADING (the gate/pause states below still stop it: those mean the server has
@@ -4585,8 +4594,9 @@ function save(forceDuringUpdate=false){if(!currentUser||!S||(typeof CLOUD!=='und
   let storedOk=false;
   if(other)saveElsewhere(other);
   else{
-    storedOk=lsPut(saveKey(),JSON.stringify(S))!==false;
-    if(!storedOk&&typeof cloudTryCompactLocalSave==='function')storedOk=cloudTryCompactLocalSave(saveKey(),S);
+    const snap=saveableState(S);
+    storedOk=lsPut(saveKey(),JSON.stringify(snap))!==false;
+    if(!storedOk&&typeof cloudTryCompactLocalSave==='function')storedOk=cloudTryCompactLocalSave(saveKey(),snap);
   }
   if(storedOk){
     CLOUD.localSaveAt=now;   // v332: proof that a durable localStorage save completed, never a RAM-only fallback
@@ -4708,6 +4718,7 @@ $('loginForm').addEventListener('submit',submitAuth);$('tabLogin').onclick=()=>s
 async function logout(){
   if(logout.inflight)return;
   logout.inflight=true;
+  if(typeof PGRaid!=='undefined'&&PGRaid.raid&&PGRaid.raid.on)PGRaid.leave({silent:true});
   settlePlazaAfk();                            // pay this session's sub-second plaza accrual before it is saved
   save();
   if(CLOUD.on)cloudBadge('☁ ⇅','Saving before logout…');
@@ -9138,7 +9149,7 @@ const playedClasses=()=>{const s=new Set();if(collClass(S.cls)&&t3At150(S.cls))s
 const t3Total=()=>{let n=0;for(const k in CLASSES)if(collClass(k))n++;return n};
 const collDmg=()=>playedClasses();
 function classBlock(n){
-  if(n===S.cls)return'Current class';if(typeof JOB_RITE!=='undefined'&&JOB_RITE.on)return'Leave the Crucible first';if(n==='Novice')return'';
+  if(n===S.cls)return'Current class';if(typeof JOB_RITE!=='undefined'&&JOB_RITE.on)return'Leave the Crucible first';if(typeof PGRaid!=='undefined'&&PGRaid.raid&&PGRaid.raid.on)return'Leave the Raid first';if(n==='Novice')return'';
   if(playedClass(n))return'';
   if(EXPANDED_LINE.has(n)&&!hasLv150ThirdClass())return`Needs any 4th job at Base Lv ${ADV4_BASE_LV} first`;
   for(let x=n;CLASSES[x].par;x=CLASSES[x].par){const p=CLASSES[x].par,pj=S.jobs[p];if(!pj||pj.jl<CLASSES[x].rj)return`Needs ${p} Job Lv ${CLASSES[x].rj}`}
@@ -9240,7 +9251,7 @@ function jobRiteHud(){
   host.querySelector('time').textContent=Math.floor(left/60)+':'+String(left%60).padStart(2,'0');
 }
 function startJobRite(target){
-  if(!FOURTH_JOBS_LIVE||JOB_RITE.on||TRIAL.on||!CLASSES[target]||CLASSES[target].tier!==4||playedClass(target)||classBlock(target)||S.cls!==CLASSES[target].par)return false;
+  if(!FOURTH_JOBS_LIVE||JOB_RITE.on||TRIAL.on||(typeof PGRaid!=='undefined'&&PGRaid.raid&&PGRaid.raid.on)||!CLASSES[target]||CLASSES[target].tier!==4||playedClass(target)||classBlock(target)||S.cls!==CLASSES[target].par)return false;
   const opponent=JOB_RITE_OPPONENTS[S.cls];if(!opponent)return false;
   const template=fieldOf(10,1).mobs[0],stats=ascensionCombatStats(10,1);
   stats.hp=stats.max=Math.floor(nmBossHpOf(9,15)*JOB_RITE_BOSS_MULT);
@@ -15083,7 +15094,7 @@ function ensureRaidLightningSheet(){
     for(const tex of raidLightningSheetState.liveTextures)tex.needsUpdate=true;
   };
   img.onerror=()=>{raidLightningSheetState.loading=false;};
-  img.src='assets/refine-fx/title-lightning.webp?v=463';
+  img.src='assets/refine-fx/title-lightning.webp?v=464';
 }
 function makeRaidLightningTexture(colorHex){
   ensureRaidLightningSheet();
@@ -17088,22 +17099,22 @@ setInterval(updateWatch,60000);
 // be hours old while the player was on another tab, and the check is a 60-byte text file.
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&(pendingUpdateBuild||Date.now()-PAGE_STARTED_AT>30000))updateWatch()});
 </script>
-<script src="assets/wardrobe-ui.js?v=463"></script>
+<script src="assets/wardrobe-ui.js?v=464"></script>
 <script src="assets/shop.js?v=321"></script>
 <script src="assets/friends.js?v=273"></script>
-<script src="assets/digimon/roster.js?v=463"></script>
-<script src="assets/digimon/base-stats.js?v=463"></script>
-<script src="assets/social-rules.js?v=463"></script>
-<script src="assets/social-poker.js?v=463"></script>
-<script src="assets/digimon-sanctuary.js?v=463"></script>
+<script src="assets/digimon/roster.js?v=464"></script>
+<script src="assets/digimon/base-stats.js?v=464"></script>
+<script src="assets/social-rules.js?v=464"></script>
+<script src="assets/social-poker.js?v=464"></script>
+<script src="assets/digimon-sanctuary.js?v=464"></script>
 <script src="assets/digimon-battle.js?v=393"></script>
-<script src="assets/social-digimon.js?v=463"></script>
+<script src="assets/social-digimon.js?v=464"></script>
 <script src="assets/social-gym-redesign.js?v=393"></script>
 <script src="assets/social-pond-design.js?v=393"></script>
 <script src="assets/social-title-art.js?v=450"></script>
-<script src="assets/social-scene.js?v=463"></script>
-<script src="assets/social-fishing.js?v=463"></script>
-<script src="assets/plaza-bots.js?v=463"></script>
+<script src="assets/social-scene.js?v=464"></script>
+<script src="assets/social-fishing.js?v=464"></script>
+<script src="assets/plaza-bots.js?v=464"></script>
 <script src="assets/adventure-guide.js?v=450"></script>
-<script src="assets/social.js?v=463"></script></body>
+<script src="assets/social.js?v=464"></script></body>
 </html>
