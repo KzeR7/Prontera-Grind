@@ -916,15 +916,15 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="preload" href="assets/ui/fonts/font-5.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-6.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-7.ttf" as="font" type="font/ttf" crossorigin>
-<link rel="stylesheet" href="assets/ui/eclipse.css?v=457">
-<link rel="stylesheet" href="assets/ui/mobile.css?v=457">
-<link rel="stylesheet" href="assets/ui/mastery-titles.css?v=457">
+<link rel="stylesheet" href="assets/ui/eclipse.css?v=458">
+<link rel="stylesheet" href="assets/ui/mobile.css?v=458">
+<link rel="stylesheet" href="assets/ui/mastery-titles.css?v=458">
 <script src="assets/ui/mobile.js?v=274"></script>
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
-<link rel="stylesheet" href="assets/social.css?v=457">
-<link rel="stylesheet" href="assets/raid.css?v=457">
+<link rel="stylesheet" href="assets/social.css?v=458">
+<link rel="stylesheet" href="assets/raid.css?v=458">
 <link rel="stylesheet" href="assets/social-battle.css?v=393">
-  <link rel="stylesheet" href="assets/social-fishing.css?v=457"><link rel="stylesheet" href="assets/friends.css?v=273">
+  <link rel="stylesheet" href="assets/social-fishing.css?v=458"><link rel="stylesheet" href="assets/friends.css?v=273">
 <link rel="stylesheet" href="assets/adventure-guide.css?v=450">
 </head>
 <body>
@@ -1055,10 +1055,10 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <div id="tooltip"></div>
 <link rel="stylesheet" href="assets/wardrobe.css?v=138">
 <link rel="stylesheet" href="assets/shop.css?v=318">
-<script src="assets/wardrobe.js?v=457"></script>
+<script src="assets/wardrobe.js?v=458"></script>
 <script src="assets/shop-catalog.js?v=321"></script>
 <script src="assets/fourth-jobs.js?v=179"></script>
-<script src="assets/expanded-jobs.js?v=457"></script>
+<script src="assets/expanded-jobs.js?v=458"></script>
 <script src="assets/ascension.js?v=156"></script>
 <script src="assets/native-mob-heights.js?v=153"></script>
 <script src="assets/native-fields.js?v=197"></script>
@@ -1066,7 +1066,7 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <script src="assets/skill-icons.js?v=130"></script>
 <script src="assets/skill-icons-extra.js?v=207"></script>
 <script src="assets/skill-icons-expanded.js?v=450"></script>
-<script src="assets/mastery-titles.js?v=457"></script>
+<script src="assets/mastery-titles.js?v=458"></script>
 <script src="assets/player-buffs.js?v=450"></script>
 <script src="assets/skill-materials.js?v=220"></script>
 <script src="assets/afterglow-animations.js?v=151"></script>
@@ -1084,11 +1084,11 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <script src="assets/expanded-fx/approved.js?v=450"></script>
 <script src="assets/skill-afterglow.js?v=450"></script>
 <script src="assets/boss-fx.js?v=249"></script>
-<script src="assets/raid.js?v=457"></script>
+<script src="assets/raid.js?v=458"></script>
 <script src="assets/pets.js?v=130"></script>
 <script src="assets/bgm-tracks.js?v=206"></script>
 <script src="assets/bgm.js?v=207"></script>
-<script src="assets/combat-audio.js?v=457"></script>
+<script src="assets/combat-audio.js?v=458"></script>
 <script src="assets/class_skins_data.js?v=2"></script>
 <script src="assets/weapon_joints_data.js?v=2"></script>
 <script src="assets/weapons_data.js?v=2"></script>
@@ -1359,7 +1359,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-22 haven-v457 Star rate rebalance, RO 1s forge FX & SFX, 5 Raid electric titles, Boss Acc cards & GM Raid tools';
+const BUILD='2026-11-22 haven-v458 Authentic RO forge SFX/sprites, minimal 3D static FX, Raid UI & Boss/Star rebalance';
 // v364: this write used to sit AFTER the `//` on the BUILD line, so it was part of the comment and
 // never ran - the login card showed an empty #buildTag and there was no way to confirm which file
 // the browser had loaded. It also has to survive the script running before the login card exists.
@@ -6394,12 +6394,12 @@ const pv=k=>SKILLS.reduce((a,s)=>a+(skillOn(s.id)?(s.type==='pas'&&s.key===k?s.f
 // atk(): it reads the left hand as eqv('off'), which is only non-zero for a dagger. A shield
 // still reads as its own DEF, which is why def() keeps its slot==='off' guard.
 const WEAPON_STAR_TABLE=[
-  [1,70,3,2,[1,2,3,4]],[2,70,3,3,[1,2,3,4]],[3,70,4,4,[2,3,4,5]],[4,60,4,5,[2,3,4,5]],[5,60,5,6,[2,3,5,6]],
-  [6,60,6,8,[3,4,6,8]],[7,60,6,10,[3,5,7,9]],[8,55,7,12,[4,6,8,10]],[9,50,8,15,[4,6,9,11]],[10,45,9,18,[5,7,10,13]],
-  [11,40,10,22,[5,8,11,14]],[12,35,11,26,[6,9,12,16]],[13,30,12,30,[7,10,14,18]],[14,26,13,35,[8,12,16,20]],[15,22,14,40,[9,13,18,23]],
-  [16,20,15,48,[10,15,20,25]],[17,17,16,56,[11,16,22,28]],[18,14,17,65,[12,18,24,30]],[19,12,18,75,[13,20,26,33]],[20,10,20,90,[15,22,30,38]]
+  [1,50,3,2,[1,2,3,4,5]],[2,50,3,3,[1,2,3,4,5]],[3,50,4,4,[2,3,4,5,6]],[4,40,4,5,[2,3,4,5,6]],[5,40,5,6,[2,3,5,6,8]],
+  [6,40,6,8,[3,4,6,7,9]],[7,40,6,10,[3,4,6,8,10]],[8,35,7,12,[4,5,7,9,11]],[9,35,8,15,[4,6,8,10,12]],[10,30,9,18,[5,7,9,11,14]],
+  [11,30,10,22,[5,7,10,12,15]],[12,25,11,26,[6,8,11,14,17]],[13,25,12,30,[6,9,12,15,18]],[14,25,13,35,[7,10,13,16,20]],[15,22,14,40,[7,10,14,18,22]],
+  [16,20,15,48,[8,11,15,19,24]],[17,15,16,56,[9,12,16,21,26]],[18,12,17,65,[10,14,18,23,28]],[19,10,18,75,[11,15,20,25,32]],[20,7,20,90,[12,17,24,30,38]]
 ];
-const items=()=>Object.values(S.eq).filter(Boolean),ev=it=>Math.round(it.val*(1+(it.r||0)*.15)),WEAPON_STAR_MAX=20,WEAPON_STAR_DMG_PER=2,WEAPON_STAR_PEN_PER=2,WEAPON_STAR_BOOSTS=[0,10,15,20,25],canStarWeapon=it=>Boolean(it&&it.wt&&(it.slot==='weapon'||it.slot==='off')&&(it.sec|0)>=5),starCount=it=>canStarWeapon(it)?Math.max(0,Math.min(WEAPON_STAR_MAX,Math.floor(Number(it.stars)||0))):0,effectiveWeaponStars=()=>S&&S.eq?Math.min(WEAPON_STAR_MAX,Math.max(starCount(S.eq.weapon),S.eq.off&&S.eq.off.wt==='dagger'?starCount(S.eq.off):0)):0,starOverallDmgPct=()=>effectiveWeaponStars()*WEAPON_STAR_DMG_PER,starArmorPenPct=()=>effectiveWeaponStars()*WEAPON_STAR_PEN_PER,applyStarAndBossArmor=(target,dmg)=>{if(!(dmg>0))return dmg;const stars=effectiveWeaponStars(),armor=target&&typeof target.raidArmor==='number'&&target.raidArmor>0?target.raidArmor:0;if(!stars&&!armor)return dmg;const dmgMult=1+stars*(WEAPON_STAR_DMG_PER/100),effArmor=armor>0?Math.max(0,armor-stars*(WEAPON_STAR_PEN_PER/100)):0,armorMult=armor>0?Math.max(.05,1-effArmor):1;return Math.max(1,Math.round(dmg*dmgMult*armorMult))},iname=it=>(it.r?'+'+it.r+' ':'')+it.name+(starCount(it)?' ★'+starCount(it):''),DUAL=.35,TWO_HANDED=1.5,eqv=k=>{const it=S.eq[k];return it?k==='off'&&it.wt==='dagger'?ev(it)*DUAL:ev(it)*(it.wt==='katar'?TWO_HANDED:1):0};
+const items=()=>Object.values(S.eq).filter(Boolean),ev=it=>Math.round(it.val*(1+(it.r||0)*.15)),WEAPON_STAR_MAX=20,WEAPON_STAR_DMG_PER=2,WEAPON_STAR_PEN_PER=2,WEAPON_STAR_BOOSTS=[0,5,7,10,12,15],canStarWeapon=it=>Boolean(it&&it.wt&&(it.slot==='weapon'||it.slot==='off')&&(it.sec|0)>=5),starCount=it=>canStarWeapon(it)?Math.max(0,Math.min(WEAPON_STAR_MAX,Math.floor(Number(it.stars)||0))):0,effectiveWeaponStars=()=>S&&S.eq?Math.min(WEAPON_STAR_MAX,Math.max(starCount(S.eq.weapon),S.eq.off&&S.eq.off.wt==='dagger'?starCount(S.eq.off):0)):0,starOverallDmgPct=()=>effectiveWeaponStars()*WEAPON_STAR_DMG_PER,starArmorPenPct=()=>effectiveWeaponStars()*WEAPON_STAR_PEN_PER,applyStarAndBossArmor=(target,dmg)=>{if(!(dmg>0))return dmg;const stars=effectiveWeaponStars(),armor=target&&typeof target.raidArmor==='number'&&target.raidArmor>0?target.raidArmor:0;if(!stars&&!armor)return dmg;const dmgMult=1+stars*(WEAPON_STAR_DMG_PER/100),effArmor=armor>0?Math.max(0,armor-stars*(WEAPON_STAR_PEN_PER/100)):0,armorMult=armor>0?Math.max(.05,1-effArmor):1;return Math.max(1,Math.round(dmg*dmgMult*armorMult))},iname=it=>(it.r?'+'+it.r+' ':'')+it.name+(starCount(it)?' ★'+starCount(it):''),DUAL=.35,TWO_HANDED=1.5,eqv=k=>{const it=S.eq[k];return it?k==='off'&&it.wt==='dagger'?ev(it)*DUAL:ev(it)*(it.wt==='katar'?TWO_HANDED:1):0};
 const bon=k=>{let v=MASTER_STATS.includes(k)?cardMasteryStat(k):0;for(const it of items()){const f=it===S.eq.off&&it.wt==='dagger'?DUAL:1;for(const a of it.aff||[])if(a.k===k)v+=a.v*f*(k==='hp'?2:1);for(const c of it.cards||[])for(const e of cardEffects(c))if(e.k===k)v+=e.v*f}
   // haven-v158: Ascension set bonuses add percentage stats on top of gear and cards.
   if(typeof ascensionSetBonuses==='function')for(const a of Object.values(ascensionSetBonuses()))if(a.tier.stats[k])v+=a.tier.stats[k];
@@ -8377,15 +8377,16 @@ function forgeDelayMs(){
   return 1000;
 }
 function roForgeFxElement(kind){
-  const wrap=document.createElement('div');
+  // Use <aside> instead of <div> so .eclipse-workshop-hero > div (46x46 item slot rule) never shrinks the forge stage.
+  const wrap=document.createElement('aside');
   wrap.className='ro-forge-fx is-'+kind;
   wrap.setAttribute('aria-hidden','true');
   if(kind==='forging'){
-    wrap.innerHTML='<div class="ro-forge-hearth"></div><svg class="ro-forge-anvil" viewBox="0 0 64 26"><path d="M6 10h52l-7 8H13z" fill="#7c8b9e" stroke="#232b36" stroke-width="2"/><path d="M18 18h28l5 6H13z" fill="#4f5c6e" stroke="#232b36" stroke-width="2"/></svg><svg class="ro-forge-hammer" viewBox="0 0 64 64"><path d="M30 30L54 54" stroke="#9e6b3b" stroke-width="6" stroke-linecap="round"/><rect x="10" y="10" width="28" height="16" rx="3" transform="rotate(-35 24 18)" fill="#ffd36b" stroke="#6b4a16" stroke-width="2.4"/><rect x="14" y="12" width="20" height="5" rx="1.5" transform="rotate(-35 24 18)" fill="#fff5cc"/></svg><div class="ro-forge-sparks"><i></i><i></i><i></i><i></i><i></i><i></i></div>';
+    wrap.innerHTML='<span class="ro-forge-hearth"></span><img class="ro-forge-anvil" src="assets/refine-fx/anvil.png" alt=""><img class="ro-forge-sword" src="assets/refine-fx/sword.png" alt=""><img class="ro-forge-hammer" src="assets/refine-fx/hammer.png" alt=""><img class="ro-forge-spark s1" src="assets/refine-fx/spark.png" alt=""><img class="ro-forge-spark s2" src="assets/refine-fx/spark.png" alt="">';
   }else if(kind==='success'){
-    wrap.innerHTML='<div class="ro-success-pillar"></div><div class="ro-success-ring"></div><svg class="ro-success-starburst" viewBox="0 0 120 120"><polygon points="60,4 70,44 110,34 80,60 110,86 70,76 60,116 50,76 10,86 40,60 10,34 50,44" fill="#ffe98a" fill-opacity=".46" stroke="#fff9d6" stroke-width="1.8"/><polygon points="60,18 66,50 98,60 66,70 60,102 54,70 22,60 54,50" fill="#fffdf0" fill-opacity=".85"/></svg><div class="ro-success-glints"><span>✦</span><span>✦</span><span>★</span></div>';
+    wrap.innerHTML='<span class="ro-success-pillar"></span><img class="ro-success-starburst" src="assets/refine-fx/ring.png" alt=""><img class="ro-success-sword" src="assets/refine-fx/sword.png" alt=""><img class="ro-success-glint g1" src="assets/refine-fx/spark.png" alt=""><img class="ro-success-glint g2" src="assets/refine-fx/spark.png" alt=""><img class="ro-success-banner" src="assets/refine-fx/success.png" alt="">';
   }else if(kind==='failure'){
-    wrap.innerHTML='<div class="ro-fail-flash"></div><svg class="ro-fail-cracks" viewBox="0 0 120 120"><path d="M60 58L32 22M60 58L88 26M60 58L22 72M60 58L96 78M60 58L52 98M46 40L28 46M74 42L94 48" stroke="#ff5e5e" stroke-width="2.6" stroke-linecap="round" fill="none"/></svg><div class="ro-fail-smoke"><i></i><i></i><i></i></div>';
+    wrap.innerHTML='<span class="ro-fail-flash"></span><img class="ro-forge-anvil dim" src="assets/refine-fx/anvil.png" alt=""><span class="ro-fail-cracks"><img class="ro-broken-hilt" src="assets/refine-fx/broken_back.png" alt=""><img class="ro-broken-tip" src="assets/refine-fx/broken_front.png" alt=""></span><img class="ro-fail-banner" src="assets/refine-fx/failed.png" alt="">';
   }
   return wrap;
 }
@@ -8480,7 +8481,7 @@ function weaponStarQuote(it,boostIdx=starBoostTier){
   const cur=starCount(it);
   if(cur>=WEAPON_STAR_MAX)return {cur,next:cur,maxed:true};
   const row=WEAPON_STAR_TABLE[cur];
-  const bIdx=Math.max(0,Math.min(4,Math.floor(Number(boostIdx)||0)));
+  const bIdx=Math.max(0,Math.min(WEAPON_STAR_BOOSTS.length-1,Math.floor(Number(boostIdx)||0)));
   const baseRate=row[1],baseMat=row[2],zeny=row[3]*1000000;
   const boostPct=WEAPON_STAR_BOOSTS[bIdx]||0;
   const boostShards=bIdx>0?(row[4][bIdx-1]||0):0;
@@ -9583,9 +9584,9 @@ function eclipseInventoryTools(){const known=new Set(eclipseInventoryState?.owne
 let mapSeason='atlas',dungeonMode='raid',raidDungeonPick='astral';
 function mapCollectionTabs(){const active=mapSeason==='echo'?'dungeons':mapSeason;return `<div class="atabs map-season-tabs" role="tablist" aria-label="Map collections">${[['atlas','World Atlas'],['ascension','Ascension Map'],['dungeons','Dungeons'],['social','Social Hub']].map(([id,label])=>`<button type="button" id="map-tab-${id}" role="tab" aria-selected="${active===id}" aria-controls="map-panel-${id}" tabindex="${active===id?0:-1}" class="${active===id?'on':''}" data-a="mapseason" data-v="${id}">${label}</button>`).join('')}</div>`;}
 const RAID_DUNGEON_CARDS=[
-  {id:'astral',name:'Astral Citadel',tier:'Lv 150 · 4th Job',img:'assets/atlas/astral-citadel.png?v=156',boss:'Memory of Thanatos',bossRole:'Sanctum Sovereign · Stage 4',bossSprite:'assets/mobs/v1/1708-0.png',bossFallback:'assets/mobs/v1/1708-0.png',bossSummary:'Commands Soul Brand, Abyssal Annihilation, Searing Cross & Cataclysmic Judgment (hide behind Sanctum Pillars).',bossTags:[['🛡 50% Raid Armor',true],['⚔ Solo ~40M DPS (@★0)',false],['👥 2p ×2.25 · 3p ×3.45 HP',false]],subtitle:'3 Starlight Bridge stages + Memory of Thanatos (6 mechanics + Pillar Wipe)',mobs:['Retribution Angel','Despair Phantom','Tower Watcher','Death Whisperer','Agony Demon'],drops:[['Solo Clear','20 Astral Shards · 500,000z · 100 Echo Shards'],['Party Clear','30 Astral Shards · 1 Valkyrie\'s Sigil · 750,000z · 150 Echo Shards'],['10% Boss Acc Cards','Primordial Ifrit Card (ATK +15%) · Sovereign Thanatos Card (MATK +15%)'],['Exclusive Raid Titles','Astral Stormbringer / Volcanic Overlord (10% drop) · 10 / 20 / 30 Clear Titles']],comingSoon:false},
-  {id:'thor',name:'Thor Volcano',tier:'Lv 150 · 4th Job',img:'assets/atlas/thor-volcano.png?v=162',boss:'Ifrit, Volcano Lord',bossRole:'Caldera Tyrant · Stage 4',bossSprite:'assets/mobs/v1/1832-0.png',bossFallback:'assets/mobs/v1/1832-0.png',bossSummary:'Unleashes Meteor Slam, Caldera Eruption, Molten Cross & Hellfire Cataclysm across the volcanic forge.',bossTags:[['🛡 50% Raid Armor',true],['⚔ Solo ~40M+ DPS (@★0)',false],['👥 2p ×2.25 · 3p ×3.45 HP',false]],subtitle:'3 Molten Caldera stages + Ifrit, Volcano Lord (6 mechanics + Pillar Wipe)',mobs:['Magma Slag','Fire Imp','Kasa','Salamander','Obsidian Golem'],drops:[['Solo Clear','20 Primal Catalysts · 500,000z · 100 Echo Shards'],['Party Clear','30 Primal Catalysts · 1 Valkyrie\'s Sigil · 750,000z · 150 Echo Shards'],['10% Boss Acc Cards','Primordial Ifrit Card (ATK +15%) · Sovereign Thanatos Card (MATK +15%)'],['Exclusive Raid Titles','Volcanic Overlord / Astral Stormbringer (10% drop) · 10 / 20 / 30 Clear Titles']],comingSoon:false},
-  {id:'abyss',name:'Niflheim Abyssal Sanctum',tier:'Lv 160 · Future Raid',img:'assets/world-map/cutout/niflheim.png?v=283',boss:'Lord of Death',bossRole:'Underworld Monarch · Planned',bossSprite:1373,bossFallback:'assets/mobs/v1/1706-0.png',bossSummary:'Rules the Throne of the Dead in the frozen abyssal sanctum — arriving in a future raid expansion.',bossTags:[['🛡 High Raid Armor',true],['🔒 Upcoming Tier',false]],subtitle:'Frozen underworld catacombs & Throne of the Dead — arriving in a future update',mobs:['Ghost Hound','Banshee','Death Knight','Soul Eater','Abyss Knight'],drops:[['Planned Clear','Abyssal Relics · Valkyrie\'s Sigils · Echo Shards'],['Planned Boss Loot','Mythic Protection Scroll · Lord of Death Card']],comingSoon:true}
+  {id:'astral',name:'Astral Citadel',tier:'Lv 150 · 4th Job',img:'assets/atlas/astral-citadel.png?v=156',boss:'Memory of Thanatos',bossRole:'Sanctum Sovereign · Stage 4',bossSprite:'assets/mobs/v1/1708-0.png',bossFallback:'assets/mobs/v1/1708-0.png',bossSummary:'3 Starlight Bridge stages + Stage 4 Boss · Soul Brand, Searing Cross & Cataclysmic Judgment (hide behind Pillars).',bossTags:[['🛡 50% Raid Armor',true],['⚔ Solo ~28M DPS (@★0)',false],['👥 2p ×2.25 · 3p ×3.45 HP',false]],subtitle:'3 Starlight Bridge stages + Memory of Thanatos (6 mechanics + Pillar Wipe)',mobs:['Retribution Angel','Despair Phantom','Tower Watcher','Death Whisperer','Agony Demon'],drops:[['Solo Clear','20 Astral Shards · 500k z · 100 Echo'],['Party Clear','30 Shards · 1 Sigil · 750k z · 150 Echo'],['10% Boss Cards','Primordial Ifrit (+15% ATK) · Sovereign Thanatos (+15% MATK)'],['Raid Titles','Stormbringer / Overlord (10% drop) · 10/20/30 Clears']],comingSoon:false},
+  {id:'thor',name:'Thor Volcano',tier:'Lv 150 · 4th Job',img:'assets/atlas/thor-volcano.png?v=162',boss:'Ifrit, Volcano Lord',bossRole:'Caldera Tyrant · Stage 4',bossSprite:'assets/mobs/v1/1832-0.png',bossFallback:'assets/mobs/v1/1832-0.png',bossSummary:'3 Molten Caldera stages + Stage 4 Boss · Meteor Slam, Caldera Eruption, Molten Cross & Hellfire Cataclysm.',bossTags:[['🛡 50% Raid Armor',true],['⚔ Solo ~32M DPS (@★0)',false],['👥 2p ×2.25 · 3p ×3.45 HP',false]],subtitle:'3 Molten Caldera stages + Ifrit, Volcano Lord (6 mechanics + Pillar Wipe)',mobs:['Magma Slag','Fire Imp','Kasa','Salamander','Obsidian Golem'],drops:[['Solo Clear','20 Primal Catalysts · 500k z · 100 Echo'],['Party Clear','30 Catalysts · 1 Sigil · 750k z · 150 Echo'],['10% Boss Cards','Primordial Ifrit (+15% ATK) · Sovereign Thanatos (+15% MATK)'],['Raid Titles','Overlord / Stormbringer (10% drop) · 10/20/30 Clears']],comingSoon:false},
+  {id:'abyss',name:'Niflheim Abyssal Sanctum',tier:'Lv 160 · Future Raid',img:'assets/world-map/cutout/niflheim.png?v=283',boss:'Lord of Death',bossRole:'Underworld Monarch · Planned',bossSprite:1373,bossFallback:'assets/mobs/v1/1706-0.png',bossSummary:'Frozen underworld catacombs & Throne of the Dead — arriving in a future raid expansion.',bossTags:[['🛡 High Raid Armor',true],['🔒 Upcoming Tier',false]],subtitle:'Frozen underworld catacombs & Throne of the Dead — arriving in a future update',mobs:['Ghost Hound','Banshee','Death Knight','Soul Eater','Abyss Knight'],drops:[['Planned Clear','Abyssal Relics · Valkyrie\'s Sigils · Echo Shards'],['Planned Loot','Mythic Protection Scroll · Lord of Death Card']],comingSoon:true}
 ];
 function renderDungeonsPanel(){
   const mode=mapSeason==='echo'?'echo':dungeonMode;
@@ -9598,15 +9599,15 @@ function renderDungeonsPanel(){
   const leftToday=isGmAcc?'∞ Unlimited (GM)':`${Math.max(0,2-usedToday)}/2 entries left today`;
   const canTry=isGmAcc||Math.max(0,2-usedToday)>0;
   const gateMsg=!unlocked?'Requires Base Lv 150 & a 4th-Job class':(!canTry?'Daily Raid limit reached (2/2 today)':'Solo <10:00 (direct entry) · Party <15:00 (Ready check & 3 revives)');
-  const cardsHtml=RAID_DUNGEON_CARDS.map(x=>`<button type="button" class="raid-dungeon-card${x.id===d.id?' on':''}${x.comingSoon?' soon':''}" data-a="raiddungeon" data-v="${x.id}" aria-pressed="${x.id===d.id}"><div class="raid-dungeon-thumb"><img src="${x.img}" alt="${esc(x.name)}"><span class="raid-dungeon-badge${x.comingSoon?' soon':''}">${x.comingSoon?'Coming Soon':'Open'}</span></div><div class="raid-dungeon-card-meta"><b>${esc(x.name)}</b><small>${esc(x.tier)} · Boss: ${esc(x.boss)}</small></div></button>`).join('');
+  const cardsHtml=RAID_DUNGEON_CARDS.map(x=>`<button type="button" class="raid-dungeon-card${x.id===d.id?' on':''}${x.comingSoon?' soon':''}" data-a="raiddungeon" data-v="${x.id}" aria-pressed="${x.id===d.id}"><div class="raid-dungeon-thumb"><img src="${x.img}" alt="${esc(x.name)}"><span class="raid-dungeon-badge${x.comingSoon?' soon':''}">${x.comingSoon?'Soon':'Open'}</span></div><div class="raid-dungeon-card-meta"><b>${esc(x.name)}</b><small>${esc(x.tier)} · ${esc(x.boss)}</small></div></button>`).join('');
   const bossSpriteSrc=typeof d.bossSprite==='number'?(typeof mobSpriteUrl==='function'?mobSpriteUrl(d.bossSprite):d.bossFallback):d.bossSprite;
   const penNow=typeof starArmorPenPct==='function'?starArmorPenPct():0;
-  const effArmorNote=!d.comingSoon&&penNow>0?`<span class="armor">★ Your Pen: ${Math.max(0,50-penNow)}% Eff. Armor</span>`:'';
-  const bossPreviewHtml=`<aside class="raid-boss-preview-card" aria-label="Raid Boss Preview"><div class="raid-boss-preview-head"><span>☠ Boss Preview</span><b>${esc(d.bossRole)}</b></div><div class="raid-boss-stage"><img src="${esc(bossSpriteSrc)}" alt="${esc(d.boss)}" onerror="this.onerror=null;this.src='${esc(d.bossFallback)}'"></div><div class="raid-boss-meta"><h4>👑 ${esc(d.boss)}</h4><p>${esc(d.bossSummary)}</p></div><div class="raid-boss-tags">${(d.bossTags||[]).map(([lbl,arm])=>`<span class="${arm?'armor':''}">${esc(lbl)}</span>`).join('')}${effArmorNote}</div></aside>`;
+  const effArmorNote=!d.comingSoon&&penNow>0?`<span class="armor">★ Pen: ${Math.max(0,50-penNow)}% Eff. Armor</span>`:'';
+  const mvpHeaderHtml=`<div class="raid-mvp-header" aria-label="MVP Boss Preview"><div class="raid-boss-stage"><img src="${esc(bossSpriteSrc)}" alt="${esc(d.boss)}" onerror="this.onerror=null;this.src='${esc(d.bossFallback)}'"></div><div class="raid-mvp-info"><div class="raid-mvp-top"><div class="raid-mvp-titles"><span class="raid-mvp-role">☠ ${esc(d.name)} · ${esc(d.bossRole)}</span><h3>👑 ${esc(d.boss)}</h3></div><span class="raid-detail-tries">${esc(leftToday)}</span></div><p class="raid-mvp-desc">${esc(d.bossSummary)}</p><div class="raid-boss-tags">${(d.bossTags||[]).map(([lbl,arm])=>`<span class="${arm?'armor':''}">${esc(lbl)}</span>`).join('')}${effArmorNote}</div></div></div>`;
   const mobsHtml=d.mobs.map(m=>`<span class="raid-mob-chip">${esc(m)}</span>`).join('')+`<span class="raid-mob-chip boss">👑 ${esc(d.boss)}</span>`;
   const dropsHtml=d.drops.map(([k,v])=>`<div class="raid-drop-row"><span>${esc(k)}</span><b>${esc(v)}</b></div>`).join('');
   const ctaHtml=d.comingSoon?`<div class="raid-dungeon-cta"><small style="color:#bfb6e2">Previewing upcoming raid destination — check back in a future update.</small><div class="raid-dungeon-cta-btns"><button type="button" class="raid-start-btn" disabled>🔒 Coming in Future Update</button></div></div>`:`<div class="raid-dungeon-cta"><small class="${unlocked&&canTry?'':'r0'}">${esc(gateMsg)}</small><div class="raid-dungeon-cta-btns"><button type="button" class="raid-start-btn" data-a="raidsolo" data-v="${d.id}" ${unlocked&&canTry?'':'disabled'}>⚔ Solo Raid (Enter Now)</button><button type="button" class="raid-party-open-btn" data-a="raidparty" data-v="${d.id}" ${unlocked&&canTry?'':'disabled'}>👥 Party Raid (Ready Room)</button></div></div>`;
-  return `${subnav}<section class="raid-dungeon-browser"><div class="raid-left-col"><div class="raid-dungeon-list" role="listbox" aria-label="Raid dungeons">${cardsHtml}</div>${bossPreviewHtml}</div><div class="raid-dungeon-detail"><div class="raid-detail-hero"><img src="${d.img}" alt="${esc(d.name)}"><div class="raid-detail-hero-shade"></div><div class="raid-detail-hero-copy"><div><h3>${esc(d.name)}</h3><p>${esc(d.subtitle)}</p></div><span class="raid-detail-tries">${esc(leftToday)}</span></div></div><div class="raid-detail-cols"><section class="raid-detail-box"><header>Monsters &amp; Boss</header><div class="raid-mob-chips">${mobsHtml}</div></section><section class="raid-detail-box"><header>Drops &amp; Clear Rewards</header><div class="raid-drop-rows">${dropsHtml}</div></section></div>${ctaHtml}</div></section>`;
+  return `${subnav}<section class="raid-dungeon-browser"><div class="raid-left-col"><div class="raid-dungeon-list" role="listbox" aria-label="Raid dungeons">${cardsHtml}</div></div><div class="raid-dungeon-detail">${mvpHeaderHtml}<div class="raid-detail-cols"><section class="raid-detail-box"><header>Monsters &amp; Boss</header><div class="raid-mob-chips">${mobsHtml}</div></section><section class="raid-detail-box"><header>Drops &amp; Clear Rewards</header><div class="raid-drop-rows">${dropsHtml}</div></section></div>${ctaHtml}</div></section>`;
 }
 // ---------- Illustrated World Map of Rune-Midgard (v283) ----------
 const WORLD_ATLAS_PLACES=[
@@ -10770,6 +10771,7 @@ function arrangePanel(k,root){
       }
       put(stage,hero);stage.classList.toggle('eclipse-reforge-stage',mode==='reforge');
       if(mode==='refine'){
+        if(typeof CombatAudio!=='undefined'&&CombatAudio.preloadForge)CombatAudio.preloadForge();
         hero.id='eclipseRefineResult';hero.setAttribute('role','status');hero.setAttribute('aria-live','polite');hero.firstElementChild.classList.add('eclipse-result-art');
         const status=make('p','eclipse-refine-status');
         const forgingHere=Boolean(forgePending&&forgePending.owner===S&&forgePending.id===it.id);
@@ -10832,9 +10834,9 @@ function arrangePanel(k,root){
           put(stage,chosen,put(make('div','eclipse-workshop-action'),starBtn));
           if(!qStar.maxed){
             const boostCard=make('div','star-boost-card');
-            const boostBtns=[0,1,2,3,4].map(bi=>{
+            const boostBtns=[0,1,2,3,4,5].map(bi=>{
               const bp=WEAPON_STAR_BOOSTS[bi],bs=bi>0?qStar.boostOptions[bi-1]:0,eff=Math.min(100,qStar.baseRate+bp);
-              return `<button type="button" class="star-boost-btn${bi===0?' span2':''}${qStar.boostIdx===bi?' on':''}" data-a="starboost" data-v="${bi}" aria-pressed="${qStar.boostIdx===bi}"><span>${bi===0?`No Shard Boost (${qStar.baseRate}%)`:`+${bp}% Boost → ${eff}%`}</span><small>${bi===0?'0 extra Astral Shards':`+${bs} Astral Shards`}</small></button>`;
+              return `<button type="button" class="star-boost-btn${qStar.boostIdx===bi?' on':''}" data-a="starboost" data-v="${bi}" aria-pressed="${qStar.boostIdx===bi}"><span>${bi===0?`No Boost (${qStar.baseRate}%)`:`+${bp}% Boost → ${eff}%`}</span><small>${bi===0?'0 extra Shards':`+${bs} Astral Shards`}</small></button>`;
             }).join('');
             boostCard.innerHTML=`<h4>✦ Astral Shard Rate Boost</h4><small>Spend extra Astral Shards on this attempt for a flat additive success boost.</small><div class="star-boost-grid">${boostBtns}</div>`;
             put(aside,boostCard);
@@ -10842,7 +10844,7 @@ function arrangePanel(k,root){
         }
         const curNext=canStarWeapon(it)?starCount(it)+1:0;
         const tblWrap=make('div','star-rate-table-wrap');
-        tblWrap.innerHTML=`<table class="star-rate-table"><thead><tr><th>★</th><th>Base</th><th>Shards</th><th>Zeny</th><th>+10/+15/+20/+25%</th></tr></thead><tbody>${WEAPON_STAR_TABLE.map(r=>`<tr class="${r[0]===curNext?'cur':''}"><td>★${r[0]}</td><td>${r[1]}%</td><td>${r[2]}</td><td>${r[3]}M</td><td>+${r[4].join('/')}</td></tr>`).join('')}</tbody></table>`;
+        tblWrap.innerHTML=`<table class="star-rate-table"><thead><tr><th>★</th><th>Base</th><th>Shards</th><th>Zeny</th><th>+5/+7/+10/+12/+15%</th></tr></thead><tbody>${WEAPON_STAR_TABLE.map(r=>`<tr class="${r[0]===curNext?'cur':''}"><td>★${r[0]}</td><td>${r[1]}%</td><td>${r[2]}</td><td>${r[3]}M</td><td>+${r[4].join('/')}</td></tr>`).join('')}</tbody></table>`;
         const rulesNote=make('small','','Each ★ grants +2% Overall DMG & +2% Armor Penetration (up to +40% / +40% at ★20). Raid Bosses have 50% Armor DR. Evolving an N+ weapon to Mythic preserves all Weapon Stars.');
         put(aside,rulesNote,tblWrap);
       }else{
@@ -11908,7 +11910,7 @@ const ACT={
     log(`🃏 ${name}: dedicated ${r.donated} cop${r.donated===1?'y':'ies'} - mastery ${r.level}/${CARD_MASTERY_PER_CARD}${r.left?`, ${r.left} left in the bag`:''}.`,'r3','card');
     addFloat(pl.x,2.6,pl.z,`🃏 ${name} ${r.level}/${CARD_MASTERY_PER_CARD}`,'#ffd23f');ui();save()})},
   refinemode:v=>{if(v==='refine'||v==='star'){refineMode=v;if(v==='star'&&selE!=='weapon'&&!(selE==='off'&&S.eq?.off?.wt==='dagger')&&S.eq?.weapon)selE='weapon';renderWin()}},
-  starboost:v=>{const n=Number(v);if(Number.isInteger(n)&&n>=0&&n<=4){starBoostTier=n;renderWin()}},
+  starboost:v=>{const n=Number(v);if(Number.isInteger(n)&&n>=0&&n<WEAPON_STAR_BOOSTS.length){starBoostTier=n;renderWin()}},
   starup:k=>starUpgrade(k),
   gmstars:v=>{if(!S||!S.gm||!S.eq.weapon||!Number.isInteger(+v)||+v<0||+v>WEAPON_STAR_MAX)return;if((S.eq.weapon.sec|0)<5)S.eq.weapon.sec=5;if(+v===0)delete S.eq.weapon.stars;else S.eq.weapon.stars=+v;log(`GM: ${iname(S.eq.weapon)} set to ★${+v}.`,'r4','gear');ui();save()},
   gmraidmat:v=>{if(!S||!S.gm)return;const [idx,amt]=String(v||'').split(':').map(Number);if(!Number.isInteger(idx)||idx<0||idx>2||!Number.isFinite(amt)||amt<=0)return;if(!Array.isArray(S.ascensionMat))S.ascensionMat=[0,0,0];S.ascensionMat[idx]=safeCount(S.ascensionMat[idx])+Math.floor(amt);log(`GM: +${Math.floor(amt).toLocaleString()} ${ASCENSION_MATERIALS[idx]}.`,'r3','gear');ui();save()},
@@ -14992,112 +14994,131 @@ function disposeThreeGroup(g){
   textures.forEach(tex=>tex.dispose());
 }
 function buildRaidElectricAura(colorHex){
-  const col=new THREE.Color(colorHex||'#3be8ff');
-  const coreCol=new THREE.Color(0xffffff).lerp(col,.22);
+  const col=new THREE.Color(colorHex||'#00eaff');
+  const shadowCol=new THREE.Color(0x070510).lerp(col,.22);
+  const coreCol=new THREE.Color(0xffffff).lerp(col,.30);
   const group=new THREE.Group();
   group.userData.color=colorHex;
-  group.userData.lastSnap=-1;
+  group.userData.arcSnaps=[-1,-1,-1];
+  group.userData.spines=[new Float32Array(6*3),new Float32Array(6*3),new Float32Array(6*3)];
 
-  const mkBoltLines=(segCount,c,op)=>{
+  // 3 minimal, thick 3D crossed-ribbon lightning arcs (5 segments * 2 crossed quads * 6 verts = 60 verts/arc = 180 verts total)
+  const mkRibbonMesh=(c,op,additive,order)=>{
     const geo=new THREE.BufferGeometry();
-    geo.setAttribute('position',new THREE.Float32BufferAttribute(new Float32Array(segCount*2*3),3));
-    const mat=new THREE.LineBasicMaterial({color:c,transparent:true,opacity:op,depthWrite:false,blending:THREE.AdditiveBlending});
-    return new THREE.LineSegments(geo,mat);
+    geo.setAttribute('position',new THREE.Float32BufferAttribute(new Float32Array(3*5*12*3),3));
+    const mat=new THREE.MeshBasicMaterial({
+      color:c,transparent:true,opacity:op,side:THREE.DoubleSide,depthWrite:false,
+      blending:additive?THREE.AdditiveBlending:THREE.NormalBlending
+    });
+    const m=new THREE.Mesh(geo,mat);
+    m.frustumCulled=false;
+    m.renderOrder=order;
+    return m;
   };
-  // 8 outer colored static bolts (7 segments each = 56) + 5 white-hot inner bolts (6 segments = 30) + 16 ground arcs
-  const outerBolts=mkBoltLines(56,col,.96);
-  const coreBolts=mkBoltLines(30,coreCol,.92);
-  const groundBolts=mkBoltLines(16,col,.84);
+  const shadowBolts=mkRibbonMesh(shadowCol,.70,false,8);
+  const outerBolts=mkRibbonMesh(col,.98,false,9);
+  const coreBolts=mkRibbonMesh(coreCol,.92,true,10);
+
+  // Clean minimal colored ground rim ring with dark contrast backing so every color reads at a glance
+  const groundBack=new THREE.Mesh(
+    new THREE.RingGeometry(.59,.73,40),
+    new THREE.MeshBasicMaterial({color:shadowCol,transparent:true,opacity:.42,side:THREE.DoubleSide,depthWrite:false})
+  );
+  groundBack.rotation.x=-Math.PI/2;groundBack.position.y=.03;groundBack.renderOrder=6;
+  const groundRing=new THREE.Mesh(
+    new THREE.RingGeometry(.62,.70,40),
+    new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:.86,side:THREE.DoubleSide,depthWrite:false})
+  );
+  groundRing.rotation.x=-Math.PI/2;groundRing.position.y=.035;groundRing.renderOrder=7;
+
   const soft=auraTexture();
-  const corona=new THREE.Sprite(new THREE.SpriteMaterial({color:col,map:soft,transparent:true,opacity:.18,depthWrite:false,blending:THREE.AdditiveBlending}));
-  corona.position.y=1.1;corona.scale.set(2.35,2.65,1);corona.renderOrder=-1;
+  const corona=new THREE.Sprite(new THREE.SpriteMaterial({color:col,map:soft,transparent:true,opacity:.14,depthWrite:false,blending:THREE.AdditiveBlending}));
+  corona.position.y=1.05;corona.scale.set(1.95,2.25,1);corona.renderOrder=5;
 
-  const sparkGeo=new THREE.BufferGeometry();
-  sparkGeo.setAttribute('position',new THREE.Float32BufferAttribute(new Float32Array(16*3),3));
-  const sparks=new THREE.Points(sparkGeo,new THREE.PointsMaterial({color:coreCol,map:soft,size:.15,transparent:true,opacity:.92,depthWrite:false,blending:THREE.AdditiveBlending}));
-
-  group.add(outerBolts,coreBolts,groundBolts,corona,sparks);
+  group.add(corona,groundBack,groundRing,shadowBolts,outerBolts,coreBolts);
+  group.userData.shadowBolts=shadowBolts;
   group.userData.outerBolts=outerBolts;
   group.userData.coreBolts=coreBolts;
-  group.userData.groundBolts=groundBolts;
+  group.userData.groundRing=groundRing;
+  group.userData.groundBack=groundBack;
   group.userData.corona=corona;
-  group.userData.sparks=sparks;
   return group;
+}
+function writeElectricBoltRibbon(arr,offset,spine,halfW){
+  let w=offset;
+  const push=(x,y,z)=>{arr[w++]=x;arr[w++]=y;arr[w++]=z;};
+  for(let s=0;s<5;s++){
+    const i0=s*3,i1=(s+1)*3;
+    const x0=spine[i0],y0=spine[i0+1],z0=spine[i0+2];
+    const x1=spine[i1],y1=spine[i1+1],z1=spine[i1+2];
+    let tx=x1-x0,ty=y1-y0,tz=z1-z0;
+    const tl=Math.hypot(tx,ty,tz)||1;tx/=tl;ty/=tl;tz/=tl;
+    // Outward radial vector from character center
+    let rx=(x0+x1)*.5,rz=(z0+z1)*.5;
+    const rl=Math.hypot(rx,rz)||1;rx/=rl;rz/=rl;
+    // N1 = normalize(T x R)
+    let n1x=ty*rz,n1y=tz*rx-tx*rz,n1z=-ty*rx;
+    let n1l=Math.hypot(n1x,n1y,n1z);
+    if(n1l<1e-4){n1x=1;n1y=0;n1z=0;n1l=1;}
+    n1x/=n1l;n1y/=n1l;n1z/=n1l;
+    // N2 = normalize(T x N1) (90-degree crossed ribbon so bolt is thick from every camera angle)
+    let n2x=ty*n1z-tz*n1y,n2y=tz*n1x-tx*n1z,n2z=tx*n1y-ty*n1x;
+    const n2l=Math.hypot(n2x,n2y,n2z)||1;n2x/=n2l;n2y/=n2l;n2z/=n2l;
+    const w0=halfW*(.24+.76*Math.sin((s/5)*Math.PI));
+    const w1=halfW*(.24+.76*Math.sin(((s+1)/5)*Math.PI));
+    // Quad 1 (along N1)
+    push(x0-n1x*w0,y0-n1y*w0,z0-n1z*w0);push(x0+n1x*w0,y0+n1y*w0,z0+n1z*w0);push(x1+n1x*w1,y1+n1y*w1,z1+n1z*w1);
+    push(x0-n1x*w0,y0-n1y*w0,z0-n1z*w0);push(x1+n1x*w1,y1+n1y*w1,z1+n1z*w1);push(x1-n1x*w1,y1-n1y*w1,z1-n1z*w1);
+    // Quad 2 (along N2)
+    push(x0-n2x*w0,y0-n2y*w0,z0-n2z*w0);push(x0+n2x*w0,y0+n2y*w0,z0+n2z*w0);push(x1+n2x*w1,y1+n2y*w1,z1+n2z*w1);
+    push(x0-n2x*w0,y0-n2y*w0,z0-n2z*w0);push(x1+n2x*w1,y1+n2y*w1,z1+n2z*w1);push(x1-n2x*w1,y1-n2y*w1,z1-n2z*w1);
+  }
 }
 function animateRaidElectricAura(group,nowMs,x,y,z,scale=1){
   if(!group)return;
   group.position.set(x,y,z);
   group.scale.setScalar(scale);
-  const snap=Math.floor(nowMs/55);
   const hash=n=>{let h=(n^0x9e3779b9)>>>0;h=Math.imul(h^(h>>>16),0x85ebca6b)>>>0;h=Math.imul(h^(h>>>13),0xc2b2ae35)>>>0;return((h^(h>>>16))>>>0)/4294967296;};
-  if(group.userData.lastSnap!==snap){
-    group.userData.lastSnap=snap;
-    // Outer jagged static lightning arcs wrapping from boots to above shoulders/head
-    const outArr=group.userData.outerBolts.geometry.attributes.position.array;
-    let w=0;
-    for(let b=0;b<8;b++){
-      const active=hash(snap*31+b*17)>.14;
-      const baseA=(b/8)*Math.PI*2+snap*.29+(hash(snap*13+b)-.5)*.65;
-      const rBase=.52+hash(snap*19+b*7)*.34;
-      const y0=.12+hash(snap*23+b*11)*.35,ySpan=1.45+hash(snap*29+b*5)*.68;
-      let px=Math.cos(baseA)*rBase,py=y0,pz=Math.sin(baseA)*rBase;
-      for(let s=1;s<=7;s++){
-        const u=s/7;
-        const ang=baseA+(u-.5)*1.25+(hash(snap*41+b*13+s)-.5)*.78;
-        const rad=active?rBase+Math.sin(u*Math.PI)*.16+(hash(snap*47+b*19+s)-.5)*.34:0;
-        const nx=active?Math.cos(ang)*rad:0,ny=active?y0+ySpan*u+(hash(snap*53+b*23+s)-.5)*.14:0,nz=active?Math.sin(ang)*rad:0;
-        outArr[w++]=px;outArr[w++]=py;outArr[w++]=pz;
-        outArr[w++]=nx;outArr[w++]=ny;outArr[w++]=nz;
-        px=nx;py=ny;pz=nz;
-      }
+  const shArr=group.userData.shadowBolts.geometry.attributes.position.array;
+  const outArr=group.userData.outerBolts.geometry.attributes.position.array;
+  const coreArr=group.userData.coreBolts.geometry.attributes.position.array;
+  const baseAngles=[2.45,-0.55,0.98]; // Left flank, Right flank, Upper back/shoulder
+  let changed=false;
+  for(let b=0;b<3;b++){
+    const snap=Math.floor((nowMs+b*55)/165);
+    if(group.userData.arcSnaps[b]===snap)continue;
+    group.userData.arcSnaps[b]=snap;
+    changed=true;
+    const spine=group.userData.spines[b];
+    const orbit=nowMs*.00045;
+    const baseA=baseAngles[b]+orbit+(hash(snap*31+b*17)-.5)*.45;
+    const rBase=.58+hash(snap*19+b*7)*.14;
+    const y0=(b===2?.72:.24)+hash(snap*23+b*11)*.22;
+    const ySpan=(b===2?1.05:1.32)+hash(snap*29+b*5)*.28;
+    for(let s=0;s<=5;s++){
+      const u=s/5;
+      const zig=(s===0||s===5)?0:((s%2===1?1:-1)*(.16+hash(snap*41+b*13+s)*.15));
+      const ang=baseA+(u-.5)*.62+zig*.55;
+      const rad=rBase+Math.sin(u*Math.PI)*.10+zig*.22;
+      spine[s*3]=Math.cos(ang)*rad;
+      spine[s*3+1]=y0+ySpan*u+(hash(snap*53+b*23+s)-.5)*.06;
+      spine[s*3+2]=Math.sin(ang)*rad;
     }
-    group.userData.outerBolts.geometry.attributes.position.needsUpdate=true;
-
-    // White-hot inner core arcs
-    const coreArr=group.userData.coreBolts.geometry.attributes.position.array;
-    w=0;
-    for(let b=0;b<5;b++){
-      const active=hash(snap*59+b*29)>.2;
-      const baseA=(b/5)*Math.PI*2-snap*.37;
-      const rBase=.42+hash(snap*61+b*31)*.26;
-      const y0=.24+hash(snap*67+b*37)*.4,ySpan=1.25+hash(snap*71+b*41)*.55;
-      let px=Math.cos(baseA)*rBase,py=y0,pz=Math.sin(baseA)*rBase;
-      for(let s=1;s<=6;s++){
-        const u=s/6;
-        const ang=baseA+(u-.5)*.95+(hash(snap*73+b*43+s)-.5)*.68;
-        const rad=active?rBase+(hash(snap*79+b*47+s)-.5)*.28:0;
-        const nx=active?Math.cos(ang)*rad:0,ny=active?y0+ySpan*u:0,nz=active?Math.sin(ang)*rad:0;
-        coreArr[w++]=px;coreArr[w++]=py;coreArr[w++]=pz;
-        coreArr[w++]=nx;coreArr[w++]=ny;coreArr[w++]=nz;
-        px=nx;py=ny;pz=nz;
-      }
-    }
-    group.userData.coreBolts.geometry.attributes.position.needsUpdate=true;
-
-    // Ground skittering static ring
-    const grdArr=group.userData.groundBolts.geometry.attributes.position.array;
-    w=0;
-    for(let s=0;s<16;s++){
-      const a0=(s/16)*Math.PI*2+snap*.11,a1=((s+1)/16)*Math.PI*2+snap*.11;
-      const r0=.84+(hash(snap*83+s*7)-.5)*.32,r1=.84+(hash(snap*83+((s+1)%16)*7)-.5)*.32;
-      const show=hash(snap*89+s*13)>.28;
-      grdArr[w++]=show?Math.cos(a0)*r0:0;grdArr[w++]=.045;grdArr[w++]=show?Math.sin(a0)*r0:0;
-      grdArr[w++]=show?Math.cos(a1)*r1:0;grdArr[w++]=.045;grdArr[w++]=show?Math.sin(a1)*r1:0;
-    }
-    group.userData.groundBolts.geometry.attributes.position.needsUpdate=true;
-
-    // High-voltage discharge spark motes
-    const spArr=group.userData.sparks.geometry.attributes.position.array;
-    for(let i=0;i<16;i++){
-      const a=hash(snap*97+i*17)*Math.PI*2,r=.38+hash(snap*101+i*23)*.68,sy=.18+hash(snap*103+i*29)*2.1;
-      spArr[i*3]=Math.cos(a)*r;spArr[i*3+1]=sy;spArr[i*3+2]=Math.sin(a)*r;
-    }
-    group.userData.sparks.geometry.attributes.position.needsUpdate=true;
+    const off=b*5*12*3;
+    writeElectricBoltRibbon(shArr,off,spine,.066);
+    writeElectricBoltRibbon(outArr,off,spine,.043);
+    writeElectricBoltRibbon(coreArr,off,spine,.016);
   }
-  const flicker=.82+Math.sin(nowMs*.037)*.14;
-  group.userData.outerBolts.material.opacity=Math.min(1,flicker+.06);
-  group.userData.coreBolts.material.opacity=flicker;
-  group.userData.corona.material.opacity=.14+Math.sin(nowMs*.021)*.05;
+  if(changed){
+    group.userData.shadowBolts.geometry.attributes.position.needsUpdate=true;
+    group.userData.outerBolts.geometry.attributes.position.needsUpdate=true;
+    group.userData.coreBolts.geometry.attributes.position.needsUpdate=true;
+  }
+  const pulse=.88+Math.sin(nowMs*.018)*.10;
+  group.userData.outerBolts.material.opacity=Math.min(1,pulse+.08);
+  group.userData.coreBolts.material.opacity=pulse;
+  group.userData.groundRing.material.opacity=.76+Math.sin(nowMs*.006)*.12;
+  group.userData.corona.material.opacity=.11+Math.sin(nowMs*.008)*.03;
 }
 function syncRaidElectricAura(){
   const eq=S.auraShow===false||S.hideUI?null:equippedMasteryTitle();
@@ -16985,22 +17006,22 @@ setInterval(updateWatch,60000);
 // be hours old while the player was on another tab, and the check is a 60-byte text file.
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&(pendingUpdateBuild||Date.now()-PAGE_STARTED_AT>30000))updateWatch()});
 </script>
-<script src="assets/wardrobe-ui.js?v=457"></script>
+<script src="assets/wardrobe-ui.js?v=458"></script>
 <script src="assets/shop.js?v=321"></script>
 <script src="assets/friends.js?v=273"></script>
-<script src="assets/digimon/roster.js?v=457"></script>
-<script src="assets/digimon/base-stats.js?v=457"></script>
-<script src="assets/social-rules.js?v=457"></script>
-<script src="assets/social-poker.js?v=457"></script>
-<script src="assets/digimon-sanctuary.js?v=457"></script>
+<script src="assets/digimon/roster.js?v=458"></script>
+<script src="assets/digimon/base-stats.js?v=458"></script>
+<script src="assets/social-rules.js?v=458"></script>
+<script src="assets/social-poker.js?v=458"></script>
+<script src="assets/digimon-sanctuary.js?v=458"></script>
 <script src="assets/digimon-battle.js?v=393"></script>
-<script src="assets/social-digimon.js?v=457"></script>
+<script src="assets/social-digimon.js?v=458"></script>
 <script src="assets/social-gym-redesign.js?v=393"></script>
 <script src="assets/social-pond-design.js?v=393"></script>
 <script src="assets/social-title-art.js?v=450"></script>
-<script src="assets/social-scene.js?v=457"></script>
-<script src="assets/social-fishing.js?v=457"></script>
-<script src="assets/plaza-bots.js?v=457"></script>
+<script src="assets/social-scene.js?v=458"></script>
+<script src="assets/social-fishing.js?v=458"></script>
+<script src="assets/plaza-bots.js?v=458"></script>
 <script src="assets/adventure-guide.js?v=450"></script>
-<script src="assets/social.js?v=457"></script></body>
+<script src="assets/social.js?v=458"></script></body>
 </html>

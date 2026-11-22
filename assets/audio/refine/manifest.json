@@ -1,0 +1,34 @@
+{
+  "source": "Ragnarok Online client WAV recordings (linhan85/rAthenaCN_LeeClient@bc268afe2d9686a8d61c87d1821e0c75d1b6431d)",
+  "retrieved": "2026-11-22",
+  "assets": [
+    {
+      "file": "bs_refine_1.wav",
+      "sourcePath": "data/wav/effect/refine/bs_refine_1.wav",
+      "blob": "d239f3c1862275f394022a41cab314462b6d2019",
+      "sha256": "d241b3cabcdab87353f63e2c8e9f6b8b2131bd3409b3d36b46117a8f68164df2",
+      "bytes": 7690
+    },
+    {
+      "file": "bs_refine_2.wav",
+      "sourcePath": "data/wav/effect/refine/bs_refine_2.wav",
+      "blob": "9db39ffb7ee32cf30aa0a37f9335582a21945c07",
+      "sha256": "b70a666a1fd76b12cdeee30343b8d818ae47a30c3d6d568c4dc6b989f10d80c3",
+      "bytes": 7834
+    },
+    {
+      "file": "bs_refine_success.wav",
+      "sourcePath": "data/wav/effect/refine/bs_refine_success.wav",
+      "blob": "30679dbca2208124d8003c882aa4fa215a40dcde",
+      "sha256": "ff24c32cffe9e1be3981018544ec20788b117de6496e37dc620333dc5ba432b6",
+      "bytes": 64434
+    },
+    {
+      "file": "bs_refine_failed.wav",
+      "sourcePath": "data/wav/effect/refine/bs_refine_failed.wav",
+      "blob": "c7f9750f59a9a41520f12bc8b474c0f31ba3d7f9",
+      "sha256": "9dd6478fa974553adb99493f001f637bee796ec5fed1265cb6bc588ee285d56d",
+      "bytes": 29514
+    }
+  ]
+}

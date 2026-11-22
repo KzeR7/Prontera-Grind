@@ -608,21 +608,23 @@ check('Map -> Dungeons overrides 220px grid with flex layout, renders Left Boss 
     assert.ok(fs.existsSync(path.join(ROOT, cleanPath)), `dungeon/boss asset exists on disk: ${cleanPath}`);
   }
 
-  // Open Map -> Dungeons and check .raid-left-col + .raid-boss-preview-card for all 3 dungeons
+  // Open Map -> Dungeons and check .raid-left-col (map options only) + right-pane .raid-mvp-header for all 3 dungeons
   g.ev(`if (!tabs.includes('map')) openTab('map'); ACT.mapseason('dungeons'); ACT.dungeonmode('raid');`);
   for (const id of ['astral', 'thor', 'abyss']) {
     g.ev(`ACT.raiddungeon('${id}');`);
     const previewInfo = g.ev(`({
       hasLeftCol: !!document.querySelector('.dungeons-panel .raid-left-col'),
       hasListInLeft: !!document.querySelector('.dungeons-panel .raid-left-col .raid-dungeon-list'),
-      hasBossPreview: !!document.querySelector('.dungeons-panel .raid-left-col .raid-boss-preview-card'),
-      bossTitle: document.querySelector('.raid-boss-preview-card h4')?.textContent || '',
-      imgSrc: document.querySelector('.raid-boss-stage img')?.getAttribute('src') || ''
+      noLeftBossPreview: !document.querySelector('.dungeons-panel .raid-left-col .raid-boss-preview-card'),
+      hasRightMvpHeader: !!document.querySelector('.dungeons-panel .raid-dungeon-detail .raid-mvp-header'),
+      bossTitle: document.querySelector('.raid-mvp-header h3')?.textContent || '',
+      imgSrc: document.querySelector('.raid-mvp-header .raid-boss-stage img')?.getAttribute('src') || ''
     })`);
     assert.equal(previewInfo.hasLeftCol, true, `${id}: .raid-left-col rendered`);
     assert.equal(previewInfo.hasListInLeft, true, `${id}: dungeon list inside .raid-left-col`);
-    assert.equal(previewInfo.hasBossPreview, true, `${id}: Boss Preview rendered on the left`);
-    assert.ok(previewInfo.bossTitle.length > 3 && previewInfo.imgSrc.length > 3, `${id}: Boss Preview displays boss title & sprite`);
+    assert.equal(previewInfo.noLeftBossPreview, true, `${id}: left column holds Raid option maps only`);
+    assert.equal(previewInfo.hasRightMvpHeader, true, `${id}: MVP Boss Preview & Info rendered on right top header`);
+    assert.ok(previewInfo.bossTitle.length > 3 && previewInfo.imgSrc.length > 3, `${id}: MVP header displays boss title & sprite`);
   }
 
   // Verify Party Ready Room banner img src resolves to an existing local asset
@@ -714,16 +716,17 @@ check('40M DPS @ ★0 Boss HP + 50% Raid Armor, 2p/3p Party HP+ATK buffs, and �
     return { p1, p2, p3 };
   })()`);
   assert.equal(scaling.p1.bossArmor, 0.50, 'Stage 4 Raid Boss carries 50% Raid Armor (0.50)');
-  assert.ok(scaling.p1.bossHp > 1.1e9 && scaling.p1.bossHp < 1.6e9, `Solo Astral Boss raw HP tuned for 40M DPS @ ★0 w/ 50% Armor (~1.30B, got ${scaling.p1.bossHp})`);
+  assert.ok(scaling.p1.bossHp > 8.5e8 && scaling.p1.bossHp < 1.0e9, `Solo Astral Boss raw HP after -30% rebalance (~907.8M, got ${scaling.p1.bossHp})`);
+  assert.ok(scaling.p1.st1Hp > 3.1e7 && scaling.p1.st1Hp < 3.5e7, `Solo Astral Stage 1 mob HP at previous+120% (2.2x = ~33.0M, got ${scaling.p1.st1Hp})`);
   assert.ok(Math.abs(scaling.p2.bossHp / scaling.p1.bossHp - 2.25) < 0.02, '2p Party buffs Boss HP by 2.25x');
   assert.ok(Math.abs(scaling.p3.bossHp / scaling.p1.bossHp - 3.45) < 0.02, '3p Party buffs Boss HP by 3.45x');
   assert.ok(Math.abs(scaling.p2.st1Hp / scaling.p1.st1Hp - 2.25) < 0.02, '2p Party buffs Stage 1-3 mob HP by 2.25x');
   assert.ok(Math.abs(scaling.p2.bossAtk / scaling.p1.bossAtk - 1.32) < 0.02 && Math.abs(scaling.p3.bossAtk / scaling.p1.bossAtk - 1.58) < 0.02, '2p/3p Party buffs Boss & mob ATK (1.32x / 1.58x)');
 
-  // Verify 20-row WEAPON_STAR_TABLE ~20-day pacing (48 shards/day -> ~941 unboosted / ~894 optimal)
+  // Verify 20-row WEAPON_STAR_TABLE pacing with Round-6 base rates
   const expShards = g.ev(`WEAPON_STAR_TABLE.reduce((sum, r) => sum + r[2] / (r[1] / 100), 0)`);
   assert.equal(g.ev(`WEAPON_STAR_TABLE.length`), 20, '20 Weapon Star tiers defined');
-  assert.ok(expShards >= 880 && expShards <= 1020, `expected unboosted ★0->★20 shards=${Math.round(expShards)} (~19.6 days @ 48/day)`);
+  assert.ok(expShards >= 1150 && expShards <= 1250, `expected unboosted ★0->★20 shards=${Math.round(expShards)} (~24.5 days @ 48/day)`);
 
   // Verify applyStarAndBossArmor math at ★0, ★10, ★20 vs Normal Mob and 50%-Armor Raid Boss
   const dmgChecks = g.ev(`(() => {
@@ -756,12 +759,12 @@ check('40M DPS @ ★0 Boss HP + 50% Raid Armor, 2p/3p Party HP+ATK buffs, and �
   g.ev(`ACT.refinemode('star');`);
   assert.ok(g.ev(`!!document.querySelector('.star-boost-card') && !!document.querySelector('[data-a="starup"]') && document.querySelectorAll('.star-rate-table tbody tr').length === 20`), 'Mode 2 renders Star Workshop, Shard Boost selector & 20-row table');
 
-  // Test +25% Boost (tier 4) at ★0 -> ★1 (70% + 25% = 95%, spends 3 base + 4 boost = 7 Astral Shards & 2M Zeny)
-  g.ev(`ACT.starboost('4');`);
+  // Test +15% Boost (tier 5) at ★0 -> ★1 (50% + 15% = 65%, spends 3 base + 5 boost = 8 Astral Shards & 2M Zeny)
+  g.ev(`ACT.starboost('5');`);
   const shBefore = g.ev(`S.ascensionMat[0]`), zBefore = g.ev(`S.zeny`);
   g.ev(`{ const oldR = Math.random; Math.random = () => 0.10; ACT.starup('weapon'); Math.random = oldR; }`);
   assert.equal(g.ev(`S.eq.weapon.stars`), 1, 'weapon upgraded to ★1');
-  assert.equal(g.ev(`${shBefore} - S.ascensionMat[0]`), 7, 'spent 3 base + 4 boost = 7 Astral Shards');
+  assert.equal(g.ev(`${shBefore} - S.ascensionMat[0]`), 8, 'spent 3 base + 5 boost = 8 Astral Shards');
   assert.equal(g.ev(`${zBefore} - S.zeny`), 2000000, 'spent 2,000,000 Zeny');
   assert.match(g.ev(`iname(S.eq.weapon)`), /★1$/, 'iname appends ★1');
   assert.equal(g.ev(`autoSellReason({ ...S.eq.weapon, id: 999888 })`), 'Starred weapon', 'auto-sell protects starred weapons when unequipped');
@@ -788,14 +791,18 @@ check('40M DPS @ ★0 Boss HP + 50% Raid Armor, 2p/3p Party HP+ATK buffs, and �
   g.ev(`ACT.refinemode('refine'); ACT.starboost('0');`);
 });
 
-// 16. Round-5: Weapon Star Base Success Rate Readjustment (★1–★3 = 70%, ★4–★7 = 60%, ★8–★20 unchanged)
-check('Round-5: WEAPON_STAR_TABLE sets ★1-★3 to 70%, ★4-★7 to 60%, and keeps ★8-★20 intact', () => {
+// 16. Round-6: Weapon Star Base Success Rates (50% ★1-3, 40% ★4-7, 35..7% ★8-20) & Nerfed Shard Boosts (5, 7, 10, 12, 15%)
+check('Round-6: WEAPON_STAR_TABLE & WEAPON_STAR_BOOSTS match exact nerfed base rates and +5/+7/+10/+12/+15% shard boost tiers', () => {
   const rates = g.ev(`WEAPON_STAR_TABLE.map(r => r[1])`);
+  const boosts = g.ev(`WEAPON_STAR_BOOSTS`);
+  const boostCols = g.ev(`WEAPON_STAR_TABLE.every(r => Array.isArray(r[4]) && r[4].length === 5)`);
   assert.deepEqual(
     [...rates],
-    [70, 70, 70, 60, 60, 60, 60, 55, 50, 45, 40, 35, 30, 26, 22, 20, 17, 14, 12, 10],
+    [50, 50, 50, 40, 40, 40, 40, 35, 35, 30, 30, 25, 25, 25, 22, 20, 15, 12, 10, 7],
     'exact 20-tier base success rate curve matches owner specification'
   );
+  assert.deepEqual([...boosts], [0, 5, 7, 10, 12, 15], 'Astral Shard boost tiers nerfed to +5%, +7%, +10%, +12%, +15%');
+  assert.equal(boostCols, true, 'all 20 star rows define 5-tier extra Astral Shard costs');
 });
 
 // 17. Round-5: 1-Second RO Blacksmith Forge Delay, Hammer/Anvil FX, Success/Failure FX & CombatAudio SFX
@@ -1040,6 +1047,36 @@ check('Round-5: GM Tools grant Raid materials, Weapon Stars, Raid Boss Accessory
   assert.equal(gmOut.maxMatk, true, 'GM +1 ★★★ Sovereign Thanatos Card button grants maxed card');
   assert.equal(gmOut.equippedId, 'volcanic-overlord', 'GM Raid Title button unlocks and equips Volcanic Overlord immediately');
   assert.equal(gmOut.hasButtons, true, 'gmToolsPanel renders all Raid testing controls');
+});
+
+// 21. Round-6: Official RO Refine Sprites (<aside>), Minimal 3D Ribbon Static FX, & No-Scroll Raid Dungeon Layout
+check('Round-6: <aside class="ro-forge-fx"> uses official RO sprites, 3D electric aura uses contrast-backed 3-arc ribbons, and Raid UI places MVP preview on right header', () => {
+  const r6 = g.ev(`(() => {
+    const f1 = roForgeFxElement('forging'), f2 = roForgeFxElement('success'), f3 = roForgeFxElement('failure');
+    const isAside = f1.tagName === 'ASIDE' && f2.tagName === 'ASIDE' && f3.tagName === 'ASIDE';
+    const hasRoSprites = Boolean(
+      f1.querySelector('img.ro-forge-anvil[src*="anvil.png"]') &&
+      f1.querySelector('img.ro-forge-hammer[src*="hammer.png"]') &&
+      f2.querySelector('img.ro-success-banner[src*="success.png"]') &&
+      f3.querySelector('img.ro-broken-hilt[src*="broken_back.png"]') &&
+      f3.querySelector('img.ro-fail-banner[src*="failed.png"]')
+    );
+    const aura = buildRaidElectricAura('#ff2442');
+    animateRaidElectricAura(aura, 500, 0, 0, 0, 1);
+    const isRibbonMesh = Boolean(aura.userData.shadowBolts?.isMesh && aura.userData.outerBolts?.isMesh && aura.userData.coreBolts?.isMesh && aura.userData.groundRing?.isMesh);
+    // Check Raid Dungeon tab DOM
+    mapSeason = 'dungeons'; dungeonMode = 'raid'; raidDungeonPick = 'astral';
+    const html = renderDungeonsPanel();
+    const tmp = document.createElement('div'); tmp.innerHTML = html;
+    const leftHasOnlyCards = Boolean(tmp.querySelector('.raid-left-col .raid-dungeon-list')) && !tmp.querySelector('.raid-left-col .raid-boss-preview-card');
+    const rightHasMvpHeader = Boolean(tmp.querySelector('.raid-dungeon-detail .raid-mvp-header .raid-boss-stage img')) && !tmp.querySelector('.raid-detail-hero');
+    return { isAside, hasRoSprites, isRibbonMesh, leftHasOnlyCards, rightHasMvpHeader };
+  })()`);
+  assert.equal(r6.isAside, true, 'roForgeFxElement uses <aside> so .eclipse-workshop-hero > div never shrinks it to 46x46');
+  assert.equal(r6.hasRoSprites, true, 'forging/success/failure overlays render authentic RO anvil, hammer, broken sword, Success & Failed sprites');
+  assert.equal(r6.isRibbonMesh, true, 'raidElectricAura renders minimal 3-arc 3D contrast-backed ribbon Meshes + colored ground rim');
+  assert.equal(r6.leftHasOnlyCards, true, 'left Raid column holds only Raid option map cards');
+  assert.equal(r6.rightHasMvpHeader, true, 'right Raid detail pane replaces duplicate map banner with MVP Boss Preview & Info header');
 });
 
 g.close();

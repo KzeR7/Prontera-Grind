@@ -79,18 +79,18 @@
   var DODGE_DIST = 5.6;
   var SYNC_INTERVAL_S = 2.0;
 
-  // Tuned to 40M DPS @ ★0 (excluding Weapon Star +DMG & Armor Pen):
-  // Raid Bosses carry 50% Raid Armor (pierced -2%/star up to -40% at ★20), so higher ★ makes raids markedly faster.
+  // Stage 1-3 mobs: v455 baseline + 120% buff (Astral 2.2x; Thor 1.1x normalized to 1.25x Astral curve).
+  // Stage 4 Bosses & escorts: reduced 30% from v456 (x0.70), retaining 50% Raid Boss Armor (-2%/star).
   var TRASH_CAMP_LIMIT = 8;
   var RAID_BOSS_ARMOR = 0.50;
-  var TRASH_HP_MULT_ASTRAL = 5.6;
-  var TRASH_HP_MULT_THOR = 2.2;
-  var BOSS_HP_MULT_ASTRAL = 6.4;
-  var BOSS_HP_MULT_THOR = 4.0;
-  var ESCORT_HP_MULT_ASTRAL = 6.0;
-  var ESCORT_HP_MULT_THOR = 3.6;
-  var BOSS_ATK_MULT = 2.55;
-  var ESCORT_ATK_MULT = 1.75;
+  var TRASH_HP_MULT_ASTRAL = 2.2;
+  var TRASH_HP_MULT_THOR = 1.1;
+  var BOSS_HP_MULT_ASTRAL = 4.48;
+  var BOSS_HP_MULT_THOR = 2.8;
+  var ESCORT_HP_MULT_ASTRAL = 4.2;
+  var ESCORT_HP_MULT_THOR = 2.52;
+  var BOSS_ATK_MULT = 1.785;
+  var ESCORT_ATK_MULT = 1.225;
   var BOSS_CLEAVE_INTERVAL_S = 2.5;
   var BOSS_CLEAVE_PCT = 0.16;
 
@@ -1169,7 +1169,7 @@
             mobs[k].provokeUntil = nowT + 86400;
             mobs[k].hp = Math.max(1, Math.floor(mobs[k].hp * trashHpMult * scale));
             mobs[k].max = mobs[k].hp;
-            mobs[k].atk = Math.max(1, Math.floor((mobs[k].atk || 100) * 1.35 * atkParty));
+            mobs[k].atk = Math.max(1, Math.floor((mobs[k].atk || 100) * 1.25 * atkParty));
           }
         } else {
           for (var i = 0; i < mobs.length; i++) {

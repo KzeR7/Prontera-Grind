@@ -104,18 +104,47 @@
     nSrc.start(at);
     nSrc.stop(at + 0.04);
   }
+  const FORGE_WAVS = [
+    'refine/bs_refine_1.wav',
+    'refine/bs_refine_2.wav',
+    'refine/bs_refine_success.wav',
+    'refine/bs_refine_failed.wav'
+  ];
+  function preloadForge() {
+    const ctx = ensureContext();
+    if (!ctx) return;
+    for (const f of FORGE_WAVS) load(f);
+  }
+  function playForgeBuffer(ctx, file, startAt, volume, playbackRate = 1) {
+    const buf = buffers.get(file);
+    if (!buf) { load(file); return false; }
+    const src = ctx.createBufferSource();
+    const gain = ctx.createGain();
+    src.buffer = buf;
+    if (playbackRate !== 1 && src.playbackRate) src.playbackRate.value = playbackRate;
+    gain.gain.value = volume;
+    src.connect(gain);
+    gain.connect(ctx.destination);
+    src.onended = () => { try { src.disconnect(); gain.disconnect(); } catch (_) {} };
+    src.start(startAt);
+    return true;
+  }
   function playForgeStart(enabled = true, isStar = false) {
     window.CombatAudio.lastForgeEvent = { kind: 'start', isStar: Boolean(isStar), enabled: Boolean(enabled), at: Date.now() };
     if (!enabled || document.hidden) return;
     const ctx = ensureContext();
     if (!ctx) return;
+    preloadForge();
     try {
       const now = ctx.currentTime;
-      const base = isStar ? 2093 : 1975.5; // Bright C7 for Star, classic B6 for Refine
-      // 3 crisp hammer-on-anvil "ting-ting-ting" strikes across the 1.0s forge window
-      scheduleAnvilTing(ctx, now + 0.03, base, 0.22);
-      scheduleAnvilTing(ctx, now + 0.35, base * 1.03, 0.24);
-      scheduleAnvilTing(ctx, now + 0.67, base * 1.06, 0.26);
+      const rate = isStar ? 1.05 : 1.0;
+      const played1 = playForgeBuffer(ctx, 'refine/bs_refine_1.wav', now + 0.04, 0.52, rate);
+      const played2 = playForgeBuffer(ctx, 'refine/bs_refine_2.wav', now + 0.44, 0.56, rate);
+      if (!played1 || !played2) {
+        const base = isStar ? 2093 : 1975.5;
+        if (!played1) scheduleAnvilTing(ctx, now + 0.04, base, 0.22);
+        if (!played2) scheduleAnvilTing(ctx, now + 0.44, base * 1.04, 0.25);
+      }
     } catch (_) {}
   }
   function playForgeResult(succeeded, enabled = true, isStar = false) {
@@ -125,8 +154,11 @@
     if (!ctx) return;
     try {
       const now = ctx.currentTime;
+      const wavFile = succeeded ? 'refine/bs_refine_success.wav' : 'refine/bs_refine_failed.wav';
+      if (playForgeBuffer(ctx, wavFile, now, succeeded ? 0.55 : 0.58, isStar && succeeded ? 1.04 : 1.0)) {
+        return;
+      }
       if (succeeded) {
-        // RO ws_refine_success: bright ascending bell fanfare ("TING-TING-TIIIING!")
         const notes = isStar ? [1174.66, 1479.98, 1760.0, 2349.32] : [1046.5, 1318.51, 1567.98, 2093.0];
         notes.forEach((freq, idx) => {
           const t0 = now + idx * 0.068;
@@ -146,7 +178,6 @@
           }
         });
       } else {
-        // RO ws_refine_failed: sharp metallic crack + descending dull thud + smoke hiss
         for (const [f0, f1, amp] of [[466.16, 138.59, 0.24], [311.13, 98.0, 0.20]]) {
           const osc = ctx.createOscillator();
           const g = ctx.createGain();
@@ -204,6 +235,9 @@
     },
     hit(critical, enabled = true, weapon = 'fist', kind = 'normal') {
       play(hits, 'hits', weapon, enabled, kind === 'pet' ? 'pet' : kind === 'skill' ? 'skill' : 'normal', critical);
+    },
+    preloadForge() {
+      preloadForge();
     },
     forgeStart(enabled = true, isStar = false) {
       playForgeStart(enabled, isStar);

@@ -51,11 +51,11 @@ const CHALLENGES=[
   {id:'echo-veteran',name:'Echo Veteran',category:'journey',metric:'echoRuns',goal:100,symbol:23,description:'Use 100 ranked Endless Echo attempts (finishing or leaving after the grace period).'}
 ];
 const RAID_TITLES=[
-  {id:'raid-vanguard',name:'Raid Vanguard',category:'raid',metric:'raidClears',goal:10,electricColor:'#3be8ff',electricName:'Cyan Static',description:'Clear 10 Raid Dungeons (Solo or Party). Surrounds your hero with Cyan static lightning.'},
-  {id:'citadel-breaker',name:'Citadel Breaker',category:'raid',metric:'raidClears',goal:20,electricColor:'#3bff8c',electricName:'Green Static',description:'Clear 20 Raid Dungeons (Solo or Party). Surrounds your hero with Emerald-Green static lightning.'},
-  {id:'sovereign-conqueror',name:'Sovereign Conqueror',category:'raid',metric:'raidClears',goal:30,electricColor:'#ffd23b',electricName:'Gold Static',description:'Clear 30 Raid Dungeons (Solo or Party). Surrounds your hero with Golden static lightning.'},
-  {id:'astral-stormbringer',name:'Astral Stormbringer',category:'raid',metric:'raidDrop',goal:1,dropOnly:true,electricColor:'#c259ff',electricName:'Purple Static',description:'Exclusive 10% Raid Boss drop. Surrounds your hero with Violet-Purple static lightning.'},
-  {id:'volcanic-overlord',name:'Volcanic Overlord',category:'raid',metric:'raidDrop',goal:1,dropOnly:true,electricColor:'#ff3b5c',electricName:'Red Static',description:'Exclusive 10% Raid Boss drop. Surrounds your hero with Crimson-Red static lightning.'}
+  {id:'raid-vanguard',name:'Raid Vanguard',category:'raid',metric:'raidClears',goal:10,electricColor:'#00eaff',electricName:'Cyan Static',description:'Clear 10 Raid Dungeons (Solo or Party). Surrounds your hero with Cyan static lightning.'},
+  {id:'citadel-breaker',name:'Citadel Breaker',category:'raid',metric:'raidClears',goal:20,electricColor:'#00ff7b',electricName:'Green Static',description:'Clear 20 Raid Dungeons (Solo or Party). Surrounds your hero with Emerald-Green static lightning.'},
+  {id:'sovereign-conqueror',name:'Sovereign Conqueror',category:'raid',metric:'raidClears',goal:30,electricColor:'#ffc800',electricName:'Gold Static',description:'Clear 30 Raid Dungeons (Solo or Party). Surrounds your hero with Golden static lightning.'},
+  {id:'astral-stormbringer',name:'Astral Stormbringer',category:'raid',metric:'raidDrop',goal:1,dropOnly:true,electricColor:'#c44dff',electricName:'Purple Static',description:'Exclusive 10% Raid Boss drop. Surrounds your hero with Violet-Purple static lightning.'},
+  {id:'volcanic-overlord',name:'Volcanic Overlord',category:'raid',metric:'raidDrop',goal:1,dropOnly:true,electricColor:'#ff2442',electricName:'Red Static',description:'Exclusive 10% Raid Boss drop. Surrounds your hero with Crimson-Red static lightning.'}
 ];
 const BY_ID=Object.assign(Object.create(null),Object.fromEntries([...CHALLENGES,...RAID_TITLES].map(t=>[t.id,t])));
 const FILTERS=[['all','All titles'],['earned','Earned'],['raid','Raid'],['rank','Hunt ranks'],['hunt','Boss & hunts'],['forge','Forge'],['class','Classes'],['explore','Exploration'],['mastery','Mastery'],['journey','Journey']];
