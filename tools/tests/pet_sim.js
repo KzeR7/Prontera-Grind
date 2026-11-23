@@ -344,6 +344,39 @@ t('Blood Siphon heals you for 0.5% of what the pet deals; Vital Aura moves the H
   P.resetPetState();
 });
 
+t('every passive family is read by a live formula, so no signature is cosmetic (v470)', () => {
+  // One hook per family. If a family is renamed or a hook is deleted, the passive would still show in
+  // the panel but do nothing - this fails instead.
+  const HOOKS = {
+    atk:      /\*\(1\+\(typeof petPassive==='function'\?petPassive\('atk'\):0\)\/100\)/,
+    matk:     /\*\(1\+\(typeof petPassive==='function'\?petPassive\('matk'\):0\)\/100\)/,
+    aspd:     /\/\(1\+\(typeof petPassive==='function'\?petPassive\('aspd'\):0\)\/100\)/,
+    critdmg:  /critD=\(\)=>[^\n]*petPassive\('critdmg'\)/,
+    flee:     /petPassive\('flee'\)/,
+    pen:      /petPen=typeof petPassive==='function'\?petPassive\('pen'\):0/,
+    skdmg:    /raw\*boost\*\(1\+\(typeof petPassive==='function'\?petPassive\('skdmg'\):0\)\/100\)/,
+    boss:     /petPassive\('boss'\)/,
+    petdmg:   /petPassive\('petdmg'\)/,
+    hp:       /petPassive\('hp'\)/,
+    dr:       /petPassive\('dr'\)/,
+    move:     /petPassive\('move'\)/,
+    zeny:     /petPassive\('zeny'\)/,
+    exp:      /petPassive\('exp'\)/,
+    gear:     /petPassive\('gear'\)/,
+    ore:      /petPassive\('ore'\)/
+  };
+  for (const [family, re] of Object.entries(HOOKS)) {
+    assert.ok(re.test(src), 'petPassive(\'' + family + '\') is not read anywhere: the ' + family + ' signature is cosmetic');
+  }
+  // Armour penetration has to fold into the one armour function every damage path already uses, and it
+  // must never turn into a bigger number than the flat 5-10% the owner allowed.
+  assert.ok(/effArmor=armor>0\?Math\.max\(0,\(armor-stars\*\(WEAPON_STAR_PEN_PER\/100\)\)\*\(1-petPen\/100\)\):0/.test(src),
+    'penetration must scale the target armour, not invent a damage multiplier');
+  // The new families ride on the existing caps: Flee still clamps, attack speed still has a floor.
+  assert.ok(/return Math\.min\(cap,st\('agi'\)\*\.5[^\n]*petPassive\('flee'\)/.test(src), 'Flee stays inside its cap');
+  assert.ok(/const aspd=\(\)=>\{const floor=/.test(src), 'the attack interval keeps its floor');
+});
+
 t('every species has ONE signature passive, 5% at Bond 0 and 10% at Bond 5 (v75)', () => {
   // The owner's instruction: passives yes, "tune it down hard. i dont want any buff go above 10%".
   assert.strictEqual(P.PET_TRAIT.length, P.PETS.length, 'one trait per species');
@@ -352,22 +385,30 @@ t('every species has ONE signature passive, 5% at Bond 0 and 10% at Bond 5 (v75)
   // Species order 20-24 is Thanatos, Seraph, Ifrit, Warden, Whisper: the signature is pinned by NAME
   // as well as by key, so a re-order of either table fails here instead of silently handing a pet
   // the wrong signature.
-  const RAIDBOUND_SIG = [['Abyssal Thanatos', 'Extinction Echo', 'boss'],
-                         ['Astral Seraph', 'Sanctum Grace', 'hp'],
-                         ['Ifrit Ember', 'Primal Heat', 'petdmg'],
-                         ['Obsidian Warden', 'Sanctum Bulwark', 'dr'],
-                         ['Void Whisper', 'Soul Tithe', 'exp']];
-  RAIDBOUND_SIG.forEach(([pet, name, key], i) => {
+  // v470: the Raidbound signatures became two-family composites (a raid reads both of its effects),
+  // so each is pinned by name AND by its exact pair.
+  const RAIDBOUND_SIG = [['Abyssal Thanatos', 'Extinction Echo', ['boss', 'pen']],
+                         ['Astral Seraph', 'Sanctum Grace', ['hp', 'skdmg']],
+                         ['Ifrit Ember', 'Primal Heat', ['petdmg', 'skdmg']],
+                         ['Obsidian Warden', 'Sanctum Bulwark', ['dr', 'pen']],
+                         ['Void Whisper', 'Soul Tithe', ['exp', 'matk']]];
+  RAIDBOUND_SIG.forEach(([pet, name, kk], i) => {
     const t = P.PET_TRAIT[20 + i];
     assert.strictEqual(P.PETS[20 + i].n, pet, 'species ' + (20 + i) + ' is ' + pet);
     assert.strictEqual(t.n, name, pet + ' carries ' + name);
-    assert.deepStrictEqual(Array.from(t.k), [key], name + ' must use ' + key);
+    assert.deepStrictEqual(Array.from(t.k), kk, name + ' must use ' + kk.join('+'));
     assert.ok(/\+?\d|%/.test(t.d(10)), 'and it must describe itself');
   });
   assert.ok(P.PET_TRAIT.every(t => t.n && typeof t.d === 'function' && t.k.length >= 1), 'every trait is named, described and keyed');
   const keys = P.PET_TRAIT.flatMap(t => t.k);
-  assert.deepStrictEqual([...new Set(keys)].sort(),
-    ['boss', 'dr', 'exp', 'gear', 'hp', 'move', 'ore', 'petdmg', 'zeny'], 'the nine hooks the game actually reads');
+  // v470 (owner: "more unique like skill damage +10%, reduce enemy defence"): sixteen families now,
+  // and every one of them is read by a live combat/economy formula - see the hook test below.
+  const FAMILIES = ['aspd', 'atk', 'boss', 'critdmg', 'dr', 'exp', 'flee', 'gear', 'hp', 'matk', 'move', 'ore', 'pen', 'petdmg', 'skdmg', 'zeny'];
+  assert.deepStrictEqual([...new Set(keys)].sort(), FAMILIES, 'the sixteen hooks the game actually reads');
+  // No species may be a copy of another: the roster's whole point is that each pet is its own pick.
+  const sets = P.PET_TRAIT.map(t => t.k.slice().sort().join('+'));
+  assert.strictEqual(new Set(sets).size, sets.length, 'two species share the same signature: ' +
+    sets.filter((v, i) => sets.indexOf(v) !== i).join(', '));
   // the ceiling, tested at both ends of the ladder
   assert.strictEqual(P.traitVal(0), 5, 'a pet you just tamed gives 5 percent');
   P.S = { pets: [], bond: [] };

@@ -916,15 +916,15 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="preload" href="assets/ui/fonts/font-5.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-6.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-7.ttf" as="font" type="font/ttf" crossorigin>
-<link rel="stylesheet" href="assets/ui/eclipse.css?v=469">
-<link rel="stylesheet" href="assets/ui/mobile.css?v=469">
-<link rel="stylesheet" href="assets/ui/mastery-titles.css?v=469">
+<link rel="stylesheet" href="assets/ui/eclipse.css?v=470">
+<link rel="stylesheet" href="assets/ui/mobile.css?v=470">
+<link rel="stylesheet" href="assets/ui/mastery-titles.css?v=470">
 <script src="assets/ui/mobile.js?v=274"></script>
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
-<link rel="stylesheet" href="assets/social.css?v=469">
-<link rel="stylesheet" href="assets/raid.css?v=469">
+<link rel="stylesheet" href="assets/social.css?v=470">
+<link rel="stylesheet" href="assets/raid.css?v=470">
 <link rel="stylesheet" href="assets/social-battle.css?v=393">
-  <link rel="stylesheet" href="assets/social-fishing.css?v=469"><link rel="stylesheet" href="assets/friends.css?v=273">
+  <link rel="stylesheet" href="assets/social-fishing.css?v=470"><link rel="stylesheet" href="assets/friends.css?v=273">
 <link rel="stylesheet" href="assets/adventure-guide.css?v=450">
 </head>
 <body>
@@ -1055,10 +1055,10 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <div id="tooltip"></div>
 <link rel="stylesheet" href="assets/wardrobe.css?v=138">
 <link rel="stylesheet" href="assets/shop.css?v=318">
-<script src="assets/wardrobe.js?v=469"></script>
+<script src="assets/wardrobe.js?v=470"></script>
 <script src="assets/shop-catalog.js?v=321"></script>
 <script src="assets/fourth-jobs.js?v=179"></script>
-<script src="assets/expanded-jobs.js?v=469"></script>
+<script src="assets/expanded-jobs.js?v=470"></script>
 <script src="assets/ascension.js?v=156"></script>
 <script src="assets/native-mob-heights.js?v=153"></script>
 <script src="assets/native-fields.js?v=197"></script>
@@ -1066,13 +1066,13 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <script src="assets/skill-icons.js?v=130"></script>
 <script src="assets/skill-icons-extra.js?v=207"></script>
 <script src="assets/skill-icons-expanded.js?v=450"></script>
-<script src="assets/mastery-titles.js?v=469"></script>
+<script src="assets/mastery-titles.js?v=470"></script>
 <script src="assets/player-buffs.js?v=450"></script>
 <script src="assets/skill-materials.js?v=220"></script>
 <script src="assets/afterglow-animations.js?v=151"></script>
 <script src="assets/skill-overdrive.js?v=220"></script>
 <script src="assets/ro-fx/index.js?v=414"></script>
-<script src="assets/signature-fx.js?v=469"></script>
+<script src="assets/signature-fx.js?v=470"></script>
 <script src="assets/spirit-spheres.js?v=450"></script>
 <script src="assets/expanded-fx/ninja-throw-fx.js?v=450"></script>
 <script src="assets/expanded-fx/expanded-fx-batch.js?v=450"></script>
@@ -1084,11 +1084,11 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <script src="assets/expanded-fx/approved.js?v=450"></script>
 <script src="assets/skill-afterglow.js?v=450"></script>
 <script src="assets/boss-fx.js?v=249"></script>
-<script src="assets/raid.js?v=469"></script>
+<script src="assets/raid.js?v=470"></script>
 <script src="assets/pets.js?v=130"></script>
 <script src="assets/bgm-tracks.js?v=206"></script>
 <script src="assets/bgm.js?v=207"></script>
-<script src="assets/combat-audio.js?v=469"></script>
+<script src="assets/combat-audio.js?v=470"></script>
 <script src="assets/class_skins_data.js?v=2"></script>
 <script src="assets/weapon_joints_data.js?v=2"></script>
 <script src="assets/weapons_data.js?v=2"></script>
@@ -1359,7 +1359,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-22 haven-v469 Raidbound pets, 2x prices, bigger Asura Strike';
+const BUILD='2026-11-22 haven-v470 Unique pet signatures, seven new passive mechanics';
 // v364: this write used to sit AFTER the `//` on the BUILD line, so it was part of the comment and
 // never ran - the login card showed an empty #buildTag and there was no way to confirm which file
 // the browser had loaded. It also has to survive the script running before the login card exists.
@@ -3592,35 +3592,46 @@ const PEQ=[{n:'Claw',d:t=>`+${t*10}% pet damage`},{n:'Collar',d:t=>`+${t*7}% pet
 // can just add the fighting three up - two copies of one species can never stack a bonus.
 const PETBOND=[1,3,6,10,15];                 // folded duplicates that make Bond 1..5 (15 to cap)
 const PET_TRAIT=[
-  {n:'Greedy Gel',    k:['zeny'],    d:v=>`+${v}% Zeny from kills`},
-  {n:'Moonlit Study', k:['exp'],     d:v=>`+${v}% EXP and Job EXP from kills`},
-  {n:'Pack Leader',   k:['petdmg'],  d:v=>`+${v}% damage for every fighting pet`},
-  {n:'Sand Tracker',  k:['ore'],     d:v=>`+${v}% Oridecon and Elunium drop chance`},
-  {n:'Swift Mount',   k:['move'],    d:v=>`+${v}% movement speed`},
-  {n:'Hoarded Flame', k:['gear'],    d:v=>`+${v}% equipment drop chance`},
-  {n:'Executioner',   k:['boss'],    d:v=>`+${v}% damage to MVPs, yours and your pets'`},
-  {n:'Divine Grace',  k:['hp','dr'], d:v=>`+${v}% Max HP and ${v}% less damage taken`},
-  {n:'Golden Jelly', k:['zeny'], d:v=>`+${v}% Zeny from kills`},
-  {n:'Resilient Gel', k:['hp'], d:v=>`+${v}% Max HP`},
-  {n:'Silken Guard', k:['dr'], d:v=>`${v}% less damage taken`},
-  {n:'Sneaky Finder', k:['gear'], d:v=>`+${v}% equipment drop chance`},
-  {n:'Curious Forager', k:['ore'], d:v=>`+${v}% Oridecon and Elunium drop chance`},
-  {n:'Forest Wisdom', k:['exp'], d:v=>`+${v}% EXP and Job EXP from kills`},
-  {n:'Spirit Tutor', k:['exp'], d:v=>`+${v}% EXP and Job EXP from kills`},
-  {n:'Impish Ambush', k:['boss'], d:v=>`+${v}% damage to MVPs, yours and your pets'`},
-  {n:'Fox Fortune', k:['gear'], d:v=>`+${v}% equipment drop chance`},
-  {n:'Dark Rally', k:['petdmg'], d:v=>`+${v}% damage for every fighting pet`},
-  {n:'Spectral Veil', k:['dr'], d:v=>`${v}% less damage taken`},
-  {n:'Tiger Challenge', k:['boss'], d:v=>`+${v}% damage to MVPs, yours and your pets'`},
-  // v469 Raidbound signatures. Each is a FIXED passive (never rolled, never swapped) and reads one
-  // of the effect families petPassive already sums - boss, petdmg, dr, hp, exp - so a new tier
-  // cannot invent a stat hook or a stronger ceiling. 5% at Bond 0, 10% at Bond 5, like every pet.
+  // v470 (owner: "more unique like skill damage +10%, reduce enemy defence"): the signature is the
+  // species' whole identity, so the roster now spreads over SIXTEEN effect families instead of nine,
+  // and seven of them are new mechanics rather than another "+X% to a stat":
+  //   atk / matk        -> raises the attack stat itself (and everything derived from it)
+  //   skdmg             -> skill damage only, never basic attacks
+  //   critdmg           -> multiplies critical damage (critD), so it pays only on crits
+  //   aspd              -> shortens the attack interval (more hits per second)
+  //   pen               -> ignores a share of the target's armour (raid bosses carry 50%)
+  //   flee              -> adds Flee points, inside the existing 60/80% cap
+  // Every value still runs 5% at Bond 0 to 10% at Bond 5 - the owner's ceiling - and every family is
+  // read by a hook that already existed in the combat formulas, so nothing here stacks past 10%.
+  // Order is the PETS order and may never be re-ordered: index === species.
+  {n:'Greedy Gel',     k:['zeny'],         d:v=>`+${v}% Zeny from kills`},
+  {n:'Moonlit Study',  k:['exp'],          d:v=>`+${v}% EXP and Job EXP from kills`},
+  {n:'Pack Leader',    k:['petdmg'],       d:v=>`+${v}% damage for every fighting pet`},
+  {n:'Sand Tracker',   k:['ore'],          d:v=>`+${v}% Oridecon and Elunium drop chance`},
+  {n:'Swift Mount',    k:['move'],         d:v=>`+${v}% movement speed`},
+  {n:'Hoarded Flame',  k:['gear'],         d:v=>`+${v}% equipment drop chance`},
+  {n:'Executioner',    k:['boss'],         d:v=>`+${v}% damage to MVPs, yours and your pets'`},
+  {n:'Divine Grace',   k:['hp','dr'],      d:v=>`+${v}% Max HP and ${v}% less damage taken`},
+  {n:'Coin Snatch',    k:['zeny','ore'],   d:v=>`+${v}% Zeny and +${v}% Oridecon and Elunium drop chance`},
+  {n:'Corrosive Gel',  k:['pen'],          d:v=>`your hits ignore ${v}% of the target's armour`},
+  {n:'Silken Guard',   k:['dr'],           d:v=>`${v}% less damage taken`},
+  {n:'Sly Step',       k:['flee'],         d:v=>`+${v}% Flee`},
+  {n:'Tailwind',       k:['aspd'],         d:v=>`+${v}% attack speed`},
+  {n:'Spore Cloud',    k:['matk'],         d:v=>`+${v}% MATK`},
+  {n:'Soul Chant',     k:['skdmg'],        d:v=>`+${v}% skill damage`},
+  {n:'Impish Ambush',  k:['critdmg'],      d:v=>`+${v}% critical damage`},
+  {n:'Foxfire',        k:['atk','critdmg'],d:v=>`+${v}% ATK and +${v}% critical damage`},
+  {n:'Dark Rally',     k:['petdmg','atk'], d:v=>`+${v}% damage for every fighting pet and +${v}% ATK`},
+  {n:'Spectral Veil',  k:['dr','flee'],    d:v=>`${v}% less damage taken and +${v}% Flee`},
+  {n:'Stampede',       k:['atk','move'],   d:v=>`+${v}% ATK and +${v}% movement speed`},
+  // v469 Raidbound signatures (fixed, never rolled or swapped). Each is a two-family composite built
+  // from the raid it comes from: the Astral Citadel pierces and endures, Thor Volcano burns and feeds.
   // Order must match PETS indices 20-24: Thanatos, Seraph, Ifrit, Warden, Whisper.
-  {n:'Extinction Echo', k:['boss'],   d:v=>`+${v}% damage to MVPs and raid bosses, yours and your pets'`},
-  {n:'Sanctum Grace',   k:['hp'],     d:v=>`+${v}% Max HP`},
-  {n:'Primal Heat',     k:['petdmg'], d:v=>`+${v}% damage for every fighting pet`},
-  {n:'Sanctum Bulwark', k:['dr'],     d:v=>`${v}% less damage taken`},
-  {n:'Soul Tithe',      k:['exp'],    d:v=>`+${v}% EXP and Job EXP from kills`}];
+  {n:'Extinction Echo', k:['boss','pen'],       d:v=>`+${v}% damage to MVPs and raid bosses, and your hits ignore ${v}% of their armour`},
+  {n:'Sanctum Grace',   k:['hp','skdmg'],       d:v=>`+${v}% Max HP and +${v}% skill damage`},
+  {n:'Primal Heat',     k:['petdmg','skdmg'],   d:v=>`+${v}% damage for every fighting pet and +${v}% skill damage`},
+  {n:'Sanctum Bulwark', k:['dr','pen'],         d:v=>`${v}% less damage taken, and your hits ignore ${v}% of the target's armour`},
+  {n:'Soul Tithe',      k:['exp','matk'],       d:v=>`+${v}% EXP and Job EXP from kills and +${v}% MATK`}];
 // Suggestions use existing random skill rolls; they do not grant skills or change odds.
 const PET_RECOMMENDED=[
  ['treasuresniff','warmnuzzle'],['vital','tailwag'],['warcry','piercingfang'],['treasuresniff','piercingfang'],
@@ -6496,7 +6507,7 @@ const WEAPON_STAR_TABLE=[
   [11,30,10,22,[5,7,10,12,15]],[12,25,11,26,[6,8,11,14,17]],[13,25,12,30,[6,9,12,15,18]],[14,25,13,35,[7,10,13,16,20]],[15,22,14,40,[7,10,14,18,22]],
   [16,20,15,48,[8,11,15,19,24]],[17,15,16,56,[9,12,16,21,26]],[18,12,17,65,[10,14,18,23,28]],[19,10,18,75,[11,15,20,25,32]],[20,7,20,90,[12,17,24,30,38]]
 ];
-const items=()=>Object.values(S.eq).filter(Boolean),ev=it=>Math.round(it.val*(1+(it.r||0)*.15)),WEAPON_STAR_MAX=20,WEAPON_STAR_DMG_PER=2,WEAPON_STAR_PEN_PER=2,WEAPON_STAR_BOOSTS=[0,5,7,10,12,15],canStarWeapon=it=>Boolean(it&&it.wt&&(it.slot==='weapon'||it.slot==='off')&&(it.sec|0)>=5),starCount=it=>canStarWeapon(it)?Math.max(0,Math.min(WEAPON_STAR_MAX,Math.floor(Number(it.stars)||0))):0,effectiveWeaponStars=()=>S&&S.eq?Math.min(WEAPON_STAR_MAX,Math.max(starCount(S.eq.weapon),S.eq.off&&S.eq.off.wt==='dagger'?starCount(S.eq.off):0)):0,starOverallDmgPct=()=>effectiveWeaponStars()*WEAPON_STAR_DMG_PER,starArmorPenPct=()=>effectiveWeaponStars()*WEAPON_STAR_PEN_PER,applyStarAndBossArmor=(target,dmg)=>{if(!(dmg>0))return dmg;const stars=effectiveWeaponStars(),armor=target&&typeof target.raidArmor==='number'&&target.raidArmor>0?target.raidArmor:0;if(!stars&&!armor)return dmg;const dmgMult=1+stars*(WEAPON_STAR_DMG_PER/100),effArmor=armor>0?Math.max(0,armor-stars*(WEAPON_STAR_PEN_PER/100)):0,armorMult=armor>0?Math.max(.05,1-effArmor):1;return Math.max(1,Math.round(dmg*dmgMult*armorMult))},iname=it=>(it.r?'+'+it.r+' ':'')+it.name+(starCount(it)?' ★'+starCount(it):''),DUAL=.35,TWO_HANDED=1.5,eqv=k=>{const it=S.eq[k];return it?k==='off'&&it.wt==='dagger'?ev(it)*DUAL:ev(it)*(it.wt==='katar'?TWO_HANDED:1):0};
+const items=()=>Object.values(S.eq).filter(Boolean),ev=it=>Math.round(it.val*(1+(it.r||0)*.15)),WEAPON_STAR_MAX=20,WEAPON_STAR_DMG_PER=2,WEAPON_STAR_PEN_PER=2,WEAPON_STAR_BOOSTS=[0,5,7,10,12,15],canStarWeapon=it=>Boolean(it&&it.wt&&(it.slot==='weapon'||it.slot==='off')&&(it.sec|0)>=5),starCount=it=>canStarWeapon(it)?Math.max(0,Math.min(WEAPON_STAR_MAX,Math.floor(Number(it.stars)||0))):0,effectiveWeaponStars=()=>S&&S.eq?Math.min(WEAPON_STAR_MAX,Math.max(starCount(S.eq.weapon),S.eq.off&&S.eq.off.wt==='dagger'?starCount(S.eq.off):0)):0,starOverallDmgPct=()=>effectiveWeaponStars()*WEAPON_STAR_DMG_PER,starArmorPenPct=()=>effectiveWeaponStars()*WEAPON_STAR_PEN_PER,applyStarAndBossArmor=(target,dmg)=>{if(!(dmg>0))return dmg;const stars=effectiveWeaponStars(),armor=target&&typeof target.raidArmor==='number'&&target.raidArmor>0?target.raidArmor:0,petPen=typeof petPassive==='function'?petPassive('pen'):0;if(!stars&&!armor&&!petPen)return dmg;const dmgMult=1+stars*(WEAPON_STAR_DMG_PER/100),effArmor=armor>0?Math.max(0,(armor-stars*(WEAPON_STAR_PEN_PER/100))*(1-petPen/100)):0,armorMult=armor>0?Math.max(.05,1-effArmor):1;return Math.max(1,Math.round(dmg*dmgMult*armorMult))},iname=it=>(it.r?'+'+it.r+' ':'')+it.name+(starCount(it)?' ★'+starCount(it):''),DUAL=.35,TWO_HANDED=1.5,eqv=k=>{const it=S.eq[k];return it?k==='off'&&it.wt==='dagger'?ev(it)*DUAL:ev(it)*(it.wt==='katar'?TWO_HANDED:1):0};
 const bon=k=>{let v=MASTER_STATS.includes(k)?cardMasteryStat(k):0;for(const it of items()){const f=it===S.eq.off&&it.wt==='dagger'?DUAL:1;for(const a of it.aff||[])if(a.k===k)v+=a.v*f*(k==='hp'?2:1);for(const c of it.cards||[])for(const e of cardEffects(c))if(e.k===k)v+=e.v*f}
   // haven-v158: Ascension set bonuses add percentage stats on top of gear and cards.
   if(typeof ascensionSetBonuses==='function')for(const a of Object.values(ascensionSetBonuses()))if(a.tier.stats[k])v+=a.tier.stats[k];
@@ -6514,8 +6525,8 @@ const bon=k=>{let v=MASTER_STATS.includes(k)?cardMasteryStat(k):0;for(const it o
 function gmStatSnapshot(){return {at:Date.now(),base:{...S.st},total:Object.fromEntries(STATS.map(([k])=>[k,st(k)])),combat:{ATK:atk(),MATK:matk(),DEF:def(),MDEF:mdef(),'Max HP':maxHp(),'Attack interval (s)':aspd(),'Critical %':crit(),'Critical damage multiplier':critD(),'Flee %':flee(),'Miss %':missCh(),'Movement (u/s)':moveSpd()}}}
 const st=k=>S.st[k]+bon(k),gearTierOf=it=>Math.max(0,Math.min(3,((it&&it.sec)|0)||0)),classTierOf=(cls=S.cls)=>Math.max(0,Math.min(3,EXPANDED_CLASSES.has(cls)&&CLASSES[cls]?3:(CLASSES[cls]&&CLASSES[cls].tier)||0)),gearTierOK=(it,cls=S.cls)=>it?.sec===6?CLASSES[cls]?.tier===4:gearTierOf(it)<=Math.max(1,classTierOf(cls)),gearUserOf=it=>it?.sec===6?'fourth-job classes only':['any class','Novice and 1st-job classes','2nd-job classes and up','transcendent classes only'][gearTierOf(it)],canUse=it=>gearTierOK(it)&&(it.slot==='off'?canShield():(it.slot!=='weapon'||!it.wt||C().wt.includes(it.wt)));
 const maxHp=()=>Math.round((80+S.lv*20+eqv('head')*4+(eqv('acc1')+eqv('acc2'))*3+st('vit')*8+bon('hp'))*C().hp*(1+(pv('hpp')+bon('hpPct')+(typeof cardMasteryStat==='function'?cardMasteryStat('hpPct'):0))/100)*(1+(petBuff.hp||0)/100)*(1+petPassive('hp')/100)*(1+ascStat('vitality')/100));
-const atk=()=>Math.round((4+S.lv*2+eqv('weapon')+(S.eq.off&&S.eq.off.wt==='dagger'?eqv('off'):0)+st(C().main)*1.5+(st('dex')+st('luk'))*.25)*C().atk*(1+(pv('atk')+bon('atk')+(typeof cardMasteryStat==='function'?cardMasteryStat('atkPct'):0)+(tb.atk||0)+(petBuff.atk||0))/100)*(1+collDmg()/100));
-const matk=()=>Math.round((4+S.lv*2+eqv('weapon')*.8+st('int')*1.5+st('dex')*.25)*C().atk*(1+(pv('matk')+bon('matk')+(typeof cardMasteryStat==='function'?cardMasteryStat('matkPct'):0)+(tb.matk||0)+(petBuff.matk||0))/100)*(1+collDmg()/100));
+const atk=()=>Math.round((4+S.lv*2+eqv('weapon')+(S.eq.off&&S.eq.off.wt==='dagger'?eqv('off'):0)+st(C().main)*1.5+(st('dex')+st('luk'))*.25)*C().atk*(1+(pv('atk')+bon('atk')+(typeof cardMasteryStat==='function'?cardMasteryStat('atkPct'):0)+(tb.atk||0)+(petBuff.atk||0))/100)*(1+(typeof petPassive==='function'?petPassive('atk'):0)/100)*(1+collDmg()/100));
+const matk=()=>Math.round((4+S.lv*2+eqv('weapon')*.8+st('int')*1.5+st('dex')*.25)*C().atk*(1+(pv('matk')+bon('matk')+(typeof cardMasteryStat==='function'?cardMasteryStat('matkPct'):0)+(tb.matk||0)+(petBuff.matk||0))/100)*(1+(typeof petPassive==='function'?petPassive('matk'):0)/100)*(1+collDmg()/100));
 // Attack interval in seconds (the sheet prints the RO-style ASPD number beside it). v86 (owner:
 // "attack speed is too slow with max agi 99 or 120, check ragnarok online as reference"): the old
 // AGI term capped at a 50% reduction, which AGI 83 already reached - AGI 99 -> 120 gave literally
@@ -6526,14 +6537,14 @@ const matk=()=>Math.round((4+S.lv*2+eqv('weapon')*.8+st('int')*1.5+st('dex')*.25
 // Assassin Cross ~.14s, Sniper ~.15s, Lord Knight ~.20s before gear ASPD%; with gear ASPD% most
 // trans classes ride the .13 floor.
 // Owner cap: 192 ASPD = 9.6 basic attacks/s. Apply after Haste and every speed bonus.
-const aspd=()=>{const floor=items().some(it=>it.sec===6)?.10:.13;return Math.max(5/(192-144),Math.max(floor,.85*C().aspd*(1-Math.min(.68,st('agi')*.0058))/(1+(pv('aspd')+bon('aspd')+(typeof cardMasteryStat==='function'?cardMasteryStat('aspdPct'):0)+(tb.aspd||0))/100))*(1-ascStat('haste')/100))};
+const aspd=()=>{const floor=items().some(it=>it.sec===6)?.10:.13;return Math.max(5/(192-144),Math.max(floor,.85*C().aspd*(1-Math.min(.68,st('agi')*.0058))/(1+(pv('aspd')+bon('aspd')+(typeof cardMasteryStat==='function'?cardMasteryStat('aspdPct'):0)+(tb.aspd||0))/100)/(1+(typeof petPassive==='function'?petPassive('aspd'):0)/100))*(1-ascStat('haste')/100))};
 // v73 crit retune (owner): reaching the 60% cap used to be a LUK dump - LUK 99 alone paid
 // 39.6%. LUK now pays 0.25 a point, the flat base is 2, and above 45% every further point from
 // stats, skills, gear and card mastery counts half. A Lv70 LUK dump with both Hunter/Sniper crit
 // passives lands ~51%, so the last stretch to 60 is a real build. Index Crit (above) is the only
 // source that passes the 60 cap, and the total stops at 100.
 const mythicCrit=()=>{let v=0;for(const it of items())if(it.sec===6){const f=it===S.eq.off&&it.wt==='dagger'?DUAL:1;for(const a of it.aff||[])if(a.k==='crit')v+=a.v*f}for(const a of Object.values(ascensionSetBonuses()))v+=a.tier.stats.crit||0;return v};
-const crit=(bonus=0)=>{const extra=mythicCrit(),v=2+st('luk')*.25+pv('crit')+bon('crit')-extra+(typeof cardMasteryStat==='function'?cardMasteryStat('critPct'):0),core=Math.min(60,v<=45?v:45+(v-45)*.5);return Math.min(100,core+(typeof indexCrit==='function'?indexCrit():0)+bonus)+extra+ascStat('precision')},flee=()=>{const hasMythic=items().some(it=>it.sec===6),cap=hasMythic?80:60;return Math.min(cap,st('agi')*.5+S.lv*.1+pv('flee')+bon('flee')+(typeof cardMasteryStat==='function'?cardMasteryStat('fleePct'):0))+ascStat('evasion')+ascSkillValue('gc_veil','flee')*(skillState().buffs.gc_veil?1:0)},missCh=()=>Math.max(0,15-st('dex')*.25);
+const crit=(bonus=0)=>{const extra=mythicCrit(),v=2+st('luk')*.25+pv('crit')+bon('crit')-extra+(typeof cardMasteryStat==='function'?cardMasteryStat('critPct'):0),core=Math.min(60,v<=45?v:45+(v-45)*.5);return Math.min(100,core+(typeof indexCrit==='function'?indexCrit():0)+bonus)+extra+ascStat('precision')},flee=()=>{const hasMythic=items().some(it=>it.sec===6),cap=hasMythic?80:60;return Math.min(cap,st('agi')*.5+S.lv*.1+pv('flee')+bon('flee')+(typeof cardMasteryStat==='function'?cardMasteryStat('fleePct'):0)+(typeof petPassive==='function'?petPassive('flee'):0))+ascStat('evasion')+ascSkillValue('gc_veil','flee')*(skillState().buffs.gc_veil?1:0)},missCh=()=>Math.max(0,15-st('dex')*.25);
 // Movement before equipment is capped at 70% of the owner's 14.35 u/s reference.
 // Pets, movement buffs and long-distance running share the cap. Equipment/card movement
 // applies afterward, retaining its existing combined +20% limit.
@@ -6541,7 +6552,7 @@ const heroMoveSpeedForAgi=agi=>5.3+Math.max(1,Number(agi)||1)*.025+Math.sqrt(Mat
 // v73 crit damage (owner: "cri damage is too overpowered"): the base multiplier drops 2.0 -> 1.9,
 // and the cdm route that fed it is slot-limited and lighter (see AB/genGear). LUK and DEX still
 // add a little on top, so a crit build stays the burst build - it just cannot stack seven slots.
-const def=()=>Math.floor(S.lv*.5+st('vit')*.5+eqv('armor')+eqv('leg')+(S.eq.off&&S.eq.off.slot==='off'?eqv('off'):0)+pv('def')+bon('def')+(typeof cardMasteryStat==='function'?cardMasteryStat('def'):0)+(tb.def||0)+(petBuff.def||0)),mdef=()=>Math.floor(S.lv*.3+st('int')*.5+st('vit')*.4+eqv('head')*.3+pv('def')*.5+bon('mdef')+(typeof cardMasteryStat==='function'?cardMasteryStat('mdef'):0)),critD=()=>1.9+st('luk')*.008+st('dex')*.005+bon('cdm')/100+ascStat('ferocity')/100,needAt=L=>roundReq(L<=50?Math.floor(NA1*Math.pow(L,NE1)):L<=70?Math.floor(N50*Math.pow(L/50,NE2)):L<=99?Math.floor(N70*Math.pow(L/70,NE2B)):Math.floor(N100*Math.pow(L/100,NE3))),baseNeedAt=L=>L>=BASE_EXP_LATE_LV?roundReq(needAt(L)*BASE_EXP_LATE_X):needAt(L),need=()=>baseNeedAt(S.lv),cost=k=>{const v=S.st[k];return v<ELITELV?1+Math.floor((v-1)/10):10+(v-ELITELV)};
+const def=()=>Math.floor(S.lv*.5+st('vit')*.5+eqv('armor')+eqv('leg')+(S.eq.off&&S.eq.off.slot==='off'?eqv('off'):0)+pv('def')+bon('def')+(typeof cardMasteryStat==='function'?cardMasteryStat('def'):0)+(tb.def||0)+(petBuff.def||0)),mdef=()=>Math.floor(S.lv*.3+st('int')*.5+st('vit')*.4+eqv('head')*.3+pv('def')*.5+bon('mdef')+(typeof cardMasteryStat==='function'?cardMasteryStat('mdef'):0)),critD=()=>(1.9+st('luk')*.008+st('dex')*.005+bon('cdm')/100+ascStat('ferocity')/100)*(1+(typeof petPassive==='function'?petPassive('critdmg'):0)/100),needAt=L=>roundReq(L<=50?Math.floor(NA1*Math.pow(L,NE1)):L<=70?Math.floor(N50*Math.pow(L/50,NE2)):L<=99?Math.floor(N70*Math.pow(L/70,NE2B)):Math.floor(N100*Math.pow(L/100,NE3))),baseNeedAt=L=>L>=BASE_EXP_LATE_LV?roundReq(needAt(L)*BASE_EXP_LATE_X):needAt(L),need=()=>baseNeedAt(S.lv),cost=k=>{const v=S.st[k];return v<ELITELV?1+Math.floor((v-1)/10):10+(v-ELITELV)};
 const totalPts=()=>{let p=10;for(let l=2;l<=S.lv;l++)p+=4+Math.floor(l/5);return p},rcost=()=>S.lv<20?0:S.lv*50;
 // Skill points belong to the class LINE you are standing in, exactly like RO: the Novice level
 // you grinded, your first job and your second job all pool together, and only the skills your
@@ -8074,7 +8085,7 @@ function skillHit(target,raw,sk,proc=false){if(!target||target.hp<=0||!mobs.incl
     if(pv('zeny')&&skillOn('steal')&&target.hp>=target.max*.8)boost+=lv('steal')*.01;}
   if(Math.random()*100<missCh())return 0;
   const critical=Math.random()*100<Math.max(0,(crit(skillBonus('critical'))+ascSkillValue(sk.id,'critical'))*(1-(target.critRes||0)));
-  const damage=Math.max(1,Math.round(raw*boost*rnd(Math.min(.95,.7+st('dex')*.004),1.15)*(critical?critD():1)*(target.boss?1+petPassive('boss')/100:1)*fieldDamage(target)*ascDamage(target)*(1+(target.boss?ascSkillValue(sk.id,'boss'):0)/100)*(1+(!sk.magic?skillBonus('ascRanged'):0)/100)));
+  const damage=Math.max(1,Math.round(raw*boost*(1+(typeof petPassive==='function'?petPassive('skdmg'):0)/100)*rnd(Math.min(.95,.7+st('dex')*.004),1.15)*(critical?critD():1)*(target.boss?1+petPassive('boss')/100:1)*fieldDamage(target)*ascDamage(target)*(1+(target.boss?ascSkillValue(sk.id,'boss'):0)/100)*(1+(!sk.magic?skillBonus('ascRanged'):0)/100)));
   hurt(target,damage,sk.col,critical,true);
   if(!proc&&target.hp>0&&target.deathmark){if(--target.deathmark.hits<=0){const mark=target.deathmark;delete target.deathmark;skillHit(target,mark.raw,mark.sk,true);}}
   return damage;
@@ -15277,7 +15288,7 @@ function ensureRaidLightningSheet(){
     for(const tex of raidLightningSheetState.liveTextures)tex.needsUpdate=true;
   };
   img.onerror=()=>{raidLightningSheetState.loading=false;};
-  img.src='assets/refine-fx/title-lightning.webp?v=469';
+  img.src='assets/refine-fx/title-lightning.webp?v=470';
 }
 function makeRaidLightningTexture(colorHex){
   ensureRaidLightningSheet();
@@ -17301,22 +17312,22 @@ setInterval(updateWatch,60000);
 // be hours old while the player was on another tab, and the check is a 60-byte text file.
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&(pendingUpdateBuild||Date.now()-PAGE_STARTED_AT>30000))updateWatch()});
 </script>
-<script src="assets/wardrobe-ui.js?v=469"></script>
+<script src="assets/wardrobe-ui.js?v=470"></script>
 <script src="assets/shop.js?v=321"></script>
 <script src="assets/friends.js?v=273"></script>
-<script src="assets/digimon/roster.js?v=469"></script>
-<script src="assets/digimon/base-stats.js?v=469"></script>
-<script src="assets/social-rules.js?v=469"></script>
-<script src="assets/social-poker.js?v=469"></script>
-<script src="assets/digimon-sanctuary.js?v=469"></script>
+<script src="assets/digimon/roster.js?v=470"></script>
+<script src="assets/digimon/base-stats.js?v=470"></script>
+<script src="assets/social-rules.js?v=470"></script>
+<script src="assets/social-poker.js?v=470"></script>
+<script src="assets/digimon-sanctuary.js?v=470"></script>
 <script src="assets/digimon-battle.js?v=393"></script>
-<script src="assets/social-digimon.js?v=469"></script>
+<script src="assets/social-digimon.js?v=470"></script>
 <script src="assets/social-gym-redesign.js?v=393"></script>
 <script src="assets/social-pond-design.js?v=393"></script>
 <script src="assets/social-title-art.js?v=450"></script>
-<script src="assets/social-scene.js?v=469"></script>
-<script src="assets/social-fishing.js?v=469"></script>
-<script src="assets/plaza-bots.js?v=469"></script>
+<script src="assets/social-scene.js?v=470"></script>
+<script src="assets/social-fishing.js?v=470"></script>
+<script src="assets/plaza-bots.js?v=470"></script>
 <script src="assets/adventure-guide.js?v=450"></script>
-<script src="assets/social.js?v=469"></script></body>
+<script src="assets/social.js?v=470"></script></body>
 </html>

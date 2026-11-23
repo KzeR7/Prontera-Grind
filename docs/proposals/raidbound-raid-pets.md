@@ -1,7 +1,7 @@
 # Raidbound raid pets
 
-Status **shipped in v469 (2026-11-22)**: the fifth tier, the prices, the five species, their fixed
-signatures and the raid drop roll are in `index.html` / `assets/raid.js`. The one thing still
+Status **shipped in v469, signatures reworked in v470 (2026-11-22)**: the fifth tier, the prices, the
+five species, their fixed signatures and the raid drop roll are in `index.html` / `assets/raid.js`. The one thing still
 missing is **art**: none of the five native pet atlases is in `assets/pets/v1/` yet, and the drop
 path refuses any species whose atlas is not in the shipped catalog, so the roll is dormant — it
 turns itself on the moment the pet pack lands. It supersedes
@@ -86,6 +86,33 @@ PET_GACHA_X = [2000, 4000, 6000, 16000, 32000]
 | Upgrade step 5 `peqCostOf(t=4)` | 30,000 | 30,000 | 30,000 | 60,000 | **120,000** |
 | Full 5-step ladder (1,200·Σ(t+1)²) | 66,000 | 66,000 | 66,000 | 132,000 | **264,000** |
 
+## Signatures, v470 (owner: "more unique like skill damage +10%, reduce enemy defence")
+
+The first pass spread 25 species over **nine** families, which read as five re-skins of "+5–10% to a
+stat". They are now spread over **sixteen**, seven of which are new mechanics rather than a bigger
+number, and **no two species share a key set** (pinned in `pet_sim`):
+
+| Family | Effect (5% at Bond 0 → 10% at Bond 5) | Where it is read | First carried by |
+| ------ | -------------------------------------- | ---------------- | ---------------- |
+| `atk` | +% ATK | `atk()` | Nine Tail · Deviling · Eddga |
+| `matk` | +% MATK | `matk()` | Spore · Void Whisper |
+| `skdmg` | +% **skill** damage (never basic attacks) | skill hit formula | Sohee · Seraph · Ifrit |
+| `critdmg` | +% **critical** damage | `critD()` | Deviruchi · Nine Tail |
+| `aspd` | +% attack speed (shorter interval) | `aspd()` | Yoyo |
+| `pen` | ignores % of the target's armour | `applyStarAndBossArmor()` | Poporing · Thanatos · Warden |
+| `flee` | +% Flee, inside the existing cap | `flee()` | Smokie · Ghostring |
+| `hp` / `dr` | +% Max HP / % less damage taken | `maxHp()`, incoming hit | Angeling, Fabre, … |
+| `boss` | +% damage to MVPs and your pets' damage to them | both damage paths | Baphomet Jr. |
+| `petdmg` | +% damage for every fighting pet | `petDmg()` | Wolf · Deviling · Ifrit |
+| `move` | +% movement speed | `moveSpd()` | Peco Peco · Eddga |
+| `zeny` / `exp` / `gear` / `ore` | economy families | kill rewards, drops | Poring, Lunatic, … |
+
+Every family is read by a formula that already existed, so nothing bypasses a cap: Flee still clamps
+at 60/80%, attack speed keeps its floor, armour penetration only scales the armour a raid boss
+already has (50%), and every value is still inside the owner's "no buff above 10%" rule.
+`pet_sim` fails if a family loses its hook (a passive that shows but does nothing) or if two species
+end up with the same signature.
+
 ## The five candidates
 
 Each is a native RO monster sheet that has no pet atlas yet, chosen so the art reads at pet scale
@@ -95,46 +122,48 @@ Indices 20–24, in this order (the order is the save format — append only):
 
 | # | Pet (`PETS` index) | Sheet | Home raid | Signature passive (Bond 0 → Bond 5) | Suggested actives |
 | - | ------------------ | ----- | --------- | ------------------------------------ | ----------------- |
-| 20 | **Abyssal Thanatos** | Memory of Thanatos (1708) | Astral Citadel | **Extinction Echo** `[boss]` — +5% → +10% damage to MVPs and raid bosses, yours and your pets' | `piercingfang` + `soulrend` |
-| 21 | **Astral Seraph** | Retribution Angel (1831) | Astral Citadel | **Sanctum Grace** `[hp]` — +5% → +10% Max HP | `vital` + `arcane` |
-| 22 | **Ifrit Ember** | Ifrit (1832) | Thor Volcano | **Primal Heat** `[petdmg]` — +5% → +10% damage for every fighting pet | `flameburst` + `warcry` |
-| 23 | **Obsidian Warden** | Obsidian Golem (1833) | Thor Volcano | **Sanctum Bulwark** `[dr]` — 5% → 10% less damage taken | `guardingchirp` + `vital` |
-| 24 | **Void Whisper** | Death Whisperer (1837) | Thor Volcano | **Soul Tithe** `[exp]` — +5% → +10% EXP and Job EXP from kills | `spiritbolt` + `siphon` |
+| 20 | **Abyssal Thanatos** | Memory of Thanatos (1708) | Astral Citadel | **Extinction Echo** `boss+pen` — +5→10% damage to MVPs and raid bosses, **and your hits ignore 5→10% of their armour** | `piercingfang` + `soulrend` |
+| 21 | **Astral Seraph** | Retribution Angel (1831) | Astral Citadel | **Sanctum Grace** `hp+skdmg` — +5→10% Max HP **and +5→10% skill damage** | `vital` + `arcane` |
+| 22 | **Ifrit Ember** | Ifrit (1832) | Thor Volcano | **Primal Heat** `petdmg+skdmg` — +5→10% damage for every fighting pet **and +5→10% skill damage** | `flameburst` + `warcry` |
+| 23 | **Obsidian Warden** | Obsidian Golem (1833) | Thor Volcano | **Sanctum Bulwark** `dr+pen` — 5→10% less damage taken **and your hits ignore 5→10% of the target's armour** | `guardingchirp` + `vital` |
+| 24 | **Void Whisper** | Death Whisperer (1837) | Thor Volcano | **Soul Tithe** `exp+matk` — +5→10% EXP and Job EXP **and +5→10% MATK** | `spiritbolt` + `siphon` |
 
 Only the signature is fixed. The two active slots are still rolled — the panel's "Suggested
 pairing" line is a hint written for the species, not a grant, and the odds are untouched.
 
 ### How to use each one
 
-- **Abyssal Thanatos — the boss killer.** `Extinction Echo` is the only Raidbound signature that
-  raises boss damage, and raid bosses are the one place it fires. Deploy it **only for a raid or an
+- **Abyssal Thanatos — the boss killer.** `Extinction Echo` raises boss damage *and* strips armour,
+  and raid bosses are the only targets that carry any (the sanctum boss sits at 50%, so 10% armour
+  penetration is worth about +11% real damage on top of the +10%). It is the strongest single raid
+  pick; on trash it is a blank slot. Deploy it **only for a raid or an
   MVP hunt**; on trash it is a blank slot. Pair it with `piercingfang` (armour-piercing single
   target) and `soulrend`, and keep it on `on` for the whole clear — the passive is unconditional
   while the raid is running.
-- **Astral Seraph — the survival pick.** `Sanctum Grace` is raw Max HP, so it is the pet you take
-  when the trouble is *getting one-shot*, not killing. Best on the Astral Citadel's later phases or
+- **Astral Seraph — the survival pick that also casts.** `Sanctum Grace` is Max HP **plus skill
+  damage**, so it is the one defensive pet that still pays on a magic or skill-rotation build. Best on the Astral Citadel's later phases or
   on any class that has no self-heal; `vital` stacks another Max HP roll on top and `arcane` adds
   the magic damage a light-armour build is short of. Turn it on for progression attempts, off once
   the fight is on farm and you want damage instead.
-- **Ifrit Ember — the pet-damage multiplier.** `Primal Heat` adds +5–10% to *every* fighting pet,
-  so its real value scales with how many pets you keep out. Deploy it as the **second and third
+- **Ifrit Ember — the pet-damage multiplier.** `Primal Heat` adds +5–10% to *every* fighting pet
+  **and** +5–10% to your own skills, so it is the pick for a three-pet party that also casts. Deploy it as the **second and third
   slot** of a multi-pet party (three pets on: it is worth up to 3× its own number), and pair it
   with `flameburst`/`warcry` for an AoE + attack-buff rotation. It is the wrong choice for a solo
   one-pet setup.
-- **Obsidian Warden — the tank's pet.** `Sanctum Bulwark` is flat damage reduction, which matters
-  most against fast-hitting raid bosses and least against trash. Use it on melee/frontline classes
+- **Obsidian Warden — the tank's pet.** `Sanctum Bulwark` is damage reduction *plus* armour
+  penetration: it keeps you alive and still chips the sanctum boss. Use it on melee/frontline classes
   that already stack DEF (percentage reduction on a high-DEF build is the largest effective-HP
   gain), with `guardingchirp` + `vital` to push the same direction; swap it out for Ifrit Ember
   once a fight is safe.
-- **Void Whisper — the levelling pet, not the raid pet.** `Soul Tithe` is EXP/Job EXP, so it pays
-  out in **dense trash farming and alts**, and does nothing on a boss kill. Deploy it whenever the
+- **Void Whisper — the levelling pet, not the raid pet.** `Soul Tithe` is EXP/Job EXP plus MATK, so
+  it pays out in **dense trash farming and alts** and still adds magic damage while you are there. Deploy it whenever the
   goal is levels or Job points (Field stages, grind maps) and park it during raids; `spiritbolt` +
   `siphon` keeps a magic class alive while it soaks EXP.
 
 Design notes:
 
-- Every signature is a raid-flavoured version of an existing effect family (`boss` damage, `atk`,
-  `dr`, revive HP, `matk` + lifesteal). No new combat rule is invented.
+- Signatures are read by hooks that already existed in the formulas (see the family table below), so
+  no new combat rule and no new cap is invented.
 - None is a "strictly better Legendary": the cap stays on the 5–10% ladder (12% only for the
   boss-damage one, paid for by being dead weight outside a raid).
 - The active slots are **random**, exactly like every other pet — the v468 gacha (18 skills: 4
