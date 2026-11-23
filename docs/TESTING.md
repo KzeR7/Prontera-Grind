@@ -45,6 +45,8 @@ must fetch them first or those suites fail with `Command failed: git show …`:
 
 ```sh
 git fetch origin d164bd0527cfe335f9c183d0e576800716b7dd26
+# stage_raid_sim validates the old isolated launcher against its v465 source snapshot
+git fetch origin 824511bd35e9fedda474a331546048c405ef1b66
 ```
 
 ## Built-site browser reliability
