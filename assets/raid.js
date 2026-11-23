@@ -90,8 +90,8 @@
   var RAID_BOSS_ARMOR = 0.50;
   var TRASH_HP_MULT_ASTRAL = 2.2;
   var TRASH_HP_MULT_THOR = 1.1;
-  var BOSS_HP_MULT_ASTRAL = 4.48;
-  var BOSS_HP_MULT_THOR = 2.8;
+  var BOSS_HP_MULT_ASTRAL = 8.96;
+  var BOSS_HP_MULT_THOR = 5.6;
   var ESCORT_HP_MULT_ASTRAL = 4.2;
   var ESCORT_HP_MULT_THOR = 2.52;
   var BOSS_ATK_MULT = 1.12;
@@ -982,41 +982,144 @@
     return { group: g, floorFill: floorFill, shockWave: shockWave, vortexFunnel: vortexFunnel };
   }
 
+  // v471 (owner: "the pillar is so ugly, replace it with a nicer sprite"): the old pillar was a flat
+  // grey tube with a coloured hoop. It is now a carved crystal monolith: a hexagonal stone plinth, a
+  // tapered crystal with a lit core, two orbiting rune rings, a bladed crown with shards, a soft ground
+  // glow and a falling light trail. Every colour is still set per raid (Astral cyan / Thor ember) and
+  // every part is additive-blended geometry with fog off, so it stays readable through the arena fog.
+  function pillarColumnTexture(THREE) {
+    var c = document.createElement('canvas');
+    c.width = 16; c.height = 128;
+    var x = c.getContext('2d');
+    var g = x.createLinearGradient(0, 128, 0, 0);
+    g.addColorStop(0, 'rgba(255,255,255,0.98)');
+    g.addColorStop(0.35, 'rgba(255,255,255,0.72)');
+    g.addColorStop(0.78, 'rgba(255,255,255,0.30)');
+    g.addColorStop(1, 'rgba(255,255,255,0.06)');
+    x.fillStyle = g; x.fillRect(0, 0, 16, 128);
+    // a few darker facet seams so the crystal reads as cut stone, not a light tube
+    x.globalCompositeOperation = 'destination-out';
+    for (var i = 0; i < 4; i++) { x.fillStyle = 'rgba(0,0,0,0.30)'; x.fillRect(i * 4 + 1, 0, 1.2, 128); }
+    x.globalCompositeOperation = 'source-over';
+    var t = new THREE.CanvasTexture(c);
+    t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping;
+    t.magFilter = t.minFilter = THREE.LinearFilter;
+    t.generateMipmaps = false;
+    return t;
+  }
+
+  function pillarGlowTexture(THREE) {
+    var c = document.createElement('canvas');
+    c.width = c.height = 128;
+    var x = c.getContext('2d');
+    var g = x.createRadialGradient(64, 64, 0, 64, 64, 64);
+    g.addColorStop(0, 'rgba(255,255,255,0.95)');
+    g.addColorStop(0.42, 'rgba(255,255,255,0.30)');
+    g.addColorStop(1, 'rgba(255,255,255,0)');
+    x.fillStyle = g; x.fillRect(0, 0, 128, 128);
+    var t = new THREE.CanvasTexture(c);
+    t.magFilter = t.minFilter = THREE.LinearFilter;
+    t.generateMipmaps = false;
+    return t;
+  }
+
   function makePillarNode(THREE) {
     var g = new THREE.Group();
     g.visible = false;
 
-    var columnWrap = new THREE.Group();
-    var shaft = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.76, 0.98, 4.1, 8),
-      hazardBasicMat(THREE, 0x6f7a9f, 1)
-    );
-    shaft.position.y = 2.05;
-    columnWrap.add(shaft);
+    var stoneMat = hazardBasicMat(THREE, 0x2b3149, 1);
+    var glowTex = pillarGlowTexture(THREE);
 
-    var runeBand = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.86, 0.86, 0.48, 8),
-      hazardBasicMat(THREE, 0x6af7d0, 1)
-    );
-    runeBand.position.y = 2.25;
-    columnWrap.add(runeBand);
+    // 1) ground glow + carved plinth
+    var glow = new THREE.Mesh(new THREE.PlaneGeometry(3.4, 3.4), new THREE.MeshBasicMaterial({
+      map: glowTex, color: 0x76ffd8, transparent: true, opacity: 0.75,
+      blending: THREE.AdditiveBlending, depthWrite: false, fog: false, toneMapped: false
+    }));
+    glow.rotation.x = -Math.PI / 2;
+    glow.position.y = 0.03;
+    g.add(glow);
 
-    var crown = new THREE.Mesh(
-      new THREE.OctahedronGeometry(0.62, 0),
-      hazardBasicMat(THREE, 0xfff0a8, 1)
-    );
-    crown.position.y = 4.55;
-    columnWrap.add(crown);
-    g.add(columnWrap);
+    var plinth = new THREE.Mesh(new THREE.CylinderGeometry(1.02, 1.22, 0.34, 6), stoneMat);
+    plinth.position.y = 0.17;
+    g.add(plinth);
 
-    var baseRing = new THREE.Mesh(
-      new THREE.RingGeometry(0.96, 1.24, 32),
-      hazardBasicMat(THREE, 0x76ffd8, 0.98)
-    );
+    var plinthLip = new THREE.Mesh(new THREE.CylinderGeometry(1.3, 1.36, 0.1, 6),
+      hazardBasicMat(THREE, 0x171b2b, 1));
+    plinthLip.position.y = 0.05;
+    g.add(plinthLip);
+
+    var baseRing = new THREE.Mesh(new THREE.RingGeometry(0.98, 1.28, 32),
+      hazardBasicMat(THREE, 0x76ffd8, 0.98));
     baseRing.rotation.x = -Math.PI / 2;
-    baseRing.position.y = 0.025;
+    baseRing.position.y = 0.35;
     g.add(baseRing);
 
+    // 2) the crystal itself - outer cut shell, lit core, both tinted per raid
+    var columnWrap = new THREE.Group();
+    var columnTex = pillarColumnTexture(THREE);
+    var shaftMat = new THREE.MeshBasicMaterial({
+      map: columnTex, color: 0x9fb4e8, transparent: true, opacity: 0.92,
+      side: THREE.DoubleSide, depthWrite: false, fog: false, toneMapped: false
+    });
+    var shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.78, 4.5, 6, 1, true), shaftMat);
+    shaft.position.y = 2.6;
+    columnWrap.add(shaft);
+
+    var core = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.34, 4.2, 6),
+      hazardBasicMat(THREE, 0xcfe9ff, 0.62));
+    core.material.blending = THREE.AdditiveBlending;
+    core.material.depthWrite = false;
+    core.position.y = 2.55;
+    columnWrap.add(core);
+
+    var collar = new THREE.Mesh(new THREE.TorusGeometry(0.72, 0.055, 6, 26),
+      hazardBasicMat(THREE, 0xfff0a8, 0.95));
+    collar.material.blending = THREE.AdditiveBlending;
+    collar.rotation.x = Math.PI / 2;
+    collar.position.y = 0.52;
+    columnWrap.add(collar);
+
+    // 3) rune rings orbiting the shaft (runeBand keeps its old name for the animation code)
+    var runeBand = new THREE.Mesh(new THREE.TorusGeometry(0.86, 0.045, 6, 30),
+      hazardBasicMat(THREE, 0x6af7d0, 0.95));
+    runeBand.material.blending = THREE.AdditiveBlending;
+    runeBand.rotation.x = Math.PI / 2;
+    runeBand.position.y = 1.55;
+    columnWrap.add(runeBand);
+
+    var runeUpper = new THREE.Mesh(new THREE.TorusGeometry(0.66, 0.038, 6, 30),
+      hazardBasicMat(THREE, 0x6af7d0, 0.8));
+    runeUpper.material.blending = THREE.AdditiveBlending;
+    runeUpper.rotation.x = Math.PI / 2 - 0.18;
+    runeUpper.position.y = 3.2;
+    columnWrap.add(runeUpper);
+
+    // 4) crown blade + orbiting shards
+    var crown = new THREE.Mesh(new THREE.OctahedronGeometry(0.5, 0),
+      hazardBasicMat(THREE, 0xfff0a8, 1));
+    crown.material.blending = THREE.AdditiveBlending;
+    crown.position.y = 5.05;
+    columnWrap.add(crown);
+
+    var shards = [];
+    for (var s = 0; s < 3; s++) {
+      var shard = new THREE.Mesh(new THREE.OctahedronGeometry(0.15, 0), hazardBasicMat(THREE, 0xfff0a8, 0.9));
+      shard.material.blending = THREE.AdditiveBlending;
+      shard.position.set(Math.cos(s * 2.09) * 0.95, 4.3, Math.sin(s * 2.09) * 0.95);
+      columnWrap.add(shard);
+      shards.push(shard);
+    }
+    g.add(columnWrap);
+
+    // 5) the falling trail, shown only while the pillar is still in the air
+    var trail = new THREE.Mesh(new THREE.ConeGeometry(0.52, 5.2, 8, 1, true), new THREE.MeshBasicMaterial({
+      color: 0xbff6ff, transparent: true, opacity: 0.3, blending: THREE.AdditiveBlending,
+      depthWrite: false, side: THREE.DoubleSide, fog: false, toneMapped: false
+    }));
+    trail.position.y = 7.2;
+    g.add(trail);
+
+    // 6) the safe-lane shadow (unchanged geometry - the hit test reads spawnSanctuaryPillars, not this)
     var shadowPivot = new THREE.Group();
     var shadowFill = new THREE.Mesh(
       new THREE.PlaneGeometry(5.4, 3.1),
@@ -1041,7 +1144,12 @@
     g.add(shadowPivot);
     applyHazardRenderOrder(g, 16);
 
-    return { group: g, columnWrap: columnWrap, shaft: shaft, runeBand: runeBand, crown: crown, baseRing: baseRing, shadowPivot: shadowPivot, shadowFill: shadowFill };
+    return {
+      group: g, columnWrap: columnWrap, shaft: shaft, core: core, collar: collar,
+      runeBand: runeBand, runeUpper: runeUpper, crown: crown, shards: shards,
+      baseRing: baseRing, glow: glow, plinth: plinth, trail: trail,
+      shadowPivot: shadowPivot, shadowFill: shadowFill
+    };
   }
 
   function makeConeNode(THREE) {
@@ -1454,10 +1562,30 @@
         for (var pk = 0; pk < pList.length && pk < pillarNodes.length; pk++) {
           var pd = pList[pk];
           var pNode = pillarNodes[pk];
-          pNode.shaft.material.color.setHex(isVolcSpire ? 0x2c1718 : 0x6f7a9f);
+          pNode.shaft.material.color.setHex(isVolcSpire ? 0xff9a54 : 0x9fb4e8);
+          pNode.shaft.material.opacity = 0.78 + 0.16 * Math.sin(tg.age * 6 + pk);
           pNode.runeBand.material.color.setHex(isVolcSpire ? 0xff9426 : 0x6af7d0);
           pNode.crown.material.color.setHex(isVolcSpire ? 0xffe06e : 0xfff0a8);
           pNode.baseRing.material.color.setHex(isVolcSpire ? 0xffbe4a : 0x76ffd8);
+          pNode.core.material.color.setHex(isVolcSpire ? 0xffd08a : 0xcfe9ff);
+          pNode.core.material.opacity = 0.45 + 0.3 * (0.5 + 0.5 * Math.sin(tg.age * 7 + pk));
+          pNode.collar.material.color.setHex(isVolcSpire ? 0xffb24a : 0xa8fff0);
+          pNode.runeUpper.material.color.setHex(isVolcSpire ? 0xff7a2a : 0x6af7d0);
+          pNode.runeUpper.rotation.z = tg.age * 1.6 + pk;
+          pNode.runeBand.rotation.z = -tg.age * 1.1;
+          pNode.glow.material.color.setHex(isVolcSpire ? 0xff7a2a : 0x76ffd8);
+          pNode.glow.material.opacity = 0.55 + 0.25 * Math.sin(tg.age * 5 + pk);
+          pNode.trail.material.color.setHex(isVolcSpire ? 0xffc46a : 0xbff6ff);
+          pNode.trail.visible = !isVolcSpire && dropT < 1;
+          pNode.trail.position.y = Math.max(4.6, 7.2 + (1 - dropT) * 6.0);
+          for (var sh = 0; sh < pNode.shards.length; sh++) {
+            var shardMesh = pNode.shards[sh];
+            var shAng = tg.age * 2.4 + sh * 2.094;
+            shardMesh.position.set(Math.cos(shAng) * (0.95 + 0.08 * Math.sin(tg.age * 3 + sh)), 4.3 + 0.22 * Math.sin(tg.age * 4 + sh), Math.sin(shAng) * (0.95 + 0.08 * Math.sin(tg.age * 3 + sh)));
+            shardMesh.material.color.setHex(isVolcSpire ? 0xffd06e : 0xdff6ff);
+            shardMesh.rotation.x = tg.age * 1.7 + sh;
+            shardMesh.rotation.y = tg.age * 2.1 + sh;
+          }
           pNode.group.visible = true;
           pNode.group.position.set(pd.x, floorYAt(pd.x, pd.z) - 0.08, pd.z);
           pNode.columnWrap.position.y = colY;
@@ -1824,6 +1952,13 @@
     try {
       S.mp = mapId;
       S.lvl = st.astralStage;
+      // v471: a raid can begin (or jump) from ANY field stage. The astral/thor scenery is one
+      // continuous world whose root z is the stage, so a non-walk jump must re-seat the world, the
+      // hero and the camera together - otherwise stage-1 mobs spawn on the last field stage's map and
+      // the first transition shifts the world from the wrong origin ("flying off into space").
+      if (!arrivedOnFoot && typeof snapAstralStage === 'function') {
+        try { snapAstralStage(st.astralStage); } catch (e) { /* scenery not built yet: the build will place it */ }
+      }
       if (typeof astralOriginStage !== 'undefined') astralOriginStage = (mapId === 10 || mapId === 11) ? st.astralStage : 0;
       if (typeof astralJourney !== 'undefined') astralJourney = null;
       if (typeof lastKey !== 'undefined') lastKey = '';
@@ -3335,6 +3470,11 @@
         S.hp = typeof maxHp === 'function' ? maxHp() : Math.max(1, raid.home.hp);
         if (typeof astralOriginStage !== 'undefined') astralOriginStage = raid.home.astralOrigin || 0;
         if (typeof astralJourney !== 'undefined') astralJourney = null;
+        // v471: leaving from a later raid stage has the same shape as entering from one - re-seat the
+        // home stage instead of leaving the scenery where the raid left it.
+        if (typeof snapAstralStage === 'function') {
+          try { snapAstralStage(raid.home.astralOrigin || S.lvl || 1); } catch (e) {}
+        }
         if (typeof lastKey !== 'undefined') lastKey = '';
         if (typeof mobs !== 'undefined') mobs = [];
         if (typeof mob !== 'undefined') mob = null;
@@ -4321,7 +4461,7 @@
       '</div>' +
       partyHtml +
       '<div class="raid-rewards-bar">' +
-        '<div><b>Party Clear</b><span>30 ' + escHtml(dng.matName) + ' · 1 Valkyrie\'s Sigil · 750,000 Zeny · 150 Echo Shards · 10% ' + escHtml(dng.bossCardName || 'Boss Acc Card') + ' &amp; Raid Title</span></div>' +
+        '<div><b>Party Clear</b><span>30 ' + escHtml(dng.matName) + ' · 1 Valkyrie\'s Sigil · 750,000 Zeny · 150 Echo Shards · 10% ' + escHtml(dng.bossCardName || 'Boss Acc Card') + ' · 10% Raid Title <small>(two separate rolls - 1% for both in one clear)</small></span></div>' +
       '</div>' +
       '<div class="raid-lobby-foot">' +
         '<div class="raid-meta-line">' +

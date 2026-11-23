@@ -711,6 +711,86 @@ check('Stage 2 Fallen Arcade keeps all mobs provoked without pull-back, Dodge at
 });
 
 // 15. 40M DPS @ ★0 Raid Scaling, 50% Boss Armor, 2p/3p Party Buff & ★0-★20 Weapon Star System
+check('v471: entering a raid from the last field stage re-seats the bridge world (the "flying into space" report)', () => {
+  // The bridge maps are one continuous world whose root z IS the stage. A jump that is not a walk has
+  // to re-seat root + hero + camera together, or the next transition shifts the world from an origin
+  // that no longer matches what is on screen.
+  assert.ok(/function snapAstralStage\(stage\)/.test(html), 'index.html exposes snapAstralStage()');
+  assert.ok(/astralOriginStage=i;/.test(html) && /ascensionRoot\.position\.z=\(Z0\+Z1\)\/2-focus\[i-1\]/.test(html),
+    'the snap moves the world root to the focus of the stage it is given');
+  assert.ok(/pl\.x=0;pl\.z=Z1-5/.test(html) && /ct\.z=pl\.z/.test(html) && /pet\.z=pl\.z/.test(html),
+    'and the hero, the camera target and the pets with it');
+  assert.ok(/if \(!arrivedOnFoot && typeof snapAstralStage === 'function'\)/.test(raidJs),
+    'spawnRaidStage snaps only when the party did NOT walk in (a walk already keeps the world aligned)');
+  assert.ok(/snapAstralStage\(raid\.home\.astralOrigin \|\| S\.lvl \|\| 1\)/.test(raidJs),
+    'leaving a raid re-seats the home stage instead of leaving the scenery where the raid left it');
+
+  // Run the live part on a copy of the state and put everything back: the rest of this suite keeps
+  // using the same S, so a raid started here must not leak its class/map/stage into later checks.
+  const live = g.ev(`(() => {
+    const keep = { mp: S.mp, lvl: S.lvl, hp: S.hp, gm: S.gm, raid: S.raid, atk: null };
+    S.gm = true; S.mp = 10; S.lvl = 5; astralOriginStage = 5;
+    PGRaid.startDirectSolo('astral');
+    const entered = { stage: PGRaid.raid.stage, lvl: S.lvl, origin: astralOriginStage };
+    const steps = [];
+    for (let n = 1; n <= 3; n++) {
+      PGRaid.raid.transition = { nextIdx: n, walked: false, fallbackLeft: 0.001 };
+      PGRaid.tick(0.2);
+      steps.push({ stage: PGRaid.raid.stage, lvl: S.lvl, origin: astralOriginStage });
+    }
+    PGRaid.leave(); PGRaid.hideResult();
+    const home = { lvl: S.lvl, origin: astralOriginStage };
+    S.mp = keep.mp; S.lvl = keep.lvl; S.hp = keep.hp; S.gm = keep.gm; S.raid = keep.raid;
+    return { entered, steps, home };
+  })()`);
+  assert.equal(live.entered.stage, 0, 'the run starts on its first stage, not on the field stage');
+  assert.equal(live.entered.lvl, 1, 'and the world is told stage 1');
+  assert.equal(live.entered.origin, 1, 'the bridge origin is stage 1, so drift is impossible');
+  console.assert(live.steps.map(s => s.origin).join(',') === '2,3,5', 'every jump re-seats the origin');
+  assert.equal(live.steps.map(s => s.origin).join(','), '2,3,5', 'each jump re-seats the bridge origin (2, 3, boss)');
+  assert.equal(live.steps.map(s => s.lvl).join(','), '2,3,5', 'and the world stage follows it');
+  assert.equal(live.home.origin, 5, 'leaving returns the field to the stage the player farmed');
+});
+
+check('v471: the Thanatos pillar is a carved crystal monolith, not a grey tube', () => {
+  assert.ok(/function pillarColumnTexture\(THREE\)/.test(raidJs) && /function pillarGlowTexture\(THREE\)/.test(raidJs),
+    'the pillar paints its own crystal and glow textures from canvas (no invented art files)');
+  assert.ok(/var shaft = new THREE\.Mesh\(new THREE\.CylinderGeometry\(0\.34, 0\.78, 4\.5, 6, 1, true\)/.test(raidJs),
+    'the shaft is a tapered hexagonal crystal');
+  assert.ok(/var core = new THREE\.Mesh\(new THREE\.CylinderGeometry\(0\.15, 0\.34, 4\.2, 6\)/.test(raidJs),
+    'with a lit core inside it');
+  assert.ok(/var plinth = new THREE\.Mesh\(new THREE\.CylinderGeometry\(1\.02, 1\.22, 0\.34, 6\)/.test(raidJs),
+    'and a stone plinth underneath');
+  assert.ok(/var runeUpper = new THREE\.Mesh\(new THREE\.TorusGeometry/.test(raidJs), 'two orbiting rune rings');
+  assert.ok(/shardMesh\.position\.set\(Math\.cos\(shAng\)/.test(raidJs), 'the crown shards orbit and bob');
+  assert.ok(/pNode\.trail\.visible = !isVolcSpire && dropT < 1/.test(raidJs), 'the falling light trail shows only while the pillar is in the air');
+  // the hit test still reads the geometry data, never the visual: the safe lane is unchanged
+  assert.ok(/shadowFill\.position\.set\(2\.85, 0\.022, 0\)/.test(raidJs), 'the safe-lane shadow keeps its exact footprint');
+});
+
+check('v471: BOTH raid bosses carry exactly double their v470 health (Astral 4.48 -> 8.96, Thor 2.8 -> 5.6)', () => {
+  const a = Number((raidJs.match(/BOSS_HP_MULT_ASTRAL\s*=\s*([\d.]+)/) || [])[1]);
+  const t = Number((raidJs.match(/BOSS_HP_MULT_THOR\s*=\s*([\d.]+)/) || [])[1]);
+  assert.equal(a, 8.96, 'Astral boss multiplier is 2 x 4.48');
+  assert.equal(t, 5.6, 'Thor boss multiplier is 2 x 2.8');
+  // Escorts and trash are NOT part of the owner's ask and must not move with the boss.
+  assert.equal(Number((raidJs.match(/ESCORT_HP_MULT_ASTRAL\s*=\s*([\d.]+)/) || [])[1]), 4.2, 'Astral escort HP unchanged');
+  assert.equal(Number((raidJs.match(/ESCORT_HP_MULT_THOR\s*=\s*([\d.]+)/) || [])[1]), 2.52, 'Thor escort HP unchanged');
+  assert.equal(Number((raidJs.match(/TRASH_HP_MULT_ASTRAL\s*=\s*([\d.]+)/) || [])[1]), 2.2, 'Astral trash HP unchanged');
+  assert.equal(Number((raidJs.match(/TRASH_HP_MULT_THOR\s*=\s*([\d.]+)/) || [])[1]), 1.1, 'Thor trash HP unchanged');
+  // and the live Thor boss really is twice the pre-v471 number
+  const thorBossHp = g.ev(`(() => {
+    PGRaid.startDirectSolo('thor');
+    PGRaid.raid.stage = 2; while (mobs.length) kill(mobs[0]);
+    for (let i = 0; i < 90 && PGRaid.raid.stage === 2; i++) { if (!tickAstralJourney(1/30)) update(1/30); t += 1/30; }
+    const b = mobs.find(m => m.boss);
+    const hp = b ? b.max : 0;
+    PGRaid.leave(); PGRaid.hideResult();
+    return hp;
+  })()`);
+  assert.ok(thorBossHp > 2.2e9 && thorBossHp < 2.35e9, 'Thor solo boss HP doubled to ~2.269B (got ' + thorBossHp + ')');
+});
+
 check('40M DPS @ ★0 Boss HP + 50% Raid Armor, 2p/3p Party HP+ATK buffs, and ★0-★20 Weapon Star Workshop + Shard Boosts', () => {
   // Verify 1p vs 2p vs 3p HP & ATK scaling on Astral Raid
   const scaling = g.ev(`(() => {
@@ -732,7 +812,9 @@ check('40M DPS @ ★0 Boss HP + 50% Raid Armor, 2p/3p Party HP+ATK buffs, and �
     return { p1, p2, p3 };
   })()`);
   assert.equal(scaling.p1.bossArmor, 0.50, 'Stage 4 Raid Boss carries 50% Raid Armor (0.50)');
-  assert.ok(scaling.p1.bossHp > 8.5e8 && scaling.p1.bossHp < 1.0e9, `Solo Astral Boss raw HP after -30% rebalance (~907.8M, got ${scaling.p1.bossHp})`);
+  // v471 (owner: "x2 the hp for both raid bosses"): the solo Astral boss is pinned at exactly double the
+  // v470 health (907.8M -> ~1815.5M), and the Thor boss at double its own (see the constants below).
+  assert.ok(scaling.p1.bossHp > 1.75e9 && scaling.p1.bossHp < 1.9e9, `Solo Astral Boss HP after the v471 x2 (~1.8155B, got ${scaling.p1.bossHp})`);
   assert.ok(scaling.p1.st1Hp > 3.1e7 && scaling.p1.st1Hp < 3.5e7, `Solo Astral Stage 1 mob HP at previous+120% (2.2x = ~33.0M, got ${scaling.p1.st1Hp})`);
   assert.ok(Math.abs(scaling.p2.bossHp / scaling.p1.bossHp - 2.25) < 0.02, '2p Party buffs Boss HP by 2.25x');
   assert.ok(Math.abs(scaling.p3.bossHp / scaling.p1.bossHp - 3.45) < 0.02, '3p Party buffs Boss HP by 3.45x');

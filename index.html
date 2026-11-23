@@ -916,15 +916,15 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="preload" href="assets/ui/fonts/font-5.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-6.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-7.ttf" as="font" type="font/ttf" crossorigin>
-<link rel="stylesheet" href="assets/ui/eclipse.css?v=470">
-<link rel="stylesheet" href="assets/ui/mobile.css?v=470">
-<link rel="stylesheet" href="assets/ui/mastery-titles.css?v=470">
+<link rel="stylesheet" href="assets/ui/eclipse.css?v=471">
+<link rel="stylesheet" href="assets/ui/mobile.css?v=471">
+<link rel="stylesheet" href="assets/ui/mastery-titles.css?v=471">
 <script src="assets/ui/mobile.js?v=274"></script>
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
-<link rel="stylesheet" href="assets/social.css?v=470">
-<link rel="stylesheet" href="assets/raid.css?v=470">
+<link rel="stylesheet" href="assets/social.css?v=471">
+<link rel="stylesheet" href="assets/raid.css?v=471">
 <link rel="stylesheet" href="assets/social-battle.css?v=393">
-  <link rel="stylesheet" href="assets/social-fishing.css?v=470"><link rel="stylesheet" href="assets/friends.css?v=273">
+  <link rel="stylesheet" href="assets/social-fishing.css?v=471"><link rel="stylesheet" href="assets/friends.css?v=273">
 <link rel="stylesheet" href="assets/adventure-guide.css?v=450">
 </head>
 <body>
@@ -1055,10 +1055,10 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <div id="tooltip"></div>
 <link rel="stylesheet" href="assets/wardrobe.css?v=138">
 <link rel="stylesheet" href="assets/shop.css?v=318">
-<script src="assets/wardrobe.js?v=470"></script>
+<script src="assets/wardrobe.js?v=471"></script>
 <script src="assets/shop-catalog.js?v=321"></script>
 <script src="assets/fourth-jobs.js?v=179"></script>
-<script src="assets/expanded-jobs.js?v=470"></script>
+<script src="assets/expanded-jobs.js?v=471"></script>
 <script src="assets/ascension.js?v=156"></script>
 <script src="assets/native-mob-heights.js?v=153"></script>
 <script src="assets/native-fields.js?v=197"></script>
@@ -1066,13 +1066,13 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <script src="assets/skill-icons.js?v=130"></script>
 <script src="assets/skill-icons-extra.js?v=207"></script>
 <script src="assets/skill-icons-expanded.js?v=450"></script>
-<script src="assets/mastery-titles.js?v=470"></script>
+<script src="assets/mastery-titles.js?v=471"></script>
 <script src="assets/player-buffs.js?v=450"></script>
 <script src="assets/skill-materials.js?v=220"></script>
 <script src="assets/afterglow-animations.js?v=151"></script>
 <script src="assets/skill-overdrive.js?v=220"></script>
 <script src="assets/ro-fx/index.js?v=414"></script>
-<script src="assets/signature-fx.js?v=470"></script>
+<script src="assets/signature-fx.js?v=471"></script>
 <script src="assets/spirit-spheres.js?v=450"></script>
 <script src="assets/expanded-fx/ninja-throw-fx.js?v=450"></script>
 <script src="assets/expanded-fx/expanded-fx-batch.js?v=450"></script>
@@ -1084,11 +1084,11 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <script src="assets/expanded-fx/approved.js?v=450"></script>
 <script src="assets/skill-afterglow.js?v=450"></script>
 <script src="assets/boss-fx.js?v=249"></script>
-<script src="assets/raid.js?v=470"></script>
+<script src="assets/raid.js?v=471"></script>
 <script src="assets/pets.js?v=130"></script>
 <script src="assets/bgm-tracks.js?v=206"></script>
 <script src="assets/bgm.js?v=207"></script>
-<script src="assets/combat-audio.js?v=470"></script>
+<script src="assets/combat-audio.js?v=471"></script>
 <script src="assets/class_skins_data.js?v=2"></script>
 <script src="assets/weapon_joints_data.js?v=2"></script>
 <script src="assets/weapons_data.js?v=2"></script>
@@ -1359,7 +1359,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-22 haven-v470 Unique pet signatures, seven new passive mechanics';
+const BUILD='2026-11-22 haven-v471 Raid entry reseat, doubled boss HP, measured drops, new pillar';
 // v364: this write used to sit AFTER the `//` on the BUILD line, so it was part of the comment and
 // never ran - the login card showed an empty #buildTag and there was no way to confirm which file
 // the browser had loaded. It also has to survive the script running before the login card exists.
@@ -11410,6 +11410,22 @@ function cancelAstralJourney(){
   pl.x=0;pl.z=Z1-5;pl.wz=pl.z;pl.wx=null;pl.run=false;ct.z=pl.z;
   for(const pet of Object.values(petR)){pet.x=pl.x;pet.z=pl.z;pet.run=false;}
 }
+// v471 (owner: "entering the astral raid from the last boss map, the mobs spawn on the boss map and
+// then the next stage flies off into space"): the bridge maps are ONE continuous world whose root z
+// IS the stage, and every walk is measured from `astralOriginStage`. Any stage change that is not a
+// walk - raid entry, a stage the walk could not reach, leaving a raid from a later stage - has to
+// re-seat the root, the hero, the camera target and the pets TOGETHER, or the next shift is measured
+// from an origin that no longer matches what is on screen.
+function snapAstralStage(stage){
+  const m=S&&S.mp;
+  if(!isContinuousBridgeMap(m))return false;
+  const focus=bridgeFocusOf(m),i=Math.max(1,Math.min(focus.length,Math.round(Number(stage))||1));
+  astralJourney=null;astralOriginStage=i;
+  if(typeof ascensionRoot!=='undefined'&&ascensionRoot)ascensionRoot.position.z=(Z0+Z1)/2-focus[i-1];
+  if(typeof pl!=='undefined'&&pl){pl.x=0;pl.z=Z1-5;pl.wz=pl.z;pl.wx=null;pl.run=false;ct.z=pl.z;}
+  if(typeof petR!=='undefined')for(const pet of Object.values(petR)){pet.x=pl.x;pet.z=pl.z;pet.run=false;}
+  return true;
+}
 function tickAstralJourney(dt){
   const journey=astralJourney;if(!journey)return false;
   if(S!==journey.owner||currentUser!==journey.user||S.cls!==journey.cls||S.mp!==journey.mp||!isContinuousBridgeMap()||TRIAL.on||JOB_RITE.on){cancelAstralJourney();return false}
@@ -15288,7 +15304,7 @@ function ensureRaidLightningSheet(){
     for(const tex of raidLightningSheetState.liveTextures)tex.needsUpdate=true;
   };
   img.onerror=()=>{raidLightningSheetState.loading=false;};
-  img.src='assets/refine-fx/title-lightning.webp?v=470';
+  img.src='assets/refine-fx/title-lightning.webp?v=471';
 }
 function makeRaidLightningTexture(colorHex){
   ensureRaidLightningSheet();
@@ -17312,22 +17328,22 @@ setInterval(updateWatch,60000);
 // be hours old while the player was on another tab, and the check is a 60-byte text file.
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&(pendingUpdateBuild||Date.now()-PAGE_STARTED_AT>30000))updateWatch()});
 </script>
-<script src="assets/wardrobe-ui.js?v=470"></script>
+<script src="assets/wardrobe-ui.js?v=471"></script>
 <script src="assets/shop.js?v=321"></script>
 <script src="assets/friends.js?v=273"></script>
-<script src="assets/digimon/roster.js?v=470"></script>
-<script src="assets/digimon/base-stats.js?v=470"></script>
-<script src="assets/social-rules.js?v=470"></script>
-<script src="assets/social-poker.js?v=470"></script>
-<script src="assets/digimon-sanctuary.js?v=470"></script>
+<script src="assets/digimon/roster.js?v=471"></script>
+<script src="assets/digimon/base-stats.js?v=471"></script>
+<script src="assets/social-rules.js?v=471"></script>
+<script src="assets/social-poker.js?v=471"></script>
+<script src="assets/digimon-sanctuary.js?v=471"></script>
 <script src="assets/digimon-battle.js?v=393"></script>
-<script src="assets/social-digimon.js?v=470"></script>
+<script src="assets/social-digimon.js?v=471"></script>
 <script src="assets/social-gym-redesign.js?v=393"></script>
 <script src="assets/social-pond-design.js?v=393"></script>
 <script src="assets/social-title-art.js?v=450"></script>
-<script src="assets/social-scene.js?v=470"></script>
-<script src="assets/social-fishing.js?v=470"></script>
-<script src="assets/plaza-bots.js?v=470"></script>
+<script src="assets/social-scene.js?v=471"></script>
+<script src="assets/social-fishing.js?v=471"></script>
+<script src="assets/plaza-bots.js?v=471"></script>
 <script src="assets/adventure-guide.js?v=450"></script>
-<script src="assets/social.js?v=470"></script></body>
+<script src="assets/social.js?v=471"></script></body>
 </html>
