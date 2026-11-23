@@ -480,6 +480,9 @@ body.clean-screen #screenBtn{visibility:visible}
 #wins .eclipse-bag .grid>.cell.b2{border-bottom-color:#b39ae8}
 #wins .eclipse-bag .grid>.cell.b3{border-bottom-color:#e1bf74}
 #wins .eclipse-bag .grid>.cell.b4{border-bottom-color:#e4a68e}
+/* v469: Raidbound (rarity 4) - the raid trophy band, one step warmer than Legendary. */
+#wins .eclipse-bag .grid>.cell.b5{border-bottom-color:#ffb27a}
+#wins .eclipse-bag .grid>.cell.b5>.pet-bond-badge{color:#ffd9a8}
 
 #wins .eclipse-bag .grid>.cell.sel{border-color:var(--gold);box-shadow:0 0 0 2px var(--e-soft)}
 #wins .eclipse-bag .grid>.cell.empty{opacity:.3}

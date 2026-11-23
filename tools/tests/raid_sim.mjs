@@ -2460,10 +2460,41 @@ check('v467: Display offers a UI scale and publishes it to the theme', () => {
   assert.match(indexSrc, /root\.style\.setProperty\('--ui-scale'/, 'the choice is published as --ui-scale');
   assert.match(indexSrc, /root\.setAttribute\('data-ui-scale'/, 'and as <html data-ui-scale>');
   assert.match(indexSrc, /data-ui-scale-step="\$\{z\}"/, 'the Display sheet renders the step buttons');
+  // v469 (owner: "auto scale based on the pc screen"): Auto is the default and derives the step from
+  // the display; picking a percentage turns it off again.
+  assert.match(indexSrc, /function autoUiScale\(\)/, 'Auto derives a step from the screen');
+  assert.match(indexSrc, /const px=w\*dpr;/, 'from CSS columns x devicePixelRatio, so a 4K panel is not judged 1920');
+  assert.match(indexSrc, /const uiScaleAutoOn=\(\)=>!!\(S&&S\.uiScaleAuto!==false\)/, 'and is on unless the save says otherwise');
+  assert.match(indexSrc, /const z=uiScaleAutoOn\(\)\?autoUiScale\(\):cleanUiScale\(S&&S\.uiScale\)/, 'applyUiScale honours it');
+  assert.match(indexSrc, /S\.uiScaleAuto=false;/, 'picking a step opts out');
+  assert.match(indexSrc, /f\.uiScaleAuto=f\.uiScaleAuto!==false;/, 'the load normaliser keeps the flag sane');
+  assert.match(indexSrc, /data-ui-scale-auto="1"/, 'the Display sheet offers an Auto button');
+  assert.match(indexSrc, /reapplyAutoUiScale\(\)/, 'and a move to another monitor re-reads the step');
   assert.match(indexSrc, /setUiScale\(/i, 'and wires them to the save');
   assert.match(uiCss, /html\[data-ui-scale\] :is\(#eclipseHeader,#dock,#sideRail/, 'the theme zooms the chrome');
   assert.match(uiCss, /zoom: var\(--ui-scale,1\)/, 'with zoom, so an anchored panel grows inward instead of off-screen');
   assert.ok(!/html\[data-ui-scale\][^{]*#view\b/.test(uiCss), 'the 3D field is never zoomed');
+});
+
+check('v469: a cleared raid rolls the 10% Raidbound pet, and the field drop never can', () => {
+  assert.match(src, /if \(typeof raidboundDrop === 'function'\)/, 'the clear block asks index.html for the roll');
+  assert.match(src, /raidboundDrop\(dng && dng\.id === 'thor' \? 'thor' : 'astral'\)/, 'and names the dungeon that was cleared');
+  assert.match(src, /try \{ raidboundPet = raidboundDrop/, 'a pet-layer failure can never break the clear');
+  assert.match(src, /raidboundPet: raidboundPet,/, 'the drop is reported in the clear rewards');
+  assert.match(src, /10% Raidbound pet/, 'and the result popup names it');
+  // Order matters: the pet is rolled with the card, after the rewards are handed out.
+  const clearBlock = src.slice(src.indexOf('var bossCardDrop = null;'), src.indexOf('function computeCommendations'));
+  assert.ok(clearBlock.indexOf('RAID_BOSS_CARDS') < clearBlock.indexOf('raidboundDrop('), 'the pet roll sits beside the card roll');
+  assert.ok(clearBlock.indexOf('raidboundDrop(') < clearBlock.indexOf('titleAwards'), 'and before the title roll');
+  // The pet layer itself: one 10% roll, per-dungeon pool, dormant until the art ships.
+  assert.match(indexSrc, /const RAIDBOUND_DROP=\.10;/, 'one 10% band, the same as the card and the title');
+  assert.match(indexSrc, /const petArtShipped=sp=>/, 'a species without a shipped atlas is gated out');
+  assert.match(indexSrc, /PETS\[i\]\.r===4&&PETS\[i\]\.raid===raidId&&petArtShipped/, 'the pool is that dungeon\'s five-tier species with art');
+  // No new message type and no alarm: the whole drop is local.
+  // No new message type, no socket traffic and no alarm: the whole drop is local.
+  assert.ok(!/raid_pet|raidbound_sync|raidbound_drop/.test(src), 'no new raid message type was invented');
+  assert.ok(!/setAlarm/.test(src), 'and no Durable Object alarm is involved');
+  assert.ok(/if \(raid\.mode === 'party'\)/.test(src), 'party sync is untouched by the pet roll');
 });
 
 g.close();

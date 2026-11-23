@@ -97,6 +97,8 @@ function block(marker){
 // v97 replaces exclusive tradeoffs; coexistence/expiry are exercised by skill_redesign_sim.js.
 const PET_SKILL_SRC = pick(/const PET_SKILLS=\[[\s\S]*?\n\];/, 'eight pet gacha skills');
 const PET_DATA_SRC = pick(/const PETS=\[[\s\S]*?\];/, 'Divine Pride pet sprite data');
+// v469: the three prices are per-rarity tables now, so the tables travel with the formulas.
+const PET_PRICE_SRC = pick(/const PET_STEP_X=\[[^\n]*/, 'pet price tables (v469)');
 const PET_SKILL_COST_SRC = pick(/petSkillCost=p=>[^,;]+/, 'pet skill gacha cost');
 const PET_TRAINING_SRC = pick(/const EGG=3000,GW=\[[^\]]*\],PT=\[[^\]]*\],PTG=\[[^\]]*\],GREAT=[^;]+;/, 'pet training odds');
 const PET_UPGRADE_DATA = pick(/const PEQ=\[[\s\S]*?\];/, 'Claw/Collar/Charm names');
@@ -239,6 +241,7 @@ t('the real pet skill gacha action charges Zeny, saves the roll and respects the
     let petBuff={atk:0,matk:0,hp:0,leech:0,atkT:0,matkT:0,hpT:0,leechT:0},petBuffSrc={},petNote={},mobs=[],pl={x:0,z:0};
     const numTxt=String,maxHp=()=>100,earnZeny=()=>{},hurt=()=>{},addFloat=()=>{},playSkillFx=()=>{};
     ${PET_HIT_SRC}
+    ${PET_PRICE_SRC}
     const ${PET_SKILL_COST_SRC};
     let S={zeny:5000,pets:[{id:7,sp:0,skills:[]}]},petSkillCd={7:4,'7|warcry':9},logRows=[],uiCount=0,saveCount=0;
     const gp=id=>S.pets.find(p=>String(p.id)===String(id)),log=(...x)=>logRows.push(x),ui=()=>uiCount++,save=()=>saveCount++;
@@ -259,6 +262,7 @@ t('the live pet upgrade handler applies its 40%/15% odds, cost and 5% double suc
   vm.runInContext(`
     ${PET_TRAINING_SRC}
     ${PET_UPGRADE_DATA}
+    ${PET_PRICE_SRC}
     const ${PET_UPGRADE_COST_SRC};
     const PETS=[{n:'Poring',r:0}];   // Common, so the Legendary x2 does not apply here
     const ${PET_UPGRADE_OF_SRC};

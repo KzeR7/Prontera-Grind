@@ -3575,6 +3575,15 @@
         }
       }
 
+      // 1b) 10% Raidbound pet drop (v469) - the same band as the card above, rolled once per clear.
+      // The pet data, the fold and the price tables all live in index.html, so the raid only asks for
+      // the roll for ITS dungeon (Astral Citadel / Thor Volcano) and never duplicates pet data here.
+      // Silently returns null until the five native atlases ship: client-side only, no DO traffic.
+      var raidboundPet = null;
+      if (typeof raidboundDrop === 'function') {
+        try { raidboundPet = raidboundDrop(dng && dng.id === 'thor' ? 'thor' : 'astral'); } catch (e) { raidboundPet = null; }
+      }
+
       // 2) 10% Exclusive Raid Title Drop (Astral Stormbringer [Purple] / Volcanic Overlord [Red])
       if (Math.random() < 0.10) {
         if (!Array.isArray(S.titleAwards)) S.titleAwards = [];
@@ -3619,6 +3628,7 @@
       echo: r.echo,
       bossCardDrop: bossCardDrop,
       titleDrop: titleDrop,
+      raidboundPet: raidboundPet,
       milestoneTitles: milestoneTitles
     };
   }
@@ -4626,6 +4636,14 @@
         '<div class="raid-loot-item rare-card">' +
           '<span class="raid-loot-icon">🃏</span>' +
           '<div class="raid-loot-meta"><b>' + escHtml(rew.bossCardDrop) + '</b><small>10% Raid Boss Accessory Card!</small></div>' +
+        '</div>'
+      );
+    }
+    if (rew.raidboundPet && rew.raidboundPet.name) {
+      lootTiles.push(
+        '<div class="raid-loot-item rare-card">' +
+          '<span class="raid-loot-icon">🐾</span>' +
+          '<div class="raid-loot-meta"><b>' + escHtml(rew.raidboundPet.name) + '</b><small>10% Raidbound pet' + (rew.raidboundPet.folded ? ' · folded into Bond' : '') + '!</small></div>' +
         '</div>'
       );
     }

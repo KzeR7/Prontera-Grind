@@ -1,10 +1,13 @@
-# Raidbound raid pets — proposal (not implemented)
+# Raidbound raid pets
 
-Status: design proposal for owner review. **No pet species, save field, sprite sheet or drop
-table has been changed by this document.** It supersedes
+Status **shipped in v469 (2026-11-22)**: the fifth tier, the prices, the five species, their fixed
+signatures and the raid drop roll are in `index.html` / `assets/raid.js`. The one thing still
+missing is **art**: none of the five native pet atlases is in `assets/pets/v1/` yet, and the drop
+path refuses any species whose atlas is not in the shipped catalog, so the roll is dormant — it
+turns itself on the moment the pet pack lands. It supersedes
 `docs/proposals/mythic-raid-pets.md` (v467), which is kept for the record.
 
-## What the owner decided (v468)
+## What the owner decided (v468–v469)
 
 | # | Decision | Answer in this document |
 | - | -------- | ----------------------- |
@@ -12,7 +15,7 @@ table has been changed by this document.** It supersedes
 | 2 | Drop rate | **10% per clear**, exactly the band the Raid Boss Card and the exclusive Raid Title already use. No first-clear bonus, no separate 1.5%/4% ladder. |
 | 3 | Signature skill | A **fixed passive**, one per species, the same shape as every other signature (`petPassive`). It is not rolled and cannot be swapped. |
 | 4 | Active skills | **Random, as today.** A Raidbound pet arrives with one rolled skill and rolls its second slot with the ordinary skill gacha. The six actives added in v468 are in that pool. |
-| 5 | Price | **A little more expensive than Legendary** — not a wall. Exact numbers in "Cost" below: ×1.5 on every Legendary price. |
+| 5 | Price | **Exactly ×2 Legendary** on all three sinks — mutation roll, skill gacha and the training/upgrade step. Numbers in "Cost" below. |
 
 ## What exists today (the ladder the new tier has to extend)
 
@@ -62,39 +65,71 @@ Measured against `tools/tests/pet_sim.js`: a maxed Legendary sits at **0.736×**
 rotation inside the 0.22–0.30× band. A 13% interval gain on the same numbers lands ≈0.83×, still
 far under the pinned ceiling, so no existing DPS budget moves.
 
-## Cost (owner: "a little more expensive", not a wall)
+## Cost (owner: **×2 Legendary**, exactly)
 
-Legendary prices are the baseline (they already carry the v90 ×2). Raidbound pays **×1.5 on top of
-Legendary**, which is +200% over an Epic and +50% over a Legendary:
+Legendary prices already carry the v90 doubling, so Raidbound is stated on top of them rather than
+inherited from the `1+r` ladder (which would make Raidbound *cheaper* than Legendary: 12,500 vs
+20,000). The shipped tables are literal ladders, one entry per rarity, so the lower rows cannot
+drift:
+
+```js
+PET_STEP_X  = [1, 1, 1, 2, 4]                                  // peqCostOf multiplies peqCost(t)
+PET_ROLL_X  = [2500, 5000, 7500, 20000, 40000]
+PET_GACHA_X = [2000, 4000, 6000, 16000, 32000]
+```
 
 | Price | Common (r0) | Rare (r1) | Epic (r2) | Legendary (r3) | **Raidbound (r4)** |
 | ----- | ----------- | --------- | --------- | -------------- | ------------------ |
-| Mutation roll `rollCost` | 2,500 | 5,000 | 7,500 | 20,000 | **30,000** |
-| Skill gacha `petSkillCost` | 2,000 | 4,000 | 6,000 | 16,000 | **24,000** |
-| Upgrade step 1 `peqCostOf(t=0)` | 1,200 | 1,200 | 1,200 | 2,400 | **3,600** |
-| Upgrade step 5 `peqCostOf(t=4)` | 30,000 | 30,000 | 30,000 | 60,000 | **90,000** |
-| Full 5-step ladder | 67,200 | 67,200 | 67,200 | 134,400 | **201,600** |
-
-Formula: `rollCost = 2500*(1+r)*2*1.5`, `petSkillCost = 2000*(1+r)*2*1.5`,
-`peqCostOf(t) = 1200*(t+1)²*2*1.5` for `r===4`. In code that is one more branch beside the existing
-`r===3?2:1`, so the Common→Legendary rows above cannot drift.
-
-Why ×1.5 and not the ladder's own `1+r`: the raw ladder would make Raidbound **cheaper** than a
-Legendary (12,500 vs 20,000), because Legendary already carries the doubling. The premium has to be
-stated, not inherited.
+| Mutation roll `rollCost` | 2,500 | 5,000 | 7,500 | 20,000 | **40,000** |
+| Skill gacha `petSkillCost` | 2,000 | 4,000 | 6,000 | 16,000 | **32,000** |
+| Upgrade step 1 `peqCostOf(t=0)` | 1,200 | 1,200 | 1,200 | 2,400 | **4,800** |
+| Upgrade step 5 `peqCostOf(t=4)` | 30,000 | 30,000 | 30,000 | 60,000 | **120,000** |
+| Full 5-step ladder (1,200·Σ(t+1)²) | 66,000 | 66,000 | 66,000 | 132,000 | **264,000** |
 
 ## The five candidates
 
 Each is a native RO monster sheet that has no pet atlas yet, chosen so the art reads at pet scale
 and the signature is a *raid* reading of an effect family `petPassive` already implements.
 
-| # | Pet | Source sheet | Signature passive (Bond 0 → Bond 5) | Rolled actives |
-| - | --- | ------------ | ------------------------------------ | -------------- |
-| 1 | **Abyssal Thanatos** | Memory of Thanatos (1708) | *Extinction Echo*: +6–12% damage to raid bosses and MVPs | random |
-| 2 | **Ifrit Ember** | Ifrit (1832) | *Primal Heat*: +5–10% ATK, 3% of your damage repeats as fire after 1s | random |
-| 3 | **Obsidian Warden** | Obsidian Golem (1833) | *Sanctum Bulwark*: 6–12% less damage taken inside a raid | random |
-| 4 | **Astral Seraph** | Retribution Angel (1831) | *Sanctum Grace*: revives return with +15–30% HP, 1s shorter cooldown | random |
-| 5 | **Void Whisper** | Death Whisperer (1837) | *Soul Tithe*: +5–10% MATK, each kill restores 1–2% max HP | random |
+Indices 20–24, in this order (the order is the save format — append only):
+
+| # | Pet (`PETS` index) | Sheet | Home raid | Signature passive (Bond 0 → Bond 5) | Suggested actives |
+| - | ------------------ | ----- | --------- | ------------------------------------ | ----------------- |
+| 20 | **Abyssal Thanatos** | Memory of Thanatos (1708) | Astral Citadel | **Extinction Echo** `[boss]` — +5% → +10% damage to MVPs and raid bosses, yours and your pets' | `piercingfang` + `soulrend` |
+| 21 | **Astral Seraph** | Retribution Angel (1831) | Astral Citadel | **Sanctum Grace** `[hp]` — +5% → +10% Max HP | `vital` + `arcane` |
+| 22 | **Ifrit Ember** | Ifrit (1832) | Thor Volcano | **Primal Heat** `[petdmg]` — +5% → +10% damage for every fighting pet | `flameburst` + `warcry` |
+| 23 | **Obsidian Warden** | Obsidian Golem (1833) | Thor Volcano | **Sanctum Bulwark** `[dr]` — 5% → 10% less damage taken | `guardingchirp` + `vital` |
+| 24 | **Void Whisper** | Death Whisperer (1837) | Thor Volcano | **Soul Tithe** `[exp]` — +5% → +10% EXP and Job EXP from kills | `spiritbolt` + `siphon` |
+
+Only the signature is fixed. The two active slots are still rolled — the panel's "Suggested
+pairing" line is a hint written for the species, not a grant, and the odds are untouched.
+
+### How to use each one
+
+- **Abyssal Thanatos — the boss killer.** `Extinction Echo` is the only Raidbound signature that
+  raises boss damage, and raid bosses are the one place it fires. Deploy it **only for a raid or an
+  MVP hunt**; on trash it is a blank slot. Pair it with `piercingfang` (armour-piercing single
+  target) and `soulrend`, and keep it on `on` for the whole clear — the passive is unconditional
+  while the raid is running.
+- **Astral Seraph — the survival pick.** `Sanctum Grace` is raw Max HP, so it is the pet you take
+  when the trouble is *getting one-shot*, not killing. Best on the Astral Citadel's later phases or
+  on any class that has no self-heal; `vital` stacks another Max HP roll on top and `arcane` adds
+  the magic damage a light-armour build is short of. Turn it on for progression attempts, off once
+  the fight is on farm and you want damage instead.
+- **Ifrit Ember — the pet-damage multiplier.** `Primal Heat` adds +5–10% to *every* fighting pet,
+  so its real value scales with how many pets you keep out. Deploy it as the **second and third
+  slot** of a multi-pet party (three pets on: it is worth up to 3× its own number), and pair it
+  with `flameburst`/`warcry` for an AoE + attack-buff rotation. It is the wrong choice for a solo
+  one-pet setup.
+- **Obsidian Warden — the tank's pet.** `Sanctum Bulwark` is flat damage reduction, which matters
+  most against fast-hitting raid bosses and least against trash. Use it on melee/frontline classes
+  that already stack DEF (percentage reduction on a high-DEF build is the largest effective-HP
+  gain), with `guardingchirp` + `vital` to push the same direction; swap it out for Ifrit Ember
+  once a fight is safe.
+- **Void Whisper — the levelling pet, not the raid pet.** `Soul Tithe` is EXP/Job EXP, so it pays
+  out in **dense trash farming and alts**, and does nothing on a boss kill. Deploy it whenever the
+  goal is levels or Job points (Field stages, grind maps) and park it during raids; `spiritbolt` +
+  `siphon` keeps a magic class alive while it soaks EXP.
 
 Design notes:
 
@@ -117,12 +152,13 @@ Design notes:
 | Panel band + compendium rows | small |
 | Tests (`pet_sim`, `pet_sprites_sim`, `raid_sim`, `save_load_sim`) | extend existing suites |
 
-Blocked on: **art**. The pinned renderer and the original ACT/SPR sources are not reachable from
-this environment (only npm/PyPI/GitHub are), so the five sheets have to be produced by the normal
-pet-pack run before any of the code above can ship.
+Blocked on: **art only**. The pinned renderer and the original ACT/SPR sources are not reachable
+from this environment (only npm/PyPI/GitHub are), so the five sheets have to come from the normal
+pet-pack run. Every line of code above is already shipped; `petArtShipped()` gates the drop on the
+catalog, so the tier goes live the moment `assets/pets/v1/thumb-<spriteId>.png` and its atlas exist
+and `assets/pet-catalog.json` lists them.
 
-## Open questions for the owner
+## Open questions
 
-1. Approve the five species, or swap any of them.
-2. Confirm the ×1.5 premium (mutation 30,000z / gacha 24,000z / full ladder 201,600z).
-3. Confirm the drop is rolled **per clear** (as the card and title are), not per boss kill.
+1. Art: run the pet pack for the five sheets, or swap a species before it is cut.
+2. Nothing else is open — species, price (×2) and the per-clear drop were decided in v469.

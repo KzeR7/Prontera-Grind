@@ -52,6 +52,7 @@ const code = [
   grab('const G=(w,a,h,o,l,ac,ac2)=>', 'const pw=()=>'),
   grab('function genGear(T,l,sec,boss,tier,sourceMap=S?.mp??0,sourceStage=S?.lvl??1){', '// ---------- skill effects'),
   grab('const PETS=[', 'const rollingSet=new Set'),      // roster, traits, bond ladder, PEQ, the 12 skills, petDmg/petHit
+  pick(/const rollingSet=new Set\(\),autoSet=new Set\(\),PW=\[[^\n]*/, 'PW (field drop weights)'),
   grab('function petFold(own,inc){', 'function petDetail(p){'),   // v75 folding
   pick(/const PET_SKILL_WEIGHTS=\[[^\n]*/, 'rollPetSkills'),
   pick(/const PET_ANIMATION_RATE=[^;]+;/, 'pet animation rate'),
@@ -69,7 +70,13 @@ const rnd=(a,b)=>a+__r()*(b-a),ri=(a,b)=>Math.floor(rnd(a,b+1)),uid=()=>1;
 const pickW=w=>{let r=Math.random()*w.reduce((x,y)=>x+y,0);for(let i=0;i<w.length;i++){r-=w[i];if(r<0)return i}return w.length-1};
 const ascStat=()=>0,ascRank=()=>0,ascSkillValue=()=>0,skillState=()=>({buffs:{}});
 let t=0,S=null,tb={},petBuff={atk:0,matk:0,hp:0,leech:0,atkT:0,matkT:0,hpT:0,leechT:0},petBuffSrc={},petSkillCd={},petNote={},mobs=[],pl={x:1.5,z:1.5};
-const numTxt=String,addFloat=()=>{},playSkillFx=()=>{},log=()=>{},earnZeny=()=>{},collDmg=()=>0;
+const numTxt=String,addFloat=()=>{},playSkillFx=()=>{},log=()=>{},earnZeny=()=>{},collDmg=()=>0,save=()=>{};
+// The Raidbound drop reads the shipped pet catalog through petSpriteStore. The harness has no
+// THREE, so it holds a stub the test can point at a catalog with or without the five new sheets.
+let petSpriteStore=null;
+const stubPetArt=on=>{petSpriteStore=on?{catalog:{species:{1708:1,1831:1,1832:1,1833:1,1837:1}}}:null};
+// The vm sandbox has its own Math, so the dice have to be forced from inside it.
+const __realRandom=Math.random,setRng=v=>{Math.random=v==null?__realRandom:()=>v};
 let dealt=0;const hurt=(o,d)=>{dealt+=d;o.hp=1e12};
 // The REAL countdown the game runs every frame, lifted so the stepped simulation ticks exactly
 // like the live loop does.
@@ -81,6 +88,7 @@ this.__p={ PETS,PET_SKILLS,RN,RCL,MUT,GW,PT,PTG,GREAT,PEQ,EGG,PETGAP,PETBAL,petD
   rollPetSkills,petSkills,petBuffWhy,petLeech,petHit,tickPet,maxHp,
   MAPS,genGear,atk,matk,aspd,crit,critD,C,CLASSES,HPK,HPE,SKILLS,SKSLOTS,SKFADE,lineOf,st,pv,
   petBuff,petBuffSrc,PET_SKILL_WEIGHTS,setMobs:m=>{mobs=m},setDealt:v=>{dealt=v},getDealt:()=>dealt,
+  raidboundDrop,raidboundPool,petArtShipped,stubPetArt,setRng,RAIDBOUND_DROP,PW,RN,RCL,PEQ,
   PETBOND,PET_TRAIT,PET_RECOMMENDED,PET_ANIMATION_RATE,PET_FRAME_FLOOR_MS,PET_ATTACK_FRAME_MS,PET_ATTACK_MIN_S,PET_ATTACK_MAX_S,petFrameTime,bondCnt,bondRank,bondNext,traitVal,petPassive,petBonusList,petFold,foldDupPets,
   setRandom:v=>{Math.random=()=>v},
   resetPetState:()=>{for(const k in petSkillCd)delete petSkillCd[k];for(const k in petNote)delete petNote[k];
@@ -102,11 +110,17 @@ t('original saved species IDs remain intact and every recommendation uses two va
  for(const pair of P.PET_RECOMMENDED){assert.strictEqual(new Set(pair).size,2);assert.ok(pair.every(id=>P.PET_SKILLS.some(s=>s.id===id)))}
 });
 // ---------------------------------------------------------------- the data
-t('the roster is 20 pets, five at each of the four rarities', () => {
-  assert.strictEqual(P.PETS.length, 20);
-  assert.deepStrictEqual([...new Set(P.PETS.map(p => p.r))], [0, 1, 2, 3]);
-  [0, 1, 2, 3].forEach(r => assert.strictEqual(P.PETS.filter(p => p.r === r).length, 5, 'rarity ' + r + ' must hold five pets'));
-  assert.strictEqual(new Set(P.PETS.map(p => p.spriteId)).size, 20, 'every pet has its own Divine Pride id');
+t('the roster is 25 pets, five at each of the five rarities (v469 adds Raidbound)', () => {
+  assert.strictEqual(P.PETS.length, 25);
+  assert.deepStrictEqual([...new Set(P.PETS.map(p => p.r))], [0, 1, 2, 3, 4]);
+  [0, 1, 2, 3, 4].forEach(r => assert.strictEqual(P.PETS.filter(p => p.r === r).length, 5, 'rarity ' + r + ' must hold five pets'));
+  assert.strictEqual(new Set(P.PETS.map(p => p.spriteId)).size, 25, 'every pet has its own Divine Pride id');
+  // v469: the five Raidbound species are appended after Eddga - every stored index 0-19 is untouched,
+  // and each names the dungeon that owns it.
+  assert.deepStrictEqual(Array.from(P.PETS.slice(20), p => p.spriteId), [1708, 1831, 1832, 1833, 1837], 'the native sheets in order');
+  assert.deepStrictEqual(Array.from(P.PETS.slice(20), p => p.raid), ['astral', 'astral', 'thor', 'thor', 'thor'], 'two Astral, three Thor');
+  assert.strictEqual(P.RN[4], 'Raidbound', 'the tier is called Raidbound');
+  assert.strictEqual(P.RCL[4], 5, 'and logs in the band above Legendary');
 });
 
 t('the gacha has eighteen skills: 4 buffs, 5 AoE, 5 single-target and 4 utility (v468)', () => {
@@ -332,7 +346,24 @@ t('Blood Siphon heals you for 0.5% of what the pet deals; Vital Aura moves the H
 
 t('every species has ONE signature passive, 5% at Bond 0 and 10% at Bond 5 (v75)', () => {
   // The owner's instruction: passives yes, "tune it down hard. i dont want any buff go above 10%".
-  assert.strictEqual(P.PET_TRAIT.length, 20, 'one trait per species');
+  assert.strictEqual(P.PET_TRAIT.length, P.PETS.length, 'one trait per species');
+  // v469: every Raidbound signature is a fixed passive that reads a family petPassive already sums,
+  // so a new tier cannot invent a stat hook.
+  // Species order 20-24 is Thanatos, Seraph, Ifrit, Warden, Whisper: the signature is pinned by NAME
+  // as well as by key, so a re-order of either table fails here instead of silently handing a pet
+  // the wrong signature.
+  const RAIDBOUND_SIG = [['Abyssal Thanatos', 'Extinction Echo', 'boss'],
+                         ['Astral Seraph', 'Sanctum Grace', 'hp'],
+                         ['Ifrit Ember', 'Primal Heat', 'petdmg'],
+                         ['Obsidian Warden', 'Sanctum Bulwark', 'dr'],
+                         ['Void Whisper', 'Soul Tithe', 'exp']];
+  RAIDBOUND_SIG.forEach(([pet, name, key], i) => {
+    const t = P.PET_TRAIT[20 + i];
+    assert.strictEqual(P.PETS[20 + i].n, pet, 'species ' + (20 + i) + ' is ' + pet);
+    assert.strictEqual(t.n, name, pet + ' carries ' + name);
+    assert.deepStrictEqual(Array.from(t.k), [key], name + ' must use ' + key);
+    assert.ok(/\+?\d|%/.test(t.d(10)), 'and it must describe itself');
+  });
   assert.ok(P.PET_TRAIT.every(t => t.n && typeof t.d === 'function' && t.k.length >= 1), 'every trait is named, described and keyed');
   const keys = P.PET_TRAIT.flatMap(t => t.k);
   assert.deepStrictEqual([...new Set(keys)].sort(),
@@ -513,7 +544,19 @@ t('roster and costs are visible data (for the Pets panel and the notes)', () => 
   const line = P.PETS.map((p, i) => p.n + ' (' + P.RN[p.r] + ', ' + P.rollCost({ sp: i }) + 'z per mutation roll)').join(' | ');
   console.log('       ' + line);
   console.log('       maxing one stat: ' + JSON.stringify(P.PT) + ' at ' + P.PTG.map(x => Math.round(x * 100) + '%').join('/') + ' per roll, ' + P.peqCost(0) + '-' + P.peqCost(4) + 'z per roll');
-  P.PETS.forEach((p, i) => assert.ok(P.rollCost({ sp: i }) === 2500 * (1 + p.r) * (p.r === 3 ? 2 : 1), 'mutation roll price'));
+  P.PETS.forEach((p, i) => assert.ok(P.rollCost({ sp: i }) === [2500, 5000, 7500, 20000, 40000][p.r], 'mutation roll price'));
+  // v469 (owner): Raidbound pays exactly DOUBLE a Legendary on the mutation roll, the skill gacha and
+  // every upgrade step.
+  const rb = 20, legend = 7;
+  assert.strictEqual(P.rollCost({ sp: rb }), 40000, 'Raidbound mutation roll is 40,000z');
+  assert.strictEqual(P.rollCost({ sp: rb }), 2 * P.rollCost({ sp: legend }), 'exactly double a Legendary');
+  assert.strictEqual(P.petSkillCost({ sp: rb }), 32000, 'Raidbound skill gacha is 32,000z');
+  assert.strictEqual(P.petSkillCost({ sp: rb }), 2 * P.petSkillCost({ sp: legend }), 'exactly double a Legendary');
+  [0, 1, 2, 3, 4].forEach(t => {
+    assert.strictEqual(P.peqCostOf({ sp: rb }, t), 4 * P.peqCost(t), 'Raidbound upgrade step ' + (t + 1) + ' is x4 the ladder');
+    assert.strictEqual(P.peqCostOf({ sp: rb }, t), 2 * P.peqCostOf({ sp: legend }, t), 'exactly double a Legendary');
+  });
+  assert.strictEqual(P.peqCostOf({ sp: rb }, 4), 120000, 'top Raidbound upgrade step is 120,000z');
 });
 
 t('Legendary pets cost twice as much on every pet price (v90), and nothing else moves', () => {
@@ -557,6 +600,42 @@ t('pet walk/attack pace sits between the old player-scaled anim and the v135 cra
   assert.ok(shown < 3.4, 'and never repeats the v135 3.4s attack stretch');
   const short = Math.min(P.PET_ATTACK_MAX_S, Math.max(P.PET_ATTACK_MIN_S, 4 * P.PET_ATTACK_FRAME_MS, 15 / 1000 / P.PET_ANIMATION_RATE));
   assert.ok(short >= P.PET_ATTACK_MIN_S && short <= .6, 'a 4-frame attack still reads at ' + short.toFixed(2) + 's');
+});
+
+t('Raidbound drops: one 10% roll per clear, per dungeon, dormant until the art ships (v469)', () => {
+  assert.strictEqual(P.RAIDBOUND_DROP, .10, 'the same 10% band as the Raid Boss Card and the Raid Title');
+  // The field drop can never hand out a fifth-tier pet: every map's weight row still has four entries,
+  // so pickW() can only return rarity 0-3.
+  assert.ok(P.PW.every(w => w.length === 4), 'field drops roll the four original rarities only');
+  // Art gate: with no catalog for the five sheets nothing rolls, even when the dice are forced.
+  P.stubPetArt(false);
+  assert.deepStrictEqual(Array.from(P.raidboundPool('astral')), [], 'no art -> no Astral pool');
+  assert.deepStrictEqual(Array.from(P.raidboundPool('thor')), [], 'no art -> no Thor pool');
+  P.setRng(0);                                 // would always pass a 10% gate
+  P.S = { pets: [], bond: {} };
+  assert.strictEqual(P.raidboundDrop('astral'), null, 'a species with no atlas can never be granted');
+  assert.strictEqual(P.S.pets.length, 0);
+  // With the catalog in place each dungeon rolls only its own species.
+  P.stubPetArt(true);
+  assert.deepStrictEqual(Array.from(P.raidboundPool('astral')), [20, 21], 'Astral Citadel: Thanatos, Seraph');
+  assert.deepStrictEqual(Array.from(P.raidboundPool('thor')), [22, 23, 24], 'Thor Volcano: Ifrit, Warden, Void Whisper');
+  P.S = { pets: [], bond: {} };
+  const got = P.raidboundDrop('astral');
+  assert.ok(got && got.sp === 20, 'a forced roll grants the first Astral species');
+  assert.strictEqual(P.S.pets.length, 1, 'and the pet is in the save');
+  assert.ok(P.S.pets[0].skills.length === 1, 'with one rolled skill, like every other drop');
+  assert.ok(P.PET_SKILLS.some(s => s.id === P.S.pets[0].skills[0]), 'that is a real gacha skill');
+  // A second copy of the same species folds into Bond instead of stacking.
+  const again = P.raidboundDrop('astral');
+  assert.ok(again && again.folded, 'the duplicate is folded');
+  assert.strictEqual(P.S.pets.length, 1, 'one pet per species');
+  // The gate itself is honest: 0.5 must miss.
+  P.setRng(.5);
+  P.S = { pets: [], bond: {} };
+  assert.strictEqual(P.raidboundDrop('thor'), null, '0.5 is not a 10% roll');
+  assert.strictEqual(P.S.pets.length, 0);
+  P.setRng(null);
+  P.stubPetArt(false);
 });
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');

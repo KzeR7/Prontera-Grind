@@ -916,15 +916,15 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="preload" href="assets/ui/fonts/font-5.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-6.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-7.ttf" as="font" type="font/ttf" crossorigin>
-<link rel="stylesheet" href="assets/ui/eclipse.css?v=468">
-<link rel="stylesheet" href="assets/ui/mobile.css?v=468">
-<link rel="stylesheet" href="assets/ui/mastery-titles.css?v=468">
+<link rel="stylesheet" href="assets/ui/eclipse.css?v=469">
+<link rel="stylesheet" href="assets/ui/mobile.css?v=469">
+<link rel="stylesheet" href="assets/ui/mastery-titles.css?v=469">
 <script src="assets/ui/mobile.js?v=274"></script>
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
-<link rel="stylesheet" href="assets/social.css?v=468">
-<link rel="stylesheet" href="assets/raid.css?v=468">
+<link rel="stylesheet" href="assets/social.css?v=469">
+<link rel="stylesheet" href="assets/raid.css?v=469">
 <link rel="stylesheet" href="assets/social-battle.css?v=393">
-  <link rel="stylesheet" href="assets/social-fishing.css?v=468"><link rel="stylesheet" href="assets/friends.css?v=273">
+  <link rel="stylesheet" href="assets/social-fishing.css?v=469"><link rel="stylesheet" href="assets/friends.css?v=273">
 <link rel="stylesheet" href="assets/adventure-guide.css?v=450">
 </head>
 <body>
@@ -1055,10 +1055,10 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <div id="tooltip"></div>
 <link rel="stylesheet" href="assets/wardrobe.css?v=138">
 <link rel="stylesheet" href="assets/shop.css?v=318">
-<script src="assets/wardrobe.js?v=468"></script>
+<script src="assets/wardrobe.js?v=469"></script>
 <script src="assets/shop-catalog.js?v=321"></script>
 <script src="assets/fourth-jobs.js?v=179"></script>
-<script src="assets/expanded-jobs.js?v=468"></script>
+<script src="assets/expanded-jobs.js?v=469"></script>
 <script src="assets/ascension.js?v=156"></script>
 <script src="assets/native-mob-heights.js?v=153"></script>
 <script src="assets/native-fields.js?v=197"></script>
@@ -1066,13 +1066,13 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <script src="assets/skill-icons.js?v=130"></script>
 <script src="assets/skill-icons-extra.js?v=207"></script>
 <script src="assets/skill-icons-expanded.js?v=450"></script>
-<script src="assets/mastery-titles.js?v=468"></script>
+<script src="assets/mastery-titles.js?v=469"></script>
 <script src="assets/player-buffs.js?v=450"></script>
 <script src="assets/skill-materials.js?v=220"></script>
 <script src="assets/afterglow-animations.js?v=151"></script>
 <script src="assets/skill-overdrive.js?v=220"></script>
 <script src="assets/ro-fx/index.js?v=414"></script>
-<script src="assets/signature-fx.js?v=450"></script>
+<script src="assets/signature-fx.js?v=469"></script>
 <script src="assets/spirit-spheres.js?v=450"></script>
 <script src="assets/expanded-fx/ninja-throw-fx.js?v=450"></script>
 <script src="assets/expanded-fx/expanded-fx-batch.js?v=450"></script>
@@ -1084,11 +1084,11 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <script src="assets/expanded-fx/approved.js?v=450"></script>
 <script src="assets/skill-afterglow.js?v=450"></script>
 <script src="assets/boss-fx.js?v=249"></script>
-<script src="assets/raid.js?v=468"></script>
+<script src="assets/raid.js?v=469"></script>
 <script src="assets/pets.js?v=130"></script>
 <script src="assets/bgm-tracks.js?v=206"></script>
 <script src="assets/bgm.js?v=207"></script>
-<script src="assets/combat-audio.js?v=468"></script>
+<script src="assets/combat-audio.js?v=469"></script>
 <script src="assets/class_skins_data.js?v=2"></script>
 <script src="assets/weapon_joints_data.js?v=2"></script>
 <script src="assets/weapons_data.js?v=2"></script>
@@ -1359,7 +1359,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-22 haven-v468 Pet pacing, six more pet actives, Raidbound spec and 2x raid monsters';
+const BUILD='2026-11-22 haven-v469 Raidbound pets, 2x prices, bigger Asura Strike';
 // v364: this write used to sit AFTER the `//` on the BUILD line, so it was part of the comment and
 // never ran - the login card showed an empty #buildTag and there was no way to confirm which file
 // the browser had loaded. It also has to survive the script running before the login card exists.
@@ -3537,7 +3537,10 @@ function startAsuraLeap(target){
   if(Math.hypot(x-pl.x,z-pl.z)<.25)return;
   asuraLeap={x0:pl.x,z0:pl.z,x1:x,z1:z,elapsed:0,duration:.48};
 }
-function asuraLeapHeight(){if(!asuraLeap)return 0;const u=Math.max(0,Math.min(1,asuraLeap.elapsed/asuraLeap.duration));return Math.sin(Math.PI*u)*1.35;}
+// v469 (owner: the Asura finisher was being overshadowed): the arc is taller so the leap reads as a
+// leap, not a shuffle. The dash itself - 3.2 units over 0.48s, and therefore the reach, the hit and
+// the retreat - is untouched; only the height the hero is drawn at changed (1.35 -> 1.62).
+function asuraLeapHeight(){if(!asuraLeap)return 0;const u=Math.max(0,Math.min(1,asuraLeap.elapsed/asuraLeap.duration));return Math.sin(Math.PI*u)*1.62;}
 function tickAsuraLeap(dt){if(!asuraLeap)return false;asuraLeap.elapsed=Math.min(asuraLeap.duration,asuraLeap.elapsed+dt);
   const u=Math.max(0,Math.min(1,asuraLeap.elapsed/asuraLeap.duration)),ease=u*u*(3-2*u);
   pl.x=asuraLeap.x0+(asuraLeap.x1-asuraLeap.x0)*ease;pl.z=asuraLeap.z0+(asuraLeap.z1-asuraLeap.z0)*ease;
@@ -3554,10 +3557,25 @@ const PETS=[{n:'Poring',spriteId:1002,r:0,c:0xff9db8},{n:'Lunatic',spriteId:1063
   {n:'Drops',spriteId:1113,r:0,c:0xffc06a},{n:'Poporing',spriteId:1031,r:0,c:0x90d477},{n:'Fabre',spriteId:1007,r:0,c:0x8ac366},
   {n:'Smokie',spriteId:1056,r:1,c:0x9a8677},{n:'Yoyo',spriteId:1057,r:1,c:0xc39b68},{n:'Spore',spriteId:1014,r:1,c:0xe2a17f},
   {n:'Sohee',spriteId:1170,r:2,c:0xb0c7e3},{n:'Deviruchi',spriteId:1109,r:2,c:0x8567ab},{n:'Nine Tail',spriteId:1180,r:2,c:0xe7ad65},
-  {n:'Deviling',spriteId:1582,r:3,c:0x8360b2},{n:'Ghostring',spriteId:1120,r:3,c:0xccdae3},{n:'Eddga',spriteId:1115,r:3,c:0xcc974f}];
+  {n:'Deviling',spriteId:1582,r:3,c:0x8360b2},{n:'Ghostring',spriteId:1120,r:3,c:0xccdae3},{n:'Eddga',spriteId:1115,r:3,c:0xcc974f},
+  // v469 (owner): the Raidbound tier. Appended after Eddga so every stored index 0-19 is unchanged.
+  // `raid` says which dungeon owns the species (the same map its native sheet comes from), and the
+  // drop path refuses any species whose native atlas is not in the shipped catalog yet - so these
+  // five stay dormant until the art pack lands and then go live with no code change.
+  {n:'Abyssal Thanatos',spriteId:1708,r:4,c:0x9a6bff,raid:'astral'},
+  {n:'Astral Seraph',spriteId:1831,r:4,c:0xffe9a8,raid:'astral'},
+  {n:'Ifrit Ember',spriteId:1832,r:4,c:0xff7a3a,raid:'thor'},
+  {n:'Obsidian Warden',spriteId:1833,r:4,c:0x8f97a8,raid:'thor'},
+  {n:'Void Whisper',spriteId:1837,r:4,c:0x6ad3ff,raid:'thor'}];
 const petSpecies=sp=>PETS[Number.isInteger(+sp)&&PETS[+sp]?+sp:0];
-const petIcon=(sp,small=false)=>{sp=sp||PETS[0];return `<img class="pet-icon${small?' small':''}" src="assets/pets/v1/thumb-${sp.spriteId}.png" alt="${sp.n}" loading="lazy" decoding="async">`};
-const RN=['Common','Rare','Epic','Legendary'],RCL=[0,2,3,4],MUT=[1,2,4,6,8,18,38],MC=[0,0x6cd36c,0x4aa3ff,0xb05cff,0xffb020,0xff4d4d,0xffffff];
+// v469: a Raidbound species whose native atlas has not been cut yet must not render a broken tile.
+// The thumb is still the primary source; if it is missing the browser falls back to the official
+// one-facing monster PNG for the same ID (the art the map already uses), never to invented pixels.
+const petIcon=(sp,small=false)=>{sp=sp||PETS[0];const fb=mobSpriteUrl(sp.spriteId);
+  return `<img class="pet-icon${small?' small':''}" src="assets/pets/v1/thumb-${sp.spriteId}.png" alt="${sp.n}" loading="lazy" decoding="async"${fb?` data-fallback="${fb}" onerror="if(this.dataset.fallback){this.onerror=null;this.src=this.dataset.fallback}"`:''}>`};
+// v469: a fifth rarity, Raidbound. It is appended (index 4) so no existing rarity value moves;
+// RCL[4]=5 is the log colour band above Legendary's r4.
+const RN=['Common','Rare','Epic','Legendary','Raidbound'],RCL=[0,2,3,4,5],MUT=[1,2,4,6,8,18,38],MC=[0,0x6cd36c,0x4aa3ff,0xb05cff,0xffb020,0xff4d4d,0xffffff];
 // Pets are found, never hatched: they only ever come from monster drops (0.3% per kill,
 // 5% from a boss). EGG survives as the price anchor for release refunds and for the Zeny
 // a full collection is paid instead of a drop.
@@ -3593,7 +3611,16 @@ const PET_TRAIT=[
   {n:'Fox Fortune', k:['gear'], d:v=>`+${v}% equipment drop chance`},
   {n:'Dark Rally', k:['petdmg'], d:v=>`+${v}% damage for every fighting pet`},
   {n:'Spectral Veil', k:['dr'], d:v=>`${v}% less damage taken`},
-  {n:'Tiger Challenge', k:['boss'], d:v=>`+${v}% damage to MVPs, yours and your pets'`}];
+  {n:'Tiger Challenge', k:['boss'], d:v=>`+${v}% damage to MVPs, yours and your pets'`},
+  // v469 Raidbound signatures. Each is a FIXED passive (never rolled, never swapped) and reads one
+  // of the effect families petPassive already sums - boss, petdmg, dr, hp, exp - so a new tier
+  // cannot invent a stat hook or a stronger ceiling. 5% at Bond 0, 10% at Bond 5, like every pet.
+  // Order must match PETS indices 20-24: Thanatos, Seraph, Ifrit, Warden, Whisper.
+  {n:'Extinction Echo', k:['boss'],   d:v=>`+${v}% damage to MVPs and raid bosses, yours and your pets'`},
+  {n:'Sanctum Grace',   k:['hp'],     d:v=>`+${v}% Max HP`},
+  {n:'Primal Heat',     k:['petdmg'], d:v=>`+${v}% damage for every fighting pet`},
+  {n:'Sanctum Bulwark', k:['dr'],     d:v=>`${v}% less damage taken`},
+  {n:'Soul Tithe',      k:['exp'],    d:v=>`+${v}% EXP and Job EXP from kills`}];
 // Suggestions use existing random skill rolls; they do not grant skills or change odds.
 const PET_RECOMMENDED=[
  ['treasuresniff','warmnuzzle'],['vital','tailwag'],['warcry','piercingfang'],['treasuresniff','piercingfang'],
@@ -3601,7 +3628,9 @@ const PET_RECOMMENDED=[
  ['treasuresniff','tailwag'],['vital','warmnuzzle'],['guardingchirp','warmnuzzle'],
  ['treasuresniff','tailwag'],['treasuresniff','piercingfang'],['vital','guardingchirp'],
  ['arcane','spiritbolt'],['piercingfang','siphon'],['flameburst','warcry'],
- ['arcane','spiritbolt'],['vital','spiritbolt'],['warcry','flameburst']];
+ ['arcane','spiritbolt'],['vital','spiritbolt'],['warcry','flameburst'],
+ // v469 Raidbound suggestions (two existing random rolls, nothing granted):
+ ['piercingfang','soulrend'],['vital','arcane'],['flameburst','warcry'],['guardingchirp','vital'],['spiritbolt','siphon']];
 let petPreviewStance='idle';
 const bondCnt=sp=>Math.max(0,Math.min(999,Number((S&&S.bond&&S.bond[sp])||0)));
 // Bond 0..5: 0 at none, 1 after the first folded duplicate, 5 after fifteen of them.
@@ -3656,13 +3685,48 @@ const PET_SKILLS=[
   {id:'soulrend',n:'Soul Rend',kind:'single',power:2.0,cd:12,desc:'Single target: 2.00× pet damage',vfx:'spiral',color:'#ffe28a',icon:'🩻'},
   {id:'galehowl',n:'Gale Howl',kind:'aoe',power:1.35,radius:4,cd:18,desc:'AoE: 1.35× pet damage to enemies within 4 units, longest pet active cooldown',vfx:'frenzy',color:'#8ef4c6',icon:'🌀'}
 ];
-const petDmg=p=>Math.round(atk()*PETBAL*(typeof skillTuning==='function'?skillTuning('companion'):1)*[.2,.32,.55,1][PETS[p.sp].r]*MUT[p.mut]*(1+p.eq[0]*.10)*(1+petPassive('petdmg')/100)),petInt=p=>Math.max(.4,1.7-PETS[p.sp].r*.15)/(1+p.eq[1]*.07);
+const petDmg=p=>Math.round(atk()*PETBAL*(typeof skillTuning==='function'?skillTuning('companion'):1)*[.2,.32,.55,1,1][PETS[p.sp].r]*MUT[p.mut]*(1+p.eq[0]*.10)*(1+petPassive('petdmg')/100)),petInt=p=>Math.max(.4,1.7-PETS[p.sp].r*.15)/(1+p.eq[1]*.07);
 // v90 (owner): every Legendary pet (r===3) costs twice as much - a mutation roll, a skill gacha and an upgrade step.
-const peqCost=t=>1200*(t+1)*(t+1),peqCostOf=(p,t)=>peqCost(t)*(PETS[p.sp].r===3?2:1),rollCost=p=>2500*(1+PETS[p.sp].r)*(PETS[p.sp].r===3?2:1),petSkillCost=p=>2000*(1+PETS[p.sp].r)*(PETS[p.sp].r===3?2:1);
+// v469 (owner: "double the raidbound pet cost for mutation, skill reroll and weapon gacha compared
+// to legendary"): the three prices are now explicit per-rarity tables instead of a doubled ladder,
+// because the ladder's own (1+r) would have made a fifth tier cheaper than a fourth. Legendary
+// keeps its v90 x2; Raidbound pays exactly double a Legendary on all three.
+//   mutation roll   2,500 / 5,000 / 7,500 / 20,000 / 40,000
+//   skill gacha     2,000 / 4,000 / 6,000 / 16,000 / 32,000
+//   upgrade step    x1 / x1 / x1 / x2 / x4 of peqCost(t)   (4,800 -> 120,000 at Raidbound)
+const PET_STEP_X=[1,1,1,2,4],PET_ROLL_X=[2500,5000,7500,20000,40000],PET_GACHA_X=[2000,4000,6000,16000,32000];
+const peqCost=t=>1200*(t+1)*(t+1),peqCostOf=(p,t)=>peqCost(t)*PET_STEP_X[PETS[p.sp].r],rollCost=p=>PET_ROLL_X[PETS[p.sp].r],petSkillCost=p=>PET_GACHA_X[PETS[p.sp].r];
 const petSkills=p=>((p.skills)||[]).map(id=>PET_SKILLS.find(s=>s.id===id)).filter(Boolean);
 // Per-skill cooldowns live in the same map as the 7s gate, keyed petId|skillId. A pet that
 // rerolls or is released must not leave those timers behind.
 const clearPetCd=id=>{for(const k in petSkillCd)if(k===String(id)||k.indexOf(id+'|')===0)delete petSkillCd[k]};
+// ---- Raidbound drop (v469, owner) -------------------------------------------------------------
+// One 10% roll per CLEARED raid, the same band the Raid Boss Card and the exclusive Raid Title use,
+// rolled only for the dungeon that owns the species. Client-side loot: no DO message, no alarm and
+// no extra socket traffic - the raid file just asks index.html for the roll.
+// Gated on the shipped catalog: a Raidbound species whose native atlas is not in assets/pets/v1 yet
+// cannot be rolled, so a save can never hold a pet the client cannot draw. The moment the art pack
+// lands (catalog.json gains the five sprite ids) the roll starts working with no code change.
+const RAIDBOUND_DROP=.10;
+const petArtShipped=sp=>{const st=typeof petSpriteStore!=='undefined'?petSpriteStore:null,c=st&&st.catalog;return !!(c&&c.species&&c.species[sp.spriteId])};
+const raidboundPool=raidId=>PETS.map((sp,i)=>i).filter(i=>PETS[i].r===4&&PETS[i].raid===raidId&&petArtShipped(PETS[i]));
+function raidboundDrop(raidId){
+  if(!S||!Array.isArray(S.pets))return null;
+  const pool=raidboundPool(raidId==='thor'?'thor':'astral');
+  if(!pool.length)return null;                       // art not shipped yet: nothing to roll
+  if(Math.random()>=RAIDBOUND_DROP)return null;
+  const sp=pool[ri(0,pool.length-1)],meta=PETS[sp],gift=PET_SKILLS[pickW(PET_SKILL_WEIGHTS)];
+  const own=S.pets.find(x=>x.sp===sp);
+  if(own){const before=bondRank(sp);petFold(own,{sp,mut:0,eq:[0,0,0],skills:[gift.id]});
+    const after=bondRank(sp),T=PET_TRAIT[sp];
+    log(`A second ${meta.n} answered the clear and folded in: Bond ${before} -> ${after}/5, so ${T.n} is now ${T.d(traitVal(sp))}.`,'r5','pet');
+    addFloat(pl.x,3.6,pl.z,'PET! '+meta.n,'#ffb27a',true);
+    save();return {name:meta.n,sp,folded:true}}
+  if(S.pets.length>=40){const z=Math.floor(EGG*2);earnZeny(z);log(`A ${meta.n} answered the clear, but your pet collection is full (+${z}z).`,'','pet,zeny');return null}
+  S.pets.push({id:ri(1e6,9e6),sp,mut:0,eq:[0,0,0],skills:[gift.id],on:S.pets.filter(x=>x.on).length<3});
+  log(`⚔ RAIDBOUND PET DROP! ${meta.n} answered the clear with ${gift.n} - ${PET_TRAIT[sp].n} ${PET_TRAIT[sp].d(traitVal(sp))} while it fights.`,'r5','pet,raid');
+  addFloat(pl.x,3.8,pl.z,'⚔ '+meta.n+'!','#ffb27a',true);
+  save();return {name:meta.n,sp,folded:false}}
 // Why this buff cannot be cast right now ('' = it can). One copy of each buff at a time across
 // the whole field, and ATK and MATK are mutually exclusive.
 function petBuffWhy(skill){
@@ -4161,6 +4225,9 @@ const s=unpackSave(JSON.parse(raw));if(s&&s.lv){const F=fresh(),f=Object.assign(
   // v467: Display → UI scale (1 = 100%). Spelled out rather than calling cleanUiScale(), because
   // the save harnesses extract this normaliser without the display helpers next to it.
   f.uiScale=[0.9,1,1.15,1.3].includes(Number(f.uiScale))?Number(f.uiScale):1;
+  // v469: Auto is on unless the save says otherwise, so an old save gets the screen-derived scale and
+  // a player who picked a step keeps it.
+  f.uiScaleAuto=f.uiScaleAuto!==false;
   if(f.cameraShake!==true&&f.cameraShake!==false)f.cameraShake=true;
   f.kite=f.kite===true;
   if(typeof PGWardrobe!=='undefined'){f.appearance=PGWardrobe.normalize(f.appearance);if(f.appearance)f.sex=f.appearance.sex;}
@@ -10458,11 +10525,30 @@ const qpSide=()=>`<button data-q="side" class="qp-side-toggle" aria-controls="si
 // damage floats are positioned in field pixels and keep their own world scale.
 const UI_SCALE_STEPS=[0.9,1,1.15,1.3];
 const cleanUiScale=v=>{v=Number(v);return UI_SCALE_STEPS.includes(v)?v:1};
+// v469 (owner: "auto scale based on the pc screen the player is using"). Auto reads the display the
+// player is actually looking at - CSS columns x devicePixelRatio - and picks the step, so a 4K panel
+// or a 1080p desk gets bigger chrome without anyone opening Display, and a small laptop does not.
+// A phone keeps 100%: mobile.css already lays that shell out in px for a small screen, and zooming
+// it would only shrink the field. The player's own pick always wins; Auto is a step you can leave.
+function autoUiScale(){
+  try{
+    if(typeof document!=='undefined'&&document.documentElement.classList.contains('pg-mobile'))return 1;
+    const w=Math.max(0,(typeof screen!=='undefined'&&Number(screen.width))||(typeof innerWidth!=='undefined'?innerWidth:0));
+    if(!w)return 1;
+    const dpr=(typeof devicePixelRatio==='number'&&devicePixelRatio>0)?devicePixelRatio:1;
+    const px=w*dpr;                       // physical columns across the screen
+    if(px>=3200)return 1.3;               // 4K, and a 1440p panel driven at 200%
+    if(px>=1700)return 1.15;              // 1080p and 1440p, retina laptops
+    if(px>=1250)return 1;                 // 1280-1600 class
+    return .9;                            // small laptops and netbooks
+  }catch(_){return 1}
+}
+const uiScaleAutoOn=()=>!!(S&&S.uiScaleAuto!==false);
 // The zoom the theme actually applies to the chrome. Read from the variable rather than from each
 // element so a measurement never disagrees with the CSS that consumed it.
 const uiZoom=()=>{const v=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ui-scale'));return isFinite(v)&&v>0?v:1};
 function applyUiScale(){
-  const z=cleanUiScale(S&&S.uiScale);
+  const z=uiScaleAutoOn()?autoUiScale():cleanUiScale(S&&S.uiScale);
   const root=document.documentElement;
   if(root.style.getPropertyValue('--ui-scale')!==String(z))root.style.setProperty('--ui-scale',String(z));
   if(z===1){if(root.hasAttribute('data-ui-scale'))root.removeAttribute('data-ui-scale')}
@@ -10483,11 +10569,31 @@ function setUiScale(v){
   if(!S)return;
   const z=cleanUiScale(v);
   S.uiScale=z;
+  S.uiScaleAuto=false;                 // picking a step is opting out of Auto
   applyUiScale();
   try{resize()}catch(_){}
   renderScreenOptions();
   save();
 }
+function setUiScaleAuto(on){
+  if(!S)return;
+  const auto=on!==false;
+  if(auto===uiScaleAutoOn())return;
+  S.uiScaleAuto=auto;
+  applyUiScale();
+  try{resize()}catch(_){}
+  renderScreenOptions();
+  save();
+}
+// A window that moves between a laptop panel and a desk monitor changes screens mid-session, so the
+// derived step is re-read on resize. It only touches the DOM when the step actually changed.
+function reapplyAutoUiScale(){
+  if(!uiScaleAutoOn())return;
+  const want=autoUiScale();
+  if(root_uiScale_now()===want)return;
+  applyUiScale();
+}
+const root_uiScale_now=()=>{const v=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ui-scale'));return isFinite(v)&&v>0?v:1};
 function applyDisplay(){
  applyUiScale();
  if(S.cameraShake===false)shake=0;
@@ -10531,8 +10637,10 @@ function screenOptions(){const panel=$('screenOptions');panel.hidden=!panel.hidd
   // v467: UI scale. Four steps keep the choice legible on a phone and a desk; the buttons are
   // `data-ui-scale-step` so the panel's own change handler stays about save-backed checkboxes.
   +`<div class="pg-sheet-head"><span>UI scale</span></div>
-    <div class="pg-actions pg-scale-row" role="group" aria-label="UI and text scale">${UI_SCALE_STEPS.map(z=>`<button type="button" data-ui-scale-step="${z}" aria-pressed="${cleanUiScale(S.uiScale)===z}" class="${cleanUiScale(S.uiScale)===z?'is-on':''}">${Math.round(z*100)}%</button>`).join('')}</div>
-    <div class="pg-note">Scales the header, dock, side rail, log, HUD and every window and popup. The 3D field keeps its size.</div>`
+    <div class="pg-actions pg-scale-row" role="group" aria-label="UI and text scale">${(()=>{const auto=uiScaleAutoOn(),cur=auto?autoUiScale():cleanUiScale(S.uiScale);
+      return `<button type="button" data-ui-scale-auto="1" aria-pressed="${auto}" class="${auto?'is-on':''}" title="Pick a scale from this screen">Auto${auto?' · '+Math.round(cur*100)+'%':''}</button>`
+        +UI_SCALE_STEPS.map(z=>`<button type="button" data-ui-scale-step="${z}" aria-pressed="${!auto&&cleanUiScale(S.uiScale)===z}" class="${!auto&&cleanUiScale(S.uiScale)===z?'is-on':''}">${Math.round(z*100)}%</button>`).join('')})()}</div>
+    <div class="pg-note">Scales the header, dock, side rail, log, HUD and every window and popup. The 3D field keeps its size. <b>Auto</b> reads this screen and picks the step; tapping a percentage holds it instead.</div>`
   // v253: the phone block. "Layout" is a device-local choice, so a phone can drop back to the
   // desk arrangement (or a desk browser can preview the phone one) without touching the save.
   +`<div class="pg-sheet-head pg-phone-head"><span>Phone</span></div>
@@ -10549,7 +10657,9 @@ function screenOptions(){const panel=$('screenOptions');panel.hidden=!panel.hidd
 }
 // The phone block's buttons live in the same panel but are not save-backed settings, so they
 // are handled here instead of in the data-display change handler below.
-document.addEventListener('click',e=>{const sc=e.target.closest&&e.target.closest('#screenOptions [data-ui-scale-step]');
+document.addEventListener('click',e=>{const sa=e.target.closest&&e.target.closest('#screenOptions [data-ui-scale-auto]');
+  if(sa){e.preventDefault();setUiScaleAuto(true);return}
+  const sc=e.target.closest&&e.target.closest('#screenOptions [data-ui-scale-step]');
   if(sc){e.preventDefault();setUiScale(sc.dataset.uiScaleStep);return}
   const b=e.target.closest&&e.target.closest('#screenOptions [data-pg]');if(!b)return;e.preventDefault();
   const pg=window.PGMobile,what=b.dataset.pg;
@@ -12683,6 +12793,8 @@ const scene=new THREE.Scene(),cam=new THREE.PerspectiveCamera(38,2,.1,200);
 let az=0,el=.95,zoom=1;
 
 function resize(){
+  // v469: a machine that moved to another screen re-reads Auto's step here (no-op unless it changed).
+  try{reapplyAutoUiScale()}catch(_){}
   const w=window.innerWidth, h=view.clientHeight||(window.innerHeight - 50);
   if(!R){eclipseMeasureDock();return}
   R.setPixelRatio(Math.min(2,devicePixelRatio||1));
@@ -12694,7 +12806,7 @@ function resize(){
 addEventListener('resize',resize);
 // v253: the phone layout changes what is painted over the field (the HUD card and the dock change
 // size), and it can flip at runtime from Display -> Layout. Re-measure both caches when it does.
-addEventListener('pg-mobile-change',()=>{resize();renderDock();try{eclipseMeasureDock()}catch(_){}});
+addEventListener('pg-mobile-change',()=>{resize();renderDock();try{eclipseMeasureDock()}catch(_){};try{reapplyAutoUiScale()}catch(_){}});
 // v74.1: on a phone the visual viewport changes when the URL bar slides away or the device is
 // turned, and iOS does not always follow that with a window resize event. Re-measure both.
 if(window.visualViewport)visualViewport.addEventListener('resize',resize);
@@ -15165,7 +15277,7 @@ function ensureRaidLightningSheet(){
     for(const tex of raidLightningSheetState.liveTextures)tex.needsUpdate=true;
   };
   img.onerror=()=>{raidLightningSheetState.loading=false;};
-  img.src='assets/refine-fx/title-lightning.webp?v=468';
+  img.src='assets/refine-fx/title-lightning.webp?v=469';
 }
 function makeRaidLightningTexture(colorHex){
   ensureRaidLightningSheet();
@@ -17189,22 +17301,22 @@ setInterval(updateWatch,60000);
 // be hours old while the player was on another tab, and the check is a 60-byte text file.
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&(pendingUpdateBuild||Date.now()-PAGE_STARTED_AT>30000))updateWatch()});
 </script>
-<script src="assets/wardrobe-ui.js?v=468"></script>
+<script src="assets/wardrobe-ui.js?v=469"></script>
 <script src="assets/shop.js?v=321"></script>
 <script src="assets/friends.js?v=273"></script>
-<script src="assets/digimon/roster.js?v=468"></script>
-<script src="assets/digimon/base-stats.js?v=468"></script>
-<script src="assets/social-rules.js?v=468"></script>
-<script src="assets/social-poker.js?v=468"></script>
-<script src="assets/digimon-sanctuary.js?v=468"></script>
+<script src="assets/digimon/roster.js?v=469"></script>
+<script src="assets/digimon/base-stats.js?v=469"></script>
+<script src="assets/social-rules.js?v=469"></script>
+<script src="assets/social-poker.js?v=469"></script>
+<script src="assets/digimon-sanctuary.js?v=469"></script>
 <script src="assets/digimon-battle.js?v=393"></script>
-<script src="assets/social-digimon.js?v=468"></script>
+<script src="assets/social-digimon.js?v=469"></script>
 <script src="assets/social-gym-redesign.js?v=393"></script>
 <script src="assets/social-pond-design.js?v=393"></script>
 <script src="assets/social-title-art.js?v=450"></script>
-<script src="assets/social-scene.js?v=468"></script>
-<script src="assets/social-fishing.js?v=468"></script>
-<script src="assets/plaza-bots.js?v=468"></script>
+<script src="assets/social-scene.js?v=469"></script>
+<script src="assets/social-fishing.js?v=469"></script>
+<script src="assets/plaza-bots.js?v=469"></script>
 <script src="assets/adventure-guide.js?v=450"></script>
-<script src="assets/social.js?v=468"></script></body>
+<script src="assets/social.js?v=469"></script></body>
 </html>

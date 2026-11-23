@@ -18,12 +18,27 @@ const MAX=90;
 // ---- painters: each returns a canvas ---------------------------------------------------------
 function canvas(w,h,draw){const c=document.createElement('canvas');c.width=w;c.height=h;draw(c.getContext('2d'),w,h);return c}
 const PAINT={
- glyph:ch=>canvas(128,128,(g,w,h)=>{g.textAlign='center';g.textBaseline='middle';
-   g.font='900 104px "Yu Mincho","Hiragino Mincho ProN","Songti SC","SimSun","Noto Serif CJK JP","Noto Serif CJK SC","MS Mincho",serif';
-   g.lineJoin='round';g.lineWidth=14;g.strokeStyle='#1a0500';g.strokeText(ch,w/2,h/2+4);
-   g.lineWidth=6;g.strokeStyle='#ffe9a8';g.strokeText(ch,w/2,h/2+4);
-   const fill=g.createLinearGradient(0,10,0,h-10);fill.addColorStop(0,'#fff3c4');fill.addColorStop(.45,'#ffb02e');fill.addColorStop(1,'#d8200c');
-   g.fillStyle=fill;g.fillText(ch,w/2,h/2+4)}),
+ glyph:(ch,arg)=>{const ink=String(arg==null?'':arg),bold=ink.startsWith('bold|'),S=bold?192:128,size=bold?166:104;ch=bold?ink.slice(5):ink;
+  return canvas(S,S,(g,w,h)=>{g.textAlign='center';g.textBaseline='middle';
+   g.font='900 '+size+'px "Yu Mincho","Hiragino Mincho ProN","Songti SC","SimSun","Noto Serif CJK JP","Noto Serif CJK SC","MS Mincho",serif';
+   g.lineJoin='round';
+   // v469 (owner: "bold & big, being overshadowed by other skills"): the Asura characters get a
+   // heavier stack - a soft outer glow, a fat dark outline, a thick gold rim and a white-hot core -
+   // so the word reads as the biggest thing on the field instead of a thin caption.
+   if(bold){
+     g.shadowColor='rgba(255,150,40,.95)';g.shadowBlur=26;
+     g.lineWidth=34;g.strokeStyle='#2a0600';g.strokeText(ch,w/2,h/2+6);
+     g.shadowBlur=14;g.lineWidth=22;g.strokeStyle='#ff9a1e';g.strokeText(ch,w/2,h/2+6);
+     g.shadowBlur=0;g.lineWidth=10;g.strokeStyle='#fff6cf';g.strokeText(ch,w/2,h/2+6);
+   }else{
+     g.lineWidth=14;g.strokeStyle='#1a0500';g.strokeText(ch,w/2,h/2+4);
+     g.lineWidth=6;g.strokeStyle='#ffe9a8';g.strokeText(ch,w/2,h/2+4);
+   }
+   const fill=g.createLinearGradient(0,S*.08,0,h-S*.08);fill.addColorStop(0,'#ffffff');fill.addColorStop(.32,'#fff3c4');fill.addColorStop(.62,'#ffb02e');fill.addColorStop(1,'#d8200c');
+   g.fillStyle=fill;g.fillText(ch,w/2,h/2+(bold?6:4));
+   if(bold){g.fillStyle='rgba(255,255,255,.55)';g.font='900 '+Math.round(size*.98)+'px "Yu Mincho","Hiragino Mincho ProN","Songti SC","SimSun",serif';
+     g.globalCompositeOperation='lighter';g.fillText(ch,w/2-2,h/2+4);g.globalCompositeOperation='source-over'}});
+ }, 
  flash:col=>canvas(96,96,(g,w)=>{const r=g.createRadialGradient(w/2,w/2,2,w/2,w/2,w/2);r.addColorStop(0,'#ffffff');r.addColorStop(.25,col);r.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=r;g.fillRect(0,0,w,w)}),
  ring:col=>canvas(128,128,(g,w)=>{g.strokeStyle=col;g.lineWidth=9;g.beginPath();g.arc(w/2,w/2,w/2-8,0,TAU);g.stroke();g.strokeStyle='rgba(255,255,255,.85)';g.lineWidth=3;g.beginPath();g.arc(w/2,w/2,w/2-8,0,TAU);g.stroke()}),
  orb:col=>canvas(48,48,(g,w)=>{const r=g.createRadialGradient(w*.42,w*.4,1,w/2,w/2,w/2);r.addColorStop(0,'#ffffff');r.addColorStop(.35,col);r.addColorStop(.8,'rgba(60,120,255,.35)');r.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=r;g.fillRect(0,0,w,w)}),
@@ -83,6 +98,9 @@ function frame(t,m,i){i=Math.max(0,Math.min(m.n-1,i|0));t.offset.set((i%m.cols)/
 function addBook(key,opt,update){const b=book(key);if(!b)return null;const m=b.meta;
  if(live.length>=MAX)drop(live.shift());
  const tex=lease(b),mat=new T.SpriteMaterial({map:tex,transparent:true,depthWrite:false,depthTest:opt.depth===true,blending:opt.glow?T.AdditiveBlending:T.NormalBlending});
+ // v469: an optional tint. A white client cell multiplied by a dark hex becomes the outline pass of
+ // a heavy word; multiplied by a warm hex it becomes the burning fill.
+ if(opt.color!=null&&mat.color&&mat.color.setHex)mat.color.setHex(opt.color);
  const s=new T.Sprite(mat);if(opt.centre)s.center.set(.5,.5);else s.center.set(m.ox,1-m.oy);s.renderOrder=opt.order||48;s.visible=false;scene.add(s);
  const natural=m.fps?m.n/m.fps:.8,life=opt.life||natural/(opt.speed||1),h=(opt.unit||2.16)*m.u*(opt.scale||1);
  frame(tex,m,opt.frame||0);
@@ -111,16 +129,31 @@ function clear(){for(const p of live)drop(p);live.length=0}
 // ---- effects ---------------------------------------------------------------------------------
 const FX={
  // Kanji fly out of the target one after another, then a shockwave.
- glyphs(c,o){const chars=[...o.text],U=c.unit,gap=.11;
-  chars.forEach((ch,i)=>{const side=(i-(chars.length-1)/2)*U*.62,rise=U*(1.25+(i%2)*.28);
+ // v469: `scale` grows the whole word (spacing, height and hold), `life` lets a big word stay up
+ // longer, and `bold` swaps in the heavy painter above. Defaults keep every other skill identical.
+ glyphs(c,o){const chars=[...o.text],U=c.unit,gap=o.gap||.11,sc=o.scale||1,hold=o.life||(o.book?1.05:.95),bold=!!o.bold;
+  const spread=U*.62*(1+(sc-1)*.55),lift=U*(1.25+(sc-1)*.42);
+  chars.forEach((ch,i)=>{const side=(i-(chars.length-1)/2)*spread,rise=lift*(1+(i%2)*.22);
    // The client's own characters when the book is in; the painted ones until then.
-   if(o.book&&addBook(o.book,{frame:i,life:1.05,delay:i*gap,order:60,centre:true,unit:U,scale:1.25},(p,k,h)=>{const pop=k<.2?.3+ease(k/.2)*1.2:1.5-ease((k-.2)/.3)*.5;
-     p.s.scale.set(h*p.aspect*pop,h*pop,1);p.s.position.set(c.to.x+side,c.floor+rise+k*U*.5,c.to.z+.05*i);p.s.material.opacity=k<.72?1:1-(k-.72)/.28}))return;
-   add('glyph',ch,.95,(p,k)=>{const pop=k<.22?.3+ease(k/.22)*1.15:1.45-ease((k-.22)/.3)*.45;size(p,U*.78*pop);
-    p.s.position.set(c.to.x+side,c.floor+rise+k*U*.5,c.to.z+.05*i);p.s.material.opacity=k<.7?1:1-(k-.7)/.3},{delay:i*gap,order:60,depth:false})});
+   if(o.book){
+    const big=1.25*Math.min(sc,1.6)*(bold?1.15:1),place=(p,k,h,pop)=>{p.s.scale.set(h*p.aspect*pop,h*pop,1);
+      p.s.position.set(c.to.x+side,c.floor+rise+k*U*.5*(1+(sc-1)*.3),c.to.z+.05*i)};
+    if(bold)addBook(o.book,{frame:i,life:hold,delay:i*gap,order:59,centre:true,unit:U,scale:big*1.13,color:0x160300},(p,k,h)=>{
+      const pop=k<.2?.3+ease(k/.2)*1.2:1.5-ease((k-.2)/.3)*.5;place(p,k,h,pop);p.s.material.opacity=k<.86?1:1-(k-.86)/.14});
+    if(addBook(o.book,{frame:i,life:hold,delay:i*gap,order:60,centre:true,unit:U,scale:big,color:bold?0xffe7bd:null},(p,k,h)=>{const pop=k<.2?.3+ease(k/.2)*1.2:1.5-ease((k-.2)/.3)*.5;
+      place(p,k,h,pop);p.s.material.opacity=k<(bold?.8:.72)?1:1-(k-(bold?.8:.72))/(bold?.2:.28)}))return}
+   add('glyph',bold?'bold|'+ch:ch,hold,(p,k)=>{const pop=k<.22?.3+ease(k/.22)*1.15:1.45-ease((k-.22)/.3)*.45;size(p,U*.78*pop*sc);
+    p.s.position.set(c.to.x+side,c.floor+rise+k*U*.5*(1+(sc-1)*.3),c.to.z+.05*i);p.s.material.opacity=k<.7?1:1-(k-.7)/.3},{delay:i*gap,order:60,depth:false})});
   const end=chars.length*gap;
-  add('flash',o.color||'#ffb02e',.5,(p,k)=>{size(p,U*(1+k*5));p.s.position.set(c.to.x,c.floor+U*.5,c.to.z);p.s.material.opacity=1-k},{delay:end,glow:true,order:55});
-  add('ring',o.color||'#ffb02e',.6,(p,k)=>{size(p,U*(.6+ease(k)*4.5));p.s.position.set(c.to.x,c.floor+U*.45,c.to.z);p.s.material.opacity=1-k},{delay:end,order:54})},
+  add('flash',o.color||'#ffb02e',.5,(p,k)=>{size(p,U*(1+k*5)*sc);p.s.position.set(c.to.x,c.floor+U*.5,c.to.z);p.s.material.opacity=1-k},{delay:end,glow:true,order:55});
+  add('ring',o.color||'#ffb02e',.6,(p,k)=>{size(p,U*(.6+ease(k)*4.5)*sc);p.s.position.set(c.to.x,c.floor+U*.45,c.to.z);p.s.material.opacity=1-k},{delay:end,order:54})},
+ // A heavy impact at the target: white-hot core, two ground rings and a rising column of light.
+ // Four sprites only, so a raid field full of skills still stays under the particle cap.
+ burst(c,o){const U=c.unit,col=o.color||'#ffcf5a';
+  add('flash',col,.45,(p,k)=>{size(p,U*(1.1+k*6.5)*.9);p.s.position.set(c.to.x,c.floor+U*.55,c.to.z);p.s.material.opacity=(1-k)*(1-k)},{glow:true,order:56});
+  add('ring',col,.75,(p,k)=>{size(p,U*(1+ease(k)*9));p.s.position.set(c.to.x,c.floor+U*.04,c.to.z);p.s.material.opacity=1-k},{foot:true,order:53});
+  add('ring','#fff3c4',1,(p,k)=>{size(p,U*(.5+ease(k)*6));p.s.position.set(c.to.x,c.floor+U*.04,c.to.z);p.s.material.opacity=(1-k)*.85},{foot:true,delay:.09,order:53});
+  add('flash',col,1.05,(p,k)=>{const w=U*(1.15-k*.55);p.s.scale.set(w,w*(1+k*3.4),1);p.s.position.set(c.to.x,c.floor+U*(.15+k*1.1),c.to.z);p.s.material.opacity=(1-k)*.8},{glow:true,order:52})},
  // Vines burst from the ground around a point, sway, and sink back.
  vines(c,o){const U=c.unit,n=o.count||9,rad=(o.radius||2.2)*U*.6,at=o.self?c.from:c.to;
   for(let i=0;i<n;i++){const a=i/n*TAU+rnd(-.3,.3),r=i?rad*Math.sqrt(rnd(.15,1)):0,x=at.x+Math.cos(a)*r,z=at.z+Math.sin(a)*r*.6,tall=U*rnd(1.1,1.9)*(o.scale||1),phase=rnd(0,TAU);
@@ -198,7 +231,11 @@ const SPHERE=[['orbs',{count:1,life:.8}]];
 const B=(book,o={})=>['book',{book,...o}];
 const MAP={
  // Monk line
- ch_asura:[['orbs',{count:5,life:.45,inward:true}],['glyphs',{text:'阿修羅覇凰拳',book:'asura'}]],
+ // v469 (owner: "increase the size of the Sura Asura Strike animation fx ... bold & big, the
+ // wording & animation"). The word is drawn at 2.1x with the heavy painter and holds for 1.5s, and
+ // the impact is a new four-sprite burst, so the finisher is the loudest thing on the field again.
+ ch_asura:[['orbs',{count:5,life:.55,inward:true,color:'#ffd870'}],['burst',{color:'#ffcf5a'}],
+   ['glyphs',{text:'阿修羅覇凰拳',book:'asura',scale:2.1,life:1.5,gap:.13,bold:true}]],
  su_gate:[B('flash',{y:1.1,scale:1.5,glow:true,else:['glyphs',{text:'閃光連撃',color:'#c05cff'}]})],
  su_tiger:[['glyphs',{text:'號砲',color:'#ff7a2a'}],['orbs',{count:1,life:.8}]],
  mo_sphere:[['orbs',{count:5,life:1.6}]],ch_fury:[['orbs',{count:5,life:1.6,color:'#ffd870'}]],ch_zen:[['orbs',{count:5,life:1.2,inward:true}]],
