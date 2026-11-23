@@ -188,6 +188,7 @@ t('player ATK and MATK formulas consume only their matching pet buffs and passiv
   const strikeBox={};vm.createContext(strikeBox);
   vm.runInContext(`
     let mob={x:0,z:0,hp:10000,size:.6,spriteScale:1},shake=0,S={dmg:0};
+    ${pick(/const playerDamage=[^\n]+/, 'Sura damage modifier')}
     const atk=()=>100,matk=()=>200,missCh=()=>0,crit=()=>0,st=()=>0,critD=()=>2,rnd=(a,b)=>a,addFloat=()=>{},damageFloat=()=>{},
       showDamage=(o,x,y,z,a,c,sk)=>damageFloat(x,y,z,a,c,false,sk),mobDamageY=()=>1.9;
     ${roster}

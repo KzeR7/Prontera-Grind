@@ -45,6 +45,8 @@ must fetch them first or those suites fail with `Command failed: git show …`:
 
 ```sh
 git fetch origin d164bd0527cfe335f9c183d0e576800716b7dd26
+# Thanatos research and staging-launcher snapshots used by the regression tests
+git fetch origin 824511bd35e9fedda474a331546048c405ef1b66 b56c23b08644abf95336b648fca61db44673216a
 ```
 
 ## Built-site browser reliability
