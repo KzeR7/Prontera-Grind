@@ -5282,7 +5282,11 @@ html[data-ui-scale] :is(#eclipseHeader,#dock,#sideRail,#hud,#hudBuffs,#xp-dock,#
    and Display sheet would grow past the screen edge. */
 html[data-ui-scale] #dock{max-width:calc((100vw - 24px)/var(--ui-scale,1))}
 html[data-ui-scale] #screenOptions{max-width:calc((100vw - 32px)/var(--ui-scale,1));max-height:calc((100vh - 170px)/var(--ui-scale,1));overflow:auto}
-html[data-ui-scale] #wins{left:calc(12px/var(--ui-scale,1));right:calc(12px/var(--ui-scale,1));top:calc(12px/var(--ui-scale,1))}
+/* v474: #wins is CENTERED - `left:50%` + `translateX(-50%)` with a 1120px cap (line 1333).
+   Overriding `left` here re-anchored it to 12px while the translate still pulled it half a window
+   to the left, so at 115% the whole dock of panels sat ~630px off the left edge. The zoomed box
+   already resolves `100%` against its own scaled containing block, so the base width cap keeps
+   its 16px gutter at every step - the override is not needed at all. */
 /* The guide keeps its own vw/vh caps (adventure-guide.css); divide them out so a 130% card still
    fits the screen instead of running off the right or bottom edge. */
 html[data-ui-scale] #adventureGuide{max-width:calc((100vw - 24px)/var(--ui-scale,1));max-height:calc((100dvh - 230px)/var(--ui-scale,1))}
