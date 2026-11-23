@@ -50,14 +50,22 @@ const CHALLENGES=[
   {id:'echo-beginner',name:'Echo Beginner',category:'journey',metric:'echoRuns',goal:1,symbol:37,description:'Use one ranked Endless Echo attempt (finishing or leaving after the grace period).'},
   {id:'echo-veteran',name:'Echo Veteran',category:'journey',metric:'echoRuns',goal:100,symbol:23,description:'Use 100 ranked Endless Echo attempts (finishing or leaving after the grace period).'}
 ];
-const BY_ID=Object.assign(Object.create(null),Object.fromEntries(CHALLENGES.map(t=>[t.id,t])));
-const FILTERS=[['all','All titles'],['earned','Earned'],['rank','Hunt ranks'],['hunt','Boss & hunts'],['forge','Forge'],['class','Classes'],['explore','Exploration'],['mastery','Mastery'],['journey','Journey']];
-const LABELS={rank:'Hunt rank',hunt:'Hunt challenge',forge:'Forge challenge',class:'Class challenge',explore:'Exploration challenge',mastery:'Mastery challenge',journey:'Journey challenge'};
+const RAID_TITLES=[
+  {id:'raid-vanguard',name:'Raid Vanguard',category:'raid',metric:'raidClears',goal:10,electricColor:'#00eaff',electricName:'Cyan Static',description:'Clear 10 Raid Dungeons (Solo or Party). Surrounds your hero with Cyan static lightning.'},
+  {id:'citadel-breaker',name:'Citadel Breaker',category:'raid',metric:'raidClears',goal:20,electricColor:'#00ff7b',electricName:'Green Static',description:'Clear 20 Raid Dungeons (Solo or Party). Surrounds your hero with Emerald-Green static lightning.'},
+  {id:'sovereign-conqueror',name:'Sovereign Conqueror',category:'raid',metric:'raidClears',goal:30,electricColor:'#ffc800',electricName:'Gold Static',description:'Clear 30 Raid Dungeons (Solo or Party). Surrounds your hero with Golden static lightning.'},
+  {id:'astral-stormbringer',name:'Astral Stormbringer',category:'raid',metric:'raidDrop',goal:1,dropOnly:true,electricColor:'#c44dff',electricName:'Purple Static',description:'Exclusive 10% Raid Boss drop. Surrounds your hero with Violet-Purple static lightning.'},
+  {id:'volcanic-overlord',name:'Volcanic Overlord',category:'raid',metric:'raidDrop',goal:1,dropOnly:true,electricColor:'#ff2442',electricName:'Red Static',description:'Exclusive 10% Raid Boss drop. Surrounds your hero with Crimson-Red static lightning.'}
+];
+const BY_ID=Object.assign(Object.create(null),Object.fromEntries([...CHALLENGES,...RAID_TITLES].map(t=>[t.id,t])));
+const FILTERS=[['all','All titles'],['earned','Earned'],['raid','Raid'],['rank','Hunt ranks'],['hunt','Boss & hunts'],['forge','Forge'],['class','Classes'],['explore','Exploration'],['mastery','Mastery'],['journey','Journey']];
+const LABELS={raid:'Exclusive Raid title',rank:'Hunt rank',hunt:'Hunt challenge',forge:'Forge challenge',class:'Class challenge',explore:'Exploration challenge',mastery:'Mastery challenge',journey:'Journey challenge'};
 const count=v=>{const n=Number(v);return Number.isFinite(n)?Math.max(0,Math.min(Number.MAX_SAFE_INTEGER,Math.floor(n))):0};
 const e=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const xpOf=state=>Number.isFinite(Number(state?.indexXp))?count(state.indexXp):count(state?.kills);
 const symbolOf=t=>t&&(t.symbol||RANK_SYMBOLS[t.id]);
-const icon=(t,eager=false)=>{const n=symbolOf(t);return n?`<img class="title-symbol" src="assets/title-symbols/${String(n).padStart(2,'0')}.webp" alt="" loading="${eager?'eager':'lazy'}" decoding="async">`:''};
+const raidElectricSvg=col=>`<svg class="title-symbol raid-title-symbol" viewBox="0 0 36 36" aria-hidden="true" style="--raid-elec:${e(col)}"><circle cx="18" cy="18" r="15" fill="none" stroke="${e(col)}" stroke-width="1.6" stroke-dasharray="5 2.5" opacity=".78"/><polygon points="18,4 30,11 30,25 18,32 6,25 6,11" fill="${e(col)}" fill-opacity=".14" stroke="${e(col)}" stroke-width="1.4"/><polygon points="20.5,6.5 11,19.2 17.6,19.2 15.2,29.5 25.2,16.5 18.6,16.5" fill="#fff" stroke="${e(col)}" stroke-width="1.5" stroke-linejoin="round"/></svg>`;
+const icon=(t,eager=false)=>{if(t&&t.electricColor)return raidElectricSvg(t.electricColor);const n=symbolOf(t);return n?`<img class="title-symbol" src="assets/title-symbols/${String(n).padStart(2,'0')}.webp" alt="" loading="${eager?'eager':'lazy'}" decoding="async">`:''};
 
 function metrics(state,classes){
   state=state&&typeof state==='object'?state:{};classes=classes&&typeof classes==='object'?classes:{};
@@ -78,19 +86,22 @@ function metrics(state,classes){
   const mastery=state.cardIndex&&state.cardIndex.mastery&&typeof state.cardIndex.mastery==='object'?state.cardIndex.mastery:{};
   const cardRanks=Object.values(mastery).reduce((sum,n)=>sum+Math.min(5,count(n)),0);
   const baseLevel=Object.values(state.base&&typeof state.base==='object'?state.base:{}).reduce((max,rec)=>Math.max(max,count(rec&&rec.lv)),count(state.lv));
+  const raidClears=count(state.raid&&state.raid.clears);
   return {weapon,armor,classes:classesDone,fourth,thanatos:count(ledger['10:Memory of Thanatos']),ifrit:count(ledger['11:Ifrit']),darklord:count(ledger['9:Dark Lord']),dragon:count(ledger['6:Dragon Lord']),
     kills:count(state.kills),clears:Array.isArray(state.mapClears)?state.mapClears.filter(x=>x===true).length:0,
     discovered:counts.filter(n=>n>0).length,finishedSpecies:counts.filter(n=>n>=50000).length,cardRanks,
-    baseLevel,echoRuns:count(state.trial&&state.trial.runs)};
+    baseLevel,echoRuns:count(state.trial&&state.trial.runs),raidClears};
 }
 function progress(title,state,classes,snapshot){
   if(!title)return 0;
+  if(title.dropOnly)return Array.isArray(state?.titleAwards)&&state.titleAwards.includes(title.id)?1:0;
   if(Number.isFinite(Number(title.xp)))return xpOf(state);
   return count((snapshot||metrics(state,classes))[title.metric]);
 }
 function unlocked(title,state,classes,snapshot){
   if(!title||!state)return false;
   if(BY_ID[title.id]&&Array.isArray(state.titleAwards)&&state.titleAwards.includes(title.id))return true;
+  if(title.dropOnly)return false;
   const goal=Number.isFinite(Number(title.xp))?count(title.xp):count(title.goal);
   return goal>0&&progress(title,state,classes,snapshot)>=goal;
 }
@@ -102,36 +113,36 @@ function sync(state,classes){
   state.titleBest={weapon:m.weapon,armor:m.armor};
   const awarded=new Set((Array.isArray(state.titleAwards)?state.titleAwards:[]).filter(id=>typeof id==='string'&&BY_ID[id]));
   const added=[];
-  for(const t of CHALLENGES)if(m[t.metric]>=t.goal&&!awarded.has(t.id)){awarded.add(t.id);added.push(t.id)}
+  for(const t of [...CHALLENGES,...RAID_TITLES])if(!t.dropOnly&&m[t.metric]>=t.goal&&!awarded.has(t.id)){awarded.add(t.id);added.push(t.id)}
   state.titleAwards=[...awarded];
   return added;
 }
 function find(id,ranks){return (Array.isArray(ranks)?ranks:[]).find(t=>t.id===id)||BY_ID[id]||null;}
 // The plaza already sends a sanitized title name in its look message. Resolve only
 // locally known names to artwork, without adding an ID or any extra room traffic.
-function findByName(name,ranks){return typeof name==='string'&&name?CHALLENGES.find(t=>t.name===name)||(Array.isArray(ranks)?ranks:[]).find(t=>t.name===name)||null:null;}
+function findByName(name,ranks){return typeof name==='string'&&name?CHALLENGES.find(t=>t.name===name)||RAID_TITLES.find(t=>t.name===name)||(Array.isArray(ranks)?ranks:[]).find(t=>t.name===name)||null:null;}
 function requirement(t){return !t?'':Number.isFinite(Number(t.xp))?`${count(t.xp).toLocaleString()} Index XP`:t.description||'';}
 
 // This markup is shared by the real Mastery Index and the focused review page.
 function renderCollection(state,classes,ranks,crit,filter='all'){
   state=state||{};ranks=Array.isArray(ranks)?ranks:[];crit=Array.isArray(crit)?crit:[];
   if(!FILTERS.some(row=>row[0]===filter))filter='all';
-  const m=metrics(state,classes),entries=[...CHALLENGES,...ranks.map((t,i)=>({...t,category:'rank',goal:t.xp,description:`Earn ${count(t.xp).toLocaleString()} Index XP.`,bonus:crit[i]}))];
+  const m=metrics(state,classes),entries=[...RAID_TITLES,...CHALLENGES,...ranks.map((t,i)=>({...t,category:'rank',goal:t.xp,description:`Earn ${count(t.xp).toLocaleString()} Index XP.`,bonus:crit[i]}))];
   const earned=entries.filter(t=>unlocked(t,state,classes,m)).length;
   const selected=entries.find(t=>t.id===state.equippedTitle&&unlocked(t,state,classes,m));
   const visible=entries.filter(t=>filter==='all'||(filter==='earned'?unlocked(t,state,classes,m):t.category===filter));
   const filters=FILTERS.map(([id,label])=>`<button type="button" data-a="titlefilter" data-v="${id}" class="${id===filter?'on':''}" aria-pressed="${id===filter}">${label}</button>`).join('');
   const cards=visible.map(t=>{
     const isEarned=unlocked(t,state,classes,m),isEquipped=selected?.id===t.id,goal=count(t.goal),raw=progress(t,state,classes,m),value=isEarned?Math.max(goal,raw):raw,pct=Math.min(100,goal?value/goal*100:0);
-    const progressText=isEarned?'Challenge complete':`${Math.min(value,goal).toLocaleString()} / ${goal.toLocaleString()}${t.category==='rank'?' XP':''}`;
-    return `<article class="tc-card${isEarned?' is-earned':' is-locked'}${isEquipped?' is-equipped':''}" data-title-id="${e(t.id)}">
-      <div class="tc-symbol">${icon(t)}</div><div class="tc-copy"><div class="tc-kicker">${e(LABELS[t.category])}${t.bonus?` <span>+${e(t.bonus)}% Index Crit</span>`:''}</div><h3>${e(t.name)}</h3><p>${e(t.description)}</p>
+    const progressText=isEarned?(t.dropOnly?'Raid Boss drop claimed':'Challenge complete'):(t.dropOnly?'10% Raid Boss drop':`${Math.min(value,goal).toLocaleString()} / ${goal.toLocaleString()}${t.category==='rank'?' XP':''}`);
+    return `<article class="tc-card${isEarned?' is-earned':' is-locked'}${isEquipped?' is-equipped':''}${t.electricColor?' is-raid-electric':''}" data-title-id="${e(t.id)}"${t.electricColor?` style="--raid-elec:${e(t.electricColor)}"`:''}>
+      <div class="tc-symbol">${icon(t)}</div><div class="tc-copy"><div class="tc-kicker">${e(LABELS[t.category])}${t.bonus?` <span>+${e(t.bonus)}% Index Crit</span>`:''}${t.electricColor?` <span class="tc-electric-pill">⚡ ${e(t.electricName||'Static FX')}</span>`:''}</div><h3>${e(t.name)}</h3><p>${e(t.description)}</p>
       <div class="tc-progress-label"><span>${e(progressText)}</span><span>${isEquipped?'EQUIPPED':isEarned?'EARNED':Math.floor(pct)+'%'}</span></div><div class="tc-progress" role="progressbar" aria-label="${e(t.name)} progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(pct)}"><i style="width:${pct.toFixed(1)}%"></i></div></div>
       <button type="button" class="tc-equip" data-a="titleequip" data-v="${isEquipped?'none':e(t.id)}" aria-pressed="${isEquipped}" aria-label="${isEquipped?'Remove '+e(t.name):isEarned?'Equip '+e(t.name):e(t.name)+' is locked'}" ${isEarned?'':'disabled'}>${isEquipped?'Equipped':isEarned?'Equip':'Locked'}</button></article>`;
   }).join('');
-  return `<section class="title-collection" aria-label="Title collection"><header class="tc-hero"><div class="tc-hero-copy"><div class="tc-eyebrow">THE MASTERY JOURNAL <span>✦</span> YOUR LEGACY</div><h2>Titles worth<br><em>earning.</em></h2><p>Every hunt, milestone and hard-won mastery leaves its mark. Complete challenges to collect a title, then wear it into the world.</p><div class="tc-count"><strong>${earned}</strong><span>/ ${entries.length}<small>TITLES EARNED</small></span></div></div><div class="tc-feature">${selected?icon(selected):'<span class="tc-empty-symbol">✧</span>'}<small>CURRENT TITLE</small><b>${selected?e(selected.name):'None equipped'}</b><span>${selected?'Your legacy on display':'Choose an earned title below'}</span>${selected?'<button type="button" data-a="titleequip" data-v="none">Remove title</button>':''}</div></header>
-    <div class="tc-section-head"><div><small>YOUR COLLECTION</small><h3>Find your next title</h3></div><span>${visible.length} shown</span></div><div class="tc-filters" role="group" aria-label="Filter titles">${filters}</div><div class="tc-list">${cards||'<div class="tc-empty">No titles here yet. Your completed challenges will appear in Earned.</div>'}</div><p class="tc-footnote">Challenge titles are cosmetic. Hunt-rank Crit bonuses are earned from Index XP and never depend on which title is equipped.</p></section>`;
+  return `<section class="title-collection" aria-label="Title collection"><header class="tc-hero"><div class="tc-hero-copy"><div class="tc-eyebrow">THE MASTERY JOURNAL <span>✦</span> YOUR LEGACY</div><h2>Titles worth<br><em>earning.</em></h2><p>Every hunt, milestone and hard-won mastery leaves its mark. Complete challenges to collect a title, then wear it into the world.</p><div class="tc-count"><strong>${earned}</strong><span>/ ${entries.length}<small>TITLES EARNED</small></span></div></div><div class="tc-feature">${selected?icon(selected):'<span class="tc-empty-symbol">✧</span>'}<small>CURRENT TITLE</small><b>${selected?e(selected.name):'None equipped'}</b><span>${selected?(selected.electricColor?'⚡ '+e(selected.electricName)+' FX active':'Your legacy on display'):'Choose an earned title below'}</span>${selected?'<button type="button" data-a="titleequip" data-v="none">Remove title</button>':''}</div></header>
+    <div class="tc-section-head"><div><small>YOUR COLLECTION</small><h3>Find your next title</h3></div><span>${visible.length} shown</span></div><div class="tc-filters" role="group" aria-label="Filter titles">${filters}</div><div class="tc-list">${cards||'<div class="tc-empty">No titles here yet. Your completed challenges will appear in Earned.</div>'}</div><p class="tc-footnote">Challenge and Raid titles are cosmetic. Equipping any of the 5 Raid titles surrounds your hero with crackling static lightning in its signature color.</p></section>`;
 }
-const api={CHALLENGES,RANK_SYMBOLS,FILTERS,metrics,progress,unlocked,sync,find,findByName,requirement,icon,renderCollection};
+const api={CHALLENGES,RAID_TITLES,RANK_SYMBOLS,FILTERS,metrics,progress,unlocked,sync,find,findByName,requirement,icon,renderCollection};
 root.PGTitles=api;if(typeof module==='object'&&module.exports)module.exports=api;
 })(typeof globalThis==='object'?globalThis:this);

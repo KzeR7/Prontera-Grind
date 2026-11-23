@@ -21,7 +21,7 @@ try {
     const {item}=makeMythicEquipment(key,slot,wt);delete item.id;
     entries.push({id:'mythic:'+key+':'+slot+(wt?':'+wt:''),label:item.name+' · '+(wt||slot),type:'gear',item,affixes:affixPool(item)});
    }
-   for(const c of CARD_CATALOG){const item=newCard(c);delete item.id;entries.push({id:'card:'+c.cardKey,label:item.n,type:'card',item});}
+   for(const c of [...CARD_CATALOG,...(typeof RAID_BOSS_CARDS!=='undefined'?RAID_BOSS_CARDS:[])]){const item=newCard(c);delete item.id;entries.push({id:'card:'+c.cardKey,label:item.n,type:'card',item});}
    for(const [resource,label] of [['ori','Oridecon'],['elu','Elunium'],['shards','Echo Shards'],['dps','Drop Protection Scroll'],['refineScrolls','Refine Scroll'],['mythicScrolls','Mythic Protection Scroll'],...ASCENSION_MATERIALS.map((n,i)=>['ascMat'+i,n]),...NM_MAT.map((n,i)=>['nmat'+i,n])])entries.push({id:resource,resource,label,type:'resource'});
    return {entries,affixes:AL,skills:Object.fromEntries(SKILLS.map(x=>[x.id,x.n])),sections:SECN,rarities:RAR.map(x=>x.n),slotStats:Object.fromEntries(Object.entries(SLOTS).map(([k,v])=>[k,v.stat])),slots:EQK.map(([id,label])=>({id,label})),classes:Object.fromEntries(Object.entries(CLASSES).map(([k,c])=>[k,{tier:EXPANDED_CLASSES.has(k)?3:c.tier,wt:c.wt}]))};
   }finally{Math.random=oldRandom}

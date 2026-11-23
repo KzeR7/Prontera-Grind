@@ -52,7 +52,7 @@ function harness({fail=false}={}){
  for(let i=0;i<20;i++)crowded.audio.attack();assert.equal(crowded.voices.length,13,'attack voices bounded separately');
  const retry=harness({fail:true});retry.events.pointerdown();await flush();retry.audio.hit(false);await flush();assert.equal(retry.voices.length,0,'failed fetch is silent');retry.recover();retry.events.keydown();await flush();retry.audio.hit(false);assert.equal(retry.voices.length,1,'failed fetch retries');
  vm.runInNewContext(code,{window:{},document:{addEventListener:(name,cb)=>cb()}});
- for(const folder of ['hits','attacks']){
+ for(const folder of ['hits','attacks','refine']){
  const manifest=JSON.parse(fs.readFileSync(`assets/audio/${folder}/manifest.json`));
  for(const asset of manifest.assets){const bytes=fs.readFileSync(`assets/audio/${folder}/`+asset.file);assert.equal(bytes.length,asset.bytes);assert.equal(bytes.subarray(0,4).toString(),'RIFF');assert.equal(bytes.subarray(8,12).toString(),'WAVE');assert.equal(crypto.createHash('sha256').update(bytes).digest('hex'),asset.sha256)}
  }

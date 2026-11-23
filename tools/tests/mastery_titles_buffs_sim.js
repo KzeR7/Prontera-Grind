@@ -121,7 +121,10 @@ test('the actual Index keeps rank progress-only and routes filters and equip act
   assert.equal(win().querySelectorAll('.mastery-title').length,10);assert.equal(win().querySelectorAll('[data-a="titleequip"]').length,0);
   assert.match(win().textContent,/equip titles in the Titles tab/);
   win().querySelector('[data-a="indexview"][data-v="titles"]').click();
-  assert.equal(ev('indexMode'),'titles');assert.equal(win().querySelectorAll('.tc-card').length,50);
+  assert.equal(ev('indexMode'),'titles');assert.equal(win().querySelectorAll('.tc-card').length,55);
+  win().querySelector('[data-a="titlefilter"][data-v="raid"]').click();
+  assert.equal(win().querySelectorAll('.tc-card.is-raid-electric').length,5);
+  win().querySelector('[data-a="titlefilter"][data-v="all"]').click();
   const locked=()=>win().querySelector('[data-title-id="thanatos-end"] .tc-equip');assert.ok(locked().disabled);
   ev(`ACT.titleequip('thanatos-end')`);assert.notEqual(ev('S.equippedTitle'),'thanatos-end','direct actions cannot bypass requirements');
   win().querySelector('[data-title-id="mythic-edge"] .tc-equip').click();

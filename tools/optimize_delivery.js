@@ -6,7 +6,7 @@ const fs=require('node:fs'),path=require('node:path'),assert=require('node:asser
 const FILES=Object.freeze(['ro-map-payon.json','ro-map-morocc.json','ro-spritesheet.json','ro-tiles-hd.json']);
 // Include the plaza styles so the new guide fits the existing classic delivery ceiling.
 // publish_sim compares every parsed rule before/after; no stylesheet semantics change.
-const CSS_FILES=Object.freeze(['assets/ui/eclipse.css','assets/ui/mobile.css','assets/social.css','assets/social-fishing.css']);
+const CSS_FILES=Object.freeze(['assets/ui/eclipse.css','assets/ui/mobile.css','assets/social.css','assets/social-fishing.css','assets/raid.css']);
 function stripStandaloneCssComments(css){
  let quote='',last=0,out='';
  for(let i=0;i<css.length;i++){
@@ -46,7 +46,8 @@ const JS_FILES=Object.freeze([
  'assets/social-scene.js','assets/social-fishing.js','assets/social.js',
  'assets/native-fields.js','assets/boss-fx.js','assets/social-rules.js',
  'assets/digimon-battle.js','assets/shop.js','assets/social-gym-redesign.js',
- 'assets/signature-fx.js','assets/plaza-bots.js','assets/shop-catalog.js','assets/friends.js'
+ 'assets/signature-fx.js','assets/plaza-bots.js','assets/shop-catalog.js','assets/friends.js',
+ 'assets/raid.js','assets/combat-audio.js','assets/mastery-titles.js'
 ]);
 function optimize(output){
  let saved=0;

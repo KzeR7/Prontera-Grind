@@ -105,7 +105,8 @@ rm -rf "$OUT/assets/weapons" "$OUT/assets/weapons_manifest.json"
 rm -f "$OUT/assets/expanded-skill-icons/catalog.json" "$OUT/assets/title-symbols/catalog.json" \
   "$OUT/assets/skill-icons/catalog.json" "$OUT/assets/digimon/index.json" \
   "$OUT/assets/digimon/digidex-portraits.json" "$OUT/assets/equipment-icons/manifest.json" \
-  "$OUT/assets/equipment-icons/mythic-manifest.json"
+  "$OUT/assets/equipment-icons/mythic-manifest.json" "$OUT/assets/audio/hits/manifest.json" \
+  "$OUT/assets/audio/attacks/manifest.json" "$OUT/assets/audio/refine/manifest.json"
 rm -f "$OUT"/assets/mob_*.png
 # v360: the Aetherwell preview render is human reference material (2.7 MiB); the hub only ever
 # fetches assets/Fountainfile/Prontera_Grand_Aetherwell.glb itself.
@@ -131,11 +132,27 @@ node "$ROOT/tools/maps/build_game_exploration.js" "$OUT"
 # build. assets/ is content-addressed by `?v=` and keeps its long cache, so this costs one revalidating
 # request per load, not a re-download.
 node -e '
-  const fs = require("fs");
+  const fs = require("fs"), crypto = require("crypto");
   const out = process.argv[1];
   const html = fs.readFileSync(out + "/index.html", "utf8");
   const m = html.match(/const BUILD=\x27([^\x27]+)\x27/);
   if (!m || !m[1]) { console.error("BUILD BROKEN: const BUILD missing in index.html"); process.exit(1); }
+  // Normalize CRLF -> LF on the SRI-pinned Three.js bundle so Windows checkouts/archives with
+  // core.autocrlf=true never publish a CRLF file that fails Subresource Integrity in browsers.
+  const threePath = out + "/assets/endgame/three-r128.min.js";
+  let threeBytes = fs.readFileSync(threePath);
+  if (threeBytes.includes(13)) {
+    threeBytes = Buffer.from(threeBytes.toString("latin1").replace(/\r\n/g, "\n"), "latin1");
+    fs.writeFileSync(threePath, threeBytes);
+  }
+  const sriMatch = html.match(/src="assets\/endgame\/three-r128\.min\.js"\s+integrity="sha384-([^"]+)"/);
+  if (sriMatch) {
+    const gotSri = crypto.createHash("sha384").update(threeBytes).digest("base64");
+    if (gotSri !== sriMatch[1]) {
+      console.error("BUILD BROKEN: three-r128.min.js SHA-384 (" + gotSri + ") != index.html SRI (" + sriMatch[1] + ")");
+      process.exit(1);
+    }
+  }
   fs.writeFileSync(out + "/version.txt", m[1]);
   const NO_CACHE = "  Cache-Control: no-cache, must-revalidate\n";
   fs.writeFileSync(out + "/_headers",
@@ -144,6 +161,7 @@ node -e '
     + "/index.html\n" + NO_CACHE
     + "/gm.html\n" + NO_CACHE
     + "/*.html\n" + NO_CACHE
+    + "/assets/endgame/three-r128.min.js\n" + NO_CACHE
     + "/version.txt\n" + NO_CACHE + "  Content-Type: text/plain; charset=utf-8\n");
 ' "$OUT"
 

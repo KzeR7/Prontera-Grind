@@ -84,12 +84,15 @@ t('map has destination, travel and field-guide sections; travel stays outside fo
   assert.ok(root.querySelector('.ui-field-guide .mapcols'));
   assert.ok(!root.querySelector('.ui-field-guide details'), 'drops are visible without opening tabs');
 });
-t('Echo has its own panel between Ascension and Social',()=>{
+t('Dungeons has its own panel between Ascension and Social (Raid Dungeons + Endless Echo)',()=>{
+  ev("mapSeason='dungeons';dungeonMode='raid'");
+  const rootRaid=window.document.createElement('div');rootRaid.innerHTML=ev('V.map()');ev('arrangePanel')('map',rootRaid);
+  assert.ok(rootRaid.querySelector('#map-panel-dungeons .raid-dungeon-browser'));
   ev("mapSeason='echo'");
   const root=window.document.createElement('div');root.innerHTML=ev('V.map()');ev('arrangePanel')('map',root);
-  assert.ok(root.querySelector('#map-panel-echo [data-trial=lobby]'));
+  assert.ok(root.querySelector('#map-panel-dungeons [data-trial=lobby]'));
   assert.equal(root.querySelector('[data-a=go]'),null);
-  ev("mapSeason='atlas'");
+  ev("mapSeason='atlas';dungeonMode='raid'");
 });
 t('kill updates retain live journal rows and focused controls',()=>{
   ev("tabs.splice(0,tabs.length,'index');indexMode='mobs';renderWin()");
@@ -339,7 +342,7 @@ t('World Atlas and Ascension Map have separate destination grids and normal trav
  const doc=window.document;ev("tabs.splice(0,tabs.length,'map');mapSeason='atlas';mapM=3;mapL=4;S.mp=3;S.lvl=4;renderWin()");
  const before=ev('JSON.stringify(S)');
  assert.ok(html.includes('map-season-tabs{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))'),'v174: the season strip is four columns so Social sits beside Ascension, not below');
- assert.deepStrictEqual([...doc.querySelectorAll('.map-season-tabs [role=tab]')].map(b=>b.id),['map-tab-atlas','map-tab-ascension','map-tab-echo','map-tab-social']);
+ assert.deepStrictEqual([...doc.querySelectorAll('.map-season-tabs [role=tab]')].map(b=>b.id),['map-tab-atlas','map-tab-ascension','map-tab-dungeons','map-tab-social']);
  const social=doc.querySelector('#map-tab-social');assert.ok(!social.disabled);assert.match(social.textContent,/Social Hub/);
  social.click();assert.strictEqual(ev('mapSeason'),'social');assert.match(doc.querySelector('.social-destination').textContent,/farming keeps going/);assert.strictEqual(ev('JSON.stringify(S)'),before);ev("ACT.mapseason('atlas')");
  assert.strictEqual(doc.querySelectorAll('[data-a=selm]').length,10);

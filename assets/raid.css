@@ -1,0 +1,2401 @@
+/* Astral Raid — Starlight Bridge & Sanctuary of Thanatos UI */
+
+body.raid-open #dock,
+body.raid-open #sideRail,
+body.raid-open #pgQuests,
+body.raid-open #feedWrap,
+body.raid-open #minimapTools,
+body.raid-open #eclipseCombat,
+body.raid-open #eclipseCompanions,
+body.raid-open #xp-dock,
+body.raid-open #hud,
+body.raid-open #wins,
+body.raid-open #hint,
+body.raid-open #pgScrim,
+body.raid-open #socialChat,
+body.raid-open #bgmPlayer {
+  display: none !important;
+}
+
+/* Lift active buff icons cleanly above the bottom-right REVIVE / DODGE / Leave buttons */
+body.raid-open #hudBuffs {
+  right: 16px !important;
+  bottom: calc(max(14px, env(safe-area-inset-bottom)) + 66px) !important;
+  z-index: 95 !important;
+}
+
+/* Reset #view's line-height: 0 so text inside Raid overlays never stacks */
+#raidLobby,
+#raidHud,
+#raidResult {
+  line-height: 1.45;
+  font-family: Inter, "Segoe UI", system-ui, -apple-system, sans-serif;
+  box-sizing: border-box;
+}
+#raidLobby *,
+#raidHud *,
+#raidResult * {
+  box-sizing: border-box;
+  line-height: 1.4;
+}
+
+/* ---------- Raid Portal / Lobby ---------- */
+#raidLobby {
+  position: fixed;
+  inset: 0;
+  z-index: 1250;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px;
+  background: radial-gradient(ellipse at 50% 24%, rgba(36, 26, 78, 0.86), rgba(7, 6, 16, 0.95));
+  backdrop-filter: blur(8px);
+}
+#raidLobby[hidden],
+#raidHud[hidden],
+#raidResult[hidden],
+#raidLobby [hidden],
+#raidHud [hidden],
+#raidResult [hidden] {
+  display: none !important;
+}
+
+.raid-lobby-card {
+  width: min(760px, 95vw);
+  max-height: min(90vh, 880px);
+  overflow-y: auto;
+  padding: 18px 20px 16px;
+  border-radius: 16px;
+  background: linear-gradient(168deg, #16132b 0%, #0d0b1b 58%, #151029 100%);
+  border: 1px solid rgba(190, 162, 255, 0.34);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.78), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  color: #ece9f8;
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+
+.raid-banner {
+  position: relative;
+  height: 136px;
+  flex: none;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(224, 188, 114, 0.36);
+  background: #0b0918;
+}
+.raid-banner img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.78;
+  display: block;
+}
+.raid-banner-shade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(10, 8, 22, 0.12) 0%, rgba(10, 8, 22, 0.56) 46%, rgba(11, 9, 24, 0.95) 100%);
+}
+.raid-banner-copy {
+  position: absolute;
+  left: 18px;
+  right: 54px;
+  bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.raid-eyebrow {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  line-height: 1.3;
+  color: #f0c975;
+  text-transform: uppercase;
+  display: block;
+}
+.raid-banner-copy h2 {
+  margin: 0;
+  font-size: 23px;
+  line-height: 1.18;
+  font-weight: 800;
+  color: #fff;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.75);
+}
+.raid-banner-copy p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.35;
+  color: #d0c8ec;
+}
+.raid-close-x {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  background: rgba(10, 8, 22, 0.72);
+  color: #ece9f8;
+  font-size: 17px;
+  line-height: 1;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+.raid-close-x:hover {
+  background: rgba(188, 72, 92, 0.72);
+}
+
+/* ---------- Party Ready Room & Character Preview Cards ---------- */
+.raid-party-box {
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(18, 15, 36, 0.88);
+  border: 1px solid rgba(164, 146, 226, 0.26);
+  font-size: 12px;
+  line-height: 1.45;
+  color: #ccc5e8;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.raid-party-box.solo-note {
+  color: #bfb8dc;
+  display: block;
+}
+.raid-party-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 11.5px;
+  line-height: 1.35;
+  color: #cfc7ec;
+}
+.raid-party-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.raid-ready-count {
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  background: rgba(255, 196, 88, 0.16);
+  border: 1px solid rgba(255, 206, 108, 0.4);
+  color: #f6d58e;
+}
+.raid-ready-count.all {
+  background: rgba(46, 196, 134, 0.2);
+  border-color: rgba(102, 238, 178, 0.55);
+  color: #88f7c4;
+}
+
+.raid-ready-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+.raid-ready-card {
+  position: relative;
+  padding: 10px 10px 11px;
+  border-radius: 12px;
+  background: radial-gradient(circle at 50% 38%, rgba(86, 62, 160, 0.28), rgba(14, 11, 28, 0.92) 72%);
+  border: 1px solid rgba(176, 154, 236, 0.28);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  text-align: center;
+  transition: border-color 0.18s, box-shadow 0.18s;
+}
+.raid-ready-card.is-ready {
+  border-color: rgba(98, 235, 172, 0.65);
+  box-shadow: 0 0 18px rgba(54, 198, 134, 0.18), inset 0 0 16px rgba(54, 198, 134, 0.08);
+}
+.raid-ready-card.is-empty {
+  opacity: 0.55;
+  border-style: dashed;
+  justify-content: center;
+  min-height: 186px;
+}
+.raid-role-tag {
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(114, 88, 196, 0.34);
+  color: #dcd4f8;
+}
+.raid-role-tag.leader {
+  background: rgba(236, 195, 107, 0.22);
+  border: 1px solid rgba(236, 195, 107, 0.45);
+  color: #f8da92;
+}
+.raid-pedestal {
+  position: relative;
+  width: 108px;
+  height: 116px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.raid-pedestal::after {
+  content: "";
+  position: absolute;
+  bottom: 4px;
+  width: 74px;
+  height: 14px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(164, 132, 255, 0.52), rgba(164, 132, 255, 0) 72%);
+  pointer-events: none;
+}
+.raid-ready-card.is-ready .raid-pedestal::after {
+  background: radial-gradient(ellipse at center, rgba(94, 242, 176, 0.58), rgba(94, 242, 176, 0) 72%);
+}
+.raid-portrait-canvas {
+  position: relative;
+  z-index: 1;
+  width: 104px;
+  height: 112px;
+  image-rendering: auto;
+  display: block;
+}
+.raid-ready-name {
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.2;
+  color: #fff;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.raid-ready-cls {
+  font-size: 10.5px;
+  line-height: 1.25;
+  color: #b4abd6;
+}
+.raid-ready-pill {
+  margin-top: 2px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  background: rgba(255, 176, 84, 0.16);
+  border: 1px solid rgba(255, 184, 98, 0.42);
+  color: #ffcf8a;
+}
+.raid-ready-pill.ok {
+  background: rgba(42, 188, 126, 0.24);
+  border-color: rgba(106, 242, 180, 0.62);
+  color: #92fbd0;
+}
+
+.raid-party-empty {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.raid-link-btn {
+  flex: none;
+  padding: 6px 11px;
+  border-radius: 8px;
+  border: 1px solid rgba(236, 195, 107, 0.5);
+  background: rgba(236, 195, 107, 0.15);
+  color: #f6d58e;
+  font-size: 11px;
+  line-height: 1.25;
+  font-weight: 700;
+  cursor: pointer;
+}
+.raid-link-btn:hover {
+  background: rgba(236, 195, 107, 0.28);
+}
+
+/* Lobby inline Party Chat */
+.raid-lobby-chat {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(170, 150, 232, 0.18);
+}
+.raid-lobby-chat-log {
+  max-height: 76px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 5px 8px;
+  border-radius: 8px;
+  background: rgba(10, 8, 22, 0.68);
+  font-size: 11px;
+}
+
+.raid-stages-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.raid-stage-item {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 9px 11px;
+  border-radius: 10px;
+  background: rgba(22, 18, 44, 0.72);
+  border: 1px solid rgba(158, 138, 218, 0.2);
+}
+.raid-stage-item > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.raid-stage-item.boss {
+  border-color: rgba(235, 98, 118, 0.48);
+  background: linear-gradient(135deg, rgba(64, 20, 38, 0.58), rgba(24, 18, 44, 0.84));
+}
+.raid-stage-num {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+  line-height: 1;
+  font-weight: 800;
+  background: rgba(114, 88, 196, 0.45);
+  color: #f3effe;
+  border: 1px solid rgba(196, 174, 255, 0.35);
+}
+.raid-stage-item.boss .raid-stage-num {
+  background: rgba(214, 62, 86, 0.52);
+  border-color: rgba(255, 138, 154, 0.55);
+}
+.raid-stage-item b {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  line-height: 1.25;
+  color: #fff;
+}
+.raid-stage-item b em {
+  font-style: normal;
+  font-size: 9px;
+  line-height: 1.2;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: #cf3850;
+  color: #fff;
+  letter-spacing: 0.06em;
+}
+.raid-stage-item small {
+  display: block;
+  font-size: 11px;
+  line-height: 1.35;
+  color: #ada4ce;
+}
+
+.raid-rewards-bar {
+  padding: 9px 13px;
+  border-radius: 9px;
+  background: rgba(236, 195, 107, 0.08);
+  border: 1px solid rgba(236, 195, 107, 0.25);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 11.5px;
+}
+.raid-rewards-bar > div {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  line-height: 1.35;
+}
+.raid-rewards-bar b {
+  color: #f2cf7d;
+  line-height: 1.35;
+}
+.raid-rewards-bar span {
+  color: #e8e3f8;
+  line-height: 1.35;
+  text-align: right;
+}
+
+.raid-lobby-foot {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.raid-meta-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 12px;
+  line-height: 1.35;
+  color: #cbc3e8;
+}
+.raid-gate-err {
+  color: #ff8e9e;
+  font-weight: 600;
+}
+.raid-gm-tag {
+  color: #7ef0c4;
+  font-weight: 700;
+}
+.raid-foot-btns {
+  display: flex;
+  gap: 10px;
+}
+.raid-start-btn,
+.raid-ready-btn {
+  flex: 1;
+  padding: 12px 18px;
+  border-radius: 10px;
+  font-size: 14px;
+  line-height: 1.25;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+}
+.raid-start-btn {
+  border: 1px solid #f2cf7d;
+  background: linear-gradient(135deg, #6e4bc9 0%, #4b3196 55%, #8a5628 100%);
+  color: #fff;
+  box-shadow: 0 8px 22px rgba(92, 60, 178, 0.42);
+}
+.raid-start-btn:hover:not(:disabled),
+.raid-ready-btn:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+.raid-start-btn:disabled,
+.raid-ready-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+.raid-ready-btn {
+  border: 1px solid #74f0bc;
+  background: linear-gradient(135deg, #1d7d57 0%, #16593e 100%);
+  color: #effff7;
+  box-shadow: 0 8px 22px rgba(32, 164, 110, 0.36);
+}
+.raid-ready-btn.is-on {
+  border-color: #f2cf7d;
+  background: linear-gradient(135deg, #279468 0%, #2a6e58 100%);
+}
+.raid-cancel-btn {
+  padding: 12px 18px;
+  border-radius: 10px;
+  border: 1px solid rgba(182, 164, 236, 0.3);
+  background: rgba(24, 20, 46, 0.8);
+  color: #d6d0ee;
+  font-size: 13px;
+  line-height: 1.25;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* ---------- Active Raid HUD ---------- */
+#raidHud {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  pointer-events: none;
+}
+
+.raid-hud-top {
+  position: absolute;
+  top: 52px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  width: min(720px, 92vw);
+}
+.raid-stage-pill {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 7px 16px;
+  border-radius: 999px;
+  background: rgba(13, 10, 28, 0.9);
+  border: 1px solid rgba(198, 174, 255, 0.36);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55);
+  color: #f3effe;
+}
+.raid-pips {
+  display: flex;
+  gap: 5px;
+}
+.raid-pip {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 10px;
+  line-height: 1;
+  font-weight: 800;
+  background: rgba(45, 38, 82, 0.85);
+  color: #9e95c4;
+  border: 1px solid rgba(164, 144, 228, 0.25);
+}
+.raid-pip.done {
+  background: #2f8f6b;
+  color: #fff;
+  border-color: #67dfb0;
+}
+.raid-pip.now {
+  background: #7c52e0;
+  color: #fff;
+  border-color: #f2cf7d;
+  box-shadow: 0 0 10px rgba(242, 207, 125, 0.5);
+}
+.raid-stage-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.raid-stage-text b {
+  font-size: 12.5px;
+  line-height: 1.25;
+  color: #fff;
+}
+.raid-stage-text small {
+  font-size: 10.5px;
+  line-height: 1.25;
+  color: #bcb3df;
+}
+.raid-clock {
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
+  line-height: 1.2;
+  font-weight: 800;
+  color: #f5d384;
+  padding-left: 10px;
+  border-left: 1px solid rgba(190, 168, 255, 0.24);
+}
+.raid-clock.warn {
+  color: #ff6e7e;
+}
+
+/* Prominent MMO Boss HP Frame + Cast Bar */
+.raid-boss-wrap {
+  width: min(680px, 88vw);
+  padding: 10px 14px 11px;
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(24, 10, 26, 0.94), rgba(14, 8, 22, 0.94));
+  border: 1px solid rgba(242, 112, 132, 0.56);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.68), 0 0 24px rgba(214, 44, 78, 0.22);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.raid-boss-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  line-height: 1.25;
+}
+.raid-boss-top b {
+  color: #ffdfe6;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.8);
+}
+.raid-boss-phase {
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(235, 72, 98, 0.28);
+  border: 1px solid rgba(255, 138, 158, 0.45);
+  color: #ffc2cd;
+  text-transform: uppercase;
+}
+.raid-boss-bar {
+  position: relative;
+  height: 24px;
+  border-radius: 12px;
+  background: rgba(12, 6, 16, 0.95);
+  overflow: hidden;
+  border: 1px solid rgba(255, 168, 182, 0.36);
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.75);
+}
+.raid-boss-bar > i {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #9e1932 0%, #df2c4d 45%, #ff5c5c 78%, #f7be63 100%);
+  box-shadow: 0 0 16px rgba(255, 82, 104, 0.6);
+  transition: width 0.12s linear;
+}
+.raid-boss-bar::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 24.8%, rgba(255,255,255,0.22) 25%, transparent 25.2%,
+    transparent 49.8%, rgba(255,255,255,0.28) 50%, transparent 50.2%,
+    transparent 74.8%, rgba(255,255,255,0.22) 75%, transparent 75.2%
+  );
+  pointer-events: none;
+}
+.raid-boss-hp-num {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  line-height: 1;
+  font-weight: 800;
+  color: #ffffff;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.95), 0 0 8px rgba(0, 0, 0, 0.85);
+  z-index: 2;
+  pointer-events: none;
+}
+
+.raid-cast-banner {
+  position: relative;
+  width: min(640px, 86vw);
+  min-height: 28px;
+  padding: 5px 14px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(34, 10, 22, 0.92);
+  border: 1px solid #ff6b80;
+  color: #fff2f4;
+  font-size: 12px;
+  line-height: 1.3;
+  font-weight: 800;
+  text-align: center;
+  letter-spacing: 0.03em;
+  box-shadow: 0 0 20px rgba(255, 58, 86, 0.5);
+}
+.raid-cast-banner > i {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 0%;
+  background: linear-gradient(90deg, rgba(196, 30, 58, 0.85), rgba(240, 102, 54, 0.85));
+  transition: width 0.06s linear;
+  z-index: 0;
+}
+.raid-cast-banner.donut {
+  border-color: #63e6ff;
+  box-shadow: 0 0 20px rgba(72, 214, 255, 0.45);
+}
+.raid-cast-banner.donut > i {
+  background: linear-gradient(90deg, rgba(24, 128, 172, 0.85), rgba(62, 190, 230, 0.85));
+}
+.raid-cast-banner.pillars {
+  border-color: #ffd36a;
+  box-shadow: 0 0 28px rgba(255, 194, 72, 0.65), 0 0 14px rgba(255, 48, 84, 0.55);
+}
+.raid-cast-banner.pillars > i {
+  background: linear-gradient(90deg, rgba(214, 24, 58, 0.92), rgba(248, 166, 52, 0.92));
+}
+.raid-cast-banner > span {
+  position: relative;
+  z-index: 1;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
+}
+
+/* Left column: Party HP + DPS Meter */
+.raid-hud-left {
+  position: absolute;
+  top: 56px;
+  left: max(12px, env(safe-area-inset-left));
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: min(236px, 44vw);
+}
+.raid-card {
+  padding: 9px 11px;
+  border-radius: 10px;
+  background: rgba(13, 10, 28, 0.86);
+  border: 1px solid rgba(182, 160, 244, 0.28);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.48);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.raid-card-hd {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 10px;
+  line-height: 1.25;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: #f0cc7a;
+  text-transform: uppercase;
+}
+.raid-member {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.raid-member.dead {
+  opacity: 0.68;
+}
+.raid-member-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  line-height: 1.3;
+  color: #f3effe;
+}
+.raid-member-top b {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1.3;
+}
+.raid-member-top small {
+  color: #ada4ce;
+  font-size: 10px;
+  line-height: 1.25;
+  flex: none;
+}
+.raid-hp-bar {
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+}
+.raid-hp-bar > i {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #27a868, #63e6a2);
+  transition: width 0.14s linear;
+}
+.raid-member.low .raid-hp-bar > i {
+  background: linear-gradient(90deg, #d84343, #ff8b66);
+}
+.raid-member.dead .raid-hp-bar > i {
+  background: #6b6385;
+}
+.raid-member-sub {
+  display: flex;
+  justify-content: space-between;
+  font-size: 9.5px;
+  line-height: 1.25;
+  color: #a99fca;
+  font-variant-numeric: tabular-nums;
+}
+
+.raid-dps-row {
+  position: relative;
+  height: 22px;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 8px;
+  font-size: 10.5px;
+  line-height: 1.2;
+  color: #f4f0ff;
+}
+.raid-dps-row > i {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, rgba(124, 82, 224, 0.58), rgba(236, 195, 107, 0.38));
+  pointer-events: none;
+}
+.raid-dps-row span,
+.raid-dps-row b {
+  position: relative;
+  z-index: 1;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+
+/* ---------- Active Raid Chat Box (Resizable) ---------- */
+.raid-chat-box {
+  position: absolute;
+  left: max(12px, env(safe-area-inset-left));
+  bottom: calc(max(14px, env(safe-area-inset-bottom)) + 44px);
+  width: 310px;
+  height: 220px;
+  min-width: 220px;
+  max-width: min(580px, 84vw);
+  min-height: 148px;
+  max-height: min(440px, 60vh);
+  padding: 8px 10px;
+  border-radius: 11px;
+  background: rgba(12, 10, 26, 0.9);
+  border: 1px solid rgba(182, 160, 244, 0.32);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.54);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  pointer-events: auto;
+}
+.raid-chat-box.minimized {
+  height: auto !important;
+  min-height: 0 !important;
+}
+.raid-chat-box.minimized .raid-chat-feed,
+.raid-chat-box.minimized .raid-chat-quick,
+.raid-chat-box.minimized .raid-chat-form {
+  display: none;
+}
+.raid-chat-hd {
+  flex: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: #f0cc7a;
+  text-transform: uppercase;
+}
+.raid-chat-hd-btns {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.raid-chat-min-btn,
+.raid-chat-size-btn,
+.raid-chat-resize-grip {
+  padding: 1px 6px;
+  border-radius: 5px;
+  border: 1px solid rgba(186, 168, 244, 0.28);
+  background: rgba(28, 22, 54, 0.85);
+  color: #d9d2f2;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.25;
+  cursor: pointer;
+}
+.raid-chat-resize-grip {
+  cursor: nesw-resize;
+  touch-action: none;
+  user-select: none;
+  color: #f5d384;
+  border-color: rgba(242, 207, 125, 0.42);
+}
+.raid-chat-min-btn:hover,
+.raid-chat-size-btn:hover,
+.raid-chat-resize-grip:hover {
+  background: rgba(74, 54, 140, 0.9);
+  border-color: #ecc36b;
+}
+.raid-chat-feed {
+  flex: 1 1 auto;
+  min-height: 44px;
+  max-height: none;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 5px 7px;
+  border-radius: 7px;
+  background: rgba(6, 5, 14, 0.65);
+  font-size: 11px;
+  line-height: 1.34;
+}
+.raid-chat-msg {
+  color: #e9e4fa;
+  word-break: break-word;
+  line-height: 1.32;
+}
+.raid-chat-msg b {
+  color: #8ad8ff;
+  margin-right: 5px;
+}
+.raid-chat-msg.me b {
+  color: #f5d384;
+}
+.raid-chat-msg.sys {
+  color: #b5add6;
+  font-style: italic;
+}
+.raid-chat-quick {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.raid-quick-pill {
+  padding: 2px 7px;
+  border-radius: 999px;
+  border: 1px solid rgba(176, 156, 236, 0.28);
+  background: rgba(42, 32, 82, 0.65);
+  color: #dfd8f8;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.25;
+  cursor: pointer;
+}
+.raid-quick-pill:hover {
+  background: rgba(94, 70, 174, 0.78);
+  border-color: #ecc36b;
+}
+.raid-chat-form {
+  display: flex;
+  gap: 5px;
+}
+.raid-chat-input {
+  flex: 1;
+  min-width: 0;
+  padding: 5px 8px;
+  border-radius: 7px;
+  border: 1px solid rgba(182, 164, 238, 0.32);
+  background: rgba(8, 6, 18, 0.9);
+  color: #f4f0ff;
+  font-size: 11.5px;
+  line-height: 1.25;
+  outline: none;
+}
+.raid-chat-input:focus {
+  border-color: #ecc36b;
+}
+.raid-chat-send {
+  flex: none;
+  padding: 5px 10px;
+  border-radius: 7px;
+  border: 1px solid rgba(236, 195, 107, 0.5);
+  background: rgba(102, 72, 188, 0.72);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+/* Bottom controls: Move hint + DODGE + Party REVIVE + Leave */
+.raid-hud-bottom {
+  position: absolute;
+  left: 12px;
+  right: 16px;
+  bottom: max(14px, env(safe-area-inset-bottom));
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+}
+.raid-move-hint {
+  padding: 7px 12px;
+  border-radius: 8px;
+  background: rgba(13, 10, 28, 0.82);
+  border: 1px solid rgba(176, 156, 236, 0.24);
+  color: #cbc3e8;
+  font-size: 11px;
+  line-height: 1.35;
+}
+.raid-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  pointer-events: auto;
+}
+.raid-dodge-btn,
+.raid-revive-btn,
+.raid-leave-btn {
+  pointer-events: auto;
+  cursor: pointer;
+  font-weight: 800;
+  border-radius: 12px;
+}
+.raid-dodge-btn {
+  min-width: 126px;
+  padding: 12px 18px;
+  border: 1px solid #76eaff;
+  background: linear-gradient(135deg, #1b5e7a 0%, #143954 100%);
+  color: #ecfcff;
+  font-size: 13px;
+  line-height: 1.25;
+  box-shadow: 0 8px 22px rgba(28, 146, 188, 0.42);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.raid-dodge-btn small {
+  font-size: 10px;
+  line-height: 1;
+  opacity: 0.84;
+  padding: 2px 5px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.28);
+}
+.raid-dodge-btn:disabled {
+  opacity: 0.55;
+  border-color: rgba(130, 170, 190, 0.35);
+  box-shadow: none;
+  cursor: default;
+}
+.raid-revive-btn {
+  min-width: 146px;
+  padding: 12px 16px;
+  border: 1px solid #7ef0b8;
+  background: linear-gradient(135deg, #1f7a53 0%, #144d36 100%);
+  color: #ecfff5;
+  font-size: 12.5px;
+  line-height: 1.25;
+  box-shadow: 0 8px 22px rgba(34, 168, 108, 0.4);
+}
+.raid-revive-btn:disabled {
+  opacity: 0.42;
+  border-color: rgba(140, 185, 160, 0.28);
+  box-shadow: none;
+  cursor: default;
+}
+.raid-leave-btn {
+  padding: 11px 14px;
+  border: 1px solid rgba(255, 136, 152, 0.38);
+  background: rgba(38, 16, 28, 0.85);
+  color: #ffc5ce;
+  font-size: 12px;
+  line-height: 1.25;
+}
+
+/* ---------- End-of-Raid Commendation & Loot Popup ---------- */
+#raidResult {
+  position: fixed;
+  inset: 0;
+  z-index: 1250;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px;
+  background: radial-gradient(ellipse at 50% 25%, rgba(34, 24, 72, 0.86), rgba(8, 6, 18, 0.94));
+  backdrop-filter: blur(8px);
+}
+.raid-result-card {
+  width: min(720px, 95vw);
+  max-height: min(90vh, 860px);
+  overflow-y: auto;
+  padding: 20px 22px 18px;
+  border-radius: 16px;
+  background: linear-gradient(165deg, #181432 0%, #0e0c1e 60%, #16112d 100%);
+  border: 1px solid rgba(236, 195, 107, 0.46);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.82), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  color: #f2eefc;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.raid-result-card.fail {
+  border-color: rgba(235, 96, 116, 0.52);
+}
+.raid-result-head {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.raid-result-card h2 {
+  margin: 0;
+  font-size: 23px;
+  line-height: 1.2;
+  font-weight: 800;
+  color: #fff;
+}
+.raid-result-card.win h2 {
+  color: #ffe39a;
+  text-shadow: 0 2px 16px rgba(242, 198, 98, 0.35);
+}
+.raid-result-card.fail h2 {
+  color: #ffb8c4;
+}
+.raid-result-sub {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: #c6bee6;
+}
+
+.raid-showcase-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(186px, 1fr));
+  gap: 11px;
+}
+.raid-showcase-card {
+  padding: 11px 12px 12px;
+  border-radius: 13px;
+  background: radial-gradient(circle at 50% 36%, rgba(98, 70, 182, 0.3), rgba(13, 10, 26, 0.94) 74%);
+  border: 1px solid rgba(190, 168, 255, 0.3);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.raid-showcase-card.is-self {
+  border-color: rgba(242, 207, 125, 0.56);
+  box-shadow: 0 0 20px rgba(242, 207, 125, 0.14);
+}
+.raid-comm-badges {
+  min-height: 24px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 5px;
+}
+.raid-badge {
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.raid-badge.dps {
+  background: linear-gradient(135deg, rgba(226, 72, 92, 0.34), rgba(244, 158, 66, 0.34));
+  border: 1px solid #ff9e75;
+  color: #ffe2cf;
+}
+.raid-badge.tank {
+  background: linear-gradient(135deg, rgba(52, 136, 224, 0.34), rgba(88, 198, 255, 0.28));
+  border: 1px solid #7cd4ff;
+  color: #dcf5ff;
+}
+.raid-badge.sup {
+  background: linear-gradient(135deg, rgba(40, 184, 122, 0.34), rgba(114, 240, 184, 0.28));
+  border: 1px solid #7ef0be;
+  color: #dffff0;
+}
+
+.raid-showcase-stats {
+  width: 100%;
+  margin-top: 2px;
+  padding-top: 7px;
+  border-top: 1px solid rgba(176, 156, 236, 0.18);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 11px;
+}
+.raid-showcase-stats > div {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #bdb4de;
+}
+.raid-showcase-stats b {
+  color: #f4effe;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Items Received Section */
+.raid-loot-section {
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(15, 12, 30, 0.88);
+  border: 1px solid rgba(236, 195, 107, 0.32);
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+.raid-loot-hd {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: #f2cf7d;
+  text-transform: uppercase;
+}
+.raid-loot-hd small {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #b7aed8;
+}
+.raid-loot-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 8px;
+}
+.raid-loot-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 11px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, rgba(46, 36, 86, 0.52), rgba(20, 16, 40, 0.88));
+  border: 1px solid rgba(196, 174, 255, 0.28);
+}
+.raid-loot-icon {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+  font-size: 17px;
+  line-height: 1;
+  background: rgba(124, 88, 224, 0.32);
+  border: 1px solid rgba(208, 184, 255, 0.42);
+  color: #e6d8ff;
+}
+.raid-loot-icon.zeny {
+  background: rgba(226, 174, 62, 0.26);
+  border-color: rgba(248, 208, 110, 0.5);
+  color: #ffe08a;
+}
+.raid-loot-icon.echo {
+  background: rgba(46, 168, 214, 0.26);
+  border-color: rgba(114, 224, 255, 0.48);
+  color: #9ceeff;
+}
+.raid-loot-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.raid-loot-meta b {
+  font-size: 13px;
+  line-height: 1.2;
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+}
+.raid-loot-meta small {
+  font-size: 10.5px;
+  line-height: 1.25;
+  color: #bcb3df;
+}
+
+/* ---------- Map UI -> Dungeons Subtab (Raid Dungeons + Endless Echo) ---------- */
+#wins .ui-panel[data-layout="map"] .dungeons-panel,
+#wins .dungeons-panel {
+  flex: 1 1 0 !important;
+  min-height: 0 !important;
+  height: 100%;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  gap: 12px !important;
+  max-height: 100%;
+  overflow-y: auto !important;
+  overscroll-behavior: contain;
+  padding: 12px 18px 16px !important;
+  box-sizing: border-box;
+}
+.dungeons-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  flex: 0 0 auto;
+  width: 100%;
+}
+.dungeons-subnav {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  width: 100%;
+  max-width: 520px;
+  margin: 0;
+}
+.dungeons-status-strip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.dungeons-stat-pill {
+  padding: 5px 11px;
+  border-radius: 999px;
+  background: rgba(18, 15, 36, 0.85);
+  border: 1px solid rgba(188, 168, 248, 0.26);
+  color: #ddd6f6;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.dungeons-stat-pill b {
+  color: #ffe299;
+}
+.dungeons-subtab {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 15px;
+  border-radius: 9px;
+  border: 1px solid rgba(178, 158, 236, 0.24);
+  background: rgba(20, 17, 38, 0.78);
+  color: #cfc8ec;
+  font-size: 12.5px;
+  line-height: 1.2;
+  font-weight: 800;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: border-color 0.16s, background 0.16s, box-shadow 0.16s;
+}
+.dungeons-subtab small {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #a8a0cc;
+}
+.dungeons-subtab.on {
+  border-color: #ecc36b;
+  background: linear-gradient(135deg, rgba(84, 58, 154, 0.56), rgba(34, 24, 68, 0.88));
+  color: #fff;
+  box-shadow: 0 0 18px rgba(236, 195, 107, 0.16);
+}
+.dungeons-subtab.on small {
+  color: #f6d88f;
+}
+
+.raid-dungeon-browser {
+  flex: 1 1 0;
+  min-height: 520px;
+  display: grid;
+  grid-template-columns: 356px minmax(0, 1fr);
+  gap: 16px;
+  align-items: stretch;
+  width: 100%;
+}
+.raid-left-col {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0;
+  gap: 12px;
+  min-width: 0;
+  min-height: 0;
+}
+.raid-dungeon-list {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0;
+  gap: 12px;
+  min-height: 0;
+}
+.raid-dungeon-card {
+  position: relative;
+  flex: 1 1 0;
+  width: 100%;
+  padding: 0;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(176, 156, 236, 0.26);
+  background: linear-gradient(145deg, rgba(24, 19, 44, 0.94), rgba(14, 11, 28, 0.96));
+  color: #eee9fb;
+  text-align: left;
+  cursor: pointer;
+  display: grid;
+  grid-template-columns: 146px minmax(0, 1fr);
+  align-items: stretch;
+  min-height: 122px;
+  transition: border-color 0.16s, transform 0.14s, box-shadow 0.16s;
+}
+.raid-dungeon-card:hover {
+  border-color: rgba(236, 195, 107, 0.62);
+}
+.raid-dungeon-card.on {
+  border-color: #f2cf7d;
+  background: linear-gradient(135deg, rgba(52, 36, 92, 0.95), rgba(20, 15, 40, 0.98));
+  box-shadow: 0 0 24px rgba(242, 207, 125, 0.22), inset 0 0 0 1px rgba(242, 207, 125, 0.24);
+}
+.raid-dungeon-card.soon {
+  opacity: 0.88;
+}
+.raid-dungeon-thumb {
+  position: relative;
+  height: 100%;
+  min-height: 122px;
+  overflow: hidden;
+  background: #0a0816;
+}
+.raid-dungeon-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.25s ease;
+}
+.raid-dungeon-card:hover .raid-dungeon-thumb img {
+  transform: scale(1.05);
+}
+.raid-dungeon-thumb::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(10, 8, 22, 0.04) 0%, rgba(16, 12, 34, 0.72) 100%);
+}
+.raid-dungeon-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 2;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: rgba(36, 174, 118, 0.92);
+  border: 1px solid rgba(132, 248, 198, 0.7);
+  color: #edfff7;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
+}
+.raid-dungeon-badge.soon {
+  background: rgba(94, 78, 136, 0.94);
+  border-color: rgba(206, 190, 248, 0.5);
+  color: #e6defc;
+}
+.raid-dungeon-card-meta {
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  min-width: 0;
+}
+.raid-dungeon-card-meta b {
+  font-size: 15px;
+  line-height: 1.22;
+  color: #fff;
+}
+.raid-dungeon-card-meta small {
+  font-size: 11px;
+  line-height: 1.32;
+  color: #c2b9e4;
+}
+.raid-card-subchips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 3px;
+}
+.raid-card-subchips span {
+  padding: 2px 7px;
+  border-radius: 6px;
+  font-size: 9.5px;
+  font-weight: 700;
+  background: rgba(38, 29, 72, 0.78);
+  border: 1px solid rgba(188, 168, 248, 0.24);
+  color: #e9e2ff;
+}
+.raid-card-subchips span.mat {
+  color: #ffe39e;
+  border-color: rgba(242, 207, 125, 0.36);
+  background: rgba(96, 66, 20, 0.36);
+}
+
+.raid-dungeon-detail {
+  padding: 16px 20px;
+  border-radius: 14px;
+  background: linear-gradient(165deg, rgba(24, 19, 46, 0.94), rgba(12, 10, 25, 0.97));
+  border: 1px solid rgba(190, 168, 252, 0.3);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 14px;
+  color: #eee9fb;
+  min-width: 0;
+  min-height: 0;
+}
+
+/* Right-Pane Top Header: Heroic MVP Boss Preview & Route Info */
+.raid-mvp-header {
+  flex: 0 0 auto;
+  display: grid;
+  grid-template-columns: 162px minmax(0, 1fr);
+  gap: 18px;
+  align-items: center;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: radial-gradient(circle at 14% 50%, rgba(146, 52, 126, 0.38), rgba(14, 11, 28, 0.95) 68%);
+  border: 1px solid rgba(236, 195, 107, 0.38);
+}
+.raid-mvp-header[data-theme="thor"] {
+  background: radial-gradient(circle at 14% 50%, rgba(196, 68, 20, 0.42), rgba(20, 11, 14, 0.95) 68%);
+  border-color: rgba(255, 168, 82, 0.44);
+}
+.raid-mvp-header[data-theme="abyss"] {
+  background: radial-gradient(circle at 14% 50%, rgba(74, 92, 152, 0.38), rgba(12, 13, 26, 0.95) 68%);
+}
+.raid-boss-stage {
+  position: relative;
+  width: 162px;
+  height: 156px;
+  border-radius: 11px;
+  background: radial-gradient(ellipse at 50% 82%, rgba(242, 207, 125, 0.3) 0%, rgba(96, 52, 154, 0.28) 48%, rgba(9, 7, 20, 0.96) 86%);
+  border: 1px solid rgba(212, 186, 255, 0.3);
+  overflow: hidden;
+  box-shadow: inset 0 0 26px rgba(0, 0, 0, 0.55);
+}
+.raid-mvp-header[data-theme="thor"] .raid-boss-stage {
+  background: radial-gradient(ellipse at 50% 82%, rgba(255, 174, 72, 0.36) 0%, rgba(168, 46, 14, 0.32) 50%, rgba(16, 8, 10, 0.96) 86%);
+  border-color: rgba(255, 166, 92, 0.34);
+}
+.raid-boss-stage::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 12px;
+  width: 116px;
+  height: 22px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(242, 207, 125, 0.55), rgba(242, 207, 125, 0) 74%);
+  border: 1px solid rgba(242, 207, 125, 0.25);
+  pointer-events: none;
+}
+.raid-boss-stage img {
+  position: absolute;
+  z-index: 1;
+  left: 50%;
+  top: 52%;
+  width: var(--bsz, 468px);
+  height: var(--bsz, 468px);
+  max-width: none;
+  max-height: none;
+  transform: translate(var(--bx, -51.2%), var(--by, -69.3%));
+  image-rendering: pixelated;
+  pointer-events: none;
+  filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.82)) drop-shadow(0 0 12px rgba(255, 140, 120, 0.32));
+}
+.raid-mvp-info {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+}
+.raid-mvp-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.raid-mvp-titles {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.raid-mvp-role {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #f2cf7d;
+}
+.raid-mvp-titles h3 {
+  margin: 0;
+  font-size: 21px;
+  line-height: 1.2;
+  font-weight: 800;
+  color: #fff;
+}
+.raid-detail-tries {
+  padding: 4px 11px;
+  border-radius: 999px;
+  background: rgba(16, 12, 34, 0.9);
+  border: 1px solid rgba(242, 207, 125, 0.48);
+  font-size: 11px;
+  font-weight: 700;
+  color: #f6d88f;
+  white-space: nowrap;
+}
+.raid-mvp-desc {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #d8d1f2;
+}
+.raid-boss-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.raid-boss-tags span {
+  padding: 3px 9px;
+  border-radius: 7px;
+  font-size: 10.5px;
+  font-weight: 700;
+  background: rgba(34, 26, 64, 0.85);
+  border: 1px solid rgba(190, 168, 252, 0.28);
+  color: #e9e2ff;
+}
+.raid-boss-tags span.armor {
+  background: rgba(118, 76, 18, 0.46);
+  border-color: rgba(246, 206, 108, 0.54);
+  color: #ffe5a3;
+}
+.raid-route-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+  margin-top: 2px;
+}
+.raid-route-step {
+  padding: 5px 8px;
+  border-radius: 7px;
+  background: rgba(18, 14, 34, 0.78);
+  border: 1px solid rgba(178, 158, 236, 0.2);
+  font-size: 10.5px;
+  color: #d4ccef;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.raid-route-step b {
+  color: #f2cf7d;
+  margin-right: 4px;
+}
+.raid-route-step.boss {
+  background: linear-gradient(135deg, rgba(132, 34, 58, 0.45), rgba(44, 18, 42, 0.82));
+  border-color: rgba(255, 138, 154, 0.44);
+  color: #ffe4ea;
+}
+.raid-route-step.boss b {
+  color: #ff9eb0;
+}
+
+.raid-detail-cols {
+  flex: 1 1 0;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1.08fr) minmax(0, 1fr);
+  gap: 14px;
+  align-items: stretch;
+}
+.raid-detail-box {
+  padding: 12px 14px;
+  border-radius: 11px;
+  background: rgba(14, 11, 28, 0.84);
+  border: 1px solid rgba(168, 148, 228, 0.24);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
+}
+.raid-detail-box > header {
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #f2cf7d;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.raid-detail-box > header small {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #a89fd0;
+}
+.raid-mob-chips {
+  flex: 1 1 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  align-content: stretch;
+}
+.raid-mob-chip {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 6px 10px;
+  border-radius: 9px;
+  background: rgba(38, 30, 72, 0.62);
+  border: 1px solid rgba(176, 156, 236, 0.24);
+  font-size: 12px;
+  font-weight: 700;
+  color: #ece6fc;
+  min-width: 0;
+}
+.raid-mob-ico {
+  position: relative;
+  width: 38px;
+  height: 38px;
+  flex: none;
+  border-radius: 7px;
+  background: radial-gradient(circle at 50% 72%, rgba(236, 195, 107, 0.2), rgba(10, 8, 22, 0.92));
+  border: 1px solid rgba(188, 168, 248, 0.24);
+  overflow: hidden;
+}
+.raid-mob-ico img {
+  position: absolute;
+  left: 50%;
+  top: 54%;
+  width: var(--msz, 152px);
+  height: var(--msz, 152px);
+  max-width: none;
+  max-height: none;
+  transform: translate(var(--mx, -51%), var(--my, -68%));
+  image-rendering: pixelated;
+  pointer-events: none;
+}
+.raid-mob-ico-glyph {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  font-size: 15px;
+  color: #cfc6f2;
+}
+.raid-mob-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.raid-mob-copy b {
+  font-size: 12px;
+  line-height: 1.2;
+  color: #f4efff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.raid-mob-copy small {
+  font-size: 9.5px;
+  font-weight: 600;
+  color: #afa6d6;
+}
+.raid-mob-chip.boss {
+  background: linear-gradient(135deg, rgba(168, 36, 64, 0.56), rgba(74, 24, 58, 0.82));
+  border-color: rgba(255, 128, 148, 0.6);
+  color: #ffe2e8;
+}
+.raid-mob-chip.boss .raid-mob-ico {
+  border-color: rgba(255, 162, 132, 0.52);
+  background: radial-gradient(circle at 50% 72%, rgba(255, 168, 92, 0.34), rgba(24, 10, 18, 0.95));
+}
+.raid-mob-chip.boss .raid-mob-copy b {
+  color: #ffe8ec;
+}
+.raid-mob-chip.boss .raid-mob-copy small {
+  color: #ffb8c6;
+}
+.raid-drop-rows {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  gap: 6px;
+  font-size: 11.5px;
+}
+.raid-drop-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  background: rgba(26, 20, 48, 0.58);
+  border: 1px solid rgba(176, 156, 236, 0.14);
+}
+.raid-drop-row span {
+  color: #cbc3e8;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.raid-drop-row b {
+  color: #ffe29a;
+  text-align: right;
+  line-height: 1.28;
+}
+
+.raid-dungeon-cta {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 7px;
+  padding: 10px 14px;
+  border-radius: 11px;
+  background: rgba(12, 9, 24, 0.72);
+  border: 1px solid rgba(182, 162, 244, 0.2);
+}
+.raid-dungeon-cta > small {
+  font-size: 11px;
+  line-height: 1.25;
+  color: #c8c0e8;
+}
+.raid-dungeon-cta-btns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.raid-dungeon-cta-btns .raid-start-btn {
+  padding: 11px 16px;
+  font-size: 13.5px;
+}
+.raid-party-open-btn {
+  flex: 1;
+  padding: 11px 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(126, 240, 190, 0.68);
+  background: linear-gradient(135deg, #1d6f52 0%, #174968 100%);
+  color: #effff8;
+  font-size: 13.5px;
+  line-height: 1.25;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 6px 16px rgba(24, 134, 102, 0.32);
+}
+.raid-party-open-btn:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+.raid-party-open-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* ---------- Refinement Workshop: [ 1: Refine | 2: Weapon Stars ] ---------- */
+.eclipse-refine-mode-switch {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 4px auto 10px;
+  width: 100%;
+  max-width: 440px;
+}
+.eclipse-refine-mode-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 8px 12px;
+  border-radius: 9px;
+  border: 1px solid rgba(214, 190, 134, 0.24);
+  background: rgba(16, 20, 28, 0.78);
+  color: #c5ced9;
+  font-size: 12.5px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, color 0.15s, box-shadow 0.15s;
+}
+.eclipse-refine-mode-btn small {
+  font-size: 10px;
+  font-weight: 600;
+  color: #8c98a8;
+}
+.eclipse-refine-mode-btn:hover {
+  border-color: rgba(242, 207, 125, 0.55);
+  color: #fff;
+}
+.eclipse-refine-mode-btn.on {
+  border-color: #f0c975;
+  background: linear-gradient(135deg, rgba(110, 78, 22, 0.42), rgba(32, 28, 44, 0.92));
+  color: #ffeab3;
+  box-shadow: 0 0 16px rgba(240, 201, 117, 0.18);
+}
+.eclipse-refine-mode-btn.on small {
+  color: #f6d992;
+}
+.eclipse-star-rank b {
+  color: #ffd66b !important;
+}
+.star-boost-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(15, 19, 27, 0.72);
+  border: 1px solid rgba(240, 201, 117, 0.22);
+  margin-bottom: 10px;
+}
+.star-boost-card h4 {
+  margin: 0;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #f2cf7d;
+}
+.star-boost-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+.star-boost-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 7px 9px;
+  border-radius: 8px;
+  border: 1px solid rgba(190, 198, 214, 0.2);
+  background: rgba(24, 29, 40, 0.82);
+  color: #dbe2ee;
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+  text-align: left;
+}
+.star-boost-btn small {
+  font-size: 10px;
+  font-weight: 600;
+  color: #9ba7ba;
+}
+.star-boost-btn.on {
+  border-color: #f2cf7d;
+  background: linear-gradient(135deg, rgba(124, 88, 24, 0.45), rgba(34, 30, 52, 0.92));
+  color: #ffebb5;
+}
+.star-boost-btn.on small {
+  color: #f7d98c;
+}
+.star-rate-table-wrap {
+  max-height: 310px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  border-radius: 8px;
+  border: 1px solid rgba(190, 198, 214, 0.16);
+  background: rgba(11, 14, 21, 0.84);
+  margin-top: 6px;
+}
+.star-rate-table {
+  width: 100%;
+  table-layout: auto;
+  border-collapse: collapse;
+  font-size: 9.8px;
+  font-variant-numeric: tabular-nums;
+}
+.star-rate-table th,
+.star-rate-table td {
+  padding: 4px 3.5px;
+  text-align: right;
+  white-space: nowrap;
+  border-bottom: 1px solid rgba(190, 198, 214, 0.1);
+  color: #cfd7e6;
+}
+.star-rate-table th:first-child,
+.star-rate-table td:first-child {
+  padding-left: 6px;
+  text-align: left;
+  font-weight: 800;
+  color: #ffd875;
+}
+.star-rate-table th:last-child,
+.star-rate-table td:last-child {
+  padding-right: 6px;
+  font-size: 9.2px;
+  color: #b9e8cf;
+}
+.star-rate-table thead th {
+  position: sticky;
+  top: 0;
+  background: #141926;
+  color: #f2cf7d;
+  font-size: 8.8px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+.star-rate-table tr.cur td {
+  background: rgba(242, 207, 125, 0.16);
+  color: #fff3cc;
+  font-weight: 700;
+}
+.star-ineligible-box {
+  padding: 18px 16px;
+  border-radius: 10px;
+  background: rgba(18, 22, 32, 0.8);
+  border: 1px solid rgba(240, 201, 117, 0.24);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+@media (max-width: 960px) {
+  .raid-dungeon-browser,
+  .raid-mvp-header,
+  .raid-detail-cols,
+  .raid-dungeon-cta-btns,
+  .raid-route-strip {
+    grid-template-columns: 1fr;
+  }
+  .raid-boss-stage {
+    width: 100%;
+    height: 154px;
+  }
+}
+
+@media (max-width: 740px) {
+  .raid-stages-grid,
+  .raid-ready-grid,
+  .dungeons-subnav {
+    grid-template-columns: 1fr;
+  }
+  .raid-hud-left {
+    top: 112px;
+    width: min(196px, 48vw);
+  }
+  .raid-chat-box {
+    width: min(264px, 68vw);
+    height: 188px;
+    bottom: 66px;
+  }
+  .raid-move-hint {
+    display: none;
+  }
+  .raid-boss-wrap {
+    width: 94vw;
+  }
+}
+
+/* ---------- Ragnarok Online Blacksmith Forge (Official RO Anvil/Hammer/Sword + Success/Failed Sprites) ---------- */
+#wins .wbody[data-view="refine"] .eclipse-workshop-stage {
+  padding-top: 14px !important;
+}
+#eclipseRefineResult {
+  position: relative;
+  overflow: visible !important;
+  padding-top: 18px !important;
+  margin-top: 4px;
+  transition: border-color 0.22s ease, box-shadow 0.22s ease;
+}
+#eclipseRefineResult .eclipse-result-art {
+  position: relative;
+  z-index: 2;
+  transition: opacity 0.16s ease, transform 0.2s ease;
+}
+#eclipseRefineResult.refine-forging .eclipse-result-art {
+  opacity: 0.16;
+}
+#eclipseRefineResult.refine-forging {
+  --result-color: #ffbe55;
+  border-color: rgba(255, 190, 85, 0.78) !important;
+  box-shadow: 0 0 28px rgba(255, 152, 42, 0.32), inset 0 0 28px rgba(255, 156, 48, 0.18);
+}
+#eclipseRefineResult.refine-success {
+  --result-color: #ffe07d;
+  border-color: rgba(255, 222, 115, 0.9) !important;
+  box-shadow: 0 0 34px rgba(255, 210, 86, 0.44), inset 0 0 36px rgba(255, 218, 108, 0.25);
+}
+#eclipseRefineResult.refine-failure {
+  --result-color: #ff7676;
+  border-color: rgba(255, 96, 96, 0.82) !important;
+  box-shadow: 0 0 28px rgba(255, 68, 68, 0.36), inset 0 0 32px rgba(180, 26, 36, 0.28);
+  animation: ro-panel-recoil 0.42s cubic-bezier(.36,.07,.19,.97);
+}
+#eclipseRefineResult.refine-failure .eclipse-result-art {
+  opacity: 0.28;
+  animation: ro-fail-shake 0.44s ease-out;
+}
+aside.ro-forge-fx {
+  position: absolute;
+  left: 50%;
+  top: -4px;
+  width: 184px;
+  height: 116px;
+  transform: translateX(-50%);
+  pointer-events: none;
+  overflow: visible !important;
+  z-index: 6;
+  display: block;
+}
+aside.ro-forge-fx img {
+  image-rendering: pixelated;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* 1.0s Forging: Official RO Anvil + Sword + Two Blacksmith Hammer Strikes + Anvil Sparks */
+.ro-forge-fx.is-forging .ro-forge-hearth {
+  position: absolute;
+  left: 50%;
+  top: 48px;
+  width: 118px;
+  height: 92px;
+  transform: translate(-50%, -40%);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 196, 78, 0.56) 0%, rgba(255, 104, 24, 0.24) 52%, transparent 74%);
+  animation: ro-anvil-pulse 0.46s ease-out 2;
+}
+.ro-forge-anvil {
+  position: absolute;
+  left: 50%;
+  top: 44px;
+  width: 64px;
+  height: auto;
+  transform: translateX(-50%);
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.88));
+}
+.ro-forge-anvil.dim {
+  opacity: 0.65;
+  top: 48px;
+}
+.ro-forge-sword {
+  position: absolute;
+  left: 50%;
+  top: 18px;
+  width: 28px;
+  height: auto;
+  transform: translateX(-50%) rotate(76deg);
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.85)) drop-shadow(0 0 8px rgba(255, 206, 102, 0.65));
+}
+.ro-forge-hammer {
+  position: absolute;
+  left: calc(50% + 6px);
+  top: 2px;
+  width: 56px;
+  height: auto;
+  transform-origin: 86% 62%;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.85)) drop-shadow(0 0 8px rgba(255, 198, 92, 0.55));
+  animation: ro-hammer-strike 0.46s cubic-bezier(.22,.78,.28,1) 2;
+}
+.ro-forge-spark {
+  position: absolute;
+  left: 50%;
+  top: 40px;
+  width: 62px;
+  height: 62px;
+  transform: translate(-50%, -50%) scale(0.3);
+  mix-blend-mode: screen;
+  filter: sepia(0.75) saturate(3.2) hue-rotate(-12deg) brightness(1.2);
+  opacity: 0;
+  animation: ro-spark-burst 0.46s ease-out 2;
+}
+.ro-forge-spark.s2 {
+  left: calc(50% - 10px);
+  top: 34px;
+  width: 46px;
+  height: 46px;
+  animation-delay: 0.04s;
+}
+
+/* Official RO Success: Unclipped Shockwave Ring + Radiant Sword + RO "Success" Pixel Banner */
+.ro-forge-fx.is-success .ro-success-pillar {
+  position: absolute;
+  left: 50%;
+  top: -8px;
+  height: 124px;
+  width: 78px;
+  transform: translateX(-50%);
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 232, 132, 0.34) 24%, rgba(255, 252, 220, 0.88) 50%, rgba(255, 232, 132, 0.34) 76%, transparent 100%);
+  mix-blend-mode: screen;
+  animation: ro-pillar-flash 1.35s ease-out forwards;
+}
+.ro-forge-fx.is-success .ro-success-starburst {
+  position: absolute;
+  left: 50%;
+  top: 42px;
+  width: 108px;
+  height: 108px;
+  transform: translate(-50%, -50%) scale(0.38);
+  mix-blend-mode: screen;
+  filter: sepia(0.85) saturate(3) hue-rotate(-8deg) brightness(1.22);
+  animation: ro-ring-expand 1.05s cubic-bezier(.16,.84,.32,1) forwards;
+}
+.ro-forge-fx.is-success .ro-success-sword {
+  position: absolute;
+  left: 50%;
+  top: 12px;
+  width: 26px;
+  height: auto;
+  transform: translateX(-50%);
+  filter: drop-shadow(0 0 12px rgba(255, 226, 110, 0.95));
+  animation: ro-sword-ascend 1.3s ease-out forwards;
+}
+.ro-forge-fx.is-success .ro-success-glint {
+  position: absolute;
+  width: 52px;
+  height: 52px;
+  mix-blend-mode: screen;
+  filter: sepia(0.6) saturate(2.5) brightness(1.3);
+  animation: ro-glint-rise 1.2s ease-out forwards;
+}
+.ro-forge-fx.is-success .ro-success-glint.g1 { left: 22px; top: 18px; }
+.ro-forge-fx.is-success .ro-success-glint.g2 { right: 22px; top: 12px; animation-delay: 0.1s; }
+.ro-forge-fx.is-success .ro-success-banner {
+  position: absolute;
+  left: 50%;
+  top: -10px;
+  width: 96px;
+  height: auto;
+  transform: translateX(-50%);
+  filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.9)) drop-shadow(0 0 10px rgba(140, 210, 255, 0.65));
+  animation: ro-banner-pop 1.65s cubic-bezier(.18,.88,.32,1.15) forwards;
+}
+
+/* Official RO Failure: Shattered Blade Halves Flying Apart + RO "Failed" Pixel Banner */
+.ro-forge-fx.is-failure .ro-fail-flash {
+  position: absolute;
+  left: 50%;
+  top: 42px;
+  width: 136px;
+  height: 98px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 68, 68, 0.56), rgba(90, 12, 18, 0.24) 58%, transparent 78%);
+  animation: ro-fail-burst 0.85s ease-out forwards;
+}
+.ro-forge-fx.is-failure .ro-fail-cracks {
+  position: absolute;
+  inset: 0;
+  display: block;
+}
+.ro-forge-fx.is-failure .ro-broken-hilt {
+  position: absolute;
+  left: calc(50% - 14px);
+  top: 22px;
+  width: 28px;
+  height: auto;
+  filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.9));
+  animation: ro-hilt-fly 1.15s cubic-bezier(.18,.78,.32,1) forwards;
+}
+.ro-forge-fx.is-failure .ro-broken-tip {
+  position: absolute;
+  left: calc(50% + 4px);
+  top: 24px;
+  width: 9px;
+  height: auto;
+  filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.9));
+  animation: ro-tip-fly 1.15s cubic-bezier(.18,.78,.32,1) forwards;
+}
+.ro-forge-fx.is-failure .ro-fail-banner {
+  position: absolute;
+  left: 50%;
+  top: -8px;
+  width: 84px;
+  height: auto;
+  transform: translateX(-50%);
+  filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.92)) drop-shadow(0 0 10px rgba(255, 68, 68, 0.55));
+  animation: ro-fail-banner-pop 1.55s ease-out forwards;
+}
+
+@keyframes ro-hammer-strike {
+  0% { transform: rotate(34deg) translate(6px, -10px); }
+  24% { transform: rotate(-28deg) translate(-8px, 12px); }
+  38% { transform: rotate(-18deg) translate(-5px, 8px); }
+  100% { transform: rotate(34deg) translate(6px, -10px); }
+}
+@keyframes ro-anvil-pulse {
+  0%, 16% { opacity: 0.25; transform: translate(-50%, -40%) scale(0.76); }
+  26% { opacity: 1; transform: translate(-50%, -40%) scale(1.18); }
+  100% { opacity: 0.22; transform: translate(-50%, -40%) scale(0.84); }
+}
+@keyframes ro-spark-burst {
+  0%, 18% { opacity: 0; transform: translate(-50%, -50%) scale(0.3) rotate(0deg); }
+  26% { opacity: 1; transform: translate(-50%, -50%) scale(1.22) rotate(22deg); }
+  65% { opacity: 0.55; transform: translate(-50%, -50%) scale(1.48) rotate(48deg); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(0.4) rotate(70deg); }
+}
+@keyframes ro-pillar-flash {
+  0% { opacity: 0; transform: translateX(-50%) scaleX(0.25); }
+  16% { opacity: 1; transform: translateX(-50%) scaleX(1.18); }
+  100% { opacity: 0; transform: translateX(-50%) scaleX(0.42); }
+}
+@keyframes ro-ring-expand {
+  0% { opacity: 0.98; transform: translate(-50%, -50%) scale(0.32); }
+  75% { opacity: 0.65; transform: translate(-50%, -50%) scale(1.18); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.36); }
+}
+@keyframes ro-sword-ascend {
+  0% { opacity: 0; transform: translateX(-50%) translateY(14px) scale(0.85); }
+  22% { opacity: 1; transform: translateX(-50%) translateY(-2px) scale(1.08); }
+  80% { opacity: 0.92; transform: translateX(-50%) translateY(-6px) scale(1.04); }
+  100% { opacity: 0; transform: translateX(-50%) translateY(-12px) scale(0.96); }
+}
+@keyframes ro-glint-rise {
+  0% { opacity: 0; transform: scale(0.4) rotate(0deg); }
+  28% { opacity: 1; transform: scale(1.12) rotate(35deg); }
+  100% { opacity: 0; transform: translateY(-18px) scale(0.5) rotate(80deg); }
+}
+@keyframes ro-banner-pop {
+  0% { opacity: 0; transform: translateX(-50%) translateY(10px) scale(0.65); }
+  18% { opacity: 1; transform: translateX(-50%) translateY(-3px) scale(1.08); }
+  30% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+  82% { opacity: 1; transform: translateX(-50%) translateY(-2px) scale(1); }
+  100% { opacity: 0; transform: translateX(-50%) translateY(-8px) scale(0.95); }
+}
+@keyframes ro-fail-burst {
+  0% { opacity: 0.95; }
+  100% { opacity: 0; }
+}
+@keyframes ro-hilt-fly {
+  0% { opacity: 1; transform: translate(0, 0) rotate(-18deg); }
+  35% { opacity: 1; transform: translate(-24px, -12px) rotate(-62deg); }
+  100% { opacity: 0; transform: translate(-38px, 22px) rotate(-118deg); }
+}
+@keyframes ro-tip-fly {
+  0% { opacity: 1; transform: translate(0, 0) rotate(22deg); }
+  35% { opacity: 1; transform: translate(26px, -16px) rotate(78deg); }
+  100% { opacity: 0; transform: translate(42px, 20px) rotate(148deg); }
+}
+@keyframes ro-fail-banner-pop {
+  0% { opacity: 0; transform: translateX(-50%) scale(1.25); }
+  14% { opacity: 1; transform: translateX(calc(-50% - 4px)) scale(1); }
+  26% { opacity: 1; transform: translateX(calc(-50% + 4px)) scale(1); }
+  38% { opacity: 1; transform: translateX(-50%) scale(1); }
+  82% { opacity: 1; transform: translateX(-50%) translateY(2px); }
+  100% { opacity: 0; transform: translateX(-50%) translateY(8px); }
+}
+@keyframes ro-fail-shake {
+  0%, 100% { transform: translateX(0); }
+  18% { transform: translateX(-7px) rotate(-3deg); }
+  36% { transform: translateX(7px) rotate(3deg); }
+  54% { transform: translateX(-5px) rotate(-2deg); }
+  72% { transform: translateX(4px) rotate(1deg); }
+}
+@keyframes ro-panel-recoil {
+  0%, 100% { transform: translateX(0); }
+  22% { transform: translateX(-4px); }
+  46% { transform: translateX(4px); }
+  70% { transform: translateX(-2px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  aside.ro-forge-fx,
+  #eclipseRefineResult.refine-failure {
+    animation: none !important;
+  }
+}
+
+/* Raid Boss Card & Exclusive Title Victory Loot Highlights */
+.raid-loot-item.rare-card {
+  border-color: rgba(255, 206, 102, 0.78);
+  background: linear-gradient(135deg, rgba(64, 38, 18, 0.92), rgba(34, 20, 44, 0.92));
+  box-shadow: 0 0 18px rgba(255, 192, 76, 0.28);
+}
+.raid-loot-item.rare-title {
+  border-color: rgba(114, 224, 255, 0.78);
+  background: linear-gradient(135deg, rgba(16, 44, 62, 0.92), rgba(34, 22, 58, 0.92));
+  box-shadow: 0 0 18px rgba(90, 214, 255, 0.28);
+}
