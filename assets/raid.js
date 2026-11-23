@@ -177,6 +177,7 @@
     party: [],             // [{ id, name, cls, sex, appearance, hp, maxHp, dps, dmgTaken, support, revives, stage, dead, disconnected, self }]
     keys: { w: false, a: false, s: false, d: false },
     moveTarget: null,      // { x, z, left, holdOnly }
+    holdGround: false,     // v467: player-armed "never auto-approach" switch
     lobbyMode: 'party',
     lobbyDungeon: 'astral',
     lobbyRoster: null,     // { partyId, leader, dungeonId, members:[{id,name,cls,lv,sex,appearance,ready}] }
@@ -192,6 +193,17 @@
 
   // Reusable Three.js hazard pool (zero per-cast allocation lag)
   var CONE_HALF_ARC = 0.96; // ~55 deg each side = 110 deg frontal magma fan
+
+  // v467 (owner): raid creatures read LARGER than the same species on the ordinary Ascension field.
+  // The raid re-uses maps 10/11, so the field's own measurement (mobVisualScale in index.html) stays
+  // untouched outside a run; inside a run it is multiplied by this. Art only - hitboxes, reach and
+  // damage are unchanged, and bosses get the larger share so the sanctum still towers.
+  var RAID_MONSTER_VISUAL_BOOST = 1.25;
+  var RAID_BOSS_VISUAL_BOOST = 1.4;
+  function mobVisualBoost(isBoss) {
+    if (!raid.on) return 1;
+    return isBoss ? RAID_BOSS_VISUAL_BOOST : RAID_MONSTER_VISUAL_BOOST;
+  }
   var hazardGroup = null;
   var craterNodes = [];
   var beamNodes = [];
@@ -1952,6 +1964,10 @@
       if (inp) inp.focus();
       return true;
     }
+    if (isDown && k === 'h') {
+      if (!isRepeat) toggleHoldGround();
+      return true;
+    }
     if (k === 'w' || k === 'arrowup') { raid.keys.w = isDown; return true; }
     if (k === 's' || k === 'arrowdown') { raid.keys.s = isDown; return true; }
     if (k === 'a' || k === 'arrowleft') { raid.keys.a = isDown; return true; }
@@ -2003,6 +2019,40 @@
     return false;
   }
 
+  // v467 (owner: "auto attacking runs me out of the pillar shadow"): the shared field AI walks the
+  // hero into reach of the nearest monster whenever the player is not steering. During a
+  // hide-behind-pillar wipe that undoes the whole mechanic - the player parks in the green shadow,
+  // the hero strolls back out and eats the 68% blast. Auto-approach is now suspended for the entire
+  // charge of a pillar wipe, and Hold Ground suspends it on demand. Neither ever stops a swing that
+  // is already in reach: only the walking is refused.
+  function pillarWipeCharging() {
+    var tg = raid.telegraph;
+    if (!tg) return false;
+    if (tg.mustHideBehindPillar) return true;
+    return tg.shape === 'pillars' && Array.isArray(tg.pillars) && tg.pillars.length > 0;
+  }
+
+  function inPillarShadow() {
+    var tg = raid.telegraph;
+    if (!tg || tg.shape !== 'pillars' || !Array.isArray(tg.pillars) || !tg.pillars.length) return false;
+    if (typeof pl === 'undefined' || !pl) return false;
+    return isBehindAnyPillar(tg.x, tg.z, tg.pillars, pl.x, pl.z);
+  }
+
+  function holdGroundActive() {
+    return Boolean(raid.holdGround) || pillarWipeCharging();
+  }
+
+  function toggleHoldGround() {
+    if (!raid.on) return false;
+    raid.holdGround = !raid.holdGround;
+    pushSystemChat(raid.holdGround
+      ? '⏸ Hold Ground ON — auto-approach off. WASD / click still moves; attacks in reach continue.'
+      : '▶ Hold Ground OFF — auto-approach resumed.');
+    renderHud();
+    return raid.holdGround;
+  }
+
   function overrideMove(dt) {
     if (!raid.on || raid.dead || typeof pl === 'undefined' || !pl) return null;
     var kv = keyVector();
@@ -2037,6 +2087,9 @@
       raid._wasManualMoving = false;
       snapToCombat();
     }
+    // moving:false pins the hero where they stand without clearing the field AI's target, so an
+    // in-reach monster still gets hit and the hero simply refuses to walk.
+    if (holdGroundActive()) return { x: pl.x, z: pl.z, moving: false };
     return null;
   }
 
@@ -3362,6 +3415,7 @@
     raid.myReady = false;
     raid.keys = { w: false, a: false, s: false, d: false };
     raid.moveTarget = null;
+    raid.holdGround = false;
     if (raid.mode === 'solo') raid.chatLog = [];
 
     S.hp = typeof maxHp === 'function' ? maxHp() : S.hp;
@@ -4322,9 +4376,10 @@
         '</form>' +
       '</div>' +
       '<div class="raid-hud-bottom">' +
-        '<div class="raid-move-hint">WASD / Click floor to move · <b>SPACE</b> to DODGE · <b>ENTER</b> to Chat</div>' +
+        '<div class="raid-move-hint">WASD / Click floor to move · <b>SPACE</b> to DODGE · <b>ENTER</b> to Chat · <b>H</b> Hold Ground</div>' +
         '<div class="raid-actions">' +
           '<button type="button" class="raid-revive-btn" id="raidReviveBtn" data-raid-act="revive" hidden></button>' +
+          '<button type="button" class="raid-hold-btn" id="raidHoldBtn" data-raid-act="hold" aria-pressed="false" title="Hold Ground: stop auto-approach so the hero never walks out of cover">⏸ HOLD</button>' +
           '<button type="button" class="raid-dodge-btn" id="raidDodgeBtn" data-raid-act="dodge"></button>' +
           '<button type="button" class="raid-leave-btn" data-raid-act="leave" title="Leave Raid">Leave</button>' +
         '</div>' +
@@ -4385,6 +4440,16 @@
       }
     }
 
+    var holdBtn = $('raidHoldBtn');
+    if (holdBtn) {
+      var held = Boolean(raid.holdGround);
+      if (holdBtn.classList.contains('is-on') !== held) holdBtn.classList.toggle('is-on', held);
+      var pressed = held ? 'true' : 'false';
+      if (holdBtn.getAttribute('aria-pressed') !== pressed) holdBtn.setAttribute('aria-pressed', pressed);
+      var holdLabel = held ? '⏸ HOLDING' : '⏸ HOLD';
+      if (holdBtn.textContent !== holdLabel) holdBtn.textContent = holdLabel;
+    }
+
     var castEl = $('raidCastBar');
     if (castEl) {
       if (raid.telegraph) {
@@ -4399,7 +4464,10 @@
         var cfill = $('raidCastFill');
         if (cfill) cfill.style.width = cpct.toFixed(1) + '%';
         var ctxt = $('raidCastText');
-        if (ctxt) ctxt.textContent = '⚠ ' + (raid.telegraph.hint || raid.telegraph.name) + ' (' + castLeft.toFixed(1) + 's)';
+        if (ctxt) {
+          var coverTag = inPillarShadow() ? ' · ✅ IN COVER' : '';
+          ctxt.textContent = '⚠ ' + (raid.telegraph.hint || raid.telegraph.name) + ' (' + castLeft.toFixed(1) + 's)' + coverTag;
+        }
       } else {
         castEl.hidden = true;
         castEl.style.display = 'none';
@@ -4682,6 +4750,7 @@
         actBtn.textContent = raid.chatMinimized ? '+' : '–';
       }
       else if (act === 'dodge') dodge();
+      else if (act === 'hold') toggleHoldGround();
       else if (act === 'revive') revive();
       else if (act === 'leave') {
         var graceEligible = raid.mode === 'solo' && !raid.dead &&
@@ -5562,6 +5631,10 @@
     onKey: onKey,
     isManualMove: isManualMove,
     overrideMove: overrideMove,
+    holdGroundActive: holdGroundActive,
+    inPillarShadow: inPillarShadow,
+    toggleHoldGround: toggleHoldGround,
+    mobVisualBoost: mobVisualBoost,
     setGroundMove: setGroundMove,
     handleCanvasClick: handleCanvasClick,
     hitByTelegraph: hitByTelegraph,

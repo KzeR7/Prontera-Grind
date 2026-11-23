@@ -916,15 +916,15 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="preload" href="assets/ui/fonts/font-5.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-6.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-7.ttf" as="font" type="font/ttf" crossorigin>
-<link rel="stylesheet" href="assets/ui/eclipse.css?v=466">
-<link rel="stylesheet" href="assets/ui/mobile.css?v=466">
-<link rel="stylesheet" href="assets/ui/mastery-titles.css?v=466">
+<link rel="stylesheet" href="assets/ui/eclipse.css?v=467">
+<link rel="stylesheet" href="assets/ui/mobile.css?v=467">
+<link rel="stylesheet" href="assets/ui/mastery-titles.css?v=467">
 <script src="assets/ui/mobile.js?v=274"></script>
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
-<link rel="stylesheet" href="assets/social.css?v=466">
-<link rel="stylesheet" href="assets/raid.css?v=466">
+<link rel="stylesheet" href="assets/social.css?v=467">
+<link rel="stylesheet" href="assets/raid.css?v=467">
 <link rel="stylesheet" href="assets/social-battle.css?v=393">
-  <link rel="stylesheet" href="assets/social-fishing.css?v=466"><link rel="stylesheet" href="assets/friends.css?v=273">
+  <link rel="stylesheet" href="assets/social-fishing.css?v=467"><link rel="stylesheet" href="assets/friends.css?v=273">
 <link rel="stylesheet" href="assets/adventure-guide.css?v=450">
 </head>
 <body>
@@ -1055,10 +1055,10 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <div id="tooltip"></div>
 <link rel="stylesheet" href="assets/wardrobe.css?v=138">
 <link rel="stylesheet" href="assets/shop.css?v=318">
-<script src="assets/wardrobe.js?v=466"></script>
+<script src="assets/wardrobe.js?v=467"></script>
 <script src="assets/shop-catalog.js?v=321"></script>
 <script src="assets/fourth-jobs.js?v=179"></script>
-<script src="assets/expanded-jobs.js?v=466"></script>
+<script src="assets/expanded-jobs.js?v=467"></script>
 <script src="assets/ascension.js?v=156"></script>
 <script src="assets/native-mob-heights.js?v=153"></script>
 <script src="assets/native-fields.js?v=197"></script>
@@ -1066,7 +1066,7 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <script src="assets/skill-icons.js?v=130"></script>
 <script src="assets/skill-icons-extra.js?v=207"></script>
 <script src="assets/skill-icons-expanded.js?v=450"></script>
-<script src="assets/mastery-titles.js?v=466"></script>
+<script src="assets/mastery-titles.js?v=467"></script>
 <script src="assets/player-buffs.js?v=450"></script>
 <script src="assets/skill-materials.js?v=220"></script>
 <script src="assets/afterglow-animations.js?v=151"></script>
@@ -1084,11 +1084,11 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <script src="assets/expanded-fx/approved.js?v=450"></script>
 <script src="assets/skill-afterglow.js?v=450"></script>
 <script src="assets/boss-fx.js?v=249"></script>
-<script src="assets/raid.js?v=466"></script>
+<script src="assets/raid.js?v=467"></script>
 <script src="assets/pets.js?v=130"></script>
 <script src="assets/bgm-tracks.js?v=206"></script>
 <script src="assets/bgm.js?v=207"></script>
-<script src="assets/combat-audio.js?v=466"></script>
+<script src="assets/combat-audio.js?v=467"></script>
 <script src="assets/class_skins_data.js?v=2"></script>
 <script src="assets/weapon_joints_data.js?v=2"></script>
 <script src="assets/weapons_data.js?v=2"></script>
@@ -1359,7 +1359,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-22 haven-v466 Raid drops grid, party preview Ready Room, per-raid boss cards & slimmer star table';
+const BUILD='2026-11-22 haven-v467 Raid Hold Ground, UI scale setting and larger raid monsters';
 // v364: this write used to sit AFTER the `//` on the BUILD line, so it was part of the comment and
 // never ran - the login card showed an empty #buildTag and there was no way to confirm which file
 // the browser had loaded. It also has to survive the script running before the login card exists.
@@ -1926,12 +1926,16 @@ const ASCENSION_KEPT_VISUAL={1707:1.375,1836:1.075}; // the two approved species
 // this one number, so the ceiling lives here.
 const MOB_VISUAL_MAX=6;
 const boundMobScale=v=>Number.isFinite(v)?Math.min(MOB_VISUAL_MAX,Math.max(.05,v)):.05;
+// v467 (owner): inside a raid the same species is drawn larger than on the field. The multiplier
+// lives in assets/raid.js (`mobVisualBoost`) and is 1 everywhere outside a run, so field play is
+// untouched. Art only - hitboxes, reach and damage never read this number's raid part.
+const raidVisualBoost=isBoss=>(typeof PGRaid!=='undefined'&&PGRaid.mobVisualBoost)?PGRaid.mobVisualBoost(isBoss):1;
 const mobVisualScale=m=>{
   // Ascension fields only: the same native sheet also dresses ordinary maps (Lava Slime, Chaos Imp,
   // Amatsu's Shiranui), and those keep the size class they have always used.
   const frame=m.mapIndex>=10?ASCENSION_FRAME_PX[m.spriteId]:null;
-  if(frame)return boundMobScale((m.boss?ASCENSION_BOSS_VISUAL:ASCENSION_KEPT_VISUAL[m.spriteId]||ASCENSION_MONSTER_VISUAL)/(3.05*frame[0]/frame[1])*(m.spawn||0));
-  return boundMobScale((((!ASCENSION_MOB_IDS.has(m.spriteId)&&referenceMobStore?.height(m.spriteId))/3.05)||((m.spriteScale||.92)*(m.boss?1.18:MOB_REGULAR_VISUAL)))*(m.spawn||0));};
+  if(frame)return boundMobScale((m.boss?ASCENSION_BOSS_VISUAL:ASCENSION_KEPT_VISUAL[m.spriteId]||ASCENSION_MONSTER_VISUAL)/(3.05*frame[0]/frame[1])*(m.spawn||0)*raidVisualBoost(!!m.boss));
+  return boundMobScale((((!ASCENSION_MOB_IDS.has(m.spriteId)&&referenceMobStore?.height(m.spriteId))/3.05)||((m.spriteScale||.92)*(m.boss?1.18:MOB_REGULAR_VISUAL)))*(m.spawn||0)*raidVisualBoost(!!m.boss));};
 const ASCENSION_MOB_IDS=new Set([1702,1705,1700,1706,1707,1708,1836,1837,1833,1831,1366,1832,1634,1635,1636,1637,1638,1639]);
 const mobSpriteUrl=id=>ASCENSION_MOB_IDS.has(+id)?`assets/mobs/v1/${+id}-0.png`:Number.isInteger(+id)&&+id>0?`https://static.divine-pride.net/images/mobs/png/${+id}.png`:'';
 // ---------- equipment database ----------
@@ -4142,6 +4146,9 @@ const s=unpackSave(JSON.parse(raw));if(s&&s.lv){const F=fresh(),f=Object.assign(
 // repair top-level numbers corrupted by older/test saves (null -> crash on .toLocaleString())
   for(const k of['lv','exp','hp','zeny','kills','indexXp','dmg','pts','mp','lvl','kl','gmx'])f[k]=num_(f[k],F[k]);if(!hadIndexXp)delete f.indexXp;
   if(f.dmgShort!==true&&f.dmgShort!==false)f.dmgShort=true;   // damage digits: short unless deliberately switched
+  // v467: Display → UI scale (1 = 100%). Spelled out rather than calling cleanUiScale(), because
+  // the save harnesses extract this normaliser without the display helpers next to it.
+  f.uiScale=[0.9,1,1.15,1.3].includes(Number(f.uiScale))?Number(f.uiScale):1;
   if(f.cameraShake!==true&&f.cameraShake!==false)f.cameraShake=true;
   f.kite=f.kite===true;
   if(typeof PGWardrobe!=='undefined'){f.appearance=PGWardrobe.normalize(f.appearance);if(f.appearance)f.sex=f.appearance.sex;}
@@ -10433,7 +10440,44 @@ function renderCardIndex(){
 }
 
 const qpSide=()=>`<button data-q="side" class="qp-side-toggle" aria-controls="sideLinks" aria-expanded="${sideOpen}">${uiIcon('index')} More destinations <span class="side-chevron${sideOpen?' open':''}">${uiIcon('chevron')}</span></button><div id="sideLinks" ${sideOpen?'':'hidden'}>${SIDE_TABS.filter(k=>k!=='gm'||S.gm).map(k=>`<button data-t="${k}" class="qp-side-tab${tabs.includes(k)?' on':''}" aria-pressed="${tabs.includes(k)}">${uiIcon(k)} ${TABS[k][1]} <small>${TABS[k][2]}</small>${k==='friends'&&dot('friends')?'<i class="dot" aria-label="Friend requests waiting"></i>':''}</button>`).join('')}</div>`;
+// v467 (owner: "the UI and words are too small"): Display → UI scale. The chosen step is stored in
+// the save (S.uiScale) and published as --ui-scale + <html data-ui-scale>, which the theme zooms.
+// Only the CSS-laid-out chrome is zoomed; the WebGL field, the projected sprite layers and the
+// damage floats are positioned in field pixels and keep their own world scale.
+const UI_SCALE_STEPS=[0.9,1,1.15,1.3];
+const cleanUiScale=v=>{v=Number(v);return UI_SCALE_STEPS.includes(v)?v:1};
+// The zoom the theme actually applies to the chrome. Read from the variable rather than from each
+// element so a measurement never disagrees with the CSS that consumed it.
+const uiZoom=()=>{const v=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ui-scale'));return isFinite(v)&&v>0?v:1};
+function applyUiScale(){
+  const z=cleanUiScale(S&&S.uiScale);
+  const root=document.documentElement;
+  if(root.style.getPropertyValue('--ui-scale')!==String(z))root.style.setProperty('--ui-scale',String(z));
+  if(z===1){if(root.hasAttribute('data-ui-scale'))root.removeAttribute('data-ui-scale')}
+  else if(root.getAttribute('data-ui-scale')!==String(z))root.setAttribute('data-ui-scale',String(z));
+  try{eclipseMeasureDock()}catch(_){}      // the dock's published height must now include the zoom
+}
+// Re-render the open Display panel without its toggle. screenOptions() is itself the toggler, so
+// the panel is forced open for the call and put back exactly as the player had it.
+function renderScreenOptions(){
+  const panel=$('screenOptions');
+  if(!panel)return;
+  const wasOpen=!panel.hidden;
+  panel.hidden=false;
+  screenOptions();
+  panel.hidden=!wasOpen;
+}
+function setUiScale(v){
+  if(!S)return;
+  const z=cleanUiScale(v);
+  S.uiScale=z;
+  applyUiScale();
+  try{resize()}catch(_){}
+  renderScreenOptions();
+  save();
+}
 function applyDisplay(){
+ applyUiScale();
  if(S.cameraShake===false)shake=0;
  // bars() runs on the HUD tick. Only notify chat when a visibility class actually
  // changes; otherwise every tick rebuilt/relaid the chat tabs under the pointer.
@@ -10454,7 +10498,9 @@ function pgPreviewProbe(){
     if(!(r.ok&&r.headers.get('X-Phone-Preview')==='1'))return;
     pgPreviewOk=true;
     // The panel was drawn before this answer arrived, so redraw it (once) while it is open.
-    const l=$('pgPhonePreview');if(l)l.hidden=false;else if($('screenOptions')&&!$('screenOptions').hidden)screenOptions();
+    // v467: re-render, never toggle. This answer can arrive while the Display sheet is open, and
+    // screenOptions() is itself the toggler - it used to slam the sheet shut mid-click.
+    const l=$('pgPhonePreview');if(l)l.hidden=false;else if($('screenOptions')&&!$('screenOptions').hidden)renderScreenOptions();
   }).catch(()=>{})}catch(_){}
 }
 function screenOptions(){const panel=$('screenOptions');panel.hidden=!panel.hidden;$('screenBtn').setAttribute('aria-expanded',String(!panel.hidden));
@@ -10470,6 +10516,11 @@ function screenOptions(){const panel=$('screenOptions');panel.hidden=!panel.hidd
   // setting. Normal accounts do not see the switch; the explicit URL override remains a
   // developer preview path. The reload is still required because the renderer is chosen at boot.
   +(S.gm?`<label><input type="checkbox" data-display="nativeFields" ${nativeFieldsEnabled?'checked':''}>GM preview: New outdoor terrain (reloads)</label>`:'')
+  // v467: UI scale. Four steps keep the choice legible on a phone and a desk; the buttons are
+  // `data-ui-scale-step` so the panel's own change handler stays about save-backed checkboxes.
+  +`<div class="pg-sheet-head"><span>UI scale</span></div>
+    <div class="pg-actions pg-scale-row" role="group" aria-label="UI and text scale">${UI_SCALE_STEPS.map(z=>`<button type="button" data-ui-scale-step="${z}" aria-pressed="${cleanUiScale(S.uiScale)===z}" class="${cleanUiScale(S.uiScale)===z?'is-on':''}">${Math.round(z*100)}%</button>`).join('')}</div>
+    <div class="pg-note">Scales the header, dock, side rail, log, HUD and every window and popup. The 3D field keeps its size.</div>`
   // v253: the phone block. "Layout" is a device-local choice, so a phone can drop back to the
   // desk arrangement (or a desk browser can preview the phone one) without touching the save.
   +`<div class="pg-sheet-head pg-phone-head"><span>Phone</span></div>
@@ -10486,7 +10537,9 @@ function screenOptions(){const panel=$('screenOptions');panel.hidden=!panel.hidd
 }
 // The phone block's buttons live in the same panel but are not save-backed settings, so they
 // are handled here instead of in the data-display change handler below.
-document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('#screenOptions [data-pg]');if(!b)return;e.preventDefault();
+document.addEventListener('click',e=>{const sc=e.target.closest&&e.target.closest('#screenOptions [data-ui-scale-step]');
+  if(sc){e.preventDefault();setUiScale(sc.dataset.uiScaleStep);return}
+  const b=e.target.closest&&e.target.closest('#screenOptions [data-pg]');if(!b)return;e.preventDefault();
   const pg=window.PGMobile,what=b.dataset.pg;
   if(what==='close'){$('screenOptions').hidden=true;$('screenBtn').setAttribute('aria-expanded','false');return}
   if(what==='fullscreen'){if(pg)pg.toggleFullscreen();else toggleFullscreen();screenOptions();$('screenOptions').hidden=false;return}
@@ -10953,10 +11006,14 @@ function eclipseMeasureDock(){
   // above it instead of overlapping it on a narrow screen. Falls back to the CSS default.
   const dk=$('dock');
   if(dk){
-    const dh=dk.offsetHeight||0;
+    // v467: offsetHeight/offsetWidth report the pre-zoom layout box, but Display → UI scale zooms the
+    // dock. Scale the measurement by the same factor, or the log and the windows that sit above the
+    // dock overlap it (and the centred More menu drifts).
+    const z=uiZoom();
+    const dh=Math.round((dk.offsetHeight||0)*z);
     let gap=12;                                  // #dock{bottom:12px}, plus the safe-area inset on a phone
-    try{const b=parseFloat(getComputedStyle(dk).bottom);if(isFinite(b))gap=b}catch(_){}
-    const top=Math.round(dh?dh+gap+6:76)+'px',bot=gap+'px',half=dk.offsetWidth/2+'px',dockSig=top+'|'+bot+'|'+half;
+    try{const b=parseFloat(getComputedStyle(dk).bottom);if(isFinite(b))gap=Math.round(b*z)}catch(_){}
+    const top=Math.round(dh?dh+gap+6:76)+'px',bot=gap+'px',half=Math.round(dk.offsetWidth*z/2)+'px',dockSig=top+'|'+bot+'|'+half;
     if(dockSig!==eclipseMeasureDock.last){
       eclipseMeasureDock.last=dockSig;
       document.documentElement.style.setProperty('--docktop',top);
@@ -15096,7 +15153,7 @@ function ensureRaidLightningSheet(){
     for(const tex of raidLightningSheetState.liveTextures)tex.needsUpdate=true;
   };
   img.onerror=()=>{raidLightningSheetState.loading=false;};
-  img.src='assets/refine-fx/title-lightning.webp?v=466';
+  img.src='assets/refine-fx/title-lightning.webp?v=467';
 }
 function makeRaidLightningTexture(colorHex){
   ensureRaidLightningSheet();
@@ -15522,10 +15579,15 @@ function mobMotion(m,clock){
 // two numbers are the ceiling: a third of the field, never more than 320px of art. They also bound
 // the DOM layer (#mobSpriteLayer) that paints above the WebGL canvas.
 const NATIVE_MOB_MAX_PX=320,NATIVE_MOB_MAX_SHARE=.34;
+// v467 (owner): raid creatures are drawn larger than the same species on the field, so the raid
+// needs its own ceiling or the boost would be clipped away by the field's 320px/34% cap. The
+// ceiling still exists - it is what stops one bad projection filling the screen with flat art.
+const RAID_NATIVE_MOB_MAX_PX=520,RAID_NATIVE_MOB_MAX_SHARE=.5;
 function nativeMobArtPx(base,top){
   const px=Math.abs(base[1]-top[1]);
   if(!Number.isFinite(px)||!Number.isFinite(base[0])||!Number.isFinite(base[1]))return 0;
-  const cap=Math.min(NATIVE_MOB_MAX_PX,Math.max(120,(R.domElement.clientHeight||600)*NATIVE_MOB_MAX_SHARE));
+  const raid=!!(typeof PGRaid!=='undefined'&&PGRaid.raid&&PGRaid.raid.on);
+  const cap=Math.min(raid?RAID_NATIVE_MOB_MAX_PX:NATIVE_MOB_MAX_PX,Math.max(120,(R.domElement.clientHeight||600)*(raid?RAID_NATIVE_MOB_MAX_SHARE:NATIVE_MOB_MAX_SHARE)));
   return Math.max(1,Math.min(cap,px));
 }
 function syncMobImage(v,m,s){
@@ -17101,22 +17163,22 @@ setInterval(updateWatch,60000);
 // be hours old while the player was on another tab, and the check is a 60-byte text file.
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&(pendingUpdateBuild||Date.now()-PAGE_STARTED_AT>30000))updateWatch()});
 </script>
-<script src="assets/wardrobe-ui.js?v=466"></script>
+<script src="assets/wardrobe-ui.js?v=467"></script>
 <script src="assets/shop.js?v=321"></script>
 <script src="assets/friends.js?v=273"></script>
-<script src="assets/digimon/roster.js?v=466"></script>
-<script src="assets/digimon/base-stats.js?v=466"></script>
-<script src="assets/social-rules.js?v=466"></script>
-<script src="assets/social-poker.js?v=466"></script>
-<script src="assets/digimon-sanctuary.js?v=466"></script>
+<script src="assets/digimon/roster.js?v=467"></script>
+<script src="assets/digimon/base-stats.js?v=467"></script>
+<script src="assets/social-rules.js?v=467"></script>
+<script src="assets/social-poker.js?v=467"></script>
+<script src="assets/digimon-sanctuary.js?v=467"></script>
 <script src="assets/digimon-battle.js?v=393"></script>
-<script src="assets/social-digimon.js?v=466"></script>
+<script src="assets/social-digimon.js?v=467"></script>
 <script src="assets/social-gym-redesign.js?v=393"></script>
 <script src="assets/social-pond-design.js?v=393"></script>
 <script src="assets/social-title-art.js?v=450"></script>
-<script src="assets/social-scene.js?v=466"></script>
-<script src="assets/social-fishing.js?v=466"></script>
-<script src="assets/plaza-bots.js?v=466"></script>
+<script src="assets/social-scene.js?v=467"></script>
+<script src="assets/social-fishing.js?v=467"></script>
+<script src="assets/plaza-bots.js?v=467"></script>
 <script src="assets/adventure-guide.js?v=450"></script>
-<script src="assets/social.js?v=466"></script></body>
+<script src="assets/social.js?v=467"></script></body>
 </html>

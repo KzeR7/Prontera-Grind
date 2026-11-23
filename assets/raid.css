@@ -1031,6 +1031,7 @@ body.raid-open #hudBuffs {
   pointer-events: auto;
 }
 .raid-dodge-btn,
+.raid-hold-btn,
 .raid-revive-btn,
 .raid-leave-btn {
   pointer-events: auto;
@@ -1051,6 +1052,24 @@ body.raid-open #hudBuffs {
   align-items: center;
   justify-content: center;
   gap: 6px;
+}
+/* v467: Hold Ground. Off = the field AI may walk the hero into reach as before; on = the hero
+   refuses to walk and keeps hitting whatever is already in range. */
+.raid-hold-btn {
+  min-width: 96px;
+  padding: 11px 12px;
+  border: 1px solid rgba(255, 214, 132, 0.5);
+  background: rgba(38, 28, 16, 0.85);
+  color: #ffdc9c;
+  font-size: 12px;
+  line-height: 1.25;
+  letter-spacing: 0.04em;
+}
+.raid-hold-btn.is-on {
+  border-color: #ffd15c;
+  background: linear-gradient(135deg, #7a5a1b 0%, #4a3510 100%);
+  color: #fff4d0;
+  box-shadow: 0 0 0 2px rgba(255, 209, 92, 0.24), 0 8px 20px rgba(160, 116, 20, 0.42);
 }
 .raid-dodge-btn small {
   font-size: 10px;
@@ -2100,6 +2119,17 @@ body.raid-open #hudBuffs {
   }
   .raid-move-hint {
     display: none;
+  }
+  /* v467: three/four controls on one row; Hold Ground stays reachable on a phone. */
+  .raid-actions {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 6px;
+  }
+  .raid-hold-btn {
+    min-width: 74px;
+    padding: 9px 8px;
+    font-size: 11px;
   }
   .raid-boss-wrap {
     width: 94vw;

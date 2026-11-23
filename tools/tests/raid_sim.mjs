@@ -20,6 +20,10 @@ const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
 const raidJs = fs.readFileSync(path.join(ROOT, 'assets/raid.js'), 'utf8');
 const combatAudioJs = fs.readFileSync(path.join(ROOT, 'assets/combat-audio.js'), 'utf8');
 const raidCss = fs.readFileSync(path.join(ROOT, 'assets/raid.css'), 'utf8');
+const uiCss = fs.readFileSync(path.join(ROOT, 'assets/ui/eclipse.css'), 'utf8');
+const mobileCss = fs.readFileSync(path.join(ROOT, 'assets/ui/mobile.css'), 'utf8');
+const src = raidJs;              // raid source, read by the v467 hold/cover checks below
+const indexSrc = html;           // index.html, read by the v467 UI-scale checks below
 
 let pass = 0;
 function check(name, fn) {
@@ -2373,6 +2377,87 @@ check('v466: Weapon Star rate table drops the +Boost column and fits four column
   assert.equal(table.boostCard, true, 'the Astral Shard boost picker above the table still works');
   assert.match(raidCss, /\.star-rate-table \{[^}]*table-layout:\s*fixed/, 'rate table uses a fixed layout so its columns fit the sidebar');
   assert.match(raidCss, /\.star-rate-table th:last-child,\s*\n\.star-rate-table td:last-child \{[^}]*width:\s*26%/, 'the Zeny column is pinned to its share of the grid');
+});
+
+// v467 ---------------------------------------------------------------------------------------
+check('v467: Hold Ground pins the hero so auto-approach cannot walk them out of a pillar shadow', () => {
+  // The shared field AI walks the hero toward the nearest monster whenever the player is not
+  // steering. That is the bug players reported: park behind a Thanatos pillar, stop moving, and the
+  // hero strolls back out of the green shadow into the 68% wipe.
+  g.ev(`
+    S=fresh(); S.cls='Rune Knight'; S.lv=150; S.gm=true;
+    PGRaid.raid.on=true; PGRaid.raid.dead=false; PGRaid.raid.telegraph=null; PGRaid.raid.holdGround=false;
+    pl.x=4.5; pl.z=6.25; PGRaid.raid.moveTarget=null; PGRaid.raid.keys={w:false,a:false,s:false,d:false};
+  `);
+  assert.equal(g.ev(`PGRaid.overrideMove(0.016)`), null, 'auto-approach is left to the field AI while nothing is held');
+  assert.equal(g.ev(`PGRaid.toggleHoldGround()`), true, 'Hold Ground arms on the first toggle');
+  const held = g.ev(`PGRaid.overrideMove(0.016)`);
+  // (JSDOM realm objects do not deepEqual a Node literal - compare the three fields)
+  assert.deepEqual(Object.keys(held).sort(), ['moving', 'x', 'z'], 'a held hero gets a position + flag, nothing else');
+  assert.equal(held.x, 4.5, 'a held hero is pinned on x');
+  assert.equal(held.z, 6.25, 'a held hero is pinned on z');
+  assert.equal(held.moving, false, 'and flagged as not moving, so the field AI keeps its target');
+  assert.equal(g.ev(`PGRaid.holdGroundActive()`), true, 'the hold reads as active');
+  assert.equal(g.ev(`document.getElementById('raidHoldBtn').textContent`), '⏸ HOLDING', 'the HUD button shows the held state');
+  assert.equal(g.ev(`document.getElementById('raidHoldBtn').getAttribute('aria-pressed')`), 'true', 'and announces itself to a screen reader');
+  // moving:false is what keeps the swing alive: the field AI still targets, it just refuses to walk
+  assert.equal(held.moving, false, 'the pinned vector keeps the target, so in-reach attacks continue');
+  assert.equal(g.ev(`PGRaid.toggleHoldGround()`), false, 'a second toggle releases it');
+  assert.equal(g.ev(`PGRaid.overrideMove(0.016)`), null, 'released: auto-approach resumes');
+  assert.equal(g.ev(`PGRaid.onKey('h',true,false) && PGRaid.raid.holdGround`), true, 'H toggles Hold Ground from the keyboard');
+  g.ev(`PGRaid.raid.holdGround=false`);
+});
+
+check('v467: a hide-behind-pillar wipe suspends auto-approach for its whole charge', () => {
+  g.ev(`
+    pl.x=4.5; pl.z=6.25; PGRaid.raid.on=true; PGRaid.raid.dead=false; PGRaid.raid.holdGround=false;
+    PGRaid.raid.moveTarget=null; PGRaid.raid.keys={w:false,a:false,s:false,d:false};
+    window.__boss={x:0,z:0,hp:100,max:100,boss:true};
+    PGRaid.raid.telegraph={name:'Oblivion Extinction',shape:'pillars',x:0,z:0,mustHideBehindPillar:true,
+      pillars:[{x:0,z:2,r:1.05}],age:0.5,life:4.2};
+  `);
+  assert.equal(g.ev(`PGRaid.holdGroundActive()`), true, 'the wipe charge alone suspends auto-approach, before anyone presses Hold');
+  const charge = g.ev(`PGRaid.overrideMove(0.016)`);
+  assert.equal(charge && charge.x, 4.5, 'the hero holds position on x during the charge');
+  assert.equal(charge && charge.z, 6.25, 'and on z');
+  assert.equal(charge && charge.moving, false, 'without walking, while the field AI keeps attacking');
+  assert.equal(g.ev(`PGRaid.raid.holdGround`), false, 'that is the wipe doing it, not the player arming Hold Ground');
+  g.ev(`PGRaid.renderHud()`);
+  assert.equal(g.ev(`document.getElementById('raidHoldBtn').getAttribute('aria-pressed')`), 'false', 'so the button still reads off');
+  g.ev(`PGRaid.raid.telegraph=null`);
+  assert.equal(g.ev(`PGRaid.overrideMove(0.016)`), null, 'once the wipe resolves, auto-approach comes back');
+  // a plain (non-pillar) telegraph must not freeze the hero
+  g.ev(`PGRaid.raid.telegraph={name:'Donut',shape:'donut',x:0,z:0,age:0.2,life:2.4}`);
+  assert.equal(g.ev(`PGRaid.overrideMove(0.016)`), null, 'an ordinary telegraph leaves movement alone');
+  g.ev(`PGRaid.raid.telegraph=null`);
+});
+
+check('v467: raid creatures are drawn larger than the same species on the field', () => {
+  g.ev(`PGRaid.raid.on=true`);
+  const inRaid = g.ev(`({trash:PGRaid.mobVisualBoost(false),boss:PGRaid.mobVisualBoost(true)})`);
+  g.ev(`PGRaid.raid.on=false`);
+  const field = g.ev(`({trash:PGRaid.mobVisualBoost(false),boss:PGRaid.mobVisualBoost(true)})`);
+  assert.equal(field.trash, 1, 'outside a run the field keeps its own size (trash)');
+  assert.equal(field.boss, 1, 'outside a run the field keeps its own size (boss)');
+  assert.ok(inRaid.trash > 1.2, 'raid trash mobs read at least a fifth larger than the field');
+  assert.ok(inRaid.boss > inRaid.trash, 'and the sanctum boss gets the larger share');
+  assert.match(indexSrc, /raidVisualBoost\(!!m\.boss\)/, 'mobVisualScale multiplies in the raid boost');
+  assert.match(indexSrc, /RAID_NATIVE_MOB_MAX_PX/, 'the raid raises the native-art ceiling so the boost is not clipped away');
+  assert.match(src, /var RAID_MONSTER_VISUAL_BOOST = 1\.25/, 'the trash boost lives next to the other raid constants');
+  assert.match(src, /if \(!raid\.on\) return 1;/, 'and is exactly 1 outside a run');
+});
+
+check('v467: Display offers a UI scale and publishes it to the theme', () => {
+  assert.match(indexSrc, /const UI_SCALE_STEPS=\[0\.9,1,1\.15,1\.3\]/, 'four scale steps: 90 / 100 / 115 / 130%');
+  assert.match(indexSrc, /const cleanUiScale=v=>\{v=Number\(v\);return UI_SCALE_STEPS\.includes\(v\)\?v:1\}/, 'an unknown stored scale falls back to 100%');
+  assert.match(indexSrc, /f\.uiScale=\[0\.9,1,1\.15,1\.3\]\.includes\(Number\(f\.uiScale\)\)/, 'the load normaliser repairs a corrupt or missing uiScale');
+  assert.match(indexSrc, /root\.style\.setProperty\('--ui-scale'/, 'the choice is published as --ui-scale');
+  assert.match(indexSrc, /root\.setAttribute\('data-ui-scale'/, 'and as <html data-ui-scale>');
+  assert.match(indexSrc, /data-ui-scale-step="\$\{z\}"/, 'the Display sheet renders the step buttons');
+  assert.match(indexSrc, /setUiScale\(/i, 'and wires them to the save');
+  assert.match(uiCss, /html\[data-ui-scale\] :is\(#eclipseHeader,#dock,#sideRail/, 'the theme zooms the chrome');
+  assert.match(uiCss, /zoom: var\(--ui-scale,1\)/, 'with zoom, so an anchored panel grows inward instead of off-screen');
+  assert.ok(!/html\[data-ui-scale\][^{]*#view\b/.test(uiCss), 'the 3D field is never zoomed');
 });
 
 g.close();

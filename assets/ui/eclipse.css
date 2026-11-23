@@ -5259,3 +5259,20 @@ body.rm-atlas-fullscreen #wins>.wp[data-win="map"].rm-fullscreen-mode.rm-drawer-
   #wins .rm-birds,#wins .rm-cloud,#wins .rm-canvas{animation:none!important;transition:none!important}
 }
 
+
+/* ---------- haven-v467 · Display → UI scale ----------
+   S.uiScale (90 / 100 / 115 / 130%) is published as --ui-scale plus <html data-ui-scale>.
+   Only chrome that CSS itself lays out is zoomed. The WebGL field, the projected mob/weapon
+   sprite layers and the damage floats are placed in field pixels, so zooming their boxes would
+   slide that art off its anchor - they keep their own world scale.
+   zoom (rather than a transform) is used because it reflows: a zoomed panel still resolves its
+   insets against its parent, so a bottom- or right-anchored panel grows inward instead of
+   hanging off the screen edge. */
+html[data-ui-scale] :is(#eclipseHeader,#dock,#sideRail,#hud,#hudBuffs,#xp-dock,#feedWrap,#minimapTools,#hint,#eclipseCombat,#wins,#screenOptions,#raidHud,#raidLobby,#raidResult,#modal,#trial,#mailDailyModal,#gmStudioModal,#pgQuests,#loginOverlay){
+  zoom: var(--ui-scale,1);
+}
+/* A vw-based ceiling is resolved inside the zoomed box, so divide it back out or a phone's dock
+   and Display sheet would grow past the screen edge. */
+html[data-ui-scale] #dock{max-width:calc((100vw - 24px)/var(--ui-scale,1))}
+html[data-ui-scale] #screenOptions{max-width:calc((100vw - 32px)/var(--ui-scale,1));max-height:calc((100vh - 170px)/var(--ui-scale,1));overflow:auto}
+html[data-ui-scale] #wins{left:calc(12px/var(--ui-scale,1));right:calc(12px/var(--ui-scale,1));top:calc(12px/var(--ui-scale,1))}
