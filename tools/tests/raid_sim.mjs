@@ -2195,5 +2195,176 @@ await check('Bug 5: Raid eligibility rejects Novice/1st/2nd jobs (even at Lv120-
   }
 });
 
+// 32. v466: Dungeons Mobs & Drops panel keeps every drop row inside the panel grid
+check('v466: Dungeons drops are a bounded 2x2 grid, so the Raid Titles row never overlaps the entry buttons', () => {
+  g.ev(`S=fresh(); S.cls='Lord Knight'; S.lv=150; S.gm=false; S.raid={day:trialDay(),used:0}; openTab('raid');`);
+  const grid = g.ev(`(() => {
+    dungeonMode='raid'; ACT.raiddungeon('astral');
+    const boxes=[...document.querySelectorAll('.raid-detail-cols .raid-detail-box')];
+    const dropBox=boxes[boxes.length-1];
+    return {
+      boxes: boxes.length,
+      dropRowsInBox: dropBox.querySelectorAll('.raid-drop-rows .raid-drop-row').length,
+      strayRows: dropBox.querySelectorAll(':scope > .raid-drop-row').length,
+      labels: [...dropBox.querySelectorAll('.raid-drop-row span')].map(e=>e.textContent).join('|'),
+      values: [...dropBox.querySelectorAll('.raid-drop-row b')].map(e=>e.textContent).join('|')
+    };
+  })()`);
+  assert.equal(grid.dropRowsInBox, 4, 'all 4 drop rows (Solo, Party, Boss Card, Raid Titles) live inside the drops box');
+  assert.equal(grid.strayRows, 0, 'no drop row escapes the drops box container');
+  assert.match(grid.labels, /Raid Titles/, 'Raid Titles row is still listed');
+  assert.match(grid.values, /5 Lightning Titles · 10% Drop · 10\/20\/30 Clears/, 'Raid Titles value stays short enough for the grid cell');
+
+  assert.match(raidCss, /\.raid-detail-cols \{[^}]*grid-template-rows:\s*minmax\(0,\s*1fr\)/, '.raid-detail-cols bounds its row so the boxes cannot grow past the panel');
+  assert.match(raidCss, /\.raid-detail-box \{[^}]*overflow-y:\s*auto/, '.raid-detail-box scrolls inside itself instead of spilling over the entry buttons');
+  assert.match(raidCss, /\.raid-detail-box \{[^}]*overflow-x:\s*hidden/, '.raid-detail-box never scrolls sideways');
+  assert.match(raidCss, /\.raid-drop-rows \{[^}]*display:\s*grid[^}]*grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)[^}]*grid-auto-rows:\s*minmax\(min-content,\s*1fr\)/, '.raid-drop-rows is a bounded 2x2 grid that keeps each cell readable');
+  assert.match(raidCss, /\.raid-drop-row \{[^}]*overflow:\s*hidden/, 'a drop cell clips its own text instead of pushing the grid taller');
+  assert.match(raidCss, /\.raid-mob-chips \{[^}]*grid-auto-rows:\s*minmax\(min-content,\s*1fr\)/, 'the monster roster grid is bounded the same way');
+});
+
+// 33. v466: Party Ready Room shows the party roster as character previews (no stage list) and invites directly
+check('v466: Party Ready Room replaces the stage list with 3 character-preview slots and invites trainers from the room', () => {
+  g.ev(`
+    window.__raidSent=[]; window.__raidEntered=false;
+    window.PGSocial={
+      app:{id:20,room:1,connected:true,party:null,partyRoster:[],players:new Map([
+        [31,{id:31,name:'Cara',room:1}],
+        [32,{id:32,name:'Dana',room:1}],
+        [40,{id:40,name:'Elsewhere',room:2}]
+      ])},
+      send:m=>{window.__raidSent.push(m);return true},
+      setRaidSuspend:()=>{},
+      enter:()=>{window.__raidEntered=true}
+    };
+    S=fresh(); S.cls='Rune Knight'; S.lv=150; S.gm=false;
+    S.raid={day:trialDay(),used:0};
+    PGRaid.showLobby('party','astral');
+  `);
+  const room = g.ev(`({
+    slots: document.querySelectorAll('#raidLobbyBody .raid-ready-grid .raid-ready-card').length,
+    portraits: document.querySelectorAll('#raidLobbyBody canvas.raid-portrait-canvas').length,
+    emptySlots: document.querySelectorAll('#raidLobbyBody .raid-ready-card.is-empty').length,
+    selfSlot: document.querySelectorAll('#raidLobbyBody .raid-ready-card.is-self').length,
+    hasStages: Boolean(document.querySelector('#raidLobbyBody .raid-stages-grid')),
+    mentionsStage: document.getElementById('raidLobbyBody').textContent.includes('Starlit Approach'),
+    options: [...document.querySelectorAll('#raidPartyInvitee option')].map(o=>o.value).join(','),
+    disabled: Boolean(document.querySelector('#raidPartyInvitee').disabled) || document.querySelector('[data-raid-act="invite"]').disabled,
+    note: document.querySelector('#raidLobbyBody .raid-party-invite-note').textContent
+  })`);
+  assert.equal(room.slots, 3, 'Ready Room renders 3 party slots even before a party forms');
+  assert.equal(room.selfSlot, 1, 'slot 1 is your own live character preview');
+  assert.equal(room.selfSlot + room.emptySlots, 3, 'the other two slots are open party slots');
+  assert.equal(room.portraits, 1, 'your character preview canvas is painted');
+  assert.equal(room.hasStages, false, 'the old stage list is removed from the Ready Room');
+  assert.equal(room.mentionsStage, false, 'no stage names leak into the Ready Room any more');
+  assert.equal(room.options, '31,32', 'only free trainers in the same plaza are offered (self, taken and other rooms excluded)');
+  assert.equal(room.disabled, false, 'invite controls are enabled in the plaza');
+  assert.match(room.note, /party pop-up/, 'note explains the invite opens their party pop-up');
+
+  // Sending the invite goes straight through the plaza party channel
+  g.ev(`const sel=document.getElementById('raidPartyInvitee'); sel.value='31'; document.querySelector('[data-raid-act="invite"]').click();`);
+  assert.equal(g.ev(`window.__raidSent.length`), 1, 'one party invite was sent');
+  assert.equal(g.ev(`window.__raidSent[0].type`), 'party_invite', 'direct invite uses the existing party_invite message');
+  assert.equal(g.ev(`window.__raidSent[0].targetId`), 31, 'invite targets the chosen trainer');
+  assert.match(g.ev(`document.querySelector('#raidLobbyBody .raid-party-invite-note').textContent`), /Party invite sent to Cara/, 'the room confirms the invite it sent');
+
+  // A 2-player party keeps the preview grid (no stage list) and its Ready/chat controls
+  g.ev(`
+    window.PGSocial.app.party={id:'party:77',leader:20,members:[{id:20,name:'Bob'},{id:31,name:'Cara'}]};
+    PGRaid.onLobby({partyId:'party:77',leader:20,dungeonId:'astral',members:[
+      {id:20,name:'Bob',cls:'Rune Knight',lv:150,ready:true,leader:true},
+      {id:31,name:'Cara',cls:'Arch Bishop',lv:148,ready:false}
+    ]});
+  `);
+  assert.equal(g.ev(`document.querySelectorAll('#raidLobbyBody canvas.raid-portrait-canvas').length`), 2, '- a real party paints both member previews');
+  assert.equal(g.ev(`Boolean(document.querySelector('#raidLobbyBody .raid-stages-grid'))`), false, '- the stage list stays gone with a live party');
+  assert.ok(g.ev(`Boolean(document.querySelector('#raidLobbyBody #raidLobbyChatForm'))`), '- party raid chat is still available');
+
+  // Outside the plaza the same row becomes one click into the plaza, keeping this Ready Room open
+  g.ev(`
+    window.PGSocial.app.party=null; window.PGSocial.app.room=0; window.__raidEntered=false;
+    PGRaid.showLobby('party','astral');
+  `);
+  assert.equal(g.ev(`Boolean(document.querySelector('#raidPartyInvitee').disabled)`), true, 'invite select is disabled when not in a plaza');
+  assert.match(g.ev(`document.querySelector('#raidLobbyBody .raid-party-invite-note').textContent`), /Fountain Plaza/, 'the note explains invites need the Fountain Plaza');
+  assert.equal(g.ev(`document.querySelector('[data-raid-act="invite"]') === null`), true, 'no dead Send Invite button is offered outside the plaza');
+  assert.match(g.ev(`document.querySelector('[data-raid-act="plaza"]').textContent`), /Enter Plaza/, 'the off-plaza action is the one-click Enter Plaza & Invite');
+  g.ev(`document.querySelector('[data-raid-act="plaza"]').click();`);
+  assert.equal(g.ev(`window.__raidEntered`), true, 'Enter Plaza & Invite walks the player into the plaza');
+  assert.equal(g.ev(`document.getElementById('raidLobby').hidden`), false, 'the Ready Room stays open so the invite list can fill in');
+  g.ev(`PGRaid.hideLobby();`);
+});
+
+// 34. v466: each dungeon only drops its own Raid Boss Card
+check('v466: Astral Citadel only drops the Sovereign Thanatos Card and Thor Volcano only the Primordial Ifrit Card', () => {
+  const drops = g.ev(`(() => {
+    const oldR=Math.random;
+    const run=(dungeon,roll)=>{
+      S.cards=[];
+      S.raid={day:trialDay(),used:0,clears:0,bestSolo:0,bestParty:0};
+      Math.random=()=>roll;
+      PGRaid.start('solo',dungeon);
+      PGRaid.finish(true,'clear',false);
+      Math.random=oldR;
+      return {name:PGRaid.raid.result.rewards.bossCardDrop, keys:S.cards.map(c=>c.cardKey).join(',')};
+    };
+    return {
+      astral: run('astral',0.01),
+      thor: run('thor',0.01),
+      astralNoDrop: run('astral',0.95),
+      thorNoDrop: run('thor',0.95)
+    };
+  })()`);
+  assert.equal(drops.astral.name, 'Sovereign Thanatos Card', 'Astral Citadel clear drops the Sovereign Thanatos Card');
+  assert.equal(drops.astral.keys, 'raid:matk', 'Astral Citadel never drops the Ifrit card');
+  assert.equal(drops.thor.name, 'Primordial Ifrit Card', 'Thor Volcano clear drops the Primordial Ifrit Card');
+  assert.equal(drops.thor.keys, 'raid:atk', 'Thor Volcano never drops the Thanatos card');
+  assert.equal(drops.astralNoDrop.name, null, 'a failed Astral roll drops no card');
+  assert.equal(drops.thorNoDrop.name, null, 'a failed Thor roll drops no card');
+  assert.match(raidJs, /bossCardKey: 'raid:matk'/, 'Astral dungeon metadata pins the Thanatos card');
+  assert.match(raidJs, /bossCardKey: 'raid:atk'/, 'Thor dungeon metadata pins the Ifrit card');
+  g.ev(`
+    if(!tabs.includes('map'))openTab('raid'); else { mapSeason='dungeons'; dungeonMode='raid'; renderWin(); }
+    ACT.raiddungeon('astral');
+  `);
+  const astralText = g.ev(`document.querySelectorAll('.raid-detail-cols .raid-detail-box')[1].textContent`);
+  assert.match(astralText, /Sovereign Thanatos · \+15% MATK/, 'Astral drops panel advertises only the Thanatos card');
+  assert.equal(/Primordial Ifrit/.test(astralText), false, 'Astral drops panel does not advertise the Ifrit card');
+  g.ev(`ACT.raiddungeon('thor');`);
+  const thorText = g.ev(`document.querySelectorAll('.raid-detail-cols .raid-detail-box')[1].textContent`);
+  assert.match(thorText, /Primordial Ifrit · \+15% ATK/, 'Thor drops panel advertises only the Ifrit card');
+  assert.equal(/Sovereign Thanatos/.test(thorText), false, 'Thor drops panel does not advertise the Thanatos card');
+  g.ev(`ACT.raiddungeon('astral');`);
+});
+
+// 35. v466: the Weapon Star rate table fits its sidebar grid without the boost column
+check('v466: Weapon Star rate table drops the +Boost column and fits four columns inside the workshop sidebar', () => {
+  g.ev(`
+    S=fresh(); S.cls='Rune Knight'; S.lv=150; S.zeny=500000000; S.ascensionMat=[200,200,50];
+    S.eq.weapon={id:99111,name:'Starfall Katar',slot:'weapon',wt:'katar',sec:6,ascSet:'starfall',val:420,r:15,aff:[],cards:[],slots:4,stars:4};
+    if(S.eq.off)S.eq.off=null;
+    selE='weapon';
+    if(!tabs.includes('equip'))openTab('equip');
+    sub.equip='refine'; renderWin(); ACT.refinemode('star');
+  `);
+  const table = g.ev(`({
+    headers: document.querySelectorAll('.star-rate-table thead th').length,
+    headText: document.querySelector('.star-rate-table thead').textContent,
+    rows: document.querySelectorAll('.star-rate-table tbody tr').length,
+    cells: document.querySelector('.star-rate-table tbody tr').children.length,
+    boostCard: Boolean(document.querySelector('.star-boost-card')),
+    currentRow: document.querySelector('.star-rate-table tbody tr.cur')?.textContent
+  })`);
+  assert.equal(table.headers, 4, 'rate table has exactly 4 columns (★, Base, Shards, Zeny)');
+  assert.equal(/Boost/i.test(table.headText), false, 'the +Boost header is gone');
+  assert.equal(table.rows, 20, 'all 20 star rows still listed');
+  assert.equal(table.cells, 4, 'each row renders 4 cells, so nothing needs horizontal scrolling');
+  assert.equal(table.currentRow, '★540%56M', 'the next-star row is still highlighted and shows ★, base rate, shards and Zeny');
+  assert.equal(table.boostCard, true, 'the Astral Shard boost picker above the table still works');
+  assert.match(raidCss, /\.star-rate-table \{[^}]*table-layout:\s*fixed/, 'rate table uses a fixed layout so its columns fit the sidebar');
+  assert.match(raidCss, /\.star-rate-table th:last-child,\s*\n\.star-rate-table td:last-child \{[^}]*width:\s*26%/, 'the Zeny column is pinned to its share of the grid');
+});
+
 g.close();
 console.log(`\nPASS: ${pass}/${pass} Astral Raid checks passed`);
