@@ -5275,7 +5275,12 @@ body.rm-atlas-fullscreen #wins>.wp[data-win="map"].rm-fullscreen-mode.rm-drawer-
    hanging off the screen edge. */
 /* v468: #adventureGuide joined the list. It was the one piece of chrome still at 100% while every
    other panel grew - the onboarding card is dense body text, which is exactly what a scale is for. */
-html[data-ui-scale] :is(#eclipseHeader,#dock,#sideRail,#hud,#hudBuffs,#xp-dock,#feedWrap,#minimapTools,#hint,#eclipseCombat,#wins,#screenOptions,#raidHud,#raidLobby,#raidResult,#modal,#trial,#mailDailyModal,#gmStudioModal,#pgQuests,#loginOverlay,#adventureGuide){
+/* v475: #bgmPlayer joins the list. It is parked flush under the HUD card (`top` = the HUD's
+   `top:68px` + `height:91px` in the >=901px block below), so when the HUD grew and the player
+   did not, the player slid 24px inside the HUD at 115% and 48px at 130% - and at 90% it was
+   left hanging in a 16px gap. Zoomed, both the card and the player scale by the same factor:
+   `top:159px` becomes 159 x scale, which is exactly where the scaled HUD bottom lands. */
+html[data-ui-scale] :is(#eclipseHeader,#dock,#sideRail,#hud,#hudBuffs,#xp-dock,#feedWrap,#minimapTools,#hint,#eclipseCombat,#wins,#screenOptions,#raidHud,#raidLobby,#raidResult,#modal,#trial,#mailDailyModal,#gmStudioModal,#pgQuests,#loginOverlay,#adventureGuide,#bgmPlayer){
   zoom: var(--ui-scale,1);
 }
 /* A vw-based ceiling is resolved inside the zoomed box, so divide it back out or a phone's dock

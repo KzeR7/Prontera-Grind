@@ -76,7 +76,7 @@ test('the zoom rule covers the chrome roots and leaves the WebGL layers alone', 
   assert.ok(zoom, 'no zoom rule in the scale block');
   assert.match(declOf(zoom, 'zoom'), /var\(--ui-scale/);
   const covered = new Set((zoom.sel.match(/#[A-Za-z][\w-]*/g) || []));
-  for (const id of ['#eclipseHeader', '#dock', '#sideRail', '#hud', '#feedWrap', '#wins', '#screenOptions',
+  for (const id of ['#eclipseHeader', '#dock', '#sideRail', '#hud', '#bgmPlayer', '#feedWrap', '#wins', '#screenOptions',
     '#raidHud', '#raidLobby', '#modal', '#trial', '#mailDailyModal', '#gmStudioModal', '#adventureGuide'])
     assert.ok(covered.has(id), 'chrome root not zoomed: ' + id);
   // The field, the sprite layers and the floats are positioned in field pixels; zooming their
@@ -106,6 +106,26 @@ test('a scaled rule never re-anchors a transform-centred panel', () => {
       }
     }
   }
+});
+
+test('the music player stays flush under the HUD card', () => {
+  // #bgmPlayer is parked flush under #hud (border-top:0 joins the two cards): its `top` must be
+  // exactly the HUD's top + height, because both are zoomed, so the same numbers keep them joined
+  // at every scale step. Hard-coded twice, they drift apart the moment either card is retuned or
+  // one of them is zoomed and the other is not - the v475 bug (24px inside the HUD at 115%).
+  const hudRule = [...bodies].reverse().find(r => r.at.length === 0 && /(^|,)\s*#hud\s*(,|$)/.test(r.sel)
+    && declOf(r, 'top') && declOf(r, 'height'));
+  assert.ok(hudRule, 'no base #hud rule with both top and height');
+  const hudTop = parseFloat(declOf(hudRule, 'top')), hudH = parseFloat(declOf(hudRule, 'height'));
+  const desk = ALL.find(r => r.at.some(a => /min-width:\s*901px/.test(a)) && /(^|,)\s*#bgmPlayer\s*(,|$)/.test(r.sel) && declOf(r, 'top'));
+  assert.ok(desk, 'no #bgmPlayer top in the >=901px block (the only width where the player is shown)');
+  const bgmTop = parseFloat(declOf(desk, 'top'));
+  assert.equal(bgmTop, hudTop + hudH,
+    'the music player hangs off the HUD: #bgmPlayer top ' + bgmTop + 'px must equal #hud top+height '
+    + hudTop + '+' + hudH + 'px. Move both together, and keep #bgmPlayer in the zoom list so the pair scales as one card.');
+  // and the player is hidden exactly where the HUD changes shape (phones/small windows)
+  const hide = ALL.find(r => r.at.some(a => /max-width:\s*900px/.test(a)) && /#bgmPlayer/.test(r.sel));
+  assert.ok(hide && /display\s*:\s*none/.test(hide.decl), 'the <=900px block must keep hiding the music player');
 });
 
 test('every vw/vh ceiling inside the zoom is divided back out', () => {
