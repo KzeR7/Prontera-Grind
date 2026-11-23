@@ -4,7 +4,7 @@
 // temporary copy before anything is built or deployed, and your checkout is never modified.
 //
 //   cd <your Prontera-Grind folder>
-//   git fetch origin arena/a976c1b9-prontera-grind
+//   git fetch origin arena/adec654f-prontera-grind
 //   cmd /c "git show FETCH_HEAD:tools/staging/stage_raid.mjs > %TEMP%\stage_raid.mjs"
 //   node $env:TEMP\stage_raid.mjs
 import assert from 'node:assert/strict';
@@ -20,8 +20,8 @@ import { fileURLToPath } from 'node:url';
 export const THREE_SRI = 'CI3ELBVUz9XQO+97x6nwMDPosPR5XvsxW2ua7N1Xeygeh1IxtgqtCkGfQY9WWdHu';
 
 export const STAGE = Object.freeze({
-  branch: 'arena/a976c1b9-prontera-grind',
-  buildTag: 'haven-v466',
+  branch: 'arena/adec654f-prontera-grind',
+  buildTag: 'haven-v473',
   pagesProject: 'prontera-grind-staging',
   branchUrl: 'https://main.prontera-grind-staging.pages.dev',
   socialProject: 'prontera-social-staging',

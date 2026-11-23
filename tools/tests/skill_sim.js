@@ -97,6 +97,8 @@ function block(marker){
 // v97 replaces exclusive tradeoffs; coexistence/expiry are exercised by skill_redesign_sim.js.
 const PET_SKILL_SRC = pick(/const PET_SKILLS=\[[\s\S]*?\n\];/, 'eight pet gacha skills');
 const PET_DATA_SRC = pick(/const PETS=\[[\s\S]*?\];/, 'Divine Pride pet sprite data');
+// v469: the three prices are per-rarity tables now, so the tables travel with the formulas.
+const PET_PRICE_SRC = pick(/const PET_STEP_X=\[[^\n]*/, 'pet price tables (v469)');
 const PET_SKILL_COST_SRC = pick(/petSkillCost=p=>[^,;]+/, 'pet skill gacha cost');
 const PET_TRAINING_SRC = pick(/const EGG=3000,GW=\[[^\]]*\],PT=\[[^\]]*\],PTG=\[[^\]]*\],GREAT=[^;]+;/, 'pet training odds');
 const PET_UPGRADE_DATA = pick(/const PEQ=\[[\s\S]*?\];/, 'Claw/Collar/Charm names');
@@ -200,16 +202,16 @@ t('player ATK and MATK formulas consume only their matching pet buffs and passiv
   assert.strictEqual(strikeBox.damage.magical,strikeBox.damage.physical*2,'the real strike() ignored its magic flag');
 });
 
-t('the gacha contains four buffs, two AoE attacks, two single-target attacks and four utility skills, and rolls two at a time', () => {
+t('the gacha contains four buffs, five AoE attacks, five single-target attacks and four utility skills (v468), and rolls two at a time', () => {
   const P=makePetHarness(),skills=Array.from(P.PET_SKILLS);
-  assert.strictEqual(skills.length,12,'the pet skill pool must contain exactly twelve skills');
+  assert.strictEqual(skills.length,18,'v468: the pet skill pool holds eighteen skills');
   const buffs=skills.filter(s=>s.kind==='buff');
   assert.strictEqual(buffs.length,4,'need four player buffs');
   assert.deepStrictEqual(buffs.map(s=>s.stat).sort(),['atk','hp','leech','matk'],'ATK, MATK, life leech and max HP');
   assert.ok(buffs.every(s=>s.duration===30&&s.cd===60),'every player buff lasts 30s on a 60s cooldown');
   assert.ok(buffs.every(s=>/never stacks/i.test(s.desc)),'and every one says it does not stack');
-  assert.strictEqual(skills.filter(s=>s.kind==='aoe').length,2,'need two AoE attacks');
-  assert.strictEqual(skills.filter(s=>s.kind==='single').length,2,'need two single-target attacks');
+  assert.strictEqual(skills.filter(s=>s.kind==='aoe').length,5,'five AoE attacks (v468 added three)');
+  assert.strictEqual(skills.filter(s=>s.kind==='single').length,5,'five single-target attacks (v468 added three)');
   assert.strictEqual(skills.filter(s=>s.kind==='utility').length,4,'need four low-impact utility skills');
   assert.ok(skills.filter(s=>s.kind==='utility').every(s=>/no combat damage/i.test(s.desc)),'utility skills must not be hidden DPS');
   assert.ok(skills.every(s=>s.cd>0&&s.desc&&K.SKILL_VFX[s.vfx]),'every gacha skill needs cooldown, description and visible effect');
@@ -217,7 +219,16 @@ t('the gacha contains four buffs, two AoE attacks, two single-target attacks and
   const rolled=P.rollAll();
   assert.strictEqual(rolled.length,200,'deterministic weighted rolls');
   rolled.forEach(pair=>{assert.strictEqual(pair.length,2,'one roll fills BOTH slots');assert.notStrictEqual(pair[0],pair[1],'a pet can never hold the same skill twice');});
-  assert.strictEqual(new Set(rolled.flat()).size,12,'weighted rolls must reach every one of the twelve skills');
+  assert.strictEqual(new Set(rolled.flat()).size,18,'weighted rolls must reach every one of the eighteen skills');
+  // v468: the six new actives stay inside the shipped band, so a wider pool cannot raise the DPS
+  // ceiling or undercut the 7s gate.
+  ['frostfang','sonicbark','embernova','shadowrake','soulrend','galehowl'].forEach(id=>{
+    const s=skills.find(x=>x.id===id);
+    assert.ok(s,'v468 active '+id+' must ship');
+    assert.ok(s.kind==='aoe'||s.kind==='single',id+' is an active');
+    assert.ok(s.power<=2,id+' must not out-punch Spirit Bolt (2.25)');
+    assert.ok(s.cd>=P.PETGAP,id+' cooldown must not be shorter than the 7s fire gate');
+  });
 });
 
 t('the real pet skill gacha action charges Zeny, saves the roll and respects the balance', () => {
@@ -231,6 +242,7 @@ t('the real pet skill gacha action charges Zeny, saves the roll and respects the
     let petBuff={atk:0,matk:0,hp:0,leech:0,atkT:0,matkT:0,hpT:0,leechT:0},petBuffSrc={},petNote={},mobs=[],pl={x:0,z:0};
     const numTxt=String,maxHp=()=>100,earnZeny=()=>{},hurt=()=>{},addFloat=()=>{},playSkillFx=()=>{};
     ${PET_HIT_SRC}
+    ${PET_PRICE_SRC}
     const ${PET_SKILL_COST_SRC};
     let S={zeny:5000,pets:[{id:7,sp:0,skills:[]}]},petSkillCd={7:4,'7|warcry':9},logRows=[],uiCount=0,saveCount=0;
     const gp=id=>S.pets.find(p=>String(p.id)===String(id)),log=(...x)=>logRows.push(x),ui=()=>uiCount++,save=()=>saveCount++;
@@ -251,6 +263,7 @@ t('the live pet upgrade handler applies its 40%/15% odds, cost and 5% double suc
   vm.runInContext(`
     ${PET_TRAINING_SRC}
     ${PET_UPGRADE_DATA}
+    ${PET_PRICE_SRC}
     const ${PET_UPGRADE_COST_SRC};
     const PETS=[{n:'Poring',r:0}];   // Common, so the Legendary x2 does not apply here
     const ${PET_UPGRADE_OF_SRC};

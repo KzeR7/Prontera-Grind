@@ -34,8 +34,8 @@ function check(name, fn) {
 
 console.log('stage_raid.mjs isolated staging verification\n');
 
-await check('STAGE targets only isolated staging resources and matches its staging source BUILD', () => {
-  assert.equal(STAGE.branch, 'arena/a976c1b9-prontera-grind');
+await check('STAGE targets only isolated staging resources and matches index.html BUILD', () => {
+  assert.equal(STAGE.branch, 'arena/adec654f-prontera-grind');
   assert.equal(STAGE.pagesProject, 'prontera-grind-staging');
   assert.equal(STAGE.socialProject, 'prontera-social-staging');
   assert.equal(STAGE.dbName, 'pg-staging');

@@ -54,6 +54,13 @@
 #screenOptions .pg-actions button{min-height:32px;padding:6px 10px;font-size:10px;line-height:1.3;white-space:normal}
 #screenOptions .pg-actions button[aria-pressed="true"]{background:#4a4038;color:#ffe9a8;border-color:#c9a35b}
 #screenOptions .pg-note{padding:4px 6px 0;font-size:9px;line-height:1.45;color:#a9bbae}
+/* v467: Display → UI scale. Four equal steps in one row (two on the narrowest phone block),
+   with the live choice gold. `pg-scale-row` rides on the allowed `pg-actions` selector so the
+   desk never matches these bytes. */
+#screenOptions .pg-actions.pg-scale-row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+#screenOptions .pg-actions.pg-scale-row button{min-height:32px;padding:6px 2px;font-size:11px;font-variant-numeric:tabular-nums}
+#screenOptions .pg-actions.pg-scale-row button.is-on{background:#4a4038;color:#ffe9a8;border-color:#c9a35b;font-weight:800}
+html.pg-mobile #screenOptions .pg-actions.pg-scale-row{grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
 /* "Open the phone preview" is dev-server only (index.html hides it everywhere else). */
 #screenOptions .pg-link{display:block;margin:8px 4px 2px;padding:7px 9px;border-radius:8px;
   border:1px dashed #6f7f5f;background:#1b2a22;color:#ffe9a8;font-size:10px;line-height:1.35;
@@ -478,6 +485,9 @@ html.pg-mobile #wins .ui-panel>.atabs.map-season-tabs button{
   min-height:30px;height:30px;padding:0 2px;font-size:9px;line-height:1.15;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center;
 }
+/* v467: at a larger UI scale the sheet is drawn bigger, so give it the room it now needs instead
+   of scrolling the last note off the bottom. Only while a scale is on - 100% keeps the old cap. */
+html.pg-mobile[data-ui-scale] #screenOptions{max-height:min(calc((100vh - 150px)/var(--ui-scale,1)),78vh)}
 html.pg-mobile #screenOptions label{padding:9px 6px;font-size:11px;border-radius:8px}
 html.pg-mobile #screenOptions label:active{background:#22392f}
 html.pg-mobile #screenOptions input{width:17px;height:17px;margin-right:9px;vertical-align:-3px}
