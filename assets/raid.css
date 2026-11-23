@@ -372,6 +372,9 @@ body.raid-open #hudBuffs {
 .raid-party-invite-note.is-error {
   color: #ffc5a1;
 }
+.raid-party-invite-note.is-ok {
+  color: #8ef4c6;
+}
 .raid-party-invite.compact {
   border-color: rgba(236, 195, 107, 0.28);
   background: rgba(30, 23, 52, 0.78);

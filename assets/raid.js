@@ -4014,13 +4014,14 @@
 
   // v466: feedback line for the Ready Room's direct party invite (no re-render, so the
   // message stays visible instead of being replaced by the fresh lobby markup).
-  function setInviteNote(text) {
+  function setInviteNote(text, isError) {
     var box = $('raidLobbyBody');
     if (!box) return;
     var note = box.querySelector('.raid-party-invite-note');
     if (!note) return;
     note.textContent = text;
-    note.classList.add('is-error');
+    note.classList.toggle('is-error', Boolean(isError));
+    note.classList.toggle('is-ok', !isError && Boolean(text));
   }
 
   // v466: the Ready Room shows the party as character previews instead of the stage
@@ -4089,7 +4090,9 @@
           actionBtn +
         '</div>' +
         (inPlaza
-          ? '<small class="raid-party-invite-note">Your invite opens a party pop-up for that trainer — they join with one click.</small>'
+          ? '<small class="raid-party-invite-note">' + (candidates.length
+              ? 'Your invite opens a party pop-up for that trainer — they join with one click.'
+              : 'Every trainer in this plaza is already in a party. Wait for someone to leave theirs.') + '</small>'
           : '<small class="raid-party-invite-note">Party invites need the Fountain Plaza. Enter Plaza keeps this Ready Room open and fills the trainer list as soon as you arrive.</small>') +
       '</div>';
   }
@@ -4166,9 +4169,17 @@
                 '</div>'
               : '') +
           '</div>' +
-          (!hasParty ? '<div class="raid-party-empty"><span>No 2–3 player party yet. Invite a trainer from the Fountain Plaza and they join with one click.</span></div>' : '') +
+          (!hasParty
+            ? '<div class="raid-party-empty"><span>' + (members.length
+                ? 'You are alone in this party. Invite another trainer — Raids need 2–3 adventurers.'
+                : 'No 2–3 player party yet. Invite a trainer from the Fountain Plaza and they join with one click.') + '</span></div>'
+            : '') +
           '<div class="raid-ready-grid">' + slotsHtml + '</div>' +
-          (members.length < 3 ? inviteRowHtml(!hasParty) : '') +
+          (members.length >= 3
+            ? ''
+            : (hasParty && !isPartyLeader()
+                ? '<div class="raid-party-invite"><small class="raid-party-invite-note">Only the Party Leader can invite another trainer.</small></div>'
+                : inviteRowHtml(!hasParty))) +
           (hasParty
             ? '<div class="raid-lobby-chat">' +
                 '<div class="raid-lobby-chat-log" id="raidLobbyChatFeed"></div>' +
@@ -4690,19 +4701,19 @@
         var invitee = $('raidPartyInvitee');
         var targetId = invitee && invitee.value ? Number(invitee.value) : NaN;
         if (!Number.isInteger(targetId) || targetId <= 0) {
-          setInviteNote('Pick a trainer from the list first.');
+          setInviteNote('Pick a trainer from the list first.', true);
           return;
         }
         var socApp = root.PGSocial && root.PGSocial.app;
         if (!root.PGSocial || typeof root.PGSocial.send !== 'function' || !socApp || !socApp.room || !socApp.connected) {
-          setInviteNote('Party invites need the Fountain Plaza — use Enter Plaza & Invite.');
+          setInviteNote('Party invites need the Fountain Plaza — use Enter Plaza & Invite.', true);
           return;
         }
         var targetName = invitee.options[invitee.selectedIndex] ? invitee.options[invitee.selectedIndex].textContent : 'a trainer';
         if (root.PGSocial.send({ type: 'party_invite', targetId: targetId })) {
           setInviteNote('Party invite sent to ' + targetName + ' — it opens their party pop-up.');
         } else {
-          setInviteNote('That invite could not be sent. Check the plaza connection.');
+          setInviteNote('That invite could not be sent. Check the plaza connection.', true);
         }
       } else if (act === 'plaza') {
         // v466: entering the plaza keeps the Ready Room open, then refills the trainer list
@@ -4711,11 +4722,17 @@
         var entered = root.PGSocial.enter(0);
         var tries = 0;
         var waitsForPlaza = function () {
-          if (++tries > 12) return;
+          if (raid.on) return;
           var lobby = $('raidLobby');
           if (!lobby || lobby.hidden) return;
           var appNow = root.PGSocial && root.PGSocial.app;
           if (appNow && appNow.room && appNow.connected) { renderLobby(); return; }
+          if (++tries > 20) {
+            // Solo / offline plaza never joins a shared room: drop the modal so the plaza stays usable.
+            hideLobby();
+            if (typeof log === 'function') log('Party invites need a cloud-connected plaza room — the Ready Room closed so you can play in the plaza.', 'r0', 'misc');
+            return;
+          }
           if (typeof setTimeout === 'function') setTimeout(waitsForPlaza, 700);
         };
         if (entered && typeof entered.then === 'function') entered.then(waitsForPlaza, function () {});

@@ -2280,6 +2280,15 @@ check('v466: Party Ready Room replaces the stage list with 3 character-preview s
   assert.equal(g.ev(`document.querySelectorAll('#raidLobbyBody canvas.raid-portrait-canvas').length`), 2, '- a real party paints both member previews');
   assert.equal(g.ev(`Boolean(document.querySelector('#raidLobbyBody .raid-stages-grid'))`), false, '- the stage list stays gone with a live party');
   assert.ok(g.ev(`Boolean(document.querySelector('#raidLobbyBody #raidLobbyChatForm'))`), '- party raid chat is still available');
+  assert.equal(g.ev(`Boolean(document.querySelector('#raidPartyInvitee'))`), true, '- the leader can still invite the third slot');
+
+  // A non-leader cannot invite (the Worker rejects it), so the room says who can
+  g.ev(`window.PGSocial.app.id=31; PGRaid.renderLobby();`);
+  assert.equal(g.ev(`Boolean(document.querySelector('#raidPartyInvitee'))`), false, '- party members see no invite picker');
+  assert.match(g.ev(`document.querySelector('#raidLobbyBody .raid-party-invite-note').textContent`), /Only the Party Leader can invite/, '- members are told the leader invites');
+  g.ev(`window.PGSocial.app.id=20; window.PGSocial.app.party={id:'party:78',leader:20,members:[{id:20,name:'Bob'}]}; PGRaid.onLobby({partyId:'party:78',leader:20,dungeonId:'astral',members:[{id:20,name:'Bob',cls:'Rune Knight',lv:150,ready:true,leader:true}]});`);
+  assert.match(g.ev(`document.querySelector('#raidLobbyBody .raid-party-empty span').textContent`), /alone in this party/, '- a one-person party is described honestly');
+  assert.equal(g.ev(`Boolean(document.querySelector('#raidPartyInvitee'))`), true, '- the lone leader still gets the invite picker');
 
   // Outside the plaza the same row becomes one click into the plaza, keeping this Ready Room open
   g.ev(`
