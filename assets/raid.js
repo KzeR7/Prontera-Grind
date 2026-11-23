@@ -198,8 +198,12 @@
   // The raid re-uses maps 10/11, so the field's own measurement (mobVisualScale in index.html) stays
   // untouched outside a run; inside a run it is multiplied by this. Art only - hitboxes, reach and
   // damage are unchanged, and bosses get the larger share so the sanctum still towers.
-  var RAID_MONSTER_VISUAL_BOOST = 1.25;
-  var RAID_BOSS_VISUAL_BOOST = 1.4;
+  // v468 (owner: "raid monster can go a little bigger, up to 2x the normal"): 1.25 -> 1.6 for the
+  // trash and 1.4 -> 2.0 for the boss, i.e. a raid boss is now exactly twice the field creature of
+  // the same species. The index.html ceiling moves with it (640px / 62% of the field) so the extra
+  // size is drawn instead of being clipped back to the field's 320px.
+  var RAID_MONSTER_VISUAL_BOOST = 1.6;
+  var RAID_BOSS_VISUAL_BOOST = 2.0;
   function mobVisualBoost(isBoss) {
     if (!raid.on) return 1;
     return isBoss ? RAID_BOSS_VISUAL_BOOST : RAID_MONSTER_VISUAL_BOOST;

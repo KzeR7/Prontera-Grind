@@ -5268,7 +5268,9 @@ body.rm-atlas-fullscreen #wins>.wp[data-win="map"].rm-fullscreen-mode.rm-drawer-
    zoom (rather than a transform) is used because it reflows: a zoomed panel still resolves its
    insets against its parent, so a bottom- or right-anchored panel grows inward instead of
    hanging off the screen edge. */
-html[data-ui-scale] :is(#eclipseHeader,#dock,#sideRail,#hud,#hudBuffs,#xp-dock,#feedWrap,#minimapTools,#hint,#eclipseCombat,#wins,#screenOptions,#raidHud,#raidLobby,#raidResult,#modal,#trial,#mailDailyModal,#gmStudioModal,#pgQuests,#loginOverlay){
+/* v468: #adventureGuide joined the list. It was the one piece of chrome still at 100% while every
+   other panel grew - the onboarding card is dense body text, which is exactly what a scale is for. */
+html[data-ui-scale] :is(#eclipseHeader,#dock,#sideRail,#hud,#hudBuffs,#xp-dock,#feedWrap,#minimapTools,#hint,#eclipseCombat,#wins,#screenOptions,#raidHud,#raidLobby,#raidResult,#modal,#trial,#mailDailyModal,#gmStudioModal,#pgQuests,#loginOverlay,#adventureGuide){
   zoom: var(--ui-scale,1);
 }
 /* A vw-based ceiling is resolved inside the zoomed box, so divide it back out or a phone's dock
@@ -5276,3 +5278,6 @@ html[data-ui-scale] :is(#eclipseHeader,#dock,#sideRail,#hud,#hudBuffs,#xp-dock,#
 html[data-ui-scale] #dock{max-width:calc((100vw - 24px)/var(--ui-scale,1))}
 html[data-ui-scale] #screenOptions{max-width:calc((100vw - 32px)/var(--ui-scale,1));max-height:calc((100vh - 170px)/var(--ui-scale,1));overflow:auto}
 html[data-ui-scale] #wins{left:calc(12px/var(--ui-scale,1));right:calc(12px/var(--ui-scale,1));top:calc(12px/var(--ui-scale,1))}
+/* The guide keeps its own vw/vh caps (adventure-guide.css); divide them out so a 130% card still
+   fits the screen instead of running off the right or bottom edge. */
+html[data-ui-scale] #adventureGuide{max-width:calc((100vw - 24px)/var(--ui-scale,1));max-height:calc((100dvh - 230px)/var(--ui-scale,1))}

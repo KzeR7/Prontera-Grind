@@ -199,16 +199,16 @@ t('player ATK and MATK formulas consume only their matching pet buffs and passiv
   assert.strictEqual(strikeBox.damage.magical,strikeBox.damage.physical*2,'the real strike() ignored its magic flag');
 });
 
-t('the gacha contains four buffs, two AoE attacks, two single-target attacks and four utility skills, and rolls two at a time', () => {
+t('the gacha contains four buffs, five AoE attacks, five single-target attacks and four utility skills (v468), and rolls two at a time', () => {
   const P=makePetHarness(),skills=Array.from(P.PET_SKILLS);
-  assert.strictEqual(skills.length,12,'the pet skill pool must contain exactly twelve skills');
+  assert.strictEqual(skills.length,18,'v468: the pet skill pool holds eighteen skills');
   const buffs=skills.filter(s=>s.kind==='buff');
   assert.strictEqual(buffs.length,4,'need four player buffs');
   assert.deepStrictEqual(buffs.map(s=>s.stat).sort(),['atk','hp','leech','matk'],'ATK, MATK, life leech and max HP');
   assert.ok(buffs.every(s=>s.duration===30&&s.cd===60),'every player buff lasts 30s on a 60s cooldown');
   assert.ok(buffs.every(s=>/never stacks/i.test(s.desc)),'and every one says it does not stack');
-  assert.strictEqual(skills.filter(s=>s.kind==='aoe').length,2,'need two AoE attacks');
-  assert.strictEqual(skills.filter(s=>s.kind==='single').length,2,'need two single-target attacks');
+  assert.strictEqual(skills.filter(s=>s.kind==='aoe').length,5,'five AoE attacks (v468 added three)');
+  assert.strictEqual(skills.filter(s=>s.kind==='single').length,5,'five single-target attacks (v468 added three)');
   assert.strictEqual(skills.filter(s=>s.kind==='utility').length,4,'need four low-impact utility skills');
   assert.ok(skills.filter(s=>s.kind==='utility').every(s=>/no combat damage/i.test(s.desc)),'utility skills must not be hidden DPS');
   assert.ok(skills.every(s=>s.cd>0&&s.desc&&K.SKILL_VFX[s.vfx]),'every gacha skill needs cooldown, description and visible effect');
@@ -216,7 +216,16 @@ t('the gacha contains four buffs, two AoE attacks, two single-target attacks and
   const rolled=P.rollAll();
   assert.strictEqual(rolled.length,200,'deterministic weighted rolls');
   rolled.forEach(pair=>{assert.strictEqual(pair.length,2,'one roll fills BOTH slots');assert.notStrictEqual(pair[0],pair[1],'a pet can never hold the same skill twice');});
-  assert.strictEqual(new Set(rolled.flat()).size,12,'weighted rolls must reach every one of the twelve skills');
+  assert.strictEqual(new Set(rolled.flat()).size,18,'weighted rolls must reach every one of the eighteen skills');
+  // v468: the six new actives stay inside the shipped band, so a wider pool cannot raise the DPS
+  // ceiling or undercut the 7s gate.
+  ['frostfang','sonicbark','embernova','shadowrake','soulrend','galehowl'].forEach(id=>{
+    const s=skills.find(x=>x.id===id);
+    assert.ok(s,'v468 active '+id+' must ship');
+    assert.ok(s.kind==='aoe'||s.kind==='single',id+' is an active');
+    assert.ok(s.power<=2,id+' must not out-punch Spirit Bolt (2.25)');
+    assert.ok(s.cd>=P.PETGAP,id+' cooldown must not be shorter than the 7s fire gate');
+  });
 });
 
 t('the real pet skill gacha action charges Zeny, saves the roll and respects the balance', () => {

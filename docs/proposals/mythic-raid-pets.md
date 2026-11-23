@@ -1,5 +1,10 @@
 # Mythic raid pets — proposal (not implemented)
 
+> **Superseded in v468** by [`raidbound-raid-pets.md`](raidbound-raid-pets.md). The owner renamed the
+> tier to **Raidbound**, set the drop to the 10% card/title band, made each signature a **fixed
+> passive** (actives stay random) and priced the tier at ×1.5 over Legendary. This file is kept as
+> the v467 record and is no longer the plan of record.
+
 Status: design proposal for owner review. No pet species, save field, sprite sheet or
 drop table has been changed by this document.
 

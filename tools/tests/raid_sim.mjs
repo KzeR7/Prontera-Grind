@@ -2441,9 +2441,15 @@ check('v467: raid creatures are drawn larger than the same species on the field'
   assert.equal(field.boss, 1, 'outside a run the field keeps its own size (boss)');
   assert.ok(inRaid.trash > 1.2, 'raid trash mobs read at least a fifth larger than the field');
   assert.ok(inRaid.boss > inRaid.trash, 'and the sanctum boss gets the larger share');
+  // v468 (owner): "up to 2x the normal size" - the boss now draws at exactly twice the field
+  // creature, and the trash at 1.6x, with no change to hitboxes (this value is art only).
+  assert.equal(inRaid.trash, 1.6, 'v468: raid trash draws at 1.6x the field creature');
+  assert.equal(inRaid.boss, 2.0, 'v468: a raid boss draws at 2x the field creature');
+  assert.ok(inRaid.boss / inRaid.trash < 1.4, 'the two boosts stay close enough to read as one family');
   assert.match(indexSrc, /raidVisualBoost\(!!m\.boss\)/, 'mobVisualScale multiplies in the raid boost');
   assert.match(indexSrc, /RAID_NATIVE_MOB_MAX_PX/, 'the raid raises the native-art ceiling so the boost is not clipped away');
-  assert.match(src, /var RAID_MONSTER_VISUAL_BOOST = 1\.25/, 'the trash boost lives next to the other raid constants');
+  assert.match(src, /var RAID_MONSTER_VISUAL_BOOST = 1\.6/, 'the trash boost lives next to the other raid constants');
+  assert.match(src, /var RAID_BOSS_VISUAL_BOOST = 2\.0/, 'and the boss boost sits beside it');
   assert.match(src, /if \(!raid\.on\) return 1;/, 'and is exactly 1 outside a run');
 });
 

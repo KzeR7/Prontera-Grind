@@ -916,15 +916,15 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="preload" href="assets/ui/fonts/font-5.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-6.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-7.ttf" as="font" type="font/ttf" crossorigin>
-<link rel="stylesheet" href="assets/ui/eclipse.css?v=467">
-<link rel="stylesheet" href="assets/ui/mobile.css?v=467">
-<link rel="stylesheet" href="assets/ui/mastery-titles.css?v=467">
+<link rel="stylesheet" href="assets/ui/eclipse.css?v=468">
+<link rel="stylesheet" href="assets/ui/mobile.css?v=468">
+<link rel="stylesheet" href="assets/ui/mastery-titles.css?v=468">
 <script src="assets/ui/mobile.js?v=274"></script>
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
-<link rel="stylesheet" href="assets/social.css?v=467">
-<link rel="stylesheet" href="assets/raid.css?v=467">
+<link rel="stylesheet" href="assets/social.css?v=468">
+<link rel="stylesheet" href="assets/raid.css?v=468">
 <link rel="stylesheet" href="assets/social-battle.css?v=393">
-  <link rel="stylesheet" href="assets/social-fishing.css?v=467"><link rel="stylesheet" href="assets/friends.css?v=273">
+  <link rel="stylesheet" href="assets/social-fishing.css?v=468"><link rel="stylesheet" href="assets/friends.css?v=273">
 <link rel="stylesheet" href="assets/adventure-guide.css?v=450">
 </head>
 <body>
@@ -1055,10 +1055,10 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <div id="tooltip"></div>
 <link rel="stylesheet" href="assets/wardrobe.css?v=138">
 <link rel="stylesheet" href="assets/shop.css?v=318">
-<script src="assets/wardrobe.js?v=467"></script>
+<script src="assets/wardrobe.js?v=468"></script>
 <script src="assets/shop-catalog.js?v=321"></script>
 <script src="assets/fourth-jobs.js?v=179"></script>
-<script src="assets/expanded-jobs.js?v=467"></script>
+<script src="assets/expanded-jobs.js?v=468"></script>
 <script src="assets/ascension.js?v=156"></script>
 <script src="assets/native-mob-heights.js?v=153"></script>
 <script src="assets/native-fields.js?v=197"></script>
@@ -1066,7 +1066,7 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <script src="assets/skill-icons.js?v=130"></script>
 <script src="assets/skill-icons-extra.js?v=207"></script>
 <script src="assets/skill-icons-expanded.js?v=450"></script>
-<script src="assets/mastery-titles.js?v=467"></script>
+<script src="assets/mastery-titles.js?v=468"></script>
 <script src="assets/player-buffs.js?v=450"></script>
 <script src="assets/skill-materials.js?v=220"></script>
 <script src="assets/afterglow-animations.js?v=151"></script>
@@ -1084,11 +1084,11 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <script src="assets/expanded-fx/approved.js?v=450"></script>
 <script src="assets/skill-afterglow.js?v=450"></script>
 <script src="assets/boss-fx.js?v=249"></script>
-<script src="assets/raid.js?v=467"></script>
+<script src="assets/raid.js?v=468"></script>
 <script src="assets/pets.js?v=130"></script>
 <script src="assets/bgm-tracks.js?v=206"></script>
 <script src="assets/bgm.js?v=207"></script>
-<script src="assets/combat-audio.js?v=467"></script>
+<script src="assets/combat-audio.js?v=468"></script>
 <script src="assets/class_skins_data.js?v=2"></script>
 <script src="assets/weapon_joints_data.js?v=2"></script>
 <script src="assets/weapons_data.js?v=2"></script>
@@ -1359,7 +1359,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-22 haven-v467 Raid Hold Ground, UI scale setting and larger raid monsters';
+const BUILD='2026-11-22 haven-v468 Pet pacing, six more pet actives, Raidbound spec and 2x raid monsters';
 // v364: this write used to sit AFTER the `//` on the BUILD line, so it was part of the comment and
 // never ran - the login card showed an empty #buildTag and there was no way to confirm which file
 // the browser had loaded. It also has to survive the script running before the login card exists.
@@ -3644,7 +3644,17 @@ const PET_SKILLS=[
   {id:'treasuresniff',n:'Treasure Sniff',kind:'utility',effect:'zeny',value:40,cd:35,desc:'Utility: finds 40 Zeny, no combat damage',vfx:'aid',color:'#ffd23f',icon:'💰'},
   {id:'warmnuzzle',n:'Warm Nuzzle',kind:'utility',effect:'heal',value:3,cd:32,desc:'Utility: restores 3% of Max HP, no combat damage',vfx:'aid',color:'#ff9db8',icon:'💞'},
   {id:'guardingchirp',n:'Guarding Chirp',kind:'utility',effect:'def',value:5,duration:20,cd:40,desc:'Utility: +5 DEF for 20s, no combat damage',vfx:'coat',color:'#8fe9ff',icon:'🛡️'},
-  {id:'tailwag',n:'Tail Wag',kind:'utility',effect:'comfort',cd:28,desc:'Utility: a cosmetic morale emote, no combat damage',vfx:'aid',color:'#fff3a0',icon:'✨'}
+  {id:'tailwag',n:'Tail Wag',kind:'utility',effect:'comfort',cd:28,desc:'Utility: a cosmetic morale emote, no combat damage',vfx:'aid',color:'#fff3a0',icon:'✨'},
+  // v468 (owner: "more active skills in the pet system"): six more random actives. They reuse the
+  // shipped aoe/single engine, existing vfx families and the same power/cooldown band (power <= 2.0,
+  // cooldown >= 7s) so no new combat rule, no new buff slot and no DPS ceiling appears - they only
+  // widen what a two-slot roll can hand out. Actives are always random; nothing here is fixed.
+  {id:'frostfang',n:'Frost Fang',kind:'single',power:1.85,cd:9,desc:'Single target: 1.85× pet damage',vfx:'spiral',color:'#9be8ff',icon:'❄️'},
+  {id:'sonicbark',n:'Sonic Bark',kind:'aoe',power:1.2,radius:4.6,cd:10,desc:'AoE: 1.20× pet damage to enemies within 4.6 units',vfx:'jup',color:'#d8c8ff',icon:'🔊'},
+  {id:'embernova',n:'Ember Nova',kind:'aoe',power:1.15,radius:5.5,cd:16,desc:'AoE: 1.15× pet damage to enemies within 5.5 units',vfx:'meteor',color:'#ff9450',icon:'🌋'},
+  {id:'shadowrake',n:'Shadow Rake',kind:'single',power:1.6,cd:7,desc:'Single target: 1.60× pet damage, quickest pet active',vfx:'soulb',color:'#b58bff',icon:'🌑'},
+  {id:'soulrend',n:'Soul Rend',kind:'single',power:2.0,cd:12,desc:'Single target: 2.00× pet damage',vfx:'spiral',color:'#ffe28a',icon:'🩻'},
+  {id:'galehowl',n:'Gale Howl',kind:'aoe',power:1.35,radius:4,cd:18,desc:'AoE: 1.35× pet damage to enemies within 4 units, longest pet active cooldown',vfx:'frenzy',color:'#8ef4c6',icon:'🌀'}
 ];
 const petDmg=p=>Math.round(atk()*PETBAL*(typeof skillTuning==='function'?skillTuning('companion'):1)*[.2,.32,.55,1][PETS[p.sp].r]*MUT[p.mut]*(1+p.eq[0]*.10)*(1+petPassive('petdmg')/100)),petInt=p=>Math.max(.4,1.7-PETS[p.sp].r*.15)/(1+p.eq[1]*.07);
 // v90 (owner): every Legendary pet (r===3) costs twice as much - a mutation roll, a skill gacha and an upgrade step.
@@ -3714,7 +3724,9 @@ const pickW=w=>{let r=Math.random()*w.reduce((a,b)=>a+b,0);for(let i=0;i<w.lengt
 const uid=()=>Date.now()+Math.random(),rnd=(a,b)=>a+Math.random()*(b-a),ri=(a,b)=>Math.floor(rnd(a,b+1)),cl=(v,a,b)=>Math.max(a,Math.min(b,v));
 // One roll fills both slots. The second pick is made from the skills the first did not take, so
 // the two can never match and there is no retry loop to spin if the dice are pinned.
-const PET_SKILL_WEIGHTS=[.35,.35,1,1,1,1,1,1,1,1,1,1],rollPetSkills=()=>{const a=pickW(PET_SKILL_WEIGHTS),rest=PET_SKILL_WEIGHTS.map((w,i)=>i).filter(i=>i!==a),b=rest[pickW(rest.map(i=>PET_SKILL_WEIGHTS[i]))];return[PET_SKILLS[a].id,PET_SKILLS[b].id]};
+// One weight per PET_SKILLS entry, in order. The two player buffs stay rare; every active and
+// utility roll keeps weight 1, so adding actives cannot make the buffs more common.
+const PET_SKILL_WEIGHTS=[.35,.35,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],rollPetSkills=()=>{const a=pickW(PET_SKILL_WEIGHTS),rest=PET_SKILL_WEIGHTS.map((w,i)=>i).filter(i=>i!==a),b=rest[pickW(rest.map(i=>PET_SKILL_WEIGHTS[i]))];return[PET_SKILLS[a].id,PET_SKILLS[b].id]};
 // ---------- auto-sell rules: shared by live drops, offline drops and bag previews ----------
 const AUTOSELL_SLOTS=['weapon','armor','head','off','leg','acc'],AUTOSELL_WEAPONS=['sword','dagger','katar','bow','staff','mace','axe'],AUTOSELL_WEAPONS_X=['spear','book','knuckle','instrument','whip','shuriken','gun'];
 const AUTOSELL_AFFIXES=['str','agi','dex','luk','int','vit','hp','atk','matk','crit','aspd','flee','cdm','move'];
@@ -15153,7 +15165,7 @@ function ensureRaidLightningSheet(){
     for(const tex of raidLightningSheetState.liveTextures)tex.needsUpdate=true;
   };
   img.onerror=()=>{raidLightningSheetState.loading=false;};
-  img.src='assets/refine-fx/title-lightning.webp?v=467';
+  img.src='assets/refine-fx/title-lightning.webp?v=468';
 }
 function makeRaidLightningTexture(colorHex){
   ensureRaidLightningSheet();
@@ -15582,7 +15594,8 @@ const NATIVE_MOB_MAX_PX=320,NATIVE_MOB_MAX_SHARE=.34;
 // v467 (owner): raid creatures are drawn larger than the same species on the field, so the raid
 // needs its own ceiling or the boost would be clipped away by the field's 320px/34% cap. The
 // ceiling still exists - it is what stops one bad projection filling the screen with flat art.
-const RAID_NATIVE_MOB_MAX_PX=520,RAID_NATIVE_MOB_MAX_SHARE=.5;
+// v468: the boost became 1.6x / 2.0x, so the raid ceiling rises to 640px / 62% of the field.
+const RAID_NATIVE_MOB_MAX_PX=640,RAID_NATIVE_MOB_MAX_SHARE=.62;
 function nativeMobArtPx(base,top){
   const px=Math.abs(base[1]-top[1]);
   if(!Number.isFinite(px)||!Number.isFinite(base[0])||!Number.isFinite(base[1]))return 0;
@@ -15654,8 +15667,20 @@ const PET_VISUAL_SCALE=.42;
 // Follow the hero's AGI, gear, pet and skill movement bonuses, with the same long-distance run boost.
 const petMoveSpeed=distance=>moveSpd(distance>3)*.95;
 // Visual time is real milliseconds, independent of x1/x2/x4 simulation speed.
-const PET_ANIMATION_RATE=.2;
-const petFrameTime=(view,ms)=>ms*Math.min(1,view.delay/(120*PET_ANIMATION_RATE));
+// v468 (owner: "walk/attack are a bit on the slower side"): v135 tamed the old player-paced
+// playback by clamping the native clock to 20% with a 120ms floor per displayed frame. That fixed
+// "too fast" but read as too slow - a Poring walked at 8 frames a second and a 28-frame attack pose
+// was stretched over 3.4 seconds. Measured against the shipped art every authored delay sits
+// between 1ms and 4.5ms, far below the floor, so the floor is the real pace: 120ms per frame in
+// v135, ~45ms in the old player-scaled version. v468 lands in the middle at 80ms (12.5 frames a
+// second) and gives the attack pose its own budget - 60ms per native frame, never under 0.5s and
+// never over 1.2s - so a swing reads as a swing instead of a long held pose.
+// PET_ANIMATION_RATE survives only as the native clock multiplier for a future asset whose delay is
+// above the floor (none today); for the shipped catalogue it cancels out of petFrameTime.
+const PET_ANIMATION_RATE=.34;
+const PET_FRAME_FLOOR_MS=80;
+const PET_ATTACK_FRAME_MS=.06,PET_ATTACK_MIN_S=.5,PET_ATTACK_MAX_S=1.2;
+const petFrameTime=(view,ms)=>ms*Math.min(1,view.delay/(PET_FRAME_FLOOR_MS*PET_ANIMATION_RATE));
 // [lowest opaque pixel, largest animation extent], measured across every native pose.
 const PET_LAYOUT={"1002":[200,74],"1007":[206,53],"1013":[211,126],"1014":[210,95],"1019":[214,137],"1031":[200,74],"1056":[204,70],"1057":[203,67],"1063":[203,54],"1096":[200,113],"1101":[203,77],"1106":[211,126],"1109":[204,141],"1113":[200,74],"1115":[209,230],"1120":[192,122],"1155":[204,117],"1170":[196,132],"1180":[206,84],"1582":[200,81]};
 const petFallbackShape=sp=>sp.n==='Lunatic'?'bunny':sp.n.includes('Wolf')?'cat':sp.n.includes('Peco')?'bug':sp.n.includes('Dragon')||sp.n.includes('Baphomet')?'demon':'blob';
@@ -15672,7 +15697,8 @@ function requestPetAsset(id,stance,direction){
 }
 function petAnimationState(id,r,direction){
  const attack=petSpriteStore?.ready(petAssetKey(id,'attack',direction))?.metadata.actions['attack'+direction];
- const duration=Math.max(.8,(attack?.frames.length||0)*.12,(petSpriteStore?.catalog?.species[id]?.attackDurations[direction]||0)/1000/PET_ANIMATION_RATE);
+ const nativeMs=(petSpriteStore?.catalog?.species[id]?.attackDurations[direction]||0)/1000/PET_ANIMATION_RATE;
+ const duration=Math.min(PET_ATTACK_MAX_S,Math.max(PET_ATTACK_MIN_S,(attack?.frames.length||0)*PET_ATTACK_FRAME_MS,nativeMs));
  const elapsed=r.attackStarted==null?Infinity:Math.max(0,skinNow()-r.attackStarted)/1000;
  return elapsed<duration?{stance:'attack',ms:elapsed*1000*PET_ANIMATION_RATE,progress:elapsed/duration}:{stance:r.run?'walk':'idle',ms:skinNow()*PET_ANIMATION_RATE,progress:null};
 }
@@ -17163,22 +17189,22 @@ setInterval(updateWatch,60000);
 // be hours old while the player was on another tab, and the check is a 60-byte text file.
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&(pendingUpdateBuild||Date.now()-PAGE_STARTED_AT>30000))updateWatch()});
 </script>
-<script src="assets/wardrobe-ui.js?v=467"></script>
+<script src="assets/wardrobe-ui.js?v=468"></script>
 <script src="assets/shop.js?v=321"></script>
 <script src="assets/friends.js?v=273"></script>
-<script src="assets/digimon/roster.js?v=467"></script>
-<script src="assets/digimon/base-stats.js?v=467"></script>
-<script src="assets/social-rules.js?v=467"></script>
-<script src="assets/social-poker.js?v=467"></script>
-<script src="assets/digimon-sanctuary.js?v=467"></script>
+<script src="assets/digimon/roster.js?v=468"></script>
+<script src="assets/digimon/base-stats.js?v=468"></script>
+<script src="assets/social-rules.js?v=468"></script>
+<script src="assets/social-poker.js?v=468"></script>
+<script src="assets/digimon-sanctuary.js?v=468"></script>
 <script src="assets/digimon-battle.js?v=393"></script>
-<script src="assets/social-digimon.js?v=467"></script>
+<script src="assets/social-digimon.js?v=468"></script>
 <script src="assets/social-gym-redesign.js?v=393"></script>
 <script src="assets/social-pond-design.js?v=393"></script>
 <script src="assets/social-title-art.js?v=450"></script>
-<script src="assets/social-scene.js?v=467"></script>
-<script src="assets/social-fishing.js?v=467"></script>
-<script src="assets/plaza-bots.js?v=467"></script>
+<script src="assets/social-scene.js?v=468"></script>
+<script src="assets/social-fishing.js?v=468"></script>
+<script src="assets/plaza-bots.js?v=468"></script>
 <script src="assets/adventure-guide.js?v=450"></script>
-<script src="assets/social.js?v=467"></script></body>
+<script src="assets/social.js?v=468"></script></body>
 </html>

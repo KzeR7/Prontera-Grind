@@ -54,6 +54,10 @@ const code = [
   grab('const PETS=[', 'const rollingSet=new Set'),      // roster, traits, bond ladder, PEQ, the 12 skills, petDmg/petHit
   grab('function petFold(own,inc){', 'function petDetail(p){'),   // v75 folding
   pick(/const PET_SKILL_WEIGHTS=\[[^\n]*/, 'rollPetSkills'),
+  pick(/const PET_ANIMATION_RATE=[^;]+;/, 'pet animation rate'),
+  pick(/const PET_FRAME_FLOOR_MS=[^;]+;/, 'pet walk/idle frame floor'),
+  pick(/const PET_ATTACK_FRAME_MS=[^;]+;/, 'pet attack frame budget'),
+  pick(/const petFrameTime=[^\n]*/, 'petFrameTime'),
   pick(/const SKSLOTS=t=>[^;]+;/, 'SKSLOTS/SKFADE'),
   pick(/const skOff=id=>[^\n]*/, 'skOff/skillOn'),
 ].join('\n');
@@ -77,7 +81,7 @@ this.__p={ PETS,PET_SKILLS,RN,RCL,MUT,GW,PT,PTG,GREAT,PEQ,EGG,PETGAP,PETBAL,petD
   rollPetSkills,petSkills,petBuffWhy,petLeech,petHit,tickPet,maxHp,
   MAPS,genGear,atk,matk,aspd,crit,critD,C,CLASSES,HPK,HPE,SKILLS,SKSLOTS,SKFADE,lineOf,st,pv,
   petBuff,petBuffSrc,PET_SKILL_WEIGHTS,setMobs:m=>{mobs=m},setDealt:v=>{dealt=v},getDealt:()=>dealt,
-  PETBOND,PET_TRAIT,PET_RECOMMENDED,bondCnt,bondRank,bondNext,traitVal,petPassive,petBonusList,petFold,foldDupPets,
+  PETBOND,PET_TRAIT,PET_RECOMMENDED,PET_ANIMATION_RATE,PET_FRAME_FLOOR_MS,PET_ATTACK_FRAME_MS,PET_ATTACK_MIN_S,PET_ATTACK_MAX_S,petFrameTime,bondCnt,bondRank,bondNext,traitVal,petPassive,petBonusList,petFold,foldDupPets,
   setRandom:v=>{Math.random=()=>v},
   resetPetState:()=>{for(const k in petSkillCd)delete petSkillCd[k];for(const k in petNote)delete petNote[k];
     for(const s of['atk','matk','hp','leech']){petBuff[s]=0;petBuff[s+'T']=0;petBuffSrc[s]=''}},
@@ -105,12 +109,12 @@ t('the roster is 20 pets, five at each of the four rarities', () => {
   assert.strictEqual(new Set(P.PETS.map(p => p.spriteId)).size, 20, 'every pet has its own Divine Pride id');
 });
 
-t('the gacha has twelve skills: 4 buffs, 2 AoE, 2 single-target and 4 utility', () => {
-  assert.strictEqual(P.PET_SKILLS.length, 12);
+t('the gacha has eighteen skills: 4 buffs, 5 AoE, 5 single-target and 4 utility (v468)', () => {
+  assert.strictEqual(P.PET_SKILLS.length, 18);
   const kinds = P.PET_SKILLS.map(s => s.kind);
-  assert.strictEqual(kinds.filter(k => k === 'buff').length, 4, 'four player buffs');
-  assert.strictEqual(kinds.filter(k => k === 'aoe').length, 2, 'two AoE');
-  assert.strictEqual(kinds.filter(k => k === 'single').length, 2, 'two single-target');
+  assert.strictEqual(kinds.filter(k => k === 'buff').length, 4, 'four player buffs (unchanged in v468)');
+  assert.strictEqual(kinds.filter(k => k === 'aoe').length, 5, 'five AoE');
+  assert.strictEqual(kinds.filter(k => k === 'single').length, 5, 'five single-target');
   P.PET_SKILLS.forEach(s => {
     assert.ok(s.cd > 0 && s.desc && s.icon && s.color, s.n + ' must be a complete entry');
     if(s.kind==='aoe'||s.kind==='single')assert.ok(s.desc.includes(String(s.power)), s.n + ' description must state its power (' + s.desc + ')');
@@ -131,6 +135,21 @@ t('the gacha has twelve skills: 4 buffs, 2 AoE, 2 single-target and 4 utility', 
   assert.strictEqual(P.PET_SKILLS.find(s => s.id === 'piercingfang').power, 2);
   assert.strictEqual(P.PET_SKILLS.find(s => s.id === 'spiritbolt').power, 2.25);
   assert.strictEqual(P.PET_SKILLS.filter(s => s.kind === 'utility').length, 4, 'four low-impact utility skills');
+  // v468: the six added actives must stay inside the shipped power/cooldown band, so widening the
+  // pool can never raise the pet DPS ceiling or break the 7s fire gate.
+  const NEW_ACTIVES = ['frostfang', 'sonicbark', 'embernova', 'shadowrake', 'soulrend', 'galehowl'];
+  const byI = id => P.PET_SKILLS.find(s => s.id === id);
+  NEW_ACTIVES.forEach(id => {
+    const s = byI(id);
+    assert.ok(s, id + ' must ship');
+    assert.ok(s.kind === 'aoe' || s.kind === 'single', id + ' is an active, never a buff or a passive');
+    assert.ok(s.power <= 2, id + ' must not out-punch Spirit Bolt (2.25)');
+    assert.ok(s.cd >= P.PETGAP, id + ' cooldown must not be shorter than the 7s fire gate');
+    if (s.kind === 'aoe') assert.ok(s.radius >= 4, id + ' needs a real radius');
+  });
+  assert.strictEqual(byI('galehowl').cd, 18, 'the widest active is also the slowest');
+  assert.strictEqual(byI('soulrend').power, 2, 'the hardest new active matches Piercing Fang, not Spirit Bolt');
+  assert.strictEqual(P.PET_SKILL_WEIGHTS.length, P.PET_SKILLS.length, 'one weight per skill, in order');
   assert.ok(P.PET_SKILL_WEIGHTS[0] < P.PET_SKILL_WEIGHTS[2] && P.PET_SKILL_WEIGHTS[1] < P.PET_SKILL_WEIGHTS[2], 'ATK/MATK buffs must be less common');
   assert.strictEqual(P.PETGAP, 7, 'one skill per pet every 7 seconds');
 });
@@ -143,7 +162,7 @@ t('one gacha fills BOTH slots and never repeats a skill', () => {
     assert.notStrictEqual(a, b, 'a pet can never hold the same skill twice');
     seen.add(a); seen.add(b);
   }
-  assert.strictEqual(seen.size, 12, 'after 200 rolls every skill must have come up at least once');
+  assert.strictEqual(seen.size, 18, 'after 200 rolls every skill must have come up at least once');
 });
 
 t('a new species arrives with one rolled skill; a duplicate folds into Bond (v75)', () => {
@@ -509,6 +528,35 @@ t('Legendary pets cost twice as much on every pet price (v90), and nothing else 
   assert.strictEqual(P.peqCostOf({ sp: leg }, 0), 2400, 'a Legendary upgrade step 1 is 2400z (was 1200z)');
   assert.strictEqual(P.peqCostOf({ sp: leg }, 4), 60000, 'a Legendary top upgrade step is 60000z (was 30000z)');
   assert.strictEqual(P.peqCost(4), 30000, 'the base upgrade ladder itself is unchanged');
+});
+
+t('pet walk/attack pace sits between the old player-scaled anim and the v135 crawl (v468)', () => {
+  // v468 (owner): v135 fixed a too-fast, player-scaled animation by clamping natives to 20% speed
+  // with a 120ms floor per displayed frame. That read as too slow, so the rate goes to 34% and the
+  // floor to 90ms - faster than v135, still slower than the old unscaled playback - and the attack
+  // pose gets its own 50ms-per-frame budget inside a 0.5s-1.15s window. Pinned here so a future
+  // retune is a deliberate, tested change instead of a silent drift.
+  assert.strictEqual(P.PET_ANIMATION_RATE, .34, '34% native clock');
+  assert.ok(P.PET_ANIMATION_RATE > .2 && P.PET_ANIMATION_RATE < 1, 'faster than v135, slower than unscaled');
+  assert.strictEqual(P.PET_FRAME_FLOOR_MS, 80, 'walk/idle floor drops from 120ms (v135) to 80ms');
+  assert.strictEqual(P.PET_ATTACK_FRAME_MS, .06, 'attack poses get 60ms per native frame');
+  assert.ok(P.PET_ATTACK_MIN_S >= .5 && P.PET_ATTACK_MAX_S <= 1.2, 'an attack stays a beat, not a scene');
+  // The shipped art authors delays of 1ms-4.5ms, so the floor binds and the real per-frame pace is
+  // floor/rate x delay/floor = ... derive it the way the game does and check it is a middle ground
+  // between the old player-scaled ~45ms and the v135 120ms.
+  // ms of real time per displayed frame = delay / (rate * factor), exactly as petFrameTime builds it
+  const paceMs = delay => { const f = Math.min(1, delay / (P.PET_FRAME_FLOOR_MS * P.PET_ANIMATION_RATE)); return delay / (P.PET_ANIMATION_RATE * f); };
+  [1, 1.5, 2, 2.5, 3, 4, 4.5].forEach(delay => {
+    assert.strictEqual(Math.round(paceMs(delay)), 80, 'delay ' + delay + 'ms must play one frame per 80ms');
+    assert.ok(paceMs(delay) > 45 && paceMs(delay) < 120, 'delay ' + delay + 'ms sits between too fast and too slow');
+  });
+  // a 28-frame attack (the longest shipped pose) must land inside the window instead of 3.4s
+  const longestNative = 44 / 1000 / P.PET_ANIMATION_RATE;
+  const shown = Math.min(P.PET_ATTACK_MAX_S, Math.max(P.PET_ATTACK_MIN_S, 28 * P.PET_ATTACK_FRAME_MS, longestNative));
+  assert.ok(shown >= 1 && shown <= P.PET_ATTACK_MAX_S, 'a 28-frame attack plays for ' + shown.toFixed(2) + 's');
+  assert.ok(shown < 3.4, 'and never repeats the v135 3.4s attack stretch');
+  const short = Math.min(P.PET_ATTACK_MAX_S, Math.max(P.PET_ATTACK_MIN_S, 4 * P.PET_ATTACK_FRAME_MS, 15 / 1000 / P.PET_ANIMATION_RATE));
+  assert.ok(short >= P.PET_ATTACK_MIN_S && short <= .6, 'a 4-frame attack still reads at ' + short.toFixed(2) + 's');
 });
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
