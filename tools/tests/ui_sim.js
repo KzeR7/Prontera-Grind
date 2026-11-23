@@ -766,6 +766,7 @@ t('damage floats stay screen-projected, restrained, and distinct by type', () =>
   vm.runInContext(`
     const fieldDamage=()=>1,ascDamage=()=>1,skillBonus=()=>0,applyLeech=()=>0,cardMasteryStat=()=>0;
     let mob={x:1,z:3,hp:10000,size:1},shake=0,hit=null,S={dmg:0};
+    ${pick(/const playerDamage=[^\n]+/, 'Sura damage modifier')}
     const missCh=()=>0,crit=()=>100,atk=()=>100,matk=()=>200,st=()=>0,critD=()=>2,
       rnd=(a,b)=>a,addFloat=()=>{},damageFloat=(...args)=>{hit=args},
       showDamage=(o,x,y,z,a,c,sk)=>damageFloat(x,y,z,a,c,false,sk),mobDamageY=()=>1.9;

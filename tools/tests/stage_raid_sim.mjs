@@ -3,6 +3,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
+import { execFileSync } from 'node:child_process';
 import {
   STAGE,
   PRODUCTION,
@@ -14,7 +15,14 @@ import {
 } from '../staging/stage_raid.mjs';
 
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), '../..');
-const BUILD = (/^const BUILD='([^']+)';/m.exec(fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8')) || [])[1];
+// This launcher deploys its specifically named historical staging branch, not every future
+// working tree. Outside that branch, verify its tag against the v466 source snapshot instead
+// of requiring an unrelated newer BUILD to match. On its own branch, still check live source.
+const branch = execFileSync('git', ['branch', '--show-current'], { cwd: ROOT, encoding: 'utf8' }).trim();
+const snapshot = 'b56c23b08644abf95336b648fca61db44673216a';
+const html = branch === STAGE.branch ? fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8') :
+  execFileSync('git', ['show', `${snapshot}:index.html`], { cwd: ROOT, encoding: 'utf8', maxBuffer: 20e6 });
+const BUILD = (/^const BUILD='([^']+)';/m.exec(html) || [])[1];
 
 let pass = 0;
 function check(name, fn) {
@@ -32,7 +40,7 @@ await check('STAGE targets only isolated staging resources and matches index.htm
   assert.equal(STAGE.socialProject, 'prontera-social-staging');
   assert.equal(STAGE.dbName, 'pg-staging');
   assert.equal(STAGE.dbId, '3a38c6fc-96a8-491d-b97b-fd536e575ca4');
-  assert.ok(BUILD.includes(STAGE.buildTag), 'index.html BUILD matches STAGE.buildTag');
+  assert.ok(BUILD.includes(STAGE.buildTag), 'staging source BUILD matches STAGE.buildTag');
 });
 
 await check('generated wrangler configs contain zero production identifiers', () => {

@@ -130,15 +130,17 @@ t('high-level bosses cut the crit chance rolled against them', () => {
   vm.createContext(strikeBox);
   vm.runInContext(`
     const fieldDamage=()=>1,ascDamage=()=>1,skillBonus=()=>0,applyLeech=()=>0,cardMasteryStat=()=>0;
-    let mob={x:1,z:3,hp:1e9,size:1,critRes:.3},shake=0,hit=null,S={dmg:0};
+    let mob={x:1,z:3,hp:1e9,size:1,critRes:.3},shake=0,hit=null,S={dmg:0,cls:'Sura'};
+    ${pick(/const playerDamage=[^\n]+/, 'Sura damage modifier')}
     const missCh=()=>0,crit=()=>50,atk=()=>100,matk=()=>200,st=()=>0,critD=()=>2,
       rnd=(a,b)=>a,addFloat=()=>{},damageFloat=(...a)=>{hit=a},
       showDamage=(o,x,y,z,a,c,sk)=>damageFloat(x,y,z,a,c,false,sk),mobDamageY=()=>1.9;
     ${grab('function strike(mult,col,magic=false,skill=false){', '// Legacy coefficient helpers retained')}
     Math.random=()=>.4;
     strike(1,'#fff');
-    this.__res=shake;
+    this.__res=shake;this.__damage=S.dmg;
   `, strikeBox);
+  assert.strictEqual(strikeBox.__damage,77,'Sura non-crit damage includes its 10% bonus');
   assert.strictEqual(strikeBox.__res, 2, 'a 40% die beats a 50% crit, but not 50% x (1-0.30) = 35%');
   vm.runInContext('mob.critRes=0;Math.random=()=>.4;strike(1,"#fff");this.__res=shake;', strikeBox);
   assert.strictEqual(strikeBox.__res, 6, 'without the resistance the same die is a critical');
