@@ -21,6 +21,8 @@
       bossName: 'Memory of Thanatos',
       matIdx: 0,
       matName: 'Astral Shards',
+      bossCardKey: 'raid:matk',
+      bossCardName: 'Sovereign Thanatos Card',
       img: 'assets/atlas/astral-citadel.png?v=156',
       banner: 'assets/atlas/astral-citadel.png?v=156',
       comingSoon: false,
@@ -38,6 +40,8 @@
       bossName: 'Ifrit',
       matIdx: 1,
       matName: 'Primal Catalysts',
+      bossCardKey: 'raid:atk',
+      bossCardName: 'Primordial Ifrit Card',
       img: 'assets/atlas/thor-volcano.png?v=162',
       banner: 'assets/atlas/thor-volcano.png?v=162',
       comingSoon: false,
@@ -392,7 +396,7 @@
     if (mode === 'party') {
       var p = socialParty();
       if (!p || p.members.length < 2) {
-        return { ok: false, reason: 'Form a 2–3 player Party in the Social Hub first.' };
+        return { ok: false, reason: 'Invite a trainer above — a party of 2–3 launches the raid.' };
       }
       if (p.members.length > 3) {
         return { ok: false, reason: 'Raid Dungeons support up to 3 party members.' };
@@ -3491,9 +3495,14 @@
         if (!st.bestSolo || secs < st.bestSolo) st.bestSolo = secs;
       }
 
-      // 1) 10% Raid Boss Accessory Card Drop (either Primordial Ifrit Card [ATK +15%] or Sovereign Thanatos Card [MATK +15%])
+      // 1) 10% Raid Boss Accessory Card Drop — each dungeon only drops its own boss card:
+      //    Astral Citadel -> Sovereign Thanatos Card (MATK +15%), Thor Volcano -> Primordial Ifrit Card (ATK +15%)
       if (typeof RAID_BOSS_CARDS !== 'undefined' && Array.isArray(RAID_BOSS_CARDS) && RAID_BOSS_CARDS.length > 0 && Math.random() < 0.10) {
-        var cardDef = RAID_BOSS_CARDS[Math.floor(Math.random() * RAID_BOSS_CARDS.length)];
+        var cardDef = null;
+        for (var ci = 0; ci < RAID_BOSS_CARDS.length; ci++) {
+          if (RAID_BOSS_CARDS[ci] && RAID_BOSS_CARDS[ci].cardKey === dng.bossCardKey) { cardDef = RAID_BOSS_CARDS[ci]; break; }
+        }
+        if (!cardDef) cardDef = RAID_BOSS_CARDS[0];
         if (cardDef && typeof newCard === 'function' && typeof addCard === 'function') {
           var rolledCard = newCard(cardDef);
           if (addCard(rolledCard, { label: cardDef.n })) {
@@ -4003,6 +4012,91 @@
     paintActivePortraits();
   }
 
+  // v466: feedback line for the Ready Room's direct party invite (no re-render, so the
+  // message stays visible instead of being replaced by the fresh lobby markup).
+  function setInviteNote(text, isError) {
+    var box = $('raidLobbyBody');
+    if (!box) return;
+    var note = box.querySelector('.raid-party-invite-note');
+    if (!note) return;
+    note.textContent = text;
+    note.classList.toggle('is-error', Boolean(isError));
+    note.classList.toggle('is-ok', !isError && Boolean(text));
+  }
+
+  // v466: the Ready Room shows the party as character previews instead of the stage
+  // list (the Map -> Dungeons panel already lists all four stages), and the empty
+  // state invites trainers directly instead of only linking to the Social Hub.
+  function selfLobbyInfo() {
+    return {
+      id: myId(),
+      name: myName(),
+      cls: (typeof S !== 'undefined' && S && S.cls) || 'Adventurer',
+      lv: (typeof S !== 'undefined' && S && S.lv) || 150,
+      sex: (typeof S !== 'undefined' && S && S.sex === 'f') ? 'f' : 'm',
+      appearance: myAppearance(),
+      self: true,
+      ready: false,
+      leader: false
+    };
+  }
+
+  function lobbyInviteCandidates() {
+    var soc = root.PGSocial && root.PGSocial.app;
+    var out = [];
+    if (!soc || !soc.room || !soc.connected || !soc.players) return out;
+    var me = myId();
+    var taken = {};
+    var party = socialParty();
+    if (party && Array.isArray(party.members)) {
+      for (var i = 0; i < party.members.length; i++) taken[party.members[i].id] = true;
+    }
+    var roster = soc.partyRoster;
+    if (Array.isArray(roster)) {
+      for (var r = 0; r < roster.length; r++) {
+        var entry = roster[r];
+        if (!entry || !Array.isArray(entry.members)) continue;
+        for (var k = 0; k < entry.members.length; k++) taken[entry.members[k]] = true;
+      }
+    }
+    var list = [];
+    if (typeof soc.players.forEach === 'function') soc.players.forEach(function (pl) { list.push(pl); });
+    else if (Array.isArray(soc.players)) list = soc.players;
+    for (var n = 0; n < list.length; n++) {
+      var pl = list[n];
+      if (!pl || pl.id == null || pl.id === me || taken[pl.id]) continue;
+      if (!Number.isInteger(Number(pl.id)) || Number(pl.id) <= 0) continue;
+      if (pl.room != null && soc.room != null && Number(pl.room) !== Number(soc.room)) continue;
+      out.push({ id: Number(pl.id), name: pl.name || ('Trainer ' + pl.id) });
+    }
+    out.sort(function (a, b) { return String(a.name).localeCompare(String(b.name)); });
+    return out.slice(0, 24);
+  }
+
+  function inviteRowHtml(compact) {
+    var soc = root.PGSocial && root.PGSocial.app;
+    var inPlaza = Boolean(soc && soc.room && soc.connected && typeof root.PGSocial.send === 'function');
+    var candidates = inPlaza ? lobbyInviteCandidates() : [];
+    var opts = candidates.length
+      ? candidates.map(function (c) { return '<option value="' + c.id + '">' + escHtml(c.name) + '</option>'; }).join('')
+      : '<option value="">' + (inPlaza ? 'No free trainers in this plaza' : 'Enter the plaza to invite trainers') + '</option>';
+    var actionBtn = inPlaza
+      ? '<button type="button" class="raid-link-btn" data-raid-act="invite"' + (candidates.length ? '' : ' disabled') + '>✉ Send Invite</button>'
+      : '<button type="button" class="raid-link-btn" data-raid-act="plaza">🚪 Enter Plaza &amp; Invite</button>';
+    return '<div class="raid-party-invite' + (compact ? ' compact' : '') + '">' +
+        '<label for="raidPartyInvitee">Invite a trainer</label>' +
+        '<div class="raid-party-invite-controls">' +
+          '<select id="raidPartyInvitee" class="raid-party-invite-select" aria-label="Choose a trainer to invite to your party"' + (candidates.length ? '' : ' disabled') + '>' + opts + '</select>' +
+          actionBtn +
+        '</div>' +
+        (inPlaza
+          ? '<small class="raid-party-invite-note">' + (candidates.length
+              ? 'Your invite opens a party pop-up for that trainer — they join with one click.'
+              : 'Every trainer in this plaza is already in a party. Wait for someone to leave theirs.') + '</small>'
+          : '<small class="raid-party-invite-note">Party invites need the Fountain Plaza. Enter Plaza keeps this Ready Room open and fills the trainer list as soon as you arrive.</small>') +
+      '</div>';
+  }
+
   function renderLobby() {
     var box = $('raidLobbyBody');
     if (!box) return;
@@ -4017,80 +4111,89 @@
 
     var partyHtml = '';
     if (mode === 'party') {
-      if (p && p.members.length >= 2) {
-        var members = lobbyMembers();
-        var readyCnt = members.filter(function (m) { return m.ready; }).length;
-        var allReady = allPartyMembersReady();
-        var slotsHtml = '';
-        for (var sIdx = 0; sIdx < 3; sIdx++) {
-          var mem = members[sIdx];
-          if (mem) {
-            var cid = 'raidLobbyPortrait_' + sIdx;
-            portraitsToPaint.push({ canvasId: cid, info: mem });
-            slotsHtml +=
-              '<div class="raid-ready-card' + (mem.ready ? ' is-ready' : '') + '">' +
-                '<span class="raid-role-tag' + (mem.leader ? ' leader' : '') + '">' +
-                  (mem.leader ? '👑 Party Leader' : 'Party Member') +
-                '</span>' +
-                '<div class="raid-pedestal">' +
-                  '<canvas id="' + cid + '" class="raid-portrait-canvas" width="104" height="112"></canvas>' +
-                '</div>' +
-                '<div class="raid-ready-name">' + escHtml(mem.name) + (mem.self ? ' (You)' : '') + '</div>' +
-                '<div class="raid-ready-cls">Lv ' + escHtml(mem.lv) + ' · ' + escHtml(mem.cls) + '</div>' +
-                '<span class="raid-ready-pill' + (mem.ready ? ' ok' : '') + '">' +
-                  (mem.leader ? '★ LEADER' : (mem.ready ? '✓ READY' : '⏳ NOT READY')) +
-                '</span>' +
-              '</div>';
-          } else {
-            slotsHtml +=
-              '<div class="raid-ready-card is-empty">' +
-                '<span class="raid-role-tag">Open Slot</span>' +
-                '<div class="raid-ready-cls">2–3 Players Supported</div>' +
-              '</div>';
-          }
-        }
-
-        partyHtml =
-          '<div class="raid-party-box">' +
-            '<div class="raid-party-head">' +
-              '<span><b>Party Ready Room — ' + escHtml(dng.name) + '</b> (' + members.length + '/3 Adventurers)</span>' +
-              '<div class="raid-party-head-actions">' +
-                (isPartyLeader() ? '<button type="button" class="raid-link-btn" data-raid-act="summon">📣 Summon Party</button>' : '') +
-                '<span class="raid-ready-count' + (allReady ? ' all' : '') + '">' + readyCnt + '/' + members.length + ' READY</span>' +
+      var members = (p && p.members.length) ? lobbyMembers() : [];
+      var hasParty = members.length >= 2;
+      var readyCnt = members.filter(function (m) { return m.ready; }).length;
+      var allReady = hasParty && allPartyMembersReady();
+      var slotsHtml = '';
+      for (var sIdx = 0; sIdx < 3; sIdx++) {
+        var mem = members[sIdx];
+        if (mem) {
+          var cid = 'raidLobbyPortrait_' + sIdx;
+          portraitsToPaint.push({ canvasId: cid, info: mem });
+          slotsHtml +=
+            '<div class="raid-ready-card' + (mem.ready ? ' is-ready' : '') + '">' +
+              '<span class="raid-role-tag' + (mem.leader ? ' leader' : '') + '">' +
+                (mem.leader ? '👑 Party Leader' : 'Party Member') +
+              '</span>' +
+              '<div class="raid-pedestal">' +
+                '<canvas id="' + cid + '" class="raid-portrait-canvas" width="104" height="112"></canvas>' +
               '</div>' +
-            '</div>' +
-            '<div class="raid-ready-grid">' + slotsHtml + '</div>' +
-            '<div class="raid-lobby-chat">' +
-              '<div class="raid-lobby-chat-log" id="raidLobbyChatFeed"></div>' +
-              '<form class="raid-chat-form" id="raidLobbyChatForm">' +
-                '<input id="raidLobbyChatInput" class="raid-chat-input" type="text" maxlength="160" autocomplete="off" placeholder="Chat with your party before launch…">' +
-                '<button type="submit" class="raid-chat-send">Send</button>' +
-              '</form>' +
-            '</div>' +
-          '</div>';
-      } else {
-        partyHtml =
-          '<div class="raid-party-box">' +
-            '<div class="raid-party-empty">' +
-              '<span>No 2–3 player party active. Invite real players in the Social Hub Plaza first!</span>' +
-              '<button type="button" class="raid-link-btn" data-raid-act="plaza">Open Social Hub</button>' +
-            '</div>' +
-          '</div>';
+              '<div class="raid-ready-name">' + escHtml(mem.name) + (mem.self ? ' (You)' : '') + '</div>' +
+              '<div class="raid-ready-cls">Lv ' + escHtml(mem.lv) + ' · ' + escHtml(mem.cls) + '</div>' +
+              '<span class="raid-ready-pill' + (mem.ready ? ' ok' : '') + '">' +
+                (mem.leader ? '★ LEADER' : (mem.ready ? '✓ READY' : '⏳ NOT READY')) +
+              '</span>' +
+            '</div>';
+        } else if (!members.length && sIdx === 0) {
+          var selfCid = 'raidLobbyPortrait_self';
+          var selfInfo = selfLobbyInfo();
+          portraitsToPaint.push({ canvasId: selfCid, info: selfInfo });
+          slotsHtml +=
+            '<div class="raid-ready-card is-self">' +
+              '<span class="raid-role-tag">Your character</span>' +
+              '<div class="raid-pedestal">' +
+                '<canvas id="' + selfCid + '" class="raid-portrait-canvas" width="104" height="112"></canvas>' +
+              '</div>' +
+              '<div class="raid-ready-name">' + escHtml(selfInfo.name) + ' (You)</div>' +
+              '<div class="raid-ready-cls">Lv ' + escHtml(selfInfo.lv) + ' · ' + escHtml(selfInfo.cls) + '</div>' +
+              '<span class="raid-ready-pill">⏳ WAITING FOR PARTY</span>' +
+            '</div>';
+        } else {
+          slotsHtml +=
+            '<div class="raid-ready-card is-empty">' +
+              '<span class="raid-role-tag">Open Slot</span>' +
+              '<div class="raid-ready-cls">' + (members.length ? '2–3 Players Supported' : 'Invite a trainer below') + '</div>' +
+            '</div>';
+        }
       }
+
+      partyHtml =
+        '<div class="raid-party-box">' +
+          '<div class="raid-party-head">' +
+            '<span><b>Party Ready Room — ' + escHtml(dng.name) + '</b> (' + Math.max(1, members.length) + '/3 Adventurers)</span>' +
+            (hasParty
+              ? '<div class="raid-party-head-actions">' +
+                  (isPartyLeader() ? '<button type="button" class="raid-link-btn" data-raid-act="summon">📣 Summon Party</button>' : '') +
+                  '<span class="raid-ready-count' + (allReady ? ' all' : '') + '">' + readyCnt + '/' + members.length + ' READY</span>' +
+                '</div>'
+              : '') +
+          '</div>' +
+          (!hasParty
+            ? '<div class="raid-party-empty"><span>' + (members.length
+                ? 'You are alone in this party. Invite another trainer — Raids need 2–3 adventurers.'
+                : 'No 2–3 player party yet. Invite a trainer from the Fountain Plaza and they join with one click.') + '</span></div>'
+            : '') +
+          '<div class="raid-ready-grid">' + slotsHtml + '</div>' +
+          (members.length >= 3
+            ? ''
+            : (hasParty && !isPartyLeader()
+                ? '<div class="raid-party-invite"><small class="raid-party-invite-note">Only the Party Leader can invite another trainer.</small></div>'
+                : inviteRowHtml(!hasParty))) +
+          (hasParty
+            ? '<div class="raid-lobby-chat">' +
+                '<div class="raid-lobby-chat-log" id="raidLobbyChatFeed"></div>' +
+                '<form class="raid-chat-form" id="raidLobbyChatForm">' +
+                  '<input id="raidLobbyChatInput" class="raid-chat-input" type="text" maxlength="160" autocomplete="off" placeholder="Chat with your party before launch…">' +
+                  '<button type="submit" class="raid-chat-send">Send</button>' +
+                '</form>' +
+              '</div>'
+            : '') +
+        '</div>';
     } else {
       var soloCid = 'raidLobbyPortrait_solo';
-      portraitsToPaint.push({
-        canvasId: soloCid,
-        info: {
-          id: myId(),
-          name: myName(),
-          cls: (typeof S !== 'undefined' && S && S.cls) || 'Adventurer',
-          lv: (typeof S !== 'undefined' && S && S.lv) || 150,
-          sex: (typeof S !== 'undefined' && S && S.sex === 'f') ? 'f' : 'm',
-          appearance: myAppearance(),
-          self: true
-        }
-      });
+      var soloInfo = selfLobbyInfo();
+      portraitsToPaint.push({ canvasId: soloCid, info: soloInfo });
       partyHtml =
         '<div class="raid-party-box solo-note" style="display:flex;align-items:center;gap:14px;">' +
           '<div class="raid-pedestal" style="flex:none;width:84px;height:92px;">' +
@@ -4101,12 +4204,6 @@
         '</div>';
     }
 
-    var stagesHtml = dng.stages.map(function (s, i) {
-      return '<div class="raid-stage-item' + (s.boss ? ' boss' : '') + '">' +
-        '<span class="raid-stage-num">' + (i + 1) + '</span>' +
-        '<div><b>' + escHtml(s.name) + (s.boss ? ' <em>BOSS</em>' : '') + '</b><small>' + escHtml(s.desc) + '</small></div>' +
-      '</div>';
-    }).join('');
 
     var entriesText = isGm()
       ? '<b class="raid-gm-tag">∞ Unlimited (GM)</b>'
@@ -4155,9 +4252,8 @@
         '<button type="button" class="raid-close-x" data-raid-act="close" aria-label="Close">×</button>' +
       '</div>' +
       partyHtml +
-      '<div class="raid-stages-grid">' + stagesHtml + '</div>' +
       '<div class="raid-rewards-bar">' +
-        '<div><b>Party Clear</b><span>30 ' + escHtml(dng.matName) + ' · 1 Valkyrie\'s Sigil · 750,000 Zeny · 150 Echo Shards · 10% Boss Acc Card &amp; Raid Title</span></div>' +
+        '<div><b>Party Clear</b><span>30 ' + escHtml(dng.matName) + ' · 1 Valkyrie\'s Sigil · 750,000 Zeny · 150 Echo Shards · 10% ' + escHtml(dng.bossCardName || 'Boss Acc Card') + ' &amp; Raid Title</span></div>' +
       '</div>' +
       '<div class="raid-lobby-foot">' +
         '<div class="raid-meta-line">' +
@@ -4601,9 +4697,46 @@
         } else {
           leave({ graceLock: graceEligible });
         }
+      } else if (act === 'invite') {
+        var invitee = $('raidPartyInvitee');
+        var targetId = invitee && invitee.value ? Number(invitee.value) : NaN;
+        if (!Number.isInteger(targetId) || targetId <= 0) {
+          setInviteNote('Pick a trainer from the list first.', true);
+          return;
+        }
+        var socApp = root.PGSocial && root.PGSocial.app;
+        if (!root.PGSocial || typeof root.PGSocial.send !== 'function' || !socApp || !socApp.room || !socApp.connected) {
+          setInviteNote('Party invites need the Fountain Plaza — use Enter Plaza & Invite.', true);
+          return;
+        }
+        var targetName = invitee.options[invitee.selectedIndex] ? invitee.options[invitee.selectedIndex].textContent : 'a trainer';
+        if (root.PGSocial.send({ type: 'party_invite', targetId: targetId })) {
+          setInviteNote('Party invite sent to ' + targetName + ' — it opens their party pop-up.');
+        } else {
+          setInviteNote('That invite could not be sent. Check the plaza connection.', true);
+        }
       } else if (act === 'plaza') {
-        hideLobby();
-        if (root.PGSocial && typeof root.PGSocial.enter === 'function') root.PGSocial.enter(0);
+        // v466: entering the plaza keeps the Ready Room open, then refills the trainer list
+        // once the room has joined so the invite is one click away.
+        if (!root.PGSocial || typeof root.PGSocial.enter !== 'function') return;
+        var entered = root.PGSocial.enter(0);
+        var tries = 0;
+        var waitsForPlaza = function () {
+          if (raid.on) return;
+          var lobby = $('raidLobby');
+          if (!lobby || lobby.hidden) return;
+          var appNow = root.PGSocial && root.PGSocial.app;
+          if (appNow && appNow.room && appNow.connected) { renderLobby(); return; }
+          if (++tries > 20) {
+            // Solo / offline plaza never joins a shared room: drop the modal so the plaza stays usable.
+            hideLobby();
+            if (typeof log === 'function') log('Party invites need a cloud-connected plaza room — the Ready Room closed so you can play in the plaza.', 'r0', 'misc');
+            return;
+          }
+          if (typeof setTimeout === 'function') setTimeout(waitsForPlaza, 700);
+        };
+        if (entered && typeof entered.then === 'function') entered.then(waitsForPlaza, function () {});
+        else if (typeof setTimeout === 'function') setTimeout(waitsForPlaza, 700);
       }
     });
 

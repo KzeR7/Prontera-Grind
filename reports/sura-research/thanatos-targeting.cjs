@@ -13,7 +13,7 @@ if(html.split(marker).length!==2)throw Error('target hook changed');
 if(process.env.SOURCE!=='working')html=html.replace(marker,marker+`\n    if(window.__bossPriority&&S.cls==='Sura'&&!swing){const r=skillState(),s=SKILLS.find(x=>x.id==='ch_asura'),b=mobs.find(x=>x.boss&&x.hp>0&&isEngaged(x));if(b&&r.comboSlots?.[r.cursor]==='ch_asura'&&skillOn('ch_asura')&&skillStackReady(s)&&(skCd.ch_asura||0)<=0)mob=b;}`);
 // Styling is irrelevant to the headless combat loop; jsdom 22 cannot parse modern CSS.
 html=html.replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi,'');
-let raid=fs.readFileSync('assets/raid.js','utf8');
+let raid=process.env.SOURCE==='working'?fs.readFileSync('assets/raid.js','utf8'):require('node:child_process').execFileSync('git',['show','824511bd35e9fedda474a331546048c405ef1b66:assets/raid.js'],{encoding:'utf8',maxBuffer:20e6});
 const raidHook='spawnSanctuaryPillars: spawnSanctuaryPillars,';
 if(raid.split(raidHook).length!==2)throw Error('raid hook changed');
 const seeds=(process.env.SEEDS||'123,321,456,789,987').split(',').map(Number);

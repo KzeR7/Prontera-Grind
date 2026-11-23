@@ -16,10 +16,10 @@ import {
 
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), '../..');
 // This launcher deploys its specifically named historical staging branch, not every future
-// working tree. Outside that branch, verify its tag against the v465 source snapshot instead
+// working tree. Outside that branch, verify its tag against the v466 source snapshot instead
 // of requiring an unrelated newer BUILD to match. On its own branch, still check live source.
 const branch = execFileSync('git', ['branch', '--show-current'], { cwd: ROOT, encoding: 'utf8' }).trim();
-const snapshot = '824511bd35e9fedda474a331546048c405ef1b66';
+const snapshot = 'b56c23b08644abf95336b648fca61db44673216a';
 const html = branch === STAGE.branch ? fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8') :
   execFileSync('git', ['show', `${snapshot}:index.html`], { cwd: ROOT, encoding: 'utf8', maxBuffer: 20e6 });
 const BUILD = (/^const BUILD='([^']+)';/m.exec(html) || [])[1];

@@ -73,3 +73,5 @@ To rerun v466 against the working tree:
 ```sh
 SOURCE=working CLASSES=Sura SURVIVAL=invulnerable node reports/sura-research/thanatos-targeting.cjs > reports/sura-research/thanatos-sura-v466-results.jsonl
 ```
+
+After integrating the newer raid changes and renumbering this game build to v467, the same v467 working-tree runs were repeated. All ten records matched `thanatos-sura-v466-results.jsonl` byte-for-byte. The fixed baseline mode also loads the v465 raid script from the historical source, so the earlier results remain reproducible.
