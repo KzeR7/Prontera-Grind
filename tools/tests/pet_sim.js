@@ -123,6 +123,15 @@ t('the roster is 25 pets, five at each of the five rarities (v469 adds Raidbound
   assert.strictEqual(P.RCL[4], 5, 'and logs in the band above Legendary');
 });
 
+t('a Raidbound drop logs in the r5 band, and the feed actually styles r5 (v472)', () => {
+  // RCL maps rarity 4 -> the log class 'r5'. #feed painted r0..r4 only, so a Raidbound drop fell
+  // through to the global .r5 (a purple) instead of the raid-trophy amber. Guard both halves.
+  assert.strictEqual(P.RCL[4], 5, 'Raidbound logs as r5');
+  const css = fs.readFileSync(__dirname + '/../../assets/ui/eclipse.css', 'utf8');
+  assert.ok(/#feed \.r5\{color:#ffb27a\}/.test(css), 'the raid feed has a colour for the Raidbound band');
+  for (const r of [0,1,2,3,4]) assert.ok(new RegExp('#feed \\.r' + P.RCL[r] + '\\{').test(css), 'feed colour r' + P.RCL[r] + ' must exist');
+});
+
 t('the gacha has eighteen skills: 4 buffs, 5 AoE, 5 single-target and 4 utility (v468)', () => {
   assert.strictEqual(P.PET_SKILLS.length, 18);
   const kinds = P.PET_SKILLS.map(s => s.kind);

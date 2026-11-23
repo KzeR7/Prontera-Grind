@@ -1338,6 +1338,8 @@ body.clean-screen #eclipseCompanions{display:none}
 #feedWrap{bottom:calc(var(--docktop,76px) + 6px);flex-direction:column}
 #feed>div{background:transparent;border:0;color:#f4f0e6;text-shadow:0 1px 3px #000,0 0 5px #000;padding:2px 0}
 #feed .r0{color:#e0e5ec}#feed .r1{color:#94efb2}#feed .r2{color:#9ecaff}#feed .r3{color:#dcb6ff}#feed .r4{color:#ffe197}
+/* v472: RCL maps Raidbound (rarity 4) to the log class r5, so the tier needs its own feed colour. */
+#feed .r5{color:#ffb27a}
 #hudBuffs{bottom:calc(var(--docktop,76px) + 6px);right:16px}
 #eclipseCompanions{bottom:calc(var(--docktop,76px) + 48px)}
 #sideMenu.eclipse-more-open{pointer-events:auto;max-height: min(60vh,440px)}

@@ -791,6 +791,18 @@ check('v471: BOTH raid bosses carry exactly double their v470 health (Astral 4.4
   assert.ok(thorBossHp > 2.2e9 && thorBossHp < 2.35e9, 'Thor solo boss HP doubled to ~2.269B (got ' + thorBossHp + ')');
 });
 
+check('v472: the Dungeons panel advertises the doubled boss, not the v470 recommendation', () => {
+  // v471 doubled BOTH raid bosses. The Atlas/Dungeons cards still told the player "Solo ~28M DPS"
+  // (Astral) and "~32M DPS" (Thor), which is the time-to-kill figure for the OLD health - a straight
+  // doubling keeps the advertised clear time honest. Pinned so a future health retune cannot leave a
+  // stale recommendation on screen.
+  const astral = (html.match(/\['⚔ Solo ~(\d+)M DPS \(@★0\)',false\]/g) || []);
+  assert.equal(astral.length, 2, 'both raid cards carry a recommended-DPS tag');
+  assert.ok(html.includes("['⚔ Solo ~56M DPS (@★0)',false]"), 'Astral Citadel recommends ~56M DPS (2 x 28M)');
+  assert.ok(html.includes("['⚔ Solo ~64M DPS (@★0)',false]"), 'Thor Volcano recommends ~64M DPS (2 x 32M)');
+  assert.ok(!/Solo ~(28|32)M DPS/.test(html), 'the pre-v471 recommendation is gone');
+});
+
 check('40M DPS @ ★0 Boss HP + 50% Raid Armor, 2p/3p Party HP+ATK buffs, and ★0-★20 Weapon Star Workshop + Shard Boosts', () => {
   // Verify 1p vs 2p vs 3p HP & ATK scaling on Astral Raid
   const scaling = g.ev(`(() => {

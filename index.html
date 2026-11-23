@@ -916,15 +916,15 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="preload" href="assets/ui/fonts/font-5.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-6.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-7.ttf" as="font" type="font/ttf" crossorigin>
-<link rel="stylesheet" href="assets/ui/eclipse.css?v=471">
-<link rel="stylesheet" href="assets/ui/mobile.css?v=471">
-<link rel="stylesheet" href="assets/ui/mastery-titles.css?v=471">
+<link rel="stylesheet" href="assets/ui/eclipse.css?v=472">
+<link rel="stylesheet" href="assets/ui/mobile.css?v=472">
+<link rel="stylesheet" href="assets/ui/mastery-titles.css?v=472">
 <script src="assets/ui/mobile.js?v=274"></script>
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
-<link rel="stylesheet" href="assets/social.css?v=471">
-<link rel="stylesheet" href="assets/raid.css?v=471">
+<link rel="stylesheet" href="assets/social.css?v=472">
+<link rel="stylesheet" href="assets/raid.css?v=472">
 <link rel="stylesheet" href="assets/social-battle.css?v=393">
-  <link rel="stylesheet" href="assets/social-fishing.css?v=471"><link rel="stylesheet" href="assets/friends.css?v=273">
+  <link rel="stylesheet" href="assets/social-fishing.css?v=472"><link rel="stylesheet" href="assets/friends.css?v=273">
 <link rel="stylesheet" href="assets/adventure-guide.css?v=450">
 </head>
 <body>
@@ -1055,10 +1055,10 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <div id="tooltip"></div>
 <link rel="stylesheet" href="assets/wardrobe.css?v=138">
 <link rel="stylesheet" href="assets/shop.css?v=318">
-<script src="assets/wardrobe.js?v=471"></script>
+<script src="assets/wardrobe.js?v=472"></script>
 <script src="assets/shop-catalog.js?v=321"></script>
 <script src="assets/fourth-jobs.js?v=179"></script>
-<script src="assets/expanded-jobs.js?v=471"></script>
+<script src="assets/expanded-jobs.js?v=472"></script>
 <script src="assets/ascension.js?v=156"></script>
 <script src="assets/native-mob-heights.js?v=153"></script>
 <script src="assets/native-fields.js?v=197"></script>
@@ -1066,13 +1066,13 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <script src="assets/skill-icons.js?v=130"></script>
 <script src="assets/skill-icons-extra.js?v=207"></script>
 <script src="assets/skill-icons-expanded.js?v=450"></script>
-<script src="assets/mastery-titles.js?v=471"></script>
+<script src="assets/mastery-titles.js?v=472"></script>
 <script src="assets/player-buffs.js?v=450"></script>
 <script src="assets/skill-materials.js?v=220"></script>
 <script src="assets/afterglow-animations.js?v=151"></script>
 <script src="assets/skill-overdrive.js?v=220"></script>
 <script src="assets/ro-fx/index.js?v=414"></script>
-<script src="assets/signature-fx.js?v=471"></script>
+<script src="assets/signature-fx.js?v=472"></script>
 <script src="assets/spirit-spheres.js?v=450"></script>
 <script src="assets/expanded-fx/ninja-throw-fx.js?v=450"></script>
 <script src="assets/expanded-fx/expanded-fx-batch.js?v=450"></script>
@@ -1084,11 +1084,11 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <script src="assets/expanded-fx/approved.js?v=450"></script>
 <script src="assets/skill-afterglow.js?v=450"></script>
 <script src="assets/boss-fx.js?v=249"></script>
-<script src="assets/raid.js?v=471"></script>
+<script src="assets/raid.js?v=472"></script>
 <script src="assets/pets.js?v=130"></script>
 <script src="assets/bgm-tracks.js?v=206"></script>
 <script src="assets/bgm.js?v=207"></script>
-<script src="assets/combat-audio.js?v=471"></script>
+<script src="assets/combat-audio.js?v=472"></script>
 <script src="assets/class_skins_data.js?v=2"></script>
 <script src="assets/weapon_joints_data.js?v=2"></script>
 <script src="assets/weapons_data.js?v=2"></script>
@@ -1359,7 +1359,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-22 haven-v471 Raid entry reseat, doubled boss HP, measured drops, new pillar';
+const BUILD='2026-11-22 haven-v472 Pre-merge raid review: honest DPS hint, Raidbound feed colour';
 // v364: this write used to sit AFTER the `//` on the BUILD line, so it was part of the comment and
 // never ran - the login card showed an empty #buildTag and there was no way to confirm which file
 // the browser had loaded. It also has to survive the script running before the login card exists.
@@ -9707,8 +9707,8 @@ const RAID_MOB_PORTRAITS={
   'Lord of Death':['assets/mobs/v1/1706-0.png','--msz:144px;--mx:-51.1%;--my:-66.1%','Planned MVP']
 };
 const RAID_DUNGEON_CARDS=[
-  {id:'astral',name:'Astral Citadel',tier:'Lv 120+ · 3rd/4th Job',img:'assets/atlas/astral-citadel.png?v=156',cardChips:[['4 Stages',false],['✦ Astral Shards',true],['50% Armor',false]],route:['Starlit Approach','Fallen Arcade','Runic Observatory','Sanctuary of Thanatos'],boss:'Memory of Thanatos',bossRole:'Sanctum Sovereign · Stage 4',bossSprite:'assets/mobs/v1/1708-0.png',bossFallback:'assets/mobs/v1/1708-0.png',bossCrop:'--bsz:482px;--bx:-51.2%;--by:-69.3%',bossSummary:'3 Starlight Bridge stages + Stage 4 Boss · Crimson Judgment, Eye of Abyss, Horizon Volley, Abyssal Cross, Starfall & Oblivion Extinction (hide behind Pillars).',bossTags:[['🛡 50% Raid Armor',true],['⚔ Solo ~28M DPS (@★0)',false],['👥 2p ×2.25 · 3p ×3.45 HP',false]],subtitle:'3 Starlight Bridge stages + Memory of Thanatos (6 mechanics + Pillar Wipe)',mobs:['Retribution Angel','Despair Phantom','Tower Watcher','Death Whisperer','Agony Demon'],drops:[['Solo Clear','20 Astral Shards · 500k z · 100 Echo'],['Party Clear','30 Shards · 1 Sigil · 750k z · 150 Echo'],['Boss Card · 10%','Sovereign Thanatos · +15% MATK'],['Raid Titles','5 Lightning Titles · 10% Drop · 10/20/30 Clears']],comingSoon:false},
-  {id:'thor',name:'Thor Volcano',tier:'Lv 120+ · 3rd/4th Job',img:'assets/atlas/thor-volcano.png?v=162',cardChips:[['4 Stages',false],['🔥 Primal Catalysts',true],['50% Armor',false]],route:['Molten Approach','Basalt Forge','Magma Conduit','Sanctum of Ifrit'],boss:'Ifrit, Volcano Lord',bossRole:'Caldera Tyrant · Stage 4',bossSprite:'assets/mobs/v1/1832-0.png',bossFallback:'assets/mobs/v1/1832-0.png',bossCrop:'--bsz:442px;--bx:-50.0%;--by:-63.9%',bossSummary:'3 Connected Volcanic Causeway stages + Stage 4 Sanctum · Molten Breath, Tectonic Ring Surge, Hellfire Pinwheel, Pyroclastic Tsunami, Fault Lines & Supernova Spires.',bossTags:[['🛡 50% Raid Armor',true],['⚔ Solo ~32M DPS (@★0)',false],['👥 2p ×2.25 · 3p ×3.45 HP',false]],subtitle:'3 Connected Volcanic Causeway stages + Ifrit, Volcano Lord (6 volcanic mechanics + Obsidian Spires)',mobs:['Magma Slag','Fire Imp','Kasa','Salamander','Obsidian Golem'],drops:[['Solo Clear','20 Primal Catalysts · 500k z · 100 Echo'],['Party Clear','30 Catalysts · 1 Sigil · 750k z · 150 Echo'],['Boss Card · 10%','Primordial Ifrit · +15% ATK'],['Raid Titles','5 Lightning Titles · 10% Drop · 10/20/30 Clears']],comingSoon:false},
+  {id:'astral',name:'Astral Citadel',tier:'Lv 120+ · 3rd/4th Job',img:'assets/atlas/astral-citadel.png?v=156',cardChips:[['4 Stages',false],['✦ Astral Shards',true],['50% Armor',false]],route:['Starlit Approach','Fallen Arcade','Runic Observatory','Sanctuary of Thanatos'],boss:'Memory of Thanatos',bossRole:'Sanctum Sovereign · Stage 4',bossSprite:'assets/mobs/v1/1708-0.png',bossFallback:'assets/mobs/v1/1708-0.png',bossCrop:'--bsz:482px;--bx:-51.2%;--by:-69.3%',bossSummary:'3 Starlight Bridge stages + Stage 4 Boss · Crimson Judgment, Eye of Abyss, Horizon Volley, Abyssal Cross, Starfall & Oblivion Extinction (hide behind Pillars).',bossTags:[['🛡 50% Raid Armor',true],['⚔ Solo ~56M DPS (@★0)',false],['👥 2p ×2.25 · 3p ×3.45 HP',false]],subtitle:'3 Starlight Bridge stages + Memory of Thanatos (6 mechanics + Pillar Wipe)',mobs:['Retribution Angel','Despair Phantom','Tower Watcher','Death Whisperer','Agony Demon'],drops:[['Solo Clear','20 Astral Shards · 500k z · 100 Echo'],['Party Clear','30 Shards · 1 Sigil · 750k z · 150 Echo'],['Boss Card · 10%','Sovereign Thanatos · +15% MATK'],['Raid Titles','5 Lightning Titles · 10% Drop · 10/20/30 Clears']],comingSoon:false},
+  {id:'thor',name:'Thor Volcano',tier:'Lv 120+ · 3rd/4th Job',img:'assets/atlas/thor-volcano.png?v=162',cardChips:[['4 Stages',false],['🔥 Primal Catalysts',true],['50% Armor',false]],route:['Molten Approach','Basalt Forge','Magma Conduit','Sanctum of Ifrit'],boss:'Ifrit, Volcano Lord',bossRole:'Caldera Tyrant · Stage 4',bossSprite:'assets/mobs/v1/1832-0.png',bossFallback:'assets/mobs/v1/1832-0.png',bossCrop:'--bsz:442px;--bx:-50.0%;--by:-63.9%',bossSummary:'3 Connected Volcanic Causeway stages + Stage 4 Sanctum · Molten Breath, Tectonic Ring Surge, Hellfire Pinwheel, Pyroclastic Tsunami, Fault Lines & Supernova Spires.',bossTags:[['🛡 50% Raid Armor',true],['⚔ Solo ~64M DPS (@★0)',false],['👥 2p ×2.25 · 3p ×3.45 HP',false]],subtitle:'3 Connected Volcanic Causeway stages + Ifrit, Volcano Lord (6 volcanic mechanics + Obsidian Spires)',mobs:['Magma Slag','Fire Imp','Kasa','Salamander','Obsidian Golem'],drops:[['Solo Clear','20 Primal Catalysts · 500k z · 100 Echo'],['Party Clear','30 Catalysts · 1 Sigil · 750k z · 150 Echo'],['Boss Card · 10%','Primordial Ifrit · +15% ATK'],['Raid Titles','5 Lightning Titles · 10% Drop · 10/20/30 Clears']],comingSoon:false},
   {id:'abyss',name:'Niflheim Abyssal Sanctum',tier:'Lv 160 · Future Raid',img:'assets/world-map/cutout/niflheim.png?v=283',cardChips:[['Planned',false],['❖ Abyssal Relics',true]],route:['Wailing Gates','Soul Catacombs','Cursed Reliquary','Throne of the Dead'],boss:'Lord of Death',bossRole:'Underworld Monarch · Planned',bossSprite:'assets/mobs/v1/1706-0.png',bossFallback:'assets/mobs/v1/1706-0.png',bossCrop:'--bsz:462px;--bx:-51.1%;--by:-66.1%',bossSummary:'Frozen underworld catacombs & Throne of the Dead — arriving in a future raid expansion.',bossTags:[['🛡 High Raid Armor',true],['🔒 Upcoming Tier',false]],subtitle:'Frozen underworld catacombs & Throne of the Dead — arriving in a future update',mobs:['Ghost Hound','Banshee','Death Knight','Soul Eater','Abyss Knight'],drops:[['Planned Clear','Abyssal Relics · Valkyrie\'s Sigils · Echo Shards'],['Planned Loot','Mythic Protection Scroll · Lord of Death Card']],comingSoon:true}
 ];
 function renderRaidMobChip(name,isBoss){
@@ -15304,7 +15304,7 @@ function ensureRaidLightningSheet(){
     for(const tex of raidLightningSheetState.liveTextures)tex.needsUpdate=true;
   };
   img.onerror=()=>{raidLightningSheetState.loading=false;};
-  img.src='assets/refine-fx/title-lightning.webp?v=471';
+  img.src='assets/refine-fx/title-lightning.webp?v=472';
 }
 function makeRaidLightningTexture(colorHex){
   ensureRaidLightningSheet();
@@ -17328,22 +17328,22 @@ setInterval(updateWatch,60000);
 // be hours old while the player was on another tab, and the check is a 60-byte text file.
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&(pendingUpdateBuild||Date.now()-PAGE_STARTED_AT>30000))updateWatch()});
 </script>
-<script src="assets/wardrobe-ui.js?v=471"></script>
+<script src="assets/wardrobe-ui.js?v=472"></script>
 <script src="assets/shop.js?v=321"></script>
 <script src="assets/friends.js?v=273"></script>
-<script src="assets/digimon/roster.js?v=471"></script>
-<script src="assets/digimon/base-stats.js?v=471"></script>
-<script src="assets/social-rules.js?v=471"></script>
-<script src="assets/social-poker.js?v=471"></script>
-<script src="assets/digimon-sanctuary.js?v=471"></script>
+<script src="assets/digimon/roster.js?v=472"></script>
+<script src="assets/digimon/base-stats.js?v=472"></script>
+<script src="assets/social-rules.js?v=472"></script>
+<script src="assets/social-poker.js?v=472"></script>
+<script src="assets/digimon-sanctuary.js?v=472"></script>
 <script src="assets/digimon-battle.js?v=393"></script>
-<script src="assets/social-digimon.js?v=471"></script>
+<script src="assets/social-digimon.js?v=472"></script>
 <script src="assets/social-gym-redesign.js?v=393"></script>
 <script src="assets/social-pond-design.js?v=393"></script>
 <script src="assets/social-title-art.js?v=450"></script>
-<script src="assets/social-scene.js?v=471"></script>
-<script src="assets/social-fishing.js?v=471"></script>
-<script src="assets/plaza-bots.js?v=471"></script>
+<script src="assets/social-scene.js?v=472"></script>
+<script src="assets/social-fishing.js?v=472"></script>
+<script src="assets/plaza-bots.js?v=472"></script>
 <script src="assets/adventure-guide.js?v=450"></script>
-<script src="assets/social.js?v=471"></script></body>
+<script src="assets/social.js?v=472"></script></body>
 </html>
