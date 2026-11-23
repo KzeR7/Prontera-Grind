@@ -700,9 +700,10 @@ export class SocialRoom {
   party.members=party.members.filter(m=>m.id!==c.id);
   party.raidReady=new Set();
   if(activeRaid){
-   activeRaid.active?.delete(c.id);
-   if(party.members.length){
-    this.partyBroadcast(party,{type:'raid_end',raidId:activeRaid.id,fromId:c.id,name:c.name,cleared:false,reason:reason==='left'?'left':'disconnect'});
+   const wasActive=Boolean(activeRaid.active?.delete(c.id));
+   if(wasActive&&party.members.length){
+    const msg={type:'raid_end',raidId:activeRaid.id,fromId:c.id,name:c.name,cleared:false,reason:reason==='left'?'left':'disconnect'};
+    for(const mem of party.members){if(!activeRaid.active.has(mem.id))continue;const peer=this.clients.get(mem.id);if(peer)this.send(peer,msg)}
    }
    if(activeRaid.active&&activeRaid.active.size===0)party.raid=null;
   }
@@ -777,12 +778,13 @@ export class SocialRoom {
   const seed=(now^((c.id||1)*2654435761))>>>0,id='raid:'+this.battleId('raid');
   const roster=party.members.map(mem=>this.raidMemberInfo(party,mem));
   party.raidReady=new Set();
-  party.lastEndedRaid=null;
-  party.raid={id,seed,dungeonId,leader:c.id,startedAt:now,active:new Set(party.members.map(mem=>mem.id))};
+  party.raid={id,seed,dungeonId,leader:c.id,startedAt:now,active:new Set(party.members.map(mem=>mem.id)),revivesLeft:3,usedReviveIds:new Set()};
   this.partyBroadcast(party,{type:'raid_started',raidId:id,seed,dungeonId,leader:c.id,members:roster});
  }
  raidSync(c,m,now){
   const party=this.partyOf(c);if(!party||!party.raid)return;
+  if(typeof m.raidId!=='string'||m.raidId!==party.raid.id)return;
+  if(!party.raid.active||!party.raid.active.has(c.id))return;
   if(m.force===true){
    if(c.raidForceAt&&now-c.raidForceAt<250)return;
    c.raidForceAt=now;
@@ -804,35 +806,48 @@ export class SocialRoom {
    stage:Math.max(0,Math.min(3,Math.floor(Number(m.stage)||0))),
    dead:!!m.dead
   };
-  for(const mem of party.members){if(mem.id===c.id)continue;const peer=this.clients.get(mem.id);if(peer)this.send(peer,payload)}
+  for(const mem of party.members){if(mem.id===c.id||!party.raid.active.has(mem.id))continue;const peer=this.clients.get(mem.id);if(peer)this.send(peer,payload)}
  }
  raidRevive(c,m,now){
   const party=this.partyOf(c);if(!party||!party.raid)return;
+  if(typeof m.raidId!=='string'||m.raidId!==party.raid.id)return;
+  if(!party.raid.active||!party.raid.active.has(c.id))return;
+  if((party.raid.revivesLeft??3)<=0)return;
   const target=Number(m.target);
-  if(!Number.isInteger(target)||target===c.id||!party.members.some(x=>x.id===target))return;
+  if(!Number.isInteger(target)||target===c.id||!party.raid.active.has(target)||!party.members.some(x=>x.id===target))return;
+  const revId=typeof m.reviveId==='string'&&m.reviveId.length>0&&m.reviveId.length<=80?m.reviveId:null;
+  if(revId&&party.raid.usedReviveIds?.has(revId))return;
   if(now-(c.raidReviveAt||0)<2500)return;
   c.raidReviveAt=now;
-  this.partyBroadcast(party,{type:'raid_revive',raidId:party.raid.id,fromId:c.id,fromName:c.name,target});
+  if(revId)party.raid.usedReviveIds?.add(revId);
+  party.raid.revivesLeft=Math.max(0,(party.raid.revivesLeft??3)-1);
+  const payload={type:'raid_revive',raidId:party.raid.id,...(revId?{reviveId:revId}:{}),revivesLeft:party.raid.revivesLeft,fromId:c.id,fromName:c.name,target};
+  for(const mem of party.members){if(!party.raid.active.has(mem.id))continue;const peer=this.clients.get(mem.id);if(peer)this.send(peer,payload)}
  }
  raidEnd(c,m,now=this.now()){
   const party=this.partyOf(c);if(!party)return;
+  if(typeof m.raidId!=='string'||!m.raidId)return;
   const cleared=m.cleared===true,reason=typeof m.reason==='string'?m.reason.slice(0,32):'';
-  let rid=null,statsOnly=false;
-  if(party.raid){
+  let rid=null,statsOnly=false,recipients=null;
+  if(party.raid&&m.raidId===party.raid.id){
+   if(!party.raid.active||!party.raid.active.has(c.id))return;
    rid=party.raid.id;
+   recipients=[...party.raid.active].filter(id=>id!==c.id);
    const isMemberExit=!cleared&&(reason==='left'||reason==='disconnect'||/^left\b/i.test(reason));
    if(isMemberExit){
-    party.raid.active?.delete(c.id);
-    if(party.raid.active&&party.raid.active.size===0)party.raid=null;
+    party.raid.active.delete(c.id);
+    if(party.raid.active.size===0)party.raid=null;
    }else{
-    party.lastEndedRaid={id:rid,until:now+10000,sent:new Set([c.id])};
+    party.lastEndedRaid={id:rid,until:now+10000,participants:new Set(party.raid.active),sent:new Set([c.id])};
     party.raid=null;
    }
-  }else if(party.lastEndedRaid&&party.lastEndedRaid.until>=now&&(!m.raidId||m.raidId===party.lastEndedRaid.id)&&!party.lastEndedRaid.sent.has(c.id)){
+  }else if(party.lastEndedRaid&&party.lastEndedRaid.until>=now&&m.raidId===party.lastEndedRaid.id&&party.lastEndedRaid.participants.has(c.id)&&!party.lastEndedRaid.sent.has(c.id)){
    rid=party.lastEndedRaid.id;
    party.lastEndedRaid.sent.add(c.id);
    statsOnly=true;
+   recipients=[...party.lastEndedRaid.participants].filter(id=>id!==c.id);
   }else return;
+  const memberIds=new Set(party.members.map(mem=>mem.id));
   const payload={
    type:'raid_end',
    raidId:rid,
@@ -847,7 +862,7 @@ export class SocialRoom {
    support:Math.max(0,Math.floor(Number(m.support)||0)),
    revives:Math.max(0,Math.floor(Number(m.revives)||0))
   };
-  for(const mem of party.members){if(mem.id===c.id)continue;const peer=this.clients.get(mem.id);if(peer)this.send(peer,payload)}
+  for(const targetId of recipients){if(!memberIds.has(targetId))continue;const peer=this.clients.get(targetId);if(peer)this.send(peer,payload)}
  }
  // Leaving a party run removes only that trainer's partner; the field stays alive for the rest.
  leavePartyRun(c,run,reason='stopped'){

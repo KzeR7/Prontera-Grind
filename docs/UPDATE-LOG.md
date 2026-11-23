@@ -12432,6 +12432,18 @@ re-recording them here would have written wrong numbers into the repository.
 * **Checks:** `raid_sim.mjs` (26/26), `stage_raid_sim.mjs` (5/5), `publish_sim.js` (23/23), `update_watch_sim.js` (23/23), `social_sim.js`, `social_worker_sim.mjs`, `social_disconnect_sim.mjs`, `social_handshake_sim.mjs`, `combat_audio_sim.js`, `starter_sim.js`, `eclipse_ui_sim.js`, `card_star_balance_sim.js`, `astral_journey_sim.js`, `ascension_scene_sim.js`, and `map_scene_review_sim.js` all passed; `bash tools/build_site.sh` succeeded cleanly (`haven-v464`).
 * **Delivery:** Pushed on branch `arena/a976c1b9-prontera-grind` updating PR #276 targeting `main`.
 
+### 2026-11-22 — `haven-v465 Raid death-before-healing, message/revive integrity, held WASD & Lv120 3rd-job gate`
+* **Changed:** Fixed five reproduced Raid & Social DO bugs in PR #276 while preserving zero solo WebSocket traffic and zero DO alarms:
+  1. **Raid Death Before Healing (`index.html`, `assets/raid.js`):** Evaluated lethal Raid HP (`PGRaid.onLethalHp()` and `PGRaid.tick(dt)`) before `HP Recovery` (`pv('hpreg')`), First Aid, combat heals, pet heals, and natural regen in `update()`, and triggered `onLethalHp()` immediately on lethal monster hits and hazard/telegraph hits so Solo death always ends the run and Party death stays downed at `0 HP` until a valid teammate revive.
+  2. **Raid Message Identity & Participation Validation (`workers/social/room.mjs`, `assets/raid.js`):** Required exact `raidId` matching and active participant membership (`party.raid.active`) on `raid_sync`, `raid_revive` (both sender and target), and `raid_end`, preventing exited members or stale prior-run packets from affecting or being relabeled into a current run while preserving planned `reauth` continuity and scoping the `10s` `lastEndedRaid` final-stats grace strictly to that ended raid's active participants.
+  3. **Single-Charge Revive Accounting (`assets/raid.js`, `workers/social/room.mjs`):** Unified local `tickRevive()` and broadcast `onRevive()` onto a single deduplicated `applyReviveEvent()` path (`reviveId` + server `revivesLeft`), spending exactly 1 of 3 shared charges across sender, Worker, and all party clients.
+  4. **Held WASD / Arrow Movement Keys (`index.html`, `assets/raid.js`):** Passed `(e.key, true, !!e.repeat)` on `keydown` so OS key-repeat keeps WASD/Arrow movement held until `keyup` without re-triggering one-shot Dodge or chat actions.
+  5. **Raid Eligibility (`assets/raid.js`, `index.html`):** Enforced `Base Lv 120+` and at least a `3rd-Job` class (`fourthJob() || c.tier >= 3`, retaining the intentional GM bypass) in both `PGRaid` and `renderDungeonsPanel()`, rejecting Novice/1st/2nd jobs and sub-Lv120 characters while admitting Lv120+ 3rd-job and 4th-job characters.
+* **Try it:** Open `Map -> Dungeons -> Raid Dungeons` with a Base Lv 120+ 3rd-Job or 4th-Job character, hold `W/A/S/D` or Arrow keys continuously inside Astral Citadel or Thor Volcano, and test Solo/Party lethal hits and Party Revive.
+* **Checks:** `raid_sim.mjs` (31/31), `stage_raid_sim.mjs` (5/5), `social_sim.js`, `social_worker_sim.mjs`, `social_disconnect_sim.mjs` (9/9), `social_handshake_sim.mjs`, `social_ui_sim.js`, `combat_damage_sim.js`, `ground_combat_sim.js`, `fourth_job_skills_sim.js`, `pet_sim.js`, `save_load_sim.js`, `gear_sim.js`, `drop_card_sheet_sim.js`, `publish_sim.js` (23/23), and `update_watch_sim.js` (23/23) all passed.
+* **Delivery:** Committed and pushed on branch `arena/a976c1b9-prontera-grind` updating PR #276 (not merged or deployed).
+
+
 
 
 

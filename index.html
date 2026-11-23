@@ -916,15 +916,15 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="preload" href="assets/ui/fonts/font-5.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-6.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-7.ttf" as="font" type="font/ttf" crossorigin>
-<link rel="stylesheet" href="assets/ui/eclipse.css?v=464">
-<link rel="stylesheet" href="assets/ui/mobile.css?v=464">
-<link rel="stylesheet" href="assets/ui/mastery-titles.css?v=464">
+<link rel="stylesheet" href="assets/ui/eclipse.css?v=465">
+<link rel="stylesheet" href="assets/ui/mobile.css?v=465">
+<link rel="stylesheet" href="assets/ui/mastery-titles.css?v=465">
 <script src="assets/ui/mobile.js?v=274"></script>
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
-<link rel="stylesheet" href="assets/social.css?v=464">
-<link rel="stylesheet" href="assets/raid.css?v=464">
+<link rel="stylesheet" href="assets/social.css?v=465">
+<link rel="stylesheet" href="assets/raid.css?v=465">
 <link rel="stylesheet" href="assets/social-battle.css?v=393">
-  <link rel="stylesheet" href="assets/social-fishing.css?v=464"><link rel="stylesheet" href="assets/friends.css?v=273">
+  <link rel="stylesheet" href="assets/social-fishing.css?v=465"><link rel="stylesheet" href="assets/friends.css?v=273">
 <link rel="stylesheet" href="assets/adventure-guide.css?v=450">
 </head>
 <body>
@@ -1055,10 +1055,10 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <div id="tooltip"></div>
 <link rel="stylesheet" href="assets/wardrobe.css?v=138">
 <link rel="stylesheet" href="assets/shop.css?v=318">
-<script src="assets/wardrobe.js?v=464"></script>
+<script src="assets/wardrobe.js?v=465"></script>
 <script src="assets/shop-catalog.js?v=321"></script>
 <script src="assets/fourth-jobs.js?v=179"></script>
-<script src="assets/expanded-jobs.js?v=464"></script>
+<script src="assets/expanded-jobs.js?v=465"></script>
 <script src="assets/ascension.js?v=156"></script>
 <script src="assets/native-mob-heights.js?v=153"></script>
 <script src="assets/native-fields.js?v=197"></script>
@@ -1066,7 +1066,7 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <script src="assets/skill-icons.js?v=130"></script>
 <script src="assets/skill-icons-extra.js?v=207"></script>
 <script src="assets/skill-icons-expanded.js?v=450"></script>
-<script src="assets/mastery-titles.js?v=464"></script>
+<script src="assets/mastery-titles.js?v=465"></script>
 <script src="assets/player-buffs.js?v=450"></script>
 <script src="assets/skill-materials.js?v=220"></script>
 <script src="assets/afterglow-animations.js?v=151"></script>
@@ -1084,11 +1084,11 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <script src="assets/expanded-fx/approved.js?v=450"></script>
 <script src="assets/skill-afterglow.js?v=450"></script>
 <script src="assets/boss-fx.js?v=249"></script>
-<script src="assets/raid.js?v=464"></script>
+<script src="assets/raid.js?v=465"></script>
 <script src="assets/pets.js?v=130"></script>
 <script src="assets/bgm-tracks.js?v=206"></script>
 <script src="assets/bgm.js?v=207"></script>
-<script src="assets/combat-audio.js?v=464"></script>
+<script src="assets/combat-audio.js?v=465"></script>
 <script src="assets/class_skins_data.js?v=2"></script>
 <script src="assets/weapon_joints_data.js?v=2"></script>
 <script src="assets/weapons_data.js?v=2"></script>
@@ -1359,7 +1359,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-22 haven-v464 Raid Dungeons, Weapon Stars, RO Forge, Lightning Titles & DO/save hardening';
+const BUILD='2026-11-22 haven-v465 Raid death-before-healing, message/revive integrity, held WASD & Lv120 3rd-job gate';
 // v364: this write used to sit AFTER the `//` on the BUILD line, so it was part of the comment and
 // never ran - the login card showed an empty #buildTag and there was no way to confirm which file
 // the browser had loaded. It also has to survive the script running before the login card exists.
@@ -9610,8 +9610,8 @@ const RAID_MOB_PORTRAITS={
   'Lord of Death':['assets/mobs/v1/1706-0.png','--msz:144px;--mx:-51.1%;--my:-66.1%','Planned MVP']
 };
 const RAID_DUNGEON_CARDS=[
-  {id:'astral',name:'Astral Citadel',tier:'Lv 150 · 4th Job',img:'assets/atlas/astral-citadel.png?v=156',cardChips:[['4 Stages',false],['✦ Astral Shards',true],['50% Armor',false]],route:['Starlit Approach','Fallen Arcade','Runic Observatory','Sanctuary of Thanatos'],boss:'Memory of Thanatos',bossRole:'Sanctum Sovereign · Stage 4',bossSprite:'assets/mobs/v1/1708-0.png',bossFallback:'assets/mobs/v1/1708-0.png',bossCrop:'--bsz:482px;--bx:-51.2%;--by:-69.3%',bossSummary:'3 Starlight Bridge stages + Stage 4 Boss · Crimson Judgment, Eye of Abyss, Horizon Volley, Abyssal Cross, Starfall & Oblivion Extinction (hide behind Pillars).',bossTags:[['🛡 50% Raid Armor',true],['⚔ Solo ~28M DPS (@★0)',false],['👥 2p ×2.25 · 3p ×3.45 HP',false]],subtitle:'3 Starlight Bridge stages + Memory of Thanatos (6 mechanics + Pillar Wipe)',mobs:['Retribution Angel','Despair Phantom','Tower Watcher','Death Whisperer','Agony Demon'],drops:[['Solo Clear','20 Astral Shards · 500k z · 100 Echo'],['Party Clear','30 Shards · 1 Sigil · 750k z · 150 Echo'],['10% Boss Cards','Primordial Ifrit (+15% ATK) · Sovereign Thanatos (+15% MATK)'],['Raid Titles','5 Electric Lightning Titles · 10% Drop & 10/20/30 Clears']],comingSoon:false},
-  {id:'thor',name:'Thor Volcano',tier:'Lv 150 · 4th Job',img:'assets/atlas/thor-volcano.png?v=162',cardChips:[['4 Stages',false],['🔥 Primal Catalysts',true],['50% Armor',false]],route:['Molten Approach','Basalt Forge','Magma Conduit','Sanctum of Ifrit'],boss:'Ifrit, Volcano Lord',bossRole:'Caldera Tyrant · Stage 4',bossSprite:'assets/mobs/v1/1832-0.png',bossFallback:'assets/mobs/v1/1832-0.png',bossCrop:'--bsz:442px;--bx:-50.0%;--by:-63.9%',bossSummary:'3 Connected Volcanic Causeway stages + Stage 4 Sanctum · Molten Breath, Tectonic Ring Surge, Hellfire Pinwheel, Pyroclastic Tsunami, Fault Lines & Supernova Spires.',bossTags:[['🛡 50% Raid Armor',true],['⚔ Solo ~32M DPS (@★0)',false],['👥 2p ×2.25 · 3p ×3.45 HP',false]],subtitle:'3 Connected Volcanic Causeway stages + Ifrit, Volcano Lord (6 volcanic mechanics + Obsidian Spires)',mobs:['Magma Slag','Fire Imp','Kasa','Salamander','Obsidian Golem'],drops:[['Solo Clear','20 Primal Catalysts · 500k z · 100 Echo'],['Party Clear','30 Catalysts · 1 Sigil · 750k z · 150 Echo'],['10% Boss Cards','Primordial Ifrit (+15% ATK) · Sovereign Thanatos (+15% MATK)'],['Raid Titles','5 Electric Lightning Titles · 10% Drop & 10/20/30 Clears']],comingSoon:false},
+  {id:'astral',name:'Astral Citadel',tier:'Lv 120+ · 3rd/4th Job',img:'assets/atlas/astral-citadel.png?v=156',cardChips:[['4 Stages',false],['✦ Astral Shards',true],['50% Armor',false]],route:['Starlit Approach','Fallen Arcade','Runic Observatory','Sanctuary of Thanatos'],boss:'Memory of Thanatos',bossRole:'Sanctum Sovereign · Stage 4',bossSprite:'assets/mobs/v1/1708-0.png',bossFallback:'assets/mobs/v1/1708-0.png',bossCrop:'--bsz:482px;--bx:-51.2%;--by:-69.3%',bossSummary:'3 Starlight Bridge stages + Stage 4 Boss · Crimson Judgment, Eye of Abyss, Horizon Volley, Abyssal Cross, Starfall & Oblivion Extinction (hide behind Pillars).',bossTags:[['🛡 50% Raid Armor',true],['⚔ Solo ~28M DPS (@★0)',false],['👥 2p ×2.25 · 3p ×3.45 HP',false]],subtitle:'3 Starlight Bridge stages + Memory of Thanatos (6 mechanics + Pillar Wipe)',mobs:['Retribution Angel','Despair Phantom','Tower Watcher','Death Whisperer','Agony Demon'],drops:[['Solo Clear','20 Astral Shards · 500k z · 100 Echo'],['Party Clear','30 Shards · 1 Sigil · 750k z · 150 Echo'],['10% Boss Cards','Primordial Ifrit (+15% ATK) · Sovereign Thanatos (+15% MATK)'],['Raid Titles','5 Electric Lightning Titles · 10% Drop & 10/20/30 Clears']],comingSoon:false},
+  {id:'thor',name:'Thor Volcano',tier:'Lv 120+ · 3rd/4th Job',img:'assets/atlas/thor-volcano.png?v=162',cardChips:[['4 Stages',false],['🔥 Primal Catalysts',true],['50% Armor',false]],route:['Molten Approach','Basalt Forge','Magma Conduit','Sanctum of Ifrit'],boss:'Ifrit, Volcano Lord',bossRole:'Caldera Tyrant · Stage 4',bossSprite:'assets/mobs/v1/1832-0.png',bossFallback:'assets/mobs/v1/1832-0.png',bossCrop:'--bsz:442px;--bx:-50.0%;--by:-63.9%',bossSummary:'3 Connected Volcanic Causeway stages + Stage 4 Sanctum · Molten Breath, Tectonic Ring Surge, Hellfire Pinwheel, Pyroclastic Tsunami, Fault Lines & Supernova Spires.',bossTags:[['🛡 50% Raid Armor',true],['⚔ Solo ~32M DPS (@★0)',false],['👥 2p ×2.25 · 3p ×3.45 HP',false]],subtitle:'3 Connected Volcanic Causeway stages + Ifrit, Volcano Lord (6 volcanic mechanics + Obsidian Spires)',mobs:['Magma Slag','Fire Imp','Kasa','Salamander','Obsidian Golem'],drops:[['Solo Clear','20 Primal Catalysts · 500k z · 100 Echo'],['Party Clear','30 Catalysts · 1 Sigil · 750k z · 150 Echo'],['10% Boss Cards','Primordial Ifrit (+15% ATK) · Sovereign Thanatos (+15% MATK)'],['Raid Titles','5 Electric Lightning Titles · 10% Drop & 10/20/30 Clears']],comingSoon:false},
   {id:'abyss',name:'Niflheim Abyssal Sanctum',tier:'Lv 160 · Future Raid',img:'assets/world-map/cutout/niflheim.png?v=283',cardChips:[['Planned',false],['❖ Abyssal Relics',true]],route:['Wailing Gates','Soul Catacombs','Cursed Reliquary','Throne of the Dead'],boss:'Lord of Death',bossRole:'Underworld Monarch · Planned',bossSprite:'assets/mobs/v1/1706-0.png',bossFallback:'assets/mobs/v1/1706-0.png',bossCrop:'--bsz:462px;--bx:-51.1%;--by:-66.1%',bossSummary:'Frozen underworld catacombs & Throne of the Dead — arriving in a future raid expansion.',bossTags:[['🛡 High Raid Armor',true],['🔒 Upcoming Tier',false]],subtitle:'Frozen underworld catacombs & Throne of the Dead — arriving in a future update',mobs:['Ghost Hound','Banshee','Death Knight','Soul Eater','Abyss Knight'],drops:[['Planned Clear','Abyssal Relics · Valkyrie\'s Sigils · Echo Shards'],['Planned Loot','Mythic Protection Scroll · Lord of Death Card']],comingSoon:true}
 ];
 function renderRaidMobChip(name,isBoss){
@@ -9628,11 +9628,11 @@ function renderDungeonsPanel(){
   if(mode==='echo')return `${subnav}<section class="echo-destination"><div class="echo-scene" role="img" aria-label="A moonlit underworld court with ruined pillars and a ritual stone floor"><span>ENDLESS ECHO</span><strong>The silent court</strong><small>Three minutes. One unbroken challenge.</small></div><div class="hd">Endless Echo</div><p>Face the Lord of Death Illusion in a three-minute damage trial.</p><div class="trial-stats"><span>Personal best <b>${Math.round(trialState().best||0).toLocaleString()} DPS</b></span><span><b>${trialLeftToday()}/2</b> ranked attempts left</span><span><b>${S.shards|0}</b> Echo Shards</span></div><button data-trial="lobby">Enter Endless Echo</button></section>`;
   const d=RAID_DUNGEON_CARDS.find(x=>x.id===raidDungeonPick)||RAID_DUNGEON_CARDS[0];
   const isGmAcc=!!(S&&S.gm)||(typeof CLOUD!=='undefined'&&CLOUD&&CLOUD.gm);
-  const unlocked=isGmAcc||(!!S&&S.lv>=150&&(C()?.tier>=4||C()?.t>=3));
+  const unlocked=typeof PGRaid!=='undefined'&&typeof PGRaid.isEligible==='function'?PGRaid.isEligible():(isGmAcc||(!!S&&S.lv>=120&&(fourthJob()||(C()?.tier||0)>=3)));
   const usedToday=(S&&S.raid&&typeof trialState==='function'&&S.raid.day===trialState().day)?(+S.raid.used||0):0;
   const leftToday=isGmAcc?'∞ Unlimited (GM)':`${Math.max(0,2-usedToday)}/2 entries left today`;
   const canTry=isGmAcc||Math.max(0,2-usedToday)>0;
-  const gateMsg=!unlocked?'Requires Base Lv 150 & a 4th-Job class':(!canTry?'Daily Raid limit reached (2/2 today)':'Solo <20:00 (direct entry, 10s early-exit refund) · Party <25:00 (Ready Room, live Raid Chat & 3 shared revives)');
+  const gateMsg=!unlocked?'Requires Base Lv 120 & at least a 3rd-Job class':(!canTry?'Daily Raid limit reached (2/2 today)':'Solo <20:00 (direct entry, 10s early-exit refund) · Party <25:00 (Ready Room, live Raid Chat & 3 shared revives)');
   const cardsHtml=RAID_DUNGEON_CARDS.map(x=>`<button type="button" class="raid-dungeon-card${x.id===d.id?' on':''}${x.comingSoon?' soon':''}" data-a="raiddungeon" data-v="${x.id}" aria-pressed="${x.id===d.id}"><div class="raid-dungeon-thumb"><img src="${x.img}" alt="${esc(x.name)}"><span class="raid-dungeon-badge${x.comingSoon?' soon':''}">${x.comingSoon?'Soon':'Open'}</span></div><div class="raid-dungeon-card-meta"><b>${esc(x.name)}</b><small>${esc(x.tier)} · ${esc(x.boss)}</small><div class="raid-card-subchips">${(x.cardChips||[]).map(([lbl,isMat])=>`<span class="${isMat?'mat':''}">${esc(lbl)}</span>`).join('')}</div></div></button>`).join('');
   const bossSpriteSrc=typeof d.bossSprite==='number'?d.bossFallback:d.bossSprite;
   const effArmorNote=!d.comingSoon&&penNow>0?`<span class="armor">★ Pen: ${Math.max(0,50-penNow)}% Eff. Armor</span>`:'';
@@ -12113,12 +12113,12 @@ function escapeUI(){
 addEventListener('keydown',e=>{if(!S||e.ctrlKey||e.metaKey||e.altKey)return;const k=e.key.toUpperCase();
   if(k==='F12'){e.preventDefault();if(e.repeat)return;toggleFullscreen();return}
   if(k==='ESCAPE'){e.preventDefault();escapeUI();return}if(/INPUT|TEXTAREA|SELECT/.test(e.target.tagName))return;
-  if(typeof PGRaid!=='undefined'&&PGRaid.raid&&PGRaid.raid.on){if(PGRaid.onKey(e.key,!e.repeat))e.preventDefault();return}
+  if(typeof PGRaid!=='undefined'&&PGRaid.raid&&PGRaid.raid.on){if(PGRaid.onKey(e.key,true,!!e.repeat))e.preventDefault();return}
   if(k==='Q'){qOpen=!qOpen;renderQ();return}
   // v2 (owner): the C key used to jump to Cards, where it fought the Cards tab at the loadout card.
   // Only R is left as a shortcut; Cards is opened by its own button.
   const X={R:['equip','refine']}[k];if(X){const same=tabs.includes(X[0])&&sub[X[0]]===X[1]&&(!expandedPanels.size||expandedPanels.has(X[0]));sub[X[0]]=X[1];if(same)openTab(X[0]);else{if(expandedPanels.size){expandedPanels.clear();expandedPanels.add(X[0])}if(!tabs.includes(X[0])){if(tabs.length>=MAX_TABS)tabs.shift();tabs.push(X[0])}renderWin()}return}const f=Object.entries(TABS).find(([,v])=>v[2]===k);if(f)openTab(f[0])});
-addEventListener('keyup',e=>{if(typeof PGRaid!=='undefined'&&PGRaid.raid&&PGRaid.raid.on)PGRaid.onKey(e.key,false)});
+addEventListener('keyup',e=>{if(typeof PGRaid!=='undefined'&&PGRaid.raid&&PGRaid.raid.on)PGRaid.onKey(e.key,false,false)});
 
 async function toggleFullscreen(){try{if(document.fullscreenElement)await document.exitFullscreen();else await document.documentElement.requestFullscreen()}catch{log('Fullscreen is unavailable in this browser. Try the browser fullscreen control.')}}
 document.addEventListener('change',e=>{const el=e.target;if(S&&el.matches('select[data-combo-slot]'))ACT.comboassign(el.dataset.comboSlot+':'+el.value)});
@@ -12347,15 +12347,9 @@ function update(dt){
     if(TRIAL.left<=0)return trialFinish()}
   atkAnim=Math.max(0,atkAnim-dt/Math.max(.05,swingDur));hitAnim=Math.max(0,hitAnim-dt*4);shake=Math.max(0,shake-dt*20);
   for(const k in skCd)skCd[k]=Math.max(0,skCd[k]-dt);
-  for(const id in petSkillCd)petSkillCd[id]=Math.max(0,petSkillCd[id]-dt);
-  for(const id in petNote)petNote[id]=Math.max(0,petNote[id]-dt);
-  for(const stat of['atk','matk','hp','leech','def']){const key=stat+'T';if(petBuff[key]>0){petBuff[key]=Math.max(0,petBuff[key]-dt);
-    if(!petBuff[key]){petBuff[stat]=0;petBuffSrc[stat]='';if(stat==='hp')S.hp=Math.min(S.hp,maxHp())}}}
-  if(pv('hpreg')&&S.hp<maxHp())S.hp=Math.min(maxHp(),S.hp+dt*maxHp()*pv('hpreg')/100);
-  shots.forEach(s=>s.t+=dt*7);shots=shots.filter(s=>{if(s.t<1)return true;if(s.m)scene.remove(s.m);return false});
-  tickSkillFx(dt);
-  if(!(typeof PGRaid!=='undefined'&&PGRaid.raid&&PGRaid.raid.on))tickBossSkill();
   if(typeof PGRaid!=='undefined'&&PGRaid.raid&&PGRaid.raid.on){
+    if(S.hp<=0)PGRaid.onLethalHp();
+    if(!PGRaid.raid.on)return;
     PGRaid.tick(dt);
     if(!PGRaid.raid.on)return;
     if(PGRaid.raid.dead){
@@ -12365,6 +12359,14 @@ function update(dt){
       return;
     }
   }
+  for(const id in petSkillCd)petSkillCd[id]=Math.max(0,petSkillCd[id]-dt);
+  for(const id in petNote)petNote[id]=Math.max(0,petNote[id]-dt);
+  for(const stat of['atk','matk','hp','leech','def']){const key=stat+'T';if(petBuff[key]>0){petBuff[key]=Math.max(0,petBuff[key]-dt);
+    if(!petBuff[key]){petBuff[stat]=0;petBuffSrc[stat]='';if(stat==='hp')S.hp=Math.min(S.hp,maxHp())}}}
+  if(pv('hpreg')&&S.hp<maxHp())S.hp=Math.min(maxHp(),S.hp+dt*maxHp()*pv('hpreg')/100);
+  shots.forEach(s=>s.t+=dt*7);shots=shots.filter(s=>{if(s.t<1)return true;if(s.m)scene.remove(s.m);return false});
+  tickSkillFx(dt);
+  if(!(typeof PGRaid!=='undefined'&&PGRaid.raid&&PGRaid.raid.on))tickBossSkill();
   if(skillOn('aid')&&!skillOn('ab_highness')&&S.hp<maxHp()*.5&&(skCd.aid||0)<=0){skCd.aid=6;const h=Math.ceil(maxHp()*(.1+.05*lv('aid')));S.hp=Math.min(maxHp(),S.hp+h);playSkillFx('aid',null,'#7dff7d');skillNameFloat('First Aid');addFloat(pl.x,2.6,pl.z,'+'+h,'#7dff7d')}
   // the swing lands on the animation's contact frame (see playerAttack): the cast(s), the extra hits
   // and the normal strike all resolve here, and they print one number per monster.
@@ -12444,7 +12446,7 @@ function update(dt){
         else{const raw=m.mag?mdef():def(),md=raw*(1-prOf(m)),cut=Math.min(.75,md/(md+4000));
           const d=Math.max(1,Math.round(m.atk*rnd(.8,1.2)*(1-cut)*(1-petPassive('dr')/100)*(1-Math.min(.25,skillBonus('guard')/100))*(1-ascStat('guard')/100)));const dAbs=absorbSoak(d);S.hp-=dAbs;skillState().counter=2;hitAnim=1;m.atkAnim=1;damageFloat(pl.x,heroDamageY(),pl.z,dAbs,false,true);
           // Defeat is the ONE thing that puts you back at the spawn point.
-if(S.hp<=0){if(typeof JOB_RITE!=='undefined'&&JOB_RITE.on){showJobRiteResult(false,'defeat');return;}if(typeof PGRaid!=='undefined'&&PGRaid.raid&&PGRaid.raid.on){S.hp=0;return}log('You were defeated... knocked back to the entrance.','r0','kills');S.hp=maxHp();S.kl=0;mobs=[];mob=null;camps=[];engageTgt=null;respawn=1.5;tb={};resetSkillRuntime(true);
+if(S.hp<=0){if(typeof JOB_RITE!=='undefined'&&JOB_RITE.on){showJobRiteResult(false,'defeat');return;}if(typeof PGRaid!=='undefined'&&PGRaid.raid&&PGRaid.raid.on){S.hp=0;PGRaid.onLethalHp();swing=null;atkAnim=0;pl.run=false;return}log('You were defeated... knocked back to the entrance.','r0','kills');S.hp=maxHp();S.kl=0;mobs=[];mob=null;camps=[];engageTgt=null;respawn=1.5;tb={};resetSkillRuntime(true);
           pl.x=0;pl.z=Z1-1.5;pl.wt=0;ui();return}}}}
     }
     // Awake monsters keep their own approach angle and are pushed apart, so a camp surrounds the hero
@@ -15094,7 +15096,7 @@ function ensureRaidLightningSheet(){
     for(const tex of raidLightningSheetState.liveTextures)tex.needsUpdate=true;
   };
   img.onerror=()=>{raidLightningSheetState.loading=false;};
-  img.src='assets/refine-fx/title-lightning.webp?v=464';
+  img.src='assets/refine-fx/title-lightning.webp?v=465';
 }
 function makeRaidLightningTexture(colorHex){
   ensureRaidLightningSheet();
@@ -17099,22 +17101,22 @@ setInterval(updateWatch,60000);
 // be hours old while the player was on another tab, and the check is a 60-byte text file.
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&(pendingUpdateBuild||Date.now()-PAGE_STARTED_AT>30000))updateWatch()});
 </script>
-<script src="assets/wardrobe-ui.js?v=464"></script>
+<script src="assets/wardrobe-ui.js?v=465"></script>
 <script src="assets/shop.js?v=321"></script>
 <script src="assets/friends.js?v=273"></script>
-<script src="assets/digimon/roster.js?v=464"></script>
-<script src="assets/digimon/base-stats.js?v=464"></script>
-<script src="assets/social-rules.js?v=464"></script>
-<script src="assets/social-poker.js?v=464"></script>
-<script src="assets/digimon-sanctuary.js?v=464"></script>
+<script src="assets/digimon/roster.js?v=465"></script>
+<script src="assets/digimon/base-stats.js?v=465"></script>
+<script src="assets/social-rules.js?v=465"></script>
+<script src="assets/social-poker.js?v=465"></script>
+<script src="assets/digimon-sanctuary.js?v=465"></script>
 <script src="assets/digimon-battle.js?v=393"></script>
-<script src="assets/social-digimon.js?v=464"></script>
+<script src="assets/social-digimon.js?v=465"></script>
 <script src="assets/social-gym-redesign.js?v=393"></script>
 <script src="assets/social-pond-design.js?v=393"></script>
 <script src="assets/social-title-art.js?v=450"></script>
-<script src="assets/social-scene.js?v=464"></script>
-<script src="assets/social-fishing.js?v=464"></script>
-<script src="assets/plaza-bots.js?v=464"></script>
+<script src="assets/social-scene.js?v=465"></script>
+<script src="assets/social-fishing.js?v=465"></script>
+<script src="assets/plaza-bots.js?v=465"></script>
 <script src="assets/adventure-guide.js?v=450"></script>
-<script src="assets/social.js?v=464"></script></body>
+<script src="assets/social.js?v=465"></script></body>
 </html>

@@ -23,7 +23,13 @@ const raidCss = fs.readFileSync(path.join(ROOT, 'assets/raid.css'), 'utf8');
 
 let pass = 0;
 function check(name, fn) {
-  fn();
+  const res = fn();
+  if (res && typeof res.then === 'function') {
+    return res.then(() => {
+      pass++;
+      console.log('  ok   ' + name);
+    });
+  }
   pass++;
   console.log('  ok   ' + name);
 }
@@ -37,8 +43,12 @@ g.ev(raidJs);
 // 1. Map -> Dungeons Subtab (Raid Dungeons + Endless Echo) & Gate checks
 check('Raid moved out of bottom dock into Map -> Dungeons subtab with 3 dungeons, Mobs & Drops, Solo direct entry & Party Ready Room', () => {
   assert.equal(g.ev(`DOCK_TABS.includes('raid')`), false, 'raid removed from main bottom dock UI');
-  g.ev(`S=fresh();S.cls='Lord Knight';S.lv=120;S.gm=false;`);
-  assert.equal(g.ev(`PGRaid.canEnter('solo').ok`), false, '3rd job blocked from Raid');
+  g.ev(`S=fresh();S.cls='Novice';S.lv=120;S.gm=false;`);
+  assert.equal(g.ev(`PGRaid.canEnter('solo').ok`), false, 'Lv120 Novice blocked from Raid');
+  g.ev(`S=fresh();S.cls='Knight';S.lv=120;S.gm=false;`);
+  assert.equal(g.ev(`PGRaid.canEnter('solo').ok`), false, 'Lv120 2nd job blocked from Raid');
+  g.ev(`S=fresh();S.cls='Lord Knight';S.lv=120;S.gm=false;S.raid={day:trialDay(),used:0};`);
+  assert.equal(g.ev(`PGRaid.canEnter('solo').ok`), true, 'Lv120 3rd job allowed into Raid');
   fourthSetup(g, 'Rune Knight', 'sword', 101);
   progressSetup(g, 'mid');
   g.ev(`S.gm=false;S.raid={day:trialDay(),used:0};`);
@@ -210,11 +220,11 @@ check('Party mode: requires Ready check, downed state freezes hero, 3s REVIVE re
   assert.equal(g.ev(`document.getElementById('raidReviveBtn').hidden`), false, 'Revive button shown in Party mode');
 
   // Bob goes down -> Alice channels 3s revive on Bob
-  g.ev(`PGRaid.onSync({fromId:20,name:'Bob',cls:'Ranger',hp:0,maxHp:500000,dps:0,stage:0,dead:true})`);
+  g.ev(`PGRaid.onSync({raidId:'raid:99',fromId:20,name:'Bob',cls:'Ranger',hp:0,maxHp:500000,dps:0,stage:0,dead:true})`);
   assert.equal(g.ev(`PGRaid.revive()`), true, 'living teammate starts 3s revive channel');
   g.ev(`for(let i=0;i<32;i++) PGRaid.tick(0.1);`);
   const revMsg = sent.find(m => m.type === 'raid_revive');
-  assert.ok(revMsg && revMsg.target === 20, 'sent raid_revive for Bob after 3s channel');
+  assert.ok(revMsg && revMsg.target === 20 && revMsg.raidId === 'raid:99', 'sent raid_revive for Bob after 3s channel');
 
   // Now Alice goes down while Bob is alive -> Alice stays at 0 HP (no natural regen!) until Bob revives Alice
   g.ev(`S.hp = 0; PGRaid.tick(0.05);`);
@@ -223,14 +233,14 @@ check('Party mode: requires Ready check, downed state freezes hero, 3s REVIVE re
   assert.equal(g.ev(`S.hp`), 0, 'downed player stays at 0 HP (no passive regen while dead)');
 
   // Bob revives Alice!
-  g.ev(`PGRaid.onRevive({fromId:20,fromName:'Bob',target:10})`);
+  g.ev(`PGRaid.onRevive({raidId:'raid:99',reviveId:'raid:99:20:1',fromId:20,fromName:'Bob',target:10})`);
   assert.equal(g.ev(`PGRaid.raid.dead`), false, 'Alice revived by Bob');
   assert.equal(g.ev(`S.hp`), g.ev(`Math.ceil(maxHp() * 0.3)`), 'Alice restored to 30% maxHp');
 
   // Both Alice and Bob fall -> Party Wipe!
   g.ev(`S.hp = 0; PGRaid.tick(0.05);`);
   assert.equal(g.ev(`PGRaid.raid.on`), true, 'still alive while Bob is up');
-  g.ev(`PGRaid.onSync({fromId:20,name:'Bob',cls:'Ranger',hp:0,maxHp:500000,dps:0,stage:0,dead:true})`);
+  g.ev(`PGRaid.onSync({raidId:'raid:99',fromId:20,name:'Bob',cls:'Ranger',hp:0,maxHp:500000,dps:0,stage:0,dead:true})`);
   assert.equal(g.ev(`PGRaid.raid.on`), false, 'party wipes when all members are dead');
   assert.match(g.ev(`PGRaid.raid.result.reason`), /wipe/i);
   g.ev(`PGRaid.hideResult()`);
@@ -283,9 +293,11 @@ check('SocialRoom enforces raid_ready before raid_start, relays raid_chat & raid
   alice.inbox.length = 0;
   bob.inbox.length = 0;
   room.receive(alice.c, JSON.stringify({ type: 'raid_start' }));
-  assert.equal(alice.inbox.some(m => m.type === 'raid_started'), true);
+  const startedMsg = alice.inbox.find(m => m.type === 'raid_started');
+  assert.ok(startedMsg && startedMsg.raidId, 'raid_started includes raidId');
   assert.equal(bob.inbox.some(m => m.type === 'raid_started'), true);
   assert.equal(bystander.inbox.length, 0, 'zero broadcast to non-party players in plaza');
+  const activeRid = startedMsg.raidId;
 
   // Raid Chat relays to both Alice & Bob, NOT Bystander
   now += 600;
@@ -296,20 +308,20 @@ check('SocialRoom enforces raid_ready before raid_start, relays raid_chat & raid
 
   // raid_sync carries dmgTaken, support & revives and is rate-limited inside 1500ms unless force:true
   bob.inbox.length = 0;
-  room.receive(alice.c, JSON.stringify({ type: 'raid_sync', hp: 800, maxHp: 1000, dps: 4500000, dmgTaken: 120000, support: 15000, revives: 0, stage: 1, dead: false }));
-  room.receive(alice.c, JSON.stringify({ type: 'raid_sync', hp: 750, maxHp: 1000, dps: 4600000, dmgTaken: 130000, support: 15000, revives: 0, stage: 1, dead: false }));
+  room.receive(alice.c, JSON.stringify({ type: 'raid_sync', raidId: activeRid, hp: 800, maxHp: 1000, dps: 4500000, dmgTaken: 120000, support: 15000, revives: 0, stage: 1, dead: false }));
+  room.receive(alice.c, JSON.stringify({ type: 'raid_sync', raidId: activeRid, hp: 750, maxHp: 1000, dps: 4600000, dmgTaken: 130000, support: 15000, revives: 0, stage: 1, dead: false }));
   const syncs1 = bob.inbox.filter(m => m.type === 'raid_sync');
   assert.equal(syncs1.length, 1, 'rapid unforced raid_sync throttled on DO');
   assert.equal(syncs1[0].dmgTaken, 120000, 'dmgTaken relayed on raid_sync');
   assert.equal(syncs1[0].support, 15000, 'support relayed on raid_sync');
   now += 2000;
-  room.receive(alice.c, JSON.stringify({ type: 'raid_sync', hp: 700, maxHp: 1000, dps: 4700000, dmgTaken: 150000, support: 20000, revives: 1, stage: 1, dead: false }));
+  room.receive(alice.c, JSON.stringify({ type: 'raid_sync', raidId: activeRid, hp: 700, maxHp: 1000, dps: 4700000, dmgTaken: 150000, support: 20000, revives: 1, stage: 1, dead: false }));
   assert.equal(bob.inbox.filter(m => m.type === 'raid_sync').length, 2, 'sync passes after rate window');
 
   // raid_revive & raid_end
-  room.receive(bob.c, JSON.stringify({ type: 'raid_revive', target: 1 }));
-  assert.equal(alice.inbox.some(m => m.type === 'raid_revive' && m.target === 1 && m.fromName === 'Bob'), true);
-  room.receive(alice.c, JSON.stringify({ type: 'raid_end', cleared: true, reason: 'boss_down', secs: 420, dps: 5100000, dmgTaken: 185000, support: 25000, revives: 0 }));
+  room.receive(bob.c, JSON.stringify({ type: 'raid_revive', raidId: activeRid, reviveId: activeRid + ':2:1', target: 1 }));
+  assert.equal(alice.inbox.some(m => m.type === 'raid_revive' && m.target === 1 && m.fromName === 'Bob' && m.revivesLeft === 2), true);
+  room.receive(alice.c, JSON.stringify({ type: 'raid_end', raidId: activeRid, cleared: true, reason: 'boss_down', secs: 420, dps: 5100000, dmgTaken: 185000, support: 25000, revives: 0 }));
   const endMsg = bob.inbox.find(m => m.type === 'raid_end');
   assert.ok(endMsg && endMsg.cleared === true && endMsg.dmgTaken === 185000, 'raid_end relays final stats');
   assert.equal(bystander.inbox.length, 0, 'still zero messages sent to plaza bystander');
@@ -441,8 +453,8 @@ check('Raid Chat Box works in raid & Commendation Popup renders character previe
   // - Bob (Arch Bishop): Best Support (1 revive + 310,000 support)
   // - Cara (Warlock): High DPS (9,800,000 DPS)
   g.ev(`S.dmg += 12000000; PGRaid.raid.elapsed = 10; PGRaid.raid.dmgTaken = 420000; PGRaid.raid.supportScore = 12000;`);
-  g.ev(`PGRaid.onSync({fromId:20,name:'Bob',cls:'Arch Bishop',hp:400000,maxHp:420000,dps:850000,dmgTaken:65000,support:310000,revives:1,stage:3,dead:false});`);
-  g.ev(`PGRaid.onSync({fromId:30,name:'Cara',cls:'Warlock',hp:310000,maxHp:350000,dps:9800000,dmgTaken:95000,support:5000,revives:0,stage:3,dead:false});`);
+  g.ev(`PGRaid.onSync({raidId:PGRaid.raid.raidId,fromId:20,name:'Bob',cls:'Arch Bishop',hp:400000,maxHp:420000,dps:850000,dmgTaken:65000,support:310000,revives:1,stage:3,dead:false});`);
+  g.ev(`PGRaid.onSync({raidId:PGRaid.raid.raidId,fromId:30,name:'Cara',cls:'Warlock',hp:310000,maxHp:350000,dps:9800000,dmgTaken:95000,support:5000,revives:0,stage:3,dead:false});`);
 
   // Case A: COMPLETE Raid -> Commendation Popup + Party Loot + Leave Raid
   g.ev(`PGRaid.finish(true, 'Memory of Thanatos defeated!', false);`);
@@ -1644,7 +1656,8 @@ await check('v464 DO relay hardening, reauth party hold, final stats grace, and 
   room.receive(b.c, JSON.stringify({ type: 'raid_ready', ready: true }));
   room.receive(d.c, JSON.stringify({ type: 'raid_ready', ready: true }));
   room.receive(a.c, JSON.stringify({ type: 'raid_start', dungeonId: 'astral' }));
-  assert.ok(room.partyOf(a.c)?.raid, 'Party raid started cleanly');
+  const rid = room.partyOf(a.c)?.raid?.id;
+  assert.ok(rid, 'Party raid started cleanly');
 
   // 1. Duplicate raid_start while raid active is rejected
   a.inbox.length = 0;
@@ -1653,12 +1666,12 @@ await check('v464 DO relay hardening, reauth party hold, final stats grace, and 
 
   // 2. force:true raid_sync obeys 250ms floor
   b.inbox.length = 0;
-  room.receive(a.c, JSON.stringify({ type: 'raid_sync', force: true, hp: 500, maxHp: 1000, dps: 100000, stage: 0 }));
+  room.receive(a.c, JSON.stringify({ type: 'raid_sync', raidId: rid, force: true, hp: 500, maxHp: 1000, dps: 100000, stage: 0 }));
   now += 50;
-  room.receive(a.c, JSON.stringify({ type: 'raid_sync', force: true, hp: 400, maxHp: 1000, dps: 110000, stage: 0 }));
+  room.receive(a.c, JSON.stringify({ type: 'raid_sync', raidId: rid, force: true, hp: 400, maxHp: 1000, dps: 110000, stage: 0 }));
   assert.equal(b.inbox.filter(m => m.type === 'raid_sync').length, 1, 'Rapid force:true raid_sync throttled inside 250ms');
   now += 260;
-  room.receive(a.c, JSON.stringify({ type: 'raid_sync', force: true, hp: 300, maxHp: 1000, dps: 120000, stage: 0 }));
+  room.receive(a.c, JSON.stringify({ type: 'raid_sync', raidId: rid, force: true, hp: 300, maxHp: 1000, dps: 120000, stage: 0 }));
   assert.equal(b.inbox.filter(m => m.type === 'raid_sync').length, 2, 'force:true raid_sync passes after 250ms floor');
 
   // 3. Planned 30-min reauth refresh preserves party & raid across quick reconnect
@@ -1673,7 +1686,6 @@ await check('v464 DO relay hardening, reauth party hold, final stats grace, and 
   // 4. Multi-member final raid_end stats relay after leader clears
   a.inbox.length = 0;
   b.inbox.length = 0;
-  const rid = room.partyOf(a.c).raid.id;
   room.receive(a.c, JSON.stringify({ type: 'raid_end', raidId: rid, cleared: true, reason: 'boss_down', secs: 300, dps: 9000000, dmgTaken: 200000, support: 50000, revives: 1 }));
   assert.equal(room.partyOf(a.c).raid, null, 'party.raid closed on clear');
   now += 40;
@@ -1724,6 +1736,463 @@ await check('v464 DO relay hardening, reauth party hold, final stats grace, and 
   assert.equal(iso.clsBlocked, 'Leave the Raid first', 'Class switching is blocked during Raid');
   assert.equal(iso.echoBlocked, true, 'Endless Echo entry is blocked during Raid');
   assert.equal(iso.restoredMp === 4 && iso.restoredLvl === 3, true, 'Leaving Raid restores home map & stage');
+});
+
+// 27. Bug 1 regression: Raid death before healing through real update() loop (HP Recovery + First Aid + natural regen)
+await check('Bug 1: lethal monster & telegraph damage end Solo Raid and keep Party downed at 0 HP in update() with HP Recovery enabled', async () => {
+  const res = g.ev(`(() => {
+    const origRand = Math.random;
+    try {
+      S = fresh();
+      S.cls = 'Rune Knight';
+      S.lv = 150;
+      S.gm = true;
+      S.sk = Object.assign({}, S.sk, { hprec: 10, aid: 5 });
+      resetSkillRuntime();
+      const hpregVal = pv('hpreg');
+
+      // Case 1A: Solo lethal monster damage inside real update(dt) with HP Recovery Lv10 + First Aid Lv5
+      PGRaid.startDirectSolo('astral');
+      PGRaid.raid.iframes = 0;
+      S.hp = 10;
+      const m1 = mobs[0];
+      m1.x = pl.x + 0.5;
+      m1.z = pl.z;
+      m1.atk = maxHp() * 50;
+      m1.at = 0.01;
+      m1.stun = 0;
+      m1.provokeUntil = t + 999;
+      Math.random = () => 0.99; // prevent dodge roll
+      update(0.05);
+      const soloEndedOnMonsterHit = !PGRaid.raid.on && PGRaid.raid.result && PGRaid.raid.result.cleared === false;
+      PGRaid.hideResult();
+
+      // Case 1B: Solo lethal telegraph damage inside real update(dt) with HP Recovery Lv10 + First Aid Lv5
+      Math.random = origRand;
+      PGRaid.startDirectSolo('astral');
+      PGRaid.raid.iframes = 0;
+      S.hp = Math.max(1, Math.floor(maxHp() * 0.15));
+      PGRaid.raid.telegraph = {
+        name: 'Crimson Judgment',
+        hint: 'Move out!',
+        shape: 'circle',
+        x: pl.x,
+        z: pl.z,
+        r: 8.0,
+        dmgPct: 0.50,
+        age: 2.30,
+        life: 2.35
+      };
+      update(0.10);
+      const soloEndedOnTelegraph = !PGRaid.raid.on && PGRaid.raid.result && PGRaid.raid.result.cleared === false;
+      PGRaid.hideResult();
+
+      // Case 1C: Solo 0 HP entering update(dt) cannot regenerate via HP Recovery before death check
+      PGRaid.startDirectSolo('astral');
+      S.hp = 0;
+      update(0.10);
+      const soloEndedFromZeroHp = !PGRaid.raid.on && PGRaid.raid.result && PGRaid.raid.result.cleared === false;
+      PGRaid.hideResult();
+
+      // Case 1D: Party lethal monster damage stays downed at 0 HP across 60 update() ticks, until valid revive
+      window.PGSocial = {
+        app: { id: 10, name: 'Alice', connected: false, party: { id: 'p1', leader: 10, members: [{ id: 10, name: 'Alice' }, { id: 20, name: 'Bob' }] } },
+        send: () => {},
+        setRaidSuspend: () => {}
+      };
+      PGRaid.onStarted({
+        raidId: 'raid:lethal-party',
+        dungeonId: 'astral',
+        seed: 42,
+        leader: 10,
+        members: [{ id: 10, name: 'Alice', cls: 'Rune Knight', lv: 150 }, { id: 20, name: 'Bob', cls: 'Arch Bishop', lv: 150 }]
+      });
+      PGRaid.raid.iframes = 0;
+      S.hp = 10;
+      const pm = mobs[0];
+      pm.x = pl.x + 0.5;
+      pm.z = pl.z;
+      pm.atk = maxHp() * 50;
+      pm.at = 0.01;
+      pm.stun = 0;
+      pm.provokeUntil = t + 999;
+      Math.random = () => 0.99;
+      update(0.05);
+      Math.random = origRand;
+      const downedAfterMonster = PGRaid.raid.on && PGRaid.raid.dead && S.hp === 0;
+      let maxHpWhileDowned = S.hp;
+      for (let i = 0; i < 60; i++) {
+        update(0.10);
+        if (S.hp > maxHpWhileDowned) maxHpWhileDowned = S.hp;
+      }
+      const stayedDownedMonster = PGRaid.raid.on && PGRaid.raid.dead && maxHpWhileDowned === 0;
+
+      // Valid teammate revive brings Alice back at 30% HP
+      PGRaid.onRevive({ raidId: 'raid:lethal-party', reviveId: 'raid:lethal-party:20:1', revivesLeft: 2, fromId: 20, fromName: 'Bob', target: 10 });
+      const revivedOk = !PGRaid.raid.dead && S.hp === Math.ceil(maxHp() * 0.3);
+
+      // Case 1E: Party lethal telegraph damage also stays downed at 0 HP across update() ticks with HP Recovery enabled
+      PGRaid.raid.iframes = 0;
+      S.hp = Math.max(1, Math.floor(maxHp() * 0.15));
+      PGRaid.raid.telegraph = {
+        name: 'Crimson Judgment',
+        hint: 'Move out!',
+        shape: 'circle',
+        x: pl.x,
+        z: pl.z,
+        r: 8.0,
+        dmgPct: 0.50,
+        age: 2.30,
+        life: 2.35
+      };
+      update(0.10);
+      let maxHpWhileTelegraphDown = S.hp;
+      for (let i = 0; i < 30; i++) {
+        update(0.10);
+        if (S.hp > maxHpWhileTelegraphDown) maxHpWhileTelegraphDown = S.hp;
+      }
+      const stayedDownedTelegraph = PGRaid.raid.on && PGRaid.raid.dead && maxHpWhileTelegraphDown === 0;
+
+      PGRaid.leave({ silent: true });
+      PGRaid.hideResult();
+      return {
+        hpregVal,
+        soloEndedOnMonsterHit,
+        soloEndedOnTelegraph,
+        soloEndedFromZeroHp,
+        downedAfterMonster,
+        stayedDownedMonster,
+        revivedOk,
+        stayedDownedTelegraph
+      };
+    } finally {
+      Math.random = origRand;
+    }
+  })()`);
+
+  assert.ok(res.hpregVal > 0, 'HP Recovery passive (pv("hpreg")) is active during test');
+  assert.equal(res.soloEndedOnMonsterHit, true, 'Lethal monster hit in update() ends Solo Raid despite HP Recovery');
+  assert.equal(res.soloEndedOnTelegraph, true, 'Lethal telegraph hit in update() ends Solo Raid despite HP Recovery & First Aid');
+  assert.equal(res.soloEndedFromZeroHp, true, '0 HP entering update() ends Solo Raid before HP Recovery runs');
+  assert.equal(res.downedAfterMonster && res.stayedDownedMonster, true, 'Party Raid player stays downed at 0 HP across 60 update() ticks with HP Recovery');
+  assert.equal(res.revivedOk, true, 'Valid teammate revive restores downed Party Raid player to 30% HP');
+  assert.equal(res.stayedDownedTelegraph, true, 'Party lethal telegraph damage also stays downed at 0 HP across update() ticks');
+});
+
+// 28. Bug 2 regression: SocialRoom validates raidId, sender/target active participation, consecutive runs, reauth & scoped 10s grace
+await check('Bug 2: SocialRoom validates raidId & active participation on sync/revive/end, blocks exited members, and scopes consecutive runs & late stats', async () => {
+  let now = 5_000_000;
+  let alarms = 0;
+  const room = new SocialRoom({
+    now: () => now,
+    onSetAlarm: () => { alarms++; }
+  });
+  const mk = (id, name) => {
+    const inbox = [];
+    const c = room.connect({ id, username: name, gm: false, friends: [] }, raw => { inbox.push(typeof raw === 'string' ? JSON.parse(raw) : raw); return true; }, () => {});
+    room.receive(c, JSON.stringify({ type: 'join', room: 1, look: { cls: 'Rune Knight', lv: 150, appearance: { sex: 'm' } } }));
+    inbox.length = 0;
+    return { c, inbox };
+  };
+  const alice = mk(301, 'Alice');
+  const bob = mk(302, 'Bob');
+  const cara = mk(303, 'Cara');
+
+  room.receive(alice.c, JSON.stringify({ type: 'party_invite', targetId: 302 }));
+  room.receive(bob.c, JSON.stringify({ type: 'party_accept' }));
+  room.receive(alice.c, JSON.stringify({ type: 'party_invite', targetId: 303 }));
+  room.receive(cara.c, JSON.stringify({ type: 'party_accept' }));
+  now += 500;
+  room.receive(bob.c, JSON.stringify({ type: 'raid_ready', ready: true }));
+  room.receive(cara.c, JSON.stringify({ type: 'raid_ready', ready: true }));
+  room.receive(alice.c, JSON.stringify({ type: 'raid_start', dungeonId: 'astral' }));
+  const rid1 = room.partyOf(alice.c)?.raid?.id;
+  assert.ok(rid1, 'Run 1 started');
+  alice.inbox.length = 0;
+  bob.inbox.length = 0;
+  cara.inbox.length = 0;
+
+  // 1. Missing or stale raidId on raid_sync, raid_revive, raid_end is rejected
+  now += 2000;
+  room.receive(alice.c, JSON.stringify({ type: 'raid_sync', hp: 500, maxHp: 1000, dps: 100 }));
+  room.receive(alice.c, JSON.stringify({ type: 'raid_sync', raidId: 'raid:wrong', hp: 500, maxHp: 1000, dps: 100 }));
+  room.receive(bob.c, JSON.stringify({ type: 'raid_revive', target: 301 }));
+  room.receive(bob.c, JSON.stringify({ type: 'raid_revive', raidId: 'raid:wrong', target: 301 }));
+  room.receive(alice.c, JSON.stringify({ type: 'raid_end', cleared: true, reason: 'boss_down' }));
+  room.receive(alice.c, JSON.stringify({ type: 'raid_end', raidId: 'raid:wrong', cleared: true, reason: 'boss_down' }));
+  assert.equal(bob.inbox.length, 0, 'Missing/stale raidId rejected on sync and end');
+  assert.equal(alice.inbox.length, 0, 'Missing/stale raidId rejected on revive');
+  assert.equal(room.partyOf(alice.c)?.raid?.id, rid1, 'Run 1 unaffected by invalid raidId messages');
+
+  // 2. Cara exits Run 1 (stays in party, leaves raid) -> Alice & Bob notified once
+  room.receive(cara.c, JSON.stringify({ type: 'raid_end', raidId: rid1, cleared: false, reason: 'left' }));
+  assert.equal(alice.inbox.filter(m => m.type === 'raid_end' && m.fromId === 303).length, 1, 'Alice notified of Cara exit');
+  assert.equal(bob.inbox.filter(m => m.type === 'raid_end' && m.fromId === 303).length, 1, 'Bob notified of Cara exit');
+  alice.inbox.length = 0;
+  bob.inbox.length = 0;
+  cara.inbox.length = 0;
+
+  // 3. Exited Cara cannot send raid_sync, raid_revive, or raid_end to surviving Run 1, and cannot be revived
+  now += 3000;
+  room.receive(cara.c, JSON.stringify({ type: 'raid_sync', raidId: rid1, force: true, hp: 999, maxHp: 1000, dps: 999999 }));
+  room.receive(cara.c, JSON.stringify({ type: 'raid_revive', raidId: rid1, target: 301 }));
+  room.receive(cara.c, JSON.stringify({ type: 'raid_end', raidId: rid1, cleared: false, reason: 'All party members fell — party wipe!' }));
+  room.receive(alice.c, JSON.stringify({ type: 'raid_revive', raidId: rid1, target: 303 })); // target exited Cara!
+  assert.equal(alice.inbox.length, 0, 'Exited member sync/revive/end and revive-on-exited-target all rejected');
+  assert.equal(bob.inbox.length, 0, 'Bob receives nothing from exited member');
+  assert.equal(room.partyOf(alice.c)?.raid?.id, rid1, 'Surviving Run 1 still active');
+  assert.equal(room.partyOf(alice.c)?.raid?.revivesLeft, 3, 'Rejected revive on exited target spent 0 charges');
+
+  // Active Alice sync relays to active Bob, NOT to exited Cara
+  room.receive(alice.c, JSON.stringify({ type: 'raid_sync', raidId: rid1, force: true, hp: 700, maxHp: 1000, dps: 500000 }));
+  assert.equal(bob.inbox.filter(m => m.type === 'raid_sync').length, 1, 'Active Bob receives Alice sync');
+  assert.equal(cara.inbox.filter(m => m.type === 'raid_sync').length, 0, 'Exited Cara does not receive active raid syncs');
+
+  // 4. Planned reauth on Bob preserves active participation in Run 1
+  bob.c.reauthAt = now - 1;
+  room.sweep();
+  now += 100;
+  bob.c = room.connect({ id: 302, username: 'Bob', gm: false, friends: [] }, raw => { bob.inbox.push(typeof raw === 'string' ? JSON.parse(raw) : raw); return true; }, () => {});
+  alice.inbox.length = 0;
+  now += 300;
+  room.receive(bob.c, JSON.stringify({ type: 'raid_sync', raidId: rid1, force: true, hp: 850, maxHp: 1000, dps: 420000 }));
+  assert.equal(alice.inbox.filter(m => m.type === 'raid_sync' && m.fromId === 302).length, 1, 'Reauthed Bob remains active in Run 1');
+
+  // 5. Alice clears Run 1 -> Consecutive Run 2 starts immediately; test old-run isolation + scoped 10s late stats
+  alice.inbox.length = 0;
+  bob.inbox.length = 0;
+  cara.inbox.length = 0;
+  room.receive(alice.c, JSON.stringify({ type: 'raid_end', raidId: rid1, cleared: true, reason: 'boss_down', secs: 240, dps: 6000000 }));
+  assert.equal(room.partyOf(alice.c)?.raid, null, 'Run 1 closed');
+  assert.equal(cara.inbox.filter(m => m.type === 'raid_end').length, 0, 'Exited Cara not sent Run 1 clear');
+
+  // Exited Cara cannot inject late final stats into Run 1's 10s grace window
+  alice.inbox.length = 0;
+  room.receive(cara.c, JSON.stringify({ type: 'raid_end', raidId: rid1, cleared: true, secs: 240, dps: 99999999 }));
+  assert.equal(alice.inbox.length, 0, 'Exited Cara blocked from Run 1 10s final-stats grace');
+
+  // Start Run 2 with all 3 members
+  now += 500;
+  room.receive(bob.c, JSON.stringify({ type: 'raid_ready', ready: true }));
+  room.receive(cara.c, JSON.stringify({ type: 'raid_ready', ready: true }));
+  room.receive(alice.c, JSON.stringify({ type: 'raid_start', dungeonId: 'thor' }));
+  const rid2 = room.partyOf(alice.c)?.raid?.id;
+  assert.ok(rid2 && rid2 !== rid1, 'Consecutive Run 2 started with distinct raidId');
+  alice.inbox.length = 0;
+  bob.inbox.length = 0;
+  cara.inbox.length = 0;
+
+  // Stale rid1 sync/revive during Run 2 are dropped and NEVER relabeled as rid2
+  now += 2000;
+  room.receive(bob.c, JSON.stringify({ type: 'raid_sync', raidId: rid1, force: true, hp: 100, maxHp: 1000, dps: 12345 }));
+  room.receive(bob.c, JSON.stringify({ type: 'raid_revive', raidId: rid1, target: 301 }));
+  assert.equal(alice.inbox.length, 0, 'Old-run sync/revive never relabeled or relayed into Run 2');
+
+  // Late final-stats packet from Bob for rid1 (within 10s) keeps rid1 + statsOnly:true, goes only to rid1 participant Alice, and leaves Run 2 untouched!
+  room.receive(bob.c, JSON.stringify({ type: 'raid_end', raidId: rid1, cleared: true, reason: 'boss_down', secs: 240, dps: 4800000, support: 320000 }));
+  assert.equal(room.partyOf(alice.c)?.raid?.id, rid2, 'Run 2 remains active when rid1 late stats arrive');
+  assert.equal(cara.inbox.length, 0, 'Cara (exited rid1) does not receive rid1 late stats');
+  const lateStat = alice.inbox.find(m => m.type === 'raid_end');
+  assert.ok(lateStat && lateStat.raidId === rid1 && lateStat.statsOnly === true && lateStat.dps === 4800000, 'Late stats stay scoped to rid1 with statsOnly:true');
+
+  // Duplicate late stats from Bob or after 10s expiry are rejected
+  alice.inbox.length = 0;
+  room.receive(bob.c, JSON.stringify({ type: 'raid_end', raidId: rid1, cleared: true, secs: 240, dps: 4900000 }));
+  assert.equal(alice.inbox.length, 0, 'Duplicate late stats from same participant rejected');
+  assert.equal(alarms, 0, 'Zero DO alarms scheduled');
+});
+
+// 29. Bug 3 regression: Complete sender -> Worker -> all 3 clients revive round trip spends exactly 1 charge
+await check('Bug 3: complete sender -> SocialRoom -> 3 clients revive round trip leaves every participant at 2 of 3 charges', async () => {
+  let now = 8_000_000;
+  const room = new SocialRoom({ now: () => now });
+  const clients = [];
+  for (const [id, name, cls] of [[401, 'Alice', 'Rune Knight'], [402, 'Bob', 'Arch Bishop'], [403, 'Cara', 'Warlock']]) {
+    const cg = createGame(html);
+    cg.ev(combatAudioJs);
+    cg.ev(raidJs);
+    cg.ev(`S = fresh(); S.cls = ${JSON.stringify(cls)}; S.lv = 150; S.gm = false; S.raid = { day: trialDay(), used: 0 };`);
+    let sock = null;
+    const queue = [];
+    sock = room.connect(
+      { id, username: name, gm: false, friends: [] },
+      raw => { queue.push(typeof raw === 'string' ? JSON.parse(raw) : raw); return true; },
+      () => {}
+    );
+    room.receive(sock, JSON.stringify({ type: 'join', room: 1, look: { cls, lv: 150, appearance: { sex: 'm' } } }));
+    queue.length = 0;
+    cg.window.PGSocial = {
+      app: { id, name, connected: true, party: null },
+      setRaidSuspend: () => {},
+      send: payload => { room.receive(sock, JSON.stringify(payload)); }
+    };
+    clients.push({ id, name, cg, sock, queue });
+  }
+
+  const flushAll = () => {
+    let progressed = true;
+    while (progressed) {
+      progressed = false;
+      for (const cl of clients) {
+        while (cl.queue.length) {
+          progressed = true;
+          const m = cl.queue.shift();
+          if (m.type === 'party') cl.cg.window.PGSocial.app.party = m.party;
+          else if (m.type === 'raid_lobby') cl.cg.window.PGRaid.onLobby(m);
+          else if (m.type === 'raid_started') cl.cg.window.PGRaid.onStarted(m);
+          else if (m.type === 'raid_sync') cl.cg.window.PGRaid.onSync(m);
+          else if (m.type === 'raid_revive') cl.cg.window.PGRaid.onRevive(m);
+          else if (m.type === 'raid_end') cl.cg.window.PGRaid.onEnded(m);
+        }
+      }
+    }
+  };
+
+  try {
+    const [alice, bob, cara] = clients;
+    room.receive(alice.sock, JSON.stringify({ type: 'party_invite', targetId: 402 }));
+    room.receive(bob.sock, JSON.stringify({ type: 'party_accept' }));
+    room.receive(alice.sock, JSON.stringify({ type: 'party_invite', targetId: 403 }));
+    room.receive(cara.sock, JSON.stringify({ type: 'party_accept' }));
+    flushAll();
+
+    now += 500;
+    bob.cg.ev(`PGRaid.toggleReady()`);
+    cara.cg.ev(`PGRaid.toggleReady()`);
+    flushAll();
+    now += 500;
+    alice.cg.ev(`PGRaid.start('party', 'astral')`);
+    flushAll();
+
+    for (const cl of clients) {
+      assert.equal(cl.cg.ev(`PGRaid.raid.on && PGRaid.raid.revivesLeft`), 3, `${cl.name} starts at 3/3 revives`);
+    }
+
+    // Alice falls in combat -> syncs downed state through SocialRoom to Bob & Cara
+    now += 2000;
+    alice.cg.ev(`S.hp = 0; PGRaid.onLethalHp();`);
+    flushAll();
+    assert.equal(alice.cg.ev(`PGRaid.raid.dead`), true, 'Alice is downed');
+    assert.equal(bob.cg.ev(`PGRaid.raid.party.find(p => p.id === 401).dead`), true, 'Bob sees Alice downed');
+
+    // Bob channels full 3s revive -> sends raid_revive -> SocialRoom broadcasts back to Alice, Bob, and Cara!
+    now += 3000;
+    assert.equal(bob.cg.ev(`PGRaid.revive()`), true, 'Bob starts revive channel');
+    bob.cg.ev(`for (let i = 0; i < 31; i++) PGRaid.tick(0.1);`);
+    flushAll();
+
+    assert.equal(alice.cg.ev(`PGRaid.raid.dead`), false, 'Alice revived via Worker round trip');
+    assert.equal(alice.cg.ev(`PGRaid.raid.revivesLeft`), 2, 'Alice at 2/3 revives');
+    assert.equal(bob.cg.ev(`PGRaid.raid.revivesLeft`), 2, 'Sender Bob at 2/3 revives (not double-decremented to 1)');
+    assert.equal(bob.cg.ev(`PGRaid.raid.revivesDone`), 1, 'Sender Bob credited with 1 revive (not 2)');
+    assert.equal(cara.cg.ev(`PGRaid.raid.revivesLeft`), 2, 'Observer Cara at 2/3 revives');
+    assert.equal(cara.cg.ev(`PGRaid.raid.party.find(p => p.id === 402).revives`), 1, 'Cara sees Bob credited with 1 revive');
+    assert.equal(room.partyOf(alice.sock)?.raid?.revivesLeft, 2, 'SocialRoom tracks 2/3 revives');
+  } finally {
+    for (const cl of clients) cl.cg.close();
+  }
+});
+
+// 30. Bug 4 regression: Held WASD/Arrow keys survive repeated keydown while one-shot actions do not repeat
+await check('Bug 4: repeated keydown preserves held WASD/arrow movement without re-triggering one-shot dodge, and keyup releases', async () => {
+  const kRes = g.ev(`(() => {
+    S.gm = true;
+    PGRaid.startDirectSolo('astral');
+    const fire = (type, key, repeat = false) => {
+      const ev = new window.KeyboardEvent(type, { key, repeat, bubbles: true, cancelable: true });
+      window.dispatchEvent(ev);
+      return ev.defaultPrevented;
+    };
+
+    const downW = fire('keydown', 'w', false);
+    const afterInitialW = PGRaid.raid.keys.w;
+    const repeatW1 = fire('keydown', 'w', true);
+    const repeatW2 = fire('keydown', 'w', true);
+    const afterRepeatW = PGRaid.raid.keys.w && PGRaid.isManualMove();
+
+    fire('keydown', 'ArrowLeft', false);
+    fire('keydown', 'ArrowLeft', true);
+    const afterRepeatLeft = PGRaid.raid.keys.a;
+
+    fire('keyup', 'w', false);
+    const afterUpW = PGRaid.raid.keys.w;
+    const stillLeft = PGRaid.raid.keys.a;
+    fire('keyup', 'ArrowLeft', false);
+    const afterUpLeft = PGRaid.raid.keys.a;
+
+    // One-shot Dodge on Space: initial keydown dodges once; repeated keydown after cooldown does NOT auto-dodge
+    PGRaid.raid.dodgeCd = 0;
+    const spaceInitialPrevented = fire('keydown', ' ', false);
+    const dodgedOnInitial = PGRaid.raid.dodgeCd > 0;
+    PGRaid.raid.dodgeCd = 0;
+    PGRaid.raid.iframes = 0;
+    const spaceRepeatPrevented = fire('keydown', ' ', true);
+    const dodgedOnRepeat = PGRaid.raid.dodgeCd > 0;
+
+    PGRaid.leave({ silent: true });
+    PGRaid.hideResult();
+    return {
+      downW, afterInitialW, repeatW1, repeatW2, afterRepeatW,
+      afterRepeatLeft, afterUpW, stillLeft, afterUpLeft,
+      spaceInitialPrevented, dodgedOnInitial, spaceRepeatPrevented, dodgedOnRepeat
+    };
+  })()`);
+
+  assert.equal(kRes.downW && kRes.afterInitialW, true, 'Initial W keydown engages forward movement');
+  assert.equal(kRes.repeatW1 && kRes.repeatW2 && kRes.afterRepeatW, true, 'Repeated W keydown keeps W held and manual movement active');
+  assert.equal(kRes.afterRepeatLeft, true, 'Repeated ArrowLeft keydown keeps left movement held');
+  assert.equal(kRes.afterUpW === false && kRes.stillLeft === true, true, 'W keyup releases W while ArrowLeft remains held');
+  assert.equal(kRes.afterUpLeft, false, 'ArrowLeft keyup releases left movement');
+  assert.equal(kRes.spaceInitialPrevented && kRes.dodgedOnInitial, true, 'Initial Space keydown triggers dodge');
+  assert.equal(kRes.spaceRepeatPrevented === true && kRes.dodgedOnRepeat === false, true, 'Repeated Space keydown prevents scroll without re-triggering dodge');
+});
+
+// 31. Bug 5 regression: Raid eligibility requires Base Lv 120+ and at least 3rd-Job class (with intentional GM bypass)
+await check('Bug 5: Raid eligibility rejects Novice/1st/2nd jobs (even at Lv120-150) & <Lv120 3rd/4th jobs, accepts Lv120+ 3rd & 4th jobs, and retains GM bypass', async () => {
+  const elig = g.ev(`(() => {
+    const testCase = (cls, lv, gm = false, cloudGm = false) => {
+      S = fresh();
+      S.cls = cls;
+      S.lv = lv;
+      S.gm = gm;
+      CLOUD.gm = cloudGm;
+      S.raid = { day: trialDay(), used: 0 };
+      const apiOk = PGRaid.canEnter('solo', 'astral').ok;
+      openTab('raid');
+      const btn = document.querySelector('[data-a="raidsolo"]');
+      const uiOk = Boolean(btn && !btn.disabled);
+      return { apiOk, uiOk };
+    };
+
+    const r = {
+      novice120: testCase('Novice', 120),
+      novice150: testCase('Novice', 150),
+      first120: testCase('Swordman', 120),
+      expandedFirst150: testCase('Ninja', 150),
+      second120: testCase('Knight', 120),
+      second150: testCase('Crusader', 150),
+      third119: testCase('Lord Knight', 119),
+      third120: testCase('Lord Knight', 120),
+      thirdAlt120: testCase('Paladin', 120),
+      third150: testCase('High Wizard', 150),
+      fourth119: testCase('Rune Knight', 119),
+      fourth120: testCase('Rune Knight', 120),
+      fourth150: testCase('Warlock', 150),
+      soloAdv120: testCase('Kagerou & Oboro', 120),
+      gmBypass: testCase('Novice', 1, true, false),
+      cloudGmBypass: testCase('Novice', 1, false, true)
+    };
+    CLOUD.gm = false;
+    S.gm = true;
+    return r;
+  })()`);
+
+  for (const k of ['novice120', 'novice150', 'first120', 'expandedFirst150', 'second120', 'second150', 'third119', 'fourth119']) {
+    assert.equal(elig[k].apiOk === false && elig[k].uiOk === false, true, `${k} must be rejected in both PGRaid and Dungeons UI`);
+  }
+  for (const k of ['third120', 'thirdAlt120', 'third150', 'fourth120', 'fourth150', 'soloAdv120', 'gmBypass', 'cloudGmBypass']) {
+    assert.equal(elig[k].apiOk === true && elig[k].uiOk === true, true, `${k} must be accepted in both PGRaid and Dungeons UI`);
+  }
 });
 
 g.close();

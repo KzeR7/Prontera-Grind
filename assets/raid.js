@@ -296,15 +296,18 @@
     return Math.max(0, DAILY_LIMIT - (Number(st.used) || 0));
   }
 
-  function isFourthUnlocked() {
+  var RAID_MIN_BASE_LV = 120;
+  var RAID_MIN_JOB_TIER = 3;
+
+  function isRaidEligible() {
     if (typeof S === 'undefined' || !S) return false;
     if (isGm()) return true;
-    if (typeof C === 'function') {
-      var c = C();
-      if (c && c.t >= 3 && S.lv >= 150) return true;
-    }
-    return S.lv >= 150;
+    if ((Number(S.lv) || 0) < RAID_MIN_BASE_LV) return false;
+    if (typeof fourthJob === 'function' && fourthJob()) return true;
+    var c = (typeof C === 'function') ? C() : (typeof CLASSES !== 'undefined' && CLASSES ? CLASSES[S.cls] : null);
+    return Boolean(c && Number(c.tier) >= RAID_MIN_JOB_TIER);
   }
+  var isFourthUnlocked = isRaidEligible;
 
   function socialParty() {
     var soc = root.PGSocial && root.PGSocial.app;
@@ -374,8 +377,8 @@
     if ((typeof TRIAL !== 'undefined' && TRIAL.on) || (typeof JOB_RITE !== 'undefined' && JOB_RITE.on)) {
       return { ok: false, reason: 'Finish your current trial first.' };
     }
-    if (!isFourthUnlocked()) {
-      return { ok: false, reason: 'Requires Base Lv 150 & a 4th-Job class (Ascension tier).' };
+    if (!isRaidEligible()) {
+      return { ok: false, reason: 'Requires Base Lv 120 & at least a 3rd-Job class.' };
     }
     if (!isGm() && raidLeftToday() <= 0) {
       return { ok: false, reason: 'Daily Raid limit reached (2/2 today). Resets at 00:00 UTC+8.' };
@@ -1930,10 +1933,13 @@
     return false;
   }
 
-  function onKey(key, down) {
+  function onKey(key, down, repeat) {
     if (!raid.on) return false;
     var k = String(key || '').toLowerCase();
-    if (down && k === 'enter') {
+    var isDown = Boolean(down);
+    var isRepeat = Boolean(repeat);
+    if (isDown && k === 'enter') {
+      if (isRepeat) return true;
       raid.keys = { w: false, a: false, s: false, d: false };
       raid.chatMinimized = false;
       var box = $('raidChatBox');
@@ -1942,11 +1948,14 @@
       if (inp) inp.focus();
       return true;
     }
-    if (k === 'w' || k === 'arrowup') { raid.keys.w = down; return true; }
-    if (k === 's' || k === 'arrowdown') { raid.keys.s = down; return true; }
-    if (k === 'a' || k === 'arrowleft') { raid.keys.a = down; return true; }
-    if (k === 'd' || k === 'arrowright') { raid.keys.d = down; return true; }
-    if (down && (k === ' ' || k === 'shift')) { dodge(); return true; }
+    if (k === 'w' || k === 'arrowup') { raid.keys.w = isDown; return true; }
+    if (k === 's' || k === 'arrowdown') { raid.keys.s = isDown; return true; }
+    if (k === 'a' || k === 'arrowleft') { raid.keys.a = isDown; return true; }
+    if (k === 'd' || k === 'arrowright') { raid.keys.d = isDown; return true; }
+    if (isDown && (k === ' ' || k === 'shift')) {
+      if (!isRepeat) dodge();
+      return true;
+    }
     return false;
   }
 
@@ -2681,6 +2690,9 @@
     if (label && typeof addFloat === 'function') {
       addFloat(pl.x, 2.8, pl.z, label, '#ff5c78', true, 'incoming');
     }
+    if (S.hp <= 0) {
+      handlePlayerDown();
+    }
   }
 
   function tickBossCleave(boss, dt) {
@@ -3050,6 +3062,91 @@
     return true;
   }
 
+  function applyReviveEvent(ev) {
+    if (!raid.on || raid.mode !== 'party' || !ev) return false;
+    var selfId = myId();
+    var fromId = ev.fromId;
+    var targetId = ev.target;
+    var revId = typeof ev.reviveId === 'string' && ev.reviveId ? ev.reviveId : '';
+    var targetSlot = null;
+    for (var ti = 0; ti < raid.party.length; ti++) {
+      var cand = raid.party[ti];
+      if (cand.id === targetId || (cand.self && targetId === selfId)) {
+        targetSlot = cand;
+        break;
+      }
+    }
+    if (!targetSlot || targetSlot.disconnected) return false;
+
+    if (!raid.appliedRevives) raid.appliedRevives = {};
+    if (!raid.pendingLocalRevives) raid.pendingLocalRevives = {};
+
+    if (revId && raid.appliedRevives[revId]) {
+      if (Number.isInteger(ev.revivesLeft)) {
+        raid.revivesLeft = Math.max(0, Math.min(MAX_PARTY_REVIVES, ev.revivesLeft));
+        updateHud();
+      }
+      return false;
+    }
+    if (!ev.localOrigin && fromId === selfId && raid.pendingLocalRevives[targetId] != null &&
+        (raid.elapsed - raid.pendingLocalRevives[targetId]) <= 15) {
+      delete raid.pendingLocalRevives[targetId];
+      if (revId) raid.appliedRevives[revId] = true;
+      if (Number.isInteger(ev.revivesLeft)) {
+        raid.revivesLeft = Math.max(0, Math.min(MAX_PARTY_REVIVES, ev.revivesLeft));
+        updateHud();
+      }
+      return false;
+    }
+
+    if (raid.revivesLeft <= 0 && !Number.isInteger(ev.revivesLeft)) return false;
+    if (revId) raid.appliedRevives[revId] = true;
+    if (ev.localOrigin) raid.pendingLocalRevives[targetId] = raid.elapsed;
+
+    if (Number.isInteger(ev.revivesLeft)) {
+      raid.revivesLeft = Math.max(0, Math.min(MAX_PARTY_REVIVES, ev.revivesLeft));
+    } else {
+      raid.revivesLeft = Math.max(0, raid.revivesLeft - 1);
+    }
+
+    for (var i = 0; i < raid.party.length; i++) {
+      var p = raid.party[i];
+      if (p.id === fromId || (p.self && fromId === selfId)) {
+        if (p.self) {
+          raid.revivesDone = (raid.revivesDone || 0) + 1;
+          raid.supportScore += 250000;
+        } else {
+          p.revives = (p.revives || 0) + 1;
+          p.support = (p.support || 0) + 250000;
+        }
+      }
+    }
+
+    targetSlot.dead = false;
+    targetSlot.hp = Math.max(1, Math.floor((targetSlot.maxHp || 1000) * 0.3));
+    if (targetSlot.self && raid.dead) {
+      raid.dead = false;
+      if (typeof S !== 'undefined' && S && typeof maxHp === 'function') {
+        S.hp = Math.max(1, Math.ceil(maxHp() * 0.3));
+        raid.lastHp = Math.round(S.hp);
+      }
+      if (typeof addFloat === 'function' && typeof pl !== 'undefined' && pl) {
+        addFloat(pl.x, 2.6, pl.z, 'REVIVED!', '#7ef0b8', true, 'heal');
+      }
+      sendSync(true);
+    }
+
+    if (ev.localOrigin) {
+      pushSystemChat(myName() + ' revived ' + targetSlot.name + '!');
+      if (typeof log === 'function') log('Revived ' + targetSlot.name + '! (' + raid.revivesLeft + ' revives left)', 'r4', 'misc');
+    } else if (ev.fromName) {
+      pushSystemChat(ev.fromName + ' revived a fallen teammate!');
+    }
+    refreshSelfStats();
+    updateHud();
+    return true;
+  }
+
   function tickRevive(dt) {
     if (!raid.reviving) return;
     if (raid.dead || raid.revivesLeft <= 0) {
@@ -3068,16 +3165,18 @@
     if (raid.reviving.left <= 0) {
       var tid = raid.reviving.targetId;
       raid.reviving = null;
-      raid.revivesLeft = Math.max(0, raid.revivesLeft - 1);
-      raid.revivesDone = (raid.revivesDone || 0) + 1;
-      raid.supportScore += 250000;
-      target.dead = false;
-      target.hp = Math.max(1, Math.floor((target.maxHp || 1000) * 0.3));
+      raid.reviveNonce = (raid.reviveNonce || 0) + 1;
+      var revId = String(raid.raidId || 'raid') + ':' + String(myId()) + ':' + String(raid.reviveNonce);
+      if (!applyReviveEvent({
+        reviveId: revId,
+        fromId: myId(),
+        fromName: myName(),
+        target: tid,
+        localOrigin: true
+      })) return;
       if (root.PGSocial && typeof root.PGSocial.send === 'function') {
-        root.PGSocial.send({ type: 'raid_revive', raidId: raid.raidId, target: tid });
+        root.PGSocial.send({ type: 'raid_revive', raidId: raid.raidId, reviveId: revId, target: tid });
       }
-      pushSystemChat(myName() + ' revived ' + target.name + '!');
-      if (typeof log === 'function') log('Revived ' + target.name + '! (' + raid.revivesLeft + ' revives left)', 'r4', 'misc');
       sendSync(true);
       renderHud();
     }
@@ -3240,6 +3339,9 @@
     raid.iframes = 0;
     raid.dead = false;
     raid.revivesLeft = raid.mode === 'party' ? MAX_PARTY_REVIVES : 0;
+    raid.reviveNonce = 0;
+    raid.appliedRevives = {};
+    raid.pendingLocalRevives = {};
     raid.reviving = null;
     raid.telegraph = null;
     raid.voidPools = [];
@@ -3708,6 +3810,7 @@
     }
 
     tickHazards(step);
+    if (!raid.on || raid.dead) return;
     tickRevive(step);
     tickPartyAssist(step);
 
@@ -3745,22 +3848,14 @@
 
   function onSync(msg) {
     if (!raid.on || raid.mode !== 'party' || !msg) return;
-    if (msg.raidId && raid.raidId && msg.raidId !== raid.raidId) return;
+    if (raid.raidId && msg.raidId !== raid.raidId) return;
     var sender = msg.fromId;
-    if (sender === myId()) return;
+    if (sender == null || sender === myId()) return;
     var slot = null;
     for (var i = 0; i < raid.party.length; i++) {
       if (raid.party[i].id === sender) { slot = raid.party[i]; break; }
     }
-    if (!slot && raid.party.length < 3) {
-      slot = {
-        id: sender, name: msg.name || 'Ally', cls: msg.cls || 'Adventurer',
-        sex: msg.sex === 'f' ? 'f' : 'm', appearance: null,
-        hp: 100, maxHp: 100, dps: 0, dmgTaken: 0, support: 0, revives: 0, stage: 0, dead: false, self: false
-      };
-      raid.party.push(slot);
-    }
-    if (!slot) return;
+    if (!slot || slot.disconnected) return;
     if (msg.name) slot.name = String(msg.name).slice(0, 20);
     if (msg.cls) slot.cls = String(msg.cls).slice(0, 24);
     if (msg.sex === 'f' || msg.sex === 'm') slot.sex = msg.sex;
@@ -3772,7 +3867,6 @@
     if (msg.revives != null) slot.revives = Math.max(0, Number(msg.revives) || 0);
     slot.stage = Math.max(0, Math.min(3, Number(msg.stage) || 0));
     slot.dead = Boolean(msg.dead);
-    slot.disconnected = false;
 
     if (slot.stage > raid.stage && !raid.transition) {
       spawnRaidStage(slot.stage);
@@ -3783,32 +3877,19 @@
 
   function onRevive(msg) {
     if (!raid.on || raid.mode !== 'party' || !msg) return;
-    if (msg.raidId && raid.raidId && msg.raidId !== raid.raidId) return;
-    raid.revivesLeft = Math.max(0, raid.revivesLeft - 1);
-    var selfId = myId();
-    for (var i = 0; i < raid.party.length; i++) {
-      var p = raid.party[i];
-      if (p.id === msg.fromId && !p.self) {
-        p.revives = (p.revives || 0) + 1;
-        p.support = (p.support || 0) + 250000;
-      }
-      if (p.id === msg.target || (p.self && msg.target === selfId)) {
-        p.dead = false;
-        p.hp = Math.max(1, Math.floor(p.maxHp * 0.3));
-        if (p.self && raid.dead) {
-          raid.dead = false;
-          if (typeof S !== 'undefined' && S && typeof maxHp === 'function') {
-            S.hp = Math.max(1, Math.ceil(maxHp() * 0.3));
-            raid.lastHp = Math.round(S.hp);
-          }
-          if (typeof addFloat === 'function' && typeof pl !== 'undefined' && pl) {
-            addFloat(pl.x, 2.6, pl.z, 'REVIVED!', '#7ef0b8', true, 'heal');
-          }
-          sendSync(true);
-        }
-      }
+    if (raid.raidId && msg.raidId !== raid.raidId) return;
+    var applied = applyReviveEvent({
+      reviveId: typeof msg.reviveId === 'string' && msg.reviveId ? msg.reviveId : '',
+      fromId: msg.fromId,
+      fromName: msg.fromName,
+      target: msg.target,
+      revivesLeft: msg.revivesLeft,
+      localOrigin: false
+    });
+    if (!applied) return;
+    if (msg.fromName && msg.fromId !== myId()) {
+      pushSystemChat(msg.fromName + ' revived a fallen teammate!');
     }
-    if (msg.fromName) pushSystemChat(msg.fromName + ' revived a fallen teammate!');
     updateHud();
   }
 
@@ -3816,11 +3897,11 @@
     if (!msg) return;
     if (!raid.on) {
       if (raid.result && raid.result.mode === 'party' && msg.fromId != null &&
-          (!msg.raidId || !raid.lastFinishedRaidId || msg.raidId === raid.lastFinishedRaidId)) {
+          raid.lastFinishedRaidId && msg.raidId === raid.lastFinishedRaidId) {
         var updated = false;
         for (var u = 0; u < raid.result.party.length; u++) {
           var rp = raid.result.party[u];
-          if (rp.id === msg.fromId && !rp.self) {
+          if (rp.id === msg.fromId && !rp.self && !rp.disconnected) {
             if (msg.dps != null) rp.dps = Math.max(0, Number(msg.dps) || 0);
             if (msg.dmgTaken != null) rp.dmgTaken = Math.max(0, Number(msg.dmgTaken) || 0);
             if (msg.support != null) rp.support = Math.max(0, Number(msg.support) || 0);
@@ -3837,7 +3918,15 @@
       return;
     }
     if (raid.mode !== 'party') return;
-    if (msg.raidId && raid.raidId && msg.raidId !== raid.raidId) return;
+    if (msg.statsOnly) return;
+    if (raid.raidId && msg.raidId !== raid.raidId) return;
+    if (msg.fromId != null && msg.fromId !== myId()) {
+      var senderSlot = null;
+      for (var sIdx = 0; sIdx < raid.party.length; sIdx++) {
+        if (raid.party[sIdx].id === msg.fromId) { senderSlot = raid.party[sIdx]; break; }
+      }
+      if (!senderSlot || senderSlot.disconnected) return;
+    }
     var rStr = String(msg.reason || '');
     var isPeerExit = !msg.cleared && msg.fromId != null && msg.fromId !== myId() &&
       (rStr === 'disconnect' || rStr === 'left' || /^left/i.test(rStr));
@@ -3848,8 +3937,7 @@
       for (var k = 0; k < raid.party.length; k++) {
         if (raid.party[k].id === msg.fromId && !raid.party[k].self) {
           peerName = raid.party[k].name || peerName;
-          if (msg.dps != null) raid.party[k].dps = 0;
-          else raid.party[k].dps = 0;
+          raid.party[k].dps = 0;
           if (msg.dmgTaken != null) raid.party[k].dmgTaken = Math.max(0, Number(msg.dmgTaken) || 0);
           if (msg.support != null) raid.party[k].support = Math.max(0, Number(msg.support) || 0);
           if (msg.revives != null) raid.party[k].revives = Math.max(0, Number(msg.revives) || 0);
@@ -3870,7 +3958,7 @@
 
     if (msg.fromId != null) {
       for (var i = 0; i < raid.party.length; i++) {
-        if (raid.party[i].id === msg.fromId && !raid.party[i].self) {
+        if (raid.party[i].id === msg.fromId && !raid.party[i].self && !raid.party[i].disconnected) {
           if (msg.dps != null) raid.party[i].dps = Math.max(0, Number(msg.dps) || 0);
           if (msg.dmgTaken != null) raid.party[i].dmgTaken = Math.max(0, Number(msg.dmgTaken) || 0);
           if (msg.support != null) raid.party[i].support = Math.max(0, Number(msg.support) || 0);
@@ -5314,7 +5402,9 @@
     DAILY_LIMIT: DAILY_LIMIT,
     raid: raid,
     isGm: isGm,
+    isEligible: isRaidEligible,
     canEnter: canEnter,
+    onLethalHp: handlePlayerDown,
     allPartyMembersReady: allPartyMembersReady,
     toggleReady: toggleReady,
     sendChat: sendChat,
