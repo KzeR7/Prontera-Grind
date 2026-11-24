@@ -113,8 +113,10 @@ rm -f "$OUT"/assets/mob_*.png
 rm -f "$OUT/assets/Fountainfile/Prontera_Grand_Aetherwell_Preview.png"
 mkdir -p "$OUT/Updates"
 cp -r "$ROOT/Updates/Sprite" "$OUT/Updates/Sprite"
+# The gallery and notes are developer references; the game fetches only the PNGs.
+rm -f "$OUT/Updates/Sprite/index.html" "$OUT/Updates/Sprite/README.md"
 
-# Compact ordinary map-kit JSON and safely remove standalone CSS/JS comments from delivery copies.
+# Compact ordinary map-kit JSON and safely remove comments and JS indentation from delivery copies.
 node "$ROOT/tools/optimize_delivery.js" "$OUT"
 node "$ROOT/tools/maps/build_game_exploration.js" "$OUT"
 

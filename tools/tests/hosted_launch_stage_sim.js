@@ -8,6 +8,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { freshDb,makeD1,createApp } from '../dev_server.js';
 import { syntheticProbe,unpackPayload,decodeOverlayFile,deployedUrl,safeSql } from '../staging/hosted_launch_stage.mjs';
+import { overlayFiles } from '../staging/launch_overlay.mjs';
 import { SANCTUARY_STAGE,sanctuaryPagesConfig,sanctuarySocialConfig,sanctuaryDeploymentUrl,verifyDeployment } from '../staging/sanctuary_hosted_stage.mjs';
 const target=path.join(os.tmpdir(),'launch-package-test-'+randomUUID()+'.mjs');
 try{
@@ -81,6 +82,15 @@ try{
   for(const rel of [...Object.values(art.digi),...Object.values(art.fishing)])
    assert.equal(payload[rel],'base64:'+fs.readFileSync(rel).toString('base64'),'uncarried Social title art '+rel);
  }
+ // Pet thumbnails are dynamic too; dormant Raidbound pets fall back to these
+ // APNGs even though they are not yet represented in the native pet catalog.
+ const petBlock=fs.readFileSync('index.html','utf8').match(/const PETS=\[([\s\S]*?)\];/);
+ assert(petBlock,'PETS roster is present');
+ const petIds=[...petBlock[1].matchAll(/\bspriteId\s*:\s*(\d+)/g)].map(m=>m[1]);
+ assert(petIds.includes('1708')&&petIds.includes('1837'),'Raidbound fallbacks are covered');
+ for(const id of petIds){const rel='assets/pets/v1/thumb-'+id+'.png';assert.equal(payload[rel],'base64:'+fs.readFileSync(rel).toString('base64'),'uncarried pet thumbnail '+id)}
+ const missingPet=fs.readFileSync('index.html','utf8').replace("spriteId:1837,r:4",'spriteId:999999,r:4');
+ assert.throws(()=>overlayFiles(missingPet),/Missing pet thumbnail.*thumb-999999\.png/,'a missing dynamic pet thumbnail fails closed');
  // Dynamic refine audio and plaza emotions are not discoverable from static HTML tags.
  const audio=JSON.parse(fs.readFileSync('assets/audio/refine/manifest.json','utf8'));
  for(const name of ['manifest.json',...audio.assets.map(a=>a.file)]){

@@ -1209,6 +1209,14 @@ body.social-open #renderNotice{display:none}
 /* Night affects the 3D scene only: readable UI/labels and pointer controls stay untouched. */
 #socialScene{isolation:isolate}
 #socialScene.plaza-night canvas{filter:brightness(.55) saturate(.78)}
-#socialScene.plaza-night::before{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:rgba(18,30,61,.56);mix-blend-mode:multiply}
-.plaza-night-lights{position:absolute;inset:0;z-index:2;pointer-events:none;mix-blend-mode:screen}
-.plaza-night-lights[hidden]{display:none}
+/* A normal translucent veil avoids a full-screen multiply blend over every frame. */
+#socialScene.plaza-night::before{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:rgba(8,16,35,.48)}
+
+/* Local, pre-painted halos move by compositor transforms instead of repainting a
+   viewport-sized gradient stack. They are above the grade, but below the UI. */
+.plaza-night-halos{position:absolute;inset:0;z-index:2;pointer-events:none}
+.plaza-night-halos[hidden],.plaza-night-halo[hidden],.plaza-night-spill[hidden]{display:none}
+.plaza-night-halo,.plaza-night-spill{position:absolute;left:0;top:0;width:128px;height:128px;pointer-events:none;will-change:transform}
+.plaza-night-halo{background:radial-gradient(circle,rgba(255,236,179,.80),rgba(255,184,81,.38) 28%,transparent 70%)}
+.plaza-night-spill{background:radial-gradient(circle closest-side,rgba(255,182,86,.45),rgba(255,171,76,.18) 36%,transparent 100%)}
+.plaza-night-crystal-halo{background:radial-gradient(circle,rgba(215,252,255,.88),rgba(73,199,255,.39) 35%,transparent 70%)}

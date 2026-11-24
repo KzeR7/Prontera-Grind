@@ -1,4 +1,4 @@
-// Publish-only JSON whitespace and standalone CSS/JS comment reduction. Sources stay untouched.
+// Publish-only JSON whitespace and safe CSS/JS comment and indentation reduction. Sources stay untouched.
 // Only these four kit documents are plain JSON fetched with response.json(); native
 // metadata has byte/hash contracts and MUST NOT be processed here.
 'use strict';
@@ -35,19 +35,33 @@ function stripStandaloneJsComments(source){
  result+=source.slice(last,start);last=end;}
  result+=source.slice(last);assert.deepEqual(collect(result),before,'JS token stream changed during delivery optimization');return result;
 }
+// Remove indentation only where the start of a line is outside a multiline
+// template literal or block comment. Keep every newline, token and comment.
+function stripJsIndentation(source){
+ const spans=[],comments=[],tokenizer=acorn.tokenizer(source,{ecmaVersion:'latest',allowHashBang:true,onComment:comments});
+ for(;;){const token=tokenizer.getToken();if(token.type.label==='eof')break;if(source.slice(token.start,token.end).includes('\n'))spans.push([token.start,token.end])}
+ for(const comment of comments)if(source.slice(comment.start,comment.end).includes('\n'))spans.push([comment.start,comment.end]);
+ spans.sort((a,b)=>a[0]-b[0]);let pos=0,index=0;
+ const lines=source.split('\n').map(line=>{while(index<spans.length&&spans[index][1]<=pos)index++;
+  const inMultiline=index<spans.length&&spans[index][0]<pos&&pos<spans[index][1];
+  const result=inMultiline?line:line.replace(/^[ \t]+/,'');pos+=line.length+1;return result});
+ const result=lines.join('\n');
+ const tokens=text=>{const t=acorn.tokenizer(text,{ecmaVersion:'latest',allowHashBang:true}),out=[];for(;;){const v=t.getToken();if(v.type.label==='eof')break;out.push(text.slice(v.start,v.end))}return out};
+ assert.deepEqual(tokens(result),tokens(source),'JS indentation optimization changed tokens');return result;
+}
 function stripHtmlJsComments(html){return html.replace(/<script\b([^>]*)>([\s\S]*?)<\/script\s*>/gi,(whole,attrs,script)=>{
  if(!script.trim()||/\bsrc\s*=/i.test(attrs)||/\btype\s*=\s*["'](?:application\/json|application\/ld\+json)["']/i.test(attrs))return whole;
  const prefix=whole.slice(0,whole.indexOf('>')+1),suffix=whole.slice(prefix.length+script.length);
- return prefix+stripStandaloneJsComments(script)+suffix;
+ return prefix+stripJsIndentation(stripStandaloneJsComments(script))+suffix;
 });}
 // These are ordinary client modules, not pinned sprite/atlas data. Only standalone
-// comments are removed; tokens, line breaks and license notices are checked below.
+// comments and indentation are removed; tokens, line breaks and license notices are checked below.
 const JS_FILES=Object.freeze([
  'assets/social-scene.js','assets/social-fishing.js','assets/social.js',
  'assets/native-fields.js','assets/boss-fx.js','assets/social-rules.js',
  'assets/digimon-battle.js','assets/shop.js','assets/social-gym-redesign.js',
  'assets/signature-fx.js','assets/plaza-bots.js','assets/shop-catalog.js','assets/friends.js',
- 'assets/raid.js','assets/combat-audio.js','assets/mastery-titles.js'
+ 'assets/raid.js','assets/combat-audio.js','assets/mastery-titles.js','assets/weapon_proposal_data.js'
 ]);
 function optimize(output){
  let saved=0;
@@ -68,8 +82,8 @@ function optimize(output){
  }
  const htmlTarget=path.join(output,'index.html'),beforeHtml=fs.readFileSync(htmlTarget,'utf8'),afterHtml=stripHtmlJsComments(beforeHtml);
  if(afterHtml!==beforeHtml){fs.writeFileSync(htmlTarget,afterHtml);saved+=Buffer.byteLength(beforeHtml)-Buffer.byteLength(afterHtml)}
- for(const file of JS_FILES){const target=path.join(output,file),before=fs.readFileSync(target,'utf8'),after=stripStandaloneJsComments(before);if(after!==before){fs.writeFileSync(target,after);saved+=Buffer.byteLength(before)-Buffer.byteLength(after)}}
+ for(const file of JS_FILES){const target=path.join(output,file),before=fs.readFileSync(target,'utf8'),after=stripJsIndentation(stripStandaloneJsComments(before));if(after!==before){fs.writeFileSync(target,after);saved+=Buffer.byteLength(before)-Buffer.byteLength(after)}}
  return saved;
 }
-if(require.main===module){if(!process.argv[2])throw Error('Pass the assembled publish directory');console.log('  JSON whitespace / standalone CSS and JS comments removed: '+optimize(path.resolve(process.argv[2]))+' bytes (source art/native packs unchanged)');}
-module.exports={FILES,CSS_FILES,JS_FILES,stripStandaloneCssComments,stripStandaloneJsComments,stripHtmlJsComments,optimize};
+if(require.main===module){if(!process.argv[2])throw Error('Pass the assembled publish directory');console.log('  JSON whitespace / standalone CSS and JS comments / safe JS indentation removed: '+optimize(path.resolve(process.argv[2]))+' bytes (source art/native packs unchanged)');}
+module.exports={FILES,CSS_FILES,JS_FILES,stripStandaloneCssComments,stripStandaloneJsComments,stripJsIndentation,stripHtmlJsComments,optimize};
