@@ -44,6 +44,12 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
  w.eval(fs.readFileSync('assets/social-title-art.js','utf8'));w.eval(fs.readFileSync('assets/digimon-sanctuary.js','utf8'));
  w.PGSocialFishing.FISHING_TITLES=require('../../assets/social-fishing.js').FISHING_TITLES;
  w.eval(fs.readFileSync('assets/signature-fx.js','utf8'));w.eval(fs.readFileSync('assets/spirit-spheres.js','utf8'));
+ // Hold the deferred art load so the test can select night before the real design
+ // replaces the fallback water material.
+ let loadPondLater,paintedWater;
+ const realSetTimeout=w.setTimeout.bind(w);w.setTimeout=(fn,ms,...args)=>ms===900?(loadPondLater=fn,0):realSetTimeout(fn,ms,...args);
+ w.eval(fs.readFileSync('assets/social-pond-design.js','utf8'));
+ const buildPond=w.PGSocialPondDesign.build;w.PGSocialPondDesign.build=args=>{const result=buildPond(args);paintedWater=args.view.water.material;return result};
  w.eval(fs.readFileSync('assets/social-scene.js','utf8'));
  const scene=await w.PGSocialScene.create(host,w.document.getElementById('labels'),{self:()=>1,menu(...a){menuCalls.push(a)},move(x,z){moves.push({x,z})},seat(id){selectedSeat=id},sanctuaryShop(){shopOpens++},sanctuaryIndex(){indexOpens++}}),flush=async()=>{for(let i=0;i<6;i++)await Promise.resolve()};
  const groundPlane=scene.scene.children.find(o=>o.geometry?.parameters?.width===192&&o.geometry?.parameters?.height===218);
@@ -109,9 +115,37 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
  for(const id of ['coach','food','trainer','guide','ring']){assert(scene.scene.children.some(o=>o.userData.sanctuaryNpc===id),'native NPC sprite '+id+' exists');assert(w.document.querySelector('[data-sanctuary-npc="'+id+'"] button'),'NPC has a talk button')}
  const cook=w.document.querySelector('[data-sanctuary-npc="food"] button');cook.click();const talk=w.document.querySelector('.sanctuary-npc-bubble[data-sanctuary-npc="food"]');assert(!talk.hidden&&talk.textContent.includes('Pet Coins'),'Cook Lina explains the Pet Coin shop');assert.equal(shopOpens,1,'Cook Lina opens the real pet-provisions shop');const guideButton=w.document.querySelector('[data-sanctuary-npc="guide"] button');guideButton.click();assert.equal(indexOpens,1,'Guide Nia opens the roster-backed DigiDex');
 
+ // The lamps are tied to existing bridge lanterns and blocked farm-fence corners.
+ const nightBulbs=scene.scene.children.filter(o=>o.userData.nightLamp),nightLights=scene.scene.children.filter(o=>o.userData.plazaNightLight);
+ assert.equal(nightBulbs.filter(o=>o.userData.nightLamp==='fishing').length,4);
+ assert.equal(nightBulbs.filter(o=>o.userData.nightLamp==='digipet').length,8);
+ const plazaLamps=scene.scene.children.filter(o=>o.userData.plazaStreetlamp);
+ assert.equal(plazaLamps.length,4,'four streetlamps around the central plaza');
+ assert.equal(nightBulbs.filter(o=>o.userData.nightLamp==='plaza').length,4);
+ for(const lamp of plazaLamps){assert(!w.PGSocialRules.walkable(lamp.position.x,lamp.position.z),'plaza lamps stand within blocked gardens');for(const seat of w.PGSocialRules.SEATS.filter(Boolean))assert(Math.hypot(seat.x-lamp.position.x,seat.z-lamp.position.z)>1,'lamps do not occupy a seat')}
+ const pondGlow=scene.scene.children.find(o=>o.userData.nightPondGlow);
+ assert(pondGlow&&!pondGlow.visible,'localized water glow is off during day');
+ assert(pondGlow.position.y<.1&&pondGlow.material.depthWrite===false,'glow sits on the pond below the bridge');
+ assert.equal(nightLights.length,4,'real lights are pooled rather than one shader light per lamp');
+ for(const [x,z] of [[49,47],[91,47],[49,81],[91,81]])assert(!w.PGSocialRules.walkable(x,z),'new field lamps occupy existing blocked fence posts');
+ const overlay=host.querySelector('.plaza-night-lights'),fireflies=scene.scene.children.find(o=>o.userData.nightFireflies);assert(overlay.hidden);assert(!scene.night);assert(nightBulbs.every(o=>!o.visible));
+ assert(fireflies&&!fireflies.visible,'night fireflies are hidden in daylight');assert.equal(fireflies.geometry.attributes.position.count,48,'one bounded particle batch serves both areas');
+ scene.setNight(true);assert(scene.night&&!overlay.hidden&&host.classList.contains('plaza-night'));
+ assert(nightBulbs.every(o=>o.visible)&&nightLights.every(o=>o.visible)&&fireflies.visible&&pondGlow.visible);assert.equal(scene.scene.background.getHex(),0x17283d);
+ assert(loadPondLater,'pond art remains deferred');await loadPondLater();
+ assert(paintedWater&&paintedWater.isShaderMaterial,'real deferred pond design replaces the fallback water');
+ assert(pondGlow.visible&&scene.scene.children.includes(pondGlow),'late art keeps the independent night glow visible');
+ scene.setNight(false);assert(!scene.night&&overlay.hidden&&!host.classList.contains('plaza-night'));
+ assert(nightBulbs.every(o=>!o.visible)&&nightLights.every(o=>!o.visible)&&!fireflies.visible&&!pondGlow.visible);assert.equal(scene.scene.background.getHex(),0xb9cbbb);
+ const nightCss=fs.readFileSync('assets/social.css','utf8');assert.match(nightCss,/#socialScene\.plaza-night::before\{[^}]*mix-blend-mode:multiply/,'moonlight veil applies only at night');assert.match(nightCss,/\.plaza-night-lights\{[^}]*pointer-events:none/,'light overlays cannot intercept walking or fishing');
  const state={id:1,name:'Synthetic',x:0,z:12,dir:0,sit:true,path:[],look:{cls:'Novice',appearance:{version:1,sex:'m'},refine:10,title:'Poring Hunter',lv:150}};
  scene.active=true;scene.putPlayer(state);await flush();frame(now+=100);assert.equal(draws.length,0);frame(now+=3100);await flush();frame(now+=100);assert(draws.length,'failed download automatically retries without network movement');assert.equal(draws.at(-1)[2],'idle','pending sitting atlas falls back to visible standing sprite');assert.equal(typeof draws.at(-1)[7],'function','native weapon glow hook');assert.equal(typeof draws.at(-1)[8],'function','stowed weapon glow hook');
  sitReady=true;frame(now+=100);await flush();frame(now+=100);assert.equal(draws.at(-1)[2],'sit');
+ scene.setNight(true);scene.putPlayer({...state,sit:false,x:70,z:64});frame(now+=100);assert(nightLights.every(l=>l.position.x>40),'pooled lights follow the camera to the DigiPet field');
+ const firstFly=fireflies.geometry.attributes.position.getX(0),fieldFly=fireflies.geometry.attributes.position.getX(24);assert(firstFly<0&&fieldFly>0,'fireflies populate the lake and farm');
+ frame(now+=100);assert.notEqual(fireflies.geometry.attributes.position.getX(0),firstFly,'fireflies drift in night mode');assert.equal(pondGlow.material.uniforms.time.value,now/1000,'pond ripples animate during night');
+ scene.putPlayer({...state,sit:false,x:-38,z:73});frame(now+=100);assert(nightLights.every(l=>l.position.x<0),'pooled lights follow the camera to the fishing lake');scene.setNight(false);const stoppedWater=pondGlow.material.uniforms.time.value;const stoppedFly=fireflies.geometry.attributes.position.getX(0);scene.putPlayer(state);frame(now+=100);assert.equal(fireflies.geometry.attributes.position.getX(0),stoppedFly,'firefly animation stops during daylight');assert.equal(pondGlow.material.uniforms.time.value,stoppedWater,'pond glow animation stops during daylight');
+
  // A remote Monk-line player always has five cosmetic spheres, including when seated.
  const spiritPlayer={id:77,name:'Spirit',x:2,z:13,dir:0,sit:true,path:[],look:{cls:'Sura',appearance:{version:1,sex:'m'}}};
  scene.putPlayer(spiritPlayer);await flush();frame(now+=100);
@@ -1000,16 +1034,23 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
  const shardB=new T.Group();shardB.name='Orbiting shard detailed 00';shardB.position.set(-1.5,8,1);fakeRoot.add(shardB);
  const crystalMat=new T.MeshBasicMaterial();crystalMat.name='Crystal facet 0';
  fakeRoot.add(new T.Mesh(new T.BoxGeometry(.3,.3,.3),crystalMat));
+ const facet1=new T.MeshStandardMaterial({name:'Crystal facet 1',emissive:0x2288cc});
+ fakeRoot.add(new T.Mesh(new T.BoxGeometry(.3,.3,.3),[crystalMat,facet1]));
  // v361: a PBR material whose name carries a KHR_materials_emissive_strength value the r128
  // loader drops, plus a known linear albedo, so the mount's fidelity pass is observable.
  const inscriptionMat=new T.MeshStandardMaterial({name:'Crystal inscriptions \u2022 electric blue'});
  inscriptionMat.color.setRGB(.25,.5,1);inscriptionMat.emissive.setRGB(.018,.54,1);
  fakeRoot.add(new T.Mesh(new T.BoxGeometry(.2,.2,.2),inscriptionMat));
- let requestedUrl='';
- T.GLTFLoader=class{load(url,onLoad){requestedUrl=url;onLoad({scene:fakeRoot})}};
+ let requestedUrl='',finishAetherwell;
+ T.GLTFLoader=class{load(url,onLoad){requestedUrl=url;finishAetherwell=()=>onLoad({scene:fakeRoot})}};
  const host2=w.document.createElement('div');host2.setPointerCapture=()=>{};host2.getBoundingClientRect=()=>({left:0,top:0,width:1000,height:700});Object.defineProperties(host2,{clientWidth:{get(){return 1000}},clientHeight:{get(){return 700}}});
  let wellSeat=null;const scene2=await w.PGSocialScene.create(host2,w.document.createElement('div'),{self:()=>2,menu(){},move(){},seat(id){wellSeat=id}});
  assert.equal(requestedUrl,'assets/Fountainfile/Prontera_Grand_Aetherwell.glb','the hub requests the Aetherwell GLB');
+ // A real GLB commonly arrives after the player has already selected night.
+ scene2.setNight(true);scene2.active=true;frame(now+=100);
+ const deferredLight=scene2.scene.children.find(o=>o.userData.plazaCrystalLight);assert(!deferredLight.visible,'fallback fountain is not treated as a crystal');
+ finishAetherwell();frame(now+=100);assert(deferredLight.visible,'crystal light activates after a delayed GLB mount');
+ scene2.setNight(false);frame(now+=100);
  const well=scene2.scene.children.find(o=>o.userData.aetherwell);
  assert(well,'the Aetherwell mounts over the plaza');
  assert(Math.abs(well.scale.x-.62)<1e-9&&Math.abs(well.position.y-.06)<1e-9,'the v361 centerpiece is scaled up to the grand plaza size');
@@ -1022,6 +1063,14 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{JSDOM}=require
  assert(Math.abs(shardA.position.x-shardBefore)>.001||Math.abs(shardA.position.z-shardZBefore)>.001,'the simple shard ring orbits the spire');
  assert(Math.abs(shardB.position.x-shardBefore)>.001||Math.abs(shardB.position.z-shardZBefore)>.001,'the detailed shard ring counter-orbits the spire');
  assert(crystalMat.emissiveIntensity>=.6&&crystalMat.emissiveIntensity<=1.1,'the shared crystal material breathes');
+ const crystalLight=scene2.scene.children.find(o=>o.userData.plazaCrystalLight),moon=scene2.scene.children.find(o=>o.userData.plazaMoonlight);
+ assert(crystalLight&&!crystalLight.visible&&moon&&!moon.visible,'crystal and moon lights are disabled by day');
+ scene2.setNight(true);frame(now+=100);assert(crystalLight.visible&&moon.visible,'night activates the crystal and moon lights');
+ assert(crystalMat.emissiveIntensity>1.4&&facet1.emissiveIntensity>2,'all crystal facets glow brighter, including material arrays');
+ assert.equal(crystalLight.position.y,6.35,'crystal lighting is anchored to the actual fountain spire');
+ scene2.setNight(false);frame(now+=100);assert(!crystalLight.visible&&!moon.visible,'day removes night lights');
+ assert(crystalMat.emissiveIntensity>=.6&&crystalMat.emissiveIntensity<=1.1&&facet1.emissiveIntensity===1,'day restores the original material levels');
+
  // v361 fidelity: the albedo was converted from linear to display space and the dropped
  // KHR_materials_emissive_strength value (5.5 for the inscriptions) is re-applied on mount.
  assert(Math.abs(inscriptionMat.color.g-.7354)<.01,'the GLB albedo is gamma-corrected for the unencoded backbuffer');

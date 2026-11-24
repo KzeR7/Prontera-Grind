@@ -1,6 +1,7 @@
 const assert=require('node:assert/strict'),fs=require('node:fs');const {JSDOM}=require('jsdom');
 const dom=new JSDOM('<div id="view"><div id="feedWrap"></div><div id="minimapTools"><button id="socialHubBtn" type="button" class="minimap-tool-btn social-hub-btn"><span class="minimap-tool-label">Social</span><b id="socialHubBadge" class="minimap-tool-badge social-hub-badge" hidden>0</b></button></div></div>',{url:'http://localhost/',runScripts:'outside-only'}),w=dom.window;
 Object.assign(w,{CLOUD:{on:false,user:null},S:{cls:'Novice',eq:{}},tabs:[],wardrobeAppearance:()=>({version:1,sex:'m'}),logShown:()=>[],openTab:()=>{},HUNT_TITLES:[{id:'poring',name:'Poring Hunter'}],titleUnlocked:()=>true,setInterval:fn=>{if(fn.name==='worldTrainingTick')w.trainingTick=fn;else if(fn.name==='battleUITick')w.battleTick=fn;else w.sessionTick=fn},PGSocialScene:{}});
+w.localStorage.setItem('pg_plaza_night','1'); // persisted across a page reload
 w.eval(fs.readFileSync('assets/digimon/roster.js','utf8'));w.eval(fs.readFileSync('assets/digimon/base-stats.js','utf8'));w.eval(fs.readFileSync('assets/social-rules.js','utf8'));w.eval(fs.readFileSync('assets/digimon-sanctuary.js','utf8'));w.eval(fs.readFileSync('assets/digimon-battle.js','utf8'));w.eval(fs.readFileSync('assets/social.js','utf8'));
 assert.equal(w.document.getElementById('socialMin').tagName,'SPAN','minimize is a line in the header, without a button box');assert.equal(w.document.getElementById('socialResize').tagName,'SPAN','resize uses the border, without a separate button');
 const app=w.PGSocial.app;app.user='previous';app.messages=[{channel:'whisper',name:'Private',body:'Do not leak'}];app.socket=null;app.room=1;app.wanted=true;app.muted.add(7);w.sessionTick();assert.equal(app.user,null);assert.equal(app.messages.length,0);assert.equal(app.muted.size,0);assert.equal(app.room,0);assert(w.document.getElementById('socialHub').hidden);
@@ -115,13 +116,18 @@ w.PGSocial.select('emoji');assert.equal(w.document.querySelectorAll('#socialEmoj
 }
 // Solo plaza fallback spawns the local character when offline or before room join, supports walk/sit, and yields cleanly to multiplayer room state.
 w.PGSocial.leave();w.CLOUD.on=false;w.CLOUD.user=null;w.currentUser='local_hero';app.socket=null;app.user=null;app.connected=false;app.room=0;
-let sceneCallbacks=null;const scenePlayers=new Map();
-w.PGSocialScene={create:async(_host,_labels,cb)=>{sceneCallbacks=cb;return{active:false,cameraState:{angle:0,pitch:48,distance:48,panX:0,panZ:0,follow:true},setCamera:v=>{cameraValues=v},resetCamera:()=>reset++,clearPlayers(){scenePlayers.clear()},putPlayer(p){scenePlayers.set(p.id,{...p,path:(p.path||[]).map(pt=>({...pt}))})},removePlayer(id){scenePlayers.delete(id)}}}};
+let sceneCallbacks=null;const scenePlayers=new Map(),nightApplied=[];
+w.PGSocialScene={create:async(_host,_labels,cb)=>{sceneCallbacks=cb;return{active:false,setNight(v){nightApplied.push(v)},cameraState:{angle:0,pitch:48,distance:48,panX:0,panZ:0,follow:true},setCamera:v=>{cameraValues=v},resetCamera:()=>reset++,clearPlayers(){scenePlayers.clear()},putPlayer(p){scenePlayers.set(p.id,{...p,path:(p.path||[]).map(pt=>({...pt}))})},removePlayer(id){scenePlayers.delete(id)}}}};
 app.scene=null;
-w.S.lv=150;w.S.auraShow=true;w.moveSpd=()=>9.5;
+w.S.lv=150;w.S.auraShow=true;w.moveSpd=()=>9.5;w.TABS={equip:['','Equipment']};
 (async()=>{
  w.S.digimonSanctuary={v:1,partners:{agumon:{stats:{power:3},training:{stat:'power',ends:1}}}};
  await w.PGSocial.enter();
+ // Local visual setting: toolbar More exposes an accessible toggle; it never sends a room message.
+ {const d=w.document;const before=socket.sent.length;assert.equal(nightApplied.at(-1),true,'saved browser preference is applied when a new scene opens');
+  d.getElementById('socialMore').click();const toggle=d.querySelector('[data-hub-night]');assert(toggle);assert.equal(toggle.getAttribute('aria-pressed'),'true');
+  toggle.click();assert.equal(toggle.getAttribute('aria-pressed'),'false');assert.equal(w.localStorage.getItem('pg_plaza_night'),'0');assert.equal(nightApplied.at(-1),false);assert.equal(socket.sent.length,before);
+  d.querySelector('[data-hub-close]').click();d.getElementById('socialMore').click();const again=d.querySelector('[data-hub-night]');assert.equal(again.getAttribute('aria-pressed'),'false');again.click();assert.equal(w.localStorage.getItem('pg_plaza_night'),'1');assert.equal(nightApplied.at(-1),true);assert.equal(socket.sent.length,before);again.click();assert.equal(nightApplied.at(-1),false);d.querySelector('[data-hub-close]').click();}
  assert.equal(w.S.digimonSanctuary.partners.agumon.stats.power,3,'legacy completed progress is preserved');assert.equal(w.S.digimonSanctuary.partners.agumon.training,null,'old pending timer cannot award offline progress');delete w.S.digimonSanctuary;
  assert.equal(app.players.size,1,'offline/reconnecting plaza spawns solo character');
  assert.equal(scenePlayers.get(0).name,'local_hero');assert.equal(sceneCallbacks.self(),0);
