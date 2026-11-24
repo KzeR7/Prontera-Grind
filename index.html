@@ -3698,7 +3698,7 @@ const PET_SKILLS=[
   {id:'soulrend',n:'Soul Rend',kind:'single',power:2.0,cd:12,desc:'Single target: 2.00× pet damage',vfx:'spiral',color:'#ffe28a',icon:'🩻'},
   {id:'galehowl',n:'Gale Howl',kind:'aoe',power:1.35,radius:4,cd:18,desc:'AoE: 1.35× pet damage to enemies within 4 units, longest pet active cooldown',vfx:'frenzy',color:'#8ef4c6',icon:'🌀'}
 ];
-const petDmg=p=>Math.round(atk()*PETBAL*(typeof skillTuning==='function'?skillTuning('companion'):1)*[.2,.32,.55,1,1][PETS[p.sp].r]*MUT[p.mut]*(1+p.eq[0]*.10)*(1+petPassive('petdmg')/100)),petInt=p=>Math.max(.4,1.7-PETS[p.sp].r*.15)/(1+p.eq[1]*.07);
+const petDmg=p=>Math.round(atk()*PETBAL*(typeof skillTuning==='function'?skillTuning('companion'):1)*[.2,.32,.55,1,1.15][PETS[p.sp].r]*MUT[p.mut]*(1+p.eq[0]*.10)*(1+petPassive('petdmg')/100)),petInt=p=>Math.max(.4,1.7-PETS[p.sp].r*.15)/(1+p.eq[1]*.07);
 // v90 (owner): every Legendary pet (r===3) costs twice as much - a mutation roll, a skill gacha and an upgrade step.
 // v469 (owner: "double the raidbound pet cost for mutation, skill reroll and weapon gacha compared
 // to legendary"): the three prices are now explicit per-rarity tables instead of a doubled ladder,
