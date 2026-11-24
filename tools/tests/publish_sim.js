@@ -137,6 +137,10 @@ t('dev-only art does not ride along in the publish tree', () => {
   // pages out of dist: assets/mob_*.png by Updates/damage-numbers-v2, assets/weapons/** by
   // tools/weapon_proposal.html, and the manifest only by make_weapon_pack.py. The game draws
   // weapons from the base64 window.WEAPON_ART and monsters from assets/mobs/v1.
+  for(const file of ['Updates/Sprite/index.html','Updates/Sprite/README.md']){
+    assert.ok(fs.existsSync(path.join(root,file)),'sprite reference stays in source: '+file);
+    assert.ok(!fs.existsSync(path.join(out,file)),'sprite reference is not runtime content: '+file);
+  }
   assert.ok(!fs.existsSync(path.join(out,'assets/weapons')), 'weapon design PNGs are dev-only');
   assert.ok(!fs.existsSync(path.join(out,'assets/weapons_manifest.json')), 'the weapons manifest is build metadata');
   assert.deepStrictEqual(fs.readdirSync(path.join(out,'assets')).filter(f=>/^mob_.+\.png$/.test(f)), [],
@@ -322,7 +326,7 @@ t('published UI styles preserve every parsed CSS rule while removing standalone 
  }finally{dom.window.close()}
 });
 
-t('published JS removes only standalone comments, preserving tokens, line breaks and license notices',()=>{
+t('published JS removes standalone comments and safe indentation, preserving tokens, lines and license notices',()=>{
  const opt=require('../optimize_delivery.js'),acorn=require('../vendor/acorn/acorn.js');
  const sample=['// remove this','const a = "// literal";','const re = /\\/\\/still-regex/;','const template = `hello', '// inside template', '${1 + 2}`;', 'a; // inline stays','// Copyright Example', '//# sourceURL=example.js', 'function f(){return', '// preserve ASI newline', '1;}'].join('\n');
  const result=opt.stripStandaloneJsComments(sample);
@@ -331,7 +335,9 @@ t('published JS removes only standalone comments, preserving tokens, line breaks
  assert.equal(result.split('\n').length,sample.split('\n').length);
  const tokens=source=>{const t=acorn.tokenizer(source,{ecmaVersion:'latest'}),out=[];for(;;){const v=t.getToken();if(v.type.label==='eof')break;out.push(source.slice(v.start,v.end))}return out};
  assert.deepStrictEqual(tokens(result),tokens(sample));
- for(const file of opt.JS_FILES){const original=fs.readFileSync(path.join(root,file),'utf8'),built=fs.readFileSync(path.join(out,file),'utf8');assert.equal(built,opt.stripStandaloneJsComments(original),file);assert.deepStrictEqual(tokens(built),tokens(original));}
+ const indented='  const literal = `first\n    preserve template indentation\n  last`;\n  /* block\n    keep spacing\n  */\n  literal;';
+ const trimmed=opt.stripJsIndentation(indented);assert.ok(trimmed.includes('\n    preserve template indentation\n  last'));assert.ok(trimmed.includes('\n    keep spacing\n  */'));assert.deepStrictEqual(tokens(trimmed),tokens(indented));assert.equal(trimmed.split('\n').length,indented.split('\n').length);
+ for(const file of opt.JS_FILES){const original=fs.readFileSync(path.join(root,file),'utf8'),built=fs.readFileSync(path.join(out,file),'utf8');assert.equal(built,opt.stripJsIndentation(opt.stripStandaloneJsComments(original)),file);assert.deepStrictEqual(tokens(built),tokens(original));}
  const original=fs.readFileSync(path.join(root,'index.html'),'utf8'),built=fs.readFileSync(path.join(out,'index.html'),'utf8');
  const cssOptimized=original.replace(/<style>([\s\S]*?)<\/style>/,(_,css)=>'<style>'+opt.stripStandaloneCssComments(css)+'</style>');
  assert.equal(built,opt.stripHtmlJsComments(cssOptimized),'published HTML differs from safe comment optimization');

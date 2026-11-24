@@ -138,6 +138,13 @@ export function overlayFiles(html) {
       socialFiles.some(rel => typeof rel !== 'string' || !/^assets\/social-title-icons\/(?:digi|fishing)-[a-z0-9-]+\.webp$/.test(rel)))
     throw Error('Invalid Social title art whitelist');
   need(socialRoot, socialFiles.map(rel => rel.slice(socialRoot.length)), 'Social title art', out);
+  // Pet thumbnails use dynamic URLs, including Raidbound fallbacks not yet in the
+  // native pet catalog. Derive every sprite ID from the actual PETS roster.
+  const petBlock=html.match(/const PETS=\[([\s\S]*?)\];/);
+  if(!petBlock)throw Error('PETS roster missing: cannot derive pet thumbnails');
+  const petIds=[...petBlock[1].matchAll(/\bspriteId\s*:\s*(\d+)/g)].map(m=>m[1]);
+  if(!petIds.length||new Set(petIds).size!==petIds.length)throw Error('Invalid PETS sprite IDs');
+  need('assets/pets/v1/',petIds.map(id=>'thumb-'+id+'.png'),'pet thumbnail',out);
   out.push(...itemIcons(html));
   const unique = [...new Set(out)].sort();
   for (const rel of unique) if (!fs.existsSync(path.join(root, rel))) throw Error('Overlay file missing: ' + rel);

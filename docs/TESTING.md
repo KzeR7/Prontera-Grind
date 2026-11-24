@@ -369,7 +369,11 @@ turns every post-login request into a 401 "signed in on another device") and
 The default entry point is `http://localhost:8788/`. The server serves `dist/`, routes
 actual API handlers through a local SQLite D1 shim and applies local migrations. Rebuild
 `dist/` after changing client files; restart after changing API handlers (the server
-caches imported modules).
+caches imported modules). The build excludes the developer-only `Updates/Sprite` gallery
+and README, but retains its runtime PNGs. It also strips safe JS indentation as well as
+standalone comments; `publish_sim.js` checks tokens, line breaks and multiline literals.
+The staging overlay derives pet thumbnail paths from the actual `PETS` roster, including
+Raidbound fallbacks; `hosted_launch_stage_sim.js` checks their packaged bytes and the guard.
 
 For disposable GM testing on your own computer, bind to localhost (for example,
 `HOST=127.0.0.1 node tools/dev_server.js --gm-all` on macOS/Linux, or
