@@ -3211,6 +3211,9 @@
 
   function onLobby(msg) {
     if (!msg || !Array.isArray(msg.members)) return;
+    var prevRoster = raid.lobbyRoster;
+    var prevCount = prevRoster && Array.isArray(prevRoster.members) ? prevRoster.members.length : 0;
+    var prevPartyId = prevRoster ? prevRoster.partyId : null;
     if (msg.dungeonId === 'thor' || msg.dungeonId === 'astral') {
       raid.lobbyDungeon = msg.dungeonId;
     }
@@ -3226,11 +3229,13 @@
         raid.myReady = Boolean(msg.members[i].ready);
       }
     }
-    if (msg.summon && !raid.on && msg.leader !== selfId) {
-      var lobbyEl = $('raidLobby');
+    var lobbyEl = $('raidLobby');
+    var shouldAutoOpen = !raid.on && lobbyEl && lobbyEl.hidden && msg.members.length >= 2 && (prevPartyId !== msg.partyId || prevCount < msg.members.length || msg.summon);
+    if ((msg.summon && !raid.on && msg.leader !== selfId) || shouldAutoOpen) {
       if (lobbyEl && lobbyEl.hidden) {
         raid.lobbyMode = 'party';
         lobbyEl.hidden = false;
+        if (socialParty()) announceReadyState(isPartyLeader());
       }
     }
     if ($('raidLobby') && !$('raidLobby').hidden) {
