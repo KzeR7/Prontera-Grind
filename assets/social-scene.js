@@ -2929,20 +2929,47 @@ void main(){
  }
  });
  }   // end frameBody
- // The native town and many sprites use unlit materials. Point lights alone cannot
- // illuminate them, so night combines real local lights for lit geometry with a
- // screen-space warm falloff for the unlit scene. UI/labels remain outside it.
- const nightOverlay=document.createElement('div');nightOverlay.className='plaza-night-lights';nightOverlay.setAttribute('aria-hidden','true');host.append(nightOverlay);
+ // The native town and sprites are unlit. Batched additive glows provide their
+ // lamp spill in the existing WebGL render, without repainting a full-screen CSS
+ // gradient stack every time the camera moves. UI and labels remain outside it.
  const nightLamps=[...farmLampCorners.map(([x,z])=>({x,z,y:3.72,area:'digipet'})),
   ...[49,64,79,90].map(z=>({x:31,z,y:3.15,area:'digipet'})),
   ...plazaLampSpots.map(p=>({x:p.x,z:p.z,y:3.54,area:'plaza'})),
   ...R.POND_PROPS.flatMap(p=>p.lanterns.map(l=>({x:l.x,z:l.z,y:2.48,area:'fishing'})))];
  const bulbMat=new T.MeshBasicMaterial({color:0xffe6a3}),bulbGeometry=new T.SphereGeometry(.25,8,6);
  const bulbs=nightLamps.map(l=>{const b=new T.Mesh(bulbGeometry,bulbMat);b.position.set(l.x,l.y,l.z);b.visible=false;b.userData.nightLamp=l.area;scene.add(b);return b});
- // Four pooled point lights cap the light count on mobile; the nearest lamps follow the camera.
- const localLights=Array.from({length:4},()=>{const light=new T.PointLight(0xffc577,1.4,18,2);light.visible=false;light.userData.plazaNightLight=true;scene.add(light);return light});
+ // Two nearest lights limit the per-fragment cost on every lit material.
+ const localLights=Array.from({length:2},()=>{const light=new T.PointLight(0xffc577,1.4,18,2);light.visible=false;light.userData.plazaNightLight=true;scene.add(light);return light});
  // The centerpiece gets a separate cool light; emissive materials alone cannot illuminate neighbors.
  const crystalLight=new T.PointLight(0x59dcff,3.3,29,2);crystalLight.position.set(0,6.35,0);crystalLight.visible=false;crystalLight.userData.plazaCrystalLight=true;scene.add(crystalLight);
+ // Two static point batches replace dozens of screen-space gradients. Each has
+ // one extra cyan point for the fountain, enabled only after its model mounts.
+ const lampGlowCanvas=document.createElement('canvas');lampGlowCanvas.width=lampGlowCanvas.height=64;
+ const lampGlowCtx=lampGlowCanvas.getContext('2d');
+ if(lampGlowCtx&&typeof lampGlowCtx.createRadialGradient==='function'){
+  const glow=lampGlowCtx.createRadialGradient(32,32,0,32,32,32);
+  glow.addColorStop(0,'rgba(255,255,255,.8)');glow.addColorStop(.36,'rgba(255,255,255,.28)');glow.addColorStop(1,'rgba(255,255,255,0)');
+  lampGlowCtx.fillStyle=glow;lampGlowCtx.fillRect(0,0,64,64);
+ }
+ const lampGlowTexture=new T.CanvasTexture(lampGlowCanvas);
+ function makeLampGlows(halo){
+  const positions=[],colors=[];
+  for(const l of nightLamps){positions.push(l.x,halo?l.y:1.4,l.z);colors.push(1,.62,.25)}
+  positions.push(0,6.35,0);colors.push(.18,.72,1);
+  const geo=new T.BufferGeometry();geo.setAttribute('position',new T.Float32BufferAttribute(positions,3));geo.setAttribute('color',new T.Float32BufferAttribute(colors,3));
+  geo.setDrawRange(0,nightLamps.length);
+  const points=new T.Points(geo,new T.PointsMaterial({map:lampGlowTexture,vertexColors:true,size:halo?8:38,transparent:true,opacity:halo?.9:.55,depthTest:false,depthWrite:false,blending:T.AdditiveBlending}));
+  points.visible=false;points.renderOrder=100;points.userData.nightLampGlow=halo?'halo':'spill';scene.add(points);return points;
+ }
+ const lampGlows=[makeLampGlows(false),makeLampGlows(true)];
+ // Small pre-painted halos and ground spills sit above the night grade. The
+ // native paving and sprites are unlit, and the grade otherwise dims away the
+ // WebGL spill. Transform each local glow rather than repainting a full-screen
+ // gradient stack as the camera moves; neither layer can intercept input.
+ const haloLayer=document.createElement('div');haloLayer.className='plaza-night-halos';haloLayer.hidden=true;haloLayer.setAttribute('aria-hidden','true');
+ const spills=nightLamps.map(()=>{const el=document.createElement('div');el.className='plaza-night-spill';el.hidden=true;haloLayer.append(el);return el});
+ const halos=nightLamps.map(()=>{const el=document.createElement('div');el.className='plaza-night-halo';el.hidden=true;haloLayer.append(el);return el});
+ const crystalHalo=document.createElement('div');crystalHalo.className='plaza-night-halo plaza-night-crystal-halo';crystalHalo.hidden=true;haloLayer.append(crystalHalo);host.append(haloLayer);
  // A few slow fireflies bring the lake and field alive without changing source art.
  const fireflyCanvas=document.createElement('canvas');fireflyCanvas.width=fireflyCanvas.height=32;
  const flyCtx=fireflyCanvas.getContext('2d');
@@ -2963,50 +2990,43 @@ void main(){
   }
   fireflyGeo.attributes.position.needsUpdate=true;
  }
- let night=false,lastNightView='';
+ let night=false,lastNightFocus='',lastHaloView='',crystalGlows=false;
  function setNight(value){
-  night=!!value;lastNightView='';host.classList.toggle('plaza-night',night);nightOverlay.hidden=!night;
+  night=!!value;lastNightFocus='';lastHaloView='';host.classList.toggle('plaza-night',night);haloLayer.hidden=!night;
   scene.background.setHex(night?0x17283d:0xb9cbbb);scene.fog.color.setHex(night?0x17283d:0xb9cbbb);
-  fishingApi.setNight(night);daylight.intensity=night?.22:1;daylight.color.setHex(night?0x9ebcff:0xffffff);daylight.groundColor.setHex(night?0x26334d:0x66775a);moonlight.visible=night;crystalLight.visible=night&&!!aetherwell.group;fireflies.visible=night;lastFireflyFrame=0;for(const b of bulbs)b.visible=night;for(const l of localLights)l.visible=night;
-  if(night)updateNightLighting();else nightOverlay.style.background='';
+  fishingApi.setNight(night);daylight.intensity=night?.22:1;daylight.color.setHex(night?0x9ebcff:0xffffff);daylight.groundColor.setHex(night?0x26334d:0x66775a);moonlight.visible=night;crystalLight.visible=night&&!!aetherwell.group;fireflies.visible=night;lastFireflyFrame=0;for(const b of bulbs)b.visible=night;for(const l of localLights)l.visible=night;for(const g of lampGlows)g.visible=night;
+  if(night)updateNightLighting();
  }
- const lightProjection=new T.Vector3();
+ const haloProjection=new T.Vector3();
  function updateNightLighting(){
   if(!night)return;
-  crystalLight.visible=!!aetherwell.group;
-  const signature=[camera.position.x,camera.position.y,camera.position.z,focus.x,focus.y,focus.z,pitch,angle,viewW,viewH,aetherwell.group?1:0].map(n=>Math.round(n*100)/100).join(',');
-  if(signature===lastNightView)return;lastNightView=signature;
-  const ordered=nightLamps.slice().sort((a,b)=>(a.x-focus.x)**2+(a.z-focus.z)**2-((b.x-focus.x)**2+(b.z-focus.z)**2));
-  localLights.forEach((light,i)=>{const p=ordered[i];light.position.set(p.x,p.y,p.z)});
-  const w=viewW||host.clientWidth,h=viewH||host.clientHeight;if(!w||!h)return;
-  const gradients=[];
-  for(const l of nightLamps){
-   lightProjection.set(l.x,1.4,l.z).project(camera);if(lightProjection.z< -1||lightProjection.z>1)continue;
-   const x=(lightProjection.x+1)*w/2,y=(1-lightProjection.y)*h/2;
-   const dist=Math.max(1,Math.hypot(camera.position.x-l.x,camera.position.y-1.4,camera.position.z-l.z));
-   const radius=Math.min(300,Math.max(25,h*7/(2*Math.tan(camera.fov*Math.PI/360)*dist)));
-   if(x< -radius||x>w+radius||y< -radius||y>h+radius)continue;
-   // Wide amber spill for the surroundings plus a smaller glow at the actual bulb.
-   // Keep these screen-space layers separate: the town sprites use unlit materials.
-   gradients.push(`radial-gradient(circle ${radius.toFixed(0)}px at ${x.toFixed(0)}px ${y.toFixed(0)}px, rgba(255,182,86,.49), rgba(255,171,76,.19) 36%, transparent 100%)`);
-   lightProjection.set(l.x,l.y,l.z).project(camera);
-   const bx=(lightProjection.x+1)*w/2,by=(1-lightProjection.y)*h/2,halo=Math.max(18,radius*.26);
-   gradients.push(`radial-gradient(circle ${halo.toFixed(0)}px at ${bx.toFixed(0)}px ${by.toFixed(0)}px, rgba(255,236,179,.80), rgba(255,184,81,.38) 28%, transparent 100%)`);
-  }
-  // A restrained cyan spill and brighter halo at the authored spire. This is a
-  // lightweight approximation to bloom, not an extra full-screen render pass.
-  if(aetherwell.group){
-   lightProjection.set(0,6.35,0).project(camera);
-   const cx=(lightProjection.x+1)*w/2,cy=(1-lightProjection.y)*h/2;
-   const d=Math.max(1,Math.hypot(camera.position.x,camera.position.y-6.35,camera.position.z));
-   const radius=Math.min(350,Math.max(35,h*9/(2*Math.tan(camera.fov*Math.PI/360)*d)));
-   if(lightProjection.z>=-1&&lightProjection.z<=1&&cx>=-radius&&cx<=w+radius&&cy>=-radius&&cy<=h+radius){
-    gradients.unshift(`radial-gradient(circle ${(radius*.30).toFixed(0)}px at ${cx.toFixed(0)}px ${cy.toFixed(0)}px, rgba(215,252,255,.88), rgba(73,199,255,.39) 35%, transparent 100%)`);
-    gradients.push(`radial-gradient(circle ${radius.toFixed(0)}px at ${cx.toFixed(0)}px ${cy.toFixed(0)}px, rgba(40,184,255,.40), rgba(28,129,231,.15) 42%, transparent 100%)`);
+  const hasCrystal=!!aetherwell.group;crystalLight.visible=hasCrystal;
+  if(hasCrystal!==crystalGlows){crystalGlows=hasCrystal;for(const g of lampGlows)g.geometry.setDrawRange(0,nightLamps.length+(hasCrystal?1:0))}
+  const w=viewW||host.clientWidth,h=viewH||host.clientHeight;
+  const haloView=[camera.position.x,camera.position.y,camera.position.z,focus.x,focus.z,pitch,angle,w,h,hasCrystal?1:0].map(n=>Math.round(n*100)/100).join(',');
+  if(w&&h&&haloView!==lastHaloView){
+   lastHaloView=haloView;
+   function placeHalo(el,x,y,z,crystal,ground=false){
+    haloProjection.set(x,y,z).project(camera);
+    const px=(haloProjection.x+1)*w/2,py=(1-haloProjection.y)*h/2;
+    const dist=Math.max(1,Math.hypot(camera.position.x-x,camera.position.y-y,camera.position.z-z));
+    const spill=Math.min(crystal?350:300,Math.max(crystal?35:25,h*(crystal?9:7)/(2*Math.tan(camera.fov*Math.PI/360)*dist)));
+    const radius=ground?spill:Math.max(18,spill*(crystal?.30:.26));
+    const visible=haloProjection.z>=-1&&haloProjection.z<=1&&px>=-radius&&px<=w+radius&&py>=-radius&&py<=h+radius;
+    if(el.hidden===visible)el.hidden=!visible;
+    if(visible){const transform=`translate3d(${(px-64).toFixed(1)}px,${(py-64).toFixed(1)}px,0) scale(${(radius/64).toFixed(3)})`;if(el.style.transform!==transform)el.style.transform=transform}
    }
+   for(let i=0;i<nightLamps.length;i++){const l=nightLamps[i];placeHalo(spills[i],l.x,.08,l.z,false,true);placeHalo(halos[i],l.x,l.y,l.z,false)}
+   if(hasCrystal)placeHalo(crystalHalo,0,6.35,0,true);else crystalHalo.hidden=true;
   }
-  gradients.push('linear-gradient(rgba(14,29,62,.08),rgba(14,29,62,.08))');
-  nightOverlay.style.background=gradients.join(',');
+  const signature=Math.round(focus.x*100)+','+Math.round(focus.z*100);
+  if(signature===lastNightFocus)return;lastNightFocus=signature;
+  // A linear scan avoids sorting and allocating an array every moving frame.
+  let first=null,second=null,d1=Infinity,d2=Infinity;
+  for(const lamp of nightLamps){const d=(lamp.x-focus.x)**2+(lamp.z-focus.z)**2;
+   if(d<d1){second=first;d2=d1;first=lamp;d1=d}else if(d<d2){second=lamp;d2=d}
+  }
+  if(first)localLights[0].position.set(first.x,first.y,first.z);if(second)localLights[1].position.set(second.x,second.y,second.z);
  }
  setNight(false);
  // Install page-lifetime listeners only after all required assets are ready.
@@ -3021,7 +3041,7 @@ void main(){
  }catch(error){
   renderer.domElement.removeEventListener('webglcontextlost',onLost);
   renderer.domElement.removeEventListener('webglcontextrestored',onRestore);
-  renderer.forceContextLoss?.();renderer.dispose();renderer.domElement.remove();host.querySelector('.plaza-night-lights')?.remove();labels.replaceChildren();
+  renderer.forceContextLoss?.();renderer.dispose();renderer.domElement.remove();host.querySelector('.plaza-night-halos')?.remove();labels.replaceChildren();
   throw error;
  }finally{clearTimeout(timer)}
 }};
