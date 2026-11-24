@@ -269,7 +269,7 @@ t('the room handler seeds the crowd before the reset re-pushes it',()=>{
 });
 
  t('the ticker rides the existing session interval, not a new timer',()=>{
- assert.ok(social.includes('setInterval(()=>{try{plazaBotsTick()}catch{}'),'the2 s session loop drives the crowd');
+ assert.ok(social.includes('setInterval(()=>{syncPlazaNight();try{plazaBotsTick()}catch{}'),'the 2 s session loop drives the night schedule and the crowd');
  assert.equal((social.match(/setInterval\(/g)||[]).length,5,'no extra setInterval was added for the crowd (cooldown, session, battle, training, and the one session loop that hosts the tick)');
  assert.ok(!/setInterval\(plazaBotsTick/.test(social),'plazaBotsTick is never its own timer');
  assert.ok(/for\(const p of app\.players\.values\(\)\)app\.scene\.putPlayer\(p\);\s*plazaBotsResync\(\);/.test(social),'enter seeds the solo crowd');

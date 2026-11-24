@@ -2,11 +2,19 @@
 
 ## Prontera night mode (haven-v468)
 
-In the plaza, open **More → Night mode**; toggle it again to restore the
-original daytime appearance. This is a manual, device/browser-local preference
-(`pg_plaza_night`), remembered across reloads when local storage is available.
-It is not a clock cycle, does not affect the field, is not part of a character
-save and sends no room messages, so other players can choose independently.
+The plaza automatically switches to day at **07:00** and night at **20:00**
+UTC+8 (Malaysia/Singapore), the same schedule for everyone. The existing
+`/api/me` session probe and poll carry server time; no extra request or room
+message is needed. Until a server response is available, or offline after a
+reload, the device clock is the fallback. Between server samples the browser
+advances the last clock offset, and checks it on tab resume and while running.
+
+**Display → Social Hub night mode** temporarily overrides the current appearance
+in this browser until the next scheduled transition; the switch can be used in
+the hub or field. Overrides survive reloads when local storage is available.
+Old `pg_plaza_night` choices are migrated as temporary overrides, rather than
+permanently disabling the automatic cycle. The lighting is cosmetic, does not
+affect the field or character save, and adds no room traffic.
 
 The existing fishing-bridge lanterns and DigiPet service lamps glow at night;
 four additional lamps sit on the already-blocked DigiPet farm fence corners.

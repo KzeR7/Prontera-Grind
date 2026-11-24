@@ -916,15 +916,15 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="preload" href="assets/ui/fonts/font-5.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-6.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-7.ttf" as="font" type="font/ttf" crossorigin>
-<link rel="stylesheet" href="assets/ui/eclipse.css?v=476">
-<link rel="stylesheet" href="assets/ui/mobile.css?v=476">
-<link rel="stylesheet" href="assets/ui/mastery-titles.css?v=476">
+<link rel="stylesheet" href="assets/ui/eclipse.css?v=478">
+<link rel="stylesheet" href="assets/ui/mobile.css?v=478">
+<link rel="stylesheet" href="assets/ui/mastery-titles.css?v=478">
 <script src="assets/ui/mobile.js?v=274"></script>
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
-<link rel="stylesheet" href="assets/social.css?v=476">
-<link rel="stylesheet" href="assets/raid.css?v=476">
+<link rel="stylesheet" href="assets/social.css?v=478">
+<link rel="stylesheet" href="assets/raid.css?v=478">
 <link rel="stylesheet" href="assets/social-battle.css?v=393">
-  <link rel="stylesheet" href="assets/social-fishing.css?v=476"><link rel="stylesheet" href="assets/friends.css?v=273">
+  <link rel="stylesheet" href="assets/social-fishing.css?v=478"><link rel="stylesheet" href="assets/friends.css?v=273">
 <link rel="stylesheet" href="assets/adventure-guide.css?v=450">
 </head>
 <body>
@@ -1055,10 +1055,10 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <div id="tooltip"></div>
 <link rel="stylesheet" href="assets/wardrobe.css?v=138">
 <link rel="stylesheet" href="assets/shop.css?v=318">
-<script src="assets/wardrobe.js?v=476"></script>
+<script src="assets/wardrobe.js?v=478"></script>
 <script src="assets/shop-catalog.js?v=321"></script>
 <script src="assets/fourth-jobs.js?v=179"></script>
-<script src="assets/expanded-jobs.js?v=476"></script>
+<script src="assets/expanded-jobs.js?v=478"></script>
 <script src="assets/ascension.js?v=156"></script>
 <script src="assets/native-mob-heights.js?v=153"></script>
 <script src="assets/native-fields.js?v=197"></script>
@@ -1066,13 +1066,13 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <script src="assets/skill-icons.js?v=130"></script>
 <script src="assets/skill-icons-extra.js?v=207"></script>
 <script src="assets/skill-icons-expanded.js?v=450"></script>
-<script src="assets/mastery-titles.js?v=476"></script>
+<script src="assets/mastery-titles.js?v=478"></script>
 <script src="assets/player-buffs.js?v=450"></script>
 <script src="assets/skill-materials.js?v=220"></script>
 <script src="assets/afterglow-animations.js?v=151"></script>
 <script src="assets/skill-overdrive.js?v=220"></script>
 <script src="assets/ro-fx/index.js?v=414"></script>
-<script src="assets/signature-fx.js?v=476"></script>
+<script src="assets/signature-fx.js?v=478"></script>
 <script src="assets/spirit-spheres.js?v=450"></script>
 <script src="assets/expanded-fx/ninja-throw-fx.js?v=450"></script>
 <script src="assets/expanded-fx/expanded-fx-batch.js?v=450"></script>
@@ -1082,13 +1082,13 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <script src="assets/expanded-fx/review-polish-fx.js?v=450"></script>
 <script src="assets/expanded-fx/triple-old-no-sword.js?v=450"></script>
 <script src="assets/expanded-fx/approved.js?v=450"></script>
-<script src="assets/skill-afterglow.js?v=476"></script>
+<script src="assets/skill-afterglow.js?v=478"></script>
 <script src="assets/boss-fx.js?v=249"></script>
-<script src="assets/raid.js?v=476"></script>
+<script src="assets/raid.js?v=478"></script>
 <script src="assets/pets.js?v=130"></script>
 <script src="assets/bgm-tracks.js?v=206"></script>
 <script src="assets/bgm.js?v=207"></script>
-<script src="assets/combat-audio.js?v=476"></script>
+<script src="assets/combat-audio.js?v=478"></script>
 <script src="assets/class_skins_data.js?v=2"></script>
 <script src="assets/weapon_joints_data.js?v=2"></script>
 <script src="assets/weapons_data.js?v=2"></script>
@@ -1359,7 +1359,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-23 haven-v476 Prontera after dark';
+const BUILD='2026-11-23 haven-v478 Plaza day and night';
 // v364: this write used to sit AFTER the `//` on the BUILD line, so it was part of the comment and
 // never ran - the login card showed an empty #buildTag and there was no way to confirm which file
 // the browser had loaded. It also has to survive the script running before the login card exists.
@@ -5009,6 +5009,14 @@ async function cloudFetch(path,opt){
   try{res=await fetch(cloudUrl(path),init)}
   finally{if(timer!==null){try{clearTimeout(timer)}catch(e){}timer=null}}
   try{if(res&&typeof res==='object')cloudResponseTiming.set(res,{clientRequestAt:requestStartedAt})}catch(e){}
+  // The existing session probe/poll also synchronizes the plaza's cosmetic clock; no extra request.
+  if(path==='/me'&&res&&(res.status===200||res.status===401)){
+    const raw=res.headers?.get?.('X-Server-Now'),serverNow=raw?Number(raw):NaN;
+    if(Number.isFinite(serverNow)&&serverNow>0&&requestStartedAt>=(window.pgPlazaClockAt||0)){
+      window.pgPlazaClockAt=requestStartedAt;window.pgPlazaClockOffset=serverNow-Date.now();
+      window.PGSocial?.syncClock?.();
+    }
+  }
   // v253: one live session per account (functions/api/sessions.js). A 401 while this tab holds a
   // session means another device signed in as this player, so this tab stops instead of grinding
   // a copy nobody will ever see and losing it to the next save conflict.
@@ -10662,6 +10670,8 @@ function screenOptions(){const panel=$('screenOptions');panel.hidden=!panel.hidd
  const pg=window.PGMobile,pgMode=pg?pg.getPhoneLayout():'auto',pgFocus=!!(pg&&pg.fieldOnly()),pgLayout=pgMode==='on'?'Phone':pgMode==='off'?'Desk':'Auto';
  panel.innerHTML=`<div class="pg-sheet-head"><span>Display</span><button type="button" data-pg="close" aria-label="Close display options">✕</button></div>`
   +[['cameraShake','Camera shake'],['dmgShow','Damage numbers'],['auraShow','Character aura'],['chatShow','Chat box'],['feedShow','Activity log'],['labelsShow','Character / monster labels'],['hideUI','Hide all screen UI (Display stays available)']].map(([key,label])=>`<label><input type="checkbox" data-display="${key}" ${key==='hideUI'?S[key]?'checked':'':S[key]!==false?'checked':''}>${label}</label>`).join('')
+  // The plaza preference is browser-local, not part of the character save or room protocol.
+  +`<label><input type="checkbox" data-plaza-night ${window.PGSocial?.getNight?.()!==false?'checked':''} ${window.PGSocial?.setNight?'':'disabled'}>Social Hub night mode <small>(automatic: day 7 AM, night 8 PM UTC+8; changes last until the next switch)</small></label>`
   // v272 (owner): the parked outdoor-terrain preview is a GM/owner tool, not a player
   // setting. Normal accounts do not see the switch; the explicit URL override remains a
   // developer preview path. The reload is still required because the renderer is chosen at boot.
@@ -10707,7 +10717,7 @@ document.addEventListener('input',e=>{
 });
 document.addEventListener('change',e=>{if(e.target.id==='uiScaleSlider'&&S){save();renderScreenOptions()}});
 $('screenBtn').onclick=()=>{if(S)screenOptions()};
-$('screenOptions').onchange=e=>{const key=e.target.dataset.display;
+$('screenOptions').onchange=e=>{if(e.target.hasAttribute('data-plaza-night')){window.PGSocial?.setNight?.(e.target.checked);return}const key=e.target.dataset.display;
   if(key==='nativeFields'){
     if(!S||!S.gm)return;   // the control is GM/owner-only; ignore forged player change events
     // Remember the choice for this tab and reload into it. `nativeFields` in the URL wins, so a
@@ -15331,7 +15341,7 @@ function ensureRaidLightningSheet(){
     for(const tex of raidLightningSheetState.liveTextures)tex.needsUpdate=true;
   };
   img.onerror=()=>{raidLightningSheetState.loading=false;};
-  img.src='assets/refine-fx/title-lightning.webp?v=476';
+  img.src='assets/refine-fx/title-lightning.webp?v=478';
 }
 function makeRaidLightningTexture(colorHex){
   ensureRaidLightningSheet();
@@ -17355,22 +17365,22 @@ setInterval(updateWatch,60000);
 // be hours old while the player was on another tab, and the check is a 60-byte text file.
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&(pendingUpdateBuild||Date.now()-PAGE_STARTED_AT>30000))updateWatch()});
 </script>
-<script src="assets/wardrobe-ui.js?v=476"></script>
+<script src="assets/wardrobe-ui.js?v=478"></script>
 <script src="assets/shop.js?v=321"></script>
 <script src="assets/friends.js?v=273"></script>
-<script src="assets/digimon/roster.js?v=476"></script>
-<script src="assets/digimon/base-stats.js?v=476"></script>
-<script src="assets/social-rules.js?v=476"></script>
-<script src="assets/social-poker.js?v=476"></script>
-<script src="assets/digimon-sanctuary.js?v=476"></script>
+<script src="assets/digimon/roster.js?v=478"></script>
+<script src="assets/digimon/base-stats.js?v=478"></script>
+<script src="assets/social-rules.js?v=478"></script>
+<script src="assets/social-poker.js?v=478"></script>
+<script src="assets/digimon-sanctuary.js?v=478"></script>
 <script src="assets/digimon-battle.js?v=393"></script>
-<script src="assets/social-digimon.js?v=476"></script>
+<script src="assets/social-digimon.js?v=478"></script>
 <script src="assets/social-gym-redesign.js?v=393"></script>
 <script src="assets/social-pond-design.js?v=393"></script>
 <script src="assets/social-title-art.js?v=450"></script>
-<script src="assets/social-scene.js?v=476"></script>
-<script src="assets/social-fishing.js?v=476"></script>
-<script src="assets/plaza-bots.js?v=476"></script>
+<script src="assets/social-scene.js?v=478"></script>
+<script src="assets/social-fishing.js?v=478"></script>
+<script src="assets/plaza-bots.js?v=478"></script>
 <script src="assets/adventure-guide.js?v=450"></script>
-<script src="assets/social.js?v=476"></script></body>
+<script src="assets/social.js?v=478"></script></body>
 </html>

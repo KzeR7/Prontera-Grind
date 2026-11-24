@@ -450,7 +450,7 @@ function ensureRaidLightningSheet(){
     for(const tex of raidLightningSheetState.liveTextures)tex.needsUpdate=true;
   };
   img.onerror=()=>{raidLightningSheetState.loading=false;};
-  img.src='assets/refine-fx/title-lightning.webp?v=476';
+  img.src='assets/refine-fx/title-lightning.webp?v=478';
 }
 function makeRaidLightningTexture(colorHex){
   ensureRaidLightningSheet();

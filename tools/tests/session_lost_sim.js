@@ -80,6 +80,7 @@ const PW = 'SyntheticPreview123!';
       const r = await fetch(base + '/api/me');
       assert.equal(r.status, 401);
       assert.equal(r.headers.get('x-session'), 'none');
+      assert.ok(Math.abs(Number(r.headers.get('x-server-now')) - Date.now()) < 5000, 'unauthenticated probe carries server time');
     });
 
     await ta('a replaced token -> 401 X-Session: ended', async () => {
@@ -91,6 +92,7 @@ const PW = 'SyntheticPreview123!';
     await ta('the newest token still works', async () => {
       const r = await fetch(base + '/api/me', { headers: { cookie: 'pg_session=' + newer } });
       assert.equal(r.status, 200);
+      assert.ok(Math.abs(Number(r.headers.get('x-server-now')) - Date.now()) < 5000, 'authenticated session carries server time');
       assert.equal((await r.json()).u, u);
     });
 

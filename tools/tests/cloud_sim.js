@@ -170,6 +170,7 @@ function harness(opts = {}) {
   sandbox.$ = sandbox.$;
   sandbox.__timers = timers;   // the parked setTimeout queue settle() drains
   sandbox.globalThis = sandbox;
+  sandbox.window = sandbox;
   sandbox.S = state.S;                 // the game state the block mutates
   sandbox.currentUser = null;          // and the account name it works against
   sandbox.BUILD = '2026-10-06 grind-test';
@@ -246,6 +247,20 @@ await T('an API that answers 401 turns the cloud on and invites the player to si
   assert.strictEqual(await h.sandbox.cloudProbe(), false, 'not signed in yet');
   assert.strictEqual(h.sandbox.CLOUD.api, true);
   assert.match(h.els.get('loginCloud').textContent, /register or sign in/i);
+});
+
+await T('session responses synchronize plaza time without another request', async () => {
+  let stamp=Date.now()+3600000, status=401, notified=0;
+  const h=harness({fetch: async () => ({status,ok:status===200,headers:{get:k=>k.toLowerCase()==='x-server-now'?String(stamp):null}})});
+  h.sandbox.PGSocial={syncClock(){notified++}};
+  await h.sandbox.cloudFetch('/me');
+  assert.ok(Math.abs(h.sandbox.pgPlazaClockOffset-3600000)<1000);
+  assert.equal(notified,1);assert.equal(h.calls.length,1);
+  status=200;stamp=Date.now()-3600000;await h.sandbox.cloudFetch('/me');
+  assert.ok(Math.abs(h.sandbox.pgPlazaClockOffset+3600000)<1000);
+  assert.equal(notified,2);assert.equal(h.calls.length,2);
+  stamp=NaN;await h.sandbox.cloudFetch('/me');assert.equal(notified,2,'bad clock headers are ignored');
+  status=503;stamp=Date.now();await h.sandbox.cloudFetch('/me');assert.equal(notified,2,'errors do not synchronize');
 });
 
 await T('a live session cookie is not a door: every load stops at the login card (v83 owner request)', async () => {

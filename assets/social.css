@@ -1212,4 +1212,3 @@ body.social-open #renderNotice{display:none}
 #socialScene.plaza-night::before{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:rgba(18,30,61,.56);mix-blend-mode:multiply}
 .plaza-night-lights{position:absolute;inset:0;z-index:2;pointer-events:none;mix-blend-mode:screen}
 .plaza-night-lights[hidden]{display:none}
-#socialMorePanel [data-hub-night][aria-pressed="true"]{border-color:#e4bd71;color:#ffe2a7}
