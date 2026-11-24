@@ -2236,7 +2236,7 @@ function renderPartyPanel(){
   worldNotice(side==='left'?'Walking to the ring stairs - press Enter PvP ring when you arrive.':'Walking to the east side of the ring - press Enter PvP ring when you arrive.');
  };
  const acceptBtn=$id('socialPartyAcceptBtn');
- if(acceptBtn)acceptBtn.onclick=()=>{send({type:'party_accept'});partySendProfile();app.partyInvite=null;syncPartyChrome();renderPartyPanel()};
+ if(acceptBtn)acceptBtn.onclick=()=>{send({type:'party_accept'});partySendProfile();app.partyInvite=null;syncPartyChrome();renderPartyPanel();if(globalThis.PGRaid&&!globalThis.PGRaid.raid.on){try{const lobby=$id('raidLobby');if(lobby&&lobby.hidden)globalThis.PGRaid.showLobby('party');}catch{}}};
  const declineBtn=$id('socialPartyDeclineBtn');
  if(declineBtn)declineBtn.onclick=()=>{send({type:'party_decline'});app.partyInvite=null;syncPartyChrome();renderPartyPanel()};
  const mute=$id('socialPartyMute');if(mute)mute.onchange=()=>{if(typeof S==='object'&&S){S.plazaPartyMute=mute.checked;if(typeof save==='function')save()}if(mute.checked&&app.partyInvite){send({type:'party_decline'});app.partyInvite=null;syncPartyChrome()}};
@@ -2265,7 +2265,7 @@ function syncPartyChrome(){
   partyHud.innerHTML='<div class="party-hud-head"><i class="party-hud-ring" aria-hidden="true"></i><b>Party</b><small>'+party.members.length+'/3</small></div><ul>'+party.members.map(m=>'<li'+(m.id===party.leader?' class="is-leader"':'')+'><i></i><span>'+escape(m.name)+(m.id===(app.room?app.id:SOLO_ID)?' (you)':'')+'</span><em>'+escape(m.form||'')+'</em></li>').join('')+'</ul>';
  }else{partyHud.hidden=true;partyHud.replaceChildren()}
 }
-partyToast.onclick=e=>{const a=e.target.closest('[data-party-toast]');if(!a)return;if(a.dataset.partyToast==='accept'){send({type:'party_accept'});partySendProfile()}else send({type:'party_decline'});app.partyInvite=null;syncPartyChrome();renderPartyPanel()};
+partyToast.onclick=e=>{const a=e.target.closest('[data-party-toast]');if(!a)return;const isAccept=a.dataset.partyToast==='accept';if(isAccept){send({type:'party_accept'});partySendProfile()}else send({type:'party_decline'});app.partyInvite=null;syncPartyChrome();renderPartyPanel();if(isAccept&&globalThis.PGRaid&&!globalThis.PGRaid.raid.on){try{const lobby=$id('raidLobby');if(lobby&&lobby.hidden)globalThis.PGRaid.showLobby('party');}catch{}} };
 // v355: plaza mini-map + full map. The Social Hub never had a spatial overview; this paints the
 // shared social-rules geometry (lake, bridge, paths, buildings, gym, farm, ring, poker tables)
 // plus every live player, colour-coded by relationship and activity. The small corner map is a
@@ -2495,7 +2495,7 @@ function receive(m){
  if(m.type==='battle_result'){receiveBattleResult(m);return}
  if(m.type==='battle_error'){app.battleIntent=null;battleOffer=null;renderPvpDialog();worldNotice(m.message||'DigiPet battle action failed.');return}
  if(m.type==='pve_end'){app.battleIntent=null;worldNotice(m.reason==='defeat'?(m.mode==='boss'?'The raid boss won this time. Train up and challenge it again.':'Your partner fainted. Feed it and try grinding again.'):m.reason==='exhausted'?'Grinding stopped.':m.reason==='complete'?(m.mode==='boss'?'Boss raid cleared! Loot paid out.':'Field run complete! A very strong partner.'):'Grinding stopped.');renderBattleHUD();renderActivityPanel(true);/* v384: a run the player stopped by hand does not start again by itself (v371 intent; only local practice honoured it) */if(m.reason!=='stopped')repeatPveRun();return}
- if(m.type==='party'){const p=m.party;if(!p||p.members.some(x=>x.id===(app.room?app.id:SOLO_ID))){app.party=p;if(p){app.partyInvite=null;if(typeof S==='object'&&S)send({type:'raid_ready',cls:S.cls||'Adventurer',lv:S.lv||150,sex:S.sex==='f'?'f':'m'})}syncPartyChrome();renderPartyPanel();if(globalThis.PGRaid&&!$id('raidLobby')?.hidden)globalThis.PGRaid.renderLobby()}return}
+ if(m.type==='party'){const p=m.party;if(!p||p.members.some(x=>x.id===(app.room?app.id:SOLO_ID))){const prevParty=app.party;const prevSize=prevParty&&Array.isArray(prevParty.members)?prevParty.members.length:0;const wasInParty=!!(prevParty&&p&&prevParty.id===p.id);app.party=p;if(p){app.partyInvite=null;if(typeof S==='object'&&S)send({type:'raid_ready',cls:S.cls||'Adventurer',lv:S.lv||150,sex:S.sex==='f'?'f':'m'})}syncPartyChrome();renderPartyPanel();if(globalThis.PGRaid){try{const lobbyEl=$id('raidLobby');const isInRaid=globalThis.PGRaid.raid&&globalThis.PGRaid.raid.on;if(!isInRaid){if(lobbyEl&&lobbyEl.hidden&&p&&p.members&&p.members.length>=2&&(!wasInParty||prevSize<p.members.length)){globalThis.PGRaid.showLobby('party',globalThis.PGRaid.raid.lobbyDungeon||'astral')}else if(lobbyEl&&!lobbyEl.hidden){globalThis.PGRaid.renderLobby()}}}catch{}} }return}
  if(m.type==='party_roster'){app.partyRoster=Array.isArray(m.parties)?m.parties:[];return}
  if(m.type==='party_invite'){if(partyMuteOn()){send({type:'party_decline'});return}app.partyInvite=m;worldNotice((m.from?.name||'A trainer')+' invites you to a party.');syncPartyChrome();if(!$id('socialPartyPanel').hidden)renderPartyPanel();return}
  if(m.type==='party_error'){worldNotice(m.message||'Party action failed.');return}
