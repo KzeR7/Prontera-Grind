@@ -1,7 +1,16 @@
 const assert=require('node:assert/strict'),fs=require('node:fs');const {JSDOM}=require('jsdom');
 const dom=new JSDOM('<div id="view"><div id="feedWrap"></div><div id="minimapTools"><button id="socialHubBtn" type="button" class="minimap-tool-btn social-hub-btn"><span class="minimap-tool-label">Social</span><b id="socialHubBadge" class="minimap-tool-badge social-hub-badge" hidden>0</b></button></div></div>',{url:'http://localhost/',runScripts:'outside-only'}),w=dom.window;
 Object.assign(w,{CLOUD:{on:false,user:null},S:{cls:'Novice',eq:{}},tabs:[],wardrobeAppearance:()=>({version:1,sex:'m'}),logShown:()=>[],openTab:()=>{},HUNT_TITLES:[{id:'poring',name:'Poring Hunter'}],titleUnlocked:()=>true,setInterval:fn=>{if(fn.name==='worldTrainingTick')w.trainingTick=fn;else if(fn.name==='battleUITick')w.battleTick=fn;else w.sessionTick=fn},PGSocialScene:{}});
-w.localStorage.setItem('pg_plaza_night','1'); // persisted across a page reload
+// Run the actual social boot with fresh storage and each previously saved choice.
+if(!process.env.PG_NIGHT_CASE){
+ const {spawnSync}=require('node:child_process');
+ for(const choice of ['0','1','override','expired','fresh-day']){const r=spawnSync(process.execPath,[__filename],{env:{...process.env,PG_NIGHT_CASE:choice},encoding:'utf8'});assert.equal(r.status,0,'saved night preference '+choice+' failed: '+r.stderr+'\n'+r.stdout)}
+}
+w.pgPlazaClockOffset=Date.parse(process.env.PG_NIGHT_CASE==='fresh-day'?'2026-11-23T02:00:00Z':'2026-11-23T12:30:00Z')-Date.now(); // UTC+8 day or night
+const nightChoice=process.env.PG_NIGHT_CASE;
+if(nightChoice==='0'||nightChoice==='1')w.localStorage.setItem('pg_plaza_night',nightChoice);
+if(nightChoice==='override'||nightChoice==='expired')w.localStorage.setItem('pg_plaza_night_override',JSON.stringify({night:false,until:Date.parse(nightChoice==='override'?'2026-11-23T23:00:00Z':'2026-11-23T12:00:00Z')}));
+const initialNight=nightChoice!=='0'&&nightChoice!=='override'&&nightChoice!=='fresh-day';
 w.eval(fs.readFileSync('assets/digimon/roster.js','utf8'));w.eval(fs.readFileSync('assets/digimon/base-stats.js','utf8'));w.eval(fs.readFileSync('assets/social-rules.js','utf8'));w.eval(fs.readFileSync('assets/digimon-sanctuary.js','utf8'));w.eval(fs.readFileSync('assets/digimon-battle.js','utf8'));w.eval(fs.readFileSync('assets/social.js','utf8'));
 assert.equal(w.document.getElementById('socialMin').tagName,'SPAN','minimize is a line in the header, without a button box');assert.equal(w.document.getElementById('socialResize').tagName,'SPAN','resize uses the border, without a separate button');
 const app=w.PGSocial.app;app.user='previous';app.messages=[{channel:'whisper',name:'Private',body:'Do not leak'}];app.socket=null;app.room=1;app.wanted=true;app.muted.add(7);w.sessionTick();assert.equal(app.user,null);assert.equal(app.messages.length,0);assert.equal(app.muted.size,0);assert.equal(app.room,0);assert(w.document.getElementById('socialHub').hidden);
@@ -119,15 +128,42 @@ w.PGSocial.leave();w.CLOUD.on=false;w.CLOUD.user=null;w.currentUser='local_hero'
 let sceneCallbacks=null;const scenePlayers=new Map(),nightApplied=[];
 w.PGSocialScene={create:async(_host,_labels,cb)=>{sceneCallbacks=cb;return{active:false,setNight(v){nightApplied.push(v)},cameraState:{angle:0,pitch:48,distance:48,panX:0,panZ:0,follow:true},setCamera:v=>{cameraValues=v},resetCamera:()=>reset++,clearPlayers(){scenePlayers.clear()},putPlayer(p){scenePlayers.set(p.id,{...p,path:(p.path||[]).map(pt=>({...pt}))})},removePlayer(id){scenePlayers.delete(id)}}}};
 app.scene=null;
+// Display can change the preference before a plaza scene has ever been created.
+w.PGSocial.setNight(!initialNight);assert.equal(w.PGSocial.getNight(),!initialNight);
+w.PGSocial.setNight(initialNight);assert.equal(w.PGSocial.getNight(),initialNight);
 w.S.lv=150;w.S.auraShow=true;w.moveSpd=()=>9.5;w.TABS={equip:['','Equipment']};
 (async()=>{
  w.S.digimonSanctuary={v:1,partners:{agumon:{stats:{power:3},training:{stat:'power',ends:1}}}};
  await w.PGSocial.enter();
- // Local visual setting: toolbar More exposes an accessible toggle; it never sends a room message.
- {const d=w.document;const before=socket.sent.length;assert.equal(nightApplied.at(-1),true,'saved browser preference is applied when a new scene opens');
-  d.getElementById('socialMore').click();const toggle=d.querySelector('[data-hub-night]');assert(toggle);assert.equal(toggle.getAttribute('aria-pressed'),'true');
-  toggle.click();assert.equal(toggle.getAttribute('aria-pressed'),'false');assert.equal(w.localStorage.getItem('pg_plaza_night'),'0');assert.equal(nightApplied.at(-1),false);assert.equal(socket.sent.length,before);
-  d.querySelector('[data-hub-close]').click();d.getElementById('socialMore').click();const again=d.querySelector('[data-hub-night]');assert.equal(again.getAttribute('aria-pressed'),'false');again.click();assert.equal(w.localStorage.getItem('pg_plaza_night'),'1');assert.equal(nightApplied.at(-1),true);assert.equal(socket.sent.length,before);again.click();assert.equal(nightApplied.at(-1),false);d.querySelector('[data-hub-close]').click();}
+ // Local visual setting: the Display-facing API preserves choices and sends no room messages.
+ {const d=w.document;const before=socket.sent.length;assert.equal(nightApplied.at(-1),initialNight,'fresh browsers default to night; saved day/night applies at scene creation');
+  assert.equal(w.PGSocial.getNight(),initialNight);d.getElementById('socialMore').click();assert.equal(d.querySelector('[data-hub-night]'),null,'night control moved out of More');d.querySelector('[data-hub-close]').click();
+  w.PGSocial.setNight(false);assert.equal(JSON.parse(w.localStorage.getItem('pg_plaza_night_override')).night,false);assert.equal(nightApplied.at(-1),false);assert.equal(w.PGSocial.getNight(),false);
+  w.PGSocial.setNight(true);assert.equal(JSON.parse(w.localStorage.getItem('pg_plaza_night_override')).night,true);assert.equal(nightApplied.at(-1),true);assert.equal(w.PGSocial.getNight(),true);
+  // Storage denial must not break a live toggle; it remains usable for this page.
+  const store=w.localStorage;Object.defineProperty(w,'localStorage',{configurable:true,value:{setItem(){throw Error('storage denied')}}});
+  w.PGSocial.setNight(false);assert.equal(w.PGSocial.getNight(),false);assert.equal(nightApplied.at(-1),false);
+  Object.defineProperty(w,'localStorage',{configurable:true,value:store});assert.equal(socket.sent.length,before,'visual preference sends no socket messages');}
+ // UTC+8 boundaries, live scene, a temporary override, a background resume and clock correction.
+ {const d=w.document,before=socket.sent.length,moveClock=iso=>{w.pgPlazaClockOffset=Date.parse(iso)-Date.now();w.PGSocial.syncClock()};
+  // Expire the previous override, then start just before the following morning.
+  moveClock('2026-11-23T23:00:00Z');
+  moveClock('2026-11-24T22:59:59Z');assert.equal(w.PGSocial.getNight(),true,'06:59:59 UTC+8 is night');
+  moveClock('2026-11-24T23:00:00Z');assert.equal(w.PGSocial.getNight(),false,'07:00 UTC+8 is day');assert.equal(nightApplied.at(-1),false);
+  w.PGSocial.setNight(true);const saved=JSON.parse(w.localStorage.getItem('pg_plaza_night_override'));assert.equal(saved.until,Date.parse('2026-11-25T12:00:00Z'),'override expires at 20:00 UTC+8');
+  moveClock('2026-11-25T11:59:59Z');assert.equal(w.PGSocial.getNight(),true,'override survives until boundary');
+  w.PGSocial.setNight(false);assert.equal(nightApplied.at(-1),false,'manual day is applied before nightfall');
+  // Simulate a throttled hidden tab; visibility resumes the scheduled appearance.
+  w.pgPlazaClockOffset=Date.parse('2026-11-25T12:00:00Z')-Date.now();d.dispatchEvent(new w.Event('visibilitychange'));assert.equal(w.PGSocial.getNight(),true,'20:00 UTC+8 is night');assert.equal(nightApplied.at(-1),true,'nightfall updates the live scene');assert.equal(w.localStorage.getItem('pg_plaza_night_override'),null);
+  moveClock('2026-11-25T23:00:00Z');assert.equal(w.PGSocial.getNight(),false,'next morning returns to day');assert.equal(nightApplied.at(-1),false);
+  // Normal running checks the clock on the existing session timer, without a fresh clock response.
+  w.pgPlazaClockOffset=Date.parse('2026-11-26T12:00:00Z')-Date.now();w.sessionTick();assert.equal(nightApplied.at(-1),true,'existing timer applies nightfall');
+  delete w.pgPlazaClockOffset;w.PGSocial.setNight(false);
+  assert.equal(JSON.parse(w.localStorage.getItem('pg_plaza_night_override')).provisional,true,'offline choice uses provisional expiry');
+  moveClock('2026-11-27T02:00:00Z');assert.equal(JSON.parse(w.localStorage.getItem('pg_plaza_night_override')).until,Date.parse('2026-11-27T12:00:00Z'),'first server clock rebases the expiry');
+  assert.equal(socket.sent.length,before,'clock changes add no socket traffic');}
+
+
  assert.equal(w.S.digimonSanctuary.partners.agumon.stats.power,3,'legacy completed progress is preserved');assert.equal(w.S.digimonSanctuary.partners.agumon.training,null,'old pending timer cannot award offline progress');delete w.S.digimonSanctuary;
  assert.equal(app.players.size,1,'offline/reconnecting plaza spawns solo character');
  assert.equal(scenePlayers.get(0).name,'local_hero');assert.equal(sceneCallbacks.self(),0);

@@ -247,6 +247,17 @@ if (JSDOM) {
     assert.equal(rt, '1.5,true,1.15,false', 'save round-trip keeps the scale (got ' + rt + ')');
   });
 
+  test('Display exposes the local Social Hub night option without modifying the save', () => {
+    let night=true,updates=[];window.PGSocial={getNight:()=>night,setNight:v=>{night=v;updates.push(v)}};
+    ev('renderScreenOptions()');let check=doc.querySelector('#screenOptions [data-plaza-night]');
+    assert.ok(check&&check.checked&&!check.disabled,'night is checked by default');
+    const before=ev('JSON.stringify(S)');check.checked=false;check.dispatchEvent(new window.Event('change',{bubbles:true}));
+    assert.deepEqual(updates,[false]);assert.equal(ev('JSON.stringify(S)'),before,'setting is not a character save change');
+    ev('renderScreenOptions()');check=doc.querySelector('#screenOptions [data-plaza-night]');assert.equal(check.checked,false,'display redraw keeps day');
+    check.checked=true;check.dispatchEvent(new window.Event('change',{bubbles:true}));assert.deepEqual(updates,[false,true]);
+    delete window.PGSocial;ev('renderScreenOptions()');assert.equal(doc.querySelector('#screenOptions [data-plaza-night]').disabled,true,'missing social module cannot misrepresent a working control');
+  });
+
   test('Display slider reflects, applies and saves the selected scale', () => {
     ev('S.uiScaleAuto=false;S.uiScale=1.15;applyUiScale();renderScreenOptions();');
     let slider=doc.querySelector('#uiScaleSlider');

@@ -57,13 +57,16 @@ an exhaustive test selection. Follow dependencies across systems and see
 
 ## Prontera night mode
 
-`assets/social.js` owns the local-only `pg_plaza_night` More-panel switch and
-applies it after scene creation. `assets/social-scene.js` owns the night tint,
+`assets/social.js` schedules day at 07:00 and night at 20:00 UTC+8, applies
+changes to the active scene and offers a browser-local override until the next
+transition. `index.html` exposes the switch in Display and uses the existing
+`/api/me` response header for clock synchronization (device clock fallback offline).
+`assets/social-scene.js` owns the night tint,
 existing bridge/service lantern anchors, fence-corner and central garden lamps, four nearest pooled
 point lights, directional moonlight, crystal emission/point light, a bounded batch
 of night-only fireflies, an independent animated pond-shaped night glow, and
 camera-projected ambient glows for unlit materials;
-the moonlight overlay CSS is in `assets/social.css`. No server protocol or movement rules change.
+the moonlight overlay CSS is in `assets/social.css`. No plaza room protocol or movement rules change.
 See [Social hub](SOCIAL-HUB.md#prontera-night-mode-haven-v468) and
 `tools/tests/social_scene_sim.js` / `social_ui_sim.js`.
 

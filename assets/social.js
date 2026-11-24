@@ -122,9 +122,41 @@ hub.querySelector('#socialLeave').innerHTML='<span class="ad-legacy-icon" aria-h
 
 const morePanel=document.createElement('section');morePanel.id='socialMorePanel';morePanel.hidden=true;morePanel.setAttribute('aria-label','Hub and field tools');hub.append(morePanel);
 // Visual-only browser preference: never stored in a character save or sent to the room.
-let plazaNight=false;try{plazaNight=localStorage.getItem('pg_plaza_night')==='1'}catch{}
-function updateNightButton(){const b=morePanel.querySelector('[data-hub-night]');if(b){b.setAttribute('aria-pressed',String(plazaNight));b.textContent=plazaNight?'☾ Night mode: On':'☾ Night mode: Off'}}
-function setPlazaNight(value){plazaNight=!!value;try{localStorage.setItem('pg_plaza_night',plazaNight?'1':'0')}catch{}app.scene?.setNight?.(plazaNight);updateNightButton()}
+// UTC+8 is fixed for everyone, regardless of the browser's time zone. /api/me updates
+// the offset on existing requests; while offline or before synchronization use device time.
+const PLAZA_DAY=86400000,PLAZA_ZONE=8*3600000,PLAZA_OVERRIDE='pg_plaza_night_override';
+function plazaNow(){return Date.now()+(Number.isFinite(window.pgPlazaClockOffset)?window.pgPlazaClockOffset:0)}
+function plazaPeriod(now){const local=now+PLAZA_ZONE,day=Math.floor(local/PLAZA_DAY)*PLAZA_DAY,within=local-day;
+ const night=within<7*3600000||within>=20*3600000;
+ const next=within<7*3600000?day+7*3600000:within<20*3600000?day+20*3600000:day+PLAZA_DAY+7*3600000;
+ return {night,next:next-PLAZA_ZONE};}
+let plazaOverride=null,plazaNight=plazaPeriod(plazaNow()).night;
+try{
+ const saved=JSON.parse(localStorage.getItem(PLAZA_OVERRIDE)||'null');
+ if(saved&&typeof saved.night==='boolean'&&Number.isFinite(saved.until)&&saved.until>plazaNow()&&saved.until<=plazaNow()+PLAZA_DAY)plazaOverride=saved;
+ // The old persistent switch becomes a temporary override rather than disabling the schedule forever.
+ const legacy=localStorage.getItem('pg_plaza_night');
+ if(!saved&&(legacy==='0'||legacy==='1'))plazaOverride={night:legacy==='1',until:plazaPeriod(plazaNow()).next,provisional:!Number.isFinite(window.pgPlazaClockOffset)};
+ localStorage.removeItem('pg_plaza_night');
+ if(plazaOverride)localStorage.setItem(PLAZA_OVERRIDE,JSON.stringify(plazaOverride));else localStorage.removeItem(PLAZA_OVERRIDE);
+}catch{}
+function syncPlazaNight(){
+ const now=plazaNow();if(plazaOverride&&now>=plazaOverride.until){plazaOverride=null;try{localStorage.removeItem(PLAZA_OVERRIDE)}catch{}}
+ const night=plazaOverride?plazaOverride.night:plazaPeriod(now).night;
+ if(night!==plazaNight){plazaNight=night;app.scene?.setNight?.(night)}
+ const control=document.querySelector('#screenOptions [data-plaza-night]');if(control)control.checked=plazaNight;
+}
+function setPlazaNight(value){plazaOverride={night:!!value,until:plazaPeriod(plazaNow()).next,provisional:!Number.isFinite(window.pgPlazaClockOffset)};try{localStorage.setItem(PLAZA_OVERRIDE,JSON.stringify(plazaOverride))}catch{}syncPlazaNight()}
+function syncPlazaClock(){
+ // A choice made before the first server response used the device's clock for its
+ // expiry. Rebase it once so a mis-set device cannot keep the override indefinitely.
+ if(plazaOverride?.provisional&&Number.isFinite(window.pgPlazaClockOffset)){
+  plazaOverride.until=plazaPeriod(plazaNow()).next;plazaOverride.provisional=false;
+  try{localStorage.setItem(PLAZA_OVERRIDE,JSON.stringify(plazaOverride))}catch{}
+ }
+ syncPlazaNight();
+}
+syncPlazaNight();
 
 const fieldMonitor=document.createElement('section');fieldMonitor.id='socialFieldMonitor';fieldMonitor.setAttribute('aria-label','Background field activity');fieldMonitor.innerHTML='<span id="socialFieldState">Field not started</span><span><b id="socialFieldExp">—</b><small>EXP/min</small></span><span><b id="socialFieldZeny">—</b><small>Zeny/min</small></span><span id="socialFieldLoot" class="social-field-loot"></span>';hub.append(fieldMonitor);
 /* v384 (owner screenshot: the MVP alert sat on top of the battle card): every top-centre notice
@@ -151,10 +183,10 @@ function focusHubPanel(kind){
 }
 moreButton.onclick=()=>{
  if(!morePanel.hidden){closeHubMore();return}focusHubPanel('more');
- morePanel.innerHTML='<header><strong>More</strong><button type="button" data-hub-close aria-label="Close More">×</button></header><small>PLAZA APPEARANCE</small><div class="social-more-grid"><button type="button" data-hub-night aria-label="Night mode" aria-pressed="false">☾ Night mode: Off</button></div><small>FIELD CHARACTER</small><div class="social-more-grid"><button type="button" data-hub-tab="equip">Equipment</button><button type="button" data-hub-tab="equip" data-hub-sub="refine">Refine</button></div><small>ALL DESTINATIONS</small><div class="social-more-grid">'+Object.entries(TABS).filter(([k])=>k!=='equip'&&(k!=='gm'||S?.gm)).map(([k,v])=>'<button type="button" data-hub-tab="'+escape(k)+'">'+escape(v[1])+'</button>').join('')+'</div>';
- updateNightButton();morePanel.hidden=false;moreButton.setAttribute('aria-expanded','true');morePanel.querySelector('button').focus();
+ morePanel.innerHTML='<header><strong>More</strong><button type="button" data-hub-close aria-label="Close More">×</button></header><small>FIELD CHARACTER</small><div class="social-more-grid"><button type="button" data-hub-tab="equip">Equipment</button><button type="button" data-hub-tab="equip" data-hub-sub="refine">Refine</button></div><small>ALL DESTINATIONS</small><div class="social-more-grid">'+Object.entries(TABS).filter(([k])=>k!=='equip'&&(k!=='gm'||S?.gm)).map(([k,v])=>'<button type="button" data-hub-tab="'+escape(k)+'">'+escape(v[1])+'</button>').join('')+'</div>';
+ morePanel.hidden=false;moreButton.setAttribute('aria-expanded','true');morePanel.querySelector('button').focus();
 };
-morePanel.onclick=e=>{const b=e.target.closest('button');if(!b)return;if(b.hasAttribute('data-hub-close')){closeHubMore();moreButton.focus();return}if(b.hasAttribute('data-hub-night')){setPlazaNight(!plazaNight);return}const key=b.dataset.hubTab;if(!key||!TABS[key])return;focusHubPanel('field');if(!tabs.includes(key))openTab(key);if(b.dataset.hubSub){sub[key]=b.dataset.hubSub;renderWin()}};
+morePanel.onclick=e=>{const b=e.target.closest('button');if(!b)return;if(b.hasAttribute('data-hub-close')){closeHubMore();moreButton.focus();return}const key=b.dataset.hubTab;if(!key||!TABS[key])return;focusHubPanel('field');if(!tabs.includes(key))openTab(key);if(b.dataset.hubSub){sub[key]=b.dataset.hubSub;renderWin()}};
 morePanel.onkeydown=e=>{if(e.key==='Escape'){e.stopPropagation();closeHubMore();moreButton.focus()}};
 // Rates come from the field's existing rolling HUD sampler, never a second accumulator.
 function syncFieldMonitor(){
@@ -2415,7 +2447,7 @@ async function enter(){
   }
   if(!current())return;
   if(!app.scene.contextLost)plazaGraphics('');
-  app.scene.setNight?.(plazaNight);app.scene.active=true;bindFishing();mapTick();for(const p of app.players.values())app.scene.putPlayer(p);
+  syncPlazaNight();app.scene.setNight?.(plazaNight);app.scene.active=true;bindFishing();mapTick();for(const p of app.players.values())app.scene.putPlayer(p);
   plazaBotsResync();refreshGymVisuals();app.scene.setBattleState?.(app.battle);renderBattleHUD();renderPvpDialog();join();
   if(!app.room){syncSoloPlayer();if(P){const snaps=syncSoloPokerSnapshots();if(snaps)for(const s of snaps)s._clientAt=Date.now()}}
   try{if(typeof BGM!=='undefined')BGM.sync(typeof S==='object'&&S?S.mp:0)}catch(e){console.warn('Plaza music unavailable',e)}
@@ -2784,7 +2816,7 @@ function connect(){
    // once the retry ladder has had a chance, so the status line names the cause instead of repeating
    // "retrying" forever. Not for 4001 (that one explains itself) and not before a second attempt.
    if(e.code!==4001&&app.retry>=2)diagnoseSocket()};ws.onerror=()=>status('Chat unavailable — checking connection…');}
-let lastLog='',lastLook='',keepAliveAt=0;setInterval(()=>{try{plazaBotsTick()}catch{}try{tickSoloMvp()}catch{}if(app.channel==='log'&&feedHidden())syncDisplay();const account=typeof CLOUD.user==='string'?CLOUD.user:CLOUD.user?.username;if(app.user&&account&&account!==app.user){const ws=app.socket;app.socket=null;ws?.close();app.connected=false;app.messages=[];localHistory.clear();app.unread.clear();app.friends.clear();app.blocked=false;app.nextConnect=0;leave();app.user=null;clearSoloMvpStorage();}if(!CLOUD.on){if(app.user||app.socket){const ws=app.socket;app.socket=null;ws?.close();app.connected=false;app.messages=[];localHistory.clear();app.unread.clear();app.muted.clear();app.friends.clear();app.blocked=false;app.nextConnect=0;app.user=null;leave();clearSoloMvpStorage();}else if(app.wanted&&app.scene){const look=JSON.stringify(currentLook());if(look!==lastLook){syncSoloPlayer();lastLook=look}}status('Sign in to use player chat');return}if(!app.socket)connect();
+let lastLog='',lastLook='',keepAliveAt=0;setInterval(()=>{syncPlazaNight();try{plazaBotsTick()}catch{}try{tickSoloMvp()}catch{}if(app.channel==='log'&&feedHidden())syncDisplay();const account=typeof CLOUD.user==='string'?CLOUD.user:CLOUD.user?.username;if(app.user&&account&&account!==app.user){const ws=app.socket;app.socket=null;ws?.close();app.connected=false;app.messages=[];localHistory.clear();app.unread.clear();app.friends.clear();app.blocked=false;app.nextConnect=0;leave();app.user=null;clearSoloMvpStorage();}if(!CLOUD.on){if(app.user||app.socket){const ws=app.socket;app.socket=null;ws?.close();app.connected=false;app.messages=[];localHistory.clear();app.unread.clear();app.muted.clear();app.friends.clear();app.blocked=false;app.nextConnect=0;app.user=null;leave();clearSoloMvpStorage();}else if(app.wanted&&app.scene){const look=JSON.stringify(currentLook());if(look!==lastLook){syncSoloPlayer();lastLook=look}}status('Sign in to use player chat');return}if(!app.socket)connect();
  // v313: a socket can open against a cold Durable Object and then sit there - Pages accepted the
  // upgrade, the room has not said hello. Nothing used to notice: the plaza showed "Connecting to
  // chat…" forever with a healthy-looking socket and no reconnect. A handshake that takes longer than
@@ -2798,6 +2830,7 @@ let lastLog='',lastLook='',keepAliveAt=0;setInterval(()=>{try{plazaBotsTick()}ca
 // well past the watchdog. Coming back to the tab checks it at once instead of waiting a cycle.
 document.addEventListener('visibilitychange',()=>{
  if(document.hidden)return;
+ syncPlazaNight();
  if(!app.socket){if(app.wanted&&CLOUD.on){app.nextConnect=0;connect()}return}
  // v313 (owner: "random reconnects"). Returning to the tab used to drop the socket on the spot
  // whenever it had been quiet for ten seconds - so every tab switch longer than that forced a
@@ -2842,5 +2875,5 @@ function setRaidSuspend(on){
   measureHubToolbar();
  }
 }
-window.PGSocial={enter,leave,send,setRaidSuspend,app,receive,select,syncDisplay,fishingMvpNotice,activityLog:()=>activityLog.map(x=>({...x})),pokerOpen,minimizePokerModal,syncPokerBounds,pokerSeatAction,claimDailyPokerChips,buyPokerChipsWithZeny,syncFriends,whisper,drawPlazaMap,focusHubPanel,refreshDigimon:()=>{if(!sanctuaryPanel.hidden){sanctuarySync();sanctuaryRender()}},tickSoloMvp,readSoloMvpState,writeSoloMvpState,clearSoloMvpStorage};select('world');connect();
+window.PGSocial={getNight:()=>{syncPlazaNight();return plazaNight},setNight:setPlazaNight,syncClock:syncPlazaClock,enter,leave,send,setRaidSuspend,app,receive,select,syncDisplay,fishingMvpNotice,activityLog:()=>activityLog.map(x=>({...x})),pokerOpen,minimizePokerModal,syncPokerBounds,pokerSeatAction,claimDailyPokerChips,buyPokerChipsWithZeny,syncFriends,whisper,drawPlazaMap,focusHubPanel,refreshDigimon:()=>{if(!sanctuaryPanel.hidden){sanctuarySync();sanctuaryRender()}},tickSoloMvp,readSoloMvpState,writeSoloMvpState,clearSoloMvpStorage};select('world');connect();
 })();

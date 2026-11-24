@@ -569,7 +569,8 @@ test('v272: terrain preview is GM-only and HUD ticks do not rebuild chat tabs',(
  ev("S.gm=false;$('screenOptions').hidden=true;screenOptions()");
  assert.equal(doc.querySelector('#screenOptions [data-display=nativeFields]'),null,'normal accounts do not see the terrain preview switch');
  const store=g.window.sessionStorage;store.setItem('pg-native-fields','sentinel');
- doc.getElementById('screenOptions').onchange({target:{dataset:{display:'nativeFields'},checked:true}});
+ const forged=doc.createElement('input');forged.type='checkbox';forged.dataset.display='nativeFields';forged.checked=true;
+ doc.getElementById('screenOptions').appendChild(forged);forged.dispatchEvent(new g.window.Event('change',{bubbles:true}));forged.remove();
  assert.equal(store.getItem('pg-native-fields'),'sentinel','forged player change events cannot toggle the GM preview');
  store.removeItem('pg-native-fields');
  ev("S.gm=true;$('screenOptions').hidden=true;screenOptions()");

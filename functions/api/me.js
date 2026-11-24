@@ -16,7 +16,11 @@ export const onRequestGet = guard(async ({ request, env }) => {
   //           expired, or the account is gone. That is the real "signed in somewhere else".
   // The client used to show the takeover card for both, which made a lost cookie look like a hijack
   // and left the player with no way back in.
-  if (!user) return await unauth(request);
+  if (!user) {
+    const response = await unauth(request);
+    response.headers.set('X-Server-Now', String(Date.now()));
+    return response;
+  }
   // v280: `id` lets the client stamp its save with the durable account identity, so a rename (which
   // changes the name, never the id) cannot strand the save. It is the caller's own id and nothing
   // else, so exposing it reveals nothing about other accounts.
@@ -24,5 +28,5 @@ export const onRequestGet = guard(async ({ request, env }) => {
   // v412 (CPU): `recoverySet` comes from the session JOIN that `currentUser()` already ran, instead of
   // a second `SELECT * FROM users`. This endpoint is polled by every open tab every 45 s, so the extra
   // round trip was the most-repeated wasted read in the game.
-  return json({ u: user.username, id: user.id, gm: user.gm, recoverySet: recoverySetFor(user) });
+  return json({ u: user.username, id: user.id, gm: user.gm, recoverySet: recoverySetFor(user) }, 200, { 'X-Server-Now': String(Date.now()) });
 });
