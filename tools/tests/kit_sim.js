@@ -698,7 +698,7 @@ t('Echo details use existing art and leave the combat center clear',()=>{
 t('all ten maps have four complete themed scenes and no spawn or boss floor stamps', () => {
   K.setAssets();
   // v77: the Endless Echo arena is a scene of its own, so the key now carries the mode as well.
-  assert.ok(/key=\(JOB_RITE\.on\?'rite:':TRIAL\.on\?'trial:':'field:'\)\+S\.mp\+':'\+S\.lvl\+':'\+bn/.test(src),
+  assert.ok(/key=\(JOB_RITE\.on\?'rite:':TRIAL\.on\?'trial:':raidOn\?'raid:':'field:'\)\+S\.mp\+':'\+S\.lvl\+':'\+bn/.test(src),
     'stage changes (and entering the trial) must rebuild the scene');
   assert.ok(!/function stageDress/.test(src), 'old spawn pads/boss floor layer must be removed');
   for(let m=0;m<10;m++){

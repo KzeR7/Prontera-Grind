@@ -93,6 +93,21 @@ for(const p of workFiles('assets/expanded-fx/'))if(!files.includes(p))files.push
   if(typeof a.file!=='string'||!/^\d+\.png$/.test(a.file))throw Error('Unexpected Mythic icon entry: '+JSON.stringify(a));
   if(!fs.existsSync(path.join(root,rel)))throw Error('Missing Mythic icon named by its manifest: '+rel);
   if(!files.includes(rel))files.push(rel)}}
+// Refining audio is referenced dynamically from its checked provenance manifest; the emotion
+// registry also builds image URLs at runtime. Include their current tracked files rather than
+// silently falling back to the historical archive. The integrity guard below remains in force.
+{const dir='assets/audio/refine/',manifest=JSON.parse(fs.readFileSync(path.join(root,dir+'manifest.json'),'utf8'));
+ if(!Array.isArray(manifest.assets)||!manifest.assets.length)throw Error('Refine audio manifest is empty');
+ for(const name of ['manifest.json',...manifest.assets.map(a=>a.file)]){
+  if(typeof name!=='string'||!(/^[a-z0-9_]+\.wav$/.test(name)||name==='manifest.json'))throw Error('Invalid refine audio filename');
+  const rel=dir+name;if(!fs.existsSync(path.join(root,rel)))throw Error('Missing refine audio: '+rel);
+  if(!files.includes(rel))files.push(rel);
+ }
+}
+for(const rel of workFiles('assets/social/emotions/'))if(!files.includes(rel))files.push(rel);
+const lightning='assets/refine-fx/title-lightning.webp';
+if(!fs.existsSync(path.join(root,lightning)))throw Error('Missing raid lightning art');
+if(!files.includes(lightning))files.push(lightning);
 // A repeated path would pack twice and make the payload's own file count meaningless.
 if(new Set(files).size!==files.length)throw Error('Duplicate package entry: '+files.find((p,i)=>files.indexOf(p)!==i));
 if(process.argv.length!==3)throw Error('Usage: node tools/staging/package_hosted_launch.mjs <output.mjs>');
@@ -129,7 +144,7 @@ for(const p of baseline.keys())if(relevant(p)&&!fs.existsSync(path.join(root,p))
 // v415: jpg joined the list. assets/atlas/fountain-plaza.jpg was being decoded as utf8 and
 // re-encoded, which mangled every non-ASCII byte (the staged copy was 252 KB where the source is
 // 140 KB) - the hub rendered a broken texture. Anything not text has to be base64.
-const isBin=p=>/\.(?:png|webp|glb|jpe?g)$/i.test(p);
+const isBin=p=>/\.(?:png|webp|glb|jpe?g|wav)$/i.test(p);
 const data=Object.fromEntries(files.map(p=>{
  const raw=fs.readFileSync(path.join(root,p));
  if(isBin(p))return [p,'base64:'+raw.toString('base64')];

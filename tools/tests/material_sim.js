@@ -27,6 +27,8 @@ const iname=it=>(it.r?'+'+it.r+' ':'')+it.name;
 // and that helper sits just outside the slice below, so define it here the same way the page does.
 ${pick(/const ORI_SLOTS=\[[^\]]*\];/, 'ORI_SLOTS')}
 ${pick(/function refineOreKey\(it\)\{[^\n]*\}/, 'refineOreKey')}
+// The real forge has an animation delay; force its supported zero-delay test mode.
+var forgePending=null; const forgeDelayMs=()=>0;
 ${grab('function refine(sl){', 'const bmOpen=()=>')}
 // v311: the workshop now buys missing ore itself, so the Black Market's ore price travels with it.
 // Presentation is exercised with a real DOM in eclipse_ui_sim.js.

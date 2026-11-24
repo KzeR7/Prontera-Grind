@@ -43,6 +43,11 @@ export function unpackPayload(encoded=PAYLOAD_B64,expected=PAYLOAD_SHA256){
   for(const v of Object.values(files))assert.equal(typeof v,'string');
   return files;
 }
+// The producer tags binary data explicitly; decode only extensions that the producer packs.
+export function decodeOverlayFile(name,text){
+  return /\.(?:png|webp|glb|jpe?g|wav)$/i.test(name)&&text.startsWith('base64:')
+    ?Buffer.from(text.slice(7),'base64'):text;
+}
 export function verifySchema(table,rows){
   assert.deepEqual(rows.map(r=>r.name),schemas[table],`Incompatible existing staging table ${table}`);
   const types=table==='damage_samples'?['INTEGER','INTEGER','INTEGER','INTEGER','INTEGER','INTEGER','REAL','REAL']:
@@ -193,7 +198,7 @@ async function main(){
   console.log('Preparing a new temporary staging copy; your existing checkouts will not be changed.');
   run('git',['-C',repo,'archive','--format=tar','--output='+archive,BASE]);
   run('tar.exe',['-xf',archive,'-C',temp]);fs.unlinkSync(archive);
-  for(const [name,text] of Object.entries(files)){const dest=path.join(temp,...name.split('/'));fs.mkdirSync(path.dirname(dest),{recursive:true});fs.writeFileSync(dest,/\.(?:png|webp|glb|jpe?g)$/i.test(name)&&text.startsWith('base64:')?Buffer.from(text.slice(7),'base64'):text);}
+  for(const [name,text] of Object.entries(files)){const dest=path.join(temp,...name.split('/'));fs.mkdirSync(path.dirname(dest),{recursive:true});fs.writeFileSync(dest,decodeOverlayFile(name,text));}
   fs.writeFileSync(path.join(temp,'wrangler.toml'),CONFIG);
   run(bash,['tools/build_site.sh'],{cwd:temp,allowOutput:true});
   const db=remote(temp);db.verify();
