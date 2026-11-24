@@ -4237,7 +4237,7 @@ const s=unpackSave(JSON.parse(raw));if(s&&s.lv){const F=fresh(),f=Object.assign(
   if(f.dmgShort!==true&&f.dmgShort!==false)f.dmgShort=true;   // damage digits: short unless deliberately switched
   // v467: Display → UI scale (1 = 100%). Spelled out rather than calling cleanUiScale(), because
   // the save harnesses extract this normaliser without the display helpers next to it.
-  f.uiScale=[0.9,1,1.15,1.3].includes(Number(f.uiScale))?Number(f.uiScale):1;
+  f.uiScale=Math.max(0.9,Math.min(1.5,Number.isFinite(Number(f.uiScale))?Number(f.uiScale):1));
   // v469: Auto is on unless the save says otherwise, so an old save gets the screen-derived scale and
   // a player who picked a step keeps it.
   f.uiScaleAuto=f.uiScaleAuto!==false;
@@ -10555,8 +10555,8 @@ const qpSide=()=>`<button data-q="side" class="qp-side-toggle" aria-controls="si
 // the save (S.uiScale) and published as --ui-scale + <html data-ui-scale>, which the theme zooms.
 // Only the CSS-laid-out chrome is zoomed; the WebGL field, the projected sprite layers and the
 // damage floats are positioned in field pixels and keep their own world scale.
-const UI_SCALE_STEPS=[0.9,1,1.15,1.3];
-const cleanUiScale=v=>{v=Number(v);return UI_SCALE_STEPS.includes(v)?v:1};
+const UI_SCALE_MIN=0.9,UI_SCALE_MAX=1.5;
+const cleanUiScale=v=>{v=Number(v);return Number.isFinite(v)?Math.round(Math.max(UI_SCALE_MIN,Math.min(UI_SCALE_MAX,v))*100)/100:1};
 // v469 (owner: "auto scale based on the pc screen the player is using"). Auto reads the display the
 // player is actually looking at - CSS columns x devicePixelRatio - and picks the step, so a 4K panel
 // or a 1080p desk gets bigger chrome without anyone opening Display, and a small laptop does not.
@@ -10666,13 +10666,11 @@ function screenOptions(){const panel=$('screenOptions');panel.hidden=!panel.hidd
   // setting. Normal accounts do not see the switch; the explicit URL override remains a
   // developer preview path. The reload is still required because the renderer is chosen at boot.
   +(S.gm?`<label><input type="checkbox" data-display="nativeFields" ${nativeFieldsEnabled?'checked':''}>GM preview: New outdoor terrain (reloads)</label>`:'')
-  // v467: UI scale. Four steps keep the choice legible on a phone and a desk; the buttons are
-  // `data-ui-scale-step` so the panel's own change handler stays about save-backed checkboxes.
-  +`<div class="pg-sheet-head"><span>UI scale</span></div>
-    <div class="pg-actions pg-scale-row" role="group" aria-label="UI and text scale">${(()=>{const auto=uiScaleAutoOn(),cur=auto?autoUiScale():cleanUiScale(S.uiScale);
-      return `<button type="button" data-ui-scale-auto="1" aria-pressed="${auto}" class="${auto?'is-on':''}" title="Pick a scale from this screen">Auto${auto?' · '+Math.round(cur*100)+'%':''}</button>`
-        +UI_SCALE_STEPS.map(z=>`<button type="button" data-ui-scale-step="${z}" aria-pressed="${!auto&&cleanUiScale(S.uiScale)===z}" class="${!auto&&cleanUiScale(S.uiScale)===z?'is-on':''}">${Math.round(z*100)}%</button>`).join('')})()}</div>
-    <div class="pg-note">Scales the header, dock, side rail, log, the HUD and the music player under it, and every window and popup. The 3D field keeps its size. <b>Auto</b> reads this screen and picks the step; tapping a percentage holds it instead.</div>`
+  // Display UI scale is a continuous slider from 90% through 150%. Auto remains the default
+  // until the player touches the slider; then their selected value is saved.
+  +`<div class="pg-sheet-head"><span>UI scale</span><output id="uiScaleValue" for="uiScaleSlider">${Math.round((uiScaleAutoOn()?autoUiScale():cleanUiScale(S.uiScale))*100)}%</output></div>
+    <label class="pg-scale-control" for="uiScaleSlider"><span>90%</span><input id="uiScaleSlider" type="range" min="90" max="150" step="1" value="${Math.round((uiScaleAutoOn()?autoUiScale():cleanUiScale(S.uiScale))*100)}" aria-label="UI and text scale"><span>150%</span></label>
+    <div class="pg-note">Scales the interface and text across the game. The 3D field keeps its size. Drag the slider to choose a size; your choice is saved.</div>`
   // v253: the phone block. "Layout" is a device-local choice, so a phone can drop back to the
   // desk arrangement (or a desk browser can preview the phone one) without touching the save.
   +`<div class="pg-sheet-head pg-phone-head"><span>Phone</span></div>
@@ -10689,18 +10687,25 @@ function screenOptions(){const panel=$('screenOptions');panel.hidden=!panel.hidd
 }
 // The phone block's buttons live in the same panel but are not save-backed settings, so they
 // are handled here instead of in the data-display change handler below.
-document.addEventListener('click',e=>{const sa=e.target.closest&&e.target.closest('#screenOptions [data-ui-scale-auto]');
-  if(sa){e.preventDefault();setUiScaleAuto(true);return}
-  const sc=e.target.closest&&e.target.closest('#screenOptions [data-ui-scale-step]');
-  if(sc){e.preventDefault();setUiScale(sc.dataset.uiScaleStep);return}
-  const b=e.target.closest&&e.target.closest('#screenOptions [data-pg]');if(!b)return;e.preventDefault();
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('#screenOptions [data-pg]');if(!b)return;e.preventDefault();
   const pg=window.PGMobile,what=b.dataset.pg;
   if(what==='close'){$('screenOptions').hidden=true;$('screenBtn').setAttribute('aria-expanded','false');return}
   if(what==='fullscreen'){if(pg)pg.toggleFullscreen();else toggleFullscreen();screenOptions();$('screenOptions').hidden=false;return}
   if(what==='focus'){if(pg)pg.setFieldOnly(!pg.fieldOnly());screenOptions();$('screenOptions').hidden=false;return}
   if(what==='layout'){if(pg){const now=pg.getPhoneLayout();pg.setPhoneLayout(now==='auto'?'on':now==='on'?'off':'auto')}screenOptions();$('screenOptions').hidden=false;setTimeout(()=>{try{resize()}catch(_){}},0);return}
 });
-document.addEventListener('input',e=>{if(e.target.id?.startsWith('oreQty-')){const o=e.target.id.slice(7),n=Number(e.target.value),out=$('oreTotal-'+o);marketQty[o]=e.target.value;if(out)out.textContent=Number.isSafeInteger(n)&&n>0?(n*BM_ORE).toLocaleString()+'z total':'Enter a whole quantity';}});
+document.addEventListener('input',e=>{
+  if(e.target.id==='uiScaleSlider'){
+    if(!S)return;
+    const z=cleanUiScale(Number(e.target.value)/100);
+    S.uiScale=z;S.uiScaleAuto=false;
+    const out=$('uiScaleValue');if(out)out.value=Math.round(z*100)+'%';
+    applyUiScale();try{resize()}catch(_){}
+    return;
+  }
+  if(e.target.id?.startsWith('oreQty-')){const o=e.target.id.slice(7),n=Number(e.target.value),out=$('oreTotal-'+o);marketQty[o]=e.target.value;if(out)out.textContent=Number.isSafeInteger(n)&&n>0?(n*BM_ORE).toLocaleString()+'z total':'Enter a whole quantity';}
+});
+document.addEventListener('change',e=>{if(e.target.id==='uiScaleSlider'&&S){save();renderScreenOptions()}});
 $('screenBtn').onclick=()=>{if(S)screenOptions()};
 $('screenOptions').onchange=e=>{const key=e.target.dataset.display;
   if(key==='nativeFields'){
