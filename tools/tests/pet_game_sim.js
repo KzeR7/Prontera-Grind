@@ -33,12 +33,23 @@ try{
  }
  for(const rate of [1,2,4]){
   ev(`speed=${rate};t=100*speed;petNow=10000;window.state=petAnimationState(1002,{run:true},0)`);
-  assert.equal(ev('state.ms'),2000,'walk playback uses 20% real time at every simulation speed');
+  // v468: the native clock is 34% of real time (was 20%). The walk/idle pace the player actually
+  // sees comes from the 80ms frame floor, checked below; this is the clock itself, at every speed.
+  assert.ok(Math.abs(ev('state.ms')-3400)<1e-6,'walk playback uses the v468 34% clock at every simulation speed');
   ev('window.state=petAnimationState(1002,{attackStarted:9900},0)');
-  assert.equal(ev('state.ms'),20,'attack playback uses real time');
+  assert.ok(Math.abs(ev('state.ms')-34)<1e-6,'attack playback uses real time');
+  // v468: an attack pose is bounded by its own window, so it cannot stretch into a held picture.
+  assert.equal(ev('state.stance'),'attack','a hit from 100ms ago is still posing');
+  ev('window.state=petAnimationState(1002,{run:false,attackStarted:8000},0)');
+  assert.equal(ev('state.stance'),'idle','but a hit from 2s ago has released the pose');
  }
  ev('S.st.agi=99');assert.ok(ev('petMoveSpeed(2)>5'),'pet speed follows increased hero AGI');
- assert.equal(ev('PGPetSprites.frameIndex({delay:1,frames:[0,1,2,3]},petFrameTime({delay:1},119*PET_ANIMATION_RATE))'),0,'tiny native delay holds frame for 120ms');
- assert.equal(ev('PGPetSprites.frameIndex({delay:1,frames:[0,1,2,3]},petFrameTime({delay:1},120*PET_ANIMATION_RATE))'),1);
+ // v468: the floor is 80ms per displayed frame (v135 used 120ms), and every shipped delay is
+ // 1-4.5ms, so this floor is the pace the player sees.
+ assert.equal(ev('PGPetSprites.frameIndex({delay:1,frames:[0,1,2,3]},petFrameTime({delay:1},79*PET_ANIMATION_RATE))'),0,'tiny native delay holds frame for 80ms');
+ assert.equal(ev('PGPetSprites.frameIndex({delay:1,frames:[0,1,2,3]},petFrameTime({delay:1},80*PET_ANIMATION_RATE))'),1);
+ assert.equal(ev('PET_FRAME_FLOOR_MS'),80,'80ms per displayed idle/walk frame');
+ assert.equal(ev('PET_ATTACK_MIN_S'),.5,'an attack poses for at least half a second');
+ assert.equal(ev('PET_ATTACK_MAX_S'),1.2,'and never longer than 1.2s');
  console.log('PASS: all 20 pets x 3 states x 8 directions, directional repaint, foot pivot, native transform bypass, pending-frame retention/disposal and actual preview actions/recommendations');
 }finally{g.close()}

@@ -410,7 +410,7 @@ body.clean-screen #screenBtn{visibility:visible}
 .ui-window-tools button{border-color:var(--e-line);opacity:.7}
 .ui-panel>.ui-hero{display:none}
 
-#wins .ui-panel>.atabs{position:sticky;top:0;padding:0 23px;min-height:39px;gap:28px;justify-content:flex-start;background:color-mix(in srgb,var(--e-bg) 65%,transparent);border-bottom:1px solid var(--e-line)}
+#wins .ui-panel>.atabs{position:sticky;top:0;padding:0 23px;min-height:39px;gap:28px;justify-content:center;overflow-x:auto;background:color-mix(in srgb,var(--e-bg) 65%,transparent);border-bottom:1px solid var(--e-line)}
 
 #wins .ui-panel>.atabs button{flex:0 0 auto;border:0;border-bottom:1px solid transparent;border-radius:0;background:none;font-weight:400;font-size:10px;padding:11px 0;color:var(--e-muted)}
 
@@ -480,6 +480,9 @@ body.clean-screen #screenBtn{visibility:visible}
 #wins .eclipse-bag .grid>.cell.b2{border-bottom-color:#b39ae8}
 #wins .eclipse-bag .grid>.cell.b3{border-bottom-color:#e1bf74}
 #wins .eclipse-bag .grid>.cell.b4{border-bottom-color:#e4a68e}
+/* v469: Raidbound (rarity 4) - the raid trophy band, one step warmer than Legendary. */
+#wins .eclipse-bag .grid>.cell.b5{border-bottom-color:#ffb27a}
+#wins .eclipse-bag .grid>.cell.b5>.pet-bond-badge{color:#ffd9a8}
 
 #wins .eclipse-bag .grid>.cell.sel{border-color:var(--gold);box-shadow:0 0 0 2px var(--e-soft)}
 #wins .eclipse-bag .grid>.cell.empty{opacity:.3}
@@ -1335,6 +1338,8 @@ body.clean-screen #eclipseCompanions{display:none}
 #feedWrap{bottom:calc(var(--docktop,76px) + 6px);flex-direction:column}
 #feed>div{background:transparent;border:0;color:#f4f0e6;text-shadow:0 1px 3px #000,0 0 5px #000;padding:2px 0}
 #feed .r0{color:#e0e5ec}#feed .r1{color:#94efb2}#feed .r2{color:#9ecaff}#feed .r3{color:#dcb6ff}#feed .r4{color:#ffe197}
+/* v472: RCL maps Raidbound (rarity 4) to the log class r5, so the tier needs its own feed colour. */
+#feed .r5{color:#ffb27a}
 #hudBuffs{bottom:calc(var(--docktop,76px) + 6px);right:16px}
 #eclipseCompanions{bottom:calc(var(--docktop,76px) + 48px)}
 #sideMenu.eclipse-more-open{pointer-events:auto;max-height: min(60vh,440px)}
@@ -5259,3 +5264,39 @@ body.rm-atlas-fullscreen #wins>.wp[data-win="map"].rm-fullscreen-mode.rm-drawer-
   #wins .rm-birds,#wins .rm-cloud,#wins .rm-canvas{animation:none!important;transition:none!important}
 }
 
+
+/* ---------- haven-v467 · Display → UI scale ----------
+   S.uiScale (90 / 100 / 115 / 130%) is published as --ui-scale plus <html data-ui-scale>.
+   Only chrome that CSS itself lays out is zoomed. The WebGL field, the projected mob/weapon
+   sprite layers and the damage floats are placed in field pixels, so zooming their boxes would
+   slide that art off its anchor - they keep their own world scale.
+   zoom (rather than a transform) is used because it reflows: a zoomed panel still resolves its
+   insets against its parent, so a bottom- or right-anchored panel grows inward instead of
+   hanging off the screen edge. */
+/* v468: #adventureGuide joined the list. It was the one piece of chrome still at 100% while every
+   other panel grew - the onboarding card is dense body text, which is exactly what a scale is for. */
+/* v475: #bgmPlayer joins the list. It is parked flush under the HUD card (`top` = the HUD's
+   `top:68px` + `height:91px` in the >=901px block below), so when the HUD grew and the player
+   did not, the player slid 24px inside the HUD at 115% and 48px at 130% - and at 90% it was
+   left hanging in a 16px gap. Zoomed, both the card and the player scale by the same factor:
+   `top:159px` becomes 159 x scale, which is exactly where the scaled HUD bottom lands. */
+html[data-ui-scale] :is(#eclipseHeader,#dock,#sideRail,#hud,#hudBuffs,#xp-dock,#feedWrap,#minimapTools,#hint,#eclipseCombat,#wins,#screenOptions,#raidHud,#raidLobby,#raidResult,#modal,#trial,#mailDailyModal,#gmStudioModal,#pgQuests,#loginOverlay,#adventureGuide,#bgmPlayer,#socialChat){
+  zoom: var(--ui-scale,1);
+}
+/* A vw-based ceiling is resolved inside the zoomed box, so divide it back out or a phone's dock
+   and Display sheet would grow past the screen edge. */
+html[data-ui-scale] #dock{max-width:calc((100vw - 24px)/var(--ui-scale,1))}
+html[data-ui-scale] #screenOptions{max-width:calc((100vw - 32px)/var(--ui-scale,1));max-height:calc((100vh - 170px)/var(--ui-scale,1));overflow:auto}
+/* v474: #wins is CENTERED - `left:50%` + `translateX(-50%)` with a 1120px cap (line 1333).
+   Overriding `left` here re-anchored it to 12px while the translate still pulled it half a window
+   to the left, so at 115% the whole dock of panels sat ~630px off the left edge. The zoomed box
+   already resolves `100%` against its own scaled containing block, so the base width cap keeps
+   its 16px gutter at every step - the override is not needed at all. */
+/* The guide keeps its own vw/vh caps (adventure-guide.css); divide them out so a 130% card still
+   fits the screen instead of running off the right or bottom edge. */
+html[data-ui-scale] #adventureGuide{max-width:calc((100vw - 24px)/var(--ui-scale,1));max-height:calc((100dvh - 230px)/var(--ui-scale,1))}
+#screenOptions .pg-sheet-head output{margin-left:auto;color:var(--gold);font-size:14px;font-variant-numeric:tabular-nums}
+#screenOptions .pg-scale-control{display:flex;align-items:center;gap:10px;padding:8px 6px;color:var(--ink);font-size:12px;font-variant-numeric:tabular-nums}
+#screenOptions .pg-scale-control input[type=range]{flex:1;min-width:100px;height:24px;margin:0;accent-color:var(--gold);cursor:pointer}
+html.pg-mobile #screenOptions .pg-scale-control{font-size:13px;padding:10px 6px}
+html.pg-mobile #screenOptions .pg-scale-control input[type=range]{height:32px}

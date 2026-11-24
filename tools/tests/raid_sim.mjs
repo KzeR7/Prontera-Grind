@@ -20,6 +20,10 @@ const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
 const raidJs = fs.readFileSync(path.join(ROOT, 'assets/raid.js'), 'utf8');
 const combatAudioJs = fs.readFileSync(path.join(ROOT, 'assets/combat-audio.js'), 'utf8');
 const raidCss = fs.readFileSync(path.join(ROOT, 'assets/raid.css'), 'utf8');
+const uiCss = fs.readFileSync(path.join(ROOT, 'assets/ui/eclipse.css'), 'utf8');
+const mobileCss = fs.readFileSync(path.join(ROOT, 'assets/ui/mobile.css'), 'utf8');
+const src = raidJs;              // raid source, read by the v467 hold/cover checks below
+const indexSrc = html;           // index.html, read by the v467 UI-scale checks below
 
 let pass = 0;
 function check(name, fn) {
@@ -707,6 +711,98 @@ check('Stage 2 Fallen Arcade keeps all mobs provoked without pull-back, Dodge at
 });
 
 // 15. 40M DPS @ ★0 Raid Scaling, 50% Boss Armor, 2p/3p Party Buff & ★0-★20 Weapon Star System
+check('v471: entering a raid from the last field stage re-seats the bridge world (the "flying into space" report)', () => {
+  // The bridge maps are one continuous world whose root z IS the stage. A jump that is not a walk has
+  // to re-seat root + hero + camera together, or the next transition shifts the world from an origin
+  // that no longer matches what is on screen.
+  assert.ok(/function snapAstralStage\(stage\)/.test(html), 'index.html exposes snapAstralStage()');
+  assert.ok(/astralOriginStage=i;/.test(html) && /ascensionRoot\.position\.z=\(Z0\+Z1\)\/2-focus\[i-1\]/.test(html),
+    'the snap moves the world root to the focus of the stage it is given');
+  assert.ok(/pl\.x=0;pl\.z=Z1-5/.test(html) && /ct\.z=pl\.z/.test(html) && /pet\.z=pl\.z/.test(html),
+    'and the hero, the camera target and the pets with it');
+  assert.ok(/if \(!arrivedOnFoot && typeof snapAstralStage === 'function'\)/.test(raidJs),
+    'spawnRaidStage snaps only when the party did NOT walk in (a walk already keeps the world aligned)');
+  assert.ok(/snapAstralStage\(raid\.home\.astralOrigin \|\| S\.lvl \|\| 1\)/.test(raidJs),
+    'leaving a raid re-seats the home stage instead of leaving the scenery where the raid left it');
+
+  // Run the live part on a copy of the state and put everything back: the rest of this suite keeps
+  // using the same S, so a raid started here must not leak its class/map/stage into later checks.
+  const live = g.ev(`(() => {
+    const keep = { mp: S.mp, lvl: S.lvl, hp: S.hp, gm: S.gm, raid: S.raid, atk: null };
+    S.gm = true; S.mp = 10; S.lvl = 5; astralOriginStage = 5;
+    PGRaid.startDirectSolo('astral');
+    const entered = { stage: PGRaid.raid.stage, lvl: S.lvl, origin: astralOriginStage };
+    const steps = [];
+    for (let n = 1; n <= 3; n++) {
+      PGRaid.raid.transition = { nextIdx: n, walked: false, fallbackLeft: 0.001 };
+      PGRaid.tick(0.2);
+      steps.push({ stage: PGRaid.raid.stage, lvl: S.lvl, origin: astralOriginStage });
+    }
+    PGRaid.leave(); PGRaid.hideResult();
+    const home = { lvl: S.lvl, origin: astralOriginStage };
+    S.mp = keep.mp; S.lvl = keep.lvl; S.hp = keep.hp; S.gm = keep.gm; S.raid = keep.raid;
+    return { entered, steps, home };
+  })()`);
+  assert.equal(live.entered.stage, 0, 'the run starts on its first stage, not on the field stage');
+  assert.equal(live.entered.lvl, 1, 'and the world is told stage 1');
+  assert.equal(live.entered.origin, 1, 'the bridge origin is stage 1, so drift is impossible');
+  console.assert(live.steps.map(s => s.origin).join(',') === '2,3,5', 'every jump re-seats the origin');
+  assert.equal(live.steps.map(s => s.origin).join(','), '2,3,5', 'each jump re-seats the bridge origin (2, 3, boss)');
+  assert.equal(live.steps.map(s => s.lvl).join(','), '2,3,5', 'and the world stage follows it');
+  assert.equal(live.home.origin, 5, 'leaving returns the field to the stage the player farmed');
+});
+
+check('v471: the Thanatos pillar is a carved crystal monolith, not a grey tube', () => {
+  assert.ok(/function pillarColumnTexture\(THREE\)/.test(raidJs) && /function pillarGlowTexture\(THREE\)/.test(raidJs),
+    'the pillar paints its own crystal and glow textures from canvas (no invented art files)');
+  assert.ok(/var shaft = new THREE\.Mesh\(new THREE\.CylinderGeometry\(0\.34, 0\.78, 4\.5, 6, 1, true\)/.test(raidJs),
+    'the shaft is a tapered hexagonal crystal');
+  assert.ok(/var core = new THREE\.Mesh\(new THREE\.CylinderGeometry\(0\.15, 0\.34, 4\.2, 6\)/.test(raidJs),
+    'with a lit core inside it');
+  assert.ok(/var plinth = new THREE\.Mesh\(new THREE\.CylinderGeometry\(1\.02, 1\.22, 0\.34, 6\)/.test(raidJs),
+    'and a stone plinth underneath');
+  assert.ok(/var runeUpper = new THREE\.Mesh\(new THREE\.TorusGeometry/.test(raidJs), 'two orbiting rune rings');
+  assert.ok(/shardMesh\.position\.set\(Math\.cos\(shAng\)/.test(raidJs), 'the crown shards orbit and bob');
+  assert.ok(/pNode\.trail\.visible = !isVolcSpire && dropT < 1/.test(raidJs), 'the falling light trail shows only while the pillar is in the air');
+  // the hit test still reads the geometry data, never the visual: the safe lane is unchanged
+  assert.ok(/shadowFill\.position\.set\(2\.85, 0\.022, 0\)/.test(raidJs), 'the safe-lane shadow keeps its exact footprint');
+});
+
+check('v471: BOTH raid bosses carry exactly double their v470 health (Astral 4.48 -> 8.96, Thor 2.8 -> 5.6)', () => {
+  const a = Number((raidJs.match(/BOSS_HP_MULT_ASTRAL\s*=\s*([\d.]+)/) || [])[1]);
+  const t = Number((raidJs.match(/BOSS_HP_MULT_THOR\s*=\s*([\d.]+)/) || [])[1]);
+  assert.equal(a, 8.96, 'Astral boss multiplier is 2 x 4.48');
+  assert.equal(t, 5.6, 'Thor boss multiplier is 2 x 2.8');
+  // Escorts and trash are NOT part of the owner's ask and must not move with the boss.
+  assert.equal(Number((raidJs.match(/ESCORT_HP_MULT_ASTRAL\s*=\s*([\d.]+)/) || [])[1]), 4.2, 'Astral escort HP unchanged');
+  assert.equal(Number((raidJs.match(/ESCORT_HP_MULT_THOR\s*=\s*([\d.]+)/) || [])[1]), 2.52, 'Thor escort HP unchanged');
+  assert.equal(Number((raidJs.match(/TRASH_HP_MULT_ASTRAL\s*=\s*([\d.]+)/) || [])[1]), 2.2, 'Astral trash HP unchanged');
+  assert.equal(Number((raidJs.match(/TRASH_HP_MULT_THOR\s*=\s*([\d.]+)/) || [])[1]), 1.1, 'Thor trash HP unchanged');
+  // and the live Thor boss really is twice the pre-v471 number
+  const thorBossHp = g.ev(`(() => {
+    PGRaid.startDirectSolo('thor');
+    PGRaid.raid.stage = 2; while (mobs.length) kill(mobs[0]);
+    for (let i = 0; i < 90 && PGRaid.raid.stage === 2; i++) { if (!tickAstralJourney(1/30)) update(1/30); t += 1/30; }
+    const b = mobs.find(m => m.boss);
+    const hp = b ? b.max : 0;
+    PGRaid.leave(); PGRaid.hideResult();
+    return hp;
+  })()`);
+  assert.ok(thorBossHp > 2.2e9 && thorBossHp < 2.35e9, 'Thor solo boss HP doubled to ~2.269B (got ' + thorBossHp + ')');
+});
+
+check('v472: the Dungeons panel advertises the doubled boss, not the v470 recommendation', () => {
+  // v471 doubled BOTH raid bosses. The Atlas/Dungeons cards still told the player "Solo ~28M DPS"
+  // (Astral) and "~32M DPS" (Thor), which is the time-to-kill figure for the OLD health - a straight
+  // doubling keeps the advertised clear time honest. Pinned so a future health retune cannot leave a
+  // stale recommendation on screen.
+  const astral = (html.match(/\['⚔ Solo ~(\d+)M DPS \(@★0\)',false\]/g) || []);
+  assert.equal(astral.length, 2, 'both raid cards carry a recommended-DPS tag');
+  assert.ok(html.includes("['⚔ Solo ~56M DPS (@★0)',false]"), 'Astral Citadel recommends ~56M DPS (2 x 28M)');
+  assert.ok(html.includes("['⚔ Solo ~64M DPS (@★0)',false]"), 'Thor Volcano recommends ~64M DPS (2 x 32M)');
+  assert.ok(!/Solo ~(28|32)M DPS/.test(html), 'the pre-v471 recommendation is gone');
+});
+
 check('40M DPS @ ★0 Boss HP + 50% Raid Armor, 2p/3p Party HP+ATK buffs, and ★0-★20 Weapon Star Workshop + Shard Boosts', () => {
   // Verify 1p vs 2p vs 3p HP & ATK scaling on Astral Raid
   const scaling = g.ev(`(() => {
@@ -728,7 +824,9 @@ check('40M DPS @ ★0 Boss HP + 50% Raid Armor, 2p/3p Party HP+ATK buffs, and �
     return { p1, p2, p3 };
   })()`);
   assert.equal(scaling.p1.bossArmor, 0.50, 'Stage 4 Raid Boss carries 50% Raid Armor (0.50)');
-  assert.ok(scaling.p1.bossHp > 8.5e8 && scaling.p1.bossHp < 1.0e9, `Solo Astral Boss raw HP after -30% rebalance (~907.8M, got ${scaling.p1.bossHp})`);
+  // v471 (owner: "x2 the hp for both raid bosses"): the solo Astral boss is pinned at exactly double the
+  // v470 health (907.8M -> ~1815.5M), and the Thor boss at double its own (see the constants below).
+  assert.ok(scaling.p1.bossHp > 1.75e9 && scaling.p1.bossHp < 1.9e9, `Solo Astral Boss HP after the v471 x2 (~1.8155B, got ${scaling.p1.bossHp})`);
   assert.ok(scaling.p1.st1Hp > 3.1e7 && scaling.p1.st1Hp < 3.5e7, `Solo Astral Stage 1 mob HP at previous+120% (2.2x = ~33.0M, got ${scaling.p1.st1Hp})`);
   assert.ok(Math.abs(scaling.p2.bossHp / scaling.p1.bossHp - 2.25) < 0.02, '2p Party buffs Boss HP by 2.25x');
   assert.ok(Math.abs(scaling.p3.bossHp / scaling.p1.bossHp - 3.45) < 0.02, '3p Party buffs Boss HP by 3.45x');
@@ -2373,6 +2471,124 @@ check('v466: Weapon Star rate table drops the +Boost column and fits four column
   assert.equal(table.boostCard, true, 'the Astral Shard boost picker above the table still works');
   assert.match(raidCss, /\.star-rate-table \{[^}]*table-layout:\s*fixed/, 'rate table uses a fixed layout so its columns fit the sidebar');
   assert.match(raidCss, /\.star-rate-table th:last-child,\s*\n\.star-rate-table td:last-child \{[^}]*width:\s*26%/, 'the Zeny column is pinned to its share of the grid');
+});
+
+// v467 ---------------------------------------------------------------------------------------
+check('v467: Hold Ground pins the hero so auto-approach cannot walk them out of a pillar shadow', () => {
+  // The shared field AI walks the hero toward the nearest monster whenever the player is not
+  // steering. That is the bug players reported: park behind a Thanatos pillar, stop moving, and the
+  // hero strolls back out of the green shadow into the 68% wipe.
+  g.ev(`
+    S=fresh(); S.cls='Rune Knight'; S.lv=150; S.gm=true;
+    PGRaid.raid.on=true; PGRaid.raid.dead=false; PGRaid.raid.telegraph=null; PGRaid.raid.holdGround=false;
+    pl.x=4.5; pl.z=6.25; PGRaid.raid.moveTarget=null; PGRaid.raid.keys={w:false,a:false,s:false,d:false};
+  `);
+  assert.equal(g.ev(`PGRaid.overrideMove(0.016)`), null, 'auto-approach is left to the field AI while nothing is held');
+  assert.equal(g.ev(`PGRaid.toggleHoldGround()`), true, 'Hold Ground arms on the first toggle');
+  const held = g.ev(`PGRaid.overrideMove(0.016)`);
+  // (JSDOM realm objects do not deepEqual a Node literal - compare the three fields)
+  assert.deepEqual(Object.keys(held).sort(), ['moving', 'x', 'z'], 'a held hero gets a position + flag, nothing else');
+  assert.equal(held.x, 4.5, 'a held hero is pinned on x');
+  assert.equal(held.z, 6.25, 'a held hero is pinned on z');
+  assert.equal(held.moving, false, 'and flagged as not moving, so the field AI keeps its target');
+  assert.equal(g.ev(`PGRaid.holdGroundActive()`), true, 'the hold reads as active');
+  assert.equal(g.ev(`document.getElementById('raidHoldBtn').textContent`), '⏸ HOLDING', 'the HUD button shows the held state');
+  assert.equal(g.ev(`document.getElementById('raidHoldBtn').getAttribute('aria-pressed')`), 'true', 'and announces itself to a screen reader');
+  // moving:false is what keeps the swing alive: the field AI still targets, it just refuses to walk
+  assert.equal(held.moving, false, 'the pinned vector keeps the target, so in-reach attacks continue');
+  assert.equal(g.ev(`PGRaid.toggleHoldGround()`), false, 'a second toggle releases it');
+  assert.equal(g.ev(`PGRaid.overrideMove(0.016)`), null, 'released: auto-approach resumes');
+  assert.equal(g.ev(`PGRaid.onKey('h',true,false) && PGRaid.raid.holdGround`), true, 'H toggles Hold Ground from the keyboard');
+  g.ev(`PGRaid.raid.holdGround=false`);
+});
+
+check('v467: a hide-behind-pillar wipe suspends auto-approach for its whole charge', () => {
+  g.ev(`
+    pl.x=4.5; pl.z=6.25; PGRaid.raid.on=true; PGRaid.raid.dead=false; PGRaid.raid.holdGround=false;
+    PGRaid.raid.moveTarget=null; PGRaid.raid.keys={w:false,a:false,s:false,d:false};
+    window.__boss={x:0,z:0,hp:100,max:100,boss:true};
+    PGRaid.raid.telegraph={name:'Oblivion Extinction',shape:'pillars',x:0,z:0,mustHideBehindPillar:true,
+      pillars:[{x:0,z:2,r:1.05}],age:0.5,life:4.2};
+  `);
+  assert.equal(g.ev(`PGRaid.holdGroundActive()`), true, 'the wipe charge alone suspends auto-approach, before anyone presses Hold');
+  const charge = g.ev(`PGRaid.overrideMove(0.016)`);
+  assert.equal(charge && charge.x, 4.5, 'the hero holds position on x during the charge');
+  assert.equal(charge && charge.z, 6.25, 'and on z');
+  assert.equal(charge && charge.moving, false, 'without walking, while the field AI keeps attacking');
+  assert.equal(g.ev(`PGRaid.raid.holdGround`), false, 'that is the wipe doing it, not the player arming Hold Ground');
+  g.ev(`PGRaid.renderHud()`);
+  assert.equal(g.ev(`document.getElementById('raidHoldBtn').getAttribute('aria-pressed')`), 'false', 'so the button still reads off');
+  g.ev(`PGRaid.raid.telegraph=null`);
+  assert.equal(g.ev(`PGRaid.overrideMove(0.016)`), null, 'once the wipe resolves, auto-approach comes back');
+  // a plain (non-pillar) telegraph must not freeze the hero
+  g.ev(`PGRaid.raid.telegraph={name:'Donut',shape:'donut',x:0,z:0,age:0.2,life:2.4}`);
+  assert.equal(g.ev(`PGRaid.overrideMove(0.016)`), null, 'an ordinary telegraph leaves movement alone');
+  g.ev(`PGRaid.raid.telegraph=null`);
+});
+
+check('v467: raid creatures are drawn larger than the same species on the field', () => {
+  g.ev(`PGRaid.raid.on=true`);
+  const inRaid = g.ev(`({trash:PGRaid.mobVisualBoost(false),boss:PGRaid.mobVisualBoost(true)})`);
+  g.ev(`PGRaid.raid.on=false`);
+  const field = g.ev(`({trash:PGRaid.mobVisualBoost(false),boss:PGRaid.mobVisualBoost(true)})`);
+  assert.equal(field.trash, 1, 'outside a run the field keeps its own size (trash)');
+  assert.equal(field.boss, 1, 'outside a run the field keeps its own size (boss)');
+  assert.ok(inRaid.trash > 1.2, 'raid trash mobs read at least a fifth larger than the field');
+  assert.ok(inRaid.boss > inRaid.trash, 'and the sanctum boss gets the larger share');
+  // v468 (owner): "up to 2x the normal size" - the boss now draws at exactly twice the field
+  // creature, and the trash at 1.6x, with no change to hitboxes (this value is art only).
+  assert.equal(inRaid.trash, 1.6, 'v468: raid trash draws at 1.6x the field creature');
+  assert.equal(inRaid.boss, 2.0, 'v468: a raid boss draws at 2x the field creature');
+  assert.ok(inRaid.boss / inRaid.trash < 1.4, 'the two boosts stay close enough to read as one family');
+  assert.match(indexSrc, /raidVisualBoost\(!!m\.boss\)/, 'mobVisualScale multiplies in the raid boost');
+  assert.match(indexSrc, /RAID_NATIVE_MOB_MAX_PX/, 'the raid raises the native-art ceiling so the boost is not clipped away');
+  assert.match(src, /var RAID_MONSTER_VISUAL_BOOST = 1\.6/, 'the trash boost lives next to the other raid constants');
+  assert.match(src, /var RAID_BOSS_VISUAL_BOOST = 2\.0/, 'and the boss boost sits beside it');
+  assert.match(src, /if \(!raid\.on\) return 1;/, 'and is exactly 1 outside a run');
+});
+
+check('v467: Display offers a UI scale and publishes it to the theme', () => {
+  assert.match(indexSrc, /const UI_SCALE_STEPS=\[0\.9,1,1\.15,1\.3\]/, 'four scale steps: 90 / 100 / 115 / 130%');
+  assert.match(indexSrc, /const cleanUiScale=v=>\{v=Number\(v\);return UI_SCALE_STEPS\.includes\(v\)\?v:1\}/, 'an unknown stored scale falls back to 100%');
+  assert.match(indexSrc, /f\.uiScale=\[0\.9,1,1\.15,1\.3\]\.includes\(Number\(f\.uiScale\)\)/, 'the load normaliser repairs a corrupt or missing uiScale');
+  assert.match(indexSrc, /root\.style\.setProperty\('--ui-scale'/, 'the choice is published as --ui-scale');
+  assert.match(indexSrc, /root\.setAttribute\('data-ui-scale'/, 'and as <html data-ui-scale>');
+  assert.match(indexSrc, /data-ui-scale-step="\$\{z\}"/, 'the Display sheet renders the step buttons');
+  // v469 (owner: "auto scale based on the pc screen"): Auto is the default and derives the step from
+  // the display; picking a percentage turns it off again.
+  assert.match(indexSrc, /function autoUiScale\(\)/, 'Auto derives a step from the screen');
+  assert.match(indexSrc, /const px=w\*dpr;/, 'from CSS columns x devicePixelRatio, so a 4K panel is not judged 1920');
+  assert.match(indexSrc, /const uiScaleAutoOn=\(\)=>!!\(S&&S\.uiScaleAuto!==false\)/, 'and is on unless the save says otherwise');
+  assert.match(indexSrc, /const z=uiScaleAutoOn\(\)\?autoUiScale\(\):cleanUiScale\(S&&S\.uiScale\)/, 'applyUiScale honours it');
+  assert.match(indexSrc, /S\.uiScaleAuto=false;/, 'picking a step opts out');
+  assert.match(indexSrc, /f\.uiScaleAuto=f\.uiScaleAuto!==false;/, 'the load normaliser keeps the flag sane');
+  assert.match(indexSrc, /data-ui-scale-auto="1"/, 'the Display sheet offers an Auto button');
+  assert.match(indexSrc, /reapplyAutoUiScale\(\)/, 'and a move to another monitor re-reads the step');
+  assert.match(indexSrc, /setUiScale\(/i, 'and wires them to the save');
+  assert.match(uiCss, /html\[data-ui-scale\] :is\(#eclipseHeader,#dock,#sideRail/, 'the theme zooms the chrome');
+  assert.match(uiCss, /zoom: var\(--ui-scale,1\)/, 'with zoom, so an anchored panel grows inward instead of off-screen');
+  assert.ok(!/html\[data-ui-scale\][^{]*#view\b/.test(uiCss), 'the 3D field is never zoomed');
+});
+
+check('v469: a cleared raid rolls the 10% Raidbound pet, and the field drop never can', () => {
+  assert.match(src, /if \(typeof raidboundDrop === 'function'\)/, 'the clear block asks index.html for the roll');
+  assert.match(src, /raidboundDrop\(dng && dng\.id === 'thor' \? 'thor' : 'astral'\)/, 'and names the dungeon that was cleared');
+  assert.match(src, /try \{ raidboundPet = raidboundDrop/, 'a pet-layer failure can never break the clear');
+  assert.match(src, /raidboundPet: raidboundPet,/, 'the drop is reported in the clear rewards');
+  assert.match(src, /10% Raidbound pet/, 'and the result popup names it');
+  // Order matters: the pet is rolled with the card, after the rewards are handed out.
+  const clearBlock = src.slice(src.indexOf('var bossCardDrop = null;'), src.indexOf('function computeCommendations'));
+  assert.ok(clearBlock.indexOf('RAID_BOSS_CARDS') < clearBlock.indexOf('raidboundDrop('), 'the pet roll sits beside the card roll');
+  assert.ok(clearBlock.indexOf('raidboundDrop(') < clearBlock.indexOf('titleAwards'), 'and before the title roll');
+  // The pet layer itself: one 10% roll, per-dungeon pool, dormant until the art ships.
+  assert.match(indexSrc, /const RAIDBOUND_DROP=\.10;/, 'one 10% band, the same as the card and the title');
+  assert.match(indexSrc, /const petArtShipped=sp=>/, 'a species without a shipped atlas is gated out');
+  assert.match(indexSrc, /PETS\[i\]\.r===4&&PETS\[i\]\.raid===raidId&&petArtShipped/, 'the pool is that dungeon\'s five-tier species with art');
+  // No new message type and no alarm: the whole drop is local.
+  // No new message type, no socket traffic and no alarm: the whole drop is local.
+  assert.ok(!/raid_pet|raidbound_sync|raidbound_drop/.test(src), 'no new raid message type was invented');
+  assert.ok(!/setAlarm/.test(src), 'and no Durable Object alarm is involved');
+  assert.ok(/if \(raid\.mode === 'party'\)/.test(src), 'party sync is untouched by the pet roll');
 });
 
 g.close();

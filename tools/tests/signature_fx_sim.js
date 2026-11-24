@@ -11,7 +11,7 @@ class Tex{constructor(){this.repeat=new Vec();this.offset=new Vec();this.image={
 const loaded=[];
 const THREE={LinearFilter:1,AdditiveBlending:2,NormalBlending:1,TextureLoader:class{load(url,done){loaded.push(url);const t=new Tex();done&&done(t);return t}},
  CanvasTexture:class{constructor(image){this.image=image}},
- SpriteMaterial:class{constructor(o){Object.assign(this,o);this.opacity=1;this.rotation=0;this.disposed=false}dispose(){this.disposed=true}},
+ SpriteMaterial:class{constructor(o){Object.assign(this,o);this.opacity=1;this.rotation=0;this.disposed=false;this.color={hex:0xffffff,setHex(v){this.hex=v}}}dispose(){this.disposed=true}},
  Sprite:class{constructor(m){this.material=m;this.position=new Vec();this.scale=new Vec();this.center=new Vec();this.visible=true}}};
 const scene={items:new Set(),add(o){this.items.add(o)},remove(o){this.items.delete(o)}};
 const box={document,console};box.window=box;vm.createContext(box);vm.runInContext(fs.readFileSync(path.join(root,'assets/ro-fx/index.js'),'utf8'),box);vm.runInContext(fs.readFileSync(path.join(root,'assets/signature-fx.js'),'utf8'),box);
@@ -29,7 +29,16 @@ for(const id of F.ids()){assert.equal(call(id),true,id);assert.ok(F.count>0,id+'
   assert.equal(F.count,0,id+' never finished');assert.equal(scene.items.size,0,id+' left sprites in the scene')}
 ok('every effect plays to the end with finite numbers and removes its sprites');
 
-call('ch_asura');assert.equal(F.count,5+6+2,'five spheres, six kanji, a flash and a ring');drain();
+// v469: the finisher grew - five spheres, a four-sprite impact burst, six heavy kanji and the
+// word's trailing flash + ring. Pinned so the sizing cannot quietly shrink back.
+// v469 also draws a dark outline pass behind each client character, so the word keeps its contrast
+// over bright grass: six cells x (outline + fill) = twelve sprites.
+call('ch_asura');assert.equal(F.count,5+6*2+4+2,'five spheres, six kanji twice (outline + fill), the burst, a flash and a ring');drain();
+const fxSrc=String(require('node:fs').readFileSync(require('node:path').join(__dirname,'../../assets/signature-fx.js'),'utf8'));
+assert.match(fxSrc,/'burst',\{color:'#ffcf5a'\}/,'Asura fires the four-sprite impact burst');
+assert.match(fxSrc,/scale:2\.1,life:1\.5,gap:\.13,bold:true/,'Asura draws the word at 2.1x with the heavy painter');
+assert.match(fxSrc,/'bold\|'\+ch/,'and the painted path switches to that painter');
+assert.match(fxSrc,/color:0x160300/,'the client characters get a dark outline pass');
 assert.ok([...'阿修羅覇凰拳'].length===6&&fs.readFileSync(path.join(root,'assets/signature-fx.js'),'utf8').includes("text:'阿修羅覇凰拳'"));
 ok('Asura Strike gathers five spheres and throws its six kanji');
 

@@ -916,15 +916,15 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="preload" href="assets/ui/fonts/font-5.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-6.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-7.ttf" as="font" type="font/ttf" crossorigin>
-<link rel="stylesheet" href="assets/ui/eclipse.css?v=471">
-<link rel="stylesheet" href="assets/ui/mobile.css?v=471">
-<link rel="stylesheet" href="assets/ui/mastery-titles.css?v=467">
+<link rel="stylesheet" href="assets/ui/eclipse.css?v=476">
+<link rel="stylesheet" href="assets/ui/mobile.css?v=476">
+<link rel="stylesheet" href="assets/ui/mastery-titles.css?v=476">
 <script src="assets/ui/mobile.js?v=274"></script>
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
-<link rel="stylesheet" href="assets/social.css?v=471">
-<link rel="stylesheet" href="assets/raid.css?v=467">
+<link rel="stylesheet" href="assets/social.css?v=476">
+<link rel="stylesheet" href="assets/raid.css?v=476">
 <link rel="stylesheet" href="assets/social-battle.css?v=393">
-  <link rel="stylesheet" href="assets/social-fishing.css?v=471"><link rel="stylesheet" href="assets/friends.css?v=273">
+  <link rel="stylesheet" href="assets/social-fishing.css?v=476"><link rel="stylesheet" href="assets/friends.css?v=273">
 <link rel="stylesheet" href="assets/adventure-guide.css?v=450">
 </head>
 <body>
@@ -1055,10 +1055,10 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <div id="tooltip"></div>
 <link rel="stylesheet" href="assets/wardrobe.css?v=138">
 <link rel="stylesheet" href="assets/shop.css?v=318">
-<script src="assets/wardrobe.js?v=471"></script>
+<script src="assets/wardrobe.js?v=476"></script>
 <script src="assets/shop-catalog.js?v=321"></script>
 <script src="assets/fourth-jobs.js?v=179"></script>
-<script src="assets/expanded-jobs.js?v=471"></script>
+<script src="assets/expanded-jobs.js?v=476"></script>
 <script src="assets/ascension.js?v=156"></script>
 <script src="assets/native-mob-heights.js?v=153"></script>
 <script src="assets/native-fields.js?v=197"></script>
@@ -1066,13 +1066,13 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <script src="assets/skill-icons.js?v=130"></script>
 <script src="assets/skill-icons-extra.js?v=207"></script>
 <script src="assets/skill-icons-expanded.js?v=450"></script>
-<script src="assets/mastery-titles.js?v=467"></script>
+<script src="assets/mastery-titles.js?v=476"></script>
 <script src="assets/player-buffs.js?v=450"></script>
 <script src="assets/skill-materials.js?v=220"></script>
 <script src="assets/afterglow-animations.js?v=151"></script>
 <script src="assets/skill-overdrive.js?v=220"></script>
 <script src="assets/ro-fx/index.js?v=414"></script>
-<script src="assets/signature-fx.js?v=450"></script>
+<script src="assets/signature-fx.js?v=476"></script>
 <script src="assets/spirit-spheres.js?v=450"></script>
 <script src="assets/expanded-fx/ninja-throw-fx.js?v=450"></script>
 <script src="assets/expanded-fx/expanded-fx-batch.js?v=450"></script>
@@ -1082,13 +1082,13 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <script src="assets/expanded-fx/review-polish-fx.js?v=450"></script>
 <script src="assets/expanded-fx/triple-old-no-sword.js?v=450"></script>
 <script src="assets/expanded-fx/approved.js?v=450"></script>
-<script src="assets/skill-afterglow.js?v=471"></script>
+<script src="assets/skill-afterglow.js?v=476"></script>
 <script src="assets/boss-fx.js?v=249"></script>
-<script src="assets/raid.js?v=467"></script>
+<script src="assets/raid.js?v=476"></script>
 <script src="assets/pets.js?v=130"></script>
 <script src="assets/bgm-tracks.js?v=206"></script>
 <script src="assets/bgm.js?v=207"></script>
-<script src="assets/combat-audio.js?v=467"></script>
+<script src="assets/combat-audio.js?v=476"></script>
 <script src="assets/class_skins_data.js?v=2"></script>
 <script src="assets/weapon_joints_data.js?v=2"></script>
 <script src="assets/weapons_data.js?v=2"></script>
@@ -1359,7 +1359,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-23 haven-v471 Prontera after dark';
+const BUILD='2026-11-23 haven-v476 Prontera after dark';
 // v364: this write used to sit AFTER the `//` on the BUILD line, so it was part of the comment and
 // never ran - the login card showed an empty #buildTag and there was no way to confirm which file
 // the browser had loaded. It also has to survive the script running before the login card exists.
@@ -1926,12 +1926,16 @@ const ASCENSION_KEPT_VISUAL={1707:1.375,1836:1.075}; // the two approved species
 // this one number, so the ceiling lives here.
 const MOB_VISUAL_MAX=6;
 const boundMobScale=v=>Number.isFinite(v)?Math.min(MOB_VISUAL_MAX,Math.max(.05,v)):.05;
+// v467 (owner): inside a raid the same species is drawn larger than on the field. The multiplier
+// lives in assets/raid.js (`mobVisualBoost`) and is 1 everywhere outside a run, so field play is
+// untouched. Art only - hitboxes, reach and damage never read this number's raid part.
+const raidVisualBoost=isBoss=>(typeof PGRaid!=='undefined'&&PGRaid.mobVisualBoost)?PGRaid.mobVisualBoost(isBoss):1;
 const mobVisualScale=m=>{
   // Ascension fields only: the same native sheet also dresses ordinary maps (Lava Slime, Chaos Imp,
   // Amatsu's Shiranui), and those keep the size class they have always used.
   const frame=m.mapIndex>=10?ASCENSION_FRAME_PX[m.spriteId]:null;
-  if(frame)return boundMobScale((m.boss?ASCENSION_BOSS_VISUAL:ASCENSION_KEPT_VISUAL[m.spriteId]||ASCENSION_MONSTER_VISUAL)/(3.05*frame[0]/frame[1])*(m.spawn||0));
-  return boundMobScale((((!ASCENSION_MOB_IDS.has(m.spriteId)&&referenceMobStore?.height(m.spriteId))/3.05)||((m.spriteScale||.92)*(m.boss?1.18:MOB_REGULAR_VISUAL)))*(m.spawn||0));};
+  if(frame)return boundMobScale((m.boss?ASCENSION_BOSS_VISUAL:ASCENSION_KEPT_VISUAL[m.spriteId]||ASCENSION_MONSTER_VISUAL)/(3.05*frame[0]/frame[1])*(m.spawn||0)*raidVisualBoost(!!m.boss));
+  return boundMobScale((((!ASCENSION_MOB_IDS.has(m.spriteId)&&referenceMobStore?.height(m.spriteId))/3.05)||((m.spriteScale||.92)*(m.boss?1.18:MOB_REGULAR_VISUAL)))*(m.spawn||0)*raidVisualBoost(!!m.boss));};
 const ASCENSION_MOB_IDS=new Set([1702,1705,1700,1706,1707,1708,1836,1837,1833,1831,1366,1832,1634,1635,1636,1637,1638,1639]);
 const mobSpriteUrl=id=>ASCENSION_MOB_IDS.has(+id)?`assets/mobs/v1/${+id}-0.png`:Number.isInteger(+id)&&+id>0?`https://static.divine-pride.net/images/mobs/png/${+id}.png`:'';
 // ---------- equipment database ----------
@@ -3535,7 +3539,10 @@ function startAsuraLeap(target){
   if(Math.hypot(x-pl.x,z-pl.z)<.25)return;
   asuraLeap={x0:pl.x,z0:pl.z,x1:x,z1:z,elapsed:0,duration:.48};
 }
-function asuraLeapHeight(){if(!asuraLeap)return 0;const u=Math.max(0,Math.min(1,asuraLeap.elapsed/asuraLeap.duration));return Math.sin(Math.PI*u)*1.35;}
+// v469 (owner: the Asura finisher was being overshadowed): the arc is taller so the leap reads as a
+// leap, not a shuffle. The dash itself - 3.2 units over 0.48s, and therefore the reach, the hit and
+// the retreat - is untouched; only the height the hero is drawn at changed (1.35 -> 1.62).
+function asuraLeapHeight(){if(!asuraLeap)return 0;const u=Math.max(0,Math.min(1,asuraLeap.elapsed/asuraLeap.duration));return Math.sin(Math.PI*u)*1.62;}
 function tickAsuraLeap(dt){if(!asuraLeap)return false;asuraLeap.elapsed=Math.min(asuraLeap.duration,asuraLeap.elapsed+dt);
   const u=Math.max(0,Math.min(1,asuraLeap.elapsed/asuraLeap.duration)),ease=u*u*(3-2*u);
   pl.x=asuraLeap.x0+(asuraLeap.x1-asuraLeap.x0)*ease;pl.z=asuraLeap.z0+(asuraLeap.z1-asuraLeap.z0)*ease;
@@ -3552,10 +3559,25 @@ const PETS=[{n:'Poring',spriteId:1002,r:0,c:0xff9db8},{n:'Lunatic',spriteId:1063
   {n:'Drops',spriteId:1113,r:0,c:0xffc06a},{n:'Poporing',spriteId:1031,r:0,c:0x90d477},{n:'Fabre',spriteId:1007,r:0,c:0x8ac366},
   {n:'Smokie',spriteId:1056,r:1,c:0x9a8677},{n:'Yoyo',spriteId:1057,r:1,c:0xc39b68},{n:'Spore',spriteId:1014,r:1,c:0xe2a17f},
   {n:'Sohee',spriteId:1170,r:2,c:0xb0c7e3},{n:'Deviruchi',spriteId:1109,r:2,c:0x8567ab},{n:'Nine Tail',spriteId:1180,r:2,c:0xe7ad65},
-  {n:'Deviling',spriteId:1582,r:3,c:0x8360b2},{n:'Ghostring',spriteId:1120,r:3,c:0xccdae3},{n:'Eddga',spriteId:1115,r:3,c:0xcc974f}];
+  {n:'Deviling',spriteId:1582,r:3,c:0x8360b2},{n:'Ghostring',spriteId:1120,r:3,c:0xccdae3},{n:'Eddga',spriteId:1115,r:3,c:0xcc974f},
+  // v469 (owner): the Raidbound tier. Appended after Eddga so every stored index 0-19 is unchanged.
+  // `raid` says which dungeon owns the species (the same map its native sheet comes from), and the
+  // drop path refuses any species whose native atlas is not in the shipped catalog yet - so these
+  // five stay dormant until the art pack lands and then go live with no code change.
+  {n:'Abyssal Thanatos',spriteId:1708,r:4,c:0x9a6bff,raid:'astral'},
+  {n:'Astral Seraph',spriteId:1831,r:4,c:0xffe9a8,raid:'astral'},
+  {n:'Ifrit Ember',spriteId:1832,r:4,c:0xff7a3a,raid:'thor'},
+  {n:'Obsidian Warden',spriteId:1833,r:4,c:0x8f97a8,raid:'thor'},
+  {n:'Void Whisper',spriteId:1837,r:4,c:0x6ad3ff,raid:'thor'}];
 const petSpecies=sp=>PETS[Number.isInteger(+sp)&&PETS[+sp]?+sp:0];
-const petIcon=(sp,small=false)=>{sp=sp||PETS[0];return `<img class="pet-icon${small?' small':''}" src="assets/pets/v1/thumb-${sp.spriteId}.png" alt="${sp.n}" loading="lazy" decoding="async">`};
-const RN=['Common','Rare','Epic','Legendary'],RCL=[0,2,3,4],MUT=[1,2,4,6,8,18,38],MC=[0,0x6cd36c,0x4aa3ff,0xb05cff,0xffb020,0xff4d4d,0xffffff];
+// v469: a Raidbound species whose native atlas has not been cut yet must not render a broken tile.
+// The thumb is still the primary source; if it is missing the browser falls back to the official
+// one-facing monster PNG for the same ID (the art the map already uses), never to invented pixels.
+const petIcon=(sp,small=false)=>{sp=sp||PETS[0];const fb=mobSpriteUrl(sp.spriteId);
+  return `<img class="pet-icon${small?' small':''}" src="assets/pets/v1/thumb-${sp.spriteId}.png" alt="${sp.n}" loading="lazy" decoding="async"${fb?` data-fallback="${fb}" onerror="if(this.dataset.fallback){this.onerror=null;this.src=this.dataset.fallback}"`:''}>`};
+// v469: a fifth rarity, Raidbound. It is appended (index 4) so no existing rarity value moves;
+// RCL[4]=5 is the log colour band above Legendary's r4.
+const RN=['Common','Rare','Epic','Legendary','Raidbound'],RCL=[0,2,3,4,5],MUT=[1,2,4,6,8,18,38],MC=[0,0x6cd36c,0x4aa3ff,0xb05cff,0xffb020,0xff4d4d,0xffffff];
 // Pets are found, never hatched: they only ever come from monster drops (0.3% per kill,
 // 5% from a boss). EGG survives as the price anchor for release refunds and for the Zeny
 // a full collection is paid instead of a drop.
@@ -3572,26 +3594,46 @@ const PEQ=[{n:'Claw',d:t=>`+${t*10}% pet damage`},{n:'Collar',d:t=>`+${t*7}% pet
 // can just add the fighting three up - two copies of one species can never stack a bonus.
 const PETBOND=[1,3,6,10,15];                 // folded duplicates that make Bond 1..5 (15 to cap)
 const PET_TRAIT=[
-  {n:'Greedy Gel',    k:['zeny'],    d:v=>`+${v}% Zeny from kills`},
-  {n:'Moonlit Study', k:['exp'],     d:v=>`+${v}% EXP and Job EXP from kills`},
-  {n:'Pack Leader',   k:['petdmg'],  d:v=>`+${v}% damage for every fighting pet`},
-  {n:'Sand Tracker',  k:['ore'],     d:v=>`+${v}% Oridecon and Elunium drop chance`},
-  {n:'Swift Mount',   k:['move'],    d:v=>`+${v}% movement speed`},
-  {n:'Hoarded Flame', k:['gear'],    d:v=>`+${v}% equipment drop chance`},
-  {n:'Executioner',   k:['boss'],    d:v=>`+${v}% damage to MVPs, yours and your pets'`},
-  {n:'Divine Grace',  k:['hp','dr'], d:v=>`+${v}% Max HP and ${v}% less damage taken`},
-  {n:'Golden Jelly', k:['zeny'], d:v=>`+${v}% Zeny from kills`},
-  {n:'Resilient Gel', k:['hp'], d:v=>`+${v}% Max HP`},
-  {n:'Silken Guard', k:['dr'], d:v=>`${v}% less damage taken`},
-  {n:'Sneaky Finder', k:['gear'], d:v=>`+${v}% equipment drop chance`},
-  {n:'Curious Forager', k:['ore'], d:v=>`+${v}% Oridecon and Elunium drop chance`},
-  {n:'Forest Wisdom', k:['exp'], d:v=>`+${v}% EXP and Job EXP from kills`},
-  {n:'Spirit Tutor', k:['exp'], d:v=>`+${v}% EXP and Job EXP from kills`},
-  {n:'Impish Ambush', k:['boss'], d:v=>`+${v}% damage to MVPs, yours and your pets'`},
-  {n:'Fox Fortune', k:['gear'], d:v=>`+${v}% equipment drop chance`},
-  {n:'Dark Rally', k:['petdmg'], d:v=>`+${v}% damage for every fighting pet`},
-  {n:'Spectral Veil', k:['dr'], d:v=>`${v}% less damage taken`},
-  {n:'Tiger Challenge', k:['boss'], d:v=>`+${v}% damage to MVPs, yours and your pets'`}];
+  // v470 (owner: "more unique like skill damage +10%, reduce enemy defence"): the signature is the
+  // species' whole identity, so the roster now spreads over SIXTEEN effect families instead of nine,
+  // and seven of them are new mechanics rather than another "+X% to a stat":
+  //   atk / matk        -> raises the attack stat itself (and everything derived from it)
+  //   skdmg             -> skill damage only, never basic attacks
+  //   critdmg           -> multiplies critical damage (critD), so it pays only on crits
+  //   aspd              -> shortens the attack interval (more hits per second)
+  //   pen               -> ignores a share of the target's armour (raid bosses carry 50%)
+  //   flee              -> adds Flee points, inside the existing 60/80% cap
+  // Every value still runs 5% at Bond 0 to 10% at Bond 5 - the owner's ceiling - and every family is
+  // read by a hook that already existed in the combat formulas, so nothing here stacks past 10%.
+  // Order is the PETS order and may never be re-ordered: index === species.
+  {n:'Greedy Gel',     k:['zeny'],         d:v=>`+${v}% Zeny from kills`},
+  {n:'Moonlit Study',  k:['exp'],          d:v=>`+${v}% EXP and Job EXP from kills`},
+  {n:'Pack Leader',    k:['petdmg'],       d:v=>`+${v}% damage for every fighting pet`},
+  {n:'Sand Tracker',   k:['ore'],          d:v=>`+${v}% Oridecon and Elunium drop chance`},
+  {n:'Swift Mount',    k:['move'],         d:v=>`+${v}% movement speed`},
+  {n:'Hoarded Flame',  k:['gear'],         d:v=>`+${v}% equipment drop chance`},
+  {n:'Executioner',    k:['boss'],         d:v=>`+${v}% damage to MVPs, yours and your pets'`},
+  {n:'Divine Grace',   k:['hp','dr'],      d:v=>`+${v}% Max HP and ${v}% less damage taken`},
+  {n:'Coin Snatch',    k:['zeny','ore'],   d:v=>`+${v}% Zeny and +${v}% Oridecon and Elunium drop chance`},
+  {n:'Corrosive Gel',  k:['pen'],          d:v=>`your hits ignore ${v}% of the target's armour`},
+  {n:'Silken Guard',   k:['dr'],           d:v=>`${v}% less damage taken`},
+  {n:'Sly Step',       k:['flee'],         d:v=>`+${v}% Flee`},
+  {n:'Tailwind',       k:['aspd'],         d:v=>`+${v}% attack speed`},
+  {n:'Spore Cloud',    k:['matk'],         d:v=>`+${v}% MATK`},
+  {n:'Soul Chant',     k:['skdmg'],        d:v=>`+${v}% skill damage`},
+  {n:'Impish Ambush',  k:['critdmg'],      d:v=>`+${v}% critical damage`},
+  {n:'Foxfire',        k:['atk','critdmg'],d:v=>`+${v}% ATK and +${v}% critical damage`},
+  {n:'Dark Rally',     k:['petdmg','atk'], d:v=>`+${v}% damage for every fighting pet and +${v}% ATK`},
+  {n:'Spectral Veil',  k:['dr','flee'],    d:v=>`${v}% less damage taken and +${v}% Flee`},
+  {n:'Stampede',       k:['atk','move'],   d:v=>`+${v}% ATK and +${v}% movement speed`},
+  // v469 Raidbound signatures (fixed, never rolled or swapped). Each is a two-family composite built
+  // from the raid it comes from: the Astral Citadel pierces and endures, Thor Volcano burns and feeds.
+  // Order must match PETS indices 20-24: Thanatos, Seraph, Ifrit, Warden, Whisper.
+  {n:'Extinction Echo', k:['boss','pen'],       d:v=>`+${v}% damage to MVPs and raid bosses, and your hits ignore ${v}% of their armour`},
+  {n:'Sanctum Grace',   k:['hp','skdmg'],       d:v=>`+${v}% Max HP and +${v}% skill damage`},
+  {n:'Primal Heat',     k:['petdmg','skdmg'],   d:v=>`+${v}% damage for every fighting pet and +${v}% skill damage`},
+  {n:'Sanctum Bulwark', k:['dr','pen'],         d:v=>`${v}% less damage taken, and your hits ignore ${v}% of the target's armour`},
+  {n:'Soul Tithe',      k:['exp','matk'],       d:v=>`+${v}% EXP and Job EXP from kills and +${v}% MATK`}];
 // Suggestions use existing random skill rolls; they do not grant skills or change odds.
 const PET_RECOMMENDED=[
  ['treasuresniff','warmnuzzle'],['vital','tailwag'],['warcry','piercingfang'],['treasuresniff','piercingfang'],
@@ -3599,7 +3641,9 @@ const PET_RECOMMENDED=[
  ['treasuresniff','tailwag'],['vital','warmnuzzle'],['guardingchirp','warmnuzzle'],
  ['treasuresniff','tailwag'],['treasuresniff','piercingfang'],['vital','guardingchirp'],
  ['arcane','spiritbolt'],['piercingfang','siphon'],['flameburst','warcry'],
- ['arcane','spiritbolt'],['vital','spiritbolt'],['warcry','flameburst']];
+ ['arcane','spiritbolt'],['vital','spiritbolt'],['warcry','flameburst'],
+ // v469 Raidbound suggestions (two existing random rolls, nothing granted):
+ ['piercingfang','soulrend'],['vital','arcane'],['flameburst','warcry'],['guardingchirp','vital'],['spiritbolt','siphon']];
 let petPreviewStance='idle';
 const bondCnt=sp=>Math.max(0,Math.min(999,Number((S&&S.bond&&S.bond[sp])||0)));
 // Bond 0..5: 0 at none, 1 after the first folded duplicate, 5 after fifteen of them.
@@ -3642,15 +3686,60 @@ const PET_SKILLS=[
   {id:'treasuresniff',n:'Treasure Sniff',kind:'utility',effect:'zeny',value:40,cd:35,desc:'Utility: finds 40 Zeny, no combat damage',vfx:'aid',color:'#ffd23f',icon:'💰'},
   {id:'warmnuzzle',n:'Warm Nuzzle',kind:'utility',effect:'heal',value:3,cd:32,desc:'Utility: restores 3% of Max HP, no combat damage',vfx:'aid',color:'#ff9db8',icon:'💞'},
   {id:'guardingchirp',n:'Guarding Chirp',kind:'utility',effect:'def',value:5,duration:20,cd:40,desc:'Utility: +5 DEF for 20s, no combat damage',vfx:'coat',color:'#8fe9ff',icon:'🛡️'},
-  {id:'tailwag',n:'Tail Wag',kind:'utility',effect:'comfort',cd:28,desc:'Utility: a cosmetic morale emote, no combat damage',vfx:'aid',color:'#fff3a0',icon:'✨'}
+  {id:'tailwag',n:'Tail Wag',kind:'utility',effect:'comfort',cd:28,desc:'Utility: a cosmetic morale emote, no combat damage',vfx:'aid',color:'#fff3a0',icon:'✨'},
+  // v468 (owner: "more active skills in the pet system"): six more random actives. They reuse the
+  // shipped aoe/single engine, existing vfx families and the same power/cooldown band (power <= 2.0,
+  // cooldown >= 7s) so no new combat rule, no new buff slot and no DPS ceiling appears - they only
+  // widen what a two-slot roll can hand out. Actives are always random; nothing here is fixed.
+  {id:'frostfang',n:'Frost Fang',kind:'single',power:1.85,cd:9,desc:'Single target: 1.85× pet damage',vfx:'spiral',color:'#9be8ff',icon:'❄️'},
+  {id:'sonicbark',n:'Sonic Bark',kind:'aoe',power:1.2,radius:4.6,cd:10,desc:'AoE: 1.20× pet damage to enemies within 4.6 units',vfx:'jup',color:'#d8c8ff',icon:'🔊'},
+  {id:'embernova',n:'Ember Nova',kind:'aoe',power:1.15,radius:5.5,cd:16,desc:'AoE: 1.15× pet damage to enemies within 5.5 units',vfx:'meteor',color:'#ff9450',icon:'🌋'},
+  {id:'shadowrake',n:'Shadow Rake',kind:'single',power:1.6,cd:7,desc:'Single target: 1.60× pet damage, quickest pet active',vfx:'soulb',color:'#b58bff',icon:'🌑'},
+  {id:'soulrend',n:'Soul Rend',kind:'single',power:2.0,cd:12,desc:'Single target: 2.00× pet damage',vfx:'spiral',color:'#ffe28a',icon:'🩻'},
+  {id:'galehowl',n:'Gale Howl',kind:'aoe',power:1.35,radius:4,cd:18,desc:'AoE: 1.35× pet damage to enemies within 4 units, longest pet active cooldown',vfx:'frenzy',color:'#8ef4c6',icon:'🌀'}
 ];
-const petDmg=p=>Math.round(atk()*PETBAL*(typeof skillTuning==='function'?skillTuning('companion'):1)*[.2,.32,.55,1][PETS[p.sp].r]*MUT[p.mut]*(1+p.eq[0]*.10)*(1+petPassive('petdmg')/100)),petInt=p=>Math.max(.4,1.7-PETS[p.sp].r*.15)/(1+p.eq[1]*.07);
+const petDmg=p=>Math.round(atk()*PETBAL*(typeof skillTuning==='function'?skillTuning('companion'):1)*[.2,.32,.55,1,1][PETS[p.sp].r]*MUT[p.mut]*(1+p.eq[0]*.10)*(1+petPassive('petdmg')/100)),petInt=p=>Math.max(.4,1.7-PETS[p.sp].r*.15)/(1+p.eq[1]*.07);
 // v90 (owner): every Legendary pet (r===3) costs twice as much - a mutation roll, a skill gacha and an upgrade step.
-const peqCost=t=>1200*(t+1)*(t+1),peqCostOf=(p,t)=>peqCost(t)*(PETS[p.sp].r===3?2:1),rollCost=p=>2500*(1+PETS[p.sp].r)*(PETS[p.sp].r===3?2:1),petSkillCost=p=>2000*(1+PETS[p.sp].r)*(PETS[p.sp].r===3?2:1);
+// v469 (owner: "double the raidbound pet cost for mutation, skill reroll and weapon gacha compared
+// to legendary"): the three prices are now explicit per-rarity tables instead of a doubled ladder,
+// because the ladder's own (1+r) would have made a fifth tier cheaper than a fourth. Legendary
+// keeps its v90 x2; Raidbound pays exactly double a Legendary on all three.
+//   mutation roll   2,500 / 5,000 / 7,500 / 20,000 / 40,000
+//   skill gacha     2,000 / 4,000 / 6,000 / 16,000 / 32,000
+//   upgrade step    x1 / x1 / x1 / x2 / x4 of peqCost(t)   (4,800 -> 120,000 at Raidbound)
+const PET_STEP_X=[1,1,1,2,4],PET_ROLL_X=[2500,5000,7500,20000,40000],PET_GACHA_X=[2000,4000,6000,16000,32000];
+const peqCost=t=>1200*(t+1)*(t+1),peqCostOf=(p,t)=>peqCost(t)*PET_STEP_X[PETS[p.sp].r],rollCost=p=>PET_ROLL_X[PETS[p.sp].r],petSkillCost=p=>PET_GACHA_X[PETS[p.sp].r];
 const petSkills=p=>((p.skills)||[]).map(id=>PET_SKILLS.find(s=>s.id===id)).filter(Boolean);
 // Per-skill cooldowns live in the same map as the 7s gate, keyed petId|skillId. A pet that
 // rerolls or is released must not leave those timers behind.
 const clearPetCd=id=>{for(const k in petSkillCd)if(k===String(id)||k.indexOf(id+'|')===0)delete petSkillCd[k]};
+// ---- Raidbound drop (v469, owner) -------------------------------------------------------------
+// One 10% roll per CLEARED raid, the same band the Raid Boss Card and the exclusive Raid Title use,
+// rolled only for the dungeon that owns the species. Client-side loot: no DO message, no alarm and
+// no extra socket traffic - the raid file just asks index.html for the roll.
+// Gated on the shipped catalog: a Raidbound species whose native atlas is not in assets/pets/v1 yet
+// cannot be rolled, so a save can never hold a pet the client cannot draw. The moment the art pack
+// lands (catalog.json gains the five sprite ids) the roll starts working with no code change.
+const RAIDBOUND_DROP=.10;
+const petArtShipped=sp=>{const st=typeof petSpriteStore!=='undefined'?petSpriteStore:null,c=st&&st.catalog;return !!(c&&c.species&&c.species[sp.spriteId])};
+const raidboundPool=raidId=>PETS.map((sp,i)=>i).filter(i=>PETS[i].r===4&&PETS[i].raid===raidId&&petArtShipped(PETS[i]));
+function raidboundDrop(raidId){
+  if(!S||!Array.isArray(S.pets))return null;
+  const pool=raidboundPool(raidId==='thor'?'thor':'astral');
+  if(!pool.length)return null;                       // art not shipped yet: nothing to roll
+  if(Math.random()>=RAIDBOUND_DROP)return null;
+  const sp=pool[ri(0,pool.length-1)],meta=PETS[sp],gift=PET_SKILLS[pickW(PET_SKILL_WEIGHTS)];
+  const own=S.pets.find(x=>x.sp===sp);
+  if(own){const before=bondRank(sp);petFold(own,{sp,mut:0,eq:[0,0,0],skills:[gift.id]});
+    const after=bondRank(sp),T=PET_TRAIT[sp];
+    log(`A second ${meta.n} answered the clear and folded in: Bond ${before} -> ${after}/5, so ${T.n} is now ${T.d(traitVal(sp))}.`,'r5','pet');
+    addFloat(pl.x,3.6,pl.z,'PET! '+meta.n,'#ffb27a',true);
+    save();return {name:meta.n,sp,folded:true}}
+  if(S.pets.length>=40){const z=Math.floor(EGG*2);earnZeny(z);log(`A ${meta.n} answered the clear, but your pet collection is full (+${z}z).`,'','pet,zeny');return null}
+  S.pets.push({id:ri(1e6,9e6),sp,mut:0,eq:[0,0,0],skills:[gift.id],on:S.pets.filter(x=>x.on).length<3});
+  log(`⚔ RAIDBOUND PET DROP! ${meta.n} answered the clear with ${gift.n} - ${PET_TRAIT[sp].n} ${PET_TRAIT[sp].d(traitVal(sp))} while it fights.`,'r5','pet,raid');
+  addFloat(pl.x,3.8,pl.z,'⚔ '+meta.n+'!','#ffb27a',true);
+  save();return {name:meta.n,sp,folded:false}}
 // Why this buff cannot be cast right now ('' = it can). One copy of each buff at a time across
 // the whole field, and ATK and MATK are mutually exclusive.
 function petBuffWhy(skill){
@@ -3712,7 +3801,9 @@ const pickW=w=>{let r=Math.random()*w.reduce((a,b)=>a+b,0);for(let i=0;i<w.lengt
 const uid=()=>Date.now()+Math.random(),rnd=(a,b)=>a+Math.random()*(b-a),ri=(a,b)=>Math.floor(rnd(a,b+1)),cl=(v,a,b)=>Math.max(a,Math.min(b,v));
 // One roll fills both slots. The second pick is made from the skills the first did not take, so
 // the two can never match and there is no retry loop to spin if the dice are pinned.
-const PET_SKILL_WEIGHTS=[.35,.35,1,1,1,1,1,1,1,1,1,1],rollPetSkills=()=>{const a=pickW(PET_SKILL_WEIGHTS),rest=PET_SKILL_WEIGHTS.map((w,i)=>i).filter(i=>i!==a),b=rest[pickW(rest.map(i=>PET_SKILL_WEIGHTS[i]))];return[PET_SKILLS[a].id,PET_SKILLS[b].id]};
+// One weight per PET_SKILLS entry, in order. The two player buffs stay rare; every active and
+// utility roll keeps weight 1, so adding actives cannot make the buffs more common.
+const PET_SKILL_WEIGHTS=[.35,.35,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],rollPetSkills=()=>{const a=pickW(PET_SKILL_WEIGHTS),rest=PET_SKILL_WEIGHTS.map((w,i)=>i).filter(i=>i!==a),b=rest[pickW(rest.map(i=>PET_SKILL_WEIGHTS[i]))];return[PET_SKILLS[a].id,PET_SKILLS[b].id]};
 // ---------- auto-sell rules: shared by live drops, offline drops and bag previews ----------
 const AUTOSELL_SLOTS=['weapon','armor','head','off','leg','acc'],AUTOSELL_WEAPONS=['sword','dagger','katar','bow','staff','mace','axe'],AUTOSELL_WEAPONS_X=['spear','book','knuckle','instrument','whip','shuriken','gun'];
 const AUTOSELL_AFFIXES=['str','agi','dex','luk','int','vit','hp','atk','matk','crit','aspd','flee','cdm','move'];
@@ -4144,6 +4235,12 @@ const s=unpackSave(JSON.parse(raw));if(s&&s.lv){const F=fresh(),f=Object.assign(
 // repair top-level numbers corrupted by older/test saves (null -> crash on .toLocaleString())
   for(const k of['lv','exp','hp','zeny','kills','indexXp','dmg','pts','mp','lvl','kl','gmx'])f[k]=num_(f[k],F[k]);if(!hadIndexXp)delete f.indexXp;
   if(f.dmgShort!==true&&f.dmgShort!==false)f.dmgShort=true;   // damage digits: short unless deliberately switched
+  // v467: Display → UI scale (1 = 100%). Spelled out rather than calling cleanUiScale(), because
+  // the save harnesses extract this normaliser without the display helpers next to it.
+  f.uiScale=Math.max(0.9,Math.min(1.5,Number.isFinite(Number(f.uiScale))?Number(f.uiScale):1));
+  // v469: Auto is on unless the save says otherwise, so an old save gets the screen-derived scale and
+  // a player who picked a step keeps it.
+  f.uiScaleAuto=f.uiScaleAuto!==false;
   if(f.cameraShake!==true&&f.cameraShake!==false)f.cameraShake=true;
   f.kite=f.kite===true;
   if(typeof PGWardrobe!=='undefined'){f.appearance=PGWardrobe.normalize(f.appearance);if(f.appearance)f.sex=f.appearance.sex;}
@@ -6412,7 +6509,7 @@ const WEAPON_STAR_TABLE=[
   [11,30,10,22,[5,7,10,12,15]],[12,25,11,26,[6,8,11,14,17]],[13,25,12,30,[6,9,12,15,18]],[14,25,13,35,[7,10,13,16,20]],[15,22,14,40,[7,10,14,18,22]],
   [16,20,15,48,[8,11,15,19,24]],[17,15,16,56,[9,12,16,21,26]],[18,12,17,65,[10,14,18,23,28]],[19,10,18,75,[11,15,20,25,32]],[20,7,20,90,[12,17,24,30,38]]
 ];
-const items=()=>Object.values(S.eq).filter(Boolean),ev=it=>Math.round(it.val*(1+(it.r||0)*.15)),WEAPON_STAR_MAX=20,WEAPON_STAR_DMG_PER=2,WEAPON_STAR_PEN_PER=2,WEAPON_STAR_BOOSTS=[0,5,7,10,12,15],canStarWeapon=it=>Boolean(it&&it.wt&&(it.slot==='weapon'||it.slot==='off')&&(it.sec|0)>=5),starCount=it=>canStarWeapon(it)?Math.max(0,Math.min(WEAPON_STAR_MAX,Math.floor(Number(it.stars)||0))):0,effectiveWeaponStars=()=>S&&S.eq?Math.min(WEAPON_STAR_MAX,Math.max(starCount(S.eq.weapon),S.eq.off&&S.eq.off.wt==='dagger'?starCount(S.eq.off):0)):0,starOverallDmgPct=()=>effectiveWeaponStars()*WEAPON_STAR_DMG_PER,starArmorPenPct=()=>effectiveWeaponStars()*WEAPON_STAR_PEN_PER,applyStarAndBossArmor=(target,dmg)=>{if(!(dmg>0))return dmg;const stars=effectiveWeaponStars(),armor=target&&typeof target.raidArmor==='number'&&target.raidArmor>0?target.raidArmor:0;if(!stars&&!armor)return dmg;const dmgMult=1+stars*(WEAPON_STAR_DMG_PER/100),effArmor=armor>0?Math.max(0,armor-stars*(WEAPON_STAR_PEN_PER/100)):0,armorMult=armor>0?Math.max(.05,1-effArmor):1;return Math.max(1,Math.round(dmg*dmgMult*armorMult))},iname=it=>(it.r?'+'+it.r+' ':'')+it.name+(starCount(it)?' ★'+starCount(it):''),DUAL=.35,TWO_HANDED=1.5,eqv=k=>{const it=S.eq[k];return it?k==='off'&&it.wt==='dagger'?ev(it)*DUAL:ev(it)*(it.wt==='katar'?TWO_HANDED:1):0};
+const items=()=>Object.values(S.eq).filter(Boolean),ev=it=>Math.round(it.val*(1+(it.r||0)*.15)),WEAPON_STAR_MAX=20,WEAPON_STAR_DMG_PER=2,WEAPON_STAR_PEN_PER=2,WEAPON_STAR_BOOSTS=[0,5,7,10,12,15],canStarWeapon=it=>Boolean(it&&it.wt&&(it.slot==='weapon'||it.slot==='off')&&(it.sec|0)>=5),starCount=it=>canStarWeapon(it)?Math.max(0,Math.min(WEAPON_STAR_MAX,Math.floor(Number(it.stars)||0))):0,effectiveWeaponStars=()=>S&&S.eq?Math.min(WEAPON_STAR_MAX,Math.max(starCount(S.eq.weapon),S.eq.off&&S.eq.off.wt==='dagger'?starCount(S.eq.off):0)):0,starOverallDmgPct=()=>effectiveWeaponStars()*WEAPON_STAR_DMG_PER,starArmorPenPct=()=>effectiveWeaponStars()*WEAPON_STAR_PEN_PER,applyStarAndBossArmor=(target,dmg)=>{if(!(dmg>0))return dmg;const stars=effectiveWeaponStars(),armor=target&&typeof target.raidArmor==='number'&&target.raidArmor>0?target.raidArmor:0,petPen=typeof petPassive==='function'?petPassive('pen'):0;if(!stars&&!armor&&!petPen)return dmg;const dmgMult=1+stars*(WEAPON_STAR_DMG_PER/100),effArmor=armor>0?Math.max(0,(armor-stars*(WEAPON_STAR_PEN_PER/100))*(1-petPen/100)):0,armorMult=armor>0?Math.max(.05,1-effArmor):1;return Math.max(1,Math.round(dmg*dmgMult*armorMult))},iname=it=>(it.r?'+'+it.r+' ':'')+it.name+(starCount(it)?' ★'+starCount(it):''),DUAL=.35,TWO_HANDED=1.5,eqv=k=>{const it=S.eq[k];return it?k==='off'&&it.wt==='dagger'?ev(it)*DUAL:ev(it)*(it.wt==='katar'?TWO_HANDED:1):0};
 const bon=k=>{let v=MASTER_STATS.includes(k)?cardMasteryStat(k):0;for(const it of items()){const f=it===S.eq.off&&it.wt==='dagger'?DUAL:1;for(const a of it.aff||[])if(a.k===k)v+=a.v*f*(k==='hp'?2:1);for(const c of it.cards||[])for(const e of cardEffects(c))if(e.k===k)v+=e.v*f}
   // haven-v158: Ascension set bonuses add percentage stats on top of gear and cards.
   if(typeof ascensionSetBonuses==='function')for(const a of Object.values(ascensionSetBonuses()))if(a.tier.stats[k])v+=a.tier.stats[k];
@@ -6430,8 +6527,8 @@ const bon=k=>{let v=MASTER_STATS.includes(k)?cardMasteryStat(k):0;for(const it o
 function gmStatSnapshot(){return {at:Date.now(),base:{...S.st},total:Object.fromEntries(STATS.map(([k])=>[k,st(k)])),combat:{ATK:atk(),MATK:matk(),DEF:def(),MDEF:mdef(),'Max HP':maxHp(),'Attack interval (s)':aspd(),'Critical %':crit(),'Critical damage multiplier':critD(),'Flee %':flee(),'Miss %':missCh(),'Movement (u/s)':moveSpd()}}}
 const st=k=>S.st[k]+bon(k),gearTierOf=it=>Math.max(0,Math.min(3,((it&&it.sec)|0)||0)),classTierOf=(cls=S.cls)=>Math.max(0,Math.min(3,EXPANDED_CLASSES.has(cls)&&CLASSES[cls]?3:(CLASSES[cls]&&CLASSES[cls].tier)||0)),gearTierOK=(it,cls=S.cls)=>it?.sec===6?CLASSES[cls]?.tier===4:gearTierOf(it)<=Math.max(1,classTierOf(cls)),gearUserOf=it=>it?.sec===6?'fourth-job classes only':['any class','Novice and 1st-job classes','2nd-job classes and up','transcendent classes only'][gearTierOf(it)],canUse=it=>gearTierOK(it)&&(it.slot==='off'?canShield():(it.slot!=='weapon'||!it.wt||C().wt.includes(it.wt)));
 const maxHp=()=>Math.round((80+S.lv*20+eqv('head')*4+(eqv('acc1')+eqv('acc2'))*3+st('vit')*8+bon('hp'))*C().hp*(1+(pv('hpp')+bon('hpPct')+(typeof cardMasteryStat==='function'?cardMasteryStat('hpPct'):0))/100)*(1+(petBuff.hp||0)/100)*(1+petPassive('hp')/100)*(1+ascStat('vitality')/100));
-const atk=()=>Math.round((4+S.lv*2+eqv('weapon')+(S.eq.off&&S.eq.off.wt==='dagger'?eqv('off'):0)+st(C().main)*1.5+(st('dex')+st('luk'))*.25)*C().atk*(1+(pv('atk')+bon('atk')+(typeof cardMasteryStat==='function'?cardMasteryStat('atkPct'):0)+(tb.atk||0)+(petBuff.atk||0))/100)*(1+collDmg()/100));
-const matk=()=>Math.round((4+S.lv*2+eqv('weapon')*.8+st('int')*1.5+st('dex')*.25)*C().atk*(1+(pv('matk')+bon('matk')+(typeof cardMasteryStat==='function'?cardMasteryStat('matkPct'):0)+(tb.matk||0)+(petBuff.matk||0))/100)*(1+collDmg()/100));
+const atk=()=>Math.round((4+S.lv*2+eqv('weapon')+(S.eq.off&&S.eq.off.wt==='dagger'?eqv('off'):0)+st(C().main)*1.5+(st('dex')+st('luk'))*.25)*C().atk*(1+(pv('atk')+bon('atk')+(typeof cardMasteryStat==='function'?cardMasteryStat('atkPct'):0)+(tb.atk||0)+(petBuff.atk||0))/100)*(1+(typeof petPassive==='function'?petPassive('atk'):0)/100)*(1+collDmg()/100));
+const matk=()=>Math.round((4+S.lv*2+eqv('weapon')*.8+st('int')*1.5+st('dex')*.25)*C().atk*(1+(pv('matk')+bon('matk')+(typeof cardMasteryStat==='function'?cardMasteryStat('matkPct'):0)+(tb.matk||0)+(petBuff.matk||0))/100)*(1+(typeof petPassive==='function'?petPassive('matk'):0)/100)*(1+collDmg()/100));
 // Attack interval in seconds (the sheet prints the RO-style ASPD number beside it). v86 (owner:
 // "attack speed is too slow with max agi 99 or 120, check ragnarok online as reference"): the old
 // AGI term capped at a 50% reduction, which AGI 83 already reached - AGI 99 -> 120 gave literally
@@ -6442,14 +6539,14 @@ const matk=()=>Math.round((4+S.lv*2+eqv('weapon')*.8+st('int')*1.5+st('dex')*.25
 // Assassin Cross ~.14s, Sniper ~.15s, Lord Knight ~.20s before gear ASPD%; with gear ASPD% most
 // trans classes ride the .13 floor.
 // Owner cap: 192 ASPD = 9.6 basic attacks/s. Apply after Haste and every speed bonus.
-const aspd=()=>{const floor=items().some(it=>it.sec===6)?.10:.13;return Math.max(5/(192-144),Math.max(floor,.85*C().aspd*(1-Math.min(.68,st('agi')*.0058))/(1+(pv('aspd')+bon('aspd')+(typeof cardMasteryStat==='function'?cardMasteryStat('aspdPct'):0)+(tb.aspd||0))/100))*(1-ascStat('haste')/100))};
+const aspd=()=>{const floor=items().some(it=>it.sec===6)?.10:.13;return Math.max(5/(192-144),Math.max(floor,.85*C().aspd*(1-Math.min(.68,st('agi')*.0058))/(1+(pv('aspd')+bon('aspd')+(typeof cardMasteryStat==='function'?cardMasteryStat('aspdPct'):0)+(tb.aspd||0))/100)/(1+(typeof petPassive==='function'?petPassive('aspd'):0)/100))*(1-ascStat('haste')/100))};
 // v73 crit retune (owner): reaching the 60% cap used to be a LUK dump - LUK 99 alone paid
 // 39.6%. LUK now pays 0.25 a point, the flat base is 2, and above 45% every further point from
 // stats, skills, gear and card mastery counts half. A Lv70 LUK dump with both Hunter/Sniper crit
 // passives lands ~51%, so the last stretch to 60 is a real build. Index Crit (above) is the only
 // source that passes the 60 cap, and the total stops at 100.
 const mythicCrit=()=>{let v=0;for(const it of items())if(it.sec===6){const f=it===S.eq.off&&it.wt==='dagger'?DUAL:1;for(const a of it.aff||[])if(a.k==='crit')v+=a.v*f}for(const a of Object.values(ascensionSetBonuses()))v+=a.tier.stats.crit||0;return v};
-const crit=(bonus=0)=>{const extra=mythicCrit(),v=2+st('luk')*.25+pv('crit')+bon('crit')-extra+(typeof cardMasteryStat==='function'?cardMasteryStat('critPct'):0),core=Math.min(60,v<=45?v:45+(v-45)*.5);return Math.min(100,core+(typeof indexCrit==='function'?indexCrit():0)+bonus)+extra+ascStat('precision')},flee=()=>{const hasMythic=items().some(it=>it.sec===6),cap=hasMythic?80:60;return Math.min(cap,st('agi')*.5+S.lv*.1+pv('flee')+bon('flee')+(typeof cardMasteryStat==='function'?cardMasteryStat('fleePct'):0))+ascStat('evasion')+ascSkillValue('gc_veil','flee')*(skillState().buffs.gc_veil?1:0)},missCh=()=>Math.max(0,15-st('dex')*.25);
+const crit=(bonus=0)=>{const extra=mythicCrit(),v=2+st('luk')*.25+pv('crit')+bon('crit')-extra+(typeof cardMasteryStat==='function'?cardMasteryStat('critPct'):0),core=Math.min(60,v<=45?v:45+(v-45)*.5);return Math.min(100,core+(typeof indexCrit==='function'?indexCrit():0)+bonus)+extra+ascStat('precision')},flee=()=>{const hasMythic=items().some(it=>it.sec===6),cap=hasMythic?80:60;return Math.min(cap,st('agi')*.5+S.lv*.1+pv('flee')+bon('flee')+(typeof cardMasteryStat==='function'?cardMasteryStat('fleePct'):0)+(typeof petPassive==='function'?petPassive('flee'):0))+ascStat('evasion')+ascSkillValue('gc_veil','flee')*(skillState().buffs.gc_veil?1:0)},missCh=()=>Math.max(0,15-st('dex')*.25);
 // Movement before equipment is capped at 70% of the owner's 14.35 u/s reference.
 // Pets, movement buffs and long-distance running share the cap. Equipment/card movement
 // applies afterward, retaining its existing combined +20% limit.
@@ -6457,7 +6554,7 @@ const heroMoveSpeedForAgi=agi=>5.3+Math.max(1,Number(agi)||1)*.025+Math.sqrt(Mat
 // v73 crit damage (owner: "cri damage is too overpowered"): the base multiplier drops 2.0 -> 1.9,
 // and the cdm route that fed it is slot-limited and lighter (see AB/genGear). LUK and DEX still
 // add a little on top, so a crit build stays the burst build - it just cannot stack seven slots.
-const def=()=>Math.floor(S.lv*.5+st('vit')*.5+eqv('armor')+eqv('leg')+(S.eq.off&&S.eq.off.slot==='off'?eqv('off'):0)+pv('def')+bon('def')+(typeof cardMasteryStat==='function'?cardMasteryStat('def'):0)+(tb.def||0)+(petBuff.def||0)),mdef=()=>Math.floor(S.lv*.3+st('int')*.5+st('vit')*.4+eqv('head')*.3+pv('def')*.5+bon('mdef')+(typeof cardMasteryStat==='function'?cardMasteryStat('mdef'):0)),critD=()=>1.9+st('luk')*.008+st('dex')*.005+bon('cdm')/100+ascStat('ferocity')/100,needAt=L=>roundReq(L<=50?Math.floor(NA1*Math.pow(L,NE1)):L<=70?Math.floor(N50*Math.pow(L/50,NE2)):L<=99?Math.floor(N70*Math.pow(L/70,NE2B)):Math.floor(N100*Math.pow(L/100,NE3))),baseNeedAt=L=>L>=BASE_EXP_LATE_LV?roundReq(needAt(L)*BASE_EXP_LATE_X):needAt(L),need=()=>baseNeedAt(S.lv),cost=k=>{const v=S.st[k];return v<ELITELV?1+Math.floor((v-1)/10):10+(v-ELITELV)};
+const def=()=>Math.floor(S.lv*.5+st('vit')*.5+eqv('armor')+eqv('leg')+(S.eq.off&&S.eq.off.slot==='off'?eqv('off'):0)+pv('def')+bon('def')+(typeof cardMasteryStat==='function'?cardMasteryStat('def'):0)+(tb.def||0)+(petBuff.def||0)),mdef=()=>Math.floor(S.lv*.3+st('int')*.5+st('vit')*.4+eqv('head')*.3+pv('def')*.5+bon('mdef')+(typeof cardMasteryStat==='function'?cardMasteryStat('mdef'):0)),critD=()=>(1.9+st('luk')*.008+st('dex')*.005+bon('cdm')/100+ascStat('ferocity')/100)*(1+(typeof petPassive==='function'?petPassive('critdmg'):0)/100),needAt=L=>roundReq(L<=50?Math.floor(NA1*Math.pow(L,NE1)):L<=70?Math.floor(N50*Math.pow(L/50,NE2)):L<=99?Math.floor(N70*Math.pow(L/70,NE2B)):Math.floor(N100*Math.pow(L/100,NE3))),baseNeedAt=L=>L>=BASE_EXP_LATE_LV?roundReq(needAt(L)*BASE_EXP_LATE_X):needAt(L),need=()=>baseNeedAt(S.lv),cost=k=>{const v=S.st[k];return v<ELITELV?1+Math.floor((v-1)/10):10+(v-ELITELV)};
 const totalPts=()=>{let p=10;for(let l=2;l<=S.lv;l++)p+=4+Math.floor(l/5);return p},rcost=()=>S.lv<20?0:S.lv*50;
 // Skill points belong to the class LINE you are standing in, exactly like RO: the Novice level
 // you grinded, your first job and your second job all pool together, and only the skills your
@@ -8005,7 +8102,7 @@ function skillHit(target,raw,sk,proc=false){if(!target||target.hp<=0||!mobs.incl
     if(pv('zeny')&&skillOn('steal')&&target.hp>=target.max*.8)boost+=lv('steal')*.01;}
   if(Math.random()*100<missCh())return 0;
   const critical=Math.random()*100<Math.max(0,(crit(skillBonus('critical'))+ascSkillValue(sk.id,'critical'))*(1-(target.critRes||0)));
-  const damage=Math.max(1,Math.round(raw*boost*rnd(Math.min(.95,.7+st('dex')*.004),1.15)*(critical?critD():1)*(target.boss?1+petPassive('boss')/100:1)*fieldDamage(target)*ascDamage(target)*(1+(target.boss?ascSkillValue(sk.id,'boss'):0)/100)*(1+(!sk.magic?skillBonus('ascRanged'):0)/100)));
+  const damage=Math.max(1,Math.round(raw*boost*(1+(typeof petPassive==='function'?petPassive('skdmg'):0)/100)*rnd(Math.min(.95,.7+st('dex')*.004),1.15)*(critical?critD():1)*(target.boss?1+petPassive('boss')/100:1)*fieldDamage(target)*ascDamage(target)*(1+(target.boss?ascSkillValue(sk.id,'boss'):0)/100)*(1+(!sk.magic?skillBonus('ascRanged'):0)/100)));
   hurt(target,damage,sk.col,critical,true);
   if(!proc&&target.hp>0&&target.deathmark){if(--target.deathmark.hits<=0){const mark=target.deathmark;delete target.deathmark;skillHit(target,mark.raw,mark.sk,true);}}
   return damage;
@@ -9631,8 +9728,8 @@ const RAID_MOB_PORTRAITS={
   'Lord of Death':['assets/mobs/v1/1706-0.png','--msz:144px;--mx:-51.1%;--my:-66.1%','Planned MVP']
 };
 const RAID_DUNGEON_CARDS=[
-  {id:'astral',name:'Astral Citadel',tier:'Lv 120+ · 3rd/4th Job',img:'assets/atlas/astral-citadel.png?v=156',cardChips:[['4 Stages',false],['✦ Astral Shards',true],['50% Armor',false]],route:['Starlit Approach','Fallen Arcade','Runic Observatory','Sanctuary of Thanatos'],boss:'Memory of Thanatos',bossRole:'Sanctum Sovereign · Stage 4',bossSprite:'assets/mobs/v1/1708-0.png',bossFallback:'assets/mobs/v1/1708-0.png',bossCrop:'--bsz:482px;--bx:-51.2%;--by:-69.3%',bossSummary:'3 Starlight Bridge stages + Stage 4 Boss · Crimson Judgment, Eye of Abyss, Horizon Volley, Abyssal Cross, Starfall & Oblivion Extinction (hide behind Pillars).',bossTags:[['🛡 50% Raid Armor',true],['⚔ Solo ~28M DPS (@★0)',false],['👥 2p ×2.25 · 3p ×3.45 HP',false]],subtitle:'3 Starlight Bridge stages + Memory of Thanatos (6 mechanics + Pillar Wipe)',mobs:['Retribution Angel','Despair Phantom','Tower Watcher','Death Whisperer','Agony Demon'],drops:[['Solo Clear','20 Astral Shards · 500k z · 100 Echo'],['Party Clear','30 Shards · 1 Sigil · 750k z · 150 Echo'],['Boss Card · 10%','Sovereign Thanatos · +15% MATK'],['Raid Titles','5 Lightning Titles · 10% Drop · 10/20/30 Clears']],comingSoon:false},
-  {id:'thor',name:'Thor Volcano',tier:'Lv 120+ · 3rd/4th Job',img:'assets/atlas/thor-volcano.png?v=162',cardChips:[['4 Stages',false],['🔥 Primal Catalysts',true],['50% Armor',false]],route:['Molten Approach','Basalt Forge','Magma Conduit','Sanctum of Ifrit'],boss:'Ifrit, Volcano Lord',bossRole:'Caldera Tyrant · Stage 4',bossSprite:'assets/mobs/v1/1832-0.png',bossFallback:'assets/mobs/v1/1832-0.png',bossCrop:'--bsz:442px;--bx:-50.0%;--by:-63.9%',bossSummary:'3 Connected Volcanic Causeway stages + Stage 4 Sanctum · Molten Breath, Tectonic Ring Surge, Hellfire Pinwheel, Pyroclastic Tsunami, Fault Lines & Supernova Spires.',bossTags:[['🛡 50% Raid Armor',true],['⚔ Solo ~32M DPS (@★0)',false],['👥 2p ×2.25 · 3p ×3.45 HP',false]],subtitle:'3 Connected Volcanic Causeway stages + Ifrit, Volcano Lord (6 volcanic mechanics + Obsidian Spires)',mobs:['Magma Slag','Fire Imp','Kasa','Salamander','Obsidian Golem'],drops:[['Solo Clear','20 Primal Catalysts · 500k z · 100 Echo'],['Party Clear','30 Catalysts · 1 Sigil · 750k z · 150 Echo'],['Boss Card · 10%','Primordial Ifrit · +15% ATK'],['Raid Titles','5 Lightning Titles · 10% Drop · 10/20/30 Clears']],comingSoon:false},
+  {id:'astral',name:'Astral Citadel',tier:'Lv 120+ · 3rd/4th Job',img:'assets/atlas/astral-citadel.png?v=156',cardChips:[['4 Stages',false],['✦ Astral Shards',true],['50% Armor',false]],route:['Starlit Approach','Fallen Arcade','Runic Observatory','Sanctuary of Thanatos'],boss:'Memory of Thanatos',bossRole:'Sanctum Sovereign · Stage 4',bossSprite:'assets/mobs/v1/1708-0.png',bossFallback:'assets/mobs/v1/1708-0.png',bossCrop:'--bsz:482px;--bx:-51.2%;--by:-69.3%',bossSummary:'3 Starlight Bridge stages + Stage 4 Boss · Crimson Judgment, Eye of Abyss, Horizon Volley, Abyssal Cross, Starfall & Oblivion Extinction (hide behind Pillars).',bossTags:[['🛡 50% Raid Armor',true],['⚔ Solo ~56M DPS (@★0)',false],['👥 2p ×2.25 · 3p ×3.45 HP',false]],subtitle:'3 Starlight Bridge stages + Memory of Thanatos (6 mechanics + Pillar Wipe)',mobs:['Retribution Angel','Despair Phantom','Tower Watcher','Death Whisperer','Agony Demon'],drops:[['Solo Clear','20 Astral Shards · 500k z · 100 Echo'],['Party Clear','30 Shards · 1 Sigil · 750k z · 150 Echo'],['Boss Card · 10%','Sovereign Thanatos · +15% MATK'],['Raid Titles','5 Lightning Titles · 10% Drop · 10/20/30 Clears']],comingSoon:false},
+  {id:'thor',name:'Thor Volcano',tier:'Lv 120+ · 3rd/4th Job',img:'assets/atlas/thor-volcano.png?v=162',cardChips:[['4 Stages',false],['🔥 Primal Catalysts',true],['50% Armor',false]],route:['Molten Approach','Basalt Forge','Magma Conduit','Sanctum of Ifrit'],boss:'Ifrit, Volcano Lord',bossRole:'Caldera Tyrant · Stage 4',bossSprite:'assets/mobs/v1/1832-0.png',bossFallback:'assets/mobs/v1/1832-0.png',bossCrop:'--bsz:442px;--bx:-50.0%;--by:-63.9%',bossSummary:'3 Connected Volcanic Causeway stages + Stage 4 Sanctum · Molten Breath, Tectonic Ring Surge, Hellfire Pinwheel, Pyroclastic Tsunami, Fault Lines & Supernova Spires.',bossTags:[['🛡 50% Raid Armor',true],['⚔ Solo ~64M DPS (@★0)',false],['👥 2p ×2.25 · 3p ×3.45 HP',false]],subtitle:'3 Connected Volcanic Causeway stages + Ifrit, Volcano Lord (6 volcanic mechanics + Obsidian Spires)',mobs:['Magma Slag','Fire Imp','Kasa','Salamander','Obsidian Golem'],drops:[['Solo Clear','20 Primal Catalysts · 500k z · 100 Echo'],['Party Clear','30 Catalysts · 1 Sigil · 750k z · 150 Echo'],['Boss Card · 10%','Primordial Ifrit · +15% ATK'],['Raid Titles','5 Lightning Titles · 10% Drop · 10/20/30 Clears']],comingSoon:false},
   {id:'abyss',name:'Niflheim Abyssal Sanctum',tier:'Lv 160 · Future Raid',img:'assets/world-map/cutout/niflheim.png?v=283',cardChips:[['Planned',false],['❖ Abyssal Relics',true]],route:['Wailing Gates','Soul Catacombs','Cursed Reliquary','Throne of the Dead'],boss:'Lord of Death',bossRole:'Underworld Monarch · Planned',bossSprite:'assets/mobs/v1/1706-0.png',bossFallback:'assets/mobs/v1/1706-0.png',bossCrop:'--bsz:462px;--bx:-51.1%;--by:-66.1%',bossSummary:'Frozen underworld catacombs & Throne of the Dead — arriving in a future raid expansion.',bossTags:[['🛡 High Raid Armor',true],['🔒 Upcoming Tier',false]],subtitle:'Frozen underworld catacombs & Throne of the Dead — arriving in a future update',mobs:['Ghost Hound','Banshee','Death Knight','Soul Eater','Abyss Knight'],drops:[['Planned Clear','Abyssal Relics · Valkyrie\'s Sigils · Echo Shards'],['Planned Loot','Mythic Protection Scroll · Lord of Death Card']],comingSoon:true}
 ];
 function renderRaidMobChip(name,isBoss){
@@ -10454,7 +10551,83 @@ function renderCardIndex(){
 }
 
 const qpSide=()=>`<button data-q="side" class="qp-side-toggle" aria-controls="sideLinks" aria-expanded="${sideOpen}">${uiIcon('index')} More destinations <span class="side-chevron${sideOpen?' open':''}">${uiIcon('chevron')}</span></button><div id="sideLinks" ${sideOpen?'':'hidden'}>${SIDE_TABS.filter(k=>k!=='gm'||S.gm).map(k=>`<button data-t="${k}" class="qp-side-tab${tabs.includes(k)?' on':''}" aria-pressed="${tabs.includes(k)}">${uiIcon(k)} ${TABS[k][1]} <small>${TABS[k][2]}</small>${k==='friends'&&dot('friends')?'<i class="dot" aria-label="Friend requests waiting"></i>':''}</button>`).join('')}</div>`;
+// v467 (owner: "the UI and words are too small"): Display → UI scale. The chosen step is stored in
+// the save (S.uiScale) and published as --ui-scale + <html data-ui-scale>, which the theme zooms.
+// Only the CSS-laid-out chrome is zoomed; the WebGL field, the projected sprite layers and the
+// damage floats are positioned in field pixels and keep their own world scale.
+const UI_SCALE_MIN=0.9,UI_SCALE_MAX=1.5;
+const cleanUiScale=v=>{v=Number(v);return Number.isFinite(v)?Math.round(Math.max(UI_SCALE_MIN,Math.min(UI_SCALE_MAX,v))*100)/100:1};
+// v469 (owner: "auto scale based on the pc screen the player is using"). Auto reads the display the
+// player is actually looking at - CSS columns x devicePixelRatio - and picks the step, so a 4K panel
+// or a 1080p desk gets bigger chrome without anyone opening Display, and a small laptop does not.
+// A phone keeps 100%: mobile.css already lays that shell out in px for a small screen, and zooming
+// it would only shrink the field. The player's own pick always wins; Auto is a step you can leave.
+function autoUiScale(){
+  try{
+    if(typeof document!=='undefined'&&document.documentElement.classList.contains('pg-mobile'))return 1;
+    const w=Math.max(0,(typeof screen!=='undefined'&&Number(screen.width))||(typeof innerWidth!=='undefined'?innerWidth:0));
+    if(!w)return 1;
+    const dpr=(typeof devicePixelRatio==='number'&&devicePixelRatio>0)?devicePixelRatio:1;
+    const px=w*dpr;                       // physical columns across the screen
+    if(px>=3200)return 1.3;               // 4K, and a 1440p panel driven at 200%
+    if(px>=1700)return 1.15;              // 1080p and 1440p, retina laptops
+    if(px>=1250)return 1;                 // 1280-1600 class
+    return .9;                            // small laptops and netbooks
+  }catch(_){return 1}
+}
+const uiScaleAutoOn=()=>!!(S&&S.uiScaleAuto!==false);
+// The zoom the theme actually applies to the chrome. Read from the variable rather than from each
+// element so a measurement never disagrees with the CSS that consumed it.
+const uiZoom=()=>{const v=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ui-scale'));return isFinite(v)&&v>0?v:1};
+function applyUiScale(){
+  const z=uiScaleAutoOn()?autoUiScale():cleanUiScale(S&&S.uiScale);
+  const root=document.documentElement;
+  if(root.style.getPropertyValue('--ui-scale')!==String(z))root.style.setProperty('--ui-scale',String(z));
+  if(z===1){if(root.hasAttribute('data-ui-scale'))root.removeAttribute('data-ui-scale')}
+  else if(root.getAttribute('data-ui-scale')!==String(z))root.setAttribute('data-ui-scale',String(z));
+  try{eclipseMeasureDock()}catch(_){}      // the dock's published height must now include the zoom
+}
+// Re-render the open Display panel without its toggle. screenOptions() is itself the toggler, so
+// the panel is forced open for the call and put back exactly as the player had it.
+function renderScreenOptions(){
+  const panel=$('screenOptions');
+  if(!panel)return;
+  const wasOpen=!panel.hidden;
+  panel.hidden=false;
+  screenOptions();
+  panel.hidden=!wasOpen;
+}
+function setUiScale(v){
+  if(!S)return;
+  const z=cleanUiScale(v);
+  S.uiScale=z;
+  S.uiScaleAuto=false;                 // picking a step is opting out of Auto
+  applyUiScale();
+  try{resize()}catch(_){}
+  renderScreenOptions();
+  save();
+}
+function setUiScaleAuto(on){
+  if(!S)return;
+  const auto=on!==false;
+  if(auto===uiScaleAutoOn())return;
+  S.uiScaleAuto=auto;
+  applyUiScale();
+  try{resize()}catch(_){}
+  renderScreenOptions();
+  save();
+}
+// A window that moves between a laptop panel and a desk monitor changes screens mid-session, so the
+// derived step is re-read on resize. It only touches the DOM when the step actually changed.
+function reapplyAutoUiScale(){
+  if(!uiScaleAutoOn())return;
+  const want=autoUiScale();
+  if(root_uiScale_now()===want)return;
+  applyUiScale();
+}
+const root_uiScale_now=()=>{const v=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ui-scale'));return isFinite(v)&&v>0?v:1};
 function applyDisplay(){
+ applyUiScale();
  if(S.cameraShake===false)shake=0;
  // bars() runs on the HUD tick. Only notify chat when a visibility class actually
  // changes; otherwise every tick rebuilt/relaid the chat tabs under the pointer.
@@ -10475,7 +10648,9 @@ function pgPreviewProbe(){
     if(!(r.ok&&r.headers.get('X-Phone-Preview')==='1'))return;
     pgPreviewOk=true;
     // The panel was drawn before this answer arrived, so redraw it (once) while it is open.
-    const l=$('pgPhonePreview');if(l)l.hidden=false;else if($('screenOptions')&&!$('screenOptions').hidden)screenOptions();
+    // v467: re-render, never toggle. This answer can arrive while the Display sheet is open, and
+    // screenOptions() is itself the toggler - it used to slam the sheet shut mid-click.
+    const l=$('pgPhonePreview');if(l)l.hidden=false;else if($('screenOptions')&&!$('screenOptions').hidden)renderScreenOptions();
   }).catch(()=>{})}catch(_){}
 }
 function screenOptions(){const panel=$('screenOptions');panel.hidden=!panel.hidden;$('screenBtn').setAttribute('aria-expanded',String(!panel.hidden));
@@ -10491,6 +10666,11 @@ function screenOptions(){const panel=$('screenOptions');panel.hidden=!panel.hidd
   // setting. Normal accounts do not see the switch; the explicit URL override remains a
   // developer preview path. The reload is still required because the renderer is chosen at boot.
   +(S.gm?`<label><input type="checkbox" data-display="nativeFields" ${nativeFieldsEnabled?'checked':''}>GM preview: New outdoor terrain (reloads)</label>`:'')
+  // Display UI scale is a continuous slider from 90% through 150%. Auto remains the default
+  // until the player touches the slider; then their selected value is saved.
+  +`<div class="pg-sheet-head"><span>UI scale</span><output id="uiScaleValue" for="uiScaleSlider">${Math.round((uiScaleAutoOn()?autoUiScale():cleanUiScale(S.uiScale))*100)}%</output></div>
+    <label class="pg-scale-control" for="uiScaleSlider"><span>90%</span><input id="uiScaleSlider" type="range" min="90" max="150" step="1" value="${Math.round((uiScaleAutoOn()?autoUiScale():cleanUiScale(S.uiScale))*100)}" aria-label="UI and text scale"><span>150%</span></label>
+    <div class="pg-note">Scales the interface and text across the game. The 3D field keeps its size. Drag the slider to choose a size; your choice is saved.</div>`
   // v253: the phone block. "Layout" is a device-local choice, so a phone can drop back to the
   // desk arrangement (or a desk browser can preview the phone one) without touching the save.
   +`<div class="pg-sheet-head pg-phone-head"><span>Phone</span></div>
@@ -10514,7 +10694,18 @@ document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest
   if(what==='focus'){if(pg)pg.setFieldOnly(!pg.fieldOnly());screenOptions();$('screenOptions').hidden=false;return}
   if(what==='layout'){if(pg){const now=pg.getPhoneLayout();pg.setPhoneLayout(now==='auto'?'on':now==='on'?'off':'auto')}screenOptions();$('screenOptions').hidden=false;setTimeout(()=>{try{resize()}catch(_){}},0);return}
 });
-document.addEventListener('input',e=>{if(e.target.id?.startsWith('oreQty-')){const o=e.target.id.slice(7),n=Number(e.target.value),out=$('oreTotal-'+o);marketQty[o]=e.target.value;if(out)out.textContent=Number.isSafeInteger(n)&&n>0?(n*BM_ORE).toLocaleString()+'z total':'Enter a whole quantity';}});
+document.addEventListener('input',e=>{
+  if(e.target.id==='uiScaleSlider'){
+    if(!S)return;
+    const z=cleanUiScale(Number(e.target.value)/100);
+    S.uiScale=z;S.uiScaleAuto=false;
+    const out=$('uiScaleValue');if(out)out.value=Math.round(z*100)+'%';
+    applyUiScale();try{resize()}catch(_){}
+    return;
+  }
+  if(e.target.id?.startsWith('oreQty-')){const o=e.target.id.slice(7),n=Number(e.target.value),out=$('oreTotal-'+o);marketQty[o]=e.target.value;if(out)out.textContent=Number.isSafeInteger(n)&&n>0?(n*BM_ORE).toLocaleString()+'z total':'Enter a whole quantity';}
+});
+document.addEventListener('change',e=>{if(e.target.id==='uiScaleSlider'&&S){save();renderScreenOptions()}});
 $('screenBtn').onclick=()=>{if(S)screenOptions()};
 $('screenOptions').onchange=e=>{const key=e.target.dataset.display;
   if(key==='nativeFields'){
@@ -10974,10 +11165,14 @@ function eclipseMeasureDock(){
   // above it instead of overlapping it on a narrow screen. Falls back to the CSS default.
   const dk=$('dock');
   if(dk){
-    const dh=dk.offsetHeight||0;
+    // v467: offsetHeight/offsetWidth report the pre-zoom layout box, but Display → UI scale zooms the
+    // dock. Scale the measurement by the same factor, or the log and the windows that sit above the
+    // dock overlap it (and the centred More menu drifts).
+    const z=uiZoom();
+    const dh=Math.round((dk.offsetHeight||0)*z);
     let gap=12;                                  // #dock{bottom:12px}, plus the safe-area inset on a phone
-    try{const b=parseFloat(getComputedStyle(dk).bottom);if(isFinite(b))gap=b}catch(_){}
-    const top=Math.round(dh?dh+gap+6:76)+'px',bot=gap+'px',half=dk.offsetWidth/2+'px',dockSig=top+'|'+bot+'|'+half;
+    try{const b=parseFloat(getComputedStyle(dk).bottom);if(isFinite(b))gap=Math.round(b*z)}catch(_){}
+    const top=Math.round(dh?dh+gap+6:76)+'px',bot=gap+'px',half=Math.round(dk.offsetWidth*z/2)+'px',dockSig=top+'|'+bot+'|'+half;
     if(dockSig!==eclipseMeasureDock.last){
       eclipseMeasureDock.last=dockSig;
       document.documentElement.style.setProperty('--docktop',top);
@@ -11240,6 +11435,22 @@ function cancelAstralJourney(){
   if(ascensionRoot&&onBridge)ascensionRoot.position.z=(Z0+Z1)/2-focus[(S.lvl||1)-1];
   pl.x=0;pl.z=Z1-5;pl.wz=pl.z;pl.wx=null;pl.run=false;ct.z=pl.z;
   for(const pet of Object.values(petR)){pet.x=pl.x;pet.z=pl.z;pet.run=false;}
+}
+// v471 (owner: "entering the astral raid from the last boss map, the mobs spawn on the boss map and
+// then the next stage flies off into space"): the bridge maps are ONE continuous world whose root z
+// IS the stage, and every walk is measured from `astralOriginStage`. Any stage change that is not a
+// walk - raid entry, a stage the walk could not reach, leaving a raid from a later stage - has to
+// re-seat the root, the hero, the camera target and the pets TOGETHER, or the next shift is measured
+// from an origin that no longer matches what is on screen.
+function snapAstralStage(stage){
+  const m=S&&S.mp;
+  if(!isContinuousBridgeMap(m))return false;
+  const focus=bridgeFocusOf(m),i=Math.max(1,Math.min(focus.length,Math.round(Number(stage))||1));
+  astralJourney=null;astralOriginStage=i;
+  if(typeof ascensionRoot!=='undefined'&&ascensionRoot)ascensionRoot.position.z=(Z0+Z1)/2-focus[i-1];
+  if(typeof pl!=='undefined'&&pl){pl.x=0;pl.z=Z1-5;pl.wz=pl.z;pl.wx=null;pl.run=false;ct.z=pl.z;}
+  if(typeof petR!=='undefined')for(const pet of Object.values(petR)){pet.x=pl.x;pet.z=pl.z;pet.run=false;}
+  return true;
 }
 function tickAstralJourney(dt){
   const journey=astralJourney;if(!journey)return false;
@@ -12636,6 +12847,8 @@ const scene=new THREE.Scene(),cam=new THREE.PerspectiveCamera(38,2,.1,200);
 let az=0,el=.95,zoom=1;
 
 function resize(){
+  // v469: a machine that moved to another screen re-reads Auto's step here (no-op unless it changed).
+  try{reapplyAutoUiScale()}catch(_){}
   const w=window.innerWidth, h=view.clientHeight||(window.innerHeight - 50);
   if(!R){eclipseMeasureDock();return}
   R.setPixelRatio(Math.min(2,devicePixelRatio||1));
@@ -12647,7 +12860,7 @@ function resize(){
 addEventListener('resize',resize);
 // v253: the phone layout changes what is painted over the field (the HUD card and the dock change
 // size), and it can flip at runtime from Display -> Layout. Re-measure both caches when it does.
-addEventListener('pg-mobile-change',()=>{resize();renderDock();try{eclipseMeasureDock()}catch(_){}});
+addEventListener('pg-mobile-change',()=>{resize();renderDock();try{eclipseMeasureDock()}catch(_){};try{reapplyAutoUiScale()}catch(_){}});
 // v74.1: on a phone the visual viewport changes when the URL bar slides away or the device is
 // turned, and iOS does not always follow that with a window resize event. Re-measure both.
 if(window.visualViewport)visualViewport.addEventListener('resize',resize);
@@ -15118,7 +15331,7 @@ function ensureRaidLightningSheet(){
     for(const tex of raidLightningSheetState.liveTextures)tex.needsUpdate=true;
   };
   img.onerror=()=>{raidLightningSheetState.loading=false;};
-  img.src='assets/refine-fx/title-lightning.webp?v=467';
+  img.src='assets/refine-fx/title-lightning.webp?v=476';
 }
 function makeRaidLightningTexture(colorHex){
   ensureRaidLightningSheet();
@@ -15544,10 +15757,16 @@ function mobMotion(m,clock){
 // two numbers are the ceiling: a third of the field, never more than 320px of art. They also bound
 // the DOM layer (#mobSpriteLayer) that paints above the WebGL canvas.
 const NATIVE_MOB_MAX_PX=320,NATIVE_MOB_MAX_SHARE=.34;
+// v467 (owner): raid creatures are drawn larger than the same species on the field, so the raid
+// needs its own ceiling or the boost would be clipped away by the field's 320px/34% cap. The
+// ceiling still exists - it is what stops one bad projection filling the screen with flat art.
+// v468: the boost became 1.6x / 2.0x, so the raid ceiling rises to 640px / 62% of the field.
+const RAID_NATIVE_MOB_MAX_PX=640,RAID_NATIVE_MOB_MAX_SHARE=.62;
 function nativeMobArtPx(base,top){
   const px=Math.abs(base[1]-top[1]);
   if(!Number.isFinite(px)||!Number.isFinite(base[0])||!Number.isFinite(base[1]))return 0;
-  const cap=Math.min(NATIVE_MOB_MAX_PX,Math.max(120,(R.domElement.clientHeight||600)*NATIVE_MOB_MAX_SHARE));
+  const raid=!!(typeof PGRaid!=='undefined'&&PGRaid.raid&&PGRaid.raid.on);
+  const cap=Math.min(raid?RAID_NATIVE_MOB_MAX_PX:NATIVE_MOB_MAX_PX,Math.max(120,(R.domElement.clientHeight||600)*(raid?RAID_NATIVE_MOB_MAX_SHARE:NATIVE_MOB_MAX_SHARE)));
   return Math.max(1,Math.min(cap,px));
 }
 function syncMobImage(v,m,s){
@@ -15614,8 +15833,20 @@ const PET_VISUAL_SCALE=.42;
 // Follow the hero's AGI, gear, pet and skill movement bonuses, with the same long-distance run boost.
 const petMoveSpeed=distance=>moveSpd(distance>3)*.95;
 // Visual time is real milliseconds, independent of x1/x2/x4 simulation speed.
-const PET_ANIMATION_RATE=.2;
-const petFrameTime=(view,ms)=>ms*Math.min(1,view.delay/(120*PET_ANIMATION_RATE));
+// v468 (owner: "walk/attack are a bit on the slower side"): v135 tamed the old player-paced
+// playback by clamping the native clock to 20% with a 120ms floor per displayed frame. That fixed
+// "too fast" but read as too slow - a Poring walked at 8 frames a second and a 28-frame attack pose
+// was stretched over 3.4 seconds. Measured against the shipped art every authored delay sits
+// between 1ms and 4.5ms, far below the floor, so the floor is the real pace: 120ms per frame in
+// v135, ~45ms in the old player-scaled version. v468 lands in the middle at 80ms (12.5 frames a
+// second) and gives the attack pose its own budget - 60ms per native frame, never under 0.5s and
+// never over 1.2s - so a swing reads as a swing instead of a long held pose.
+// PET_ANIMATION_RATE survives only as the native clock multiplier for a future asset whose delay is
+// above the floor (none today); for the shipped catalogue it cancels out of petFrameTime.
+const PET_ANIMATION_RATE=.34;
+const PET_FRAME_FLOOR_MS=80;
+const PET_ATTACK_FRAME_MS=.06,PET_ATTACK_MIN_S=.5,PET_ATTACK_MAX_S=1.2;
+const petFrameTime=(view,ms)=>ms*Math.min(1,view.delay/(PET_FRAME_FLOOR_MS*PET_ANIMATION_RATE));
 // [lowest opaque pixel, largest animation extent], measured across every native pose.
 const PET_LAYOUT={"1002":[200,74],"1007":[206,53],"1013":[211,126],"1014":[210,95],"1019":[214,137],"1031":[200,74],"1056":[204,70],"1057":[203,67],"1063":[203,54],"1096":[200,113],"1101":[203,77],"1106":[211,126],"1109":[204,141],"1113":[200,74],"1115":[209,230],"1120":[192,122],"1155":[204,117],"1170":[196,132],"1180":[206,84],"1582":[200,81]};
 const petFallbackShape=sp=>sp.n==='Lunatic'?'bunny':sp.n.includes('Wolf')?'cat':sp.n.includes('Peco')?'bug':sp.n.includes('Dragon')||sp.n.includes('Baphomet')?'demon':'blob';
@@ -15632,7 +15863,8 @@ function requestPetAsset(id,stance,direction){
 }
 function petAnimationState(id,r,direction){
  const attack=petSpriteStore?.ready(petAssetKey(id,'attack',direction))?.metadata.actions['attack'+direction];
- const duration=Math.max(.8,(attack?.frames.length||0)*.12,(petSpriteStore?.catalog?.species[id]?.attackDurations[direction]||0)/1000/PET_ANIMATION_RATE);
+ const nativeMs=(petSpriteStore?.catalog?.species[id]?.attackDurations[direction]||0)/1000/PET_ANIMATION_RATE;
+ const duration=Math.min(PET_ATTACK_MAX_S,Math.max(PET_ATTACK_MIN_S,(attack?.frames.length||0)*PET_ATTACK_FRAME_MS,nativeMs));
  const elapsed=r.attackStarted==null?Infinity:Math.max(0,skinNow()-r.attackStarted)/1000;
  return elapsed<duration?{stance:'attack',ms:elapsed*1000*PET_ANIMATION_RATE,progress:elapsed/duration}:{stance:r.run?'walk':'idle',ms:skinNow()*PET_ANIMATION_RATE,progress:null};
 }
@@ -17123,22 +17355,22 @@ setInterval(updateWatch,60000);
 // be hours old while the player was on another tab, and the check is a 60-byte text file.
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&(pendingUpdateBuild||Date.now()-PAGE_STARTED_AT>30000))updateWatch()});
 </script>
-<script src="assets/wardrobe-ui.js?v=471"></script>
+<script src="assets/wardrobe-ui.js?v=476"></script>
 <script src="assets/shop.js?v=321"></script>
 <script src="assets/friends.js?v=273"></script>
-<script src="assets/digimon/roster.js?v=471"></script>
-<script src="assets/digimon/base-stats.js?v=471"></script>
-<script src="assets/social-rules.js?v=471"></script>
-<script src="assets/social-poker.js?v=471"></script>
-<script src="assets/digimon-sanctuary.js?v=471"></script>
+<script src="assets/digimon/roster.js?v=476"></script>
+<script src="assets/digimon/base-stats.js?v=476"></script>
+<script src="assets/social-rules.js?v=476"></script>
+<script src="assets/social-poker.js?v=476"></script>
+<script src="assets/digimon-sanctuary.js?v=476"></script>
 <script src="assets/digimon-battle.js?v=393"></script>
-<script src="assets/social-digimon.js?v=471"></script>
+<script src="assets/social-digimon.js?v=476"></script>
 <script src="assets/social-gym-redesign.js?v=393"></script>
 <script src="assets/social-pond-design.js?v=393"></script>
 <script src="assets/social-title-art.js?v=450"></script>
-<script src="assets/social-scene.js?v=471"></script>
-<script src="assets/social-fishing.js?v=471"></script>
-<script src="assets/plaza-bots.js?v=471"></script>
+<script src="assets/social-scene.js?v=476"></script>
+<script src="assets/social-fishing.js?v=476"></script>
+<script src="assets/plaza-bots.js?v=476"></script>
 <script src="assets/adventure-guide.js?v=450"></script>
-<script src="assets/social.js?v=471"></script></body>
+<script src="assets/social.js?v=476"></script></body>
 </html>

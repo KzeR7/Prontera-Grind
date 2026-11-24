@@ -82,13 +82,22 @@ t('monster IDs include the intentional RO-name aliases and point at the PNG endp
 });
 
 t('every pet portrait uses a local crop of its original native sprite', () => {
-  const expected={Poring:1002,Lunatic:1063,Wolf:1013,'Desert Wolf':1106,'Peco Peco':1019,'Dragon Whelp':1155,'Baphomet Jr.':1101,Angeling:1096,Drops:1113,Poporing:1031,Fabre:1007,Smokie:1056,Yoyo:1057,Spore:1014,Sohee:1170,Deviruchi:1109,'Nine Tail':1180,Deviling:1582,Ghostring:1120,Eddga:1115};
-  assert.strictEqual(PETS.length,20,'pet roster changed');
+  const expected={Poring:1002,Lunatic:1063,Wolf:1013,'Desert Wolf':1106,'Peco Peco':1019,'Dragon Whelp':1155,'Baphomet Jr.':1101,Angeling:1096,Drops:1113,Poporing:1031,Fabre:1007,Smokie:1056,Yoyo:1057,Spore:1014,Sohee:1170,Deviruchi:1109,'Nine Tail':1180,Deviling:1582,Ghostring:1120,Eddga:1115,
+    // v469: the five Raidbound species, appended after Eddga so no stored index moved.
+    'Abyssal Thanatos':1708,'Astral Seraph':1831,'Ifrit Ember':1832,'Obsidian Warden':1833,'Void Whisper':1837};
+  assert.strictEqual(PETS.length,25,'pet roster changed');
+  assert.strictEqual(PETS.slice(20).map(p=>p.r).join(','), '4,4,4,4,4', 'species 20-24 are the Raidbound tier');
   for(const p of PETS){
     assert.strictEqual(p.spriteId,expected[p.n],p.n+' lost its verified monster ID');
     const html=petIcon(p);
     assert.ok(html.includes(`src="assets/pets/v1/thumb-${p.spriteId}.png"`)&&html.includes(`alt="${p.n}"`),p.n+' does not render an accessible official sprite');
+    // No invented art: a species whose atlas is not cut yet falls back to the official monster PNG.
+    const shipped=fs.existsSync(root+'/assets/pets/v1/thumb-'+p.spriteId+'.png');
+    assert.strictEqual(html.includes('data-fallback="'+mobSpriteUrl(p.spriteId)+'"'), true, p.n+' lost its official fallback');
+    if(!shipped) assert.strictEqual(p.r,4,p.n+' ships no atlas but is not a Raidbound species');
   }
+  const raids=PETS.slice(20).map(p=>p.raid);
+  assert.strictEqual(raids.join(','),'astral,astral,thor,thor,thor','each Raidbound species names its home raid');
 });
 
 t('all pets use native animation with local fallback and remain uniformly small', () => {
@@ -124,7 +133,7 @@ t('all pets use native animation with local fallback and remain uniformly small'
     const v=ctx.build({shape:P.petFallbackShape(sp),c:sp.c,spriteId:sp.spriteId,pet:true});
     assert.strictEqual(v.spriteId,sp.spriteId);assert.strictEqual(v.image.src,'assets/pets/v1/thumb-'+sp.spriteId+'.png');
   }
-  assert.strictEqual(ctx.images.length,20);assert.strictEqual(ctx.requested.length,20);
+  assert.strictEqual(ctx.images.length,PETS.length);assert.strictEqual(ctx.requested.length,PETS.length);
 });
 
 t('all 100 unique native/Divine Pride mob IDs match their database size class and player-relative scale', () => {
