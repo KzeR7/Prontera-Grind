@@ -1637,6 +1637,7 @@ input[type=checkbox],input[type=radio]{accent-color:var(--gold)}
 #wins .eclipse-companion-card[data-rarity="1"]{--pet-rarity:#9ecaff}
 #wins .eclipse-companion-card[data-rarity="2"]{--pet-rarity:#dcb6ff}
 #wins .eclipse-companion-card[data-rarity="3"]{--pet-rarity:#ffe197}
+#wins .eclipse-companion-card[data-rarity="4"]{--pet-rarity:#ff6b6b}
 #wins .eclipse-companion-card .pet-rarity{color:var(--pet-rarity)}
 #wins .eclipse-companion-grid[data-pet-view=collection]>.eclipse-companion-card{display:grid;grid-template-rows:20px 100px 44px 48px 24px 6px 24px 24px 40px 100px 42px;align-content:start;align-items:center}
 #wins .eclipse-companion-grid[data-pet-view=collection] .eclipse-pet-deployment{align-self:stretch;display:flex;flex-direction:column;justify-content:flex-end;gap:8px}
