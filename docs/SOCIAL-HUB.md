@@ -1,5 +1,50 @@
 # World chat and Fountain Plaza
 
+## Prontera night mode (haven-v468)
+
+In the plaza, open **More → Night mode**; toggle it again to restore the
+original daytime appearance. This is a manual, device/browser-local preference
+(`pg_plaza_night`), remembered across reloads when local storage is available.
+It is not a clock cycle, does not affect the field, is not part of a character
+save and sends no room messages, so other players can choose independently.
+
+The existing fishing-bridge lanterns and DigiPet service lamps glow at night;
+four additional lamps sit on the already-blocked DigiPet farm fence corners.
+The town uses many unlit materials, so the scene combines four nearest pooled
+Three.js point lights for lit objects with a noninteractive, screen-space warm
+glow for unlit surfaces and a scene-only night tint. This is atmospheric rather
+than shadow-casting or physically accurate; labels and panels remain untinted.
+Since v469, a cool moonlit wash, warmer bulb halos and a small batch of drifting
+fireflies around the lake and farm give the night more atmosphere. The glow
+overlay moves with the camera, ignores pointer input and updates only when
+the view changes; fireflies are hidden and stop updating during the day. `social_scene_sim.js` and `social_ui_sim.js` cover the scene,
+settings, reload preference and no-new-traffic behavior.
+
+
+**Lighting research and v470 refinement.** Night should read from darker
+surroundings and distinct light sources, not only a blue tint. See [night
+lighting principles](https://gamineai.com/blog/game-lighting-design-creating-atmosphere-and-mood-in-your-games)
+and [emission and bloom](https://www.donmccurdy.com/2024/04/27/emission-and-bloom/).
+Emission alone does not illuminate other geometry in the ordinary local renderer.
+V470 lowers the base light, adds a cool directional moon for lit geometry, and
+makes the loaded Aetherwell crystal facets brighter with a separate cyan point
+light and projected halo. The point lights affect lit meshes, while much of the
+native town and sprites use unlit materials, so grading and screen-space falloff
+remain approximations: they do not cast shadows or respect occlusion. The halo
+is deliberately lightweight, **not** HDR bloom. True depth-aware lighting and
+selective HDR bloom would require a renderer/postprocessing redesign and device
+performance testing; see [the Three.js selective bloom example](https://github.com/mrdoob/three.js/blob/master/examples/webgl_postprocessing_unreal_bloom_selective.html).
+
+
+**V471 after dark.** The night scene is darker, the Aetherwell's emission and
+cyan halo are stronger, and four middle-town lamps occupy existing blocked garden
+corners, clear of walkable paths and seats. They join the same four-light pool.
+An animated additive glow follows the pond's actual outline, above the water but
+below the bridge. It is a separate night-only surface, so it works before and
+after the deferred pond-design shader replaces the fallback. It is hidden and
+stops updating in daytime; no water texture, fishing rules or traffic change.
+Screen-space lamp/crystal halos still do not account for occlusion.
+
 The bottom-left chat replaces the short field feed. World, Whisper and Log
 are available from the field; entering Maps → Social Hub adds Local. On desktop (1120px and wider), its bottom aligns with the centered navigation bar.
 Its width is capped to the space on the left, so resizing never shifts or covers

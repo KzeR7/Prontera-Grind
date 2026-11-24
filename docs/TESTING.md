@@ -49,6 +49,23 @@ git fetch origin d164bd0527cfe335f9c183d0e576800716b7dd26
 git fetch origin 824511bd35e9fedda474a331546048c405ef1b66 b56c23b08644abf95336b648fca61db44673216a
 ```
 
+## Prontera night PR gate repair (2026-11-23)
+
+The full gate on the combined `haven-v476` branch passed **270/270**, with no
+dependency skips. Eight older red suites were repaired without changing the
+game's combat, save, navigation or night-mode behavior. The APNG backup is
+regenerated from the live source; the material harness uses the real forge's
+zero-delay test mode; the trial/kit and UI-scale/raid expectations match the
+current raid scene key, trial HUD and continuous 90–150% slider. The staging
+raid test pins the v475 source snapshot, not the earlier v466 snapshot; shallow
+checkouts can fetch it with `git fetch origin 25686944dc36716003be223bb13c3e0159c49218`.
+
+The isolated hosted-launch package now includes the manifest-listed refine WAVs,
+the dynamic plaza emotion images and raid lightning art. WAV bytes are encoded
+and restored as binary. `hosted_launch_stage_sim.js` checks each asset byte for
+byte and proves an unlisted runtime asset still fails the overlay guard; the
+rehearsal is local only, with synthetic data and no deployment.
+
 ## Built-site browser reliability
 
 Use a disposable local server/database, **not a hosted game**. Build once, then run the

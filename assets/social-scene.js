@@ -36,7 +36,9 @@ window.PGSocialScene={async create(host,labels,callbacks){
   const ring=R.SANCTUARY_RING;if(ring&&Math.abs(x-ring.x)<=ring.w/2&&Math.abs(z-ring.z)<=ring.d/2)return ring.height;
   return 0;
  };
- scene.add(new T.HemisphereLight(0xffffff,0x66775a,1));
+ const daylight=new T.HemisphereLight(0xffffff,0x66775a,1);scene.add(daylight);
+ // A directional moon and local sources light Lambert/PBR objects; unlit RO art uses a separate grade.
+ const moonlight=new T.DirectionalLight(0x9bbcff,.38);moonlight.position.set(-30,55,20);moonlight.visible=false;moonlight.userData.plazaMoonlight=true;scene.add(moonlight);
  const [catalog,data,atlas,paving]=await assets([fetch('assets/social/town/catalog.json').then(r=>{if(!r.ok)throw Error('Town metadata unavailable');return r.json()}),fetch('assets/social/town/models.bin').then(r=>{if(!r.ok)throw Error('Town models unavailable');return r.arrayBuffer()}),new T.TextureLoader().loadAsync('assets/social/town/models.webp'),new T.TextureLoader().loadAsync('assets/social/town/paving.webp')]);
  atlas.flipY=false;atlas.magFilter=T.LinearFilter;const modelMat=new T.MeshBasicMaterial({map:atlas,vertexColors:true,side:T.DoubleSide,alphaTest:.35});
  modelMat.onBeforeCompile=shader=>{shader.vertexShader='attribute vec4 sourceBounds; varying vec4 nativeBounds;\n'+shader.vertexShader;shader.vertexShader=shader.vertexShader.replace('#include <uv_vertex>','#include <uv_vertex>\nnativeBounds=sourceBounds;');shader.fragmentShader='varying vec4 nativeBounds;\n'+shader.fragmentShader;shader.fragmentShader=shader.fragmentShader.replace('#include <map_fragment>','vec4 texelColor = texture2D(map, clamp(vUv, nativeBounds.xy, nativeBounds.zw)); texelColor = mapTexelToLinear(texelColor); diffuseColor *= texelColor;')};
@@ -88,7 +90,7 @@ function model(name,x,z,size,rotation=0,source=catalog,vertices=floats,material=
   // luminous cyan aether (x2.3), the electric-blue inscriptions (x5.5) and the ice-white
   // motes (x7) were all glowing at plain strength. Both values are read from the export.
   const AETHER_STRENGTH={'Aether \u2022 luminous cyan':2.3,'Crystal inscriptions \u2022 electric blue':5.5,'Aether motes \u2022 ice white':7};
-  let spire=null,inverted=null,motes=null,crystalMat=null;const shards=[];
+  let spire=null,inverted=null,motes=null,crystalMat=null;const shards=[],crystalMaterials=new Set();
   root.traverse(o=>{
    const n=o.name||'';
    if(n==='AETHER \u2022 main floating spire')spire=o;
@@ -100,6 +102,7 @@ function model(name,x,z,size,rotation=0,source=catalog,vertices=floats,material=
    }
    if(o.isMesh&&o.material){
     for(const m of Array.isArray(o.material)?o.material:[o.material]){
+     if(/^Crystal facet [0-4]$/.test(m.name||''))crystalMaterials.add(m);
      if(!m.userData.aetherTuned){
       m.userData.aetherTuned=true;
       if(m.color&&m.color.convertLinearToSRGB)m.color.convertLinearToSRGB();
@@ -113,7 +116,7 @@ function model(name,x,z,size,rotation=0,source=catalog,vertices=floats,material=
   });
   aetherwell.group=root;aetherwell.spire=spire;aetherwell.spireY=spire?spire.position.y:0;
   aetherwell.inverted=inverted;aetherwell.invertedY=inverted?inverted.position.y:0;
-  aetherwell.motes=motes;aetherwell.shards=shards;aetherwell.crystalMat=crystalMat||null;
+  aetherwell.motes=motes;aetherwell.shards=shards;aetherwell.crystalMat=crystalMat||null;aetherwell.crystalMaterials=[...crystalMaterials];
   scene.add(root);
   fountainFallback.visible=false;
   // v361: the model's eight benches are real seats (R.FOUNTAIN_BENCHES, ids 112-127). Their
@@ -160,7 +163,10 @@ function model(name,x,z,size,rotation=0,source=catalog,vertices=floats,material=
   if(aetherwell.inverted){aetherwell.inverted.position.y=aetherwell.invertedY+Math.sin(t*.85+2.4)*.11;aetherwell.inverted.rotation.y=-t*.3}
   if(aetherwell.motes)aetherwell.motes.rotation.y=t*.05;
   for(const s of aetherwell.shards){s.node.position.x=Math.cos(s.a0+t*s.w)*s.r;s.node.position.z=Math.sin(s.a0+t*s.w)*s.r;s.node.position.y=s.y0+Math.sin(t*1.2+s.ph)*.07;s.node.rotation.y=t*s.w*2.2}
-  if(aetherwell.crystalMat)aetherwell.crystalMat.emissiveIntensity=.85+.25*Math.sin(t*1.9);
+  for(const m of aetherwell.crystalMaterials||[]){
+   const base=m===aetherwell.crystalMat?.85+.25*Math.sin(t*1.9):1;
+   m.emissiveIntensity=night?base*3.3:base;
+  }
  }
  for(const b of R.BUILDINGS)model(b.name,b.x,b.z,b.size,b.rotation||0);
  // Sanctuary: arranged south of the plaza from the owner's highlighted lawn.
@@ -170,6 +176,19 @@ function model(name,x,z,size,rotation=0,source=catalog,vertices=floats,material=
  const wood=new T.MeshLambertMaterial({map:beamTexture,color:0xc3a27d}),darkWood=new T.MeshLambertMaterial({map:beamTexture,color:0x997954}),lightWood=new T.MeshLambertMaterial({color:0xb58a59}),metal=new T.MeshLambertMaterial({color:0x5f6860}),iron=new T.MeshLambertMaterial({color:0x303a36}),cream=new T.MeshLambertMaterial({color:0xe8d9ba}),plaster=new T.MeshLambertMaterial({map:plasterTexture,color:0xf1e7d0}),roofMat=new T.MeshLambertMaterial({map:roofTexture,color:0xe0c8a4,side:T.DoubleSide});
  function flat(geometry,material,x,z,y){const m=new T.Mesh(geometry,material);m.rotation.x=-Math.PI/2;m.position.set(x,y,z);scene.add(freeze(m));return m}
  function box(x,y,z,w,h,d,mat){const m=new T.Mesh(new T.BoxGeometry(w,h,d),mat);m.position.set(x,y,z);scene.add(freeze(m));return m}
+ // Four lamps live inside already-blocked central garden corners, not on paths or seats.
+ const plazaLampSpots=R.GARDENS.map(g=>({x:g.x-Math.sign(g.x)*4.4,z:g.z-Math.sign(g.z)*4.4}));
+ const plazaLampMetal=new T.MeshLambertMaterial({color:0x454a51}),plazaLampGlass=new T.MeshBasicMaterial({color:0xffd895});
+ for(const p of plazaLampSpots){
+  const g=new T.Group();g.position.set(p.x,0,p.z);g.userData.plazaStreetlamp=true;
+  const part=(geo,mat,y)=>{const m=new T.Mesh(geo,mat);m.position.y=y;g.add(m)};
+  part(new T.CylinderGeometry(.28,.37,.18,8),plazaLampMetal,.09);
+  part(new T.CylinderGeometry(.09,.15,3.0,8),plazaLampMetal,1.65);
+  part(new T.BoxGeometry(.57,.12,.57),plazaLampMetal,3.16);
+  part(new T.BoxGeometry(.43,.62,.43),plazaLampGlass,3.54);
+  part(new T.ConeGeometry(.48,.3,4),plazaLampMetal,4.0);
+  scene.add(g);
+ }
  function beam(a,b,thick,mat=darkWood){const dx=b[0]-a[0],dy=b[1]-a[1],dz=b[2]-a[2],len=Math.hypot(dx,dy,dz);const m=new T.Mesh(new T.CylinderGeometry(thick,thick,len,4),mat);m.position.set((a[0]+b[0])/2,(a[1]+b[1])/2,(a[2]+b[2])/2);m.quaternion.setFromUnitVectors(new T.Vector3(0,1,0),new T.Vector3(dx/len,dy/len,dz/len));scene.add(freeze(m));return m}
  function worldSign(x,y,z,text,width=3.3,height=.65){const c=document.createElement('canvas');c.width=512;c.height=128;const ctx=c.getContext('2d');if(ctx&&typeof ctx.fillRect==='function'&&typeof ctx.fillText==='function'){ctx.fillStyle='#e7d6ab';ctx.fillRect(0,0,512,128);ctx.strokeStyle='#64432a';ctx.lineWidth=12;ctx.strokeRect(7,7,498,114);ctx.fillStyle='#4a2d1d';ctx.font='bold 43px serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(text,256,65,470)}const m=new T.Mesh(new T.PlaneGeometry(width,height),new T.MeshBasicMaterial({map:new T.CanvasTexture(c),side:T.DoubleSide}));m.position.set(x,y,z);m.userData.sanctuarySign=text;scene.add(freeze(m));return m}
  // Wide wooden circulation joins the avenue and runs between the kiosks and field.
@@ -366,6 +385,9 @@ function model(name,x,z,size,rotation=0,source=catalog,vertices=floats,material=
  for(const x of [16.5,27.5]){box(x,2,69.2,2.3,1.3,.06,cream);for(let i=0;i<4;i++)box(x,2.35-i*.23,69.25,1.7,.035,.025,darkWood)}
  // Lanterns and small pennants along the service strip.
  for(const z of [49,64,79,90]){box(31,1.7,z,.18,3.4,.18,darkWood);box(31,3.55,z,.6,.16,.6,darkWood);box(31,3.15,z,.42,.65,.42,new T.MeshBasicMaterial({color:0xf4d58d}));box(31,2.78,z,.58,.12,.58,darkWood)}
+ // Lamps sit on already-blocked fence corners; no change to movement or server rules.
+ const farmLampCorners=[[49,47],[91,47],[49,81],[91,81]];
+ for(const [x,z] of farmLampCorners){box(x,2,z,.18,4,.18,darkWood);box(x,4.1,z,.65,.15,.65,darkWood);box(x,3.72,z,.43,.65,.43,new T.MeshBasicMaterial({color:0xf4d58d}));box(x,3.35,z,.6,.12,.6,darkWood)}
  // Bulletin boards, crates and barrels make the guide and cart readable at player scale.
  for(const [x,z] of [[16.5,69],[27.5,69]]){box(x,1,z,.18,2,.18,darkWood);box(x,2,z,2.6,1.8,.16,lightWood);box(x,2,z+.1,2.2,1.4,.05,cream)}
  for(const [x,z] of [[18,43],[26.5,44],[18,74]]){const barrel=new T.Mesh(new T.CylinderGeometry(.55,.65,1.2,12),wood);barrel.position.set(x,.6,z);scene.add(freeze(barrel));for(const h of [.2,.95]){const hoop=new T.Mesh(new T.TorusGeometry(.57,.05,5,12),iron);hoop.rotation.x=Math.PI/2;hoop.position.set(x,h,z);scene.add(freeze(hoop))}}
@@ -1625,6 +1647,7 @@ const ATTACK_MS=520;let fxTextures=null;
   // in the same hand-painted style as the town. If they never arrive the primitives above stay.
   const pondViews=[];
   const pondDesigns=[];
+  const nightWater=[];
   const cropTex=(img,rect)=>{
    if(!img||!rect||typeof document==='undefined')return null;
    const c=document.createElement('canvas');c.width=Math.max(1,rect.w);c.height=Math.max(1,rect.h);
@@ -1844,6 +1867,23 @@ void main(){
     scene.add(boulders);view.fallback.push(boulders);
    }
    view.designLegacy=scene.children.filter(o=>!beforePond.has(o));
+  }
+  // A water-only emissive layer follows the exact pond shape and sits below the
+  // bridge. It is independent of delayed pond-art replacement, and never colors land.
+  for(const p of R.PONDS){
+   const mat=new T.ShaderMaterial({transparent:true,depthWrite:false,blending:T.AdditiveBlending,uniforms:{time:{value:0}},
+    vertexShader:`varying vec2 vLake;void main(){vLake=position.xy;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`,
+    fragmentShader:`varying vec2 vLake;uniform float time;
+    void main(){
+     vec2 v=vec2(vLake.x,-vLake.y);
+     float moon=exp(-dot((v-vec2(-2.,4.))/vec2(8.,15.),(v-vec2(-2.,4.))/vec2(8.,15.)));
+     float wave=pow(max(0.,sin(v.x*.65+sin(v.y*.24)+time*.65)*sin(v.y*.73-time*.42)),5.);
+     float warm=exp(-pow((abs(v.x)-16.)/4.,2.)-pow((abs(v.y)-5.)/5.,2.));
+     vec3 color=vec3(.25,.85,1.)*(.72+.28*wave)+vec3(1.,.50,.16)*warm*.70;
+     float alpha=clamp(.19+moon*.46+wave*.18+warm*.19,0.,.85);
+     gl_FragColor=vec4(color,alpha);
+    }`});
+   const mesh=new T.Mesh(new T.ShapeGeometry(pondShape(p,-.12)),mat);mesh.rotation.x=-Math.PI/2;mesh.position.set(p.x,.045,p.z);mesh.visible=false;mesh.userData.nightPondGlow=true;scene.add(freeze(mesh));nightWater.push(mesh);
   }
   // v306: fetch the painted sheets once the pond exists (deferred so the plaza is interactive first);
   // every pond view is repainted in place when they arrive.
@@ -2288,6 +2328,7 @@ void main(){
    lineGeo.attributes.position.needsUpdate=true;lineGeo.computeBoundingSphere?.();
   }
   function update(now,dt){
+   for(const water of nightWater)if(water.visible)water.material.uniforms.time.value=now/1000;
    for(const design of pondDesigns)design.update(now/1000,camera);
    updateMvpFloat(now);
    updateRemoteRigs(now,dt);
@@ -2326,7 +2367,7 @@ void main(){
     placeRod(bobber.position.x,bobber.position.y,bobber.position.z,now);
    }
   }
-  return {api,update};
+  return {api,update,setNight(value){for(const water of nightWater)water.visible=!!value}};
  })();
  // 12 physical metal park benches, each split into 2 side-by-side seat targets (24 seats total).
  // v359: only the gym-court and field-fence benches remain wooden (ids >= 20); the ring
@@ -2752,6 +2793,7 @@ void main(){
  const settledAtGym=self&&!self.state.path.length&&focusX>=43&&focusX<=95&&focusZ>=12&&focusZ<=39;
  if(!focused||settledAtGym||focus.distanceTo(target)>12){focus.copy(target);focused=true}else focus.lerp(target,1-Math.exp(-dt*12));
  const tilt=pitch*Math.PI/180;camera.position.set(focus.x+Math.sin(angle)*distance*Math.cos(tilt),focus.y+Math.sin(tilt)*distance,focus.z+Math.cos(angle)*distance*Math.cos(tilt));camera.lookAt(focus);camera.updateMatrixWorld();
+ stage('night-lighting',()=>{updateNightLighting();updateFireflies(now)});
  for(let i=0;i<72;i++){const t=(now/1500+i/72)%1,a=i*2.399;spray[i*3]=Math.cos(a)*t*2.6;spray[i*3+1]=1.5+Math.sin(t*Math.PI)*3;spray[i*3+2]=Math.sin(a)*t*2.6}sprayGeo.attributes.position.needsUpdate=true;
  fishingApi.update(now,dt);
  const w=viewW||host.clientWidth,h=viewH||host.clientHeight;
@@ -2887,6 +2929,86 @@ void main(){
  }
  });
  }   // end frameBody
+ // The native town and many sprites use unlit materials. Point lights alone cannot
+ // illuminate them, so night combines real local lights for lit geometry with a
+ // screen-space warm falloff for the unlit scene. UI/labels remain outside it.
+ const nightOverlay=document.createElement('div');nightOverlay.className='plaza-night-lights';nightOverlay.setAttribute('aria-hidden','true');host.append(nightOverlay);
+ const nightLamps=[...farmLampCorners.map(([x,z])=>({x,z,y:3.72,area:'digipet'})),
+  ...[49,64,79,90].map(z=>({x:31,z,y:3.15,area:'digipet'})),
+  ...plazaLampSpots.map(p=>({x:p.x,z:p.z,y:3.54,area:'plaza'})),
+  ...R.POND_PROPS.flatMap(p=>p.lanterns.map(l=>({x:l.x,z:l.z,y:2.48,area:'fishing'})))];
+ const bulbMat=new T.MeshBasicMaterial({color:0xffe6a3}),bulbGeometry=new T.SphereGeometry(.25,8,6);
+ const bulbs=nightLamps.map(l=>{const b=new T.Mesh(bulbGeometry,bulbMat);b.position.set(l.x,l.y,l.z);b.visible=false;b.userData.nightLamp=l.area;scene.add(b);return b});
+ // Four pooled point lights cap the light count on mobile; the nearest lamps follow the camera.
+ const localLights=Array.from({length:4},()=>{const light=new T.PointLight(0xffc577,1.4,18,2);light.visible=false;light.userData.plazaNightLight=true;scene.add(light);return light});
+ // The centerpiece gets a separate cool light; emissive materials alone cannot illuminate neighbors.
+ const crystalLight=new T.PointLight(0x59dcff,3.3,29,2);crystalLight.position.set(0,6.35,0);crystalLight.visible=false;crystalLight.userData.plazaCrystalLight=true;scene.add(crystalLight);
+ // A few slow fireflies bring the lake and field alive without changing source art.
+ const fireflyCanvas=document.createElement('canvas');fireflyCanvas.width=fireflyCanvas.height=32;
+ const flyCtx=fireflyCanvas.getContext('2d');
+ if(flyCtx&&typeof flyCtx.createRadialGradient==='function'&&typeof flyCtx.fillRect==='function'){const glow=flyCtx.createRadialGradient(16,16,0,16,16,16);glow.addColorStop(0,'rgba(255,249,192,1)');glow.addColorStop(.24,'rgba(255,217,116,.8)');glow.addColorStop(1,'rgba(255,194,75,0)');flyCtx.fillStyle=glow;flyCtx.fillRect(0,0,32,32)}
+ const fireflyTexture=new T.CanvasTexture(fireflyCanvas),fireflyPositions=new Float32Array(48*3),fireflyHomes=[];
+ for(let i=0;i<48;i++){
+  const lake=i<24,k=i%24,a=k*2.399963,rad=lake?18+5*Math.sin(k*7.1):5+(k%5)*2.5;
+  fireflyHomes.push({x:(lake?-38:70)+Math.cos(a)*rad,z:(lake?73:64)+Math.sin(a)*rad*(lake?1.35:.65),y:.7+(k%5)*.34,phase:i*1.71});
+ }
+ const fireflyGeo=new T.BufferGeometry();fireflyGeo.setAttribute('position',new T.BufferAttribute(fireflyPositions,3));
+ const fireflies=new T.Points(fireflyGeo,new T.PointsMaterial({map:fireflyTexture,color:0xffe7a6,size:.7,transparent:true,opacity:.72,depthWrite:false,blending:T.AdditiveBlending}));
+ fireflies.frustumCulled=false;fireflies.visible=false;fireflies.userData.nightFireflies=true;scene.add(fireflies);
+ let lastFireflyFrame=0;
+ function updateFireflies(now){
+  if(!night||now-lastFireflyFrame<66)return;lastFireflyFrame=now;
+  for(let i=0;i<fireflyHomes.length;i++){const f=fireflyHomes[i],t=now/1000+f.phase,o=i*3;
+   fireflyPositions[o]=f.x+Math.sin(t*.45)*.55;fireflyPositions[o+1]=f.y+Math.sin(t*.85)*.25;fireflyPositions[o+2]=f.z+Math.cos(t*.38)*.55;
+  }
+  fireflyGeo.attributes.position.needsUpdate=true;
+ }
+ let night=false,lastNightView='';
+ function setNight(value){
+  night=!!value;lastNightView='';host.classList.toggle('plaza-night',night);nightOverlay.hidden=!night;
+  scene.background.setHex(night?0x17283d:0xb9cbbb);scene.fog.color.setHex(night?0x17283d:0xb9cbbb);
+  fishingApi.setNight(night);daylight.intensity=night?.22:1;daylight.color.setHex(night?0x9ebcff:0xffffff);daylight.groundColor.setHex(night?0x26334d:0x66775a);moonlight.visible=night;crystalLight.visible=night&&!!aetherwell.group;fireflies.visible=night;lastFireflyFrame=0;for(const b of bulbs)b.visible=night;for(const l of localLights)l.visible=night;
+  if(night)updateNightLighting();else nightOverlay.style.background='';
+ }
+ const lightProjection=new T.Vector3();
+ function updateNightLighting(){
+  if(!night)return;
+  crystalLight.visible=!!aetherwell.group;
+  const signature=[camera.position.x,camera.position.y,camera.position.z,focus.x,focus.y,focus.z,pitch,angle,viewW,viewH,aetherwell.group?1:0].map(n=>Math.round(n*100)/100).join(',');
+  if(signature===lastNightView)return;lastNightView=signature;
+  const ordered=nightLamps.slice().sort((a,b)=>(a.x-focus.x)**2+(a.z-focus.z)**2-((b.x-focus.x)**2+(b.z-focus.z)**2));
+  localLights.forEach((light,i)=>{const p=ordered[i];light.position.set(p.x,p.y,p.z)});
+  const w=viewW||host.clientWidth,h=viewH||host.clientHeight;if(!w||!h)return;
+  const gradients=[];
+  for(const l of nightLamps){
+   lightProjection.set(l.x,1.4,l.z).project(camera);if(lightProjection.z< -1||lightProjection.z>1)continue;
+   const x=(lightProjection.x+1)*w/2,y=(1-lightProjection.y)*h/2;
+   const dist=Math.max(1,Math.hypot(camera.position.x-l.x,camera.position.y-1.4,camera.position.z-l.z));
+   const radius=Math.min(300,Math.max(25,h*7/(2*Math.tan(camera.fov*Math.PI/360)*dist)));
+   if(x< -radius||x>w+radius||y< -radius||y>h+radius)continue;
+   // Wide amber spill for the surroundings plus a smaller glow at the actual bulb.
+   // Keep these screen-space layers separate: the town sprites use unlit materials.
+   gradients.push(`radial-gradient(circle ${radius.toFixed(0)}px at ${x.toFixed(0)}px ${y.toFixed(0)}px, rgba(255,182,86,.49), rgba(255,171,76,.19) 36%, transparent 100%)`);
+   lightProjection.set(l.x,l.y,l.z).project(camera);
+   const bx=(lightProjection.x+1)*w/2,by=(1-lightProjection.y)*h/2,halo=Math.max(18,radius*.26);
+   gradients.push(`radial-gradient(circle ${halo.toFixed(0)}px at ${bx.toFixed(0)}px ${by.toFixed(0)}px, rgba(255,236,179,.80), rgba(255,184,81,.38) 28%, transparent 100%)`);
+  }
+  // A restrained cyan spill and brighter halo at the authored spire. This is a
+  // lightweight approximation to bloom, not an extra full-screen render pass.
+  if(aetherwell.group){
+   lightProjection.set(0,6.35,0).project(camera);
+   const cx=(lightProjection.x+1)*w/2,cy=(1-lightProjection.y)*h/2;
+   const d=Math.max(1,Math.hypot(camera.position.x,camera.position.y-6.35,camera.position.z));
+   const radius=Math.min(350,Math.max(35,h*9/(2*Math.tan(camera.fov*Math.PI/360)*d)));
+   if(lightProjection.z>=-1&&lightProjection.z<=1&&cx>=-radius&&cx<=w+radius&&cy>=-radius&&cy<=h+radius){
+    gradients.unshift(`radial-gradient(circle ${(radius*.30).toFixed(0)}px at ${cx.toFixed(0)}px ${cy.toFixed(0)}px, rgba(215,252,255,.88), rgba(73,199,255,.39) 35%, transparent 100%)`);
+    gradients.push(`radial-gradient(circle ${radius.toFixed(0)}px at ${cx.toFixed(0)}px ${cy.toFixed(0)}px, rgba(40,184,255,.40), rgba(28,129,231,.15) 42%, transparent 100%)`);
+   }
+  }
+  gradients.push('linear-gradient(rgba(14,29,62,.08),rgba(14,29,62,.08))');
+  nightOverlay.style.background=gradients.join(',');
+ }
+ setNight(false);
  // Install page-lifetime listeners only after all required assets are ready.
  if(typeof ResizeObserver==='function')new ResizeObserver(syncSize).observe(host);
  else addEventListener('resize',syncSize);
@@ -2895,11 +3017,11 @@ void main(){
  // especially - the v359 bleacher slabs taught us that const) is initialized. The network GLB
  // always resolves after create() anyway; this also keeps synchronous loader stubs safe.
  loadAetherwell();
- return {putPlayer,removePlayer,setGymResidents,setBattleState,battleEvent,bubble,dealerBubble,updatePoker,setCamera,resetCamera,fishing:fishingApi.api,get contextLost(){return contextLost},get cameraState(){return cameraState()},clearPlayers(){focused=false;for(const id of [...players.keys()])removePlayer(id)},get active(){return active},set active(v){active=v;if(v){syncSize();last=performance.now();focused=false}},scene,camera,renderer};
+ return {setNight,get night(){return night},putPlayer,removePlayer,setGymResidents,setBattleState,battleEvent,bubble,dealerBubble,updatePoker,setCamera,resetCamera,fishing:fishingApi.api,get contextLost(){return contextLost},get cameraState(){return cameraState()},clearPlayers(){focused=false;for(const id of [...players.keys()])removePlayer(id)},get active(){return active},set active(v){active=v;if(v){syncSize();last=performance.now();focused=false}},scene,camera,renderer};
  }catch(error){
   renderer.domElement.removeEventListener('webglcontextlost',onLost);
   renderer.domElement.removeEventListener('webglcontextrestored',onRestore);
-  renderer.forceContextLoss?.();renderer.dispose();renderer.domElement.remove();labels.replaceChildren();
+  renderer.forceContextLoss?.();renderer.dispose();renderer.domElement.remove();host.querySelector('.plaza-night-lights')?.remove();labels.replaceChildren();
   throw error;
  }finally{clearTimeout(timer)}
 }};

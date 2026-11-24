@@ -121,6 +121,11 @@ moreButton.innerHTML='<span class="ad-legacy-icon" aria-hidden="true">··· </s
 hub.querySelector('#socialLeave').innerHTML='<span class="ad-legacy-icon" aria-hidden="true">↩ </span>'+FIELD_ART_SVG+'Field';
 
 const morePanel=document.createElement('section');morePanel.id='socialMorePanel';morePanel.hidden=true;morePanel.setAttribute('aria-label','Hub and field tools');hub.append(morePanel);
+// Visual-only browser preference: never stored in a character save or sent to the room.
+let plazaNight=false;try{plazaNight=localStorage.getItem('pg_plaza_night')==='1'}catch{}
+function updateNightButton(){const b=morePanel.querySelector('[data-hub-night]');if(b){b.setAttribute('aria-pressed',String(plazaNight));b.textContent=plazaNight?'☾ Night mode: On':'☾ Night mode: Off'}}
+function setPlazaNight(value){plazaNight=!!value;try{localStorage.setItem('pg_plaza_night',plazaNight?'1':'0')}catch{}app.scene?.setNight?.(plazaNight);updateNightButton()}
+
 const fieldMonitor=document.createElement('section');fieldMonitor.id='socialFieldMonitor';fieldMonitor.setAttribute('aria-label','Background field activity');fieldMonitor.innerHTML='<span id="socialFieldState">Field not started</span><span><b id="socialFieldExp">—</b><small>EXP/min</small></span><span><b id="socialFieldZeny">—</b><small>Zeny/min</small></span><span id="socialFieldLoot" class="social-field-loot"></span>';hub.append(fieldMonitor);
 /* v384 (owner screenshot: the MVP alert sat on top of the battle card): every top-centre notice
    lives in ONE column - the MVP alert, the running-activities shortcut, the battle card, plaza
@@ -146,10 +151,10 @@ function focusHubPanel(kind){
 }
 moreButton.onclick=()=>{
  if(!morePanel.hidden){closeHubMore();return}focusHubPanel('more');
- morePanel.innerHTML='<header><strong>More</strong><button type="button" data-hub-close aria-label="Close More">×</button></header><small>FIELD CHARACTER</small><div class="social-more-grid"><button type="button" data-hub-tab="equip">Equipment</button><button type="button" data-hub-tab="equip" data-hub-sub="refine">Refine</button></div><small>ALL DESTINATIONS</small><div class="social-more-grid">'+Object.entries(TABS).filter(([k])=>k!=='equip'&&(k!=='gm'||S?.gm)).map(([k,v])=>'<button type="button" data-hub-tab="'+escape(k)+'">'+escape(v[1])+'</button>').join('')+'</div>';
- morePanel.hidden=false;moreButton.setAttribute('aria-expanded','true');morePanel.querySelector('button').focus();
+ morePanel.innerHTML='<header><strong>More</strong><button type="button" data-hub-close aria-label="Close More">×</button></header><small>PLAZA APPEARANCE</small><div class="social-more-grid"><button type="button" data-hub-night aria-label="Night mode" aria-pressed="false">☾ Night mode: Off</button></div><small>FIELD CHARACTER</small><div class="social-more-grid"><button type="button" data-hub-tab="equip">Equipment</button><button type="button" data-hub-tab="equip" data-hub-sub="refine">Refine</button></div><small>ALL DESTINATIONS</small><div class="social-more-grid">'+Object.entries(TABS).filter(([k])=>k!=='equip'&&(k!=='gm'||S?.gm)).map(([k,v])=>'<button type="button" data-hub-tab="'+escape(k)+'">'+escape(v[1])+'</button>').join('')+'</div>';
+ updateNightButton();morePanel.hidden=false;moreButton.setAttribute('aria-expanded','true');morePanel.querySelector('button').focus();
 };
-morePanel.onclick=e=>{const b=e.target.closest('button');if(!b)return;if(b.hasAttribute('data-hub-close')){closeHubMore();moreButton.focus();return}const key=b.dataset.hubTab;if(!key||!TABS[key])return;focusHubPanel('field');if(!tabs.includes(key))openTab(key);if(b.dataset.hubSub){sub[key]=b.dataset.hubSub;renderWin()}};
+morePanel.onclick=e=>{const b=e.target.closest('button');if(!b)return;if(b.hasAttribute('data-hub-close')){closeHubMore();moreButton.focus();return}if(b.hasAttribute('data-hub-night')){setPlazaNight(!plazaNight);return}const key=b.dataset.hubTab;if(!key||!TABS[key])return;focusHubPanel('field');if(!tabs.includes(key))openTab(key);if(b.dataset.hubSub){sub[key]=b.dataset.hubSub;renderWin()}};
 morePanel.onkeydown=e=>{if(e.key==='Escape'){e.stopPropagation();closeHubMore();moreButton.focus()}};
 // Rates come from the field's existing rolling HUD sampler, never a second accumulator.
 function syncFieldMonitor(){
@@ -2410,7 +2415,7 @@ async function enter(){
   }
   if(!current())return;
   if(!app.scene.contextLost)plazaGraphics('');
-  app.scene.active=true;bindFishing();mapTick();for(const p of app.players.values())app.scene.putPlayer(p);
+  app.scene.setNight?.(plazaNight);app.scene.active=true;bindFishing();mapTick();for(const p of app.players.values())app.scene.putPlayer(p);
   plazaBotsResync();refreshGymVisuals();app.scene.setBattleState?.(app.battle);renderBattleHUD();renderPvpDialog();join();
   if(!app.room){syncSoloPlayer();if(P){const snaps=syncSoloPokerSnapshots();if(snaps)for(const s of snaps)s._clientAt=Date.now()}}
   try{if(typeof BGM!=='undefined')BGM.sync(typeof S==='object'&&S?S.mp:0)}catch(e){console.warn('Plaza music unavailable',e)}

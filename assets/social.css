@@ -1205,3 +1205,11 @@ svg.ad-toolbar-art{width:22px;height:22px;vertical-align:middle;margin-right:5px
 #plazaRenderNotice{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);max-width:85%;margin:0;padding:12px 16px;background:#172a30ed;color:white;border-radius:6px;text-align:center;z-index:2;pointer-events:none}
 body.social-open #renderNotice{display:none}
 #plazaRenderNotice button{pointer-events:auto}
+
+/* Night affects the 3D scene only: readable UI/labels and pointer controls stay untouched. */
+#socialScene{isolation:isolate}
+#socialScene.plaza-night canvas{filter:brightness(.55) saturate(.78)}
+#socialScene.plaza-night::before{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:rgba(18,30,61,.56);mix-blend-mode:multiply}
+.plaza-night-lights{position:absolute;inset:0;z-index:2;pointer-events:none;mix-blend-mode:screen}
+.plaza-night-lights[hidden]{display:none}
+#socialMorePanel [data-hub-night][aria-pressed="true"]{border-color:#e4bd71;color:#ffe2a7}

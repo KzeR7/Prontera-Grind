@@ -2548,21 +2548,20 @@ check('v467: raid creatures are drawn larger than the same species on the field'
 });
 
 check('v467: Display offers a UI scale and publishes it to the theme', () => {
-  assert.match(indexSrc, /const UI_SCALE_STEPS=\[0\.9,1,1\.15,1\.3\]/, 'four scale steps: 90 / 100 / 115 / 130%');
-  assert.match(indexSrc, /const cleanUiScale=v=>\{v=Number\(v\);return UI_SCALE_STEPS\.includes\(v\)\?v:1\}/, 'an unknown stored scale falls back to 100%');
-  assert.match(indexSrc, /f\.uiScale=\[0\.9,1,1\.15,1\.3\]\.includes\(Number\(f\.uiScale\)\)/, 'the load normaliser repairs a corrupt or missing uiScale');
+  assert.match(indexSrc, /const UI_SCALE_MIN=0\.9,UI_SCALE_MAX=1\.5/, 'slider range is 90–150%');
+  assert.match(indexSrc, /Math\.max\(UI_SCALE_MIN,Math\.min\(UI_SCALE_MAX,v\)\)/, 'manual choices clamp to range');
+  assert.match(indexSrc, /f\.uiScale=Math\.max\(0\.9,Math\.min\(1\.5,/, 'load normalizer clamps stored scale');
   assert.match(indexSrc, /root\.style\.setProperty\('--ui-scale'/, 'the choice is published as --ui-scale');
   assert.match(indexSrc, /root\.setAttribute\('data-ui-scale'/, 'and as <html data-ui-scale>');
-  assert.match(indexSrc, /data-ui-scale-step="\$\{z\}"/, 'the Display sheet renders the step buttons');
-  // v469 (owner: "auto scale based on the pc screen"): Auto is the default and derives the step from
-  // the display; picking a percentage turns it off again.
+  assert.match(indexSrc, /id="uiScaleSlider" type="range" min="90" max="150" step="1"/, 'Display renders the continuous slider');
+  // Auto is the default and derives the step from the display; adjusting the slider turns it off.
   assert.match(indexSrc, /function autoUiScale\(\)/, 'Auto derives a step from the screen');
   assert.match(indexSrc, /const px=w\*dpr;/, 'from CSS columns x devicePixelRatio, so a 4K panel is not judged 1920');
   assert.match(indexSrc, /const uiScaleAutoOn=\(\)=>!!\(S&&S\.uiScaleAuto!==false\)/, 'and is on unless the save says otherwise');
   assert.match(indexSrc, /const z=uiScaleAutoOn\(\)\?autoUiScale\(\):cleanUiScale\(S&&S\.uiScale\)/, 'applyUiScale honours it');
   assert.match(indexSrc, /S\.uiScaleAuto=false;/, 'picking a step opts out');
   assert.match(indexSrc, /f\.uiScaleAuto=f\.uiScaleAuto!==false;/, 'the load normaliser keeps the flag sane');
-  assert.match(indexSrc, /data-ui-scale-auto="1"/, 'the Display sheet offers an Auto button');
+  assert.match(indexSrc, /e\.target\.id==='uiScaleSlider'/, 'slider changes update the scale');
   assert.match(indexSrc, /reapplyAutoUiScale\(\)/, 'and a move to another monitor re-reads the step');
   assert.match(indexSrc, /setUiScale\(/i, 'and wires them to the save');
   assert.match(uiCss, /html\[data-ui-scale\] :is\(#eclipseHeader,#dock,#sideRail/, 'the theme zooms the chrome');

@@ -391,6 +391,240 @@ function syncLevelAura(){
   }
   positions.needsUpdate=colors.needsUpdate=true;
 }
+let raidElectricAura=null,roForgeFieldFx=null;
+function disposeThreeGroup(g){
+  if(!g)return;
+  const textures=new Set();
+  g.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material){if(o.material.map)textures.add(o.material.map);o.material.dispose();}});
+  textures.forEach(tex=>tex.dispose());
+}
+const raidLightningSheetState={loaded:false,loading:false,pixels:null,width:768,height:768,canvases:new Map(),liveTextures:new Set()};
+function paintRaidLightningFallback(cv,tr,tg,tb){
+  const ctx=cv&&cv.getContext?cv.getContext('2d'):null;if(!ctx)return;
+  const W=192,H=192;ctx.clearRect(0,0,cv.width,cv.height);
+  for(let slot=0;slot<16;slot++){
+    const ox=(slot%4)*W,oy=Math.floor(slot/4)*H,fade=slot<11?1-slot*.06:.45;
+    ctx.save();ctx.translate(ox,oy);ctx.lineCap='round';ctx.lineJoin='round';
+    const pts=[[108,16],[88+(slot%3)*7,56],[112-(slot%2)*10,96],[68+(slot%3)*6,136],[118,162],[98,180]];
+    for(const [w,col,alp] of [[15,`rgba(${tr},${tg},${tb},${(.42*fade).toFixed(3)})`,1],[7,`rgba(${tr},${tg},${tb},${(.88*fade).toFixed(3)})`,1],[3,`rgba(255,255,255,${(.96*fade).toFixed(3)})`,1]]){
+      ctx.strokeStyle=col;ctx.lineWidth=w;ctx.globalAlpha=alp;ctx.beginPath();
+      pts.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.stroke();
+    }
+    ctx.restore();
+  }
+}
+function paintRaidLightningRecolor(cv,tr,tg,tb){
+  const ctx=cv&&cv.getContext?cv.getContext('2d'):null;if(!ctx)return;
+  const src=raidLightningSheetState.pixels,W=raidLightningSheetState.width,H=raidLightningSheetState.height;
+  if(!src){paintRaidLightningFallback(cv,tr,tg,tb);return;}
+  if(cv.width!==W)cv.width=W;if(cv.height!==H)cv.height=H;
+  const imgData=ctx.createImageData(W,H),dst=imgData.data;
+  for(let i=0;i<src.length;i+=4){
+    const a=src[i+3];if(!a)continue;
+    const aura=src[i]/255,core=src[i+1]/255,boost=.72+.48*aura;
+    dst[i]=Math.min(255,Math.round(tr*boost*(1-core)+255*core));
+    dst[i+1]=Math.min(255,Math.round(tg*boost*(1-core)+255*core));
+    dst[i+2]=Math.min(255,Math.round(tb*boost*(1-core)+255*core));
+    dst[i+3]=a;
+  }
+  ctx.putImageData(imgData,0,0);
+}
+function ensureRaidLightningSheet(){
+  if(raidLightningSheetState.loaded||raidLightningSheetState.loading||typeof Image==='undefined'||typeof document==='undefined')return;
+  raidLightningSheetState.loading=true;
+  const img=new Image();
+  img.decoding='async';
+  img.onload=()=>{
+    raidLightningSheetState.loading=false;
+    const W=img.naturalWidth||768,H=img.naturalHeight||768;
+    const mcv=document.createElement('canvas');mcv.width=W;mcv.height=H;
+    const mctx=mcv.getContext&&mcv.getContext('2d');
+    if(!mctx)return;
+    mctx.drawImage(img,0,0,W,H);
+    raidLightningSheetState.width=W;raidLightningSheetState.height=H;
+    raidLightningSheetState.pixels=mctx.getImageData(0,0,W,H).data;
+    raidLightningSheetState.loaded=true;
+    for(const [hex,entry] of raidLightningSheetState.canvases){
+      paintRaidLightningRecolor(entry.cv,entry.r,entry.g,entry.b);
+    }
+    for(const tex of raidLightningSheetState.liveTextures)tex.needsUpdate=true;
+  };
+  img.onerror=()=>{raidLightningSheetState.loading=false;};
+  img.src='assets/refine-fx/title-lightning.webp?v=476';
+}
+function makeRaidLightningTexture(colorHex){
+  ensureRaidLightningSheet();
+  const key=String(colorHex||'#00eaff').toLowerCase();
+  let entry=raidLightningSheetState.canvases.get(key);
+  if(!entry){
+    const c=new THREE.Color(key);
+    const r=Math.round(c.r*255),g=Math.round(c.g*255),b=Math.round(c.b*255);
+    const cv=document.createElement('canvas');cv.width=raidLightningSheetState.width;cv.height=raidLightningSheetState.height;
+    paintRaidLightningRecolor(cv,r,g,b);
+    entry={cv,r,g,b};
+    raidLightningSheetState.canvases.set(key,entry);
+  }
+  const tex=new THREE.CanvasTexture(entry.cv);
+  tex.minFilter=THREE.LinearFilter;
+  tex.magFilter=THREE.LinearFilter;
+  tex.generateMipmaps=false;
+  raidLightningSheetState.liveTextures.add(tex);
+  tex.addEventListener('dispose',()=>raidLightningSheetState.liveTextures.delete(tex));
+  return tex;
+}
+function setRaidLightningCellUv(geo,slot,mirrorX){
+  const uv=geo&&geo.attributes&&geo.attributes.uv;if(!uv)return;
+  const col=slot&3,row=(slot>>2)&3,pad=.0015;
+  const u0=col*.25+pad,u1=(col+1)*.25-pad;
+  const vTop=1-row*.25-pad,vBot=1-(row+1)*.25+pad;
+  const uL=mirrorX?u1:u0,uR=mirrorX?u0:u1;
+  uv.setXY(0,uL,vTop);uv.setXY(1,uR,vTop);
+  uv.setXY(2,uL,vBot);uv.setXY(3,uR,vBot);
+  uv.needsUpdate=true;
+}
+function buildRaidElectricAura(colorHex){
+  const col=new THREE.Color(colorHex||'#00eaff');
+  const group=new THREE.Group();
+  group.userData.color=colorHex;
+  group.userData.sheetUrl='assets/refine-fx/title-lightning.webp';
+  group.userData.cellSnaps=[-1,-1,-1];
+
+  const sheetTex=makeRaidLightningTexture(colorHex);
+  const mkBoltPlane=(w,h,op,rollRad,mirrorX,order)=>{
+    const geo=new THREE.PlaneGeometry(w,h);
+    setRaidLightningCellUv(geo,3,mirrorX);
+    const mat=new THREE.MeshBasicMaterial({
+      map:sheetTex,color:0xffffff,transparent:true,opacity:op,side:THREE.DoubleSide,
+      depthWrite:false,fog:false,toneMapped:false
+    });
+    const m=new THREE.Mesh(geo,mat);
+    m.frustumCulled=false;
+    m.renderOrder=order;
+    m.userData.mirrorX=Boolean(mirrorX);
+    m.onBeforeRender=function(_r,_s,camera){
+      if(camera&&camera.quaternion){
+        this.quaternion.copy(camera.quaternion);
+        if(rollRad)this.rotateZ(rollRad);
+      }
+    };
+    return m;
+  };
+
+  // Capped strictly at character neck/collarbone (top y <= 1.24 vs hero height 2.16) with no bottom ground ring!
+  const outerBolts=mkBoltPlane(1.58,1.22,.94,.04,false,11);
+  outerBolts.position.set(-.04,.63,.08);
+  const coreBolts=mkBoltPlane(1.48,1.16,.84,-.06,true,9);
+  coreBolts.position.set(.05,.60,-.11);
+  const shadowBolts=mkBoltPlane(1.34,.92,.76,.12,false,10);
+  shadowBolts.position.set(.02,.48,.06);
+
+  const soft=auraTexture();
+  const corona=new THREE.Sprite(new THREE.SpriteMaterial({color:col,map:soft,transparent:true,opacity:.14,depthWrite:false,fog:false,blending:THREE.AdditiveBlending}));
+  corona.position.y=.60;corona.scale.set(1.48,1.18,1);corona.renderOrder=5;
+
+  group.add(corona,coreBolts,shadowBolts,outerBolts);
+  group.userData.shadowBolts=shadowBolts;
+  group.userData.outerBolts=outerBolts;
+  group.userData.coreBolts=coreBolts;
+  group.userData.corona=corona;
+  return group;
+}
+function animateRaidElectricAura(group,nowMs,x,y,z,scale=1){
+  if(!group)return;
+  group.position.set(x,y,z);
+  group.scale.setScalar(scale);
+  // Calm ~4.0s discharge cycle (95ms/frame across 16 frames + ~1.8s calm breathing pause between surges)
+  const tick=Math.floor(Math.max(0,nowMs)/95);
+  const cycle=tick%42;
+  const activeA=cycle<16;
+  const activeB=cycle>=7&&cycle<23;
+  const activeC=cycle>=4&&cycle<20;
+  const cellA=activeA?cycle:15;
+  const cellB=activeB?(cycle-7):15;
+  const sparkSeq=[12,13,14,15,5,6,14,15];
+  const cellC=sparkSeq[Math.floor(Math.max(0,nowMs)/135)%sparkSeq.length];
+  const snaps=group.userData.cellSnaps;
+  if(snaps[0]!==cellA){
+    snaps[0]=cellA;
+    setRaidLightningCellUv(group.userData.outerBolts.geometry,cellA,false);
+  }
+  if(snaps[1]!==cellB){
+    snaps[1]=cellB;
+    setRaidLightningCellUv(group.userData.coreBolts.geometry,cellB,true);
+  }
+  if(snaps[2]!==cellC){
+    snaps[2]=cellC;
+    setRaidLightningCellUv(group.userData.shadowBolts.geometry,cellC,(tick&16)!==0);
+  }
+  const envA=activeA?(cycle===0?.65:cycle>=13?(16-cycle)/4:1):0;
+  const envB=activeB?((cycle-7)===0?.60:(cycle-7)>=13?(16-(cycle-7))/4:1):0;
+  const envC=activeC?Math.sin(((cycle-4)/16)*Math.PI):0;
+  group.userData.outerBolts.material.opacity=.94*envA;
+  group.userData.coreBolts.material.opacity=.82*envB;
+  group.userData.shadowBolts.material.opacity=.74*envC;
+  group.userData.corona.material.opacity=.06+.08*Math.max(envA,envB);
+}
+function syncRaidElectricAura(){
+  const eq=S.auraShow===false||S.hideUI?null:equippedMasteryTitle();
+  const color=eq&&eq.electricColor?eq.electricColor:null;
+  if(!color){if(raidElectricAura)raidElectricAura.visible=false;return;}
+  if(!raidElectricAura||raidElectricAura.userData.color!==color){
+    if(raidElectricAura){scene.remove(raidElectricAura);disposeThreeGroup(raidElectricAura);raidElectricAura=null;}
+    raidElectricAura=buildRaidElectricAura(color);
+    scene.add(raidElectricAura);
+  }
+  raidElectricAura.visible=!!heroSpr&&heroSpr.visible;
+  if(raidElectricAura.visible)animateRaidElectricAura(raidElectricAura,skinNow(),pl.x,actorFloorY()+.02,pl.z,1);
+}
+const roForgeFieldPool=(()=>{
+  if(typeof THREE==='undefined'||typeof scene==='undefined'||!scene)return null;
+  const g=new THREE.Group();
+  const beamGeo=new THREE.CylinderGeometry(.46,.88,1,18,1,true);
+  const beamMat=new THREE.MeshBasicMaterial({color:0xffcf56,transparent:true,opacity:0,side:THREE.DoubleSide,depthWrite:false,blending:THREE.AdditiveBlending});
+  const beam=new THREE.Mesh(beamGeo,beamMat);
+  const ringGeo=new THREE.RingGeometry(.28,.86,24);
+  const ringMat=new THREE.MeshBasicMaterial({color:0xfff6bf,transparent:true,opacity:0,side:THREE.DoubleSide,depthWrite:false,blending:THREE.AdditiveBlending});
+  const ring=new THREE.Mesh(ringGeo,ringMat);
+  ring.rotation.x=-Math.PI/2;ring.position.y=.06;
+  g.add(beam,ring);
+  g.visible=false;
+  g.userData={born:0,dur:0,succeeded:true,beam,ring,baseH:4.4};
+  scene.add(g);
+  return g;
+})();
+function spawnRoForgeFieldFx(succeeded,isStar){
+  if(!roForgeFieldPool||S.hideUI)return;
+  const col=succeeded?(isStar?0xffe47a:0xffcf56):0xff4d4d;
+  const u=roForgeFieldPool.userData;
+  u.beam.material.color.setHex(col);
+  u.beam.material.opacity=.72;
+  u.ring.material.color.setHex(succeeded?0xfff6bf:0xff6b6b);
+  u.ring.material.opacity=.88;
+  u.baseH=succeeded?4.4:1.9;
+  u.beam.position.y=u.baseH*.5;
+  u.beam.scale.set(1,u.baseH,1);
+  u.ring.scale.setScalar(.6);
+  u.born=skinNow();
+  u.dur=succeeded?1150:780;
+  u.succeeded=Boolean(succeeded);
+  roForgeFieldPool.position.set(pl.x,actorFloorY()+.02,pl.z);
+  roForgeFieldPool.visible=true;
+  roForgeFieldFx=roForgeFieldPool;
+}
+function syncRoForgeFieldFx(){
+  if(!roForgeFieldFx||!roForgeFieldFx.visible)return;
+  const u=roForgeFieldFx.userData,age=skinNow()-u.born;
+  if(age>=u.dur){roForgeFieldFx.visible=false;roForgeFieldFx=null;return;}
+  const k=Math.max(0,Math.min(1,age/u.dur));
+  roForgeFieldFx.position.set(pl.x,actorFloorY()+.02,pl.z);
+  const wScale=u.succeeded?1.15-k*.55:.7+k*1.2;
+  const hScale=u.baseH*(u.succeeded?.6+k*.65:1-k*.4);
+  u.beam.position.y=hScale*.5;
+  u.beam.scale.set(wScale,hScale,wScale);
+  u.beam.material.opacity=(1-k)*(u.succeeded?.76:.58);
+  u.ring.scale.setScalar(.6+k*2.8);
+  u.ring.material.opacity=(1-k)*.88;
+}
 // A cached alpha silhouette forms a narrow hard edge; the original weapon is drawn over it.
 // No broad Gaussian shadow, so pointed blades retain their corners instead of a rounded halo.
 const weaponGlowMasks=new WeakMap();

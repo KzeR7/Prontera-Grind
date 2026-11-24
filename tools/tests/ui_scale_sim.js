@@ -1,10 +1,10 @@
-// Display → UI scale (100 / 115 / 130 / 90%, plus Auto): the chrome zoom must never move a
+// Display → UI scale (90–150% continuous slider with automatic default): the chrome zoom must never move a
 // centred panel. v467 shipped `html[data-ui-scale] #wins{left:...}` on top of the base rule
 // `#wins{left:50%;transform:translateX(-50%)}`, so at 115% the Dungeons window was pulled
 // half a window off the left edge. This suite pins the two halves of the contract:
 //   * CSS: everything the scale block touches stays inside the scale scope, keeps its
 //     centring, and divides any vw/vh ceiling back out of the zoom.
-//   * JS:  the four steps clamp, Auto reads the display, and the save keeps the choice.
+//   * JS:  the slider clamps, Auto reads the display, and the save keeps the choice.
 //   node tools/tests/ui_scale_sim.js
 const fs = require('node:fs'), path = require('node:path'), assert = require('node:assert/strict');
 const ROOT = path.resolve(__dirname, '../..');
@@ -192,9 +192,9 @@ if (JSDOM) {
     Object.defineProperty(window, 'devicePixelRatio', { value: dpr, configurable: true });
   };
 
-  test('the four steps clamp and publish both signals', () => {
-    assert.equal(ev('UI_SCALE_STEPS.join()'), '0.9,1,1.15,1.3');
-    for (const z of [0.9, 1.15, 1.3]) {
+  test('continuous scale clamps and publishes both signals', () => {
+    assert.equal(ev('[UI_SCALE_MIN,UI_SCALE_MAX].join()'), '0.9,1.5');
+    for (const z of [0.9, 1.15, 1.23, 1.3, 1.5]) {
       ev(`setUiScale(${z})`);
       assert.equal(doc.documentElement.getAttribute('data-ui-scale'), String(z), 'data-ui-scale for ' + z);
       assert.equal(scaleOf(), String(z), '--ui-scale for ' + z);
@@ -205,9 +205,11 @@ if (JSDOM) {
     ev('setUiScale(1)');
     assert.equal(doc.documentElement.hasAttribute('data-ui-scale'), false);
     assert.equal(scaleOf(), '1');
-    // a value that is not a step falls back to 100% instead of half-applying
+    // Out-of-range values clamp; invalid numbers fall back to 100%.
     ev('setUiScale(1.7)');
-    assert.equal(ev('S.uiScale'), 1);
+    assert.equal(ev('S.uiScale'), 1.5);
+    ev('setUiScale(0.5)');
+    assert.equal(ev('S.uiScale'), 0.9);
     ev('setUiScale("nonsense")');
     assert.equal(ev('S.uiScale'), 1);
   });
@@ -232,8 +234,8 @@ if (JSDOM) {
     ev('setUiScaleAuto(false)');
     assert.equal(ev('S.uiScaleAuto'), false);
     assert.equal(scaleOf(), '0.9', 'Auto off falls back to the saved step');
-    // the save normaliser: a value that is not a step loads as 100%, Auto defaults on,
-    // and a deliberate step + Auto off survives the round-trip.
+    // The save normaliser clamps out-of-range values, defaults Auto on,
+    // and preserves a deliberate manual percentage and Auto off.
     const rt = ev(`(()=>{try{
       const base=Object.assign(fresh(),{lv:150,cls:'Lord Knight'});
       lsPut(saveKey(),JSON.stringify(Object.assign({},base,{uiScale:1.7,uiScaleAuto:'nonsense'})));
@@ -242,25 +244,23 @@ if (JSDOM) {
       const b=load();
       return [a.uiScale,a.uiScaleAuto,b.uiScale,b.uiScaleAuto].join()
     }catch(e){return 'err:'+e.message}})()`);
-    assert.equal(rt, '1,true,1.15,false', 'save round-trip keeps the scale (got ' + rt + ')');
+    assert.equal(rt, '1.5,true,1.15,false', 'save round-trip keeps the scale (got ' + rt + ')');
   });
 
-  test('Display renders Auto plus the four steps and marks the live one', () => {
+  test('Display slider reflects, applies and saves the selected scale', () => {
     ev('S.uiScaleAuto=false;S.uiScale=1.15;applyUiScale();renderScreenOptions();');
-    const btns = [...doc.querySelectorAll('#screenOptions [data-ui-scale-step]')];
-    assert.deepEqual(btns.map(b => b.textContent.trim()), ['90%', '100%', '115%', '130%']);
-    assert.equal(btns.filter(b => b.getAttribute('aria-pressed') === 'true').map(b => b.textContent.trim()).join(), '115%');
-    const auto = doc.querySelector('#screenOptions [data-ui-scale-auto]');
-    assert.ok(auto, 'Auto button missing');
-    assert.equal(auto.getAttribute('aria-pressed'), 'false');
+    let slider=doc.querySelector('#uiScaleSlider');
+    assert.ok(slider, 'slider missing');
+    assert.equal(slider.type,'range');
+    assert.equal(slider.min,'90');assert.equal(slider.max,'150');assert.equal(slider.step,'1');
+    assert.equal(slider.value,'115');assert.equal(doc.querySelector('#uiScaleValue').textContent.trim(),'115%');
+    slider.value='123';slider.dispatchEvent(new window.Event('input',{bubbles:true}));
+    assert.equal(ev('S.uiScale'),1.23);assert.equal(ev('S.uiScaleAuto'),false);
+    assert.equal(scaleOf(),'1.23');assert.equal(doc.querySelector('#uiScaleValue').value,'123%');
+    slider.dispatchEvent(new window.Event('change',{bubbles:true}));
+    slider=doc.querySelector('#uiScaleSlider');assert.equal(slider.value,'123','redraw preserves the chosen scale');
     ev('S.uiScaleAuto=true;applyUiScale();renderScreenOptions();');
-    const auto2 = doc.querySelector('#screenOptions [data-ui-scale-auto]');
-    assert.equal(auto2.getAttribute('aria-pressed'), 'true');
-    assert.match(auto2.textContent, /Auto · \d+%/, 'Auto shows the step it picked');
-    assert.equal([...doc.querySelectorAll('#screenOptions [data-ui-scale-step]')].filter(b => b.getAttribute('aria-pressed') === 'true').length, 0);
-    // and the buttons are wired to the setters, not to the checkbox handler
-    ev('setUiScale(1.3)');
-    assert.equal(doc.querySelector('#screenOptions [data-ui-scale-step="1.3"]').getAttribute('aria-pressed'), 'true');
+    assert.equal(doc.querySelector('#uiScaleSlider').value,'115','Auto shows the display-derived value');
     ev('setUiScale(1)');
   });
 }

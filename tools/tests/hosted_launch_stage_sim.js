@@ -7,7 +7,7 @@ import http from 'node:http';
 import os from 'node:os';
 import path from 'node:path';
 import { freshDb,makeD1,createApp } from '../dev_server.js';
-import { syntheticProbe,unpackPayload,deployedUrl,safeSql } from '../staging/hosted_launch_stage.mjs';
+import { syntheticProbe,unpackPayload,decodeOverlayFile,deployedUrl,safeSql } from '../staging/hosted_launch_stage.mjs';
 import { SANCTUARY_STAGE,sanctuaryPagesConfig,sanctuarySocialConfig,sanctuaryDeploymentUrl,verifyDeployment } from '../staging/sanctuary_hosted_stage.mjs';
 const target=path.join(os.tmpdir(),'launch-package-test-'+randomUUID()+'.mjs');
 try{
@@ -19,6 +19,14 @@ try{
  const gitArgs=['-c','core.autocrlf=true','hash-object','--path=_routes.json','--stdin'];
  const clean=runGit(gitArgs,routes);assert.equal(clean.status,0);assert.equal(clean.stdout.trim(),original,'CRLF checkout normalizes to the committed blob');
  assert.notEqual(runGit(gitArgs,routes+'actual change').stdout.trim(),original,'real edits remain distinct');
+ // A new unlisted runtime asset must still fail closed, not silently ship from an old archive.
+ const unlisted='assets/__stage_guard_'+randomUUID()+'.txt';
+ try{
+  fs.writeFileSync(unlisted,'synthetic unlisted runtime');
+  const denied=spawnSync(process.execPath,['tools/staging/package_hosted_launch.mjs',target],{encoding:'utf8'});
+  assert.notEqual(denied.status,0,'unlisted runtime file must stop packaging');
+  assert.ok(denied.stderr.includes('Unpackaged runtime change: '+unlisted),'guard identifies the exact unlisted file');
+ }finally{fs.rmSync(unlisted,{force:true})}
  const packaged=spawnSync(process.execPath,['tools/staging/package_hosted_launch.mjs',target],{encoding:'utf8'});
  assert.equal(packaged.status,0,packaged.stderr);const script=fs.readFileSync(target,'utf8');
  const encoded=script.match(/const PAYLOAD_B64 = '([^']+)'/)[1],sha=script.match(/const PAYLOAD_SHA256 = '([^']+)'/)[1];
@@ -73,6 +81,20 @@ try{
   for(const rel of [...Object.values(art.digi),...Object.values(art.fishing)])
    assert.equal(payload[rel],'base64:'+fs.readFileSync(rel).toString('base64'),'uncarried Social title art '+rel);
  }
+ // Dynamic refine audio and plaza emotions are not discoverable from static HTML tags.
+ const audio=JSON.parse(fs.readFileSync('assets/audio/refine/manifest.json','utf8'));
+ for(const name of ['manifest.json',...audio.assets.map(a=>a.file)]){
+  const rel='assets/audio/refine/'+name,encodedFile=payload[rel];
+  assert.equal(typeof encodedFile,'string','missing refine audio '+rel);
+  const decoded=decodeOverlayFile(rel,encodedFile);
+  assert.ok(Buffer.from(decoded).equals(fs.readFileSync(rel)),'staged refine audio differs '+rel);
+  if(name.endsWith('.wav'))assert.ok(Buffer.isBuffer(decoded),'WAV is decoded as binary');
+ }
+ for(const name of fs.readdirSync('assets/social/emotions')){
+  const rel='assets/social/emotions/'+name;
+  assert.ok(Buffer.from(decodeOverlayFile(rel,payload[rel])).equals(fs.readFileSync(rel)),'staged emotion differs '+rel);
+ }
+ assert.ok(Buffer.from(decodeOverlayFile('assets/refine-fx/title-lightning.webp',payload['assets/refine-fx/title-lightning.webp'])).equals(fs.readFileSync('assets/refine-fx/title-lightning.webp')));
  // And every packaged file must survive the round trip byte for byte - this is what catches a new
  // binary type being decoded as text before it reaches the owner's rehearsal.
  for(const [name,text] of Object.entries(payload)){

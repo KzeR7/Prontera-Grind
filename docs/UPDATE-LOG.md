@@ -12567,3 +12567,45 @@ re-recording them here would have written wrong numbers into the repository.
 * **Copy:** the Display sheet's UI-scale note now says the scale covers "the HUD and the music player under it", so the setting describes what it actually does.
 * **Build tag:** `BUILD` and the three mirrors read `haven-v475`; all 24 `?v=` asset tags moved **474 → 475** so returning browsers fetch the fixed `eclipse.css`.
 * **Delivery:** Committed and pushed on branch `arena/c4b08450-prontera-grind`; not merged and not deployed.
+
+
+### 2026-11-23 — `haven-v468 Prontera night mode`
+* **Changed:** Added a browser-local day/night switch in the plaza More menu. Fishing bridge lanterns and DigiPet service/fence lamps give warm ambient light at night. The scene tint, pooled local lights and projected glow are cosmetic; no walking rules, sprites, save data or plaza network traffic change.
+* **Try it:** Enter Social Hub, choose More → Night mode, visit the West Lake fishing bridge and DigiPet farm, then switch night mode off. The preference persists on the same browser where storage is available.
+* **Checks:** `social_scene_sim.js`, `social_ui_sim.js`, `social_sim.js`, `social_gym_sim.js`, `social_config_sim.js`, `plaza_entry_sim.js`, `social_api_sim.mjs`, `social_worker_sim.mjs`, `update_watch_sim.js` (23/23), `gear_sim.js` (43/43), `drop_card_sheet_sim.js` (14/14), `publish_sim.js` (23/23), and `bash tools/build_site.sh` passed. Desktop and 390px Chromium/SwiftShader preview checked the switch, scenes, and glow placement; not a physical-device performance test.
+* **Delivery:** Local changes on the current branch; not pushed or deployed.
+
+### 2026-11-23 — `haven-v469 Moonlit Prontera`
+* **Changed:** Replaced the dim daylight look with a cooler moonlit tint, stronger warm light pools and bulb halos, plus a small, gently drifting batch of fireflies by the fishing lake and DigiPet field. The manual local toggle, day appearance, sprite assets, gameplay and network behavior remain unchanged; fireflies stop updating in day mode.
+* **Try it:** In Social Hub choose More → Night mode and visit the fishing bridge or DigiPet farm; toggle it off to compare daytime.
+* **Checks:** `social_scene_sim.js` (including day/night particle lifecycle and nonblocking overlay), `social_ui_sim.js`, `social_sim.js`, `social_gym_sim.js`, `plaza_entry_sim.js`, `update_watch_sim.js` (23/23), `publish_sim.js` (23/23), `gear_sim.js` (43/43), `drop_card_sheet_sim.js` (14/14), `bash tools/build_site.sh` and `git diff --check` passed. Rendered both areas in desktop and 390px Chromium/SwiftShader previews; physical-device performance is not verified.
+* **Delivery:** Local changes on the current branch; not pushed or deployed.
+
+### 2026-11-23 — `haven-v470 Aetherwell at night`
+* **Changed:** Researched night lighting and made night darker with a cool directional moon for lit meshes, stronger contrast between darkness and lanterns, and a separate cyan point light, brighter crystal facets and a lightweight projected halo at the loaded Aetherwell. The native town uses unlit materials, so the scene still uses a screen-space approximation rather than full depth-aware lighting or HDR bloom. This stays a manual local setting with no new server traffic.
+* **Try it:** Enter the plaza, enable More → Night mode and visit the central crystal, West Lake and DigiPet farm. Toggle it off to compare the unchanged day levels.
+* **Checks:** `social_scene_sim.js` (including delayed fountain loading, multi-material crystal, moon and day restoration), `social_ui_sim.js`, `social_sim.js`, `social_gym_sim.js`, `social_config_sim.js`, `update_watch_sim.js` (23/23), `publish_sim.js` (23/23), `gear_sim.js` (43/43), `drop_card_sheet_sim.js` (14/14), `bash tools/build_site.sh` and `git diff --check` passed. Desktop and 390px Chromium/SwiftShader preview inspected the crystal; physical-device performance was not verified.
+* **Delivery:** Local changes on the current branch; not pushed or deployed.
+
+
+### 2026-11-23 — `haven-v471 Prontera after dark`
+* **Changed:** Darker night, brighter Aetherwell crystal, four new lamps inside the already-blocked central gardens, and an animated, pond-shaped night glow underneath the bridge. Daytime appearance, navigation, fishing, sprite assets and network behavior remain unchanged. The pond glow survives deferred art loading.
+* **Try it:** Choose More → Night mode in Social Hub, visit the central plaza and West Lake, then switch back to day.
+* **Checks:** `social_scene_sim.js` (garden collision and seat clearance, day/night pond animation, real deferred pond-design load, crystal and light lifecycle), `social_ui_sim.js`, `social_sim.js`, `social_gym_sim.js`, `social_config_sim.js`, `plaza_entry_sim.js`, `social_api_sim.mjs`, `social_worker_sim.mjs`, `update_watch_sim.js` (23/23), `publish_sim.js` (23/23), `gear_sim.js` (43/43), `drop_card_sheet_sim.js` (14/14), `bash tools/build_site.sh` and `git diff --check` passed. Desktop and 390px Chromium/SwiftShader previews inspected; no physical-device performance testing.
+* **Delivery:** Local changes on the current branch; not pushed or deployed.
+
+### 2026-11-23 — `Prontera night mode pre-PR recheck`
+* **Changed:** Aligned the afterglow cache tag with the build and guarded the optional firefly canvas drawing against incomplete canvas implementations. Re-ran all three progression benchmarks against the original baseline and current game; all before/after measurements were unchanged, with only their source fingerprints updated for the build label.
+* **Checks:** The pre-push sweep and targeted reruns yielded 263/268 checks passing, including the four generated/config checks. The five existing failures (`class_skin_sim.js`, `hosted_launch_stage_sim.js`, `kit_sim.js`, `material_sim.js`, `trial_sim.js`) were previously reproduced on the branch's main baseline. The initial `adventurer_updates_sim.js` failure passed on rerun; historical-object and night-scene harness failures were addressed and rerun. This was before integrating newer main-branch work.
+* **Delivery:** Local recheck on this branch; not deployed.
+
+### 2026-11-23 — `haven-v476 Prontera after dark, main integration`
+* **Changed:** Integrated current main's raid, pet and UI-scale work without dropping the night-mode changes. Coordinated the four build mirrors and runtime cache versions at v476; kept the night setting local and cosmetic. Reran the three complete progression benchmarks for the combined source rather than changing fingerprints alone. Gear and growth before/after measurements match main's fixtures; some encounter after measurements changed, while all comparison checks still pass.
+* **Try it:** In Social Hub, open More → Night mode, visit the central crystal and West Lake, then turn it off.
+* **Checks:** The combined-source pre-push gate completed with 262/270 checks passing; the eight failures also occur on the main baseline: `class_skin_sim.js`, `hosted_launch_stage_sim.js`, `kit_sim.js`, `material_sim.js`, `trial_sim.js`, `ui_scale_sim.js`, `raid_sim.mjs`, and `stage_raid_sim.mjs`. The UI-scale and raid failures are stale scale expectations on main; the raid staging launcher targets a different branch. No dependency skips. Build and `skill_balance_sim.js` passed. Social scene/UI/fishing/poker tests passed; the updated 390px Chromium/SwiftShader preview reached night crystal and pond. An earlier preview attempt timed out under concurrent load, then passed on retry. Physical-device performance is unverified.
+* **Delivery:** Integrated locally on the current branch for PR review; no staging or production deployment.
+
+### 2026-11-23 — `night PR: eight pre-existing check failures repaired`
+* **Changed:** Regenerated the class-animation backup; taught the isolated staging package to carry the dynamically referenced refine WAVs, plaza emotion images and lightning art with lossless WAV decoding; updated stale trial/kit, refine-harness, slider/raid and staging-snapshot checks to exercise the current code. The overlay still rejects unlisted runtime changes. No game or plaza-network behavior changed.
+* **Checks:** Complete pre-push gate **270/270 passed**, including generated-asset/config checks and all JS/MJS sims and smokes, with no dependency skips. `hosted_launch_stage_sim.js` checks the new files byte-for-byte, synthetic local handlers, and a deliberately unlisted runtime file that must fail closed. `bash tools/build_site.sh` and `git diff --check` passed. No staging or production deployment.
+* **Delivery:** Prepared on the current PR branch; no deployment.
