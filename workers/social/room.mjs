@@ -878,6 +878,8 @@ export class SocialRoom {
   if(Number.isFinite(Number(m.mobsLeft)))payload.mobsLeft=Math.max(0,Math.min(99,Math.floor(Number(m.mobsLeft))));
   const tele=this.cleanTelegraph(m.tele);if(tele)payload.tele=tele;
   if(Array.isArray(m.snap)){const snap=this.cleanMobSnap(m.snap);if(snap)payload.snap=snap;}
+  // v485: world-host claim — a member may carry the raid world when the leader drops/goes silent.
+  if(m.worldHost===true)payload.worldHost=true;
   for(const mem of party.members){if(mem.id===c.id||!party.raid.active.has(mem.id))continue;const peer=this.clients.get(mem.id);if(peer)this.send(peer,payload)}
  }
  raidRevive(c,m,now){

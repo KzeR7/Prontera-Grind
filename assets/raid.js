@@ -629,14 +629,44 @@
     return null;
   }
 
+  // ---------- haven-v485 (phase 3): the raid world passes on host disconnect/silence ----------
+  // The world authority is a claim, not a person. The raid leader starts with it; if the leader
+  // goes silent (HOST_MIGRATE_S of game time) or their slot is flagged disconnected/left by the
+  // room, the freshest lowest-id living member atomically takes over: it starts sending
+  // `worldHost: true` in raid_sync and its mob/boss simulation becomes canonical again.
+  // Rules (deterministic, convergent — no new DO types, no server arbitration):
+  //   * every raid_sync carries `worldHost` (boolean; the room whitelists it),
+  //   * a claim refreshes the 6s host voice for everyone listening,
+  //   * a promoted host yields to a fresh entry-leader claim (leader reclaims),
+  //   * two promoted hosts race once: the lower id keeps the world, the other yields,
+  //   * dead members never promote; disconnected slots are never candidates.
+  var HOST_MIGRATE_S = 8.0;     // silence (game seconds) before the world is passed on
+  var CAND_FRESH_S = 8.0;       // slot freshness required of other members for candidacy
+  function idKey(v) { var n = Number(v); return Number.isFinite(n) ? n : String(v); }
+  function lowerId(a, b) {
+    var ka = idKey(a), kb = idKey(b);
+    if (typeof ka === 'number' && typeof kb === 'number') return ka < kb;
+    return String(Number.isFinite(Number(ka)) && Number.isFinite(Number(kb)) ? Number(ka) : ka) <
+           String(Number.isFinite(Number(kb)) && Number.isFinite(Number(kb)) ? Number(kb) : kb);
+  }
+  function hostSlotView() {
+    if (raid.mode !== 'party' || raid.hostId == null) return null;
+    for (var i = 0; i < raid.party.length; i++) {
+      if (String(raid.party[i].id) === String(raid.hostId)) return raid.party[i];
+    }
+    return null;
+  }
+
   // ---------- haven-v483: party host authority ----------
   // The party leader simulates mob/boss casts. Members render the same attack relayed through
   // raid_sync instead of rolling their own, so the party dodges the same pattern together.
   // The DO relays a whitelisted copy; the client-side snapshot mirrors it to keep payloads small.
   function isRaidHost() {
     if (raid.mode !== 'party') return true;
-    if (raid.hostId != null) return String(raid.hostId) === String(myId());
-    return isPartyLeader();
+    if (raid.hostId != null && String(raid.hostId) === String(myId())) return true;   // entry leader reclaims by voice
+    if (raid.promotedHost) return true;                                                // took over by election
+    if (raid.hostId == null) return isPartyLeader();                                   // legacy fallback
+    return false;
   }
   function hostVoiceAlive() {
     if (raid.mode !== 'party') return false;
@@ -645,6 +675,37 @@
     // first 6 seconds rather than rolling a divergent local cast instantly; if the host never
     // syncs in, the member reverts to local casting once the grace window elapses.
     return raid.elapsed < 6;
+  }
+  function electRaidWorldHost() {
+    if (raid.mode !== 'party' || !raid.on || raid.dead) return;
+    if (isRaidHost()) return;                                   // leader/promoted: no election needed
+    if (!raid.party || !raid.party.length) return;
+    var eps = raid.elapsed - raid._lastHostPartySyncAt;
+    var stale = raid._lastHostPartySyncAt === 0 ? (raid.elapsed > HOST_MIGRATE_S) : eps > HOST_MIGRATE_S;
+    var hs = hostSlotView();
+    // v485: someone ELSE (not the entry leader) is feeding us a fresh world — never double-promote.
+    var foreignFresh = raid._worldVoiceId != null && String(raid._worldVoiceId) !== String(raid.hostId) && eps <= 6.0;
+    var hostGone = stale || (Boolean(hs && hs.disconnected) && !foreignFresh);
+    if (!hostGone) return;
+    var my = String(myId());
+    var candidates = [];
+    for (var i = 0; i < raid.party.length; i++) {
+      var slot = raid.party[i];
+      if (!slot || slot.dead || slot.disconnected) continue;
+      var isSelf = slot.self || String(slot.id) === my;
+      if (!isSelf && (raid.elapsed - (slot._lastMsgAt || -1e9)) > CAND_FRESH_S) continue;
+      candidates.push(slot);
+    }
+    if (!candidates.length) return;
+    var winner = candidates[0];
+    for (var j = 1; j < candidates.length; j++) if (lowerId(candidates[j].id, winner.id)) winner = candidates[j];
+    if (!(String(winner.id) === my || (winner.self && String(myId()) === String(winner.id)))) return;
+    if (raid.promotedHost) return;
+    raid.promotedHost = true;
+    raid._lastHostPartySyncAt = raid.elapsed;                  // own voice is fresh by definition
+    raid._worldVoiceId = String(myId());
+    pushSystemChat('The raid world passes to you — you are the authority now.');
+    try { sendSync(true); } catch (e) { /* first sync lands on the next interval */ }
   }
   function clamp01n(v) {
     v = Number(v);
@@ -3771,6 +3832,7 @@
       bossFrac: hostSnap ? hostSnap.bossFrac : undefined,
       mobsLeft: hostSnap ? hostSnap.mobsLeft : undefined,
       snap: hostSnap ? hostSnap.snap : undefined,
+      worldHost: isRaidHost(),   // v485: members may hold the world; the room whitelists the boolean
       force: Boolean(force)
     });
   }
@@ -3882,7 +3944,10 @@
     raid.seed = Number(opts.seed) || 1;
     raid.hostId = (opts && opts.hostId != null) ? String(opts.hostId) : (raid.mode === 'party' ? (socialParty() && socialParty().leader != null ? socialParty().leader : myId()) : null);
     raid._lastHostPartySyncAt = 0;
-    raid._hostTeleKey = '';
+    raid.promotedHost = false;
+    raid._worldVoiceId = null;
+    raid._electTimer = 0;
+    raid._yielding = false;
     raid._hostBossFrac = null;
     raid._hostMobsLeft = null;
     raid.stage = 0;
@@ -3948,6 +4013,7 @@
           self: isMe
         };
       });
+      for (var pi = 0; pi < raid.party.length; pi++) raid.party[pi]._lastMsgAt = 0;
       if (!selfEntry()) {
         raid.party.unshift({
           id: selfId, name: myName(), cls: S.cls || 'Adventurer',
@@ -4188,6 +4254,10 @@
     var refundedEntry = Boolean(finishOpts.refundedEntry);
 
     raid.on = false;
+    raid.promotedHost = false;                  // v485: authority never outlives the run
+    raid._worldVoiceId = null;
+    raid._electTimer = 0;
+    raid._yielding = false;
     raid.lastFinishedRaidId = rid;
     raid.dead = false;
     raid.entryConsumed = false;
@@ -4391,6 +4461,8 @@
       }
     }
 
+    raid._electTimer = (raid._electTimer || 0) - step;
+    if (raid._electTimer <= 0) { raid._electTimer = 0.5; electRaidWorldHost(); }
     if (raid.mode === 'party' && !isRaidHost() && hostVoiceAlive()) lerpHostMobs(step);
     tickHazards(step);
     if (!raid.on || raid.dead) return;
@@ -4445,6 +4517,20 @@
       if (raid.party[i].id === sender) { slot = raid.party[i]; break; }
     }
     if (!slot || slot.disconnected) return;
+    slot._lastMsgAt = raid.elapsed;                 // v485: proof of life for candidacy
+    // v485: the leader's syncs are an implicit world claim (older clients never send worldHost),
+    // so mixed v484/v485 parties keep working. Explicit claims elect/promote as designed.
+    var claim = msg.worldHost === true || (raid.hostId != null && String(sender) === String(raid.hostId));
+    if (claim) raid._worldVoiceId = String(sender);
+    if (claim && raid.promotedHost && String(sender) === String(raid.hostId)) {
+      // Rule A: the entry leader reclaimed the world — a promoted host yields by construction.
+      raid.promotedHost = false;
+      pushSystemChat('The raid world returns to ' + (slot.name || 'the raid leader') + '.');
+    } else if (msg.worldHost === true && raid.promotedHost && lowerId(sender, myId())) {
+      // Rule C: two promoted hosts raced once — the lower id keeps the world.
+      raid.promotedHost = false;
+      pushSystemChat('The raid world passes to ' + (slot.name || 'a teammate') + '.');
+    }
     if (msg.name) slot.name = String(msg.name).slice(0, 20);
     if (msg.cls) slot.cls = String(msg.cls).slice(0, 24);
     if (msg.sex === 'f' || msg.sex === 'm') slot.sex = msg.sex;
@@ -4459,7 +4545,7 @@
     if (msg.x != null && Number.isFinite(Number(msg.x))) slot.x = Math.max(-512, Math.min(512, Number(msg.x)));
     if (msg.z != null && Number.isFinite(Number(msg.z))) slot.z = Math.max(-512, Math.min(512, Number(msg.z)));
     if (msg.ry != null && Number.isFinite(Number(msg.ry))) slot.ry = Number(msg.ry);
-    if (String(sender) === String(raid.hostId)) {
+    if (claim) {                                   // v485: any world host — leader (implicit) or elected member
       raid._lastHostPartySyncAt = raid.elapsed;
       if (msg.bossFrac != null && Number.isFinite(Number(msg.bossFrac))) raid._hostBossFrac = clamp01n(msg.bossFrac);
       if (msg.mobsLeft != null && Number.isFinite(Number(msg.mobsLeft))) raid._hostMobsLeft = Math.max(0, Math.min(99, Math.floor(Number(msg.mobsLeft))));
@@ -4477,6 +4563,11 @@
   function onRevive(msg) {
     if (!raid.on || raid.mode !== 'party' || !msg) return;
     if (raid.raidId && msg.raidId !== raid.raidId) return;
+    if (msg.fromId != null) {
+      for (var vi = 0; vi < raid.party.length; vi++) {
+        if (String(raid.party[vi].id) === String(msg.fromId)) { raid.party[vi]._lastMsgAt = raid.elapsed; break; }
+      }
+    }
     var applied = applyReviveEvent({
       reviveId: typeof msg.reviveId === 'string' && msg.reviveId ? msg.reviveId : '',
       fromId: msg.fromId,
@@ -6186,6 +6277,7 @@
     isGm: isGm,
     isRaidHost: isRaidHost,
     hostVoiceAlive: hostVoiceAlive,
+    electRaidWorldHost: electRaidWorldHost,
     isEligible: isRaidEligible,
     canEnter: canEnter,
     onLethalHp: handlePlayerDown,
