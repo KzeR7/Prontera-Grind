@@ -1,17 +1,17 @@
 {
  "_comment": "Pins each versioned social asset to the ?v= it was last shipped under. An asset whose bytes change while its ?v= stays put FAILS update_watch_sim, because browsers keep serving the cached copy - the v445 emoji miss. Regenerate with: UPDATE=1 node tools/tests/update_watch_sim.js",
- "build": 490,
+ "build": 493,
  "assets": {
   "assets/ui/eclipse.css": {
-   "v": 490,
+   "v": 493,
    "sha256": "c0cc54769666f913921a8a7f45a00016a067a2dfd1544c61dc2897c56967ad7d"
   },
   "assets/ui/mobile.css": {
-   "v": 490,
+   "v": 493,
    "sha256": "7fa52cf0124193416686114f4bd0128f42c84a35db8dd01aeab0bc3080a062fc"
   },
   "assets/ui/mastery-titles.css": {
-   "v": 490,
+   "v": 493,
    "sha256": "9341b7481468a404fe4e2b509ada308af98a4b72f33360abe6db8f45de8a8132"
   },
   "assets/ui/mobile.js": {
@@ -19,11 +19,11 @@
    "sha256": "867fb850f65965328fc465032c9e6de99d599fe163213a0cb3e5e04f96ad9fa6"
   },
   "assets/social.css": {
-   "v": 490,
-   "sha256": "b5e82e4a44cf97d976b96c8f2444947dc69dec29535bf2f14b8e71930194a97f"
+   "v": 493,
+   "sha256": "d05e0453466286d62923d56575824f3022a434d8abcc1b3b0ed10c3f492c0ccb"
   },
   "assets/raid.css": {
-   "v": 490,
+   "v": 493,
    "sha256": "952698d994d7febd70e97f09b39cdd27e52b2418e0bfdbb23f70f990dcfa2b3c"
   },
   "assets/social-battle.css": {
@@ -31,7 +31,7 @@
    "sha256": "8d677bab1c9921debaa268f7dfcaad4b9d5adb1ff8aac6d0b5bb54e6e1ae86f6"
   },
   "assets/social-fishing.css": {
-   "v": 490,
+   "v": 493,
    "sha256": "1ff89998c213445acd2152e65fdbf6ea9cbfeb7f50743b172fa7431a8d82b4ff"
   },
   "assets/friends.css": {
@@ -51,7 +51,7 @@
    "sha256": "9695339bee423d30081bf9a66cbc5e766e64e1b92163a4a2b8cefc6c2fc5e008"
   },
   "assets/wardrobe.js": {
-   "v": 490,
+   "v": 493,
    "sha256": "52f8b78a0df924f7ca9e8a4d60a546c2fad77335525edce1c0602ca6974b1cee"
   },
   "assets/shop-catalog.js": {
@@ -63,7 +63,7 @@
    "sha256": "6c17ebb5f14f125bc16e26c223581ee3b12183c1a8777509d06ef2694582a4fe"
   },
   "assets/expanded-jobs.js": {
-   "v": 490,
+   "v": 493,
    "sha256": "18bb1319714323ce0f7cbdcd42d277d23d599d9cda71fdf8414357132106a5b7"
   },
   "assets/ascension.js": {
@@ -95,7 +95,7 @@
    "sha256": "b87c0ef547bd3fbc94be57ad2e598cca51b70c6a5fe56c7464e3303cd6f0c861"
   },
   "assets/mastery-titles.js": {
-   "v": 490,
+   "v": 493,
    "sha256": "32eabd829b029b2fbbd3d980669c63d45b6d97d8b9d183c9b8a4aaa73315d534"
   },
   "assets/player-buffs.js": {
@@ -119,7 +119,7 @@
    "sha256": "1f622caf77e74f9f9967ce4f6d358edfd69111c8d108790be3d867c1cd5df171"
   },
   "assets/signature-fx.js": {
-   "v": 490,
+   "v": 493,
    "sha256": "b8ad2ca453258273885871668770bee939f6bffe5da5d374b6003012d6b4eabc"
   },
   "assets/spirit-spheres.js": {
@@ -159,7 +159,7 @@
    "sha256": "7a37537ac50ecdaf2e08fcfc8c9a173534c2ddc36a49834dc67f631246ed2b5e"
   },
   "assets/skill-afterglow.js": {
-   "v": 490,
+   "v": 493,
    "sha256": "7b8a32a2802a500d8c18b25601bb178acc12a87dd590ac3fee82749202e988a3"
   },
   "assets/boss-fx.js": {
@@ -167,8 +167,8 @@
    "sha256": "d915f255b9916f80f52b2b570687f47ac0d2ae05416dd22225ab65e6b18a68cf"
   },
   "assets/raid.js": {
-   "v": 490,
-   "sha256": "67ff7d6a5b9682be9c57c693cf21e7c6ebbaca7f4c1932f8de5551358a6c1de0"
+   "v": 493,
+   "sha256": "18a3075911a1104488cb801a57fae95ce9f86908758f29415cc4c323913c149f"
   },
   "assets/pets.js": {
    "v": 130,
@@ -183,7 +183,7 @@
    "sha256": "bf5c1f4d3ae420ae1ee2d79dc67ea564364025d7549bd03071c022303393ac65"
   },
   "assets/combat-audio.js": {
-   "v": 490,
+   "v": 493,
    "sha256": "3b3c39f8e7f16e841904baed883904d38e789ae721faaabeb0816dcdc033be57"
   },
   "assets/class_skins_data.js": {
@@ -207,7 +207,7 @@
    "sha256": "c566b3e46104740690e136d9098b876d14bbaa4601226e6a0b00863dc2866c17"
   },
   "assets/wardrobe-ui.js": {
-   "v": 490,
+   "v": 493,
    "sha256": "41ed25f0c76907f09bedbfddb15a2758ac99c8cd08dc0e78478426c79ce3cd20"
   },
   "assets/shop.js": {
@@ -219,23 +219,23 @@
    "sha256": "f88498f9bd2f872edec44cb925ceccab4a32ce321db27238e57200cecb9204de"
   },
   "assets/digimon/roster.js": {
-   "v": 490,
+   "v": 493,
    "sha256": "07479d85f4f0a4796ab853718d5a215b47a4c54956559d141f0f8404d9ac1d16"
   },
   "assets/digimon/base-stats.js": {
-   "v": 490,
+   "v": 493,
    "sha256": "4c0edce7b7aeb3bd6063d5c5c19087a90398ca09f0e073bb0e7b5678de1ea68d"
   },
   "assets/social-rules.js": {
-   "v": 490,
+   "v": 493,
    "sha256": "f9fe5159e51a025451e797310b9a4d4a36ed99c29b31b40fd8f17babf146e4e7"
   },
   "assets/social-poker.js": {
-   "v": 490,
+   "v": 493,
    "sha256": "f101aec13226758b074267e8f83d064fb117fdf3f13683971a8f52116a00f356"
   },
   "assets/digimon-sanctuary.js": {
-   "v": 490,
+   "v": 493,
    "sha256": "3a9354df6c0340779117e45d931ef3fe7bc66af686ab1d3f70e13ce8e8ad2541"
   },
   "assets/digimon-battle.js": {
@@ -243,7 +243,7 @@
    "sha256": "005baee5aa04fa499a91dbbbc51b1fc6e6d4c7ae82834ab9f26948efc1835be5"
   },
   "assets/social-digimon.js": {
-   "v": 490,
+   "v": 493,
    "sha256": "698591c6be52d8567fbf6bbdf32fb355f7ab8acf0206f98d01e08575e80be4be"
   },
   "assets/social-gym-redesign.js": {
@@ -259,15 +259,15 @@
    "sha256": "0b512e0d0dbd88aacd32073a33b35132fdcc63571fc12fd874019f17c7c801a7"
   },
   "assets/social-scene.js": {
-   "v": 490,
+   "v": 493,
    "sha256": "441513c8f33321c74161f0b74c0e51a3a555963fd28e74b01300a3a09169d19d"
   },
   "assets/social-fishing.js": {
-   "v": 490,
+   "v": 493,
    "sha256": "8b52fa3d068a205b73e1d5692e199573fb158387a0188aee4d7808f981a3d3ff"
   },
   "assets/plaza-bots.js": {
-   "v": 490,
+   "v": 493,
    "sha256": "9bd891bbd32a6b4b4d86c7dbd654f57947b18601973a9a60d84dc1b9c3c4b7d2"
   },
   "assets/adventure-guide.js": {
@@ -275,8 +275,8 @@
    "sha256": "f2dc28e8c83dec541913d9a5d4131a5a1d6627bb0ebe747d8665325fc35207a3"
   },
   "assets/social.js": {
-   "v": 490,
-   "sha256": "9cb511a19343442f9a7e34fdcf1a0ee62565ae2b1425d0c65fbe1ecf26972d58"
+   "v": 493,
+   "sha256": "2d49252b472a10f20ba9b29ce8489befa1e3b857f66a34b2edee06e9d7faf290"
   }
  }
 }
