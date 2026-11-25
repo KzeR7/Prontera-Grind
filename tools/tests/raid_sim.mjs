@@ -262,7 +262,7 @@ check('SocialRoom enforces raid_ready before raid_start, relays raid_chat & raid
   const makeClient = (id, name, cls = 'Rune Knight') => {
     const inbox = [];
     const c = room.connect({ id, username: name }, raw => inbox.push(JSON.parse(raw)), () => {});
-    room.receive(c, JSON.stringify({ type: 'join', look: { cls, appearance: { version: 1, sex: 'm', headTop: 'crown' } } }));
+    room.receive(c, JSON.stringify({ type: 'join', look: { cls, appearance: { version: 1, sex: 'm', headTop: 'crown' }, lv: 150 } }));
     return { c, inbox };
   };
   const alice = makeClient(1, 'Alice', 'Rune Knight');
@@ -321,6 +321,27 @@ check('SocialRoom enforces raid_ready before raid_start, relays raid_chat & raid
   now += 2000;
   room.receive(alice.c, JSON.stringify({ type: 'raid_sync', raidId: activeRid, hp: 700, maxHp: 1000, dps: 4700000, dmgTaken: 150000, support: 20000, revives: 1, stage: 1, dead: false }));
   assert.equal(bob.inbox.filter(m => m.type === 'raid_sync').length, 2, 'sync passes after rate window');
+
+  // v482: optional x/z/ry relay (ally markers) — backwards-compatible & clamped
+  bob.inbox.length = 0; now += 2000;
+  room.receive(alice.c, JSON.stringify({ type: 'raid_sync', raidId: activeRid, hp: 690, maxHp: 1000, dps: 4701000, stage: 1, dead: false, x: 1234.5, z: -9999, ry: 4.2 }));
+  const posSync = bob.inbox.find(m => m.type === 'raid_sync');
+  assert.ok(posSync, 'sync with position relayed');
+  assert.equal(posSync.x, 512, 'x clamped to +512 on DO');
+  assert.equal(posSync.z, -512, 'z clamped to -512 on DO');
+  assert.ok(Math.abs(posSync.ry - (4.2 - Math.PI * 2)) < 1e-9, 'ry normalised into (-PI, PI]');
+  bob.inbox.length = 0; now += 2000;
+  room.receive(alice.c, JSON.stringify({ type: 'raid_sync', raidId: activeRid, hp: 685, maxHp: 1000, dps: 4702000, stage: 1, dead: false }));
+  const posless = bob.inbox.find(m => m.type === 'raid_sync');
+  assert.equal(posless.x, undefined, 'no x relayed when absent (backwards compatible)');
+  assert.equal(posless.z, undefined, 'no z relayed when absent');
+  assert.equal(posless.ry, undefined, 'no ry relayed when absent');
+  bob.inbox.length = 0; now += 2000;
+  room.receive(alice.c, JSON.stringify({ type: 'raid_sync', raidId: activeRid, hp: 680, maxHp: 1000, dps: 4703000, stage: 1, dead: false, x: NaN, z: 'junk', ry: Infinity }));
+  const junkPos = bob.inbox.find(m => m.type === 'raid_sync');
+  assert.equal(junkPos.x, undefined, 'non-finite x dropped');
+  assert.equal(junkPos.z, undefined, 'non-finite z dropped');
+  assert.equal(junkPos.ry, undefined, 'non-finite ry dropped');
 
   // raid_revive & raid_end
   room.receive(bob.c, JSON.stringify({ type: 'raid_revive', raidId: activeRid, reviveId: activeRid + ':2:1', target: 1 }));
@@ -1579,7 +1600,7 @@ check('Round-10: Title FX removes bottom ground ring, Raid timers are 20m/25m, B
   const mk = (id, name) => {
     const inbox = [];
     const c = room.connect({ id, username: name }, raw => inbox.push(JSON.parse(raw)), () => {});
-    room.receive(c, JSON.stringify({ type: 'join', look: { cls: 'Rune Knight', appearance: { version: 1, sex: 'm', headTop: 'crown' } } }));
+    room.receive(c, JSON.stringify({ type: 'join', look: { cls: 'Rune Knight', appearance: { version: 1, sex: 'm', headTop: 'crown' }, lv: 150 } }));
     return { c, inbox };
   };
   const pA = mk(101, 'Alice');

@@ -625,12 +625,17 @@ body.social-open #bgmPlayer{display:none!important}
 #socialPartyBtn.has-invite{box-shadow:0 0 0 2px #f3d68b}
 #socialPartyToast{position:absolute;z-index:80;left:50%;top:calc(var(--socialhub-top,64px) + 12px);transform:translateX(-50%);display:flex;align-items:center;gap:12px;padding:11px 16px;border:1.5px solid #d4b26a;border-radius:12px;background:#1b160ef5;color:#ffe9ad;box-shadow:0 10px 28px #000a;font:13px/1.4 "Trebuchet MS",sans-serif;max-width:min(460px,calc(100% - 24px));pointer-events:auto}
 #socialPartyToast[hidden]{display:none}#socialPartyToast span{display:flex;gap:6px}#socialPartyToast button{cursor:pointer;border-radius:6px;padding:6px 10px;border:1px solid #c5a76b;background:#2a2418;color:#ffe9ad;font:600 11px "Trebuchet MS",sans-serif}
-#socialPartyHud{position:absolute;z-index:46;left:12px;top:calc(var(--socialhub-top,64px) + 8px);width:168px;padding:8px 9px;border:1px solid #c5a76b88;border-radius:12px;background:#121c18e8;color:#eef3e8;font:11px/1.35 "Trebuchet MS",sans-serif;box-shadow:0 8px 20px #0007}
+/* v467: the party HUD docks to the bottom-left corner; the minimap/BGM stack owns the top-left,
+   so party names no longer sit on top of the map (the overlap the owner flagged). */
+#socialPartyHud{position:absolute;z-index:46;left:12px;top:auto;bottom:12px;width:168px;padding:8px 9px;border:1px solid #c5a76b88;border-radius:12px;background:#121c18e8;color:#eef3e8;font:11px/1.35 "Trebuchet MS",sans-serif;box-shadow:0 8px 20px #0007}
 #socialPartyHud[hidden]{display:none}.party-hud-head{display:flex;align-items:center;gap:6px;margin-bottom:6px;color:#f4dfaa}
 .party-hud-ring{width:18px;height:18px;border-radius:50%;border:2px solid #f3d68b;box-shadow:inset 0 0 0 3px #1b241f,0 0 8px #f3d68b88}
 #socialPartyHud ul{list-style:none;margin:0;padding:0}#socialPartyHud li{display:flex;align-items:center;gap:6px;padding:3px 0;color:#d8e2d0}
 #socialPartyHud li i{width:8px;height:8px;border-radius:50%;background:#7bb24f}#socialPartyHud li.is-leader i{background:#f3d68b}
 #socialPartyHud li em{margin-left:auto;color:#9fb8a8;font-style:normal;font-size:9.5px}
+.party-hud-leave{display:block;width:100%;margin-top:7px;padding:5px 8px;border:1px solid #c5a76b55;border-radius:7px;background:#1c2b23;color:#e7d6a4;font:600 10.5px/1 "Trebuchet MS",sans-serif;letter-spacing:.3px;cursor:pointer}
+.party-hud-leave:hover{background:#3a1f1c;border-color:#d98a7a66;color:#ffd9cf}
+.party-hud-leave:focus-visible{outline:2px solid #d8ba70;outline-offset:1px}
 
 
 /* v371: one movable panel for the gym and the middle field. Replaces the two single-purpose
@@ -879,6 +884,7 @@ body.social-open #socialChat{--chat-accent:var(--ad-accent);--chat-panel:#1c2027
  #socialMiniMap,html.pg-mobile #socialMiniMap{top:calc(var(--socialhub-top,92px) + 8px);bottom:auto;left:10px;right:auto;width:52px;height:52px;padding:4px;border-radius:8px}
  #socialMiniMap canvas,html.pg-mobile #socialMiniMap canvas{display:block;width:42px;height:42px;border-radius:5px}
  #socialBgmMount{top:calc(var(--socialhub-top,92px) + 68px);width:220px}
+ #socialPartyHud{top:calc(var(--socialhub-top,92px) + 110px);bottom:auto;left:10px}
  #socialFieldMonitor{left:10px;transform:none;bottom:10px;padding:8px 10px;gap:10px;max-width:calc(100% - 78px);flex-wrap:wrap;row-gap:4px}
  #socialFieldState{flex-basis:100%;font-size:8px}#socialFieldMonitor b{font-size:16px}#socialFieldMonitor small{font-size:7px}
  body.social-open #socialChat{bottom:82px;left:8px;max-width:calc(100% - 16px)}

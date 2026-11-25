@@ -540,7 +540,7 @@ w.S.lv=150;w.S.auraShow=true;w.moveSpd=()=>9.5;w.TABS={equip:['','Equipment']};
  const realRandom=w.Math.random.bind(w.Math),realGetValues=w.crypto?.getRandomValues?.bind(w.crypto);w.Math.random=()=>0;if(w.crypto?.getRandomValues)w.crypto.getRandomValues=arr=>{arr[0]=0;return arr};
  w.document.querySelector('[data-sanctuary-action=evolve]').click();w.Math.random=realRandom;if(realGetValues)w.crypto.getRandomValues=realGetValues;
  assert.equal(w.S.digimonSanctuary.partners.agumon.stage,1);assert.equal(scenePlayers.get(0).look.digimon,'greymon');assert.equal(w.S.pets[0].sp,2);w.document.getElementById('sanctuaryClose').click();
- w.sessionTick();w.S.auraShow=false;w.sessionTick();assert.equal(scenePlayers.get(0).look.lv,0,'the Display aura switch also hides it in the plaza');w.S.auraShow=true;w.sessionTick();
+ w.sessionTick();w.S.auraShow=false;w.sessionTick();assert.equal(scenePlayers.get(0).look.auraHidden,true,'the Display aura switch also hides the aura in the plaza');assert.equal(scenePlayers.get(0).look.lv,w.S.lv,'the aura switch never zeroes the level the room sees');w.S.auraShow=true;w.sessionTick();assert.equal(scenePlayers.get(0).look.auraHidden,undefined,'re-enabling the aura switch drops the hidden flag');
  // v355: plaza mini-map, big map dialog and music player mount.
  {
   const mini=w.document.getElementById('socialMiniMap'),modal=w.document.getElementById('socialMapModal'),mount=w.document.getElementById('socialBgmMount');

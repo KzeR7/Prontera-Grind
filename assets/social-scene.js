@@ -2634,7 +2634,8 @@ void main(){
  // is the same object and animation here. Textures are private to one player and freed on leave.
  function auraTier(lv){return typeof LEVEL_AURAS==='undefined'?null:LEVEL_AURAS.filter(a=>lv>=a.at).at(-1)||null}
  function syncAura(p){
-  const tier=auraTier(Math.max(0,Math.floor(Number(p.state.look?.lv)||0))),tierAt=tier?tier.at:0;
+  const auraHidden=p.state.look?.auraHidden===true;
+  const tier=auraHidden?null:auraTier(Math.max(0,Math.floor(Number(p.state.look?.lv)||0))),tierAt=tier?tier.at:0;
   if(p.auraTier!==tierAt){p.auraTier=tierAt;if(p.aura){scene.remove(p.aura);disposeAura(p.aura);p.aura=null}if(tier&&typeof buildLevelAura==='function'){p.aura=buildLevelAura(tier);scene.add(p.aura)}}
   const titleObj=p.state.look?.title?globalThis.PGTitles?.findByName?.(p.state.look.title,typeof INDEX_TITLES==='undefined'?[]:INDEX_TITLES):null;
   const elec=titleObj?.electricColor||'';
