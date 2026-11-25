@@ -119,6 +119,34 @@ for (const [k, name] of [['a', 'alice'], ['b', 'bob']]) {
   check('ghost: member world re-seated with stage-1 raidEids (no stage-0 ghosts lingering)', memberEids.length > 0 && memberEids.every(e => e >= 100));
   check('ghost: member rolled personal kills on the shared wipe', Number(b.ev(`S.kl`)) > 0);
 
+  // ---- Act C: pet damage routes through the same gate -----------------------------------
+  // Pets call hurt() for every hit (already gated since v489), but petLeech also feeds on the
+  // PRE-mitigation deal amount computed outside hurt() — a member pet was healing off ghosts
+  // it never actually hurt. Re-freeze the world and verify: ghost hp untouched, and the
+  // member's leech heal does NOT fire on ghost hits — while the host's world (authority)
+  // keeps the normal behaviour as a control.
+  freeze(a); freeze(b);
+  b.ev(`S.hp = Math.floor(maxHp() * 0.5)`);
+  a.ev(`S.hp = Math.floor(maxHp() * 0.5)`);
+  const SP = `Object.keys(PETS)[0]`;
+  b.ev(`S.pets.push({ id: 4242, sp: ${SP}, eq: [0, 0, 0], skills: ['piercingfang'], lvl: 90, xp: 0, mut: 0 })`);
+  a.ev(`S.pets.push({ id: 4243, sp: ${SP}, eq: [0, 0, 0], skills: ['piercingfang'], lvl: 90, xp: 0, mut: 0 })`);
+  b.ev(`petBuff.leech = 100; petBuff.leechT = t + 9999`);
+  a.ev(`petBuff.leech = 100; petBuff.leechT = t + 9999`);
+  const bHp0 = Number(b.ev(`S.hp`));
+  const aHp0 = Number(a.ev(`S.hp`));
+  const bGhostHp = Number(b.ev(`mobs.find(m => m.raidEid === 100).hp`));
+  const aGhostHp = Number(a.ev(`mobs.find(m => m.raidEid === 100).hp`));
+  b.ev(`petHit(S.pets[S.pets.length - 1], mobs.find(m => m.raidEid === 100))`);
+  a.ev(`petHit(S.pets[S.pets.length - 1], mobs.find(m => m.raidEid === 100))`);
+  const bHp1 = Number(b.ev(`S.hp`));
+  const aHp1 = Number(a.ev(`S.hp`));
+  const bGhostHp1 = Number(b.ev(`mobs.find(m => m.raidEid === 100).hp`));
+  const aGhostHp1 = Number(a.ev(`mobs.find(m => m.raidEid === 100).hp`));
+  check('pet: member pet hits resolve true on ghosts but drain ZERO ghost hp', bGhostHp1 === bGhostHp);
+  check('pet: member pet leech does NOT heal off ghost damage (no unearned sustain)', bHp1 === bHp0);
+  check('pet: host pet leech still heals in its own world (authority control)', aHp1 > aHp0 && aGhostHp1 < aGhostHp);
+
   const ok = results.every(r => r[1]);
   console.log(ok ? `\nALL CHECKS PASS (${results.length} checks)` : `\n${results.filter(r => !r[1]).length} FAILURES (${results.length} checks)`);
   process.exit(ok ? 0 : 1);
