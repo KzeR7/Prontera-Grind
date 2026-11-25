@@ -786,6 +786,23 @@
     }
   }
 
+  // v487: backstop for the pre-wipe same-stage snapshot, which can be dropped by the room's
+  // 250 ms forced-relay floor (concurrent forced syncs: peer-exit, death, promotion). Either
+  // sweep path destroys the same local copies and kill() filters the mob out, so the second
+  // call is a no-op — personal kill rolls happen exactly once.
+  function sweepStageGhosts() {
+    if (typeof mobs === 'undefined' || !Array.isArray(mobs)) return 0;
+    var n = 0;
+    for (var i = mobs.length - 1; i >= 0; i--) {
+      var m = mobs[i];
+      if (!m) continue;
+      m.hp = 0;
+      if (typeof kill === 'function') kill(m);
+      n++;
+    }
+    return n;
+  }
+
   // haven-v484: the host owns mob identity, HP and drift. Members pin their local copies to
   // the host's snapshot (never showing more HP than the host does), lerp them to the host's
   // position, and run their own personal kill() when the host's copy dies - drops/EXP stay
@@ -4581,6 +4598,10 @@
     }
 
     if (slot.stage > raid.stage && !raid.transition) {
+      // v487: the host only reaches the next stage by clearing this one, so anything the
+      // member still holds belongs to the world the host just wiped — it counts as personal
+      // kills. Backstops the pre-wipe sync (see sweepStageGhosts).
+      sweepStageGhosts();
       spawnRaidStage(slot.stage);
     }
     checkPartyWipe();
@@ -4683,6 +4704,10 @@
         }
       }
     }
+    // v487: last-chance personal kill rolls for the cleared stage — the host is done, anything
+    // the member still holds was wiped on the host's world. Backstops the pre-wipe sync (see
+    // sweepStageGhosts); a no-op when the pre-wipe sync already landed.
+    sweepStageGhosts();
     finish(Boolean(msg.cleared), msg.reason || (msg.cleared ? (activeDungeon().bossName + ' defeated!') : 'Raid ended by party.'), true);
   }
 
