@@ -12,7 +12,7 @@ function harness(){
    if(dead){failedWrites++;throw new Error("Can't call WebSocket send() after close()");}
    events.push(JSON.parse(raw));
   },()=>{dead=true});
-  room.receive(c,JSON.stringify({type:'join',look:{cls:'Novice',appearance:{version:1,sex:'m'},digimon:'agumon'}}));
+  room.receive(c,JSON.stringify({type:'join',look:{cls:'Rune Knight',appearance:{version:1,sex:'m'},digimon:'agumon',lv:150}}));
   return {c,events,die:()=>{dead=true},writes:()=>failedWrites};
  }
  return {room,saved,join};

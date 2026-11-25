@@ -214,6 +214,19 @@ for(const row of BLEACHER_ROWS)row.seats.forEach((seat,slot)=>{seat.id=bleacherI
 // snapshot with this fingerprint and the page compares it on arrival, so a mismatch announces
 // itself the moment the plaza opens instead of as mystery rubber-banding.
 const rulesFingerprint=()=>[CAPACITY,BENCHES.length,CHAIRS.length,BLEACHER_ROWS.length,FOUNTAIN_BENCHES.length,SEATS.filter(Boolean).length,walkable(0,7.7)?1:0,walkable(0,7.8)?1:0,SANCTUARY_GYM_SHELL.length].join('/');
+// haven-v481 (owner): joining a party requires Base Lv 120 & at least a 3rd-Job class - everywhere,
+// not only for the Party Raid. The class tree lives in the browser (index.html CLASSES, tiers computed
+// from the parent chain). The Social Durable Object cannot see it, so the tier>=3 roster is pinned
+// once here and shared by the plaza client and the room so both enforce the same rule. When the class
+// tables change (index.html CD/CDX/CD4/CD4X), refresh this list in the same commit - the update watch
+// fails otherwise only for bytes that change, so treat this set as part of the tree.
+const RAID_ELIGIBLE_CLASSES=Object.freeze(new Set(['Arch Bishop','Assassin Cross','Biochemist','Champion','Geneticist','Guillotine Cross','High Priest','High Wizard','Kagerou & Oboro','Lord Knight','Maestro & Wanderer','Mechanic','Minstrel & Gypsy','Paladin','Ranger','Rebellion','Royal Guard','Rune Knight','Scholar','Shadow Chaser','Sniper','Sorcerer','Stalker','Sura','Warlock','Whitesmith']));
+const RAID_MIN_BASE_LV=120;
+function partyEligible(cls,lv){
+ const level=Math.floor(Number(lv)||0);
+ if(level<RAID_MIN_BASE_LV)return false;
+ return RAID_ELIGIBLE_CLASSES.has(String(cls||''));
+}
 const FOUNTAIN_BENCHES=(()=>{const seats=[];for(let k=0;k<8;k++){
  const a=k*Math.PI/4,ca=Math.cos(a),sa=Math.sin(a),dir=[2,3,4,5,6,7,0,1][k],r=12.81*.62;
  for(let slot=0;slot<2;slot++){const off=slot?0.45:-0.45;
@@ -305,5 +318,5 @@ function advance(p,now){let distance=Math.max(0,(now-p.at)/1000)*walkSpeed(p);p.
 // One id can be six files: the dice is `dice.png` (face 1) plus dice2..dice6. Every renderer needs
 // the same rule, and both social.js and social-scene.js used to carry their own copy of it.
 const emotionURL=(id,face)=>'assets/social/emotions/'+(id==='dice'&&Number.isInteger(face)&&face>=2&&face<=6?id+face:id)+'.png';
-return {emotionURL,EMOTE_NAMES,EMOTE_BY_CMD,EMOTE_LAYOUT,LIMIT,MIN_X,MAX_X,MIN_Z,MAX_Z,SPEED,MIN_SPEED,MAX_SPEED,walkSpeed,CAPACITY,CHAT_DELAY,EMOTIONS,BUILDINGS,FOUNTAIN_BENCHES,fountainSpawn,rulesFingerprint,SANCTUARY,SANCTUARY_ARCHES,SANCTUARY_PLANTERS,SANCTUARY_TREES,SANCTUARY_OBSTACLES,SANCTUARY_BARRIERS,SANCTUARY_FENCES,SANCTUARY_GYM_FENCES,SANCTUARY_GYM_WALLS,SANCTUARY_RING,GYM_STATIONS,inGymArea,fenceBlocked,ringBlocked,cleanDigimon,GARDENS,TREES,PONDS,POND_FALLS,POND_PROPS,SHORE_ROCKS,CHAIRS,BENCHES,BLEACHER_ROWS,SEATS,POKER,pondRadius,pondContains,pondBoundary,pondDistance,clampPond,cragBlocked,onBridge,walkable,path,advance};
+return {emotionURL,EMOTE_NAMES,EMOTE_BY_CMD,EMOTE_LAYOUT,LIMIT,MIN_X,MAX_X,MIN_Z,MAX_Z,SPEED,MIN_SPEED,MAX_SPEED,walkSpeed,CAPACITY,CHAT_DELAY,EMOTIONS,BUILDINGS,FOUNTAIN_BENCHES,fountainSpawn,rulesFingerprint,RAID_ELIGIBLE_CLASSES,RAID_MIN_BASE_LV,partyEligible,SANCTUARY,SANCTUARY_ARCHES,SANCTUARY_PLANTERS,SANCTUARY_TREES,SANCTUARY_OBSTACLES,SANCTUARY_BARRIERS,SANCTUARY_FENCES,SANCTUARY_GYM_FENCES,SANCTUARY_GYM_WALLS,SANCTUARY_RING,GYM_STATIONS,inGymArea,fenceBlocked,ringBlocked,cleanDigimon,GARDENS,TREES,PONDS,POND_FALLS,POND_PROPS,SHORE_ROCKS,CHAIRS,BENCHES,BLEACHER_ROWS,SEATS,POKER,pondRadius,pondContains,pondBoundary,pondDistance,clampPond,cragBlocked,onBridge,walkable,path,advance};
 });

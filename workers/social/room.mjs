@@ -377,7 +377,51 @@ export class SocialRoom {
  // v225: lv drives the level aura and speed is the character's field run speed. Both are
  // presentation hints: lv is clamped to a display tier input, speed to the shared walk band, so a
  // client cannot make itself faster than the fastest legal character in the plaza.
- cleanLook(look){if(!look||typeof look.cls!=='string'||look.cls.length>40||!look.appearance||JSON.stringify(look).length>1200)return null;return {cls:look.cls,appearance:look.appearance,refine:Math.max(0,Math.min(15,Number(look.refine)||0)),title:typeof look.title==='string'?look.title.replace(/[\u0000-\u001f\u007f]/g,'').slice(0,64):'',fishTitle:typeof look.fishTitle==='string'?look.fishTitle.replace(/[\u0000-\u001f\u007f]/g,'').slice(0,64):'',fishTitleColor:typeof look.fishTitleColor==='string'&&/^#[0-9a-f]{6}$/i.test(look.fishTitleColor)?look.fishTitleColor:'',digiTitle:typeof look.digiTitle==='string'?look.digiTitle.replace(/[\u0000-\u001f\u007f]/g,'').slice(0,64):'',digiTitleColor:typeof look.digiTitleColor==='string'&&/^#[0-9a-f]{6}$/i.test(look.digiTitleColor)?look.digiTitleColor:'',lv:Math.max(0,Math.min(999,Math.floor(Number(look.lv)||0))),speed:Math.max(R.MIN_SPEED,Math.min(R.MAX_SPEED,Number(look.speed)||R.SPEED)),...(R.cleanDigimon(look.digimon)?{digimon:R.cleanDigimon(look.digimon)}:{})};}
+ cleanLook(look){if(!look||typeof look.cls!=='string'||look.cls.length>40||!look.appearance||JSON.stringify(look).length>1200)return null;return {cls:look.cls,appearance:look.appearance,refine:Math.max(0,Math.min(15,Number(look.refine)||0)),title:typeof look.title==='string'?look.title.replace(/[\u0000-\u001f\u007f]/g,'').slice(0,64):'',fishTitle:typeof look.fishTitle==='string'?look.fishTitle.replace(/[\u0000-\u001f\u007f]/g,'').slice(0,64):'',fishTitleColor:typeof look.fishTitleColor==='string'&&/^#[0-9a-f]{6}$/i.test(look.fishTitleColor)?look.fishTitleColor:'',digiTitle:typeof look.digiTitle==='string'?look.digiTitle.replace(/[\u0000-\u001f\u007f]/g,'').slice(0,64):'',digiTitleColor:typeof look.digiTitleColor==='string'&&/^#[0-9a-f]{6}$/i.test(look.digiTitleColor)?look.digiTitleColor:'',lv:Math.max(0,Math.min(999,Math.floor(Number(look.lv)||0))),...(look.auraHidden===true?{auraHidden:true}:{}),speed:Math.max(R.MIN_SPEED,Math.min(R.MAX_SPEED,Number(look.speed)||R.SPEED)),...(R.cleanDigimon(look.digimon)?{digimon:R.cleanDigimon(look.digimon)}:{})};}
+ // v483 host-authority raid sync: the party leader's client is authoritative for boss casts,
+ // so relay a bounded, whitelisted copy of its telegraph, plus two tiny HUD hints (boss bar
+ // fraction and remaining mob count). Everything else is dropped; the client-side clamp keeps
+ // the payload small. Older rooms simply never send these fields and older clients ignore them.
+ cleanTelegraph(t){
+  if(!t||typeof t!=='object')return undefined;
+  const out={};
+  const str=(v,max)=>typeof v==='string'?v.replace(/[\u0000-\u001f\u007f]/g,'').slice(0,max):undefined;
+  for(const k of ['name','hint','shape','fx']){const v=str(t[k],k==='hint'?140:32);if(v)out[k]=v;}
+  for(const k of ['volcanic','volcanicSpires','meteors','leavesPool','growFromCaster','mustHideBehindPillar','bypassShield']){if(t[k]===true)out[k]=true;}
+  for(const k of ['x','z','ang','r','width','len','age','life','dmgPct','gapX','gapHalfW','depth','rotSpeed','innerR','outerR','innerSafeR','outerSafeR','halfArc','pullSpeed','seq','casterX','casterZ']){
+   const v=Number(t[k]);if(Number.isFinite(v))out[k]=Math.max(-1e6,Math.min(1e6,v));
+  }
+  const cleanArr=(a,keys,maxN,maxItem)=>{
+   if(!Array.isArray(a))return undefined;
+   const arr=a.slice(0,maxN).map(item=>{
+    if(!item||typeof item!=='object')return null;
+    const o={};let ok=false;
+    for(const k of keys){const v=Number(item[k]);if(Number.isFinite(v)){o[k]=Math.max(-1e4,Math.min(1e4,v));ok=true;}}
+    return ok?o:null;
+   }).filter(Boolean);
+   return arr.length?arr:undefined;
+  };
+  const zones=cleanArr(t.zones,['x','z','r'],6);if(zones)out.zones=zones;
+  const beams=cleanArr(t.beams,['x','z','ang','width','len'],8);if(beams)out.beams=beams;
+  const pillars=cleanArr(t.pillars,['x','z','r'],12);if(pillars)out.pillars=pillars;
+  const pt=p=>{if(!p||typeof p!=='object')return undefined;const x=Number(p.x),z=Number(p.z);return Number.isFinite(x)&&Number.isFinite(z)?{x:Math.max(-1e4,Math.min(1e4,x)),z:Math.max(-1e4,Math.min(1e4,z))}:undefined;};
+  const lobFrom=pt(t.lobFrom);if(lobFrom)out.lobFrom=lobFrom;
+  const poolSpot=pt(t.poolSpot);if(poolSpot)out.poolSpot=poolSpot;
+  try{const s=JSON.stringify(out);return s.length<=1500?out:undefined;}catch{return undefined;}
+ }
+ // v484: host-authoritative mob snapshot - [eid, hp, x, z] tuples, bounded hard.
+ cleanMobSnap(list){
+  if(!Array.isArray(list))return undefined;
+  const out=[];
+  for(const e of list.slice(0,28)){
+   if(!Array.isArray(e)||e.length<4)continue;
+   const eid=Number(e[0]),hp=Number(e[1]),x=Number(e[2]),z=Number(e[3]);
+   if(!Number.isFinite(eid)||!Number.isFinite(hp)||!Number.isFinite(x)||!Number.isFinite(z))continue;
+   out.push([Math.max(0,Math.floor(eid)),Math.max(0,Math.min(1e12,Math.floor(hp))),Math.max(-512,Math.min(512,Math.round(x*10)/10)),Math.max(-512,Math.min(512,Math.round(z*10)/10))]);
+   if(out.length>=28)break;
+  }
+  try{const s=JSON.stringify(out);return s.length<=1400?out:undefined;}catch{return undefined;}
+ }
  // Gym reservations are per room and per apparatus, with at most one per owner.
  // They are presentation only, not trusted progression or competitive stats.
  gymSnapshot(room){return [...this.clients.values()].filter(p=>p.gym&&p.gym.room===room).map(p=>({owner:p.id,...p.gym}))}
@@ -655,6 +699,15 @@ export class SocialRoom {
   if(room)this.broadcast({type:'party_roster',parties:[...this.parties.values()].filter(p=>p.members.some(m=>this.clients.get(m.id)?.room===room)).map(p=>({id:p.id,members:p.members.map(m=>m.id)}))},c=>c.room===room);
  }
  partyError(c,request,message){this.send(c,{type:'party_error',request,message})}
+ // haven-v481 (owner): parties are gated everywhere - an ineligible trainer must not be able to join
+ // one, even if their client is patched to click Accept. The Social room has no access to saves, so
+ // the check reads the same look snapshot the plaza already carries (cls/lv, clamped at cleanLook).
+ // A determined forger can still lie upward in look - the requirement is enforced, not attested.
+ partyEligibleFor(c){
+  if(c.gm)return true;
+  const look=c.look;
+  return !!look&&R.partyEligible(look.cls,look.lv);
+ }
  partyInvite(c,m,now){
   const request=Number.isSafeInteger(m.request)&&m.request>0?m.request:null;
   if(!c.room)return this.partyError(c,request,'Join a plaza before forming a party.');
@@ -684,6 +737,12 @@ export class SocialRoom {
   if(party.raid||this.partyOf(c)?.raid)return this.partyError(c,request,'Finish the current Party Raid first.');
   if(party.members.length>=3)return this.partyError(c,request,'The party filled up while you decided.');
   if(c.pve||c.pvp)return this.partyError(c,request,'Finish the current DigiPet activity first.');
+  if(!this.partyEligibleFor(c)){
+   const partyName=c.name;
+   const from=this.clients.get(invite.fromId);
+   if(from)this.send(from,{type:'party_notice',message:partyName+' does not meet the party requirement (Base Lv 120 & at least a 3rd-Job class).'});
+   return this.partyError(c,request,'Parties require Base Lv 120 & at least a 3rd-Job class.');
+  }
   party.members.push({id:c.id,name:c.name});
   party.raidReady=new Set();
   this.partySync(party);
@@ -719,9 +778,9 @@ export class SocialRoom {
   return {
    id:mem.id,
    name:mem.name,
-   cls:(meta&&meta.cls)||(look&&look.cls)||'Adventurer',
-   lv:(meta&&meta.lv)||150,
-   sex:(meta&&meta.sex)||(look&&look.appearance&&look.appearance.sex)==='f'?'f':'m',
+   cls:(look&&look.cls)||(meta&&meta.cls)||'Adventurer',
+   lv:(look&&Number.isFinite(look.lv)&&look.lv>0?look.lv:null)||(meta&&meta.lv)||150,
+   sex:((meta&&meta.sex)||(look&&look.appearance&&look.appearance.sex))==='f'?'f':'m',
    appearance:(look&&look.appearance)||null,
    ready:mem.id===party.leader?true:Boolean(party.raidReady&&party.raidReady.has(mem.id))
   };
@@ -771,6 +830,8 @@ export class SocialRoom {
   const members=party.members.map(mem=>this.clients.get(mem.id));
   if(members.some(mem=>!mem))return this.send(c,{type:'raid_error',message:'Every party member must be online.'});
   if(members.some(mem=>mem.pve||mem.pvp))return this.send(c,{type:'raid_error',message:'Finish the current DigiPet activity before entering Raid.'});
+  const ineligible=party.members.find(mem=>{const peer=this.clients.get(mem.id);return !peer||!this.partyEligibleFor(peer)});
+  if(ineligible)return this.send(c,{type:'raid_error',message:ineligible.name+' does not meet the Party Raid requirement (Base Lv 120 & at least a 3rd-Job class).'});
   const unready=party.members.find(mem=>mem.id!==party.leader&&!(party.raidReady&&party.raidReady.has(mem.id)));
   if(unready)return this.send(c,{type:'raid_error',message:'Waiting for '+unready.name+' to press Ready.'});
   if(typeof m.dungeonId==='string')party.raidDungeon=m.dungeonId==='thor'?'thor':'astral';
@@ -806,6 +867,19 @@ export class SocialRoom {
    stage:Math.max(0,Math.min(3,Math.floor(Number(m.stage)||0))),
    dead:!!m.dead
   };
+  // haven-v482 (owner): teammates render each other in the raid now, so the sync carries the
+  // hero's local position and facing. Optional and backwards-compatible: older clients never
+  // send them, older rooms never relay them, and receivers with no positions draw no teammate.
+  if(Number.isFinite(m.x))payload.x=Math.max(-512,Math.min(512,m.x));
+  if(Number.isFinite(m.z))payload.z=Math.max(-512,Math.min(512,m.z));
+  if(Number.isFinite(m.ry))payload.ry=((m.ry%(Math.PI*2))+Math.PI*3)%(Math.PI*2)-Math.PI;
+  // haven-v483 (owner): one-world party raid - the host's boss/mob state rides the same sync.
+  if(Number.isFinite(Number(m.bossFrac)))payload.bossFrac=Math.max(0,Math.min(1,Number(m.bossFrac)));
+  if(Number.isFinite(Number(m.mobsLeft)))payload.mobsLeft=Math.max(0,Math.min(99,Math.floor(Number(m.mobsLeft))));
+  const tele=this.cleanTelegraph(m.tele);if(tele)payload.tele=tele;
+  if(Array.isArray(m.snap)){const snap=this.cleanMobSnap(m.snap);if(snap)payload.snap=snap;}
+  // v485: world-host claim — a member may carry the raid world when the leader drops/goes silent.
+  if(m.worldHost===true)payload.worldHost=true;
   for(const mem of party.members){if(mem.id===c.id||!party.raid.active.has(mem.id))continue;const peer=this.clients.get(mem.id);if(peer)this.send(peer,payload)}
  }
  raidRevive(c,m,now){
