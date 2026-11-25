@@ -4382,6 +4382,15 @@
     var dng = activeDungeon();
     var stages = dng.stages;
     var nextIdx = raid.stage + 1;
+    if (raid.mode === 'party') {
+      // v487: members earn their personal kill rolls on a shared clear only when they see the
+      // wipe. The next snapshot would carry the NEW stage and fail the stage-equality gate, so
+      // the wipe would vanish from the member's world with no loot/EXP/quest for anyone but the
+      // host. A forced, same-stage, empty-snap sync sweeps the member's copies as personal
+      // kills before the world re-seats (or the raid ends). Ordered ahead of the raid_end
+      // broadcast so the sweep still applies while the member's raid is on.
+      try { sendSync(true); } catch (e) { /* never block the advance on a relay failure */ }
+    }
     if (nextIdx >= stages.length) {
       finish(true, dng.bossName + ' defeated!', false);
       return;

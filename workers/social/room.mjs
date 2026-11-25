@@ -417,7 +417,7 @@ export class SocialRoom {
    if(!Array.isArray(e)||e.length<4)continue;
    const eid=Number(e[0]),hp=Number(e[1]),x=Number(e[2]),z=Number(e[3]);
    if(!Number.isFinite(eid)||!Number.isFinite(hp)||!Number.isFinite(x)||!Number.isFinite(z))continue;
-   out.push([Math.max(0,Math.floor(eid)),Math.max(0,Math.min(1e9,Math.floor(hp))),Math.max(-512,Math.min(512,Math.round(x*10)/10)),Math.max(-512,Math.min(512,Math.round(z*10)/10))]);
+   out.push([Math.max(0,Math.floor(eid)),Math.max(0,Math.min(1e12,Math.floor(hp))),Math.max(-512,Math.min(512,Math.round(x*10)/10)),Math.max(-512,Math.min(512,Math.round(z*10)/10))]);
    if(out.length>=28)break;
   }
   try{const s=JSON.stringify(out);return s.length<=1400?out:undefined;}catch{return undefined;}
