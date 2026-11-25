@@ -134,6 +134,23 @@ const mobEids = g => g.ev(`JSON.stringify((mobs||[]).map(m=>m.raidEid))`);
     H.players.a.g.window.close(); H.players.b.g.window.close(); H.players.c.g.window.close();
   }
 
+  // ===== Suite E — the promoted host drops too: the room flags the slot, the next member promotes fast =====
+  {
+    const H = bootTrio('E');
+    await formPartyRaid(H);
+    H.room.disconnect(H.clients.a); now += 300;             // leader drops
+    advance(H, ['b', 'c'], 1.0); now += 1600;
+    check('E: bob promoted on the leader peer-exit', H.players.b.g.ev(`!!PGRaid.raid.promotedHost`) === true);
+    // Prove bob's world voice is what's keeping carol alive: bob syncs once more, then bob drops.
+    H.players.b.g.ev(`PGRaid.raid.syncTimer = 0; PGRaid.tick(0.05)`); now += 400;
+    H.room.disconnect(H.clients.b); now += 300;             // elected host drops as well
+    advance(H, ['c'], 1.0); now += 1600;
+    check('E: carol promotes within ~a second of the elected host\'s peer-exit (no 8s wait)', H.players.c.g.ev(`!!PGRaid.raid.promotedHost`) === true);
+    check('E: carol adopts the peer-exited host flag on her slot',
+      H.players.c.g.ev(`(PGRaid.raid.party.find(p=>String(p.id)==='${H.ids.b}')||{}).disconnected`) === true);
+    H.players.a.g.window.close(); H.players.b.g.window.close(); H.players.c.g.window.close();
+  }
+
   const failed = results.filter(r => !r[1]);
   console.log(failed.length ? `\n${failed.length} FAILURES (${results.length} checks)` : `\nALL CHECKS PASS (${results.length} checks)`);
   process.exit(failed.length ? 1 : 0);

@@ -685,7 +685,14 @@
     var hs = hostSlotView();
     // v485: someone ELSE (not the entry leader) is feeding us a fresh world — never double-promote.
     var foreignFresh = raid._worldVoiceId != null && String(raid._worldVoiceId) !== String(raid.hostId) && eps <= 6.0;
-    var hostGone = stale || (Boolean(hs && hs.disconnected) && !foreignFresh);
+    // ...and if THAT member just dropped out (room-flagged), pick the next one immediately.
+    var wvSlot = null;
+    if (raid._worldVoiceId != null && String(raid._worldVoiceId) !== String(raid.hostId)) {
+      for (var wi = 0; wi < raid.party.length; wi++) {
+        if (String(raid.party[wi].id) === String(raid._worldVoiceId)) { wvSlot = raid.party[wi]; break; }
+      }
+    }
+    var hostGone = stale || (Boolean(hs && hs.disconnected) && !foreignFresh) || Boolean(wvSlot && wvSlot.disconnected);
     if (!hostGone) return;
     var my = String(myId());
     var candidates = [];
@@ -785,10 +792,15 @@
   // personal, the shared-world view stays coherent. If the host goes silent, members revert
   // to their local simulation via hostVoiceAlive().
   function applyHostSnapshot(snap, hostStage) {
+    // hostStage: the sending world-host's stage. Null/absent (older clients) = trust the eid-space as-is.
     if (!Array.isArray(snap)) return;
     if (typeof mobs === 'undefined' || !Array.isArray(mobs)) return;
     if (raid.transition) return; // stage churn in flight; next sync lands after the re-seat
-    var localStage = raid.stage;
+    // v486: a snapshot from a different stage is not my world (raidEids are stage-scoped).
+    // Without this gate, the host's stage-N+1 snap (containing no stage-N eids) would
+    // force-kill EVERY local mob as "absent from the host snap" — phantom loot/EXP for a
+    // whole stage on every transition, or on a member rejoining at a different stage.
+    if (hostStage != null && Number(hostStage) !== raid.stage) return;
     var byEid = {};
     var i, m;
     for (i = 0; i < mobs.length; i++) {
@@ -813,7 +825,7 @@
     for (i = mobs.length - 1; i >= 0; i--) {
       m = mobs[i];
       if (!m || m.raidEid == null || m.hp <= 0) continue;
-      if (seen[m.raidEid] || raid.stage !== localStage) continue;
+      if (seen[m.raidEid]) continue;
       if (typeof kill === 'function') { m.hp = 0; kill(m); }
     }
   }
@@ -4470,8 +4482,14 @@
     tickPartyAssist(step);
 
     if (typeof mobs !== 'undefined' && Array.isArray(mobs) && mobs.length === 0) {
-      beginStageAdvance();
-      if (!raid.on) return;
+      // v486: only the world authority advances stages. A member whose local copies all fell
+      // early must wait for the host's stage sync (the raid_sync ratchet re-seats it) instead
+      // of re-seating/finishing the run from a divergent world — which could broadcast a
+      // bogus 'cleared' to the party.
+      if (raid.mode !== 'party' || isRaidHost()) {
+        beginStageAdvance();
+        if (!raid.on) return;
+      }
     }
 
     raid.syncTimer -= step;
