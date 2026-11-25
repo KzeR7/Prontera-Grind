@@ -916,15 +916,15 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <link rel="preload" href="assets/ui/fonts/font-5.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-6.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-7.ttf" as="font" type="font/ttf" crossorigin>
-<link rel="stylesheet" href="assets/ui/eclipse.css?v=488">
-<link rel="stylesheet" href="assets/ui/mobile.css?v=488">
-<link rel="stylesheet" href="assets/ui/mastery-titles.css?v=488">
+<link rel="stylesheet" href="assets/ui/eclipse.css?v=489">
+<link rel="stylesheet" href="assets/ui/mobile.css?v=489">
+<link rel="stylesheet" href="assets/ui/mastery-titles.css?v=489">
 <script src="assets/ui/mobile.js?v=274"></script>
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
-<link rel="stylesheet" href="assets/social.css?v=488">
-<link rel="stylesheet" href="assets/raid.css?v=488">
+<link rel="stylesheet" href="assets/social.css?v=489">
+<link rel="stylesheet" href="assets/raid.css?v=489">
 <link rel="stylesheet" href="assets/social-battle.css?v=393">
-  <link rel="stylesheet" href="assets/social-fishing.css?v=488"><link rel="stylesheet" href="assets/friends.css?v=273">
+  <link rel="stylesheet" href="assets/social-fishing.css?v=489"><link rel="stylesheet" href="assets/friends.css?v=273">
 <link rel="stylesheet" href="assets/adventure-guide.css?v=450">
 </head>
 <body>
@@ -1055,10 +1055,10 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <div id="tooltip"></div>
 <link rel="stylesheet" href="assets/wardrobe.css?v=138">
 <link rel="stylesheet" href="assets/shop.css?v=318">
-<script src="assets/wardrobe.js?v=488"></script>
+<script src="assets/wardrobe.js?v=489"></script>
 <script src="assets/shop-catalog.js?v=321"></script>
 <script src="assets/fourth-jobs.js?v=179"></script>
-<script src="assets/expanded-jobs.js?v=488"></script>
+<script src="assets/expanded-jobs.js?v=489"></script>
 <script src="assets/ascension.js?v=156"></script>
 <script src="assets/native-mob-heights.js?v=153"></script>
 <script src="assets/native-fields.js?v=197"></script>
@@ -1066,13 +1066,13 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <script src="assets/skill-icons.js?v=130"></script>
 <script src="assets/skill-icons-extra.js?v=207"></script>
 <script src="assets/skill-icons-expanded.js?v=450"></script>
-<script src="assets/mastery-titles.js?v=488"></script>
+<script src="assets/mastery-titles.js?v=489"></script>
 <script src="assets/player-buffs.js?v=450"></script>
 <script src="assets/skill-materials.js?v=220"></script>
 <script src="assets/afterglow-animations.js?v=151"></script>
 <script src="assets/skill-overdrive.js?v=220"></script>
 <script src="assets/ro-fx/index.js?v=414"></script>
-<script src="assets/signature-fx.js?v=488"></script>
+<script src="assets/signature-fx.js?v=489"></script>
 <script src="assets/spirit-spheres.js?v=450"></script>
 <script src="assets/expanded-fx/ninja-throw-fx.js?v=450"></script>
 <script src="assets/expanded-fx/expanded-fx-batch.js?v=450"></script>
@@ -1082,13 +1082,13 @@ body.job-rite #eclipseCombat,body.job-rite #eclipseMapCard{display:none!importan
 <script src="assets/expanded-fx/review-polish-fx.js?v=450"></script>
 <script src="assets/expanded-fx/triple-old-no-sword.js?v=450"></script>
 <script src="assets/expanded-fx/approved.js?v=450"></script>
-<script src="assets/skill-afterglow.js?v=488"></script>
+<script src="assets/skill-afterglow.js?v=489"></script>
 <script src="assets/boss-fx.js?v=249"></script>
-<script src="assets/raid.js?v=488"></script>
+<script src="assets/raid.js?v=489"></script>
 <script src="assets/pets.js?v=130"></script>
 <script src="assets/bgm-tracks.js?v=206"></script>
 <script src="assets/bgm.js?v=207"></script>
-<script src="assets/combat-audio.js?v=488"></script>
+<script src="assets/combat-audio.js?v=489"></script>
 <script src="assets/class_skins_data.js?v=2"></script>
 <script src="assets/weapon_joints_data.js?v=2"></script>
 <script src="assets/weapons_data.js?v=2"></script>
@@ -1359,7 +1359,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp||(typeof simOccluded!=='undefined'&&simOccluded);
-const BUILD='2026-11-24 haven-v488 One-world party raid: kill-roll backstops';
+const BUILD='2026-11-24 haven-v489 One-world party raid: member ghost gate';
 // v364: this write used to sit AFTER the `//` on the BUILD line, so it was part of the comment and
 // never ran - the login card showed an empty #buildTag and there was no way to confirm which file
 // the browser had loaded. It also has to survive the script running before the login card exists.
@@ -7460,16 +7460,21 @@ function heroKite(dt,target,reach){
   }
   return best;
 }
+// v489: in a party (one-world) raid the host's world is the truth. Members never drain their
+// ghost copies locally: damage numbers still print and party DPS accrues via S.dmg (the host
+// converts it into the shared boss/mob drain), but mob hp is pinned by the host's snapshot and
+// personal kill rolls arrive only via the snapshot sweep — never via a local hp<=0.
+const partyRaidMemberActive=()=>{try{return typeof PGRaid!=='undefined'&&PGRaid.raid&&PGRaid.raid.on&&PGRaid.raid.mode==='party'&&!PGRaid.isRaidHost()}catch(e){return false}};
 function shot(col){if(!mob)return;const magic=INT_CLASSES.includes(S.cls),heldType=heroWeaponType(C().n,C().wt,S.eq.weapon&&S.eq.weapon.wt),arrow=(typeof rangedWeapon==='function'?rangedWeapon(heldType):heldType==='bow');if(!magic&&!arrow)return;
   shots.push({x0:pl.x,z0:pl.z,x1:mob.x,z1:mob.z,t:0,col:col||(magic?'#d9b9ff':'#fff'),arrow:!magic&&arrow})}
-function hurt(o,d,col,c,skill=false,soundWeapon=S.eq.weapon?.wt,soundKind=skill?'skill':'normal'){if(soundKind!=='pet')d=playerDamage(d);if(typeof applyStarAndBossArmor==='function')d=applyStarAndBossArmor(o,d);if(d>0&&typeof CombatAudio!=='undefined')CombatAudio.hit(c,S.sfx!==false,soundWeapon,soundKind);S.dmg=(S.dmg||0)+d;o.hp-=d;o.flash=1;o.hitAnim=1;showDamage(o,o.x,mobDamageY(o,c),o.z,d,c,skill);try{provokeNearby(o);}catch(e){}if(o.hp<=0)kill(o)}
+function hurt(o,d,col,c,skill=false,soundWeapon=S.eq.weapon?.wt,soundKind=skill?'skill':'normal'){if(soundKind!=='pet')d=playerDamage(d);if(typeof applyStarAndBossArmor==='function')d=applyStarAndBossArmor(o,d);if(d>0&&typeof CombatAudio!=='undefined')CombatAudio.hit(c,S.sfx!==false,soundWeapon,soundKind);S.dmg=(S.dmg||0)+d;if(typeof partyRaidMemberActive==='function'&&partyRaidMemberActive()&&o&&o.raidEid!=null){o.flash=1;o.hitAnim=1;showDamage(o,o.x,mobDamageY(o,c),o.z,d,c,skill);try{provokeNearby(o);}catch(e){}return}o.hp-=d;o.flash=1;o.hitAnim=1;showDamage(o,o.x,mobDamageY(o,c),o.z,d,c,skill);try{provokeNearby(o);}catch(e){}if(o.hp<=0)kill(o)}
 function strike(mult,col,magic=false,skill=false){
   if(!mob)return;if(Math.random()*100<missCh()){addFloat(mob.x,1.8,mob.z,'MISS','#dfe5ed',false,'miss');return}
   // v73: the crit roll answers to the target - a boss carries its map's crit resistance
   // (BOSS_CRIT_RES) and every other monster resists nothing.
   const c=Math.random()*100<Math.max(0,crit()*(1-(mob.critRes||0))),base=magic?matk():atk(),rawD=Math.max(1,Math.round(base*mult*rnd(Math.min(.95,.7+st('dex')*.004),1.15)*(c?critD():1)*(mob.boss?1+petPassive('boss')/100:1)*fieldDamage(mob)*ascDamage(mob)*(1+skillBonus('ascBlade')/100)*(1+(!magic?skillBonus('ascRanged'):0)/100))),d=typeof applyStarAndBossArmor==='function'?applyStarAndBossArmor(mob,playerDamage(rawD)):playerDamage(rawD);
   if(typeof CombatAudio!=='undefined')CombatAudio.hit(c,S.sfx!==false,S.eq.weapon?.wt,skill?'skill':'normal');
-  S.dmg=(S.dmg||0)+d;mob.hp-=d;mob.flash=1;mob.hitAnim=1;shake=c?6:2;applyLeech(Math.min(d,Math.max(0,mob.hp+d)),cardMasteryStat('leech')*.5);showDamage(mob,mob.x,mobDamageY(mob,c),mob.z,d,c,skill);try{provokeNearby(mob);}catch(e){}
+  S.dmg=(S.dmg||0)+d;if(typeof partyRaidMemberActive==='function'&&partyRaidMemberActive()&&mob.raidEid!=null){mob.flash=1;mob.hitAnim=1;showDamage(mob,mob.x,mobDamageY(mob,c),mob.z,d,c,skill);try{provokeNearby(mob);}catch(e){}return}mob.hp-=d;mob.flash=1;mob.hitAnim=1;shake=c?6:2;applyLeech(Math.min(d,Math.max(0,mob.hp+d)),cardMasteryStat('leech')*.5);showDamage(mob,mob.x,mobDamageY(mob,c),mob.z,d,c,skill);try{provokeNearby(mob);}catch(e){}
 }
 // Legacy coefficient helpers retained for damage simulations; combo casts use full power.
 const SKSLOTS=t=>1+(t||0),SKFADE=[1,.55,.3,.18];
@@ -12620,7 +12625,7 @@ function update(dt){
   if(mobs.length)for(const m of mobs.slice()){
     m.stun=Math.max(0,(m.stun||0)-dt);m.stunResist=Math.max(0,(m.stunResist||0)-dt);
     const ds=m.dots;if(ds&&ds.length)for(let i=ds.length-1;i>=0;i--){const d=ds[i];d.dur-=dt;d.t+=dt;
-      if(d.t>=.5){d.t-=.5;if(m.hp>0){const rawDv=playerDamage(Math.max(1,Math.round(d.dps*.5))),dv=typeof applyStarAndBossArmor==='function'?applyStarAndBossArmor(m,rawDv):rawDv;S.dmg=(S.dmg||0)+dv;m.hp-=dv;m.flash=1;m.hitAnim=1;dotTick(m,dv,d.col,!!d.skill);if(m.hp<=0){kill(m);continue}}}
+      if(d.t>=.5){d.t-=.5;if(m.hp>0){const rawDv=playerDamage(Math.max(1,Math.round(d.dps*.5))),dv=typeof applyStarAndBossArmor==='function'?applyStarAndBossArmor(m,rawDv):rawDv;S.dmg=(S.dmg||0)+dv;if(typeof partyRaidMemberActive==='function'&&partyRaidMemberActive()&&m.raidEid!=null){m.flash=1;m.hitAnim=1;dotTick(m,dv,d.col,!!d.skill)}else{m.hp-=dv;m.flash=1;m.hitAnim=1;dotTick(m,dv,d.col,!!d.skill);if(m.hp<=0){kill(m);continue}}}}
       if(d.dur<=0)ds.splice(i,1)}}
   let tx=0,tz=Z1-1.5,reach=1.4;
   // v83: an empty field is only rebuilt when there are no camps to rebuild it (a fresh map, the boss
@@ -17377,22 +17382,22 @@ setInterval(updateWatch,60000);
 // be hours old while the player was on another tab, and the check is a 60-byte text file.
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&(pendingUpdateBuild||Date.now()-PAGE_STARTED_AT>30000))updateWatch()});
 </script>
-<script src="assets/wardrobe-ui.js?v=488"></script>
+<script src="assets/wardrobe-ui.js?v=489"></script>
 <script src="assets/shop.js?v=321"></script>
 <script src="assets/friends.js?v=273"></script>
-<script src="assets/digimon/roster.js?v=488"></script>
-<script src="assets/digimon/base-stats.js?v=488"></script>
-<script src="assets/social-rules.js?v=488"></script>
-<script src="assets/social-poker.js?v=488"></script>
-<script src="assets/digimon-sanctuary.js?v=488"></script>
+<script src="assets/digimon/roster.js?v=489"></script>
+<script src="assets/digimon/base-stats.js?v=489"></script>
+<script src="assets/social-rules.js?v=489"></script>
+<script src="assets/social-poker.js?v=489"></script>
+<script src="assets/digimon-sanctuary.js?v=489"></script>
 <script src="assets/digimon-battle.js?v=393"></script>
-<script src="assets/social-digimon.js?v=488"></script>
+<script src="assets/social-digimon.js?v=489"></script>
 <script src="assets/social-gym-redesign.js?v=393"></script>
 <script src="assets/social-pond-design.js?v=393"></script>
 <script src="assets/social-title-art.js?v=450"></script>
-<script src="assets/social-scene.js?v=488"></script>
-<script src="assets/social-fishing.js?v=488"></script>
-<script src="assets/plaza-bots.js?v=488"></script>
+<script src="assets/social-scene.js?v=489"></script>
+<script src="assets/social-fishing.js?v=489"></script>
+<script src="assets/plaza-bots.js?v=489"></script>
 <script src="assets/adventure-guide.js?v=450"></script>
-<script src="assets/social.js?v=488"></script></body>
+<script src="assets/social.js?v=489"></script></body>
 </html>
