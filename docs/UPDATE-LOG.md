@@ -12752,3 +12752,10 @@ re-recording them here would have written wrong numbers into the repository.
 * **Try it:** Open Prontera Party at desktop and phone widths; drag the header and verify panel width/theme remain intact. In raid, change stages and confirm the remote ally appears at the new-stage position without sliding from the old one.
 * **Checks:** `party_raid_sync_sim.mjs` 6/6 (includes stage-history reset), `party_raid_host_sim.mjs` 14/14, `party_raid_allies_sim.mjs` 7/7, `social_ui_sim.js` passed, `update_watch_sim.js` 23/23, `skill_balance_sim.js` passed after the three `--reuse-baseline` fixture hashes were refreshed without changing before measurements; `build_site.sh`, syntax checks and `git diff --check` passed. No live two-client browser test available.
 * **Delivery:** Follow-up commit on PR #289; not merged or deployed.
+
+### 2026-11-26 — `haven-v495 Enforce faster party raid relay`
+
+* **Changed:** Pre-merge recheck found an important omission: the client was sending snapshots every 500 ms, but the actual Social Durable Object still enforced the old 1,500 ms floor. The client-side cadence change therefore could not deliver the promised relay improvement. The room throttle is now also 500 ms. Updated its rate-limit regression and corrected the host simulation's mock clock window, which had fast-forwarded the member 30 game seconds and artificially triggered stale-host failover before checking snapshots.
+* **Try it:** After deploying, compare the relay age during the same-party raid; the server now admits periodic snapshots at the intended half-second cadence.
+* **Checks:** `raid_sim.mjs` 44/44, `party_raid_host_sim.mjs` 14/14, `party_raid_allies_sim.mjs` 7/7, `party_raid_sync_sim.mjs` 6/6, `social_ui_sim.js` passed; syntax and diff checks passed. `update_watch_sim.js` 23/23 and `build_site.sh` passed. No live two-client test.
+* **Delivery:** Follow-up for PR #289; not merged or deployed.
