@@ -2268,6 +2268,17 @@ function openPartyPanel(tab){
 }
 $id('socialPartyBtn').onclick=()=>openPartyPanel();
 $id('socialPartyClose').onclick=()=>{$id('socialPartyPanel').hidden=true};
+// Keep the party window out of the chat lane by default, but let players place it where it suits.
+const partyPanel=$id('socialPartyPanel'),partyHead=partyPanel.querySelector('.social-party-head'),PARTY_PANEL_POS='pg_prontera_party_panel_pos';
+let partyPanelDrag=null;
+function clampPartyPanel(left,top){const w=hub.clientWidth||0,h=hub.clientHeight||0,pw=partyPanel.offsetWidth||320,ph=partyPanel.offsetHeight||240;return{left:Math.max(0,Math.min(Math.round(left),Math.max(0,w-pw))),top:Math.max(0,Math.min(Math.round(top),Math.max(0,h-ph)))}}
+function setPartyPanelPos(left,top){const p=clampPartyPanel(left,top);partyPanel.classList.add('is-moved');partyPanel.style.left=p.left+'px';partyPanel.style.top=p.top+'px';partyPanel.style.right='auto';return p}
+try{const p=JSON.parse(localStorage.getItem(PARTY_PANEL_POS)||'null');if(p&&Number.isFinite(p.left)&&Number.isFinite(p.top)){setPartyPanelPos(p.left,p.top)}}catch{}
+partyHead.addEventListener('pointerdown',e=>{if(e.target.closest('button'))return;const r=partyPanel.getBoundingClientRect();partyPanelDrag={dx:e.clientX-r.left,dy:e.clientY-r.top};partyPanel.classList.add('is-dragging');try{partyHead.setPointerCapture(e.pointerId)}catch{}e.preventDefault();e.stopPropagation()});
+partyHead.addEventListener('pointermove',e=>{if(!partyPanelDrag)return;const r=hub.getBoundingClientRect();setPartyPanelPos(e.clientX-r.left-partyPanelDrag.dx,e.clientY-r.top-partyPanelDrag.dy);e.preventDefault()});
+function finishPartyPanelDrag(){if(!partyPanelDrag)return;partyPanelDrag=null;partyPanel.classList.remove('is-dragging');const r=partyPanel.getBoundingClientRect(),h=hub.getBoundingClientRect();try{localStorage.setItem(PARTY_PANEL_POS,JSON.stringify({left:r.left-h.left,top:r.top-h.top}))}catch{}}
+partyHead.addEventListener('pointerup',finishPartyPanelDrag);partyHead.addEventListener('pointercancel',finishPartyPanelDrag);
+addEventListener('resize',()=>{if(!partyPanel.hidden&&partyPanel.classList.contains('is-moved')){const p=clampPartyPanel(parseFloat(partyPanel.style.left)||0,parseFloat(partyPanel.style.top)||0);partyPanel.style.left=p.left+'px';partyPanel.style.top=p.top+'px'}});
 const partyToast=document.createElement('div');partyToast.id='socialPartyToast';partyToast.hidden=true;hub.append(partyToast);
 const partyHud=document.createElement('div');partyHud.id='socialPartyHud';partyHud.hidden=true;hub.append(partyHud);
 partyHud.addEventListener('click',e=>{

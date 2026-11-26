@@ -310,7 +310,7 @@ check('SocialRoom enforces raid_ready before raid_start, relays raid_chat & raid
   assert.equal(bob.inbox.some(m => m.type === 'raid_chat' && m.text === 'Stack inside Eye of Abyss!'), true);
   assert.equal(bystander.inbox.length, 0, 'raid_chat never leaks to plaza bystander');
 
-  // raid_sync carries dmgTaken, support & revives and is rate-limited inside 1500ms unless force:true
+  // raid_sync carries dmgTaken, support & revives and is rate-limited inside 500ms unless force:true
   bob.inbox.length = 0;
   room.receive(alice.c, JSON.stringify({ type: 'raid_sync', raidId: activeRid, hp: 800, maxHp: 1000, dps: 4500000, dmgTaken: 120000, support: 15000, revives: 0, stage: 1, dead: false }));
   room.receive(alice.c, JSON.stringify({ type: 'raid_sync', raidId: activeRid, hp: 750, maxHp: 1000, dps: 4600000, dmgTaken: 130000, support: 15000, revives: 0, stage: 1, dead: false }));
@@ -318,9 +318,12 @@ check('SocialRoom enforces raid_ready before raid_start, relays raid_chat & raid
   assert.equal(syncs1.length, 1, 'rapid unforced raid_sync throttled on DO');
   assert.equal(syncs1[0].dmgTaken, 120000, 'dmgTaken relayed on raid_sync');
   assert.equal(syncs1[0].support, 15000, 'support relayed on raid_sync');
-  now += 2000;
+  now += 500;
+  room.receive(alice.c, JSON.stringify({ type: 'raid_sync', raidId: activeRid, hp: 740, maxHp: 1000, dps: 4601000, stage: 1, dead: false }));
+  assert.equal(bob.inbox.filter(m => m.type === 'raid_sync').length, 2, 'sync passes at the 500ms relay floor');
+  now += 1500;
   room.receive(alice.c, JSON.stringify({ type: 'raid_sync', raidId: activeRid, hp: 700, maxHp: 1000, dps: 4700000, dmgTaken: 150000, support: 20000, revives: 1, stage: 1, dead: false }));
-  assert.equal(bob.inbox.filter(m => m.type === 'raid_sync').length, 2, 'sync passes after rate window');
+  assert.equal(bob.inbox.filter(m => m.type === 'raid_sync').length, 3, 'sync passes after 500ms relay window');
 
   // v482: optional x/z/ry relay (ally markers) — backwards-compatible & clamped
   bob.inbox.length = 0; now += 2000;

@@ -82,7 +82,8 @@
   var DODGE_CD_S = 3.5;
   var DODGE_IFRAME_S = 0.75;
   var DODGE_DIST = 5.6;
-  var SYNC_INTERVAL_S = 2.0;
+  // Keep party movement/combat snapshots fresh; the room enforces the same 500ms floor.
+  var SYNC_INTERVAL_S = 0.5;
 
   // Stage 1-3 mobs: v455 baseline + 120% buff (Astral 2.2x; Thor 1.1x normalized to 1.25x Astral curve).
   // Stage 4 Bosses & escorts: reduced 30% HP from v456, with softened Boss ATK/cleave/telegraph damage (v462).
@@ -228,6 +229,26 @@
   // party can actually see each other. Class skins are not shared across clients, so this is a
   // stylized stand-in (ring + body + name sprite), driven purely by raid_sync x/z/ry.
   var ALLY_ACCENTS = [0x67e8f9, 0xf0a6ff];
+  // 500ms relay cadence: render just over one interval behind to interpolate continuously.
+  var ALLY_INTERP_DELAY_MS = 550;
+  function raidMonotonicMs() {
+    return typeof performance !== 'undefined' && performance.now ? performance.now() : Date.now();
+  }
+  function allyRenderPose(slot, nowMs) {
+    var samples = slot && slot._posSamples;
+    if (!samples || !samples.length) return { x: slot.x, z: slot.z, ry: slot.ry || 0 };
+    var at = nowMs - ALLY_INTERP_DELAY_MS;
+    if (samples.length === 1 || at <= samples[0].at) return samples[0];
+    for (var i = 1; i < samples.length; i++) {
+      var a = samples[i - 1], b = samples[i];
+      if (at <= b.at) {
+        var span = Math.max(1, b.at - a.at), t = Math.max(0, Math.min(1, (at - a.at) / span));
+        var dy = ((b.ry - a.ry + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
+        return { x: a.x + (b.x - a.x) * t, z: a.z + (b.z - a.z) * t, ry: a.ry + dy * t };
+      }
+    }
+    return samples[samples.length - 1];
+  }
   function ensureAllyMeshes() {
     if (allyGroup) return true;
     if (typeof THREE === 'undefined' || typeof scene === 'undefined' || !scene || typeof document === 'undefined') return false;
@@ -297,17 +318,18 @@
       var node = allyNodes[nodeIdx++];
       var known = Number.isFinite(slot.x) && Number.isFinite(slot.z) && !slot.disconnected && slot.stage === raid.stage;
       if (!known) { node.group.visible = false; node.placed = false; continue; }
-      var ty = (typeof floorYAt === 'function' ? floorYAt(slot.x, slot.z) : 0) + 0.02;
-      var dist = node.placed ? Math.hypot(slot.x - node.group.position.x, slot.z - node.group.position.z) : Infinity;
+      var pose = allyRenderPose(slot, raidMonotonicMs());
+      var ty = (typeof floorYAt === 'function' ? floorYAt(pose.x, pose.z) : 0) + 0.02;
+      var dist = node.placed ? Math.hypot(pose.x - node.group.position.x, pose.z - node.group.position.z) : Infinity;
       if (!node.placed || dist > 25) {
-        node.group.position.set(slot.x, ty, slot.z);
+        node.group.position.set(pose.x, ty, pose.z);
         node.placed = true;
       } else {
-        node.group.position.x += (slot.x - node.group.position.x) * 0.35;
+        node.group.position.x = pose.x;
         node.group.position.y = ty;
-        node.group.position.z += (slot.z - node.group.position.z) * 0.35;
+        node.group.position.z = pose.z;
       }
-      node.group.rotation.y = Number(slot.ry) || 0;
+      node.group.rotation.y = Number(pose.ry) || 0;
       var dead = Boolean(slot.dead);
       node.ring.material.color.setHex(dead ? 0xff7070 : node.accent);
       node.body.material.color.setHex(dead ? 0x8a8f9c : node.accent);
@@ -4584,11 +4606,22 @@
     if (msg.dmgTaken != null) slot.dmgTaken = Math.max(0, Number(msg.dmgTaken) || 0);
     if (msg.support != null) slot.support = Math.max(0, Number(msg.support) || 0);
     if (msg.revives != null) slot.revives = Math.max(0, Number(msg.revives) || 0);
+    var priorStage = slot.stage;
     slot.stage = Math.max(0, Math.min(3, Number(msg.stage) || 0));
+    if (slot.stage !== priorStage) slot._posSamples = [];
     slot.dead = Boolean(msg.dead);
     if (msg.x != null && Number.isFinite(Number(msg.x))) slot.x = Math.max(-512, Math.min(512, Number(msg.x)));
     if (msg.z != null && Number.isFinite(Number(msg.z))) slot.z = Math.max(-512, Math.min(512, Number(msg.z)));
     if (msg.ry != null && Number.isFinite(Number(msg.ry))) slot.ry = Number(msg.ry);
+    if (Number.isFinite(slot.x) && Number.isFinite(slot.z) && (msg.x != null || msg.z != null)) {
+      var samples = slot._posSamples || (slot._posSamples = []);
+      var nowMs = raidMonotonicMs();
+      var last = samples.length ? samples[samples.length - 1] : null;
+      if (!last || nowMs > last.at) {
+        samples.push({ x: slot.x, z: slot.z, ry: Number(slot.ry) || 0, at: nowMs });
+        while (samples.length > 3) samples.shift();
+      }
+    }
     if (claim) {                                   // v485: any world host — leader (implicit) or elected member
       raid._lastHostPartySyncAt = raid.elapsed;
       if (msg.bossFrac != null && Number.isFinite(Number(msg.bossFrac))) raid._hostBossFrac = clamp01n(msg.bossFrac);
