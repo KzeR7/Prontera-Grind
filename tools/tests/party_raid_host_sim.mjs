@@ -75,7 +75,7 @@ mk(alice, 101); mk(bob, 102);
   // Member takes host-pattern damage when standing inside the telegraph at end of life
   const hpBefore = bob.g.ev(`S.hp`);
   bob.g.ev(`(function(){var tg=PGRaid.raid.telegraph;if(tg){pl.x=tg.x;pl.z=tg.z;}})()`);
-  bob.g.ev(`for(var i=0;i<100;i++)PGRaid.tick(0.05)`); now += 5000;
+  bob.g.ev(`for(var i=0;i<600;i++)PGRaid.tick(0.05)`); now += 100;
   const hpAfter = bob.g.ev(`S.hp`);
   check('member hero takes the host pattern damage in the zone', hpAfter < hpBefore);
 
@@ -90,7 +90,7 @@ mk(alice, 101); mk(bob, 102);
   check('renderHud with shared boss fraction does not throw', typeof hudText === 'string');
 
   // --- v484: mob snapshot sync (HP pin, position lerp, kill handshake) ---
-  // The room throttles raid_sync to 1 per 500ms of wall clock; advance `now` so each host send relays.
+  // The room throttles raid_sync to 1 per 1500ms of wall clock (by design); advance `now` so each host send relays.
   const hostEid0 = alice.g.ev(`mobs[0].raidEid`);
   const memberHpBefore = bob.g.ev(`(mobs||[]).find(m=>m.raidEid===${hostEid0}).hp`);
   check('member mob present with eid', memberHpBefore > 0);

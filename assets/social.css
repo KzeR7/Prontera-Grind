@@ -600,7 +600,10 @@ body.social-open #bgmPlayer{display:none!important}
 @media(max-width:760px){#socialMiniMap{right:12px;bottom:calc(var(--docktop,76px) + 52px)}#socialMiniMap canvas{width:104px;height:104px}#socialMapModal{width:calc(100% - 12px)}#socialBgmMount{width:min(304px,calc(100% - 24px))}}
 
 /* v355: grind-party panel and PvP lobby. */
-#socialPartyPanel{position:absolute;left:auto;right:16px;top:72px;transform:none;z-index:63;touch-action:auto}#socialPartyPanel.is-moved{right:auto}#socialPartyPanel .social-party-head{cursor:grab;touch-action:none}#socialPartyPanel.is-dragging .social-party-head{cursor:grabbing}width:min(92vw,420px);box-sizing:border-box;padding:12px 14px;background:linear-gradient(180deg,#1c3129f5,#0e1c17f5);border:1.5px solid #d4b26a;border-radius:14px;box-shadow:0 18px 48px #000b;color:#f4dfaa;font:12px/1.5 "Trebuchet MS",sans-serif}
+#socialPartyPanel{position:absolute;left:auto;right:16px;top:72px;transform:none;z-index:63;width:min(92vw,420px);box-sizing:border-box;padding:12px 14px;background:linear-gradient(180deg,#1c3129f5,#0e1c17f5);border:1.5px solid #d4b26a;border-radius:14px;box-shadow:0 18px 48px #000b;color:#f4dfaa;font:12px/1.5 "Trebuchet MS",sans-serif;touch-action:auto}
+#socialPartyPanel.is-moved{right:auto}
+#socialPartyPanel .social-party-head{cursor:grab;touch-action:none}
+#socialPartyPanel.is-dragging .social-party-head{cursor:grabbing}
 #socialPartyPanel .social-party-head{display:flex;align-items:center;justify-content:space-between;margin:0 0 8px}
 #socialPartyPanel .social-party-head strong{font-size:15px;text-shadow:0 1px 2px #000}
 #socialPartyClose{min-width:30px;min-height:30px;padding:4px 9px;border:1px solid #c5a76b;border-radius:6px;background:linear-gradient(180deg,#3a4a44,#182622);color:#f4dfaa;font:700 13px "Trebuchet MS",sans-serif;cursor:pointer}

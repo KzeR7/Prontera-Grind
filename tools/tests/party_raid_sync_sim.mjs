@@ -53,6 +53,7 @@ function check(label, cond) { results.push([label, !!cond]); console.log((cond ?
   bob.g.ev(`(function(){ var me = PGRaid.raid; me.stage = 3; PGRaid.raid.syncTimer = 0; })()`);
   bob.g.ev(`PGRaid.tick(0.05)`); now += 3000;
   check('member on a later stage pulls leader forward to Stage 4', alice.g.ev('String(PGRaid.raid.stage)') === '3');
+  check('stage transition drops old-stage position samples', alice.g.ev(`(PGRaid.raid.party.find(p=>!p.self)._posSamples||[]).length`) <= 1);
   const failed = results.filter(r => !r[1]).length;
   console.log('\n' + (failed ? failed + ' FAILURES' : 'ALL CHECKS PASS') + ' (' + results.length + ' checks)');
   process.exit(failed ? 1 : 0);

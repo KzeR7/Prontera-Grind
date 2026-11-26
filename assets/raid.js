@@ -4606,7 +4606,9 @@
     if (msg.dmgTaken != null) slot.dmgTaken = Math.max(0, Number(msg.dmgTaken) || 0);
     if (msg.support != null) slot.support = Math.max(0, Number(msg.support) || 0);
     if (msg.revives != null) slot.revives = Math.max(0, Number(msg.revives) || 0);
+    var priorStage = slot.stage;
     slot.stage = Math.max(0, Math.min(3, Number(msg.stage) || 0));
+    if (slot.stage !== priorStage) slot._posSamples = [];
     slot.dead = Boolean(msg.dead);
     if (msg.x != null && Number.isFinite(Number(msg.x))) slot.x = Math.max(-512, Math.min(512, Number(msg.x)));
     if (msg.z != null && Number.isFinite(Number(msg.z))) slot.z = Math.max(-512, Math.min(512, Number(msg.z)));

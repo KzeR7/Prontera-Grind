@@ -849,7 +849,7 @@ export class SocialRoom {
   if(m.force===true){
    if(c.raidForceAt&&now-c.raidForceAt<250)return;
    c.raidForceAt=now;
-  }else if(c.raidSyncAt&&now-c.raidSyncAt<500)return;
+  }else if(c.raidSyncAt&&now-c.raidSyncAt<1500)return;
   c.raidSyncAt=now;
   const payload={
    type:'raid_sync',
